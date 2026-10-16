@@ -65,3 +65,5 @@ crates/forma-ir/tests/fixtures/parity/*.json text eol=lf
 docs/archive/2026-10-15-pre-attribute-values/** -text
 
 docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
+# FORMA-181 checkpoint C: the pre-key-adoption test originals are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-key-adoption/** -text

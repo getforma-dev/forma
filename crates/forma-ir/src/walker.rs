@@ -87,7 +87,7 @@ struct KeyedRow {
     /// The key path, dotted, for the row's diagnostics.
     path: Rc<str>,
     /// The canonical key, until the row's root element takes it.
-    key: Option<String>,
+    key: Option<Rc<str>>,
     /// [`WalkState::element_depth`] when the row's body started.
     entry_depth: usize,
     /// Elements opened at `entry_depth` so far.
@@ -255,7 +255,7 @@ impl WalkState {
 
     /// An element is being opened: if it is the innermost keyed row's root,
     /// count it and hand back the key it carries.
-    fn open_row_root(&mut self) -> Option<String> {
+    fn open_row_root(&mut self) -> Option<Rc<str>> {
         let row = self.keyed_row_at_entry_depth()?;
         row.roots += 1;
         row.key.take()
@@ -1337,13 +1337,31 @@ impl<'m> ListKey<'m> {
             .iter()
             .map(|segment| strings.get(*segment))
             .collect::<Result<Vec<&str>, IrError>>()?;
-        let path = Rc::from(segments.join("."));
+        let path = Rc::from(dotted_path(&segments));
         Ok(ListKey {
             list_offset,
             segments,
             path,
         })
     }
+}
+
+/// A key path for a diagnostic: segments joined by dots, and a segment that
+/// a dot would make ambiguous (empty, or holding `.`, `[` or `]`) quoted in
+/// brackets, so `user.id` is two fields and `["user.id"]` is one.
+fn dotted_path(segments: &[&str]) -> String {
+    let mut path = String::new();
+    for segment in segments {
+        if segment.is_empty() || segment.contains(['.', '[', ']']) {
+            path.push_str(&format!("[{segment:?}]"));
+        } else {
+            if !path.is_empty() {
+                path.push('.');
+            }
+            path.push_str(segment);
+        }
+    }
+    path
 }
 
 /// What one execution of a LIST iterates (see [`walk_list_rows`]).
@@ -1357,10 +1375,11 @@ struct ListRows<'a, 'm> {
 
 /// Walk every row of one LIST execution.
 ///
-/// Every error leaves the walk state as the rows found it: the slot journal
-/// is unwound to the row's mark and a keyed row's guard is popped before the
-/// error propagates, and the caller restores the list depth. No partial page
-/// is returned either way: an error ends the whole walk.
+/// Before any error propagates, the slot journal is unwound to the row's mark
+/// and a keyed row's guard is popped, and the caller restores the list depth.
+/// The rest of the walk state (the element depth, an open start tag, the
+/// island stack) is not restored: a `WalkState` serves one walk, and an error
+/// ends that walk, which returns no partial page.
 fn walk_list_rows(
     module: &IrModule,
     slots: &mut SlotData,
@@ -1396,7 +1415,8 @@ fn walk_list_rows(
     // fits in what is left of the budget, and every admitted key is then
     // written, escaped, on its row's root, so the keys held here never
     // outgrow the output.
-    let mut seen_keys: HashMap<String, usize> = HashMap::new();
+    // One allocation per key: the set and the row's guard share it.
+    let mut seen_keys: HashMap<Rc<str>, usize> = HashMap::new();
     for (ordinal, item) in rows.items.iter().enumerate() {
         // Total across all depths, never decremented: depth alone does not
         // bound volume, and four nested LISTs over the same array give n^4
@@ -1423,12 +1443,14 @@ fn walk_list_rows(
             if crate::keys::normalized_len_exceeds(value, limit.saturating_sub(out.len())) {
                 return Err(IrError::OutputLimitExceeded { limit });
             }
-            let text = crate::keys::canonical_key_text(value).map_err(refuse)?;
+            let text: Rc<str> = crate::keys::canonical_key_text(value)
+                .map_err(refuse)?
+                .into();
             if let Some(&first_row) = seen_keys.get(&text) {
                 // The two ordinals, never the key: it is the row's data.
                 return Err(refuse(ListKeyReason::Duplicate { first_row }));
             }
-            seen_keys.insert(text.clone(), ordinal);
+            seen_keys.insert(Rc::clone(&text), ordinal);
             state.keyed_rows.push(KeyedRow {
                 list_offset: key.list_offset,
                 ordinal,
@@ -1490,12 +1512,12 @@ fn walk_list_rows(
 
 /// The whole-render refusal for one keyed row (RENDER-503).
 fn list_key_error(list_offset: u32, row: usize, path: &str, reason: ListKeyReason) -> IrError {
-    IrError::InvalidListKey(Box::new(ListKeyViolation {
+    IrError::InvalidListKey(Box::new(ListKeyViolation::new(
         list_offset,
         row,
-        path: path.to_string(),
+        path,
         reason,
-    }))
+    )))
 }
 
 /// A refusal inside the innermost keyed row, or `fallback` when the walk is in
@@ -7847,6 +7869,49 @@ mod tests {
             .unwrap_err();
             assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 1 });
             assert_eq!(failure.counts.list_iterations, 0);
+        }
+
+        /// FORMA-181 checkpoint C: the `served` markup of every keys.json vector is exactly
+        /// what this walker writes for that key, because the browser spec parses that markup
+        /// in Chromium, Firefox and WebKit and checks it decodes to the canonical text
+        /// (packages/core/e2e/keyed-adoption.spec.ts). A change to the attribute escaping
+        /// fails here before it can drift from what the browsers were shown.
+        #[test]
+        fn every_shared_key_vector_is_written_as_its_served_markup() {
+            let vectors: serde_json::Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/keys.json")).unwrap();
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let mut checked = 0;
+            for case in vectors["values"].as_array().unwrap() {
+                let Some(served) = case.get("served").and_then(serde_json::Value::as_str) else {
+                    continue;
+                };
+                let row = object(vec![(
+                    "id",
+                    crate::slot::json_to_slot_value(&case["value"]),
+                )]);
+                assert_eq!(
+                    walk_to_html(&module, &rows(vec![row])).unwrap(),
+                    format!(
+                        "<!--f:l0--><li data-forma-key=\"{served}\"><span></span></li><!--/f:l0-->"
+                    ),
+                    "{}",
+                    case["id"]
+                );
+                checked += 1;
+            }
+            assert!(
+                checked >= 20,
+                "the vector file lost its served markup: {checked}"
+            );
+        }
+
+        #[test]
+        fn a_diagnostic_path_quotes_a_segment_a_dot_would_make_ambiguous() {
+            assert_eq!(dotted_path(&["user", "id"]), "user.id");
+            assert_eq!(dotted_path(&["user.id"]), "[\"user.id\"]");
+            assert_eq!(dotted_path(&["a", "b.c", "d"]), "a[\"b.c\"].d");
+            assert_eq!(dotted_path(&["", "x[0]"]), "[\"\"][\"x[0]\"]");
         }
     }
 }

@@ -1011,8 +1011,8 @@ decision brief L-55):
 | Class | Chosen by | Forma's code | All of the route's JavaScript |
 | --- | --- | --- | --- |
 | `no-interactive-region` | a server-rendered route whose page has no island, or a route that lists no script | none | none: a service worker counted |
-| `islands` | a server-rendered route with at least one island | 25,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
-| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as islands |
+| `islands` | a server-rendered route with at least one island | 27,500 B | 75 KiB (76,800 B), or 365 KiB (373,760 B) for a route declared `canvas: true` |
+| `whole-page-mount` | a route whose page the browser mounts whole: an entry declared `ssr: false`, or any route of an application built without `ssr` | 27,500 B | as islands |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed from
 the bundler's metafile (each input's share of the file's raw bytes, applied to
@@ -1071,7 +1071,8 @@ unchanged.
 | Code | Boundary | Meaning and corrective action |
 | --- | --- | --- |
 | `FORMA_E_HYDRATE_NODE` | node matching; retained code | The expected node kind, tag or namespace does not match the served node. Keep the server and client component structure consistent; adoption does not replace the node. |
-| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_LIST_COUNT` | list matching; retained code | Server and client row counts of an unkeyed list differ. Supply the same initial rows; adoption does not trim or append rows to repair the mismatch. |
+| `FORMA_E_HYDRATE_KEY` | keyed list matching (FORMA-181) | A served keyed row and the client's items do not pair by canonical key: a key on one side only, a served key twice, a served row without `data-forma-key` beside keyed rows, two client keys with the same canonical text (1 and `"1"`), or a client key outside the domain (not a string or a safe integer, or a string with an unpaired surrogate). Refused before any row runs, writing nothing. Give the client the server's rows (in any order) with their own keys. |
 | `FORMA_E_HYDRATE_MARKER` | marker validation | A required marker is missing, malformed, duplicated, out of range or incorrectly nested. Preserve the compiler/native marker grammar and paired output. |
 | `FORMA_E_HYDRATE_STRUCTURE` | structural validation | A claimed node/range, topology or ownership relationship is invalid or changed during preparation, or the private walker cannot validate the context. Do not move or replace the prepared structure before commit. The [private raw noscript limitation](../packages/core/docs/ADOPTION-PREPARATION.md) also uses this code. |
 | `FORMA_E_HYDRATE_VALUE` | initial value/default validation | Initial text, attributes, branch/list values or normalized control defaults disagree with the served content/state, or a prepared observation was invalidated. Fix the initial server/client disagreement; do not rely on an early user edit to hide it. |

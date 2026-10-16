@@ -1,0 +1,1596 @@
+{
+  "schema": 1,
+  "dryRun": false,
+  "tag": "v3.0.0-alpha.2",
+  "commit": "119c12c60eee77a5320b3a2d239925e64cc5af98",
+  "run": "38771766038",
+  "toolchain": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+  "node": "v24.22.0",
+  "npm": "11.19.1",
+  "contracts": {
+    "stage": "v3-development",
+    "fmir": 3,
+    "manifest": 2,
+    "props": "declared-v1",
+    "stateBlock": null,
+    "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+    "version": "3.0.0",
+    "milestones": {
+      "alpha": {
+        "plan": "M2",
+        "tags": "v3.0.0-alpha.N: npm next, Cargo -alpha.N",
+        "gates": {
+          "FORMA-110": {
+            "status": "done",
+            "scope": "server functions, the WASM walker and Node rendering removed"
+          },
+          "FORMA-185": {
+            "status": "done",
+            "scope": "FMIR v3 writer and reader on main, seeded-fault replay, the nightly fuzz observed"
+          },
+          "FORMA-112": {
+            "status": "done",
+            "scope": "one version, the compatibility window checked at install, build and start"
+          },
+          "FORMA-102": {
+            "status": "done",
+            "scope": "declared page data, the derived Rust type and the start-time bind"
+          },
+          "FORMA-107": {
+            "status": "done",
+            "scope": "render returns the result, strict loading only, declared route modes, per-page limits"
+          },
+          "FORMA-109": {
+            "status": "done",
+            "scope": "PageResponse only, Trusted Types enforced"
+          },
+          "FORMA-111": {
+            "status": "done",
+            "scope": "the worker's digest checks, integrity on every tag, precache mode removed"
+          },
+          "FORMA-144 slice 1": {
+            "status": "done",
+            "scope": "both templates on the 3.0 API, packed and verified by P17"
+          }
+        }
+      },
+      "beta": {
+        "plan": "M3",
+        "tags": "v3.0.0-beta.N: npm next, Cargo -beta.N",
+        "gates": {
+          "FORMA-103": {
+            "status": "pending",
+            "scope": "island props in one JSON block, compiler-bound seeding"
+          },
+          "FORMA-104": {
+            "status": "pending",
+            "scope": "adoption writes nothing on its first run, coded mismatch errors"
+          },
+          "FORMA-105": {
+            "status": "pending",
+            "scope": "islands only, literal registry, identity digest"
+          },
+          "FORMA-181": {
+            "status": "pending",
+            "scope": "keyed rows"
+          },
+          "FORMA-182": {
+            "status": "pending",
+            "scope": "the marker vocabulary and the seven value rules with shared vectors"
+          },
+          "FORMA-183": {
+            "status": "pending",
+            "scope": "the parity harness and its corpus, blocking in CI"
+          },
+          "FORMA-184": {
+            "status": "pending",
+            "scope": "renderBoth(component, state) in Forma's own suite"
+          },
+          "FORMA-144 slice 2": {
+            "status": "pending",
+            "scope": "island state adoption in the templates"
+          },
+          "FORMA-188 fixture applications": {
+            "status": "pending",
+            "scope": "the three fixture applications in P17"
+          },
+          "FORMA-021 ratchet": {
+            "status": "pending",
+            "scope": "the safe cuts landed and the size gate green at the restated ceiling"
+          }
+        }
+      },
+      "rc": {
+        "plan": "M4",
+        "tags": "v3.0.0-rc.N: npm next, Cargo -rc.N",
+        "gates": {
+          "FORMA-101": {
+            "status": "pending",
+            "scope": "the published server-renderable subset and coded build errors"
+          },
+          "FORMA-139": {
+            "status": "pending",
+            "scope": "the conformance corpus, a fixture and a near miss per code"
+          },
+          "FORMA-108": {
+            "status": "pending",
+            "scope": "the hostile corpus with zero executions"
+          },
+          "FORMA-186": {
+            "status": "pending",
+            "scope": "the deployment identity and inert-or-reload on a skew"
+          },
+          "FORMA-188 skew drill": {
+            "status": "pending",
+            "scope": "the skew drill green in P17"
+          },
+          "FORMA-190": {
+            "status": "pending",
+            "scope": "the size report green on both templates at the recorded ceiling"
+          },
+          "FORMA-141": {
+            "status": "pending",
+            "scope": "the upgrade guide and the stability record"
+          },
+          "FORMA-116": {
+            "status": "pending",
+            "scope": "CODEOWNERS, alerts and the probes"
+          },
+          "FORMA-189": {
+            "status": "pending",
+            "scope": "the recall script and SECURITY.md generated from the release record"
+          },
+          "FORMA-145 audit": {
+            "status": "pending",
+            "scope": "the whole-release audit on another model with an empty blocking list (D14)"
+          }
+        }
+      },
+      "final": {
+        "plan": "M5",
+        "tags": "v3.0.0: npm latest, Cargo 3.0.0",
+        "gates": {
+          "FORMA-144 slice 3": {
+            "status": "pending",
+            "scope": "final template and release cleanup"
+          },
+          "FORMA-191": {
+            "status": "pending",
+            "scope": "the per-release measurements in P17"
+          },
+          "FORMA-192": {
+            "status": "pending",
+            "scope": "the read-only gate runs against the rc with coded counts"
+          },
+          "FORMA-147": {
+            "status": "pending",
+            "scope": "the fAuth login spike at the restated G3"
+          },
+          "FORMA-146": {
+            "status": "pending",
+            "scope": "Q10 to Q13 recorded"
+          },
+          "FORMA-145 soak": {
+            "status": "pending",
+            "scope": "the rc's 7-day soak on next (D7)"
+          }
+        }
+      }
+    },
+    "trustedTypes": "enforced-v1",
+    "boundRender": "finalized-v1",
+    "assetIntegrity": "sha384-v1",
+    "sourceTemplates": "declared-v1"
+  },
+  "milestone": {
+    "name": "alpha",
+    "plan": "M2",
+    "version": "3.0.0-alpha.2",
+    "ready": true,
+    "blocking": [],
+    "later": {
+      "beta": [
+        "FORMA-103: island props in one JSON block, compiler-bound seeding",
+        "FORMA-104: adoption writes nothing on its first run, coded mismatch errors",
+        "FORMA-105: islands only, literal registry, identity digest",
+        "FORMA-181: keyed rows",
+        "FORMA-182: the marker vocabulary and the seven value rules with shared vectors",
+        "FORMA-183: the parity harness and its corpus, blocking in CI",
+        "FORMA-184: renderBoth(component, state) in Forma's own suite",
+        "FORMA-144 slice 2: island state adoption in the templates",
+        "FORMA-188 fixture applications: the three fixture applications in P17",
+        "FORMA-021 ratchet: the safe cuts landed and the size gate green at the restated ceiling"
+      ],
+      "rc": [
+        "FORMA-101: the published server-renderable subset and coded build errors",
+        "FORMA-139: the conformance corpus, a fixture and a near miss per code",
+        "FORMA-108: the hostile corpus with zero executions",
+        "FORMA-186: the deployment identity and inert-or-reload on a skew",
+        "FORMA-188 skew drill: the skew drill green in P17",
+        "FORMA-190: the size report green on both templates at the recorded ceiling",
+        "FORMA-141: the upgrade guide and the stability record",
+        "FORMA-116: CODEOWNERS, alerts and the probes",
+        "FORMA-189: the recall script and SECURITY.md generated from the release record",
+        "FORMA-145 audit: the whole-release audit on another model with an empty blocking list (D14)"
+      ],
+      "final": [
+        "FORMA-144 slice 3: final template and release cleanup",
+        "FORMA-191: the per-release measurements in P17",
+        "FORMA-192: the read-only gate runs against the rc with coded counts",
+        "FORMA-147: the fAuth login spike at the restated G3",
+        "FORMA-146: Q10 to Q13 recorded",
+        "FORMA-145 soak: the rc's 7-day soak on next (D7)"
+      ]
+    }
+  },
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.0.0-alpha.2",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.0.0-alpha.2.crate",
+      "sha256": "65c38e1acb89510485ca0e286a16342c9cf0f7b0044b445ec79a9bdb45d78d85"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.0.0-alpha.2",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.0.0-alpha.2.crate",
+      "sha256": "9fdf44432607f4e65e46f4baab0f33fe947103995ee2ca5caf44146ce744a329"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.0.0-alpha.2",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.0.0-alpha.2.crate",
+      "sha256": "d84d2f8c71322e63b67c993c4f45ecbb35121e9adfc0fc7e9e2c965ccddae926"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.0.0-alpha.2",
+      "path": "packages/core",
+      "file": "getforma-core-3.0.0-alpha.2.tgz",
+      "sha256": "d46e428ed292319f1b07b662cd1af1c46a7cc19f7c1b7f63e44d742d0beede35"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.0.0-alpha.2",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.0.0-alpha.2.tgz",
+      "sha256": "038c633ea0e4e9a4e785144e201f74f4f714f4baee4e3e4123575378b5c012fe"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.0.0-alpha.2",
+      "path": "packages/build",
+      "file": "getforma-build-3.0.0-alpha.2.tgz",
+      "sha256": "9d4862dcd261934e9ad8707bd14082369d206453ac165ef2a362318b7362b9af"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.0.0-alpha.2",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.0.0-alpha.2.tgz",
+      "sha256": "82129f074ba441e461494e0ebd81c65eca78723fdf1a57ae134218ea7b3d6a64"
+    }
+  ],
+  "ciRun": "38769339489",
+  "startedAt": "2026-10-15T16:46:16.000Z",
+  "recordedAt": "2026-10-15T16:59:04.937Z",
+  "elapsedSeconds": 768.937,
+  "timingBasis": "GitHub tag-triggered workflow created_at to acknowledged GitHub Release write (queue included; push ingestion latency not available in Actions)",
+  "measurements": {
+    "schema": 1,
+    "commit": "119c12c60eee77a5320b3a2d239925e64cc5af98",
+    "passed": true,
+    "tests": [
+      {
+        "name": "packed npm packages resolve one another inside the packed set, never through the workspace",
+        "passed": true,
+        "seconds": 0.091
+      },
+      {
+        "name": "packed templates contain exact checked-in Rust and TypeScript sources",
+        "passed": true,
+        "seconds": 0.008
+      },
+      {
+        "name": "forma-ir: packed Cargo.lock advisories",
+        "passed": true,
+        "shippedLockSha256": "dcd0d365e13aecb3f035f0fad32cead89ee9b1ae47582b5a225e12e9de2cc214",
+        "auditLockSha256": "52a5cbb62015ca3408c1bae48d203c4d0df9bf88591628020678aaed1fd430d3"
+      },
+      {
+        "name": "forma-ir-derive: packed Cargo.lock advisories",
+        "passed": true,
+        "shippedLockSha256": "e0f4872e616355882942f2b6d2b2c78c0ac8e300b9b5a3705d7e7aaaf56a9cd5",
+        "auditLockSha256": "e0f4872e616355882942f2b6d2b2c78c0ac8e300b9b5a3705d7e7aaaf56a9cd5"
+      },
+      {
+        "name": "forma-server: packed Cargo.lock advisories",
+        "passed": true,
+        "shippedLockSha256": "7c4746c4ca35aff637b6b5e7afef504f25731970a4183c96c01eabe0df5f21a7",
+        "auditLockSha256": "268950174eee201d08bd06ebfdd0d3631e417ccf647eacc0b6441d655678be20"
+      },
+      {
+        "name": "fresh advisories over every exact shipped crate lock",
+        "passed": true,
+        "seconds": 2.548
+      },
+      {
+        "name": "packed CLI registry signatures",
+        "passed": true,
+        "localCandidates": [],
+        "registryDependencies": [
+          {
+            "name": "prompts",
+            "version": "2.4.2",
+            "location": "node_modules/prompts",
+            "resolved": "https://registry.npmjs.org/prompts/-/prompts-2.4.2.tgz",
+            "integrity": "sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q=="
+          },
+          {
+            "name": "kleur",
+            "version": "3.0.3",
+            "location": "node_modules/prompts/node_modules/kleur",
+            "resolved": "https://registry.npmjs.org/kleur/-/kleur-3.0.3.tgz",
+            "integrity": "sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w=="
+          },
+          {
+            "name": "sisteransi",
+            "version": "1.0.5",
+            "location": "node_modules/prompts/node_modules/sisteransi",
+            "resolved": "https://registry.npmjs.org/sisteransi/-/sisteransi-1.0.5.tgz",
+            "integrity": "sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg=="
+          }
+        ]
+      },
+      {
+        "name": "packed CLI has an isolated, locked runtime dependency installation",
+        "passed": true,
+        "seconds": 0.95
+      },
+      {
+        "name": "packed compiler emits the frozen corpus read by packed forma-ir",
+        "passed": true,
+        "seconds": 3.865
+      },
+      {
+        "name": "packed compiler declared props bind and render through packed typed Pages",
+        "passed": true,
+        "seconds": 11.026
+      },
+      {
+        "name": "packed reader requires full digests on every public document path",
+        "passed": true,
+        "seconds": 0.339
+      },
+      {
+        "name": "packed build verifies cached and network bytes including dynamic chunks and compressed delivery",
+        "passed": true,
+        "seconds": 0.366
+      },
+      {
+        "name": "packed builds preserve waiting lifecycle and actual packed Rust retirement",
+        "passed": true,
+        "seconds": 15.511
+      },
+      {
+        "name": "minimal: registry signatures and DS11 candidate authentication",
+        "passed": true,
+        "localCandidates": [
+          {
+            "name": "@getforma/build",
+            "version": "3.0.0-alpha.2",
+            "location": "node_modules/@getforma/build",
+            "file": "getforma-build-3.0.0-alpha.2.tgz",
+            "sha256": "9d4862dcd261934e9ad8707bd14082369d206453ac165ef2a362318b7362b9af"
+          },
+          {
+            "name": "@getforma/compiler",
+            "version": "3.0.0-alpha.2",
+            "location": "node_modules/@getforma/compiler",
+            "file": "getforma-compiler-3.0.0-alpha.2.tgz",
+            "sha256": "038c633ea0e4e9a4e785144e201f74f4f714f4baee4e3e4123575378b5c012fe"
+          },
+          {
+            "name": "@getforma/core",
+            "version": "3.0.0-alpha.2",
+            "location": "node_modules/@getforma/core",
+            "file": "getforma-core-3.0.0-alpha.2.tgz",
+            "sha256": "d46e428ed292319f1b07b662cd1af1c46a7cc19f7c1b7f63e44d742d0beede35"
+          }
+        ],
+        "registryDependencies": [
+          {
+            "name": "@esbuild/linux-x64",
+            "version": "0.28.2",
+            "location": "node_modules/@esbuild/linux-x64",
+            "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
+            "integrity": "sha512-4xTZr1FUmSoQW4XIWmit3tzQrUTZM+N3P0XV8xROKYF50XfI7xeO90+1bZvNwxIufQ9hDQVRJH5YhgPVF8A/HQ=="
+          },
+          {
+            "name": "@babel/parser",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser",
+            "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.8.tgz",
+            "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "esbuild",
+            "version": "0.28.1",
+            "location": "node_modules/@getforma/build/node_modules/esbuild",
+            "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.1.tgz",
+            "integrity": "sha512-HrJrvZv5ayxBzPfwphOoNzkzOIIlifzk0KJrGK2c8R4+LKpMtpYLQeUdjnwjWv/LZlkH2laZk+4w78pi99D4Vw=="
+          },
+          {
+            "name": "@esbuild/linux-x64",
+            "version": "0.28.1",
+            "location": "node_modules/@getforma/build/node_modules/esbuild/node_modules/@esbuild/linux-x64",
+            "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.1.tgz",
+            "integrity": "sha512-u/anNYF2mmVOEDwLtnQ1wOr3EZ9sTNGLWrsYGYwHWzGA3Si84IOkHXlbWTD1NB+9/1lcnweYKO54uhxZydNzfA=="
+          },
+          {
+            "name": "smol-toml",
+            "version": "1.9.1",
+            "location": "node_modules/@getforma/build/node_modules/smol-toml",
+            "resolved": "https://registry.npmjs.org/smol-toml/-/smol-toml-1.9.1.tgz",
+            "integrity": "sha512-j7WyPdf0CJoutMzMoPLF/bVXHtKZIT9Rb4eGeEbWw8X2t5oirjPgpL+OpaENZrILYaXqYwnVH+qgUwVbl+pUJQ=="
+          },
+          {
+            "name": "@babel/parser",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/parser",
+            "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.8.tgz",
+            "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/parser/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "@babel/traverse",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse",
+            "resolved": "https://registry.npmjs.org/@babel/traverse/-/traverse-7.29.8.tgz",
+            "integrity": "sha512-I5z7H3bf/41ktsNVLtpN0wAa336HkqIHQ5BuPLEhTkt1jVSyZpeNKIzTgEWmlxjdg81R0IgUCcaE+Ok3NvrfZg=="
+          },
+          {
+            "name": "@babel/code-frame",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/code-frame",
+            "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
+            "integrity": "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/code-frame/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "js-tokens",
+            "version": "4.0.0",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/code-frame/node_modules/js-tokens",
+            "resolved": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz",
+            "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="
+          },
+          {
+            "name": "picocolors",
+            "version": "1.1.1",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/code-frame/node_modules/picocolors",
+            "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+            "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="
+          },
+          {
+            "name": "@babel/generator",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator",
+            "resolved": "https://registry.npmjs.org/@babel/generator/-/generator-7.29.8.tgz",
+            "integrity": "sha512-gZbepsdh3WDtgZKWL+vTPh71LSBrm/Y4/QDZBVCcYfmeTEEuoOYwlSy+G1StfJg+/Zy550u/3TATbm7qDbbMtg=="
+          },
+          {
+            "name": "@babel/parser",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/parser",
+            "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.8.tgz",
+            "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/parser/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "@jridgewell/gen-mapping",
+            "version": "0.3.13",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/gen-mapping",
+            "resolved": "https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz",
+            "integrity": "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="
+          },
+          {
+            "name": "@jridgewell/sourcemap-codec",
+            "version": "1.5.5",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/gen-mapping/node_modules/@jridgewell/sourcemap-codec",
+            "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz",
+            "integrity": "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="
+          },
+          {
+            "name": "@jridgewell/trace-mapping",
+            "version": "0.3.31",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/gen-mapping/node_modules/@jridgewell/trace-mapping",
+            "resolved": "https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz",
+            "integrity": "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="
+          },
+          {
+            "name": "@jridgewell/resolve-uri",
+            "version": "3.1.2",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/gen-mapping/node_modules/@jridgewell/trace-mapping/node_modules/@jridgewell/resolve-uri",
+            "resolved": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
+            "integrity": "sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw=="
+          },
+          {
+            "name": "@jridgewell/sourcemap-codec",
+            "version": "1.5.5",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/gen-mapping/node_modules/@jridgewell/trace-mapping/node_modules/@jridgewell/sourcemap-codec",
+            "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz",
+            "integrity": "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="
+          },
+          {
+            "name": "@jridgewell/trace-mapping",
+            "version": "0.3.31",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/trace-mapping",
+            "resolved": "https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz",
+            "integrity": "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="
+          },
+          {
+            "name": "@jridgewell/resolve-uri",
+            "version": "3.1.2",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/trace-mapping/node_modules/@jridgewell/resolve-uri",
+            "resolved": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
+            "integrity": "sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw=="
+          },
+          {
+            "name": "@jridgewell/sourcemap-codec",
+            "version": "1.5.5",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/@jridgewell/trace-mapping/node_modules/@jridgewell/sourcemap-codec",
+            "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz",
+            "integrity": "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="
+          },
+          {
+            "name": "jsesc",
+            "version": "3.1.0",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/generator/node_modules/jsesc",
+            "resolved": "https://registry.npmjs.org/jsesc/-/jsesc-3.1.0.tgz",
+            "integrity": "sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA=="
+          },
+          {
+            "name": "@babel/helper-globals",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/helper-globals",
+            "resolved": "https://registry.npmjs.org/@babel/helper-globals/-/helper-globals-7.29.7.tgz",
+            "integrity": "sha512-3nQVUAtvkKH9zahfWgw96Jc/uFOmjACE1kQz82E2lqWmHBgjzbNlsC22nuQTfahmWeQtTq5nQ/4Nnd2A1wj4zA=="
+          },
+          {
+            "name": "@babel/parser",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/parser",
+            "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.8.tgz",
+            "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/parser/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "@babel/template",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template",
+            "resolved": "https://registry.npmjs.org/@babel/template/-/template-7.29.7.tgz",
+            "integrity": "sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg=="
+          },
+          {
+            "name": "@babel/code-frame",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/code-frame",
+            "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
+            "integrity": "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/code-frame/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "js-tokens",
+            "version": "4.0.0",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/code-frame/node_modules/js-tokens",
+            "resolved": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz",
+            "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="
+          },
+          {
+            "name": "picocolors",
+            "version": "1.1.1",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/code-frame/node_modules/picocolors",
+            "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+            "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="
+          },
+          {
+            "name": "@babel/parser",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/parser",
+            "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.8.tgz",
+            "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/parser/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/template/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "debug",
+            "version": "4.4.3",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/debug",
+            "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+            "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA=="
+          },
+          {
+            "name": "ms",
+            "version": "2.1.3",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/traverse/node_modules/debug/node_modules/ms",
+            "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+            "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/compiler/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "alien-signals",
+            "version": "3.1.2",
+            "location": "node_modules/@getforma/core/node_modules/alien-signals",
+            "resolved": "https://registry.npmjs.org/alien-signals/-/alien-signals-3.1.2.tgz",
+            "integrity": "sha512-d9dYqZTS90WLiU0I5c6DHj/HcKkF8ZyGN3G5x8wSbslulz70KOxaqCT0hQCo9KOyhVqzqGojvNdJXoTumZOtcw=="
+          },
+          {
+            "name": "esbuild",
+            "version": "0.28.2",
+            "location": "node_modules/esbuild",
+            "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+            "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA=="
+          },
+          {
+            "name": "tsx",
+            "version": "4.23.15",
+            "location": "node_modules/tsx",
+            "resolved": "https://registry.npmjs.org/tsx/-/tsx-4.23.15.tgz",
+            "integrity": "sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw=="
+          },
+          {
+            "name": "typescript",
+            "version": "5.9.3",
+            "location": "node_modules/typescript",
+            "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+            "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="
+          }
+        ]
+      },
+      {
+        "name": "minimal: packed manifest 2 identity, modes, aliases and uncompressed SHA-384",
+        "passed": true
+      },
+      {
+        "name": "minimal: actual packed server resource tags carry manifest SHA-384 and nonces",
+        "passed": true,
+        "resources": [
+          {
+            "tag": "LINK",
+            "rel": "stylesheet",
+            "url": "/_assets/app.8098e2c0.css",
+            "integrity": "sha384-KZx2zbkPSKZbxUiXO0zO4dU1qfGZ4/EvgdwHoJEclHN8C3XUy3OARpffWTEJovZf",
+            "crossorigin": "anonymous",
+            "nonce": ""
+          },
+          {
+            "tag": "LINK",
+            "rel": "modulepreload",
+            "url": "/_assets/home.f0ce9b93.js",
+            "integrity": "sha384-xNrIE6VadJVybbuWKi+bwHLFypVrkWk9jLsCLNW+DtZw09Hjb9fGb+8zyogHNx9z",
+            "crossorigin": "anonymous",
+            "nonce": "HtdYkhw8Q409akNYj5FMprK8BUCdb4VYof+6/86Sd7Y="
+          },
+          {
+            "tag": "SCRIPT",
+            "rel": null,
+            "url": "/_assets/home.f0ce9b93.js",
+            "integrity": "sha384-xNrIE6VadJVybbuWKi+bwHLFypVrkWk9jLsCLNW+DtZw09Hjb9fGb+8zyogHNx9z",
+            "crossorigin": "anonymous",
+            "nonce": "HtdYkhw8Q409akNYj5FMprK8BUCdb4VYof+6/86Sd7Y="
+          }
+        ]
+      },
+      {
+        "name": "minimal: served policy and zero CSP violations during positive browser interaction",
+        "passed": true,
+        "trustedTypesContract": "enforced-v1",
+        "servedPolicy": "default-src 'none'; script-src 'nonce-4P7MmgOcp2XvE5O8YKcVf46ItAq4XQhl9GCAsGCWSXY=' 'strict-dynamic' 'self'; style-src 'nonce-4P7MmgOcp2XvE5O8YKcVf46ItAq4XQhl9GCAsGCWSXY=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "browserPolicy": "default-src 'none'; script-src 'nonce-HtdYkhw8Q409akNYj5FMprK8BUCdb4VYof+6/86Sd7Y=' 'strict-dynamic' 'self'; style-src 'nonce-HtdYkhw8Q409akNYj5FMprK8BUCdb4VYof+6/86Sd7Y=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "nativeTrustedTypes": true,
+        "violations": [],
+        "pageErrors": []
+      },
+      {
+        "name": "minimal: browser blocks changed actual entry bytes using packed server SRI",
+        "passed": true,
+        "observations": [
+          {
+            "protectedTag": true,
+            "replacementRequests": 1,
+            "replacementExecuted": false
+          },
+          {
+            "protectedTag": false,
+            "replacementRequests": 1,
+            "replacementExecuted": true
+          }
+        ]
+      },
+      {
+        "name": "minimal: typed handler count7 reaches actual SSR before JavaScript",
+        "passed": true,
+        "serverCount": 7,
+        "clientActivationChecked": false
+      },
+      {
+        "name": "packed loader refuses a corrupt module before binding",
+        "passed": true
+      },
+      {
+        "name": "packed loader refuses a newer-minor module before binding, naming both versions",
+        "passed": true
+      },
+      {
+        "name": "minimal: packed manifest schema/app/writer refused before binding",
+        "passed": true
+      },
+      {
+        "name": "minimal: packed manifest missing and malformed digests refused before binding",
+        "passed": true
+      },
+      {
+        "name": "minimal: packed checked worker accepts matching app and refuses mismatch before binding",
+        "passed": true
+      },
+      {
+        "name": "minimal: packed CLI, locked install, signatures, build, serve and interaction",
+        "passed": true,
+        "seconds": 15.678
+      },
+      {
+        "name": "dashboard: registry signatures and DS11 candidate authentication",
+        "passed": true,
+        "localCandidates": [
+          {
+            "name": "@getforma/build",
+            "version": "3.0.0-alpha.2",
+            "location": "node_modules/@getforma/build",
+            "file": "getforma-build-3.0.0-alpha.2.tgz",
+            "sha256": "9d4862dcd261934e9ad8707bd14082369d206453ac165ef2a362318b7362b9af"
+          },
+          {
+            "name": "@getforma/core",
+            "version": "3.0.0-alpha.2",
+            "location": "node_modules/@getforma/core",
+            "file": "getforma-core-3.0.0-alpha.2.tgz",
+            "sha256": "d46e428ed292319f1b07b662cd1af1c46a7cc19f7c1b7f63e44d742d0beede35"
+          }
+        ],
+        "registryDependencies": [
+          {
+            "name": "@esbuild/linux-x64",
+            "version": "0.28.2",
+            "location": "node_modules/@esbuild/linux-x64",
+            "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
+            "integrity": "sha512-4xTZr1FUmSoQW4XIWmit3tzQrUTZM+N3P0XV8xROKYF50XfI7xeO90+1bZvNwxIufQ9hDQVRJH5YhgPVF8A/HQ=="
+          },
+          {
+            "name": "@babel/parser",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser",
+            "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.8.tgz",
+            "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA=="
+          },
+          {
+            "name": "@babel/types",
+            "version": "7.29.8",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser/node_modules/@babel/types",
+            "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
+            "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg=="
+          },
+          {
+            "name": "@babel/helper-string-parser",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-string-parser",
+            "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
+            "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+          },
+          {
+            "name": "@babel/helper-validator-identifier",
+            "version": "7.29.7",
+            "location": "node_modules/@getforma/build/node_modules/@babel/parser/node_modules/@babel/types/node_modules/@babel/helper-validator-identifier",
+            "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
+            "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+          },
+          {
+            "name": "esbuild",
+            "version": "0.28.1",
+            "location": "node_modules/@getforma/build/node_modules/esbuild",
+            "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.1.tgz",
+            "integrity": "sha512-HrJrvZv5ayxBzPfwphOoNzkzOIIlifzk0KJrGK2c8R4+LKpMtpYLQeUdjnwjWv/LZlkH2laZk+4w78pi99D4Vw=="
+          },
+          {
+            "name": "@esbuild/linux-x64",
+            "version": "0.28.1",
+            "location": "node_modules/@getforma/build/node_modules/esbuild/node_modules/@esbuild/linux-x64",
+            "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.1.tgz",
+            "integrity": "sha512-u/anNYF2mmVOEDwLtnQ1wOr3EZ9sTNGLWrsYGYwHWzGA3Si84IOkHXlbWTD1NB+9/1lcnweYKO54uhxZydNzfA=="
+          },
+          {
+            "name": "smol-toml",
+            "version": "1.9.1",
+            "location": "node_modules/@getforma/build/node_modules/smol-toml",
+            "resolved": "https://registry.npmjs.org/smol-toml/-/smol-toml-1.9.1.tgz",
+            "integrity": "sha512-j7WyPdf0CJoutMzMoPLF/bVXHtKZIT9Rb4eGeEbWw8X2t5oirjPgpL+OpaENZrILYaXqYwnVH+qgUwVbl+pUJQ=="
+          },
+          {
+            "name": "alien-signals",
+            "version": "3.1.2",
+            "location": "node_modules/@getforma/core/node_modules/alien-signals",
+            "resolved": "https://registry.npmjs.org/alien-signals/-/alien-signals-3.1.2.tgz",
+            "integrity": "sha512-d9dYqZTS90WLiU0I5c6DHj/HcKkF8ZyGN3G5x8wSbslulz70KOxaqCT0hQCo9KOyhVqzqGojvNdJXoTumZOtcw=="
+          },
+          {
+            "name": "@jridgewell/gen-mapping",
+            "version": "0.3.13",
+            "location": "node_modules/@jridgewell/gen-mapping",
+            "resolved": "https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz",
+            "integrity": "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="
+          },
+          {
+            "name": "@jridgewell/remapping",
+            "version": "2.3.5",
+            "location": "node_modules/@jridgewell/remapping",
+            "resolved": "https://registry.npmjs.org/@jridgewell/remapping/-/remapping-2.3.5.tgz",
+            "integrity": "sha512-LI9u/+laYG4Ds1TDKSJW2YPrIlcVYOwi2fUC6xB43lueCjgxV4lffOCZCtYFiH6TNOX+tQKXx97T4IKHbhyHEQ=="
+          },
+          {
+            "name": "@jridgewell/resolve-uri",
+            "version": "3.1.2",
+            "location": "node_modules/@jridgewell/resolve-uri",
+            "resolved": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
+            "integrity": "sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw=="
+          },
+          {
+            "name": "@jridgewell/sourcemap-codec",
+            "version": "1.6.0",
+            "location": "node_modules/@jridgewell/sourcemap-codec",
+            "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz",
+            "integrity": "sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw=="
+          },
+          {
+            "name": "@jridgewell/trace-mapping",
+            "version": "0.3.31",
+            "location": "node_modules/@jridgewell/trace-mapping",
+            "resolved": "https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz",
+            "integrity": "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="
+          },
+          {
+            "name": "@parcel/watcher",
+            "version": "2.5.1",
+            "location": "node_modules/@parcel/watcher",
+            "resolved": "https://registry.npmjs.org/@parcel/watcher/-/watcher-2.5.1.tgz",
+            "integrity": "sha512-dfUnCxiN9H4ap84DvD2ubjw+3vUNpstxa0TneY/Paat8a3R4uQZDLSvWjmznAY/DoahqTHl9V46HF/Zs3F29pg=="
+          },
+          {
+            "name": "@parcel/watcher-linux-x64-glibc",
+            "version": "2.5.1",
+            "location": "node_modules/@parcel/watcher-linux-x64-glibc",
+            "resolved": "https://registry.npmjs.org/@parcel/watcher-linux-x64-glibc/-/watcher-linux-x64-glibc-2.5.1.tgz",
+            "integrity": "sha512-GcESn8NZySmfwlTsIur+49yDqSny2IhPeZfXunQi48DMugKeZ7uy1FX83pO0X22sHntJ4Ub+9k34XQCX+oHt2A=="
+          },
+          {
+            "name": "@parcel/watcher-linux-x64-musl",
+            "version": "2.5.1",
+            "location": "node_modules/@parcel/watcher-linux-x64-musl",
+            "resolved": "https://registry.npmjs.org/@parcel/watcher-linux-x64-musl/-/watcher-linux-x64-musl-2.5.1.tgz",
+            "integrity": "sha512-n0E2EQbatQ3bXhcH2D1XIAANAcTZkQICBPVaxMeaCVBtOpBZpWJuf7LwyWPSBDITb7In8mqQgJ7gH8CILCURXg=="
+          },
+          {
+            "name": "@playwright/test",
+            "version": "1.64.1",
+            "location": "node_modules/@playwright/test",
+            "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.64.1.tgz",
+            "integrity": "sha512-IaYGml/nSOiZWROfPtuIL7neuu9qDOZ3TNvNljUIrhDMxiGTgPjzj/g9p9RxpS2tSepPDRY+UwAaEeiKtUvIAg=="
+          },
+          {
+            "name": "@tailwindcss/cli",
+            "version": "4.3.3",
+            "location": "node_modules/@tailwindcss/cli",
+            "resolved": "https://registry.npmjs.org/@tailwindcss/cli/-/cli-4.3.3.tgz",
+            "integrity": "sha512-ZvS/n1ZHOBKcVlhkt8l5NNr1EDXk1NboYO5CYDOs6NUmvT9z6bzkwsosaJftY57T/3gWNzWMJzIXLodZC8ssdw=="
+          },
+          {
+            "name": "@tailwindcss/node",
+            "version": "4.3.3",
+            "location": "node_modules/@tailwindcss/node",
+            "resolved": "https://registry.npmjs.org/@tailwindcss/node/-/node-4.3.3.tgz",
+            "integrity": "sha512-/T8IKEsf9VTU6tLjgC7+sv2mOPtQxzE2jMw7u4Tt40Tx+QSZxpzh95/H6cMKoja9XuW7iMdLJYBB0o9G1CaAgg=="
+          },
+          {
+            "name": "@tailwindcss/oxide",
+            "version": "4.3.3",
+            "location": "node_modules/@tailwindcss/oxide",
+            "resolved": "https://registry.npmjs.org/@tailwindcss/oxide/-/oxide-4.3.3.tgz",
+            "integrity": "sha512-krXjAikiaFSPaK/FkAQT5UTx3VormQaiZ5hBFlJZ9UFQGB/rwg1MZIhHAG9smMQRTdyJxP6Qt5MwMtdyU5FWrA=="
+          },
+          {
+            "name": "@tailwindcss/oxide-linux-x64-gnu",
+            "version": "4.3.3",
+            "location": "node_modules/@tailwindcss/oxide-linux-x64-gnu",
+            "resolved": "https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-gnu/-/oxide-linux-x64-gnu-4.3.3.tgz",
+            "integrity": "sha512-tx7us1muwOKAKWao2v/GaafFeQboE6aj88vC6ziN2NCGcRm8gWUhwjzg+YdVB1e4boAtdtma4L43onunI6NS4w=="
+          },
+          {
+            "name": "@tailwindcss/oxide-linux-x64-musl",
+            "version": "4.3.3",
+            "location": "node_modules/@tailwindcss/oxide-linux-x64-musl",
+            "resolved": "https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.3.3.tgz",
+            "integrity": "sha512-SJxX60smvHgasZoBy11dX6YRjXJFovwWBoedhbQPOBzgFWBHGB+TVPWB9BxzR7TTxU8FQZAI2AyiNCMzFm8Img=="
+          },
+          {
+            "name": "braces",
+            "version": "3.0.3",
+            "location": "node_modules/braces",
+            "resolved": "https://registry.npmjs.org/braces/-/braces-3.0.3.tgz",
+            "integrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA=="
+          },
+          {
+            "name": "detect-libc",
+            "version": "1.0.3",
+            "location": "node_modules/detect-libc",
+            "resolved": "https://registry.npmjs.org/detect-libc/-/detect-libc-1.0.3.tgz",
+            "integrity": "sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg=="
+          },
+          {
+            "name": "enhanced-resolve",
+            "version": "5.26.0",
+            "location": "node_modules/enhanced-resolve",
+            "resolved": "https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.26.0.tgz",
+            "integrity": "sha512-9vhedylFonb2YGogzUKX6+Ja72gOJbN1QHAqdrvqLwhdl/QWbKopzoUC9EbQNVsAns/bx/4uyqalrQAoy1IByw=="
+          },
+          {
+            "name": "esbuild",
+            "version": "0.28.2",
+            "location": "node_modules/esbuild",
+            "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+            "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA=="
+          },
+          {
+            "name": "fill-range",
+            "version": "7.1.1",
+            "location": "node_modules/fill-range",
+            "resolved": "https://registry.npmjs.org/fill-range/-/fill-range-7.1.1.tgz",
+            "integrity": "sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg=="
+          },
+          {
+            "name": "graceful-fs",
+            "version": "4.2.11",
+            "location": "node_modules/graceful-fs",
+            "resolved": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz",
+            "integrity": "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="
+          },
+          {
+            "name": "is-extglob",
+            "version": "2.1.1",
+            "location": "node_modules/is-extglob",
+            "resolved": "https://registry.npmjs.org/is-extglob/-/is-extglob-2.1.1.tgz",
+            "integrity": "sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ=="
+          },
+          {
+            "name": "is-glob",
+            "version": "4.0.3",
+            "location": "node_modules/is-glob",
+            "resolved": "https://registry.npmjs.org/is-glob/-/is-glob-4.0.3.tgz",
+            "integrity": "sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg=="
+          },
+          {
+            "name": "is-number",
+            "version": "7.0.0",
+            "location": "node_modules/is-number",
+            "resolved": "https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz",
+            "integrity": "sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng=="
+          },
+          {
+            "name": "jiti",
+            "version": "2.7.0",
+            "location": "node_modules/jiti",
+            "resolved": "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz",
+            "integrity": "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="
+          },
+          {
+            "name": "lightningcss",
+            "version": "1.32.0",
+            "location": "node_modules/lightningcss",
+            "resolved": "https://registry.npmjs.org/lightningcss/-/lightningcss-1.32.0.tgz",
+            "integrity": "sha512-NXYBzinNrblfraPGyrbPoD19C1h9lfI/1mzgWYvXUTe414Gz/X1FD2XBZSZM7rRTrMA8JL3OtAaGifrIKhQ5yQ=="
+          },
+          {
+            "name": "lightningcss-linux-x64-gnu",
+            "version": "1.32.0",
+            "location": "node_modules/lightningcss-linux-x64-gnu",
+            "resolved": "https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.32.0.tgz",
+            "integrity": "sha512-V7Qr52IhZmdKPVr+Vtw8o+WLsQJYCTd8loIfpDaMRWGUZfBOYEJeyJIkqGIDMZPwPx24pUMfwSxxI8phr/MbOA=="
+          },
+          {
+            "name": "lightningcss-linux-x64-musl",
+            "version": "1.32.0",
+            "location": "node_modules/lightningcss-linux-x64-musl",
+            "resolved": "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.32.0.tgz",
+            "integrity": "sha512-bYcLp+Vb0awsiXg/80uCRezCYHNg1/l3mt0gzHnWV9XP1W5sKa5/TCdGWaR/zBM2PeF/HbsQv/j2URNOiVuxWg=="
+          },
+          {
+            "name": "detect-libc",
+            "version": "2.1.2",
+            "location": "node_modules/lightningcss/node_modules/detect-libc",
+            "resolved": "https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz",
+            "integrity": "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="
+          },
+          {
+            "name": "magic-string",
+            "version": "0.30.21",
+            "location": "node_modules/magic-string",
+            "resolved": "https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz",
+            "integrity": "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="
+          },
+          {
+            "name": "micromatch",
+            "version": "4.0.8",
+            "location": "node_modules/micromatch",
+            "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz",
+            "integrity": "sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA=="
+          },
+          {
+            "name": "mri",
+            "version": "1.2.0",
+            "location": "node_modules/mri",
+            "resolved": "https://registry.npmjs.org/mri/-/mri-1.2.0.tgz",
+            "integrity": "sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA=="
+          },
+          {
+            "name": "node-addon-api",
+            "version": "7.1.1",
+            "location": "node_modules/node-addon-api",
+            "resolved": "https://registry.npmjs.org/node-addon-api/-/node-addon-api-7.1.1.tgz",
+            "integrity": "sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ=="
+          },
+          {
+            "name": "picocolors",
+            "version": "1.1.1",
+            "location": "node_modules/picocolors",
+            "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+            "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="
+          },
+          {
+            "name": "picomatch",
+            "version": "2.3.2",
+            "location": "node_modules/picomatch",
+            "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-2.3.2.tgz",
+            "integrity": "sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA=="
+          },
+          {
+            "name": "playwright",
+            "version": "1.64.1",
+            "location": "node_modules/playwright",
+            "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.64.1.tgz",
+            "integrity": "sha512-HCrVhHr5QQuwYoswEUGTb7gGp522yflbv/ST8nF4sFWGuLjQCt17Q/EubpGGSNKYn1tsTCPZxqHhHCfVURu7UA=="
+          },
+          {
+            "name": "playwright-core",
+            "version": "1.64.1",
+            "location": "node_modules/playwright-core",
+            "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.64.1.tgz",
+            "integrity": "sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ=="
+          },
+          {
+            "name": "source-map-js",
+            "version": "1.2.2",
+            "location": "node_modules/source-map-js",
+            "resolved": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz",
+            "integrity": "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw=="
+          },
+          {
+            "name": "tailwindcss",
+            "version": "4.3.3",
+            "location": "node_modules/tailwindcss",
+            "resolved": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.3.3.tgz",
+            "integrity": "sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ=="
+          },
+          {
+            "name": "tapable",
+            "version": "2.3.3",
+            "location": "node_modules/tapable",
+            "resolved": "https://registry.npmjs.org/tapable/-/tapable-2.3.3.tgz",
+            "integrity": "sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A=="
+          },
+          {
+            "name": "to-regex-range",
+            "version": "5.0.1",
+            "location": "node_modules/to-regex-range",
+            "resolved": "https://registry.npmjs.org/to-regex-range/-/to-regex-range-5.0.1.tgz",
+            "integrity": "sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ=="
+          },
+          {
+            "name": "tsx",
+            "version": "4.23.15",
+            "location": "node_modules/tsx",
+            "resolved": "https://registry.npmjs.org/tsx/-/tsx-4.23.15.tgz",
+            "integrity": "sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw=="
+          },
+          {
+            "name": "typescript",
+            "version": "5.9.3",
+            "location": "node_modules/typescript",
+            "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+            "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="
+          }
+        ]
+      },
+      {
+        "name": "dashboard: packed manifest 2 identity, modes, aliases and uncompressed SHA-384",
+        "passed": true
+      },
+      {
+        "name": "dashboard: actual packed server resource tags carry manifest SHA-384 and nonces",
+        "passed": true,
+        "resources": [
+          {
+            "tag": "LINK",
+            "rel": "stylesheet",
+            "url": "/_assets/dashboard.5936f46f.css",
+            "integrity": "sha384-wDmDGyrGE1qHo9QQWw7JV1WNkolk7MdbdCyEcZhRc7fFm5xc9MLve0w5ca3EcDEi",
+            "crossorigin": "anonymous",
+            "nonce": ""
+          },
+          {
+            "tag": "LINK",
+            "rel": "modulepreload",
+            "url": "/_assets/dashboard.e686bbce.js",
+            "integrity": "sha384-kVuasZ6ovxFGCkfswO52byaYrBuM2LRhQAyTk36Sc87FQqZVgtWoNdKL1+Q4oRVU",
+            "crossorigin": "anonymous",
+            "nonce": "FwDJQ+HSF6CTzHFk+ooq7HNwPEqgThGAch3OjqhruH8="
+          },
+          {
+            "tag": "SCRIPT",
+            "rel": null,
+            "url": "/_assets/dashboard.e686bbce.js",
+            "integrity": "sha384-kVuasZ6ovxFGCkfswO52byaYrBuM2LRhQAyTk36Sc87FQqZVgtWoNdKL1+Q4oRVU",
+            "crossorigin": "anonymous",
+            "nonce": "FwDJQ+HSF6CTzHFk+ooq7HNwPEqgThGAch3OjqhruH8="
+          }
+        ]
+      },
+      {
+        "name": "dashboard: served policy and zero CSP violations during positive browser interaction",
+        "passed": true,
+        "trustedTypesContract": "enforced-v1",
+        "servedPolicy": "default-src 'none'; script-src 'nonce-y1SdhQO2F/Q3Ajr7jcjtgg13OVBr1yYcLNQEOenwJYQ=' 'strict-dynamic' 'self'; style-src 'nonce-y1SdhQO2F/Q3Ajr7jcjtgg13OVBr1yYcLNQEOenwJYQ=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "browserPolicy": "default-src 'none'; script-src 'nonce-FwDJQ+HSF6CTzHFk+ooq7HNwPEqgThGAch3OjqhruH8=' 'strict-dynamic' 'self'; style-src 'nonce-FwDJQ+HSF6CTzHFk+ooq7HNwPEqgThGAch3OjqhruH8=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "nativeTrustedTypes": true,
+        "violations": [],
+        "pageErrors": []
+      },
+      {
+        "name": "dashboard: browser blocks changed actual entry bytes using packed server SRI",
+        "passed": true,
+        "observations": [
+          {
+            "protectedTag": true,
+            "replacementRequests": 1,
+            "replacementExecuted": false
+          },
+          {
+            "protectedTag": false,
+            "replacementRequests": 1,
+            "replacementExecuted": true
+          }
+        ]
+      },
+      {
+        "name": "dashboard: packed manifest schema/app/writer refused before binding",
+        "passed": true
+      },
+      {
+        "name": "dashboard: packed manifest missing and malformed digests refused before binding",
+        "passed": true
+      },
+      {
+        "name": "dashboard: packed checked worker accepts matching app and refuses mismatch before binding",
+        "passed": true
+      },
+      {
+        "name": "dashboard: packed CLI, locked install, signatures, build, serve and interaction",
+        "passed": true,
+        "seconds": 7.558
+      }
+    ],
+    "milestone": {
+      "name": "alpha",
+      "plan": "M2",
+      "version": "3.0.0-alpha.2",
+      "ready": true,
+      "blocking": [],
+      "later": {
+        "beta": [
+          "FORMA-103: island props in one JSON block, compiler-bound seeding",
+          "FORMA-104: adoption writes nothing on its first run, coded mismatch errors",
+          "FORMA-105: islands only, literal registry, identity digest",
+          "FORMA-181: keyed rows",
+          "FORMA-182: the marker vocabulary and the seven value rules with shared vectors",
+          "FORMA-183: the parity harness and its corpus, blocking in CI",
+          "FORMA-184: renderBoth(component, state) in Forma's own suite",
+          "FORMA-144 slice 2: island state adoption in the templates",
+          "FORMA-188 fixture applications: the three fixture applications in P17",
+          "FORMA-021 ratchet: the safe cuts landed and the size gate green at the restated ceiling"
+        ],
+        "rc": [
+          "FORMA-101: the published server-renderable subset and coded build errors",
+          "FORMA-139: the conformance corpus, a fixture and a near miss per code",
+          "FORMA-108: the hostile corpus with zero executions",
+          "FORMA-186: the deployment identity and inert-or-reload on a skew",
+          "FORMA-188 skew drill: the skew drill green in P17",
+          "FORMA-190: the size report green on both templates at the recorded ceiling",
+          "FORMA-141: the upgrade guide and the stability record",
+          "FORMA-116: CODEOWNERS, alerts and the probes",
+          "FORMA-189: the recall script and SECURITY.md generated from the release record",
+          "FORMA-145 audit: the whole-release audit on another model with an empty blocking list (D14)"
+        ],
+        "final": [
+          "FORMA-144 slice 3: final template and release cleanup",
+          "FORMA-191: the per-release measurements in P17",
+          "FORMA-192: the read-only gate runs against the rc with coded counts",
+          "FORMA-147: the fAuth login spike at the restated G3",
+          "FORMA-146: Q10 to Q13 recorded",
+          "FORMA-145 soak: the rc's 7-day soak on next (D7)"
+        ]
+      }
+    },
+    "signatures": "registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256",
+    "templates": [
+      {
+        "template": "minimal",
+        "npmLockSha256": "278610b466bee5e85c97e1d8e896b3ff6326559c870d7b0ee679e7396a032659",
+        "packedPackages": [
+          "forma-ir@3.0.0-alpha.2",
+          "forma-ir-derive@3.0.0-alpha.2",
+          "forma-server@3.0.0-alpha.2",
+          "@getforma/core@3.0.0-alpha.2",
+          "@getforma/compiler@3.0.0-alpha.2",
+          "@getforma/build@3.0.0-alpha.2",
+          "@getforma/create-app@3.0.0-alpha.2"
+        ]
+      },
+      {
+        "template": "dashboard",
+        "npmLockSha256": "571b0cded4a8909ba700a4517f63cdce4c7e62870a5eae27e57f2044fc7215d6",
+        "packedPackages": [
+          "forma-ir@3.0.0-alpha.2",
+          "forma-ir-derive@3.0.0-alpha.2",
+          "forma-server@3.0.0-alpha.2",
+          "@getforma/core@3.0.0-alpha.2",
+          "@getforma/compiler@3.0.0-alpha.2",
+          "@getforma/build@3.0.0-alpha.2",
+          "@getforma/create-app@3.0.0-alpha.2"
+        ]
+      }
+    ],
+    "packedLinks": [
+      {
+        "name": "@getforma/core",
+        "link": "node_modules/@getforma/core",
+        "target": "packages/core"
+      },
+      {
+        "name": "@getforma/compiler",
+        "link": "node_modules/@getforma/compiler",
+        "target": "packages/compiler"
+      },
+      {
+        "name": "@getforma/build",
+        "link": "node_modules/@getforma/build",
+        "target": "packages/build"
+      }
+    ],
+    "packedResolution": [
+      {
+        "package": "@getforma/build",
+        "from": "packages/build/dist/index.js",
+        "specifier": "@getforma/compiler",
+        "resolved": "packages/compiler/dist/index.js"
+      },
+      {
+        "package": "@getforma/build",
+        "from": "packages/build/dist/raw-lint-cli.js",
+        "specifier": "@getforma/core/runtime",
+        "resolved": "packages/core/dist/runtime.js"
+      },
+      {
+        "package": "@getforma/build",
+        "from": "packages/build/dist/raw-lint-cli.js",
+        "specifier": "@getforma/core",
+        "resolved": "packages/core/dist/index.js"
+      },
+      {
+        "package": "@getforma/build",
+        "from": "packages/build/dist/raw-lint-cli.js",
+        "specifier": "@getforma/core",
+        "resolved": "packages/core/dist/index.js"
+      }
+    ],
+    "workerIntegrity": {
+      "passed": true,
+      "app": "p17-integrity",
+      "results": [
+        {
+          "name": "installation does not fetch lazy assets or claim the registering page",
+          "passed": true
+        },
+        {
+          "name": "altered cached entry refetches and never executes",
+          "passed": true
+        },
+        {
+          "name": "dynamic chunk without a script tag is verified before execution",
+          "passed": true
+        },
+        {
+          "name": "altered network chunk is refused and never cached or executed",
+          "passed": true
+        },
+        {
+          "name": "verified cache works offline and altered cache fails offline",
+          "passed": true
+        },
+        {
+          "name": "gzip and brotli delivery hash decoded bytes",
+          "passed": true,
+          "encodings": [
+            "gzip",
+            "br"
+          ]
+        }
+      ],
+      "build": "7c583fd335c7df01a494145df08250e5da45f0632c6dd88f8b9b5307ebbc2d38",
+      "entry": "/_assets/app.NFXDAGBC.js",
+      "lazy": "/_assets/chunk.MTRQML67.js"
+    },
+    "workerLifecycle": {
+      "passed": true,
+      "app": "p17-integrity",
+      "results": [
+        {
+          "name": "old tabs keep their worker and cache while an upgrade waits",
+          "passed": true
+        },
+        {
+          "name": "alternating deployment instances preserve the old cache",
+          "passed": true,
+          "updateChecks": 6
+        },
+        {
+          "name": "closing old tabs activates the next build without touching other apps",
+          "passed": true
+        },
+        {
+          "name": "rollback then upgrade follows the same waiting boundary",
+          "passed": true
+        },
+        {
+          "name": "actual retiring worker deletes only owned and v1 caches then unregisters",
+          "passed": true,
+          "caches": [
+            "forma:p17-integrity-other:0123456789ab",
+            "unrelated-app"
+          ]
+        },
+        {
+          "name": "retired application fetches assets from the network afterward",
+          "passed": true
+        }
+      ],
+      "builds": {
+        "A": "0c9ece3b1d3543f7e727c34549d324b3f7eff1fe5ee027376811193d4af81e9f",
+        "B": "7aa90d0fe79efa53dc58a2d792abb95fcd58735e7b44d157265767ff2e97e5bd"
+      },
+      "retiringWorkerSha256": "0b8fba84251eb671e659bb7e8d04fd007df25d0ae250227eb59e89c46fab64ee"
+    },
+    "elapsedSeconds": 59.338
+  },
+  "changelog": "## [3.0.0-alpha.2] - 2026-10-15\n\nThe tag `v3.0.0-alpha.1` on `8ba2930` never published: its release run (38764599499) passed\n`check`, the three engines and `pack`, then `verify` failed in P17 before the publish jobs,\nwhich were skipped; nothing reached crates.io or npm. The cause was the verification harness,\nnot the packages: the packed `@getforma/build` imports its optional compiler peer by name, and\nP17 ran the packed libraries from a scratch directory whose upward module search reached the\ncheckout's root `node_modules`, where the workspace link `@getforma/compiler` points at\n`packages/compiler`, which the `verify` job never builds (`ERR_MODULE_NOT_FOUND` on\n`packages/compiler/dist/index.js`). On a built workstation the same search had silently used\nthe workspace build instead of the packed bytes, which is why every local dry run passed.\n\nP17 now writes a `node_modules/@getforma` beside the unpacked packages, linking each packed\nlibrary, and proves with Node's own resolver that every bare `@getforma/*` specifier in every\npacked dist resolves inside the packed set (`scripts/release-packed-resolution.mjs`, a new P17\ncheck before any packed code runs, and `release-packed-resolution.test.mjs`, which reproduces\nthe tag's failure in an unbuilt checkout and refuses a built workspace standing in). Since a\nversion is never retagged, this alpha is `3.0.0-alpha.2`: the seven packages at the new\nversion, their bytes otherwise identical to alpha.1's, and the alpha.1 notes below stand."
+}
