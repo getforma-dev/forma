@@ -1,0 +1,37 @@
+e2e (webkit)	Native HTML admission and archived parser controls	﻿2026-10-16T10:31:13.5047940Z ##[group]Run node --test e2e/parity/tests/html-context.test.mts
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5048484Z [36;1mnode --test e2e/parity/tests/html-context.test.mts[0m
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5113405Z shell: /usr/bin/bash -e {0}
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5113702Z env:
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5113936Z   CARGO_HOME: /home/runner/.cargo
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5114237Z   CARGO_INCREMENTAL: 0
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5114499Z   CARGO_TERM_COLOR: always
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5114774Z   CACHE_ON_FAILURE: false
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5115047Z   FORMA_PARITY_BROWSER: webkit
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:13.5115330Z ##[endgroup]
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.1011935Z ✔ 139 admitted owned roots activate from real typed native products in webkit (22927.047942ms)
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4367861Z ✖ 139 archived parser repair remains observable in webkit (334.29629ms)
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4706922Z ℹ tests 2
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4707502Z ℹ suites 0
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4707920Z ℹ pass 1
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4708335Z ℹ fail 1
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4708762Z ℹ cancelled 0
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4709279Z ℹ skipped 0
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4718164Z ℹ todo 0
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4719349Z ℹ duration_ms 23920.738847
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4720040Z 
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4720499Z ✖ failing tests:
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4720947Z 
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4721549Z test at e2e/parity/tests/html-context.test.mts:42:29
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4722973Z ✖ 139 archived parser repair remains observable in webkit (334.29629ms)
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4724464Z   AssertionError [ERR_ASSERTION]: nested form: parser must repair the actual former native output
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4726572Z       at TestContext.<anonymous> (file:///home/runner/work/forma/forma/e2e/parity/tests/html-context.test.mts:51:11)
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4728112Z       at async Test.run (node:internal/test_runner/test:1409:7)
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4729512Z       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4730652Z     generatedMessage: false,
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4731387Z     code: 'ERR_ASSERTION',
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4732282Z     actual: '<form><section><form>nested</form></section></form>',
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4733497Z     expected: '<form><section><form>nested</form></section></form>',
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4734522Z     operator: 'notStrictEqual',
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4735279Z     diff: 'simple'
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4736213Z   }
+e2e (webkit)	Native HTML admission and archived parser controls	2026-10-16T10:31:37.4786240Z ##[error]Process completed with exit code 1.

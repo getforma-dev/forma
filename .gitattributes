@@ -227,3 +227,6 @@ docs/evidence/frame-tcp-control-repair/** -text
 # Preserve the original FORMA-116 rollout and approved L-60 disposition evidence.
 docs/archive/forma-116-live-deferral/** -text
 docs/evidence/forma-116-live-deferral/** -text
+
+# Original hosted failure and primary parser specification evidence.
+docs/archive/html-document-parser-control/** -text

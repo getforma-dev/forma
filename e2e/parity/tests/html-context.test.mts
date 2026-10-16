@@ -47,7 +47,8 @@ for(const engine of engines)test(`139 archived parser repair remains observable 
    const original=manifest.cases.find((item:any)=>item.name===name);assert.ok(original.sha256,name);
    const [rendered]=renderStates(join(archive,original.stem+'.ir'),[{}]);assert.ok(rendered&&'html'in rendered,JSON.stringify(rendered));
    const body=(rendered as {html:string}).html;
-   const result=await page.evaluate(html=>{const fragment=document.createElement('template');fragment.innerHTML=html;return {serialized:fragment.innerHTML,p:!!fragment.content.querySelector('p > div'),nestedA:!!fragment.content.querySelector('a a'),nestedForm:!!fragment.content.querySelector('form form'),nestedLi:!!fragment.content.querySelector('li li'),nestedDefinition:!!fragment.content.querySelector('dd dt,dt dd'),nestedOption:!!fragment.content.querySelector('option option,option optgroup,optgroup optgroup')};},body);
+   // Native pages use document parsing. Template fragments have distinct form-pointer rules.
+   const result=await page.evaluate(html=>{const parsed=new DOMParser().parseFromString(html,'text/html').body;return {serialized:parsed.innerHTML,p:!!parsed.querySelector('p > div'),nestedA:!!parsed.querySelector('a a'),nestedForm:!!parsed.querySelector('form form'),nestedLi:!!parsed.querySelector('li li'),nestedDefinition:!!parsed.querySelector('dd dt,dt dd'),nestedOption:!!parsed.querySelector('option option,option optgroup,optgroup optgroup')};},body);
    assert.notEqual(result.serialized,body,name+': parser must repair the actual former native output');
    assert.equal(result.p||result.nestedA||result.nestedForm||result.nestedLi||result.nestedDefinition||result.nestedOption,false,name);
   }
