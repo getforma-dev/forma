@@ -330,6 +330,15 @@ const config: BuildConfig = {
 await build(config);
 ```
 
+`formaAlias` remains a migration bridge throughout 3.x. If the build's source
+graph imports `formajs` or one of its subpaths, one warning lists the importing
+files and the `@getforma/core` replacement. The same warning appears in
+`BuildResult.warnings`; duplicate imports and the two production identity passes
+do not repeat it. Erased TypeScript imports and re-exports are included. A
+`build()` call with no legacy imports is quiet, including its initial watch
+build. The alias still resolves as configured; omitting it does not make the
+unavailable bare package resolve.
+
 ### Retention: a tab opened before a deploy
 
 While a deploy rolls out, and for as long as a tab stays open, a page of the
