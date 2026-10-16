@@ -84,7 +84,7 @@ export async function prepareBurnIn({ authenticated, work, test }) {
   const derive = metadata.packages.filter(p => p.name === 'forma-ir-derive'); assert.equal(derive.length, 1); assert.equal(derive[0].version, version);
   assert.equal(realpathSync(derive[0].manifest_path), realpathSync(join(cratesDir, 'forma-ir-derive/Cargo.toml')));
   run('python3', ['seed-corpus.py'], fuzz, { stdio: 'inherit' });
-  for (const target of FUZZ_TARGETS) run('cargo', ['fuzz', 'build', target, '--sanitizer', 'address'], fuzz, { stdio: 'inherit', env: { ...fuzzEnv, CARGO_NET_OFFLINE: 'true' } });
+  for (const target of FUZZ_TARGETS) run('cargo', ['fuzz', 'build', target, '--sanitizer', 'address', '--fuzz-dir', fuzz], fuzz, { stdio: 'inherit', env: { ...fuzzEnv, CARGO_NET_OFFLINE: 'true' } });
   assert.equal(digest(join(fuzz, 'Cargo.lock')), fuzzLock, 'fuzzer compilation changed locked dependencies');
   const triple = /^host: (.+)$/m.exec(run('rustc', ['-vV'], fuzz, { env: fuzzEnv }))?.[1]; assert(triple);
   const binaries = Object.fromEntries(FUZZ_TARGETS.map(name => [name, join(fuzz, 'target', triple, 'release', name)]));

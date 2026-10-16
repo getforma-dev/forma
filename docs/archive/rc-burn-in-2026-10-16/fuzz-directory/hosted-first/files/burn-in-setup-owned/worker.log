@@ -1,0 +1,525 @@
+
+added 3 packages in 327ms
+
+added 66 packages in 1s
+
+> build:ssr
+> tsx build.ts --ssr --strict
+
+SSR mode enabled — emitting IR files
+   IR emitted (real): home.ir (770 bytes, 1 islands)
+   IR emitted (real): about.ir (413 bytes, 0 islands)
+
+   dist/home.82419934.js  75.4kb
+
+   4 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /       islands                Forma 25,915 of 28,000 B  JavaScript 27,571 of 76,800 B  (Brotli: Forma 23,192, JavaScript 24,614)  home.82419934.js
+   /about  no interactive region  no JavaScript
+   Service worker   sw.js  3,215 B raw, 1,534 B gzip, 1,313 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       361 ms: bundle 257 ms, hash 1 ms, compress 102 ms, manifest 1 ms
+
+Manifest written: dist/manifest.json (build: 53fbcedd157b...)
+Size report written: dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded block-buffer v0.12.1
+  Downloaded axum-core v0.5.6
+  Downloaded const-oid v0.10.2
+  Downloaded atomic-waker v1.1.2
+  Downloaded cfg-if v1.0.5
+  Downloaded bytes v1.12.1
+  Downloaded ryu v1.0.23
+  Downloaded serde_urlencoded v0.7.1
+  Downloaded scopeguard v1.2.0
+  Downloaded mime v0.3.17
+  Downloaded matchit v0.8.4
+  Downloaded form_urlencoded v1.2.2
+  Downloaded untrusted v0.9.0
+  Downloaded serde_path_to_error v0.1.20
+  Downloaded rust-embed-utils v8.13.0
+  Downloaded futures-task v0.3.34
+  Downloaded futures-core v0.3.34
+  Downloaded tokio-macros v2.7.2
+  Downloaded tower-service v0.3.3
+  Downloaded tower-layer v0.3.3
+  Downloaded rust-embed-impl v8.13.0
+  Downloaded crypto-common v0.2.2
+  Downloaded thread_local v1.1.10
+  Downloaded nu-ansi-term v0.50.3
+  Downloaded base64 v0.22.1
+  Downloaded lock_api v0.4.14
+  Downloaded same-file v1.0.6
+  Downloaded lazy_static v1.5.1
+  Downloaded sync_wrapper v1.0.2
+  Downloaded digest v0.11.3
+  Downloaded pin-project-lite v0.2.17
+  Downloaded unicase v2.10.0
+  Downloaded tracing-log v0.2.0
+  Downloaded slab v0.4.12
+  Downloaded quote v1.0.47
+  Downloaded walkdir v2.5.0
+  Downloaded sha2 v0.11.0
+  Downloaded unicode-ident v1.0.27
+  Downloaded sharded-slab v0.1.7
+  Downloaded zmij v1.0.23
+  Downloaded tracing-core v0.1.36
+  Downloaded cc v1.8.0
+  Downloaded serde v1.0.229
+  Downloaded serde_derive v1.0.229
+  Downloaded typenum v1.20.1
+  Downloaded tower v0.5.3
+  Downloaded mio v1.2.4
+  Downloaded serde_json v1.0.154
+  Downloaded hyper v1.12.0
+  Downloaded tracing-subscriber v0.3.23
+  Downloaded futures-util v0.3.34
+  Downloaded hyper-util v0.1.21
+  Downloaded http v1.5.0
+  Downloaded syn v2.0.119
+  Downloaded axum v0.8.9
+  Downloaded memchr v2.8.3
+  Downloaded syn v3.0.9
+  Downloaded ryu-js v1.0.3
+  Downloaded proc-macro2 v1.0.107
+  Downloaded find-msvc-tools v0.1.14
+  Downloaded tracing-attributes v0.1.31
+  Downloaded tracing v0.1.44
+  Downloaded socket2 v0.6.5
+  Downloaded serde_core v1.0.229
+  Downloaded parking_lot v0.12.5
+  Downloaded log v0.4.34
+  Downloaded mime_guess v2.0.5
+  Downloaded httparse v1.10.1
+  Downloaded http-body-util v0.1.5
+  Downloaded getrandom v0.2.17
+  Downloaded smallvec v1.16.3
+  Downloaded signal-hook-registry v1.4.8
+  Downloaded percent-encoding v2.3.2
+  Downloaded parking_lot_core v0.9.12
+  Downloaded hybrid-array v0.4.15
+  Downloaded httpdate v1.0.3
+  Downloaded cpufeatures v0.3.1
+  Downloaded shlex v2.0.1
+  Downloaded http-body v1.1.0
+  Downloaded libc v0.2.190
+  Downloaded rust-embed v8.13.0
+  Downloaded tokio v1.53.3
+  Downloaded ring v0.17.14
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling libc v0.2.190
+   Compiling cfg-if v1.0.5
+   Compiling itoa v1.0.18
+   Compiling pin-project-lite v0.2.17
+   Compiling bytes v1.12.1
+   Compiling syn v3.0.9
+   Compiling syn v2.0.119
+   Compiling typenum v1.20.1
+   Compiling parking_lot_core v0.9.12
+   Compiling once_cell v1.21.4
+   Compiling serde_core v1.0.229
+   Compiling smallvec v1.16.3
+   Compiling tracing-core v0.1.36
+   Compiling hybrid-array v0.4.15
+   Compiling log v0.4.34
+   Compiling scopeguard v1.2.0
+   Compiling futures-core v0.3.34
+   Compiling lock_api v0.4.14
+   Compiling errno v0.3.14
+   Compiling http v1.5.0
+   Compiling tracing-attributes v0.1.31
+   Compiling signal-hook-registry v1.4.8
+   Compiling http-body v1.1.0
+   Compiling parking_lot v0.12.5
+   Compiling tokio-macros v2.7.2
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling mio v1.2.4
+   Compiling socket2 v0.6.5
+   Compiling unicase v2.10.0
+   Compiling zmij v1.0.23
+   Compiling const-oid v0.10.2
+   Compiling httparse v1.10.1
+   Compiling digest v0.11.3
+   Compiling mime_guess v2.0.5
+   Compiling tokio v1.53.3
+   Compiling tracing v0.1.44
+   Compiling cpufeatures v0.3.1
+   Compiling serde v1.0.229
+   Compiling tower-service v0.3.3
+   Compiling serde_json v1.0.154
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling same-file v1.0.6
+   Compiling walkdir v2.5.0
+   Compiling cc v1.8.0
+   Compiling sha2 v0.11.0
+   Compiling serde_derive v1.0.229
+   Compiling memchr v2.8.3
+   Compiling tower-layer v0.3.3
+   Compiling percent-encoding v2.3.2
+   Compiling futures-task v0.3.34
+   Compiling sync_wrapper v1.0.2
+   Compiling mime v0.3.17
+   Compiling httpdate v1.0.3
+   Compiling slab v0.4.12
+   Compiling atomic-waker v1.1.2
+   Compiling hyper v1.12.0
+   Compiling futures-util v0.3.34
+   Compiling form_urlencoded v1.2.2
+   Compiling ring v0.17.14
+   Compiling rust-embed-utils v8.13.0
+   Compiling http-body-util v0.1.5
+   Compiling ryu v1.0.23
+   Compiling serde_urlencoded v0.7.1
+   Compiling axum-core v0.5.6
+   Compiling rust-embed-impl v8.13.0
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.21
+   Compiling serde_path_to_error v0.1.20
+   Compiling forma-ir-derive v3.0.0-dev (/home/runner/work/_temp/burn-in-setup-work/crates/forma-ir-derive)
+   Compiling getrandom v0.2.17
+   Compiling ryu-js v1.0.3
+   Compiling lazy_static v1.5.1
+   Compiling untrusted v0.9.0
+   Compiling matchit v0.8.4
+   Compiling axum v0.8.9
+   Compiling forma-ir v3.0.0-dev (/home/runner/work/_temp/burn-in-setup-work/crates/forma-ir)
+   Compiling sharded-slab v0.1.7
+   Compiling rust-embed v8.13.0
+   Compiling tracing-log v0.2.0
+   Compiling thread_local v1.1.10
+   Compiling base64 v0.22.1
+   Compiling nu-ansi-term v0.50.3
+   Compiling tracing-subscriber v0.3.23
+   Compiling forma-server v3.0.0-dev (/home/runner/work/_temp/burn-in-setup-work/crates/forma-server)
+   Compiling burn-in-minimal v0.1.0 (/home/runner/work/_temp/burn-in-setup-work/burn-in-minimal)
+    Finished `release` profile [optimized] target(s) in 45.10s
+
+added 53 packages in 1s
+
+> build
+> tsx build.ts --strict
+
+[3m[1m[34m≈[39m[22m[23m tailwindcss [34mv4.3.3[39m
+
+Done in [34m68ms[39m
+
+   dist/dashboard.9955c611.js  54.7kb
+
+   2 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 8,867 of 28,000 B  JavaScript 19,227 of 76,800 B  (Brotli: Forma 7,961, JavaScript 17,197)  dashboard.9955c611.js
+   Service worker   sw.js  3,230 B raw, 1,534 B gzip, 1,312 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       475 ms: bundle 375 ms, hash 1 ms, compress 98 ms, manifest 1 ms
+
+Manifest written: dist/manifest.json (build: 0997045e4654...)
+Size report written: dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling burn-in-dashboard v0.1.0 (/home/runner/work/_temp/burn-in-setup-work/burn-in-dashboard)
+    Finished `release` profile [optimized] target(s) in 3.27s
+
+added 64 packages in 1s
+SSR mode enabled — emitting IR files
+   IR emitted (real): household.ir (1755 bytes, 1 islands)
+   SSR diagnostics written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ledger/diagnostics.json (0)
+
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ledger/dist/household.506d9564.js  77.3kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /household  islands  Forma 26,213 of 28,000 B  JavaScript 28,243 of 76,800 B  (Brotli: Forma 23,399, JavaScript 25,153)  household.506d9564.js
+   Service worker   sw.js  3,218 B raw, 1,539 B gzip, 1,316 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       406 ms: bundle 302 ms, hash 1 ms, compress 102 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ledger/dist/manifest.json (build: 5980b211d11c...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ledger/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): tenant-login.ir (4192 bytes, 2 islands)
+   IR emitted (real): onboarding.ir (1740 bytes, 1 islands)
+   IR emitted (real): benchmark.ir (3125 bytes, 2 islands)
+   SSR diagnostics written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/fauth/diagnostics.json (0)
+
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/fauth/dist/onboarding.d0eac820.js  77.1kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/fauth/dist/tenant-login.1367d1e7.js  79.3kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/fauth/dist/benchmark.3988322b.js  82.4kb
+
+   7 assets hashed
+   4 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /t/:slug/login        islands  Forma 26,213 of 28,000 B  JavaScript 29,019 of 76,800 B  (Brotli: Forma 23,362, JavaScript 25,836)  tenant-login.1367d1e7.js
+   /platform/onboarding  islands  Forma 26,205 of 28,000 B  JavaScript 28,317 of 76,800 B  (Brotli: Forma 23,410, JavaScript 25,266)  onboarding.d0eac820.js
+   /platform/benchmark   islands  Forma 27,567 of 28,000 B  JavaScript 30,080 of 76,800 B  (Brotli: Forma 24,529, JavaScript 26,740)  benchmark.3988322b.js
+   Service worker   sw.js  3,438 B raw, 1,691 B gzip, 1,480 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       880 ms: bundle 568 ms, hash 1 ms, compress 310 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/fauth/dist/manifest.json (build: 17d0eeaf3d12...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/fauth/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): check.ir (4334 bytes, 2 islands)
+   SSR diagnostics written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ksx/diagnostics.json (0)
+
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ksx/dist/check.365a7c93.js  82.4kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /check  islands  Forma 27,556 of 28,000 B  JavaScript 29,923 of 76,800 B  (Brotli: Forma 24,553, JavaScript 26,609)  check.365a7c93.js
+   Service worker   sw.js  3,208 B raw, 1,532 B gzip, 1,312 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       333 ms: bundle 220 ms, hash 0 ms, compress 112 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ksx/dist/manifest.json (build: 4ef364525492...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/ksx/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): login300.ir (1989 bytes, 1 islands)
+   IR emitted (real): doc10000.ir (1439 bytes, 1 islands)
+   IR emitted (real): islands100.ir (1125 bytes, 1 islands)
+   IR emitted (real): ledger20000.ir (1750 bytes, 1 islands)
+   IR emitted (real): console1500.ir (1994 bytes, 1 islands)
+   IR emitted (real): canvas15000.ir (1371 bytes, 1 islands)
+   SSR diagnostics written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/diagnostics.json (0)
+
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/islands100.9386e962.js  76.4kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/canvas15000.9386e962.js  76.4kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/doc10000.9386e962.js  76.4kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/ledger20000.9386e962.js  76.4kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/console1500.9386e962.js  76.4kb
+   /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/login300.9386e962.js  76.4kb
+
+   13 assets hashed
+   7 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /pages/300          islands  Forma 26,163 of 28,000 B  JavaScript 27,942 of 76,800 B  (Brotli: Forma 23,411, JavaScript 24,960)  login300.9386e962.js
+   /pages/1500         islands  Forma 26,163 of 28,000 B  JavaScript 27,942 of 76,800 B  (Brotli: Forma 23,411, JavaScript 24,960)  console1500.9386e962.js
+   /pages/10000        islands  Forma 26,163 of 28,000 B  JavaScript 27,942 of 76,800 B  (Brotli: Forma 23,411, JavaScript 24,960)  doc10000.9386e962.js
+   /pages/15000        islands  Forma 26,163 of 28,000 B  JavaScript 27,942 of 76,800 B  (Brotli: Forma 23,411, JavaScript 24,960)  canvas15000.9386e962.js
+   /pages/20000        islands  Forma 26,163 of 28,000 B  JavaScript 27,942 of 76,800 B  (Brotli: Forma 23,411, JavaScript 24,960)  ledger20000.9386e962.js
+   /pages/islands-100  islands  Forma 26,163 of 28,000 B  JavaScript 27,942 of 76,800 B  (Brotli: Forma 23,411, JavaScript 24,960)  islands100.9386e962.js
+   Service worker   sw.js  3,766 B raw, 1,580 B gzip, 1,371 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       1.11 s: bundle 508 ms, hash 1 ms, compress 599 ms, manifest 2 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/manifest.json (build: 7db1e10eeff3...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap/out/bench/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+ Downloading crates ...
+  Downloaded sha2 v0.11.1
+   Compiling tokio v1.53.3
+   Compiling sha2 v0.11.1
+   Compiling rust-embed-utils v8.13.0
+   Compiling rust-embed-impl v8.13.0
+   Compiling rust-embed v8.13.0
+   Compiling hyper v1.12.0
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.21
+   Compiling axum v0.8.9
+   Compiling forma-server v3.0.0-dev (/home/runner/work/_temp/burn-in-setup-work/crates/forma-server)
+   Compiling forma-fixture-apps v0.0.0 (/home/runner/work/_temp/burn-in-setup-work/tmp/forma-packed-fixtures-WQyqap)
+    Finished `release` profile [optimized] target(s) in 26.72s
+
+added 64 packages in 1s
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-7.JZBEHTRC.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-8.HKZHWYLG.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/app.U6Z5ELRE.js  1.1kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/browser.VDQTMPBF.js  313b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/chunk.DIYDUIZD.js  75.5kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-1.QENEYE5G.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-2.L4B5IIMZ.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-3.PANNTAC2.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-4.4HP5PRCE.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-5.PQIDWJ3O.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/panel-6.WGNZ37ZT.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/chunk.KC7K2VIC.js  33b
+
+   23 assets hashed
+   12 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,050 of 28,000 B  JavaScript 28,799 of 76,800 B  (Brotli: Forma 23,317, JavaScript 25,709)  app.U6Z5ELRE.js chunk.DIYDUIZD.js
+   /csr  whole-page mount  Forma 26,061 of 28,000 B  JavaScript 28,525 of 76,800 B  (Brotli: Forma 23,325, JavaScript 25,470)  browser.VDQTMPBF.js chunk.DIYDUIZD.js
+   Service worker   sw.js  4,273 B raw, 2,224 B gzip, 1,946 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       323 ms: bundle 214 ms, hash 0 ms, compress 108 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/manifest.json (build: ee3e0523a020...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/A/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-7.M53JRD2R.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-8.FKUZFWOI.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/app.AYBJPCAF.js  1.1kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/browser.7WTKJVN5.js  313b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/chunk.R7CFMLDD.js  75.5kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-1.OAFVODBZ.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-2.BSJN3IH5.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-3.D6H77IT2.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-4.MYD7X6KR.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-5.6A7RWINR.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/panel-6.LBF6EUYG.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/chunk.T6WOULKJ.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build ee3e0523a020...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,055 of 28,000 B  JavaScript 29,568 of 76,800 B  (Brotli: Forma 23,303, JavaScript 26,378)  app.AYBJPCAF.js chunk.R7CFMLDD.js
+   /csr  whole-page mount  Forma 26,066 of 28,000 B  JavaScript 29,296 of 76,800 B  (Brotli: Forma 23,312, JavaScript 26,142)  browser.7WTKJVN5.js chunk.R7CFMLDD.js
+   Service worker   sw.js  5,549 B raw, 2,987 B gzip, 2,630 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       345 ms: bundle 128 ms, hash 0 ms, compress 216 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/manifest.json (build: 828d630cb215...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-7.M53JRD2R.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-8.FKUZFWOI.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/app.AYBJPCAF.js  1.1kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/browser.7WTKJVN5.js  313b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/chunk.R7CFMLDD.js  75.5kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-1.OAFVODBZ.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-2.BSJN3IH5.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-3.D6H77IT2.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-4.MYD7X6KR.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-5.6A7RWINR.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/panel-6.LBF6EUYG.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/chunk.T6WOULKJ.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build ee3e0523a020...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,055 of 28,000 B  JavaScript 29,568 of 76,800 B  (Brotli: Forma 23,303, JavaScript 26,378)  app.AYBJPCAF.js chunk.R7CFMLDD.js
+   /csr  whole-page mount  Forma 26,066 of 28,000 B  JavaScript 29,296 of 76,800 B  (Brotli: Forma 23,312, JavaScript 26,142)  browser.7WTKJVN5.js chunk.R7CFMLDD.js
+   Service worker   sw.js  5,549 B raw, 2,987 B gzip, 2,630 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       326 ms: bundle 110 ms, hash 0 ms, compress 215 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/manifest.json (build: 828d630cb215...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/B2/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-7.YBCLX6U6.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-8.SUCYQMFD.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/app.FVGSCFAN.js  1.1kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/browser.S37RTI3F.js  313b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/chunk.FTCRJZ76.js  75.5kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-1.LEAUV6YT.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-2.J6XXNEBG.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-3.PIGPCXZ6.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-4.K7ADNW5E.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-5.T5DVCDKX.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/panel-6.N5IARAM5.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/chunk.P6UUKDJJ.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build 828d630cb215...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,055 of 28,000 B  JavaScript 29,564 of 76,800 B  (Brotli: Forma 23,281, JavaScript 26,367)  app.FVGSCFAN.js chunk.FTCRJZ76.js
+   /csr  whole-page mount  Forma 26,066 of 28,000 B  JavaScript 29,292 of 76,800 B  (Brotli: Forma 23,290, JavaScript 26,125)  browser.S37RTI3F.js chunk.FTCRJZ76.js
+   Service worker   sw.js  5,549 B raw, 2,984 B gzip, 2,636 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       335 ms: bundle 120 ms, hash 0 ms, compress 214 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/manifest.json (build: 725db8e18822...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/C/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Security release: the previous dist is ignored and nothing is retained (L-16, SR45)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-7.PWZKI45C.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-8.3ZPFZKLY.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/app.C4YW3TSU.js  1.1kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/browser.SIUVM7AA.js  313b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/chunk.AED7DGRL.js  75.5kb
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-1.3OZ5GKUU.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-2.DZRPA3NO.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-3.S6EGRVAH.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-4.BJZ6GGHC.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-5.AF4AKMJA.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/panel-6.NAVLXD4A.js  98b
+   /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/chunk.3J6Z3YES.js  33b
+
+   23 assets hashed
+   12 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,053 of 28,000 B  JavaScript 28,795 of 76,800 B  (Brotli: Forma 23,329, JavaScript 25,712)  app.C4YW3TSU.js chunk.AED7DGRL.js
+   /csr  whole-page mount  Forma 26,064 of 28,000 B  JavaScript 28,522 of 76,800 B  (Brotli: Forma 23,339, JavaScript 25,485)  browser.SIUVM7AA.js chunk.AED7DGRL.js
+   Service worker   sw.js  4,273 B raw, 2,216 B gzip, 1,936 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       205 ms: bundle 96 ms, hash 0 ms, compress 108 ms, manifest 1 ms
+
+Manifest written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/manifest.json (build: f2f3b318011a...)
+Size report written: /home/runner/work/_temp/burn-in-setup-work/skew-drill/out/S/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling tracing-core v0.1.36
+   Compiling log v0.4.34
+   Compiling tracing v0.1.44
+   Compiling axum-core v0.5.6
+   Compiling tower v0.5.3
+   Compiling forma-ir v3.0.0-dev (/home/runner/work/_temp/burn-in-setup-work/crates/forma-ir)
+   Compiling axum v0.8.9
+   Compiling forma-server v3.0.0-dev (/home/runner/work/_temp/burn-in-setup-work/crates/forma-server)
+   Compiling forma-e2e-skew v0.0.0 (/home/runner/work/_temp/burn-in-setup-work/skew-drill/server)
+    Finished `release` profile [optimized] target(s) in 13.93s
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded getrandom v0.4.3
+  Downloaded r-efi v6.0.0
+  Downloaded arbitrary v1.5.0
+  Downloaded jobserver v0.1.35
+  Downloaded libfuzzer-sys v0.4.13
+Seeded all four adapters from frozen fixtures and regression inputs.
+Error: could not find a cargo project
+Error: Command failed: cargo fuzz build parse_raw --sanitizer address
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at run (file:///home/runner/work/forma/forma/scripts/release-set.mjs:24:10)
+    at prepareBurnIn (file:///home/runner/work/forma/forma/scripts/release-burn-in-stage.mjs:87:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async rehearseSetup (file:///home/runner/work/forma/forma/scripts/release-burn-in-setup.mjs:37:20)
+    at async main (file:///home/runner/work/forma/forma/scripts/release-burn-in-setup.mjs:82:5) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 7211,
+  stdout: null,
+  stderr: null
+}
