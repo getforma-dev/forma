@@ -131,5 +131,15 @@ docs/evidence/forma-129/** -text
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
 
+# FORMA-144 archived sources and qualification evidence use byte-exact hashes.
+docs/archive/forma-144-final-before/** -text
+docs/evidence/forma-144-final/** -text
+
+# Original Vite configuration and its first failure are byte-authenticated.
+docs/archive/forma-144-vite7-config/** -text
+
+# Original fixture tool path and actual hosted failure are byte-authenticated.
+docs/archive/forma-144-fixture-tool/** -text
+
 # Byte-exact watch-readiness original source and failure evidence.
 docs/archive/forma-watch-readiness/** -text

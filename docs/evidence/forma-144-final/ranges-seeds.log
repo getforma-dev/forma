@@ -1,0 +1,17 @@
+✔ stable template ranges advance with the set while development and prereleases stay exact (1.622125ms)
+✔ staged 3.0.0-beta.1 npm locks authenticate actual packed bytes despite manifest ranges (26.87575ms)
+✔ staged 3.0.0 npm locks authenticate actual packed bytes despite manifest ranges (15.305541ms)
+✔ identified source seeds preserve every external resolution across dev, alpha, beta and stable preparation (124.017583ms)
+✔ prepared source seeds remain preparable after alpha, beta and stable versions are written (40.945125ms)
+✔ source seeds reject missing or malformed external npm and Cargo hashes (4.300042ms)
+✔ source seeds refuse unknown or mixed internal npm packages and requirements (6.039958ms)
+✔ source seeds refuse unknown crates, mixed versions, stale internal hashes and invalid graph edges (3.556792ms)
+✔ seed identity and both templates are validated before staging writes or archive access (29.936666ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 298.0385

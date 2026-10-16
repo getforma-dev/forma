@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-144 slice 3
+
+- Ship caret requirements for stable sets and exact prerelease requirements, while keeping the tested archive versions and hashes in both lockfiles. Source seeds remain exact; staging preserves typed Rust sources and restores files even on failure.
+- Match the public Node 22 floor, retain the local Tailwind CLI and scripts-off/signature checks, and document the explicit two-copy esbuild decision. Add the 0.6.x template migration guide with preserved-source links. Current packed adoption, static-page and size evidence remains a release gate.
+
 ### Changed — FORMA-144 slice 2
 
 - Extract the minimal template's unary Counter island with a declared count. The native handler supplies7 independently of Browser mode's0; native compilation removes the whole-page mount and retains only the registered interactive region.

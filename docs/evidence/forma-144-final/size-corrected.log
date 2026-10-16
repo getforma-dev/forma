@@ -1,0 +1,16 @@
+dist/index.js
+  48063 B gzipped (limit 48294, 100%) — core ESM entry + every shared chunk it imports
+  files: chunk-HJUFIIUR.js, chunk-QMDEYXZ4.js, chunk-ZBXG25HE.js, index.js
+  external (not weighed): alien-signals
+dist/formajs-runtime.global.js
+  41310 B gzipped (limit 41500, 100%) — CDN runtime bundle (single self-contained IIFE)
+  files: formajs-runtime.global.js
+dist/forma.esm.js
+  48209 B gzipped (limit 48448, 100%) — CDN browser ESM bundle (self-contained, inlines alien-signals)
+  files: forma.esm.js
+dist/formajs-frame.global.js
+  39658 B gzipped (limit 40000, 99%) — preview frame runtime (one classic script, inlined by the server)
+  files: formajs-frame.global.js
+dist/formajs-runtime-hardened.global.js
+  40230 B gzipped (limit 40500, 99%) — CDN hardened runtime bundle (single self-contained IIFE)
+  files: formajs-runtime-hardened.global.js
