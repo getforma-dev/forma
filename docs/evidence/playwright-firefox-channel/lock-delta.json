@@ -1,0 +1,241 @@
+{
+  "node": "v24.22.0",
+  "npm": "11.19.1",
+  "beforeEntries": 475,
+  "afterEntries": 474,
+  "beforeSha256": "9b7d2a9e520132511ad41f184bd7343a028bc8446be1c7a9568b2db2b77bba58",
+  "afterSha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90",
+  "changes": [
+    {
+      "path": "",
+      "before": {
+        "name": "forma-stack",
+        "workspaces": [
+          "packages/core",
+          "packages/compiler",
+          "packages/build",
+          "packages/create-app"
+        ],
+        "devDependencies": {
+          "@babel/core": "7.29.7",
+          "@playwright/test": "^1.62.1",
+          "@tanstack/react-query": "5.101.4",
+          "@vitest/coverage-v8": "^4.1.11",
+          "babel-plugin-react-compiler": "1.0.0",
+          "esbuild": "^0.28.1",
+          "happy-dom": "^20.11.2",
+          "lighthouse": "13.5.0",
+          "react": "19.2.8",
+          "react-dom": "19.2.8",
+          "serve": "^14.2.6",
+          "tsup": "^8.5.1",
+          "vitest": "^4.1.11"
+        },
+        "engines": {
+          "node": ">=24.22.0 <25"
+        }
+      },
+      "after": {
+        "name": "forma-stack",
+        "workspaces": [
+          "packages/core",
+          "packages/compiler",
+          "packages/build",
+          "packages/create-app"
+        ],
+        "devDependencies": {
+          "@babel/core": "7.29.7",
+          "@playwright/test": "^1.64.1",
+          "@tanstack/react-query": "5.101.4",
+          "@vitest/coverage-v8": "^4.1.11",
+          "babel-plugin-react-compiler": "1.0.0",
+          "esbuild": "^0.28.1",
+          "happy-dom": "^20.11.2",
+          "lighthouse": "13.5.0",
+          "react": "19.2.8",
+          "react-dom": "19.2.8",
+          "serve": "^14.2.6",
+          "tsup": "^8.5.1",
+          "vitest": "^4.1.11"
+        },
+        "engines": {
+          "node": ">=24.22.0 <25"
+        }
+      }
+    },
+    {
+      "path": "node_modules/@playwright/test",
+      "before": {
+        "version": "1.62.1",
+        "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.62.1.tgz",
+        "integrity": "sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ==",
+        "dev": true,
+        "license": "Apache-2.0",
+        "dependencies": {
+          "playwright": "1.62.1"
+        },
+        "bin": {
+          "playwright": "cli.js"
+        },
+        "engines": {
+          "node": ">=20"
+        }
+      },
+      "after": {
+        "version": "1.64.1",
+        "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.64.1.tgz",
+        "integrity": "sha512-IaYGml/nSOiZWROfPtuIL7neuu9qDOZ3TNvNljUIrhDMxiGTgPjzj/g9p9RxpS2tSepPDRY+UwAaEeiKtUvIAg==",
+        "dev": true,
+        "license": "Apache-2.0",
+        "dependencies": {
+          "playwright": "1.64.1"
+        },
+        "bin": {
+          "playwright": "cli.js"
+        },
+        "engines": {
+          "node": ">=20"
+        }
+      }
+    },
+    {
+      "path": "node_modules/playwright",
+      "before": {
+        "version": "1.62.1",
+        "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.62.1.tgz",
+        "integrity": "sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==",
+        "dev": true,
+        "license": "Apache-2.0",
+        "dependencies": {
+          "playwright-core": "1.62.1"
+        },
+        "bin": {
+          "playwright": "cli.js"
+        },
+        "engines": {
+          "node": ">=20"
+        },
+        "optionalDependencies": {
+          "fsevents": "2.3.2"
+        }
+      },
+      "after": {
+        "version": "1.64.1",
+        "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.64.1.tgz",
+        "integrity": "sha512-HCrVhHr5QQuwYoswEUGTb7gGp522yflbv/ST8nF4sFWGuLjQCt17Q/EubpGGSNKYn1tsTCPZxqHhHCfVURu7UA==",
+        "dev": true,
+        "license": "Apache-2.0",
+        "dependencies": {
+          "playwright-core": "1.64.1"
+        },
+        "bin": {
+          "playwright": "cli.js"
+        },
+        "engines": {
+          "node": ">=20"
+        }
+      }
+    },
+    {
+      "path": "node_modules/playwright-core",
+      "before": {
+        "version": "1.62.1",
+        "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.1.tgz",
+        "integrity": "sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==",
+        "dev": true,
+        "license": "Apache-2.0",
+        "bin": {
+          "playwright-core": "cli.js"
+        },
+        "engines": {
+          "node": ">=20"
+        }
+      },
+      "after": {
+        "version": "1.64.1",
+        "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.64.1.tgz",
+        "integrity": "sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==",
+        "dev": true,
+        "license": "Apache-2.0",
+        "bin": {
+          "playwright-core": "cli.js"
+        },
+        "engines": {
+          "node": ">=20"
+        }
+      }
+    },
+    {
+      "path": "node_modules/playwright/node_modules/fsevents",
+      "before": {
+        "version": "2.3.2",
+        "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz",
+        "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
+        "dev": true,
+        "hasInstallScript": true,
+        "license": "MIT",
+        "optional": true,
+        "os": [
+          "darwin"
+        ],
+        "engines": {
+          "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
+        }
+      },
+      "after": null
+    },
+    {
+      "path": "packages/core",
+      "before": {
+        "name": "@getforma/core",
+        "version": "3.0.0-dev",
+        "license": "MIT",
+        "dependencies": {
+          "alien-signals": "3.1.2"
+        },
+        "devDependencies": {
+          "@arethetypeswrong/cli": "^0.18.5",
+          "@playwright/test": "^1.62.1",
+          "@vitest/coverage-v8": "^4.1.11",
+          "esbuild": "^0.28.1",
+          "fake-indexeddb": "^6.2.3",
+          "happy-dom": "^20.11.2",
+          "publint": "^0.3.23",
+          "serve": "^14.2.6",
+          "tsup": "^8.5.1",
+          "typedoc": "^0.28.20",
+          "typescript": "^5.9.3",
+          "vitest": "^4.1.11"
+        },
+        "engines": {
+          "node": ">=22"
+        }
+      },
+      "after": {
+        "name": "@getforma/core",
+        "version": "3.0.0-dev",
+        "license": "MIT",
+        "dependencies": {
+          "alien-signals": "3.1.2"
+        },
+        "devDependencies": {
+          "@arethetypeswrong/cli": "^0.18.5",
+          "@playwright/test": "^1.64.1",
+          "@vitest/coverage-v8": "^4.1.11",
+          "esbuild": "^0.28.1",
+          "fake-indexeddb": "^6.2.3",
+          "happy-dom": "^20.11.2",
+          "publint": "^0.3.23",
+          "serve": "^14.2.6",
+          "tsup": "^8.5.1",
+          "typedoc": "^0.28.20",
+          "typescript": "^5.9.3",
+          "vitest": "^4.1.11"
+        },
+        "engines": {
+          "node": ">=22"
+        }
+      }
+    }
+  ]
+}

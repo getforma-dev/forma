@@ -1,0 +1,66 @@
+{
+  "baseCommit": "825b70fca6cd86d1b5c68964c7975ac91f445674",
+  "unrelatedLockRecordsUnchanged": 469,
+  "files": [
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package.json",
+      "bytes": 633,
+      "sha256": "4b92b62cb180dab64d44842c63e8a44c6e216305ca2aab54d449c0fb174242b4"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
+      "bytes": 75007,
+      "sha256": "a3754d18c3487ec8b23350abdfa47b564ae5e43f0def1937220d075a69dcc777"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package.json",
+      "bytes": 574,
+      "sha256": "c9594fcd9c6373cc0eb5c0f35f146f67785afd0ea484a263b1f4731acdb72d85"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package-lock.json",
+      "bytes": 85362,
+      "sha256": "4fcf7dbe563acaa33b8655160e3b6758105a18e77349fd7d88068815ad6f3f73"
+    },
+    {
+      "path": "e2e/frame/app/package-lock.json",
+      "bytes": 518,
+      "sha256": "a117ff3a65b0583450bbf14c7b8a6cdde22fee70063e8369b3e55b81387d77cc"
+    },
+    {
+      "path": "scripts/release-performance-spec.mjs",
+      "bytes": 962,
+      "sha256": "cc7b528c3264141130dad2a277524a25a319cf7ead57d0f6c67f0241a8846e4e"
+    },
+    {
+      "path": "scripts/release-performance-decoder.mjs",
+      "bytes": 15999,
+      "sha256": "aeee03f2492bc76a16af2caf17c15e9943c98b252bc133632b701c89ac36284d"
+    },
+    {
+      "path": "e2e/skew/run-drill.mjs",
+      "bytes": 11947,
+      "sha256": "3e9d282becd735eb7e5576ca7391573f7c71f044a9c09e5805f4a6186b53b123"
+    },
+    {
+      "path": "e2e/skew/skew.spec.ts",
+      "bytes": 3496,
+      "sha256": "e71386c22d0d18a394a1963b96e69d84fc9cf49dbfdf418a1a64febafbbee8b0"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 30559,
+      "sha256": "e76348bae9542bb7c135908dd1fbc65560ed6b932c898160dff6964dee093757"
+    },
+    {
+      "path": ".github/workflows/e2e-engines.yml",
+      "bytes": 11363,
+      "sha256": "7a62d4760b4aa4da1baaab7bdd0602239724103a0800d23af560b388ba1b1fb1"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "bytes": 9930,
+      "sha256": "e4c2a74eebf6527977518e9e1d966d1b7938f2dd46319030e6c5cf09e78dec81"
+    }
+  ]
+}
