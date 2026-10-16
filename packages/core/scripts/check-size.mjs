@@ -39,7 +39,9 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * 46,504 B. L-58 permits measured +300 B for these reviewed features, so
  * those gates became 46,777 and 46,804 B (CHANGELOG, FORMA-181/182).
  * The reviewed FORMA-186 deployment guard then measures 46,997 and 47,095 B;
- * L-58 re-anchors the gates to measured +300 B: 47,297 and 47,395 B. They are
+ * L-58 re-anchors the gates to measured +300 B: 47,297 and 47,395 B.
+ * Reviewed FORMA-181 indexed rows on that stack measure 47,994 and 48,148 B;
+ * L-58 re-anchors those gates to measured +300 B: 48,294 and 48,448 B. They are
  * ratchets like the runtime gates below, not a budget: the budget is N2,
  * Forma's code per route, which @getforma/build measures and fails
  * (route-size.ts).
@@ -83,7 +85,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 47297,
+    limit: 48294,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
@@ -93,7 +95,7 @@ export const GATES = [
   },
   {
     entry: 'dist/forma.esm.js',
-    limit: 47395,
+    limit: 48448,
     note: 'CDN browser ESM bundle (self-contained, inlines alien-signals)',
   },
   {
