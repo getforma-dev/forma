@@ -10,6 +10,8 @@
 
 ## [Unreleased]
 
+- FORMA-196: refuse native script elements with BUILD-623 and unrepresentable srcdoc markup with BUILD-624, matching core's existing Trusted Types and bundle-only boundaries. Preserve literal style, absent null/false srcdoc and explicit Browser typed raw APIs; retain the superseded FORMA-139 source/product evidence.
+
 - Add a read-only hosted RC burn-in against all seven original published archives, with at least 3,600 completed positive-input native fuzz seconds plus every hostile, three-engine deployment and fixture check per round. Authenticate actual D14/P17 provenance before the RC/final release, retain bounded raw evidence and verify owned cleanup; implementation is not a completed campaign.
 - Repair the separate fuzz workspace lock to include the existing exact `ryu-js` 1.0.3 dependency; current locked ASan qualification is tracked by FORMA-194.
 

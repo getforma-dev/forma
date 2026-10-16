@@ -1,0 +1,499 @@
+[
+  {
+    "id": "srcdoc-static",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "2a1efdb64fb51fca9209715457a2b9820c7326cfffed4022d01a02d6fdee8267"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "6a1f82e338682730",
+        "aliases": {
+          "home.ir": "home.231d8665.ir"
+        },
+        "assets": {
+          "home.231d8665.ir": {
+            "immutable": true,
+            "integrity": "sha384-j5knFRBQCd2lK7vsqyQuqdxcAbbgEfkIYIl84E04fdR0RDZkWU4ooauQnjYWVKTE"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.231d8665.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"srcdoc-static\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"6a1f82e338682730\\\" data-forma-ssr><main><iframe srcdoc=\\\"&lt;p data-probe=&quot;raw&quot;&gt;nested markup&lt;/p&gt;\\\"></iframe></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-zLe+WGPPxu+vku5blxPuBFoah1q84uGcLk0t3UkLP3k=' 'strict-dynamic' 'self'; style-src 'nonce-zLe+WGPPxu+vku5blxPuBFoah1q84uGcLk0t3UkLP3k=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "srcdoc-declared",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "73a86e19cf8b128bb7ec3ad60f5a70b956cd21901314b569ced198bfbccb7658"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "5a2937e5ffcd7dee8c97bccf8045b00dc94261bcf47204c9e92474a53ad9c42c"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "cbbe67caadaf127e",
+        "aliases": {
+          "home.ir": "home.f1b6de55.ir"
+        },
+        "assets": {
+          "home.f1b6de55.ir": {
+            "immutable": true,
+            "integrity": "sha384-inAAGVa2adNCnyrO2DV+TvBefTRAHJwknLi6I5IRLz47jdN92SWgPABBx3U2e2SY"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.f1b6de55.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"srcdoc-declared\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"cbbe67caadaf127e\\\" data-forma-ssr><main><iframe srcdoc=\\\"&lt;p data-probe=&quot;raw&quot;&gt;nested markup&lt;/p&gt;\\\"></iframe></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-vUC/M+MP/WCOl8QRkMzL/eiaB5Qdl9qo1jXK/rw5W3Q=' 'strict-dynamic' 'self'; style-src 'nonce-vUC/M+MP/WCOl8QRkMzL/eiaB5Qdl9qo1jXK/rw5W3Q=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "srcdoc-mixed-case",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "bae47acddb866b2357709457e4567be5e36a6948ab0d01691ba18da60a2aff22"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "d121ea4152f7c931",
+        "aliases": {
+          "home.ir": "home.faa736ec.ir"
+        },
+        "assets": {
+          "home.faa736ec.ir": {
+            "immutable": true,
+            "integrity": "sha384-kOeJ/Lf51r/hW6g8xYIEsNxfAS2opnXDl7TNxbxdO5x5UZEYTEpjn5TptkCYkTHm"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.faa736ec.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"srcdoc-mixed-case\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"d121ea4152f7c931\\\" data-forma-ssr><main><iframe SrCdOc=\\\"&lt;p data-probe=&quot;raw&quot;&gt;nested markup&lt;/p&gt;\\\"></iframe></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-JD/Djd2X/Jjj3knzqtUN+5UwHOxBUdMmWRrTQheLEEo=' 'strict-dynamic' 'self'; style-src 'nonce-JD/Djd2X/Jjj3knzqtUN+5UwHOxBUdMmWRrTQheLEEo=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "script-html",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "7a1c51eff69084fb4f776c62350bf295c26fb1bdfc700255acb85739a00b474a"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "79ac8f8cf8f0bd3b",
+        "aliases": {
+          "home.ir": "home.3c99a477.ir"
+        },
+        "assets": {
+          "home.3c99a477.ir": {
+            "immutable": true,
+            "integrity": "sha384-kv9SCpsULN1bYuPpT+AUP1qLiwvjATNJJTBisF8Tp8pkR5dyOrGvsLcn2wkIIeig"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.3c99a477.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"script-html\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"79ac8f8cf8f0bd3b\\\" data-forma-ssr><main><script>globalThis.__FORMA_RAW_PROBE__ = 1</script></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-B+i8i57A33rSPehLhfZKxQWuoAPhfVbLCVwmH6DB2LQ=' 'strict-dynamic' 'self'; style-src 'nonce-B+i8i57A33rSPehLhfZKxQWuoAPhfVbLCVwmH6DB2LQ=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "script-html-case",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "8a322ff259255c5877c620a7faaeb93461791a716461bba5c4e2e7d38017ee72"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "70c867a2b1548264",
+        "aliases": {
+          "home.ir": "home.0194a4c1.ir"
+        },
+        "assets": {
+          "home.0194a4c1.ir": {
+            "immutable": true,
+            "integrity": "sha384-0p3ZMki4+PaWNZ7FBxIeEtyp40FjAdwjYVmzNW/sF3s+m9vhv4WZQ9Lbq4K1XY4F"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.0194a4c1.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"script-html-case\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"70c867a2b1548264\\\" data-forma-ssr><main><SCRIPT>globalThis.__FORMA_RAW_PROBE__ = 1</SCRIPT></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-rpiSP9EkpjEcJ3IUiXJ25FSnnfQcs8UmBzbMuAqklsk=' 'strict-dynamic' 'self'; style-src 'nonce-rpiSP9EkpjEcJ3IUiXJ25FSnnfQcs8UmBzbMuAqklsk=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "script-svg",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "0b1b9f31fa765cceb21b8d73cd5f050103ddd8089fe6871c91f0548c06066e6a"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "d151c7325892605d",
+        "aliases": {
+          "home.ir": "home.90a00162.ir"
+        },
+        "assets": {
+          "home.90a00162.ir": {
+            "immutable": true,
+            "integrity": "sha384-PRE4mGlGEwRRrr+1hta1sMhSfV0yDcw3Ggt3O8TSDzBAQfzieKDpXxpR6DSa8Z8J"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.90a00162.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"script-svg\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"d151c7325892605d\\\" data-forma-ssr><main><svg><script>globalThis.__FORMA_RAW_PROBE__ = 1</script></svg></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-v9Za11fzHfxm1ISMLtxRGVCjrZ9XpzF0ZMVwy2RA/ik=' 'strict-dynamic' 'self'; style-src 'nonce-v9Za11fzHfxm1ISMLtxRGVCjrZ9XpzF0ZMVwy2RA/ik=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "safe-iframe",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "8fa75d2c09e44426fe52a50ff8ca724a2a16b864e3415082ba950ab00eee6436"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "7a4a02ef7171fbdd",
+        "aliases": {
+          "home.ir": "home.dd6720f8.ir"
+        },
+        "assets": {
+          "home.dd6720f8.ir": {
+            "immutable": true,
+            "integrity": "sha384-Zw05IxZ2mcQy6ov8TbmFie/h4lVX4WcRx9QKL+DTVysFOniJ3cJJP1nXlU+uX0kw"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.dd6720f8.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"safe-iframe\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"7a4a02ef7171fbdd\\\" data-forma-ssr><main><iframe title=\\\"safe\\\" src=\\\"/frame\\\"></iframe></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-jHhvP6++UxbWIKTVIsVbFHUBO5efydPFJbrj+PdudiQ=' 'strict-dynamic' 'self'; style-src 'nonce-jHhvP6++UxbWIKTVIsVbFHUBO5efydPFJbrj+PdudiQ=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "literal-style",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "23f89c1ad4cdab25b9a6642bbc24c4f575e7bbe0fee2683647e3d809fa781b8c"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "79c846cc2a179ea4",
+        "aliases": {
+          "home.ir": "home.5cc07654.ir"
+        },
+        "assets": {
+          "home.5cc07654.ir": {
+            "immutable": true,
+            "integrity": "sha384-BR5HjpX/QOE9lxhJY6xlaxT1BG4kR98FCcFdd/vdzyD0zCPRilakoV6FKSvJ+Ujk"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.5cc07654.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"literal-style\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"79c846cc2a179ea4\\\" data-forma-ssr><main><style>p{color:navy}</style></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-wM1n/lR9zSYVs2+uSwekzgfT4iixMkbOEmNSm/dQNzE=' 'strict-dynamic' 'self'; style-src 'nonce-wM1n/lR9zSYVs2+uSwekzgfT4iixMkbOEmNSm/dQNzE=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "srcdoc-null",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "515aa166d99edbc133d4a4f4088ad73b347c52dda8a9780dd769f80f65b5f96a"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "af00f27fe248776c",
+        "aliases": {
+          "home.ir": "home.a9efd0e1.ir"
+        },
+        "assets": {
+          "home.a9efd0e1.ir": {
+            "immutable": true,
+            "integrity": "sha384-sv4j+QL9IOa+iXIZX3LSXeIX2bCPQhXyTppLph2BxsigrU+EiMNtBWYdmZJojdLx"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.a9efd0e1.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"srcdoc-null\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"af00f27fe248776c\\\" data-forma-ssr><main><iframe></iframe></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-+Ajsz5RKDWDiKIc3DL1qFhg3yjHlm7j+hwSMsDbDd1Y=' 'strict-dynamic' 'self'; style-src 'nonce-+Ajsz5RKDWDiKIc3DL1qFhg3yjHlm7j+hwSMsDbDd1Y=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "srcdoc-false",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "9ff28dbe5465109d7408fe5987f4ee297d254b636d06d91a6b86785905cf3b10"
+      }
+    ],
+    "build": {
+      "accepted": true,
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "af00f27fe248776c",
+        "aliases": {
+          "home.ir": "home.a9efd0e1.ir"
+        },
+        "assets": {
+          "home.a9efd0e1.ir": {
+            "immutable": true,
+            "integrity": "sha384-sv4j+QL9IOa+iXIZX3LSXeIX2bCPQhXyTppLph2BxsigrU+EiMNtBWYdmZJojdLx"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.a9efd0e1.ir"
+          }
+        }
+      },
+      "diagnostics": []
+    },
+    "native": {
+      "status": 0,
+      "stdout": "[{\"bind\":[],\"name\":\"srcdoc-false\",\"renders\":[{\"document\":\"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>/</title>\\n<script type=\\\"application/json\\\" data-island-state>{\\\"v\\\":1,\\\"s\\\":[],\\\"i\\\":[]}</script>\\n</head>\\n<body>\\n<div id=\\\"app\\\" data-forma-build=\\\"af00f27fe248776c\\\" data-forma-ssr><main><iframe></iframe></main></div>\\n\\n</body>\\n</html>\",\"headers\":{\"cache-control\":\"no-store\",\"content-security-policy\":\"default-src 'none'; script-src 'nonce-TPAzDiZ7dazhs4aMoQPd5lRJ6C38RyJisQzGpyZPEEc=' 'strict-dynamic' 'self'; style-src 'nonce-TPAzDiZ7dazhs4aMoQPd5lRJ6C38RyJisQzGpyZPEEc=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-security-policy-report-only\":\"require-trusted-types-for 'script'; trusted-types forma forma-runtime\",\"content-type\":\"text/html; charset=utf-8\",\"cross-origin-opener-policy\":\"same-origin\",\"permissions-policy\":\"geolocation=(), camera=(), microphone=()\",\"referrer-policy\":\"strict-origin-when-cross-origin\",\"x-content-type-options\":\"nosniff\"}}]}]\n",
+      "stderr": ""
+    }
+  },
+  {
+    "id": "typed-srcdoc",
+    "sourceHashes": [
+      {
+        "path": "app.ts",
+        "sha256": "ad77b586e982b02af7bd1d57a01adced58c1c9d3891762daf8a52683387999fa"
+      },
+      {
+        "path": "page.ts",
+        "sha256": "1aac7bad301f1fb303cc24a8bbe20bc9f132e109016cf7709c6536dda432738d"
+      }
+    ],
+    "build": {
+      "accepted": false,
+      "error": "FormaStrictBuildError: @getforma/build: 1 SSR diagnostic is an error; 3.0 requires the published server-renderable subset:\n/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/typed-srcdoc/src/page.ts:2:65  BUILD-207  attribute 'srcdoc' on <iframe> is trustedHtml(...), which the compiler cannot evaluate in /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/typed-srcdoc/src/page.ts:2:65 — the attribute is OMITTED from the server-rendered HTML and hydration does not re-apply a non-function prop, so it never appears — inline the literal, use a module-level const, or wrap it in a function (`() => …`) for a reactive binding\n    why: The attribute has no supported native value, so the build refuses the page instead of publishing HTML with an omitted attribute.\n    fix: Pass the computed value as its own declared prop, inline a literal or module-level const, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.\nEach code, with its fix: https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md\n    at strictFailure (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/build/dist/index.js:668:17)\n    at buildInto (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/build/dist/index.js:2376:34)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async build4 (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/build/dist/index.js:2039:14)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:20:15"
+    }
+  }
+]

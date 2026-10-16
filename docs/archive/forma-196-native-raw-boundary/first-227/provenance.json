@@ -1,0 +1,72 @@
+{
+  "head": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "node": "v24.22.0",
+  "started": "2026-10-16T19:00:44.069Z",
+  "hashes": [
+    {
+      "path": "packages/core/dist/index.js",
+      "sha256": "742f400e59bc67a131495a1f75aa4f03a28d7fe31e70525802a5efe768fff2b2"
+    },
+    {
+      "path": "packages/compiler/dist/index.js",
+      "sha256": "ff74d23f9e7e28a9b77a9cb2458a72d549ffedb8e34e3b640fc6c461692f388f"
+    },
+    {
+      "path": "packages/build/dist/index.js",
+      "sha256": "2879fbf4f78477b0f2d5a4c34cc15835fe7d6140ac3d2d122a521b2bb60ac49b"
+    },
+    {
+      "path": "packages/build/dist/raw-lint-cli.js",
+      "sha256": "46cf75b36809103289e43f27a552a4c6842661f447d323226825c5bd96e6aa1a"
+    },
+    {
+      "path": "target/debug/examples/parity_render",
+      "sha256": "6d5694e5713ab0ca7e1e3cc86daf8fa23c2f67cc75f34da19b5b5b18545a6250"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "77f729f48524d85b0f87ac1aa9126b195894da3a550981f1aaa0438c06169269"
+    },
+    {
+      "path": "packages/compiler/src/html-context.ts",
+      "sha256": "419a1a0f605428e577aa4ddc70af093ca7de0ffcbeafe30894eb19d5ed1ffc7b"
+    },
+    {
+      "path": "packages/compiler/src/ir-walk.ts",
+      "sha256": "cb50067a7b94b386e1046d545135144462961ecd6b7a5c8fe327e17c76751bc7"
+    },
+    {
+      "path": "packages/compiler/src/island-bindings.ts",
+      "sha256": "32952acc98192def1d9eae07b1510f8ed692a86ad6154961ed960084385aaa75"
+    },
+    {
+      "path": "packages/core/src/dom/trusted-html.ts",
+      "sha256": "c2d827377a0e159f1a30fb023a6eeab064a62011a225126ee57605523e881411"
+    },
+    {
+      "path": "packages/core/src/dom/element.ts",
+      "sha256": "52cfc8f6f9b689662dda06c125656d86810f3353130b21e17e8cfa4238b82f51"
+    },
+    {
+      "path": "crates/forma-ir/src/walker.rs",
+      "sha256": "9e0934093a5f27f183a6ae140db6056bd81e20141e9e5e3d32de1b9eed561ec7"
+    },
+    {
+      "path": "crates/forma-server/examples/parity_render.rs",
+      "sha256": "98fac60c0eaeed9441ddab0e547cd53a1c16c9ba63cd2c9a2e189cff7747389c"
+    },
+    {
+      "path": "docs/TRUSTED-TYPES.md",
+      "sha256": "bcebb84093326b136d3aea4b76c7af4a15566dd53cd7933245eec1a6195f1512"
+    }
+  ],
+  "scriptHash": "a2573fa384380360fadcc21612d8244658358bc642580fbb0edd680788051be0",
+  "scope": "finite original compiler/build/native/core/raw-lint boundary reproduction; no browser or performance qualification",
+  "finished": "2026-10-16T19:00:45.461Z",
+  "cleanAfter": true,
+  "hashesUnchanged": true
+}

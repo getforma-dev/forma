@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "raw-boundary-probe",
+  "build": "cbbe67caadaf127e",
+  "aliases": {
+    "home.ir": "home.f1b6de55.ir"
+  },
+  "assets": {
+    "home.f1b6de55.ir": {
+      "immutable": true,
+      "integrity": "sha384-inAAGVa2adNCnyrO2DV+TvBefTRAHJwknLi6I5IRLz47jdN92SWgPABBx3U2e2SY"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 200000,
+      "ir": "home.f1b6de55.ir"
+    }
+  }
+}

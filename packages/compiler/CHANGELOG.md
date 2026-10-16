@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- FORMA-196: refuse native script elements with BUILD-623 and unrepresentable srcdoc markup with BUILD-624, matching core's existing Trusted Types and bundle-only boundaries. Preserve literal style, absent null/false srcdoc and explicit Browser typed raw APIs; retain the superseded FORMA-139 source/product evidence.
+
 - Refuse native attribute spellings whose HTML-parsed name or namespace differs from current Browser creation (BUILD-610). Preserve canonical SVG/MathML adjustments and supported XLink attributes; propagate actual integration-point context, including both possible namespaces for unknown MathML annotation encoding. Browser attribute behavior is unchanged.
 
 - Emit `className`, `htmlFor` and `tabIndex` with the same exact native names as browser creation/adoption, and use those names in island binding identities. Refuse competing alias-normalized or ASCII-case-colliding attribute props on one native element with BUILD-610, including HTML-parsed SVG/MathML; unrelated spellings and distinct elements remain independent.

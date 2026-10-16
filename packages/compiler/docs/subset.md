@@ -115,8 +115,16 @@ different values. Only an originally unbound `undefined` proves absence. The opt
 rule is this release's deliberately narrow subset, not every current HTML model.
 
 HTML component title is BUILD-619; pass document title to the server render call.
-SVG title remains valid. Dynamic/reactive children in style/script are BUILD-620;
-use immediate authored literal text and pass data through ordinary safe sinks.
+SVG title remains valid. Dynamic/reactive style children are BUILD-620;
+use immediate authored literal CSS and pass data through ordinary safe sinks.
+Component script elements now refuse BUILD-623 in every namespace and spelling,
+including literal, external and inert-type forms, matching core's bundle-only
+contract. This explicitly supersedes FORMA-139's former literal-script admission;
+its [original source and product](../../../docs/archive/forma-196-native-raw-boundary/README.md) remain unchanged.
+Native srcdoc props refuse BUILD-624 because FMIR data has no trustedHtml brand;
+use a safe iframe src or an explicit Browser-mode typed raw sink. Literal
+null/false stay omitted. Original unbound undefined retains its supported omission;
+JSX-lowered void expressions retain the existing strict BUILD-207 refusal.
 Named constants and template expressions still enter the existing dynamic opcode
 path and are refused here; no separate executable-text evaluator is introduced. Namespaces and
 HTML integration points are tracked only to apply these finite checks correctly.
@@ -574,9 +582,9 @@ name: browser property order and parsed duplicate HTML attributes can disagree.
 
 ### BUILD-620 — Dynamic child in executable text content
 
-**Why.** A dynamic or reactive style/script child enters a CSS or JavaScript context that ordinary HTML escaping cannot make safe.
+**Why.** A dynamic or reactive style child enters a CSS context that ordinary HTML escaping cannot make safe.
 
-**Fix.** Keep authored literal style/script text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.
+**Fix.** Keep authored literal style text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.
 
 **Build result.** Error: publication is refused.
 
@@ -599,6 +607,26 @@ name: browser property order and parsed duplicate HTML attributes can disagree.
 **Fix.** Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths. Keep declared initial arrays and their ancestors unmodified and unescaped during construction. Mutate or expose them or the handle only in proved deferred intrinsic event callbacks, including immutable local handler aliases.
 
 [Refusal fixture](../tests/fixtures/conformance/BUILD-622/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-622/pass/).
+
+### BUILD-623 — Script element outside the bundle contract
+
+**Why.** Core h() refuses script elements in every namespace and spelling; emitting one natively would bypass that bundle-only contract.
+
+**Fix.** Load executable code through the page bundle. Native component script elements, including literal, external and inert-type forms, are not supported.
+
+**Build result.** Error: publication is refused.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-623/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-623/pass/).
+
+### BUILD-624 — Raw srcdoc outside the native data contract
+
+**Why.** Native props and FMIR string attributes cannot prove the reviewed trustedHtml brand required by core srcdoc; escaping a string does not establish that trust.
+
+**Fix.** Use a safe iframe src or an explicit Browser-mode trustedHtml sink. Literal null and false remain omitted attributes; other supported absence forms retain their existing behavior.
+
+**Build result.** Error: publication is refused.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-624/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-624/pass/).
 
 ### BUILD-701 — Plain array child (`.map()` without createList)
 

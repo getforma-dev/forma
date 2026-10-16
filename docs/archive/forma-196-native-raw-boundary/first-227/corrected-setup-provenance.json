@@ -1,0 +1,8 @@
+{
+  "source": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "node": "v24.22.0",
+  "scriptHash": "b20d4360b61691aaa1382a755e9706f7a3a714fec787c3eff00b0a310b49176f",
+  "finished": "2026-10-16T19:01:41.733Z",
+  "sameArtifacts": true,
+  "changes": "Only build config app and complete DOM globals; prior outputs preserved; same cases/source/products. No new compiler/native rerun except actual build products."
+}

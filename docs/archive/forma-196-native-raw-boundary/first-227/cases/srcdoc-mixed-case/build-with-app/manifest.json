@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "writer": "3.0.0",
+  "app": "raw-boundary-probe",
+  "build": "d121ea4152f7c931",
+  "aliases": {
+    "home.ir": "home.faa736ec.ir"
+  },
+  "assets": {
+    "home.faa736ec.ir": {
+      "immutable": true,
+      "integrity": "sha384-kOeJ/Lf51r/hW6g8xYIEsNxfAS2opnXDl7TNxbxdO5x5UZEYTEpjn5TptkCYkTHm"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "js": [],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 200000,
+      "ir": "home.faa736ec.ir"
+    }
+  }
+}

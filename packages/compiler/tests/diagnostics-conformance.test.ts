@@ -128,7 +128,7 @@ afterEach(() => {
 });
 
 describe('the code catalogue', () => {
-  it.each(['BUILD-206', 'BUILD-617'])('the direct plugin refuses %s even with strict:false, and admits its near miss', async code => {
+  it.each(['BUILD-206', 'BUILD-617', 'BUILD-623', 'BUILD-624'])('the direct plugin refuses %s even with strict:false, and admits its near miss', async code => {
     const errors = await strictBuild(join(CORPUS, code, 'fail'), false);
     expect(errors.map(error => error.id)).toContain(code);
     expect(errors.find(error => error.id === code)?.location?.line).toBeGreaterThan(0);
