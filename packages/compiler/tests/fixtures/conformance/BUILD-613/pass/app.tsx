@@ -1,5 +1,5 @@
-import { h, mount, createList } from '@getforma/core';
-const todos = () => [{ id: 1, title: 'a', done: false }];
+import { h, mount, createList, createSignal } from '@getforma/core';
+const [todos] = createSignal([{ id: 1, title: 'a', done: false }, { id: 2, title: 'b', done: true }]);
 
 mount(() => (
   <main>

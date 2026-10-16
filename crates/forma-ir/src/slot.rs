@@ -14,8 +14,9 @@ pub enum SlotValue {
     Null,
     /// A string, emitted HTML-escaped.
     Text(String),
-    /// A boolean. As a DYN_ATTR value, `true` emits the bare attribute name
-    /// and `false` omits the attribute entirely.
+    /// A boolean. As a DYN_ATTR value, `true` emits presence on an HTML
+    /// boolean attribute and the word "true" on any other attribute;
+    /// `false` omits the attribute entirely.
     Bool(bool),
     /// A double, rendered exactly as ECMAScript's `Number::toString` would.
     Number(f64),

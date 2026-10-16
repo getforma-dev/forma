@@ -95,6 +95,6 @@ describe('exact-result SSR product transport', () => {
       plugins: [core, ...[f.entry, other].map((entry, i) => formaSsrPlugin({ page: i ? 'other' : 'app', outDir: f.outdir, entryPoint: entry }))] });
     expect(getSsrEntryProducts(result).map(p => p.page)).toEqual(['app', 'other']);
     writeFileSync(f.entry, 'export const noNativeRoot = true;');
-    await expect(build(options(f))).rejects.toThrow('requires a successful native product');
+    await expect(build(options(f))).rejects.toThrow('BUILD-601');
   });
 });

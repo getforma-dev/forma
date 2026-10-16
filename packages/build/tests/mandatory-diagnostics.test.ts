@@ -60,14 +60,14 @@ function preserved(f: ReturnType<typeof fixture>) {
 }
 function reportComplete(f: ReturnType<typeof fixture>) {
   const report = JSON.parse(readFileSync(f.report, 'utf8'));
-  expect(report.strict).toBe(false);
+  expect(report.strict).toBe(true);
   expect(report.diagnostics.map((d: {page:string;code:string;severity:string}) => [d.page,d.code,d.severity])).toEqual([
-    ['mandatory','BUILD-101','warning'], ['mandatory','BUILD-610','error'], ['delayed','BUILD-207','warning'],
+    ['mandatory','BUILD-101','error'], ['mandatory','BUILD-610','error'], ['delayed','BUILD-207','error'],
   ]);
 }
 
 describe('mandatory refusal reports', () => {
-  it('waits for a held page, writes its complete report, and rethrows the original refusal without late publication', async () => {
+  it('waits for a held page, writes its complete report, and returns the aggregate refusal without late publication', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {}); vi.spyOn(console, 'log').mockImplementation(() => {});
     const f = fixture();
     let release!: () => void;
@@ -85,9 +85,9 @@ describe('mandatory refusal reports', () => {
       preserved(f);
     } finally { release(); }
     const result = await attempt;
-    expect(result.error).toBe(control.error);
+    expect(result.error.name).toBe('FormaStrictBuildError');
     expect(String(result.error)).toContain('BUILD-610');
-    expect(control.finished).toBe(true);
+    expect(control.finished).toBe(false); // the held entry also reaches its mandatory refusal
     reportComplete(f); preserved(f);
     expect(readdirSync(f.root).filter(name => name.includes('forma-staging'))).toEqual([]);
     await new Promise(resolve => setImmediate(resolve));

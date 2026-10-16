@@ -29,6 +29,20 @@ import { PropsSchemaError } from './props-schema';
 import { readSourceFile } from './source-snapshot';
 import type { SignalDefault } from './signal-scope';
 
+/**
+ * Rule 6's attribute table (docs/parity-rules.md; findings F2 and F3): the
+ * HTML boolean attributes, the ones a `true` writes bare. Every other
+ * attribute is written as the value's string, `true` as "true". The same list
+ * as core's BOOLEAN_ATTRS and the walker's HTML_BOOLEAN_ATTRIBUTES; all three
+ * suites read it from crates/forma-ir/tests/fixtures/parity/attributes.json.
+ * Verified by: packages/compiler/tests/value-rule-6-attributes.test.ts
+ */
+export const HTML_BOOLEAN_ATTRIBUTES: ReadonlySet<string> = new Set([
+  'async', 'autofocus', 'autoplay', 'checked', 'controls', 'default', 'defer', 'disabled',
+  'formnovalidate', 'hidden', 'ismap', 'loop', 'multiple', 'muted', 'nomodule', 'novalidate',
+  'open', 'playsinline', 'readonly', 'required', 'reversed', 'selected',
+]);
+
 /** What the compiler can prove about a value's type. */
 export type ValueKind = 'boolean' | 'other' | 'unknown';
 

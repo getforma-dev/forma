@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "09c22e710bb9900af9dd2f658e8e7f30897a9311",
+  "role": "Pre-FORMA-182 F2/F3 originals: the js-emitter contract corpus outputs that rule 6's attribute table regenerates (a reactive true on a non-boolean attribute is the word \"true\"; an attribute whose server value is '' is a static value=\"\"). Byte-exact; never regenerated to make a new implementation pass.",
+  "sha256": {
+    "js-emitter/dynamic-attrs.dump": {
+      "bytes": 1559,
+      "sha256": "a96ed6d8879e5aa21b05b1d2d4a6df0b97bc2c3020976f11540a61d1b47c4773"
+    },
+    "js-emitter/dynamic-attrs.html": {
+      "bytes": 1305,
+      "sha256": "5a3defb5e64931e777fa7203d1e5cfefd33307b994156bef88aaca30af887043"
+    },
+    "js-emitter/dynamic-attrs.ir": {
+      "bytes": 697,
+      "sha256": "5c527dbae77508965d523b9db659c9563b47a243ce6d2c63996c5c767dfa81bd"
+    },
+    "js-emitter/jsx-page.html": {
+      "bytes": 1912,
+      "sha256": "b85ba94c5f54104c498a19045ccc71f72132d41090c292095a02a6638f4f44e2"
+    },
+    "js-emitter/sub-component-scopes.html": {
+      "bytes": 1527,
+      "sha256": "a737db33c0550c1e475c17345d449e6071a0f48778204ca0695e4685afa9e8be"
+    }
+  }
+}

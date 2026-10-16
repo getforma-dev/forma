@@ -298,7 +298,8 @@ export function structuralClass(module: string, difference: Difference): string 
 // The report
 // ---------------------------------------------------------------------------
 
-export type Verdict = 'equal' | 'different' | 'expected-divergent' | 'server-refused' | 'error';
+/** `no-setter`: P3 for a module that names no transition setter (counted, not skipped). */
+export type Verdict = 'equal' | 'different' | 'expected-divergent' | 'server-refused' | 'error' | 'no-setter';
 
 export interface Report {
   readonly module: string;
@@ -319,6 +320,8 @@ export interface Report {
   readonly refusal?: { readonly code: string; readonly path?: string; readonly message?: string };
   readonly error?: string;
   readonly state?: unknown;
+  /** P3: the state the page was activated at and the state the setter moved it to. */
+  readonly transition?: { readonly from: number; readonly to: number };
   /** P2: island hosts on the page, and how many hold core's disposer after activation. */
   readonly activation?: { readonly hosts: number; readonly activated: number };
   /** The typed path's bind or load refusals, when the low-level path rendered in its place. */

@@ -318,19 +318,19 @@ disagreement, in `h()`'s `class` writer: a reactive class getter returning
 `null`, `undefined` or `false` threw inside its effect (the rule-1 normalizer
 was handed a non-string) and left the previous class standing, so a fresh
 element kept `class="x"` in all three engines while the walker omits the
-attribute; and a static `class: true` wrote the word `true` where the walker
-writes the bare attribute.
+attribute. (A static `class: true` wrote the word `true`; under rule 6's
+attribute table that is now what every writer writes.)
 
 **Implementation.** Rust: `crates/forma-ir/src/walker.rs` (`DYN_TEXT` on
 `Null` writes the empty holder, `DYN_ATTR` on `Null` writes nothing, a text-only
 parent composes the empty string). TypeScript: `h()`'s `appendChild` skips
 `null` and `undefined` and a reactive child returning one clears its content;
 adoption's text expectation is empty and `prepareAttribute` expects the
-attribute absent; `class`/`className`, static and reactive, now follows the
-presence table every other attribute writer uses (`null`, `undefined` and
-`false` remove the attribute, `true` is the bare attribute, anything else its
-string under rule 1): the inner `write` of `handleClass` and the class branch
-of `applyStaticProp` in `packages/core/src/dom/element.ts`.
+attribute absent; `class`/`className`, static and reactive, now follows rule
+6's attribute table as every other attribute writer does (`null`, `undefined`
+and `false` remove the attribute, anything else, `true` included, its string
+under rule 1): the inner `write` of `handleClass` and the class branch of
+`applyStaticProp` in `packages/core/src/dom/element.ts`.
 
 **Vectors.** `crates/forma-ir/tests/fixtures/parity/null.json`: `children`
 (`null` alone, between, first, last, only `null`s, beside a number; `expected`
@@ -381,8 +381,55 @@ through a getter, as a child or as a `createShow` or ternary branch. Admitted:
 
 On every client path a boolean text value writes nothing: `h()`, strict
 adoption's expectation and adoption's later writes. As an attribute value a
-boolean follows the presence table on both sides, `class` included: `true`
-writes the bare attribute, `false` omits it as `null` does (rule 5).
+boolean follows the attribute table below.
+
+**The attribute table (findings F2 and F3).** An attribute in the HTML
+boolean set (core's `BOOLEAN_ATTRS`: `async`, `autofocus`, `autoplay`,
+`checked`, `controls`, `default`, `defer`, `disabled`, `formnovalidate`,
+`hidden`, `ismap`, `loop`, `multiple`, `muted`, `nomodule`, `novalidate`,
+`open`, `playsinline`, `readonly`, `required`, `reversed`, `selected`) is
+presence according to scalar truthiness: `true`, a nonempty string (including
+`"false"` and `"0"`), or a nonzero number writes it bare; `false`, `null`,
+`undefined`, `""`, `0` and `-0` omit it. Every other
+attribute, `data-*`, `aria-*`, `class`, `title` and the rest, is the value's
+string: `true` is the word `"true"`, a string is itself, the empty string
+included, and `false` and `null` omit it. Names are matched as written,
+lower-case. The same on every writer: the walker's `DYN_ATTR`
+(`HTML_BOOLEAN_ATTRIBUTES` in `crates/forma-ir/src/walker.rs`), the
+compiler's static attributes (`HTML_BOOLEAN_ATTRIBUTES` in
+`packages/compiler/src/value-rules.ts`), `h()` static and reactive, and
+adoption's expectations and later writes
+(`packages/core/src/dom/adoption-attributes.ts`). Before it, a reactive `true`
+on `data-live` or `aria-pressed` was bare from the walker and adoption and
+`"true"` from `h()`'s reactive writer, and bare again from its static one
+(F2; FORMA-188 saw `aria-pressed=""`, which ARIA reads as no value). An
+non-boolean attribute whose server value is the empty string is written: a client slot
+cannot carry an empty default (zero default bytes are "no default", which the
+walker reads as `null`), so the compiler writes such an attribute as a static
+`name=""` (a signal created with `''`, or a value that evaluates to `''`);
+before, `value: () => query()` over `createSignal('')` was dropped by the
+server and written `value=""` by `h()` (F3). `aria-*` `false` omits the
+attribute as every non-boolean `false` does; a page that needs ARIA's
+`"false"` token writes the word, `() => String(pressed())`.
+
+Vectors: `crates/forma-ir/tests/fixtures/parity/attributes.json`
+(`booleanAttributes`, `values` for the slot writers, `compiled` for the
+compiler). Consumers: `crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
+"rule_6_attribute_values_follow_one_table" (each value as `DYN_ATTR`, and
+every boolean name bare beside its `data-` twin as the word),
+`packages/compiler/tests/value-rule-6-attributes.test.ts` (each compiled shape
+with no diagnostic and its attribute under the defaults; the compiler's set
+equals the file's), `packages/core/src/dom/__tests__/value-rule-6-attributes.test.ts`
+(`h()` static and reactive, adoption's expectation, later write and a served
+attribute adopted without a write), and `packages/core/e2e/value-rules.spec.ts`
+(each value served as the walker writes it and adopted without a write, static
+and reactive, in the three engines). First failures:
+`work/FORMA-182-rules/first-failures/` `forma-ir-f2-f3.log` (26),
+`core-f2-f3.log` (30 of 56), `compiler-f2-f3.log` (29 of 39),
+`core-e2e-f2-f3.log` (24, every engine). The js-emitter corpus outputs it
+regenerates (`dynamic-attrs` `.ir`/`.dump`/`.html`, `jsx-page.html`,
+`sub-component-scopes.html`) are archived in
+`docs/archive/2026-10-15-pre-attribute-values/` with a before/after ledger.
 
 **Why.** DR-9: a boolean text was `true` or `false` from the walker and
 adoption and nothing from `h()`. The vectors found where that reached a
@@ -416,20 +463,22 @@ empty string, as it already did `null`.
 `BUILD-614`, a `fix` that builds) or built
 with no diagnostic and the visible text `writes` under its defaults),
 `nearMissText` (the word for `true` and `false`), `idiom` (`() => ready() &&
-'Go'` at each default) and `attribute` (the presence table). Consumers:
+'Go'` at each default); its attribute half is `attributes.json` (the table
+above). Consumers:
 `packages/compiler/tests/value-rule-6-boolean-text.test.ts`, the `BUILD-614`
 pair in `packages/compiler/tests/diagnostics-conformance.test.ts`,
 `crates/forma-ir/src/walker.rs` > `value_rule_vectors` >
-"rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence"
-(the word, the idiom's ranges, `disabled` and `class` presence),
+"rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range"
+(the word and the idiom's ranges),
 `packages/core/src/dom/__tests__/value-rule-6-boolean-text.test.ts`
 (`String(flag)` static and reactive, the browser-only drop of a bare boolean,
-the presence table on every writer, the idiom fresh and adopted with its later
-writes), and `packages/core/e2e/value-rules.spec.ts` in the three engines (the
-word and the idiom's ranges and the presence table adopted without a write; a
+the idiom fresh and adopted with its later writes), and
+`packages/core/e2e/value-rules.spec.ts` in the three engines (the word and the
+idiom's ranges adopted without a write; a
 control shows the word the walker used to serve for the idiom at `false`
-refused). Mutation probes `el/static-class-true-word` and
-`adoption/boolean-text-word` are caught by the core suite.
+refused). Mutation probes `adoption/boolean-text-word`, and for the attribute
+table `el/static-class-true-bare`, `el/static-true-bare` and
+`adoption/true-bare-off-boolean-set`, are caught by the core suite.
 
 **Migration.** Breaking: a page that reads a boolean as text no longer
 builds; the fix is `String(flag)` or a ternary, as the message says. Rendered
@@ -523,21 +572,6 @@ unchanged. Applications are counted with FORMA-192's read-only runs.
 Changes the rules point at that need a broader decision than one rule's
 vectors; each is written here instead of as code.
 
-### ARIA states written as `"true"` and `"false"`
-
-Design 4's attribute table writes ARIA's state attributes (`aria-pressed`,
-`aria-expanded`, `aria-checked`, …) as the words `"true"` and `"false"`, which
-is what ARIA reads: an absent `aria-pressed` means "not a toggle button", not
-"not pressed". Today both sides follow the presence table for every
-attribute, `aria-*` included, so they agree with each other but `aria-pressed:
-false` omits the attribute. Changing it touches the walker's `DYN_ATTR`, the
-compiler's static boolean attributes, `h()`'s attribute writers and
-adoption's expectations at once, changes what existing pages render, and
-needs its own vectors (each ARIA state and its tokens, `aria-hidden` and the
-`true`/`false`/`mixed` tri-states). Proposed: a `aria` section in a new
-vector file, the four writers changed in one coordinated pull request, and a
-CHANGELOG entry that names it a rendering change.
-
 ### The walker refusing a non-boolean `SHOW_IF` slot
 
 Rule 7 makes the walker's truthiness fallback unreachable from a compiled
@@ -586,3 +620,8 @@ than rendering wrong; a static one is unaffected.
 FORMA-026's SVG and MathML namespace vectors stay at
 `packages/core/src/__tests__/vectors/namespaces.json` until their relocation is
 coordinated; no Rust reader references that file yet.
+
+
+INV1 attribute-name and URL checks are specified in [INV1.md](INV1.md) and share
+`inv1.json` beside these value vectors (FORMA-140). A rejected served attribute
+refuses strict adoption; initial DOM is never repaired.

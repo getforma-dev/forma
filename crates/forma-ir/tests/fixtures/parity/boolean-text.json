@@ -1,13 +1,13 @@
 {
   "rule": 6,
   "title": "A boolean in text is a build error (FORMA-182; DR-9 rule 6, the first half of design 4 rule 5)",
-  "contract": "A text position whose value is boolean-typed is a build error, BUILD-614: a declared boolean prop (optional included), a signal whose default is a boolean, a closed boolean (an aggregate or list-row field, a module-level const initialized with true or false), or an expression that can only be a boolean (!x, a comparison, && or || of booleans), read eagerly or through a getter, as a child or as a createShow or ternary branch. h() writes nothing for a boolean child whatever its value while the walker would write 'true' or 'false', so such a page either breaks parity or shows nothing. Admitted: String(flag) on a non-optional declared boolean prop (DYN_TEXT on the boolean slot, written as the word on both sides) and on a boolean signal (folded to the word); a boolean literal (writes nothing on both sides); and a mixed expression whose boolean result stands for nothing (`ready() && 'Go'`): eagerly it folds, and through a getter the server writes an empty range when its default is the boolean, as h() does. As an attribute value a boolean follows the presence table on both sides: true writes the bare attribute, false and null omit it.",
+  "contract": "A text position whose value is boolean-typed is a build error, BUILD-614: a declared boolean prop (optional included), a signal whose default is a boolean, a closed boolean (an aggregate or list-row field, a module-level const initialized with true or false), or an expression that can only be a boolean (!x, a comparison, && or || of booleans), read eagerly or through a getter, as a child or as a createShow or ternary branch. h() writes nothing for a boolean child whatever its value while the walker would write 'true' or 'false', so such a page either breaks parity or shows nothing. Admitted: String(flag) on a non-optional declared boolean prop (DYN_TEXT on the boolean slot, written as the word on both sides) and on a boolean signal (folded to the word); a boolean literal (writes nothing on both sides); and a mixed expression whose boolean result stands for nothing (`ready() && 'Go'`): eagerly it folds, and through a getter the server writes an empty range when its default is the boolean, as h() does. As an attribute value a boolean follows rule 6's attribute table, attributes.json (presence for the HTML boolean set, the word \"true\" elsewhere).",
   "consumers": [
     "packages/compiler/tests/value-rule-6-boolean-text.test.ts (each `compiledText` shape builds without a diagnostic and writes `writes` under its defaults, or refuses with its code)",
     "packages/compiler/tests/diagnostics-conformance.test.ts (the BUILD-614 fixture and its String(flag) near miss)",
-    "crates/forma-ir/src/walker.rs > value_rule_vectors (the near miss: DYN_TEXT on a Bool slot; DYN_ATTR presence)",
-    "packages/core/src/dom/__tests__/value-rule-6-boolean-text.test.ts (String(flag) through h(); the attribute presence table; the browser-only drop; the mixed idiom's nothing)",
-    "packages/core/e2e/value-rules.spec.ts (the walker's word range, the empty range of the mixed idiom and the attribute presence parsed by the three engines and strictly adopted without a write)"
+    "crates/forma-ir/src/walker.rs > value_rule_vectors (the near miss: DYN_TEXT on a Bool slot; the idiom's ranges)",
+    "packages/core/src/dom/__tests__/value-rule-6-boolean-text.test.ts (String(flag) through h(); the browser-only drop; the mixed idiom's nothing)",
+    "packages/core/e2e/value-rules.spec.ts (the walker's word range and the empty range of the mixed idiom parsed by the three engines and strictly adopted without a write)"
   ],
   "note": "Hand-enumerated. `idiom` is the mixed expression `() => ready() && 'Go'` at each default of ready: the compiler writes a Text slot whose default is empty at false (the empty range) and the string at true, which the walker writes, core's h() and adoption agree with, and the three engines adopt without a write. `props` is the declared page props type, `setup` a module-level statement, `child` the text child expression; `code` null means the page builds with no diagnostic, `slot` the declared slot DYN_TEXT binds and `writes` the visible text the walker writes under the slot defaults (an empty range shows nothing). A refused shape names the code the build fails with; a BUILD-614 shape's `fix` is the child its message advises (`String(…)` where the compiler binds or folds it, a ternary where `String(…)` is itself refused), which must build with no diagnostic in the same page.",
   "compiledText": [
@@ -46,9 +46,5 @@
   "idiom": [
     {"id": "and-at-false", "ready": false, "expected": ""},
     {"id": "and-at-true", "ready": true, "expected": "Go"}
-  ],
-  "attribute": [
-    {"id": "true-is-bare", "value": true, "present": true, "expected": ""},
-    {"id": "false-is-absent", "value": false, "present": false}
   ]
 }

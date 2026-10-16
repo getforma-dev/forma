@@ -43,6 +43,15 @@ struct ArrivalProps {
     arrival_status: String,
     arrival_summary: bool,
 }
+#[derive(PageProps)]
+struct KeyedMoveRow {
+    id: String,
+    label: String,
+}
+#[derive(PageProps)]
+struct KeyedMoveProps {
+    rows: Vec<KeyedMoveRow>,
+}
 fn render_typed<P: PageProps>(
     manifest: &AssetManifest,
     props: &P,
@@ -120,6 +129,22 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     .as_u64()
                     .and_then(|n| n.try_into().ok())
                     .ok_or("missing u32 count")?,
+            },
+        )?,
+        "keyed-moves" => render_typed(
+            &manifest,
+            &KeyedMoveProps {
+                rows: input["rows"]
+                    .as_array()
+                    .ok_or("missing rows")?
+                    .iter()
+                    .map(|row| {
+                        Ok(KeyedMoveRow {
+                            id: row["id"].as_str().ok_or("missing row id")?.into(),
+                            label: row["label"].as_str().ok_or("missing row label")?.into(),
+                        })
+                    })
+                    .collect::<Result<Vec<_>, Box<dyn Error>>>()?,
             },
         )?,
         "ledger-arrival" => render_typed(

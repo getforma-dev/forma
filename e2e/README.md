@@ -69,6 +69,37 @@ success, so each behaviour test exercises the island through a reactive reader
 | `ledger-arrival` | seeded values survive activation; Retry runs | passes |
 | `browser-only` | a `browserOnly()` component: the server sends its empty host with its declared props, the browser renders it there and it works; client-rendered it renders as any component (FORMA-119) | passes |
 
+### Keyed product qualification (FORMA-181 D)
+
+`keyed-moves` is a typed native product: Rust passes three declared rows through
+`Pages`, the compiler emits the island registration and native key metadata, and
+the production browser bundle activates that server markup. Its test holds the
+module, verifies real keys/state/control values, then requires zero initial writes
+and retained row/input identity. F2 rotates the focused first row to the end with
+exactly one removal and insertion; backward selection, typing and the row's click
+listener remain attached to that key.
+
+Run the dedicated product checks in all three engines:
+
+```bash
+CARGO_BUILD_JOBS=3 FORMA_SSR_PROFILE=release bash e2e/ssr/build.sh
+FORMA_SSR_PROFILE=release node e2e/ssr/keyed-products-evidence.mjs
+npx playwright test --config e2e/ssr/keyed-products.config.ts --workers=2
+```
+
+`FORMA_SSR_PROFILE` defaults to `debug` and accepts `release`. The product check
+uses release because the server deliberately emits an endpoint-less Trusted Types
+report-only header in debug, which WebKit reports as a configuration error. The
+production enforced CSP and zero-console-error assertions remain intact.
+
+`out/keyed-products-evidence.json` records the source commit, Node/native profile,
+source/compiler/runtime/native/browser/HTML/header hashes, the native state and the
+emitted registration contract; `out/keyed-products.dump` is the actual native dump.
+The script requires current compiler IR to match the built/served bytes and the
+native state to match the declared Rust inputs. HTML includes a per-render nonce,
+so its hash records that run. This qualifies row movement through actual products;
+it does not measure or claim the separate N3 indexed replacement requirement.
+
 The table "every case is server-rendered and activates" adds the shared
 controls for every case: the walker's HTML; island activation, or for a static
 page no script referenced or requested; the Phase 1 mount; and no console
@@ -96,15 +127,17 @@ runtime):
    (`e2e/frame/build-app.mjs`): `out/dist-on` with `previewFrame: true`,
    `out/dist-off` without it, and `out/dist-tampered`, dist-on with a
    `</script>` appended to its runtime. The script fails unless the build's
-   `forma-runtime.<hash>.js` is core's `dist/formajs-frame.global.js` byte for
-   byte, and never core's `dist/forma-runtime.js`.
+   `forma-runtime.<hash>.js` is core's `dist/formajs-frame.global.js` minified
+   (FORMA-190: the application's output carries the small file, core's own
+   stays as published and readable, and the file is named by its own hash and
+   listed with its own SRI), and never core's `dist/forma-runtime.js`.
 2. `e2e/frame/server/` (Rust) is a small forma-server application from a
    forma checkout that embeds the three outputs at compile time and, at start,
    calls `PreviewFrame::load` on each as an application does; it serves the
    frame (`PageResponse::frame` from dist-on) and a host page that frames it
    as forma-server's `frame` module docs prescribe.
 3. The spec starts the server on a free port (so clones never meet) and checks
-   that forma-server accepts dist-on's runtime and hashes core's bytes; that in
+   that forma-server accepts dist-on's runtime and hashes the bytes served; that in
    Chromium, under the frame's hash-only policy, the runtime answers `ready`
    and mounts a module sent over the port, in tier (c), with an opaque origin
    and no CSP violation; that dist-off is refused with FRAME-101 and

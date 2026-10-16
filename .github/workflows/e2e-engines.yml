@@ -1,6 +1,7 @@
 name: E2E engines
 
-# Core's whole e2e suite in Chromium, Firefox and WebKit, one job per engine.
+# Core's whole e2e suite in Chromium, Firefox and WebKit, one job per engine,
+# and the parity harness (FORMA-183) in Firefox and WebKit (non-blocking).
 # Decision brief DR-9: Chromium on every merge (ci.yml's `check` job runs
 # `npm run test:e2e -w packages/core`, the `chromium` project only), all three
 # before each release (FORMA-027). Ways in:
@@ -140,3 +141,56 @@ jobs:
           path: packages/core/test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  # The parity harness (FORMA-183) in the two engines CI does not run per
+  # merge: step 1 of the corpus at 10 states, P1, P2 and P3, with the same
+  # expected list as ci.yml's `parity` job (DR-9: Chromium per merge, Firefox
+  # and WebKit per release). Non-blocking, as the per-merge job is, until the
+  # blocking switch (e2e/parity/README.md); a release still sees its report.
+  parity:
+    name: parity (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    # MEASURED locally: step 1 at 10 states (28 modules, 118 states) in 91 s in
+    # Firefox and 12 s in WebKit; the builds and installs dominate the rest.
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          # The harness is TypeScript run by Node's type stripping (Node 24).
+          node-version-file: .node-version
+          cache: npm
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: parity-engines
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+      - name: Install ${{ matrix.browser }} and its system packages
+        timeout-minutes: 10
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: npx playwright install --with-deps "$BROWSER"
+      - name: Parity over step 1 in ${{ matrix.browser }}
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: node e2e/parity/src/run.mts --step 1 --states 10 --browser "$BROWSER" --report "$RUNNER_TEMP/parity/report.jsonl"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: parity-report-${{ matrix.browser }}
+          path: ${{ runner.temp }}/parity/
+          if-no-files-found: warn
+          retention-days: 14

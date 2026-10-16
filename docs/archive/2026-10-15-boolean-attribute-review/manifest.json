@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "b5f1905696575ea20f5e79b1832024ebc753ced4",
+  "reason": "Original tests before the independent F3 boolean-empty review correction. These source files remain byte-exact; current tests require scalar truthiness for HTML boolean attributes.",
+  "files": {
+    "walker.rs": {
+      "source": "crates/forma-ir/src/walker.rs",
+      "bytes": 309983,
+      "sha256": "1e2e866cd5e612b85d68a6daef13a78a8ae2ed2a09e6bb53524439d91f6bc4a1"
+    },
+    "value-rule-6-attributes.test.ts": {
+      "source": "packages/core/src/dom/__tests__/value-rule-6-attributes.test.ts",
+      "bytes": 3805,
+      "sha256": "2d855a9b80d015f180f0c75238ace2d842ac167f9a4c68223a0a104870872c6a"
+    }
+  }
+}

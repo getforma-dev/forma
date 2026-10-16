@@ -25,6 +25,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpath
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
+import { runInNewContext } from 'node:vm';
 import { DIAGNOSTIC_CATALOGUE } from '@getforma/compiler';
 
 import { build } from './helpers/named-build';
@@ -182,22 +183,36 @@ function twoPackages(versionB: string, sameRuntime = false) {
 }
 
 describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.js (FORMA-175)', () => {
-  it('copies core\'s dist/formajs-frame.global.js unchanged as a hashed forma-runtime.<hash>.js and names it in the manifest\'s assets', async () => {
+  it('writes core\'s dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest\'s assets, and leaves core\'s file as published', async () => {
     const { dist, frameFile, config } = fixture({});
     const result = await build({ ...config, previewFrame: true });
 
+    // Core's file is read, never written: still the readable bytes it shipped.
     const core = readFileSync(frameFile);
-    const name = `forma-runtime.${sha256(core, 'hex').slice(0, 8)}.js`;
-    expect(result.manifest.aliases['forma-runtime.js']).toBe(name);
+    expect(core.toString('utf8')).toBe(frameOf('APP'));
+    expect(core.toString('utf8')).toContain('\n  // é, ✓ and 𝄞');
+
+    // The application's output carries it minified (FORMA-190, from FORMA-180
+    // F1): the document inlines these bytes under `no-store` on every load.
+    // Hashed and named by the bytes written, so the SHA-256 forma-server
+    // computes for the frame's script-src and the SRI the manifest lists are
+    // those of the file served.
+    const name = result.manifest.aliases['forma-runtime.js']!;
     const manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8'));
     expect(manifest.aliases['forma-runtime.js']).toBe(name);
-
-    // The bytes are core's, unchanged: no minify, no transform, no line
-    // endings rewritten, so the SHA-256 forma-server computes for the frame's
-    // script-src is the one of core's file.
     const written = readFileSync(join(dist, name));
-    expect(written.equals(core)).toBe(true);
-    expect(sha256(written, 'base64')).toBe(sha256(Buffer.from(frameOf('APP'), 'utf8'), 'base64'));
+    expect(name).toBe(`forma-runtime.${sha256(written, 'hex').slice(0, 8)}.js`);
+    expect(written.equals(core)).toBe(false);
+    expect(written.length).toBeLessThan(core.length);
+    expect(written.toString('utf8').trimEnd().split('\n')).toHaveLength(1);
+    expect(written.toString('utf8')).not.toContain('// é');
+    expect(manifest.assets[name].integrity).toBe(`sha384-${createHash('sha384').update(written).digest('base64')}`);
+    expect(manifest.assets[name].immutable).toBe(true);
+    // Still a script forma-server will inline as it is.
+    expect(written.toString('utf8').toLowerCase()).not.toContain('</script');
+    expect(written.toString('utf8')).not.toContain('<!--');
+    expect(written.includes(13)).toBe(false);
+    expect(written.includes(0)).toBe(false);
     // Never core's file of the target's name, the CDN alias that auto-mounts.
     expect(written.toString('utf8')).not.toBe(CDN_ALIAS);
     // Only under its hashed name: no unhashed copy, and no route loads it.
@@ -205,6 +220,42 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     expect(manifest.routes['/'].js).toEqual([result.manifest.aliases['app.js']]);
     expect(logs.join('\n')).toContain('Preview frame runtime: forma-runtime.js from @getforma/core 2.1.0');
     expect(logs.join('\n')).toContain('the core the bundles import');
+    expect(logs.join('\n')).toContain(`minified ${core.length.toLocaleString('en-US')} -> ${written.length.toLocaleString('en-US')} B`);
+  }, 30_000);
+
+  it('the minified runtime does what core\'s does, and two builds write the same bytes', async () => {
+    const first = fixture({});
+    const result = await build({ ...first.config, previewFrame: true });
+    const written = readFileSync(join(first.dist, result.manifest.aliases['forma-runtime.js']!));
+    // Both run as a classic script in a window of their own, and leave the same state in it.
+    const ran = (code: string) => {
+      const window: Record<string, unknown> = {};
+      runInNewContext(code, { window });
+      return window.__formaFrame;
+    };
+    expect(ran(written.toString('utf8'))).toEqual(ran(frameOf('APP')));
+    expect(ran(written.toString('utf8'))).toEqual(['</script> written escaped, and <!- not a comment', 'FRAME_APP']);
+
+    const second = fixture({});
+    const again = await build({ ...second.config, previewFrame: true });
+    expect(again.manifest.aliases['forma-runtime.js']).toBe(result.manifest.aliases['forma-runtime.js']);
+    expect(readFileSync(join(second.dist, again.manifest.aliases['forma-runtime.js']!)).equals(written)).toBe(true);
+  }, 30_000);
+
+  it('BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was', async () => {
+    const good = fixture({});
+    await build(good.config);
+    const before = snapshot(good.dist);
+    const bad = fixture({ frame: 'window.__formaFrame = (;\n' });
+    const error = await refusal({ ...bad.config, previewFrame: true });
+    expect(error.message).toMatch(/^@getforma\/build: BUILD-823 /);
+    expect(error.message).toContain('dist/formajs-frame.global.js');
+    expect(error.diagnostics).toHaveLength(1);
+    expect(error.diagnostics![0]).toMatchObject({ code: 'BUILD-823', severity: 'error', page: '' });
+    // Before anything is written: no output directory, nothing beside it.
+    expect(existsSync(bad.dist)).toBe(false);
+    expect(readdirSync(bad.root).sort()).toEqual(['node_modules', 'package.json', 'src']);
+    expect(snapshot(good.dist)).toEqual(before);
   }, 30_000);
 
   it('the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker\'s immutable list', async () => {
@@ -221,17 +272,20 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
   }, 30_000);
 
   it('the size report carries a frame-document row: the inlined runtime in raw, gzip -9 and Brotli bytes, printed and written, and no row when previewFrame is off (FORMA-190)', async () => {
-    const { dist, config } = fixture({});
+    const { dist, frameFile, config } = fixture({});
     const result = await build({ ...config, previewFrame: true });
     const file = result.manifest.aliases['forma-runtime.js']!;
     const bytes = readFileSync(join(dist, file));
-    const row = { file, raw: bytes.length, gzip: gzipSync(bytes, { level: 9 }).length, brotli: brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length };
+    // The served bytes (minified), with core's file beside them for the comparison.
+    const coreLength = readFileSync(frameFile).length;
+    expect(bytes.length).toBeLessThan(coreLength);
+    const row = { file, raw: bytes.length, gzip: gzipSync(bytes, { level: 9 }).length, brotli: brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length, sourceRaw: coreLength };
     expect(result.sizeReport.frame).toEqual(row);
     // The runtime is the frame document's, not a route's: no route lists it or counts its bytes.
     for (const each of result.sizes) expect(each.files.map(entry => entry.file)).not.toContain(file);
     // Printed in the report, and written to the file beside the manifest.
     const printed = logs.join('\n');
-    expect(printed).toContain(`Frame document   ${file}  ${row.raw.toLocaleString('en-US')} B raw, ${row.gzip.toLocaleString('en-US')} B gzip, ${row.brotli.toLocaleString('en-US')} B Brotli`);
+    expect(printed).toContain(`Frame document   ${file}  ${row.raw.toLocaleString('en-US')} B raw (core's file: ${row.sourceRaw.toLocaleString('en-US')} B), ${row.gzip.toLocaleString('en-US')} B gzip, ${row.brotli.toLocaleString('en-US')} B Brotli`);
     expect(JSON.parse(readFileSync(join(dist, 'size-report.json'), 'utf8')).frame).toEqual(row);
 
     // Off, the report names no frame.
@@ -319,7 +373,7 @@ describe('previewFrame: core\'s frame runtime as the manifest\'s forma-runtime.j
     const error = await refusal({ ...config, previewFrame: true });
     expect(error.message).toMatch(/^@getforma\/build: BUILD-806 /);
     expect(error.message).toMatch(reason);
-    expect(error.message).toContain('https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md');
+    expect(error.message).toContain('https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md');
     // The core as esbuild found it: its real path.
     expect(error.diagnostics![0]).toMatchObject({ code: 'BUILD-806', severity: 'error', file: realpathSync(frameFile) });
     expect(snapshot(dist)).toEqual(good);

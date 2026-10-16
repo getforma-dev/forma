@@ -941,11 +941,15 @@ fn walk_range_impl(
                     let value = match slots.get(slot_id) {
                         // An HTML boolean attribute is ON whenever it is
                         // present, so the old `disabled="false"` meant
-                        // DISABLED. Absent for false/null, bare for true —
-                        // byte-for-byte what `renderAttr` in @getforma/core
-                        // produces for the same value.
+                        // DISABLED: scalar truthiness selects presence. Any
+                        // other attribute takes the word `h()` writes for
+                        // true, `data-live="true"` (FORMA-182 finding F2,
+                        // docs/parity-rules.md rule 6's attribute table).
                         SlotValue::Bool(false) | SlotValue::Null => None,
-                        SlotValue::Bool(true) => Some(AttrValue::Bare),
+                        other if is_html_boolean_attribute(attr_name) => {
+                            other.as_bool().then_some(AttrValue::Bare)
+                        }
+                        SlotValue::Bool(true) => Some(AttrValue::Valued("true")),
                         other => {
                             text = other.to_text();
                             // An empty string is a value, not an absence:
@@ -1550,9 +1554,9 @@ fn bounded_offset(base: usize, len: usize, limit: usize) -> Result<usize, IrErro
 /// the escapers), so a string-table entry used as a tag name — `div onload=x`
 /// — or as an attribute key — `x"><script` — is direct markup injection. The
 /// accepted class is `[A-Za-z_:][-A-Za-z0-9_:.]*`, byte-identical to
-/// formajs's `isSafeAttrName`/`isSafeTagName`, and covers every valid HTML,
-/// SVG and custom-element name (`data-*`, `aria-*`, `xlink:href`, `viewBox`,
-/// dotted component names).
+/// core's `isSafeAttrName`/`isSafeTagName`. This deliberately admits an ASCII
+/// subset (`data-*`, `aria-*`, `xlink:href`, `viewBox`, dotted names); the DOM
+/// accepting a Unicode name does not expand this contract (docs/INV1.md).
 fn is_valid_name(name: &str) -> bool {
     let mut chars = name.chars();
     match chars.next() {
@@ -1560,6 +1564,15 @@ fn is_valid_name(name: &str) -> bool {
         _ => return false,
     }
     chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.'))
+}
+
+/// Attribute names also satisfy the qualified-name requirement of core's
+/// xlink setAttributeNS writer. Tag-name admission remains unchanged.
+fn is_valid_attr_name(name: &str) -> bool {
+    is_valid_name(name)
+        && name
+            .strip_prefix("xlink:")
+            .map_or(true, |local| is_valid_name(local) && !local.contains(':'))
 }
 
 /// True for any `on…` event-handler attribute name (case-insensitive).
@@ -1603,8 +1616,8 @@ fn is_url_attr(name: &str) -> bool {
 ///
 /// Browsers strip ASCII whitespace and C0/C1 control characters out of a URL
 /// before resolving its scheme, so `java\tscript:alert(1)` executes even
-/// though a naive prefix test does not match it. The value is normalized the
-/// same way before testing — byte-identical to formajs's `isDangerousUrl`, so
+/// though a naive prefix test does not match it. Forma uses a conservative
+/// classification transform, shared with core's `isDangerousUrl`, so
 /// the server emits exactly what the client would have produced.
 fn is_dangerous_url(value: &str, tag: &str) -> bool {
     // A NUL anywhere in a URL attribute value is refused outright (FORMA-182
@@ -1659,6 +1672,39 @@ enum AttrValue<'a> {
     Valued(&'a str),
 }
 
+/// Core's HTML boolean attribute set (`BOOLEAN_ATTRS` in
+/// packages/core/src/dom/element.ts): the attributes a `true` writes bare.
+/// Matched as written, as core matches its prop keys.
+/// Verified by: crates/forma-ir/src/walker.rs > "rule_6_attribute_values_follow_one_table"
+const HTML_BOOLEAN_ATTRIBUTES: [&str; 22] = [
+    "async",
+    "autofocus",
+    "autoplay",
+    "checked",
+    "controls",
+    "default",
+    "defer",
+    "disabled",
+    "formnovalidate",
+    "hidden",
+    "ismap",
+    "loop",
+    "multiple",
+    "muted",
+    "nomodule",
+    "novalidate",
+    "open",
+    "playsinline",
+    "readonly",
+    "required",
+    "reversed",
+    "selected",
+];
+
+fn is_html_boolean_attribute(name: &str) -> bool {
+    HTML_BOOLEAN_ATTRIBUTES.contains(&name)
+}
+
 /// Emit one attribute, dropping it entirely if it is unsafe.
 ///
 /// Dropping (rather than emitting an empty value) is what the client does:
@@ -1672,7 +1718,7 @@ fn emit_attr(
     val: AttrValue<'_>,
     limit: usize,
 ) -> Result<(), IrError> {
-    if !is_valid_name(key) {
+    if !is_valid_attr_name(key) {
         // Skip silently (matching the walker's existing convention for
         // malformed attribute operands) rather than failing the whole page
         // for one bad key.
@@ -2068,7 +2114,10 @@ fn consume_control_attr(state: &mut WalkState, key: &str, prop: Prop<'_>) -> boo
                 true
             }
             "multiple" => {
-                *multiple |= prop.is_written();
+                *multiple |= match prop {
+                    Prop::Static(_) => true,
+                    Prop::Slot(value) => value.as_bool(),
+                };
                 false
             }
             _ => false,
@@ -2724,22 +2773,22 @@ mod tests {
     }
 
     #[test]
-    fn dyn_attr_empty_string_is_a_value_not_an_absence() {
-        // `renderAttr(key, "")` emits `key=""`, and the client hydrating the
-        // same slot calls setAttribute(key, "") — dropping the attribute here
-        // is a real DOM difference on the common `value=""` / `alt=""` case.
+    fn dyn_attr_empty_string_and_zero_follow_boolean_presence() {
+        // The original expected ordinary value semantics on `disabled`.
+        // Its exact source is archived with the FORMA-182 review evidence.
+        // Ordinary empty values remain covered by attributes.json.
         assert_eq!(
             walk_dyn_attr_with(SlotValue::Text(String::new())),
-            "<input disabled=\"\">"
+            "<input>"
         );
         assert_eq!(
             walk_dyn_attr_with(SlotValue::Text("yes".into())),
-            "<input disabled=\"yes\">"
+            "<input disabled>"
         );
-        // Numbers stringify, they do not vanish: 0 is a value.
+        assert_eq!(walk_dyn_attr_with(SlotValue::Number(0.0)), "<input>");
         assert_eq!(
-            walk_dyn_attr_with(SlotValue::Number(0.0)),
-            "<input disabled=\"0\">"
+            walk_dyn_attr_with(SlotValue::Number(1.0)),
+            "<input disabled>"
         );
     }
 
@@ -5650,9 +5699,17 @@ mod tests {
         // select is single and an array value is `String(array)`, "a,c",
         // which matches none of these options. True writes it, and the
         // array then selects each member.
-        for (multiple, attr, chosen) in [(false, "", false), (true, " multiple", true)] {
+        for (multiple, attr, chosen) in [
+            (SlotValue::Bool(false), "", false),
+            (SlotValue::Bool(true), " multiple", true),
+            (SlotValue::Text(String::new()), "", false),
+            (SlotValue::Number(0.0), "", false),
+            (SlotValue::Number(-0.0), "", false),
+            (SlotValue::Text("false".into()), " multiple", true),
+            (SlotValue::Number(1.0), " multiple", true),
+        ] {
             let mut page = Page::new();
-            let flag = page.slot(SlotValue::Bool(multiple));
+            let flag = page.slot(multiple.clone());
             let v = page.slot(SlotValue::array(vec![text("a"), text("c")]));
             page.open("select", &[])
                 .dyn_attr("multiple", flag)
@@ -5671,7 +5728,7 @@ mod tests {
                     option("b", "Banana", false),
                     option("c", "Cherry", chosen)
                 ),
-                "multiple {multiple}"
+                "multiple {multiple:?}"
             );
         }
     }
@@ -6627,6 +6684,143 @@ mod tests {
         }
     }
 
+    // FORMA-140: both languages read this same finite INV1 specification.
+    mod inv1_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        #[test]
+        fn names_and_urls_agree_for_static_and_dynamic_attributes() {
+            let vectors: Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/inv1.json")).unwrap();
+            let mut failures = Vec::new();
+            for (section, tag, value) in [("names", "div", "value"), ("urls", "", "")] {
+                for case in vectors[section].as_array().unwrap() {
+                    let name = case["name"].as_str().unwrap();
+                    let tag = case["tag"].as_str().unwrap_or(tag);
+                    let value = case["value"].as_str().unwrap_or(value);
+                    let written = case["written"].as_bool().unwrap();
+                    if section == "names" {
+                        assert_eq!(
+                            is_valid_attr_name(name),
+                            case["valid"].as_bool().unwrap(),
+                            "{}",
+                            case["id"]
+                        );
+                    }
+                    let mut escaped = String::new();
+                    push_escaped_attr(&mut escaped, value, usize::MAX).unwrap();
+                    let attribute = if written {
+                        format!(" {name}=\"{escaped}\"")
+                    } else {
+                        String::new()
+                    };
+                    let want = format!("<{tag} id=\"ok\"{attribute}></{tag}>");
+                    let mut static_page = Page::new();
+                    static_page
+                        .open(tag, &[("id", "ok"), (name, value)])
+                        .close(tag);
+                    let mut dynamic_page = Page::new();
+                    let slot = dynamic_page.slot(SlotValue::Text(value.to_string()));
+                    dynamic_page
+                        .open(tag, &[("id", "ok")])
+                        .dyn_attr(name, slot)
+                        .close(tag);
+                    for (writer, actual) in [
+                        ("static", static_page.render()),
+                        ("dynamic", dynamic_page.render()),
+                    ] {
+                        // Static OPEN_TAG uses the bare spelling for an empty
+                        // value; DYN_ATTR uses ="". Both parse to the same DOM.
+                        let expected = if writer == "static" && written && value.is_empty() {
+                            format!("<{tag} id=\"ok\" {name}></{tag}>")
+                        } else {
+                            want.clone()
+                        };
+                        if actual != expected {
+                            failures.push(format!(
+                                "{} {writer}: {actual:?} != {expected:?}",
+                                case["id"]
+                            ));
+                        }
+                    }
+                }
+            }
+            let names: Vec<_> = vectors["urlAttributes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect();
+            assert_eq!(names, URL_ATTRS);
+            assert!(failures.is_empty(), "{}", failures.join("\n"));
+        }
+
+        #[test]
+        fn ordinary_payloads_are_escaped_in_both_output_contexts() {
+            let vectors: Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/inv1.json")).unwrap();
+            for payload in vectors["payloads"].as_array().unwrap() {
+                let text = payload["text"].as_str().unwrap();
+                let attr = payload["attribute"].as_str().unwrap();
+                let payload = payload["value"].as_str().unwrap();
+                let mut page = Page::new();
+                page.open("p", &[("title", payload)])
+                    .text(payload)
+                    .close("p");
+                let html = page.render();
+                assert!(!html.contains("<script"));
+                assert!(!html.contains("<img"));
+                assert!(!html.contains("</textarea>"));
+                assert_eq!(html, format!("<p title=\"{attr}\">{text}</p>"));
+            }
+        }
+    }
+
+    // -- FORMA-016 F5: a conditional branch that is a scalar -----------------
+    //
+    // The shared vectors (`show-text-branch.json`) are read here and by
+    // @getforma/core's suite, so the bytes the walker writes for a branch
+    // that is a DYN_TEXT and the text core's createShow writes for a branch
+    // that returns a string or a number cannot drift apart.
+    mod show_text_branch_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const VECTORS: &str = include_str!("../tests/fixtures/parity/show-text-branch.json");
+
+        #[test]
+        fn a_dyn_text_branch_is_written_between_the_conditional_markers() {
+            let all: Value = serde_json::from_str(VECTORS).unwrap();
+            let mut failures = Vec::new();
+            let mut walked = 0;
+            for case in all["values"].as_array().unwrap() {
+                if case["clientOnly"].as_bool() == Some(true) {
+                    continue;
+                }
+                walked += 1;
+                let id = case["id"].as_str().unwrap();
+                let mut page = Page::new();
+                let shown = page.slot(SlotValue::Bool(true));
+                let value = page.slot(crate::slot::json_to_slot_value(&case["value"]));
+                page.show_if(
+                    shown,
+                    |p| {
+                        p.dyn_text(value);
+                    },
+                    |_| {},
+                );
+                let want = format!("<!--f:s0-->{}<!--/f:s0-->", case["html"].as_str().unwrap());
+                let got = page.render();
+                if got != want {
+                    failures.push(format!("{id}: expected {want:?}, walker wrote {got:?}"));
+                }
+            }
+            assert!(walked >= 9, "the vectors were not read");
+            assert!(failures.is_empty(), "{}", failures.join("\n"));
+        }
+    }
+
     // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
     //
     // One JSON file per rule under tests/fixtures/parity/, each read by this
@@ -6643,6 +6837,7 @@ mod tests {
         const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
         const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
         const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
+        const ATTRIBUTES: &str = include_str!("../tests/fixtures/parity/attributes.json");
 
         fn cases(file: &str, section: &str) -> Vec<Value> {
             let all: Value = serde_json::from_str(file).unwrap();
@@ -6867,11 +7062,11 @@ mod tests {
         }
 
         #[test]
-        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_attributes_follow_presence() {
+        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range() {
             // The build error itself is the compiler's (BUILD-614). What the
             // walker writes for the admitted `String(flag)` is DYN_TEXT on the
-            // boolean slot, and an attribute bound to a boolean is bare or
-            // absent.
+            // boolean slot. An attribute bound to a boolean follows rule 6's
+            // attribute table, read by rule_6_attribute_values_follow_one_table.
             let mut failures = Vec::new();
             for case in cases(BOOLEAN_TEXT, "nearMissText") {
                 let (id, expected) = (field(&case, "id"), field(&case, "expected"));
@@ -6904,28 +7099,51 @@ mod tests {
                     &format!("<p>{}</p>", marker(slot, expected)),
                 );
             }
-            // The same attributes core's suite and the three-engine replay
-            // check: a boolean attribute and `class`.
-            for case in cases(BOOLEAN_TEXT, "attribute") {
-                let id = field(&case, "id");
-                let value = case["value"].as_bool().unwrap();
-                let present = case["present"].as_bool().unwrap();
-                for attribute in ["disabled", "class"] {
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_attribute_values_follow_one_table() {
+            // Findings F2 and F3: presence only for the HTML boolean set; any
+            // other attribute is the value's string, `true` the word and `""`
+            // a value; false and Null omit it.
+            let mut failures = Vec::new();
+            for case in cases(ATTRIBUTES, "values") {
+                let (id, attribute, html) = (
+                    field(&case, "id"),
+                    field(&case, "attribute"),
+                    field(&case, "html"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(slot_value(&case["value"]));
+                page.open("input", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("input");
+                check(
+                    &mut failures,
+                    &format!("attributes/values/{id}"),
+                    &page.render(),
+                    &format!("<input id=\"ok\"{html}></input>"),
+                );
+            }
+            // The walker's boolean set is the vector's: each member is bare for
+            // true, and a name beside each (its `data-` twin) is the word.
+            for name in cases(ATTRIBUTES, "booleanAttributes") {
+                let name = name.as_str().unwrap();
+                for (attribute, want) in [
+                    (name.to_string(), format!(" {name}")),
+                    (format!("data-{name}"), format!(" data-{name}=\"true\"")),
+                ] {
                     let mut page = Page::new();
-                    let slot = page.slot(SlotValue::Bool(value));
+                    let slot = page.slot(SlotValue::Bool(true));
                     page.open("input", &[("id", "ok")])
-                        .dyn_attr(attribute, slot)
+                        .dyn_attr(&attribute, slot)
                         .close("input");
-                    let want = if present {
-                        format!("<input id=\"ok\" {attribute}></input>")
-                    } else {
-                        "<input id=\"ok\"></input>".to_string()
-                    };
                     check(
                         &mut failures,
-                        &format!("boolean-text/attribute/{id} {attribute}"),
+                        &format!("attributes/booleanAttributes/{attribute}"),
                         &page.render(),
-                        &want,
+                        &format!("<input id=\"ok\"{want}></input>"),
                     );
                 }
             }

@@ -1,0 +1,64 @@
+{
+  "files": {
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.ir": {
+      "archived": "js-emitter/dynamic-attrs.ir",
+      "before": {
+        "bytes": 697,
+        "sha256": "5c527dbae77508965d523b9db659c9563b47a243ce6d2c63996c5c767dfa81bd"
+      },
+      "after": {
+        "bytes": 700,
+        "sha256": "ce269a921cec1c11cff90687d90756f0aebbb8146b09dc08538a7ae1dcdf5405"
+      },
+      "change": "F3: `value: () => query()` with query defaulting to '' is a static value=\"\" instead of a DYN_ATTR over the query slot"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.dump": {
+      "archived": "js-emitter/dynamic-attrs.dump",
+      "before": {
+        "bytes": 1559,
+        "sha256": "a96ed6d8879e5aa21b05b1d2d4a6df0b97bc2c3020976f11540a61d1b47c4773"
+      },
+      "after": {
+        "bytes": 1565,
+        "sha256": "0e1975a03912bcb17769d29616f14ab6ff65497cd95b3a314146d8ed48385933"
+      },
+      "change": "F3: the canonical dump of the regenerated module"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.html": {
+      "archived": "js-emitter/dynamic-attrs.html",
+      "before": {
+        "bytes": 1305,
+        "sha256": "5a3defb5e64931e777fa7203d1e5cfefd33307b994156bef88aaca30af887043"
+      },
+      "after": {
+        "bytes": 1284,
+        "sha256": "95de660efb9524f64d486f5859da6588fc96bcfb52ee3d70f9f933291d4bfdbd"
+      },
+      "change": "F3: every @page section serves value (empty) where it dropped it or filled the query slot"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/jsx-page.html": {
+      "archived": "js-emitter/jsx-page.html",
+      "before": {
+        "bytes": 1912,
+        "sha256": "b85ba94c5f54104c498a19045ccc71f72132d41090c292095a02a6638f4f44e2"
+      },
+      "after": {
+        "bytes": 1940,
+        "sha256": "36f54a6d0e5ccfa974e8246c84c223d6a9cbdb1825defae065c396a1d2455dc5"
+      },
+      "change": "F2: data-live=\"true\" where the walker wrote the bare name"
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.html": {
+      "archived": "js-emitter/sub-component-scopes.html",
+      "before": {
+        "bytes": 1527,
+        "sha256": "a737db33c0550c1e475c17345d449e6071a0f48778204ca0695e4685afa9e8be"
+      },
+      "after": {
+        "bytes": 1548,
+        "sha256": "8a7e6933f4f65de0f728a1ec5e2e4285c7910cc7c2e5541bef817c5d38a721d4"
+      },
+      "change": "F2: data-ready=\"true\" where the walker wrote the bare name"
+    }
+  }
+}

@@ -34,6 +34,7 @@ import { splitGraph, type SplitGraph } from './split-graph.js';
 import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } from './entry-products.js';
 import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
 import { computeIdentity, DEV_IDENTITY, identityBanner, type IdentityFile } from './identity.js';
+import { readPreviousDist, retainFrom, type PreviousRelease } from './retention.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
 import { REPORT_CEILINGS, formatSizeReport, frameSize, routeSizeFailure, routeSizes, serializeSizeReport, workerSize, type BuildTimes, type SizeReport } from './route-size.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
@@ -79,6 +80,20 @@ async function withoutIrChatter<T>(run: () => Promise<T>): Promise<T> {
   finally {
     if (--quietPasses === 0) { console.log = consoleOriginals!.log; console.warn = consoleOriginals!.warn; consoleOriginals = undefined; }
   }
+}
+
+/**
+ * `FORMA_SECURITY_RELEASE`, read as FORMA_STRICT is, but case-insensitive and trimmed:
+ * `1` or `true` marks the release; unset, empty, `0` or `false` leaves it unmarked; any
+ * other value fails the build (BUILD-822). A mark that fails open (`yes` read as off)
+ * would retain the revoked build's assets in a release that exists to remove them.
+ * Verified by: packages/build/tests/retention.test.ts > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT is read, and refuses any other value (BUILD-822)"
+ */
+function securityFromEnvironment(raw: string | undefined): boolean {
+  const value = raw?.trim().toLowerCase();
+  if (value === undefined || value === '' || value === '0' || value === 'false') return false;
+  if (value === '1' || value === 'true') return true;
+  throw new Error(`BUILD-822 FORMA_SECURITY_RELEASE is ${JSON.stringify(raw)}: set it to 1 or true to mark a release that fixes a vulnerability, or unset it (0 and false also leave it unmarked)`);
 }
 
 /** Hash a file and return an 8-char hex prefix. */
@@ -321,6 +336,18 @@ function validateConfig(config: BuildConfig): void {
     problems.push(
       `previewFrame is ${shown(previewFrame)}: use true to copy @getforma/core's preview-frame runtime, or false (the default)`,
     );
+  }
+
+  // The previous release and the security mark (FORMA-186): a JavaScript config is not
+  // type checked, and `security: 'false'` would otherwise mark a release.
+  // Verified by: packages/build/tests/retention.test.ts > "is checked as configuration: a path, and a boolean mark"
+  const previousDist: unknown = config.previousDist;
+  if (previousDist !== undefined && (typeof previousDist !== 'string' || previousDist === '')) {
+    problems.push(`previousDist is ${shown(previousDist)}: use the path of the previous release's dist/, or leave it out for a first deploy`);
+  }
+  const security: unknown = config.security;
+  if (security !== undefined && typeof security !== 'boolean') {
+    problems.push(`security is ${shown(security)}: use true to mark a release that fixes a vulnerability, or false`);
   }
 
   for (const entry of config.entryPoints) {
@@ -583,9 +610,23 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   // Validate before anything is written: a config error must not touch the
   // previous build's output on its way to failing.
   validateConfig(userConfig);
-  // `strict` from the config, else FORMA_STRICT (FORMA-119).
+  // 3.0 strict-only publication; validate legacy flag spelling.
   const project = process.cwd();
-  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app) };
+  // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
+  // a `false` in the configuration does not unmark it: the mark can only be forgotten safely.
+  const environmentSecurity = securityFromEnvironment(process.env.FORMA_SECURITY_RELEASE);
+  const security = userConfig.security === true || environmentSecurity;
+  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app), security };
+  // The previous release is read and checked before anything is bundled or written, so a wrong
+  // path fails at once (BUILD-820). Watch mode and a security release never read it.
+  // Verified by: packages/build/tests/retention.test.ts > "is ignored by watch mode, which is a development build"
+  // Verified by: packages/build/tests/retention.test.ts > "with %s, a previous dist is ignored: no retained entry and a dist holding only its own files"
+  let previous: PreviousRelease | undefined;
+  if (config.previousDist !== undefined) {
+    if (config.watch) console.log('   previousDist is ignored in watch mode: a development build retains nothing');
+    else if (security) console.log('   Security release: the previous dist is ignored and nothing is retained (L-16, SR45)');
+    else previous = readPreviousDist(config.previousDist, config.outputDir, config.app!);
+  } else if (security && !config.watch) console.log('   Security release: nothing is retained (L-16, SR45)');
   let compiler: typeof import('@getforma/compiler') | undefined;
   try { compiler = await import('@getforma/compiler'); }
   catch (error) {
@@ -624,7 +665,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   const staging = createStagingDirectory(config.outputDir);
   let result: BuildResult;
   try {
-    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame, compiler, compatibility);
+    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame, compiler, compatibility, previous);
   } catch (err) {
     rmSync(staging, { recursive: true, force: true });
     throw err;
@@ -641,7 +682,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
  * the preview frame's runtime, already read and checked, when `previewFrame`
  * is on.
  */
-async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRuntime | undefined, compiler: typeof import('@getforma/compiler') | undefined, compatibility: () => void): Promise<BuildResult> {
+async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRuntime | undefined, compiler: typeof import('@getforma/compiler') | undefined, compatibility: () => void, previous?: PreviousRelease): Promise<BuildResult> {
   const distDir = config.outputDir;
   const createdDir = !existsSync(distDir);
 
@@ -676,7 +717,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const target = join(distDir, FRAME_RUNTIME_ASSET);
       if (config.watch) writeFileAtomic(target, frame.bytes);
       else writeFileSync(target, frame.bytes);
-      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}`);
+      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}${frame.minified ? `; minified ${frame.sourceBytes.toLocaleString('en-US')} -> ${frame.bytes.length.toLocaleString('en-US')} B` : ''}`);
     }
     // The dev manifest names it as itself, as it names every watched asset.
     const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
@@ -688,9 +729,8 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
 
     // ── Lazy-load SSR plugin only when needed ─────────────────────────
     let formaSsrPlugin: SsrPluginFactory | undefined;
-    // Every page's coded diagnostics (FORMA-119). A production build applies
-    // --strict itself, once every page is compiled, so the failure lists all
-    // of them; watch mode hands it to each page's plugin.
+    // Every page refuses unsupported native contracts. Production waits for
+    // every entry before returning the aggregate diagnostic report.
     const strict = config.strict === true;
     const collector = new DiagnosticsCollector(strict, config.entryPoints.map((entry) => basename(entry.outfile, '.js')));
     const pluginShared: SsrPluginShared = {
@@ -987,21 +1027,19 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     duplicateCore = duplicateCoreDiagnostic(metafiles);
     if (duplicateCore) console.warn(`${duplicateCore.code}: ${duplicateCore.message}`);
 
-    // ── SSR diagnostics: the JSON report, then strict mode ────────────
-    // Every page is compiled by now, so a strict failure names them all.
+    // ── SSR diagnostics: the JSON report, then publication refusal ─────
+    // Every page is compiled by now, so the aggregate failure names them all.
     const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
     if (config.diagnosticsJson) {
       const written = writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
       console.log(`   SSR diagnostics written: ${written} (${diagnostics.length})`);
     }
-    // Wait for every entry before removing staging or writing the report. A
-    // mandatory compiler refusal stays fatal even when strict mode is off.
+    // Every entry has completed. Report all source diagnostics before a
+    // bundler failure so strict-only publication never hides later pages.
+    const errors = collector.errors();
+    if (errors.length > 0) throw strictFailure(errors);
     if (buildFailures.length) throw buildFailures[0];
     if (firstPassFailure) throw firstPassFailure;
-    if (strict) {
-      const errors = collector.errors();
-      if (errors.length > 0) throw strictFailure(errors);
-    }
 
     mark('bundle');
 
@@ -1010,6 +1048,18 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     printBundleSummary(metafiles, assets, shownDir);
     console.log(`   ${Object.keys(assets).length} assets hashed`);
     mark('hash');
+
+    // ── Retention (FORMA-186, DR-29, L-25) ────────────────────────────
+    // The previous release's own hashed assets, copied into staging after this
+    // build's are hashed and before anything is compressed, so they get the same
+    // compressed siblings and the same manifest metadata, flagged. A failure
+    // here leaves the existing output as it was, like any other.
+    let retained: ReadonlySet<string> = new Set();
+    if (previous) {
+      if (previous.note) console.log(`   ${previous.note}`);
+      retained = retainFrom(previous, distDir).retained;
+      if (!previous.note) console.log(`   ${retained.size} files retained from the previous release (build ${previous.build.slice(0, 12)}...)`);
+    }
 
     // ── Compression ───────────────────────────────────────────────────
     // The preview frame's runtime is inlined by forma-server, never fetched:
@@ -1020,7 +1070,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     mark('compress');
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings, classes } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products, identity);
+    const { manifest, warnings, classes } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products, identity, retained);
     if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
     mark('manifest');
 
@@ -1046,7 +1096,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       ceilings: REPORT_CEILINGS,
       routes: sizes,
       worker,
-      ...(frameFile ? { frame: frameSize(frameFile, distDir) } : {}),
+      ...(frameFile && frame ? { frame: frameSize(frameFile, distDir, frame.sourceBytes) } : {}),
       times,
     };
     console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);

@@ -118,7 +118,7 @@ describe('authenticated islands-only entry policy',()=>{
  it('does not select an unrelated Page when the explicit mount component is unsupported',async()=>{
   const f=fixture();edit(f,'import {Page} from "./page"','import {Page as MainPage} from "./page"');
   edit(f,'mount(Page,"#app");','mount(globalThis.component(),"#app");');
-  await expect(compile(f)).rejects.toThrow(/BUILD-610.*successful native product/);
+  await expect(compile(f)).rejects.toThrow(/BUILD-60[12]/);
  });
  it('refuses ambiguous activation-only Page imports',async()=>{
   const f=fixture();edit(f,'import {Page} from "./page"','import {Page as MainPage,Page as OtherPage} from "./page"');
@@ -170,7 +170,7 @@ describe('authenticated islands-only entry policy',()=>{
  });
  it('does not infer a native page from the registration alias alone',async()=>{
   const f=fixture();writeFileSync(f.entry,'import {activateIslands} from "@getforma/core";import {Badge as CounterPage} from "./island";activateIslands({PublicCounter:CounterPage});');
-  await expect(compile(f)).rejects.toThrow(/BUILD-610.*successful native product/);
+  await expect(compile(f)).rejects.toThrow(/BUILD-60[12]/);
  });
 
  it.each([

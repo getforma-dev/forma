@@ -17,6 +17,7 @@ import {
   isDangerousUrl,
   isEventHandlerAttr,
   isRawHtmlAttr,
+  isSafeAttrName,
   isUnsafeAttrWrite,
   isUrlAttr,
 } from '../security/url-safety.js';
@@ -157,11 +158,15 @@ const MATHML_TAGS = new Set([
   'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'semantics', 'mglyph', 'malignmark',
 ]);
 
-// ---------------------------------------------------------------------------
-// Boolean HTML attributes (set/remove via setAttribute/removeAttribute)
-// ---------------------------------------------------------------------------
-
-const BOOLEAN_ATTRS = new Set([
+/**
+ * The HTML boolean attributes: the ones a `true` writes bare and a `false`
+ * removes (FORMA-182 rule 6's attribute table, docs/parity-rules.md). Every
+ * other attribute is written as the value's string, `true` as "true". The
+ * walker's HTML_BOOLEAN_ATTRIBUTES is the same list, and both suites read it
+ * from crates/forma-ir/tests/fixtures/parity/attributes.json.
+ * Verified by: src/dom/__tests__/value-rule-6-attributes.test.ts > "%s is presence on every writer; its data- twin is the word"
+ */
+export const BOOLEAN_ATTRS: ReadonlySet<string> = new Set([
   'disabled',
   'checked',
   'readonly',
@@ -310,16 +315,15 @@ function innerHtmlOf(value: unknown): unknown {
 }
 
 /**
- * Handle class / className prop. The value follows the attribute presence
- * table of the value rules (docs/parity-rules.md, rules 5 and 6): null,
- * undefined and false remove the attribute (the walker omits a DYN_ATTR whose
- * slot is Null or false), true is the bare attribute, anything else its string
- * under rule 1.
+ * Handle class / className prop. The value follows the attribute table of the
+ * value rules (docs/parity-rules.md, rules 5 and 6): null, undefined and false
+ * remove the attribute (the walker omits a DYN_ATTR whose slot is Null or
+ * false); anything else, `true` included, is its string under rule 1.
  * Verified by: src/dom/__tests__/value-rule-5-null.test.ts > "$id: a null or undefined attribute is absent, static, reactive and on adoption, and a later null removes it"
  */
 function handleClass(el: Element, _key: string, value: unknown): void {
   const write = (raw: unknown): void => {
-    const v = raw == null || raw === false ? null : raw === true ? '' : normalizeDomText(String(raw));
+    const v = raw == null || raw === false ? null : normalizeDomText(String(raw));
     const cache = getCache(el);
     if (cache['class'] === v) return;
     cache['class'] = v;
@@ -745,7 +749,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   if (value == null || value === false) return;
 
   if (key === 'class' || key === 'className') {
-    const v = value === true ? '' : normalizeDomText(String(value));
+    const v = normalizeDomText(String(value));
     if (el instanceof HTMLElement) {
       el.className = v;
     } else {
@@ -797,11 +801,8 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   }
   checkRawAttr(key, value);
 
-  // true → empty string attribute, else stringified value
-  if (value === true) {
-    el.setAttribute(key, '');
-    return;
-  }
+  // `true` is the word "true" off the boolean set (rule 6's attribute table,
+  // docs/parity-rules.md: the walker writes the same), else the value's string.
   const raw = String(value), strVal = normalizeDomText(raw);
   if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {
     if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
@@ -1069,7 +1070,7 @@ export function fillElement<E extends Element>(
   if (props) {
     let hasDynamic = false;
     for (const key in props) {
-      if (key === 'ref') continue;
+      if (key === 'ref' || !isSafeAttrName(key)) continue;
       const value = props[key];
 
       // A select cannot select an option until its children exist, and input

@@ -1,5 +1,5 @@
 import { h, mount, createSignal, createShow, createList, activateIslands, browserOnly, createErrorBoundary, createSwitch, createPortal, createSuspense } from '@getforma/core';
-const todos = () => [{ id: 1, title: 'a' }];
+const [todos] = createSignal([{ id: 1, title: 'a' }, { id: 2, title: 'b' }]);
 
 mount(() => (
   <main>

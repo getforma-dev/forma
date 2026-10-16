@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Attribute values — FORMA-182
+
+- Pages render through forma-ir's attribute table (rule 6, finding F2): a `true` on a non-boolean attribute is written as `name="true"` (`tests/typed_pages.rs` asserts `data-enabled="true"` on a keyed row where it asserted the bare name).
+
 ### The build's size report is not served — FORMA-190
 
 - `serve_asset` refuses `size-report.json` (404), as it refuses `manifest.json`: `@getforma/build` 3.0 writes the report beside the manifest, in the directory an application embeds, and it lists every route with its class, ceilings and bytes. The report is not an asset, and an embed that carries it never serves it. Tests: `assets::tests::denied_names_are_never_served` (the name), and `assets::tests::an_embedded_size_report_is_not_served_through_the_route` (the route, with the file really embedded).

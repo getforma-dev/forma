@@ -13,6 +13,7 @@ export function generateManifest(
   graphFiles: ReadonlySet<string> = new Set(),
   products: EntryProducts = new Map(),
   identity?: string,
+  retained: ReadonlySet<string> = new Set(),
 ): { manifest: AssetManifest; warnings: string[]; classes: Record<string, RouteClass> } {
   const distDir = config.outputDir;
   const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
@@ -132,9 +133,13 @@ export function generateManifest(
   for (const file of readdirSync(distDir).sort()) {
     if (file === 'manifest.json' || file === 'size-report.json' || file === 'sw.js' || /\.(?:br|gz)$/.test(file)) continue;
     if (!statSync(join(distDir, file)).isFile()) continue;
+    // A retained file (retention.ts) is the previous release's, kept for tabs still open
+    // on it: immutable by the build's guarantee that its name is its content, and flagged.
+    const kept = !config.watch && retained.has(file);
     metadata[file] = {
-      immutable: !config.watch && immutable.has(file),
+      immutable: !config.watch && (immutable.has(file) || kept),
       integrity: `sha384-${createHash('sha384').update(readFileSync(join(distDir, file))).digest('base64')}`,
+      ...(kept ? { retained: true } : {}),
     };
   }
   const aliases = { ...assets };
