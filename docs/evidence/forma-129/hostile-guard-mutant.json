@@ -1,0 +1,254 @@
+{
+  "schema": 1,
+  "passed": false,
+  "completeMatrix": false,
+  "selection": "selector",
+  "node": "v24.22.0",
+  "sourceCommit": "9cdcacdb53790097cb81966c4c9b23584ff8622c",
+  "sourceClean": true,
+  "catalogueSha256": "8ad17caf088ed5d85314173ecc0665c93bc61646a6a1c0d4effebdf7e2377c0b",
+  "requested": 57,
+  "requestedCapabilityControls": 3,
+  "cases": [
+    {
+      "id": "value/selector-secret/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    }
+  ],
+  "capabilities": [],
+  "observers": [
+    {
+      "profile": "none",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "unexpectedResponse": 404,
+      "trustedTypesRefused": true
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:59171"
+    },
+    {
+      "method": "GET",
+      "path": "/observer-unexpected",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:59171"
+    }
+  ],
+  "harnessSources": {
+    "catalogue.mjs": "173cbdb1a45cec38dcda186eb531f5c27788244e0101a26b274354fac6774460",
+    "browser-case.mjs": "bf3ed627245b199fee53cfde2888bfc6732777ce74e2e22638b8c22db25119a1",
+    "capabilities.mjs": "efc0456760d65452bb4d3a2d4bc3aae18dad95727593c2e5d3c88dbf99eadded",
+    "observers.mjs": "56bf79c8f930b7a697a25abf6064d3311e65e80b8b6c8b768cd7d542c6c186d4",
+    "server.mjs": "81835d321462e4097df5e45331d3638f9e996a9bec1ac67e559fd818932dd506",
+    "run.mjs": "2c8ebca705e1ed8c0e9f190b455cb9fcc810895ea7c72398540b6e757f7b586a",
+    "probe-provenance.json": "8f5160f7b386bee90a599221204e967ac9c2435f3a9b09de094bbe9e36fb8921"
+  },
+  "provenance": {
+    "historical": 93,
+    "current": 260,
+    "currentSecurity": 151
+  },
+  "runtimePath": "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-widget-guard-O4QzKl/runtime.js",
+  "runtimeSha256": "e840bf0040705c4df18effb97100c02372ea46b6e6208b40a7e87667b1c75cfa",
+  "policy": "default-src 'none'; script-src 'nonce-mGydQ89Q8jquhUzyMqngwN+JAHUzs+fv' 'strict-dynamic'; connect-src 'self' http://127.0.0.1:59170; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "browser": "151.0.7922.34",
+  "current": {
+    "item": {
+      "id": "selector",
+      "expression": "$el.closest('div').querySelector('[data-secret] span') ? 'read' : 'none'",
+      "allowed": "read",
+      "denied": "unbound",
+      "code": "FORMA_E_GRANT_DOM"
+    },
+    "profile": "none",
+    "id": "selector/none",
+    "otherOrigin": "http://127.0.0.1:59170"
+  },
+  "lastObservation": {
+    "id": "selector/none",
+    "live": true,
+    "value": "read",
+    "codes": [],
+    "outsideReads": 1,
+    "submits": 0
+  },
+  "error": "AssertionError [ERR_ASSERTION]: unauthorized outside-root read\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:105:39",
+  "elapsedMs": 497.33908399999996
+}

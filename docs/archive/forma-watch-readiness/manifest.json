@@ -1,0 +1,36 @@
+{
+  "base": "5fddd3d54e875d12b28a1d8cbf000d52b9061d81",
+  "originalHelper": "packages/build/tests/helpers/watch.ts",
+  "ciRun": 38854874895,
+  "ciJob": 116823982939,
+  "node": "24.22.0",
+  "vitest": "3.2.7",
+  "maxWorkers": 2,
+  "files": [
+    {
+      "file": "watch-helper-original.ts",
+      "bytes": 5246,
+      "sha256": "78a0a5c30468596924acfec8df838b7e4fd0ec7c02fb4cb0200c51e3092336f5"
+    },
+    {
+      "file": "readiness-original-control.test.ts",
+      "bytes": 4659,
+      "sha256": "3d462d312a523e948c9c413a510b3ba88f1a5381970234d6b5b004004d5a5ca1"
+    },
+    {
+      "file": "readiness-before.log",
+      "bytes": 2050,
+      "sha256": "558196d2843b8eb9fecca6dfd72a425b4cf99162783589c8c13262f99ec3bc21"
+    },
+    {
+      "file": "readiness-after.log",
+      "bytes": 15026,
+      "sha256": "18b22c7c6e4b5e6ecc7eed09d0e7ead7888697659528cedcb035e05f8b2ac8a6"
+    },
+    {
+      "file": "ci-38854874895-windows-node.log",
+      "bytes": 515343,
+      "sha256": "38dfb48b5471a68342538349b568f77091521d288b751c9051dd2b7f43c9a6af"
+    }
+  ]
+}
