@@ -145,3 +145,21 @@ test('the Release notes carry one line of P17\'s measurements when it took them,
   const line = measurementsNotes({ measurements: { p17: { seconds: 301.4, limitSeconds: 1800 }, n2: [{ app: 'ledger', route: '/household', formaGzip: 25366, limit: 25500 }], machine } });
   assert.match(line, /^\nP17 ran 301 s of 1,800 s; the most Forma code on any fixture route is 25,366 B of 25,500 B gzip -9 \(ledger \/household\)/);
 });
+
+test('final DS12 retains the exact reviewed hosted burn-in pointer, never inventing a run', async t => {
+  const f = await evidenceFixture(t), content = 'finite independent final diff review';
+  const reference = {contract:'rc-burn-in-reference-v1',rcTag:'v3.0.0-rc.1',rcCommit:'a'.repeat(40),runId:42,runAttempt:1,manifestSha256:'b'.repeat(64),finalVersion:'3.0.0',reviewEvidence:{content,sha256:digest(content)},reviewedChanges:[]};
+  mkdirSync(join(f.root,'docs/release'),{recursive:true});
+  const bytes=encode(reference);writeFileSync(join(f.root,'docs/release/rc-burn-in.json'),bytes);
+  const result=await qualificationEvidence({...f,set:{...f.set,tag:'v3.0.0'}});
+  assert.equal(result.fields.burnIn.sha256,digest(bytes));assert.deepEqual(readFileSync(result.assets[0]),Buffer.from(bytes));
+  reference.runAttempt=0;writeFileSync(join(f.root,'docs/release/rc-burn-in.json'),encode(reference));
+  await assert.rejects(qualificationEvidence({...f,set:{...f.set,tag:'v3.0.0'}}));
+});
+
+test('DS12 byte limit applies to the exact pretty UTF-8 bytes written, including newline', async () => {
+  const { releaseRecordBytes } = await import('./release-record.mjs');
+  const record = { text: 'é😀' }, bytes = Buffer.from(JSON.stringify(record, null, 2) + '\n');
+  assert.deepEqual(releaseRecordBytes(record, bytes.length), bytes);
+  assert.throws(() => releaseRecordBytes(record, bytes.length - 1), /transport byte limit/);
+});

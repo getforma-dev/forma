@@ -10,7 +10,7 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
-import { verifyMinimalIsland, verifyStaticTemplate } from './release-template-islands.mjs';
+import { verifyMinimalIsland, verifyStaticTemplate, interactDashboard } from './release-template-islands.mjs';
 import { withOwnedServer } from './owned-server.mjs';
 import { linkPackedPackages, assertPackedResolution } from './release-packed-resolution.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
@@ -442,8 +442,7 @@ export async function verify(dir, reportPath) {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
               } else {
-                await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
-                await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
+                await interactDashboard(page);
               }
               // Historical activation removed status markers. Strict adoption keeps
               // the original DOM; its separate held-module observer proves success.

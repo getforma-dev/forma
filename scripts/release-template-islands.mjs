@@ -162,3 +162,19 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
       errors: observed.errors, violations, servedPolicy: csp };
   } finally { await context.close(); }
 }
+
+/** The same Browser-template positive interaction used by P17 and RC stress. */
+export async function interactDashboard(page) {
+  await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
+  await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
+}
+export async function verifyDashboardTemplate(browser, origin) {
+  const context = await browser.newContext(), observed = await observe(context);
+  try {
+    const csp = await policy(await observed.page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 }));
+    await interactDashboard(observed.page);
+    assert.equal(await observed.page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'dashboard did not activate');
+    await settle(observed.page); await noErrors(observed);
+    return { interacted: true, csp, pageErrors: observed.errors, violations: [] };
+  } finally { await context.close(); }
+}

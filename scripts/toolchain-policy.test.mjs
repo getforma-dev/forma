@@ -8,7 +8,7 @@ import { nodeLines } from './toolchain-matrix.mjs';
 const root = resolve(import.meta.dirname, '..');
 const policyFiles = ['.github/workflows/ci.yml', '.github/workflows/e2e-engines.yml',
   '.github/workflows/nightly-probes.yml', '.github/workflows/value-rules.yml', '.github/workflows/advisories.yml',
-  '.github/workflows/release-plane-observe.yml',
+  '.github/workflows/release-plane-observe.yml', '.github/workflows/rc-burn-in.yml',
   '.node-version', 'package.json', 'scripts/toolchain-matrix.mjs',
   ...['core','compiler','build','create-app'].map(n => `packages/${n}/package.json`),
   ...['forma-ir','forma-ir-derive','forma-server'].map(n => `crates/${n}/Cargo.toml`)];
@@ -72,7 +72,7 @@ test('maintenance pin drift refuses without replacing published compatibility li
     const cases = [
       ...[['ci.yml','check'],['ci.yml','toolchains'],['e2e-engines.yml','e2e'],
         ['nightly-probes.yml','expressions'],['nightly-probes.yml','probes'],['value-rules.yml','qualify'],
-        ['release-plane-observe.yml','observe']].map(([file,job]) =>
+        ['release-plane-observe.yml','observe'],['rc-burn-in.yml','burn-in']].map(([file,job]) =>
         [`.github/workflows/${file}`, s => editJob(s,job,j => j.replace('node-version-file: .node-version','node-version: 24')), /maintenance must/]),
       ['.github/workflows/ci.yml', s => editJob(s,'check',j => j.replace('node-version-file: .node-version','node-version-file: .node-version\n          node-version: 24.21.0')), /maintenance must/],
       ['.github/workflows/ci.yml', s => editJob(s,'check',j => j.replace('      - uses: actions/setup-node@','      - if: false\n        uses: actions/setup-node@')), /maintenance must/],

@@ -3,6 +3,7 @@
 // from the working tree, and P17 (scripts/release-fixture-apps.mjs) against servers built from the
 // packed set. `expect` is Playwright's, which works on any Playwright `page`, in or out of its runner.
 import { expect } from '@playwright/test';
+import { EXTRA_NAMES } from './check-identities.mjs';
 
 /**
  * Every listed tile counts: one press adds one to the count the server sent (7 stays 7 until it
@@ -167,7 +168,7 @@ const open = async (browser, origin, path, options = {}) => {
 export const EXTRAS = {
   ledger: [
     {
-      name: '/household: a failed load names the attempt, keeps the snapshot, and Retry recovers',
+      name: EXTRA_NAMES.ledger[0],
       async run({ browser, origin }) {
         const context = await browser.newContext();
         try {
@@ -191,7 +192,7 @@ export const EXTRAS = {
   ],
   fauth: [
     {
-      name: '/t/quote/login: a tenant named with script and markup renders as text and runs nothing',
+      name: EXTRA_NAMES.fauth[0],
       async run({ browser, origin }) {
         const context = await browser.newContext();
         try {
@@ -215,14 +216,14 @@ export const EXTRAS = {
       },
     },
     {
-      name: '/t/unknown/login: an unknown tenant is a 404, not a page',
+      name: EXTRA_NAMES.fauth[1],
       async run({ origin }) {
         const response = await fetch(new URL('/t/unknown/login', origin).href);
         expect(response.status).toBe(404);
       },
     },
     {
-      name: '/t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch',
+      name: EXTRA_NAMES.fauth[2],
       async run({ browser, origin }) {
         const { context, page } = await open(browser, origin, '/t/lockbox/login');
         try {
@@ -236,7 +237,7 @@ export const EXTRAS = {
   ],
   ksx: [
     {
-      name: '/check?state=empty: with no controller the empty section replaces the chips, and the roster is empty',
+      name: EXTRA_NAMES.ksx[0],
       async run({ browser, origin }) {
         const { context, page } = await open(browser, origin, '/check?state=empty', { javaScriptEnabled: false });
         try {
@@ -247,7 +248,7 @@ export const EXTRAS = {
       },
     },
     {
-      name: '/check: the roster and the chips are the nested payload read through paths and rows',
+      name: EXTRA_NAMES.ksx[1],
       async run({ browser, origin }) {
         const { context, page } = await open(browser, origin, '/check', { javaScriptEnabled: false });
         try {

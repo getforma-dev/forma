@@ -4,12 +4,19 @@ import { createHash } from 'node:crypto';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve, join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { json, save, run, ROOT, assertMilestoneReady, milestoneOf } from './release-set.mjs';
+import { json, run, ROOT, assertMilestoneReady, milestoneOf } from './release-set.mjs';
 import { releaseNotesLine } from './release-measurements.mjs';
 import { githubReleaseMetadata, readSupportHistory } from './release-support-history.mjs';
 import { renderSecurity } from './release-support.mjs';
 import { verifyEvidence } from './release-evidence.mjs';
 import { AUDIT_FILES, readRcAudit } from './release-audit.mjs';
+import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
+
+export function releaseRecordBytes(record, maxBytes = RELEASE_RECORD_MAX_BYTES) {
+  const bytes = Buffer.from(JSON.stringify(record, null, 2) + '\n');
+  assert(bytes.length <= maxBytes, 'DS12 release record exceeds transport byte limit');
+  return bytes;
+}
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 function runNumber(value, name) {
@@ -48,6 +55,19 @@ export async function qualificationEvidence({ set, reportPath, directory, env = 
       fields.d14[name] = sha256(bytes);
       assets.push(file);
     }
+  }
+  if (milestoneOf(set.tag.slice(1)) === 'final') {
+    // The check job authenticates the hosted result before either publisher.
+    // Record the same immutable source pointer; do not replace that preflight
+    // with a post-publication network check or manufacture a new pass here.
+    const { readBurnInReference } = await import('./release-burn-in-final.mjs');
+    const retained = readBurnInReference(root), file = join(directory, retained.assetName);
+    writeFileSync(file, retained.bytes);
+    fields.burnIn = { file: retained.assetName, sha256: retained.sha256,
+      rcTag: retained.reference.rcTag, rcCommit: retained.reference.rcCommit,
+      runId: retained.reference.runId, runAttempt: retained.reference.runAttempt,
+      manifestSha256: retained.reference.manifestSha256 };
+    assets.push(file);
   }
   return { fields, assets, report };
 }
@@ -107,7 +127,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   record.changelog = entry;
   let notes = releaseNotes(set, record, entry, milestone);
   const recordPath = join(dir, 'release-record.json'), notesPath = join(dir, 'release-notes.md');
-  save(recordPath, record); writeFileSync(notesPath, notes);
+  writeFileSync(recordPath, releaseRecordBytes(record)); writeFileSync(notesPath, notes);
   // Existence is queried through an API whose non-404 failures remain failures. Reruns edit
   // their existing release; they never interpret a failed API request as an absent release.
   const response = await fetch(`https://api.github.com/repos/getforma-dev/forma/releases/tags/${encodeURIComponent(set.tag)}`, { headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, 'User-Agent': 'getforma-release-ci' }, signal: AbortSignal.timeout(20_000) });
@@ -127,7 +147,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   record.supportHistory = { sources: history.sources, inventorySha256: history.inventorySha256 };
   const securityPath = join(dir, 'SECURITY.md');
   writeFileSync(securityPath, renderSecurity(readFileSync(join(ROOT, 'SECURITY.md'), 'utf8'), history.support));
-  save(recordPath, record);
+  writeFileSync(recordPath, releaseRecordBytes(record));
   notes = notes.replace(/Tag-event run to record: [^;]+;/, `Tag-event run to acknowledged release write: ${record.elapsedSeconds.toFixed(1)} seconds;`);
   writeFileSync(notesPath, notes);
   run('gh', ['release', 'edit', set.tag, '--notes-file', notesPath]);
