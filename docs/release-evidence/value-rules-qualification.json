@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "sourceCommit": "9dbf7c13283ac3d66cfda4731125a5a6958db96f",
+  "dirty": false,
+  "node": "v24.22.0",
+  "engine": "chromium",
+  "seed": 1820300,
+  "comparedPerRule": 1000000,
+  "batch": 1000,
+  "passed": true,
+  "nativeSha256": "16747bea0c1fc31f708042cb7755e5d9e18b18a1810e3eed47db6e81ba1c56ed",
+  "coreSha256": "561f3e6fdb844c28825e5d8dd9f818bb62b3e7502449cddc826a15cdf99c5a77",
+  "rules": [
+    {
+      "rule": 1,
+      "inputs": 1000000,
+      "compared": 1000000,
+      "refused": 0,
+      "inputSha256": "300ac8d8ca1d516ad4ff80d340fd1673fe83d695b74e171e37b3d27cd08343b2",
+      "seconds": 149.427070709
+    },
+    {
+      "rule": 2,
+      "inputs": 1000000,
+      "compared": 1000000,
+      "refused": 0,
+      "inputSha256": "6dc7a8057bc9f10fe54a26c3eabe9c1c48555ecf6292e65afeb155c8127032ca",
+      "seconds": 188.97692858300002
+    },
+    {
+      "rule": 3,
+      "inputs": 1108767,
+      "compared": 1000000,
+      "refused": 108767,
+      "inputSha256": "555b32a263fb43177d74f6b95407190175bdf095011b14c24d3cf9f368ac3b29",
+      "seconds": 184.50831379199994
+    },
+    {
+      "rule": 4,
+      "inputs": 1014351,
+      "compared": 1000000,
+      "refused": 14351,
+      "inputSha256": "42271f90feb84134acb69052186729eaf1b11cc4d658c33d2667e5c446dd5f42",
+      "seconds": 177.56500524999993
+    },
+    {
+      "rule": 5,
+      "inputs": 1000000,
+      "compared": 1000000,
+      "refused": 0,
+      "inputSha256": "65301f322fbb99fe3a3f80f3a3e8651ddc2224ed7dba1b9758a2ac28102fa0ef",
+      "seconds": 159.75920504199993
+    },
+    {
+      "rule": 6,
+      "inputs": 1000000,
+      "compared": 1000000,
+      "refused": 0,
+      "inputSha256": "e6a9a3a848ccb0ab460b8b4169e4f3d0c095986fcf24c07ca144366098024569",
+      "seconds": 157.48985945800004
+    },
+    {
+      "rule": 7,
+      "inputs": 1000000,
+      "compared": 1000000,
+      "refused": 0,
+      "inputSha256": "850ceabb974bd4676c8f3c7723202caf7068a0954ab25baaf55d16a7b25b9148",
+      "seconds": 166.60446104199997
+    }
+  ],
+  "controls": {
+    "compilerLogSha256": "9dff38e87e6c0790c5c338baef09d23a6cf631122d4f5c849e75f2933bb82042",
+    "nativeMismatch": "fresh",
+    "adoptionLiveness": {
+      "live": true,
+      "initialWrites": 0,
+      "initialUnchanged": true,
+      "kept": true,
+      "updateWrites": 2
+    },
+    "disabledAdoption": {
+      "live": false,
+      "initialWrites": 0,
+      "initialUnchanged": true,
+      "kept": true,
+      "updateWrites": 0
+    }
+  },
+  "startedAt": "2026-10-16T01:22:38.871Z",
+  "seconds": 1184.332506625,
+  "finishedAt": "2026-10-16T01:42:23.568Z"
+}

@@ -3,6 +3,14 @@
 ## [Unreleased]
 
 - Execute every declared route JavaScript entry in manifest order with its nonce, integrity and crossorigin attributes. Earlier entries are no longer merely preloaded while only the last runs; dependency-only modulepreloads remain hints. Both typed SSR and Browser documents charge all entry tags to their complete output budget.
+### Ordinary document metadata — FORMA-182
+
+- Normalize CRLF/CR to LF and NUL to U+FFFD before escaping ordinary title,
+  body class, typed head fields and resource URL values on both SSR and browser
+  shell paths. Shared rule-1 vectors cover both actual document writers.
+  Request state, configuration JSON, nonces, integrity digests, build identity
+  and raw CSS retain their existing encoding. URL refusal and exact complete
+  document byte-budget checks remain active.
 
 ### Attribute values — FORMA-182
 

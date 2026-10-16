@@ -3,8 +3,8 @@ import {join} from 'node:path';
 import {expect,test,type Page,type Route} from '@playwright/test';
 import {SSR_ORIGIN as ORIGIN} from './origin';
 
-// FORMA-182 relocates this same frozen file into the native parity directory.
-const vectors=JSON.parse(readFileSync(join(__dirname,'../../packages/core/src/__tests__/vectors/namespaces.json'),'utf8')).vectors.filter((vector:{name:string})=>!vector.name.includes('script'));
+// Frozen shared native/browser namespace vectors from FORMA-182.
+const vectors=JSON.parse(readFileSync(join(__dirname,'../../crates/forma-ir/tests/fixtures/parity/namespaces.json'),'utf8')).vectors.filter((vector:{name:string})=>!vector.name.includes('script'));
 test.use({baseURL:ORIGIN});
 test.beforeAll(async()=>{
   const site=await fetch(`${ORIGIN}/__site`).then(response=>response.json());

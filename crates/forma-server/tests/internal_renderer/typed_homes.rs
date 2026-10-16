@@ -261,6 +261,118 @@ fn head_links_are_written_escaped_in_the_head_in_the_order_added() {
     }
 }
 
+/// Exported only on an explicit test-run request for the real-browser metadata
+/// gate. These are actual complete SSR/shell documents, never copied HTML.
+#[test]
+fn ordinary_metadata_uses_the_shared_rule_one_vectors_on_both_render_paths() {
+    let vectors: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../forma-ir/tests/fixtures/parity/normalization.json"
+    ))
+    .unwrap();
+    let manifest = styled_manifest();
+    let module = module();
+    let slots = SlotData::new(0);
+    let mut documents = Vec::new();
+    let mut failures = Vec::new();
+    for vector in vectors["values"].as_array().unwrap() {
+        let input = vector["input"].as_str().unwrap();
+        let expected = vector["expected"].as_str().unwrap();
+        // This oracle escapes already-normalized shared expected values; it
+        // deliberately does not call the production writer/normalizer.
+        let escaped = expected
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;");
+        let ctx = RenderCtx::new().with_head_link(
+            HeadLink::new("alternate", "/metadata?one=1&two=2")
+                .unwrap()
+                .with_type(input)
+                .with_sizes(input),
+        );
+        for (name, render) in PATHS {
+            let mut config = config(&manifest, "/", &module, &slots, None);
+            config.title = input;
+            config.body_class = Some(input);
+            let page = render(&config, &ctx).unwrap().into_parts_unchecked();
+            for fragment in [
+                format!("<title>{escaped}</title>"),
+                format!("<body class=\"{escaped}\">"),
+                format!("type=\"{escaped}\" sizes=\"{escaped}\""),
+            ] {
+                if !page.html.contains(&fragment) {
+                    failures.push(format!("{name}/{} missing {fragment:?}", vector["id"]));
+                }
+            }
+            // Nonces and manifest digests stay opaque and exact.
+            if vector["id"] == "nul" {
+                let size = page.html.len();
+                let limits = |bytes| {
+                    ctx.clone().with_limits(forma_ir::WalkLimits {
+                        max_output_bytes: bytes,
+                        ..forma_ir::WalkLimits::default()
+                    })
+                };
+                assert!(render(&config, &limits(size)).is_ok());
+                assert!(matches!(
+                    render(&config, &limits(size - 1)),
+                    Err(RenderError::Budget { .. })
+                ));
+            }
+            let nonce = page.nonce.to_string();
+            assert!(page.html.contains(&format!("nonce=\"{nonce}\"")));
+            assert!(page
+                .headers
+                .iter()
+                .any(|(key, value)| key == "content-security-policy"
+                    && value
+                        .to_str()
+                        .unwrap()
+                        .contains(&format!("'nonce-{nonce}'"))));
+            assert!(page.html.contains("integrity=\"sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb\""));
+            documents.push(serde_json::json!({
+                "path": name, "id": vector["id"], "expected": expected, "document": page.html,
+            }));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    if let Some(path) = std::env::var_os("FORMA_METADATA_OUTPUT") {
+        std::fs::write(path, serde_json::to_vec(&documents).unwrap()).unwrap();
+    }
+}
+
+#[test]
+fn metadata_normalization_preserves_transport_and_url_refusals() {
+    let manifest = styled_manifest();
+    let module = module();
+    let slots = SlotData::new(0);
+    let data = serde_json::json!({"value": "original\r\n\0<&"});
+    for (_, render) in PATHS {
+        let mut config = config(&manifest, "/", &module, &slots, None);
+        config.config_json = Some(&data);
+        let page = render(&config, &RenderCtx::new())
+            .unwrap()
+            .into_parts_unchecked();
+        let start =
+            page.html.find("window.__FORMA_CONFIG__=").unwrap() + "window.__FORMA_CONFIG__=".len();
+        let json = page.html[start..].split(";</script>").next().unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(json).unwrap(),
+            data
+        );
+    }
+    for href in [
+        "java\r\nscript:alert(1)",
+        "\r\nvbscript:x",
+        "java\rscript:x",
+    ] {
+        assert_eq!(
+            HeadLink::new("alternate", href).unwrap_err().code(),
+            "HEAD-103"
+        );
+    }
+}
+
 #[test]
 fn a_head_link_refuses_a_script_url_and_keeps_every_other() {
     for href in [

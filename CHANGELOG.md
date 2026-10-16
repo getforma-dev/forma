@@ -12,6 +12,7 @@
 - Compiler and build loaders share the original source snapshot with adoption hooks and SSR/Browser entry ownership. Handwritten `h`, separate component bodies, custom JSX factories and the deferred dynamic SVG title adoption boundary keep their existing contracts.
 
 - FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
+- FORMA-182 release qualification: the e2e locked graph now carries the same pinned `ryu-js` formatter as the native workspace. Packed template runtime additions are placed in Cargo package order, preserving existing external versions and checksums, so a fresh scaffold does not rewrite `Cargo.lock` on its first Cargo command.
 
 ### Native LIST sources must carry real rows — FORMA-101
 
