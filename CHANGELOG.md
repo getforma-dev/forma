@@ -27,6 +27,8 @@
 - A handle captures its scopes, so unmount also disposes a scope the application detached or moved. Unreviewed refusals retain distinct mount names, tiers and counts. The obsolete manual attribute produces one development-only migration hint; it has no binding authority.
 - Monorepo fixtures and measurement helpers use actual explicit mounts. Byte-exact A2 sources and all260 old mutation records remain archived with per-ID dispositions; current qualification and its nine extra explicit-mount controls are reported separately from historical results. FMIR remains restricted to modules from the application's own build; external module admission requires the deferred M9 boundary.
 
+- FORMA-145: reconcile the main upgrade, compatibility and declared-props guides with the seven-package release, typed Pages startup, island adoption, explicit runtime ownership, strict native subset and current asset/skew policy. Preserve the prior staged guides and link the template migration. Release qualification and publication remain separate gates.
+
 ### Final template packaging — FORMA-144
 
 - Resolve the E2E fixture bundler from the selected core package, including workspace-hoisted installations.

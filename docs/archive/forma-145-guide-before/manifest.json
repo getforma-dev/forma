@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "7dc72ef0f5582012ed173a6c75ce1c7802240e1d",
+  "files": {
+    "docs/UPGRADING-3.0.md": {
+      "bytes": 6726,
+      "sha256": "d3f3092542f376622be11d2872774e5960623f8cc6dea929965607ffdb3cf84e"
+    },
+    "docs/compatibility.md": {
+      "bytes": 13151,
+      "sha256": "2c68064ed827199dd009c6a08733c47f4fdcbbe0509026c437126787fd2a145b"
+    },
+    "docs/DECLARED-PROPS.md": {
+      "bytes": 8642,
+      "sha256": "3a708a6c55a46f5cecbc4d40535c0e8bd2196edee395592ea200b32bb5b1b3a8"
+    }
+  }
+}

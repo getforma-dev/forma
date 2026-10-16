@@ -175,3 +175,6 @@ docs/archive/forma-144-fixture-tool/** -text
 
 # Byte-exact watch-readiness original source and failure evidence.
 docs/archive/forma-watch-readiness/** -text
+
+# FORMA-145 preserves prior staged guides byte-for-byte.
+docs/archive/forma-145-guide-before/** -text
