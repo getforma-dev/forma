@@ -17,7 +17,9 @@
 #           `fmir-contract` job, which used to check out another repository)
 #   e2e     the build package's browser test, the full-stack, SSR and
 #           preview-frame lanes (forma-tools' `e2e` job, which used to clone
-#           formajs and forma) and core's own Playwright suite, all in Chromium
+#           formajs and forma), the fixture applications (FORMA-188: three
+#           consumer-shaped applications built in strict mode and served by
+#           forma-server) and core's own Playwright suite, all in Chromium
 #   parity  the parity harness's own tests (FORMA-183, e2e/parity/): the state
 #           generator, the comparison, the serializer against Chromium's
 #           parser and renderBoth end to end; the corpus run joins this script
@@ -74,6 +76,8 @@ step "packed compiler API and actual optional-compiler compatibility"
 node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test.mjs
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
+step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
+node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
 npm run check:size -w packages/core
@@ -92,10 +96,15 @@ if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)"
   exit 1
 fi
 
-step "e2e lanes: fixtures, the SSR site, the preview frame"
+step "e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications"
 bash e2e/sync-fixtures.sh
 bash e2e/ssr/build.sh
 bash e2e/frame/build.sh
+bash e2e/fixtures/apps/build.sh
+# After the build: the servers embed what it wrote, and the embed needs the folders to exist.
+step "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)"
+cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check
+cargo clippy --locked --manifest-path e2e/fixtures/apps/Cargo.toml --all-targets -- -D warnings
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs
