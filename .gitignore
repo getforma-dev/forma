@@ -25,6 +25,9 @@ e2e/frame/out/
 
 # Seeded differential reports and actual metadata documents.
 e2e/value-rules/out/
+# The fixture applications' output: the builds, their reports, the negative builds
+# (e2e/fixtures/apps/build.sh). e2e/fixtures/apps/node_modules is covered by node_modules/.
+e2e/fixtures/apps/out/
 
 # P17 owns and removes these temporary packed-template checkouts.
 /.release-verify-*/

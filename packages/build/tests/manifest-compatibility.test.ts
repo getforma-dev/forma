@@ -67,7 +67,7 @@ describe('manifest2 compatibility through real builds', () => {
     expect(accepted.manifest?.app).toBe('ledger');
     expect(accepted.manifest?.writer).toBe('3.0.0');
     expect(existsSync(join(outputDir, 'sentinel'))).toBe(false);
-  });
+  }, 30_000); // two child builds, each bundling the build and the compiler first: seconds on a busy machine
 
   it.each([false, true])('watches Cargo.lock and preserves valid output through incompatible rebuilds and recovery with splitting=%s', async codeSplitting => {
     const {root, entry, outputDir} = fixture();

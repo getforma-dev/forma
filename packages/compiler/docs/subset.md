@@ -690,3 +690,43 @@ their real lifecycle tests.
 **Build result.** Error: publication is refused.
 
 [Lifecycle tests](../../build/tests/route-size.test.ts).
+
+### BUILD-820 — The previous release for retention is not usable
+
+**Why.** previousDist names something that is not the previous release's dist/: a path that does not exist or is not a directory, one with no readable manifest.json, another application's dist, a watch build's, one whose asset names are not flat file names, or a directory that is, holds or sits inside outputDir (which the build replaces whole).
+
+**Fix.** Pass the directory of the release that is live, kept apart from outputDir, or leave previousDist out for a first deploy. A dist built by an earlier schema retains nothing and says so; that is not this error.
+
+**Build result.** Error: publication is refused.
+
+[Lifecycle tests](../../build/tests/retention.test.ts).
+
+### BUILD-821 — A retained asset cannot be vouched for
+
+**Why.** A file the previous manifest lists is missing from the previous dist, is not a regular file, or its bytes no longer match the SHA-384 the manifest recorded; or this build emitted a file of the same name with other bytes. The build will not copy bytes it cannot vouch for into a release browsers execute, and it fails before writing any output.
+
+**Fix.** Keep the whole release artifact unaltered, as the build wrote it, and pass that directory. If the previous dist was damaged, restore it from the artifact store, or build this release as a security release (security: true) to retain nothing.
+
+**Build result.** Error: publication is refused.
+
+[Lifecycle tests](../../build/tests/retention.test.ts).
+
+### BUILD-822 — FORMA_SECURITY_RELEASE is not a value the build understands
+
+**Why.** The environment variable that marks a release as a security release (nothing is retained from the previous release) holds a value other than 1, true, 0, false or empty. Reading an unknown value as unmarked would retain a revoked build's assets in the release that exists to remove them, so the build refuses it.
+
+**Fix.** Set FORMA_SECURITY_RELEASE=1 (or true) for a release that fixes a vulnerability, or unset it.
+
+**Build result.** Error: publication is refused.
+
+[Lifecycle tests](../../build/tests/retention.test.ts).
+
+### BUILD-823 — Preview frame runtime that cannot be minified
+
+**Why.** `previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified (its bytes are on every preview document), so the file must be JavaScript esbuild can parse for ES2022.
+
+**Fix.** Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.
+
+**Build result.** Error: publication is refused.
+
+[Lifecycle tests](../../build/tests/preview-frame.test.ts).
