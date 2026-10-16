@@ -1,7 +1,7 @@
 name: E2E engines
 
 # Core's whole e2e suite in Chromium, Firefox and WebKit, one job per engine,
-# and the parity harness (FORMA-183) in Firefox and WebKit (non-blocking).
+# and the blocking parity harness (FORMA-183) in Firefox and WebKit.
 # Decision brief DR-9: Chromium on every merge (ci.yml's `check` job runs
 # `npm run test:e2e -w packages/core`, the `chromium` project only), all three
 # before each release (FORMA-027). Ways in:
@@ -52,6 +52,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: html-context-engines
       - run: npm ci --ignore-scripts
 
       # The engine is installed in two halves, each from a cache when it can
@@ -134,6 +138,34 @@ jobs:
       # Builds core's dist, then runs every spec in this engine's project.
       - run: npm run test:e2e:engines -w packages/core -- --project=${{ matrix.browser }}
 
+      # These native/parser controls are blocking in every release engine;
+      # R17 runs the same tests with its provisioned Chromium by default.
+      - run: npm run build -w packages/compiler -w packages/build
+      - name: Native HTML admission and archived parser controls
+        env:
+          FORMA_PARITY_BROWSER: ${{ matrix.browser }}
+        run: node --test e2e/parity/tests/html-context.test.mts
+
+      - name: Build typed indexed SSR products
+        env:
+          FORMA_SSR_PROFILE: release
+        run: bash e2e/ssr/build.sh
+      - name: Indexed adoption, row ownership and tamper controls
+        run: >-
+          npx playwright test --config e2e/ssr/indexed-products.config.ts --project=${{ matrix.browser }} --workers=2 --grep-invert 'indexed products: complete public set' --output test-results/indexed-functional-${{ matrix.browser }}
+      # This step begins only after all other browser/native work on this runner
+      # has exited. Same required operation and limits, with no timing retries.
+      - name: Indexed public-set timing, serial
+        run: >-
+          npx playwright test --config e2e/ssr/indexed-products.config.ts --project=${{ matrix.browser }} --workers=1 --grep 'indexed products: complete public set' --output test-results/indexed-${{ matrix.browser }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: indexed-results-${{ matrix.browser }}
+          path: test-results/indexed-*/
+          if-no-files-found: warn
+          retention-days: 14
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
@@ -144,13 +176,11 @@ jobs:
 
   # The parity harness (FORMA-183) in the two engines CI does not run per
   # merge: step 1 of the corpus at 10 states, P1, P2 and P3, with the same
-  # expected list as ci.yml's `parity` job (DR-9: Chromium per merge, Firefox
-  # and WebKit per release). Non-blocking, as the per-merge job is, until the
-  # blocking switch (e2e/parity/README.md); a release still sees its report.
+  # empty expected list as R17 (DR-9: Chromium per merge, Firefox and WebKit
+  # per release). A difference, error, refusal or added exception blocks release.
   parity:
     name: parity (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    continue-on-error: true
     # MEASURED locally: step 1 at 10 states (28 modules, 118 states) in 91 s in
     # Firefox and 12 s in WebKit; the builds and installs dominate the rest.
     timeout-minutes: 25
@@ -186,7 +216,9 @@ jobs:
       - name: Parity over step 1 in ${{ matrix.browser }}
         env:
           BROWSER: ${{ matrix.browser }}
-        run: node e2e/parity/src/run.mts --step 1 --states 10 --browser "$BROWSER" --report "$RUNNER_TEMP/parity/report.jsonl"
+        run: |
+          node --input-type=module -e 'import assert from "node:assert/strict"; import {readExpected} from "./e2e/parity/src/expected.mts"; assert.equal(readExpected().length, 0, "blocking parity requires an empty expected-divergent list");'
+          node e2e/parity/src/run.mts --step 1 --states 10 --browser "$BROWSER" --report "$RUNNER_TEMP/parity/report.jsonl"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

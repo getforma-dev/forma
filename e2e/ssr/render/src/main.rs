@@ -50,6 +50,32 @@ fn fixture_ctx() -> RenderCtx {
     RenderCtx::new().with_policy(PolicyExtensions::new().report_uri("/__csp-reports"))
 }
 
+#[derive(PageProps)]
+struct KeyedMoveRow {
+    id: String,
+    label: String,
+}
+#[derive(PageProps)]
+struct KeyedMoveProps {
+    rows: Vec<KeyedMoveRow>,
+}
+#[derive(PageProps)]
+struct IndexedProps {
+    small: Vec<KeyedMoveRow>,
+    large: Vec<KeyedMoveRow>,
+}
+fn indexed_rows(count: &serde_json::Value) -> Result<Vec<KeyedMoveRow>, Box<dyn Error>> {
+    let count = count.as_u64().ok_or("missing indexed row count")?;
+    if count != 200 && count != 2000 {
+        return Err("indexed fixture count must be 200 or 2000".into());
+    }
+    Ok((0..count)
+        .map(|index| KeyedMoveRow {
+            id: format!("row-{index}"),
+            label: format!("Label {index}"),
+        })
+        .collect())
+}
 fn render_typed<P: PageProps>(
     manifest: &AssetManifest,
     props: &P,
@@ -133,6 +159,31 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     .as_u64()
                     .and_then(|n| n.try_into().ok())
                     .ok_or("missing u32 count")?,
+            },
+            title,
+        )?,
+        "keyed-indexed" => render_typed(
+            &manifest,
+            &IndexedProps {
+                small: indexed_rows(&input["small"])?,
+                large: indexed_rows(&input["large"])?,
+            },
+            title,
+        )?,
+        "keyed-moves" => render_typed(
+            &manifest,
+            &KeyedMoveProps {
+                rows: input["rows"]
+                    .as_array()
+                    .ok_or("missing rows")?
+                    .iter()
+                    .map(|row| {
+                        Ok(KeyedMoveRow {
+                            id: row["id"].as_str().ok_or("missing row id")?.into(),
+                            label: row["label"].as_str().ok_or("missing row label")?.into(),
+                        })
+                    })
+                    .collect::<Result<Vec<_>, Box<dyn Error>>>()?,
             },
             title,
         )?,

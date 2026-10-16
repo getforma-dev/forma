@@ -22,7 +22,10 @@ e2e/ssr/out/
 # The preview-frame e2e lane's output: the packed core, the builds, lane.json
 # (e2e/frame/build.sh). e2e/frame/app/node_modules is covered by node_modules/.
 e2e/frame/out/
+e2e/skew/out/
 
+# Seeded differential reports and actual metadata documents.
+e2e/value-rules/out/
 # The fixture applications' output: the builds, their reports, the negative builds
 # (e2e/fixtures/apps/build.sh). e2e/fixtures/apps/node_modules is covered by node_modules/.
 e2e/fixtures/apps/out/

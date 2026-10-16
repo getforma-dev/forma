@@ -28,7 +28,7 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
     exports: [
       '$', '$$', 'Fragment', '__adoptionChild', '__adoptionConditional', '__adoptionSignal', '__adoptionWritable', '__islandRegistration', 'activateIslands', 'addClass', 'batch', 'browserOnly', 'children',
       'cleanup', 'closest', 'createBus', 'createComputed', 'createContext',
-      'createEffect', 'createErrorBoundary', 'createHistory', 'createList',
+      'createEffect', 'createErrorBoundary', 'createHistory', 'createKeyedRows', 'createList',
       'createMemo', 'createPortal', 'createReducer', 'createRef',
       'createResource', 'createRoot', 'createShow', 'createSignal',
       'createStore', 'createSuspense', 'createSwitch', 'createText',
@@ -73,6 +73,8 @@ describe('public api surface', () => {
     const mod = await load();
     const actual = Object.keys(mod).filter((n) => n !== 'default').sort();
     expect(actual).toEqual([...exports].sort());
+    // Q11 / FORMA-184: renderBoth is a repository test helper, not a public core API.
+    expect(actual).not.toContain('renderBoth');
   });
 
   it.each(Object.keys(SURFACES))('%s exports only callable or usable values', async (subpath) => {

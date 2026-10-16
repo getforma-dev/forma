@@ -8,6 +8,7 @@
  * worker generation, and budget warnings.
  */
 
+import {jsxNamespaceFallback} from './jsx-namespace.js';
 import * as esbuild from 'esbuild';
 import { generateManifest } from './manifest.js';
 import { BUILD_WRITER_VERSION, checkProjectCompatibility, requireCompatibleCompiler, resolveAppName } from './compatibility.js';
@@ -647,10 +648,14 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   ];
   const compatibility = () => { checkProjectCompatibility(project, writers, config.ssr === true); };
   const compatibilityWarnings = checkProjectCompatibility(project, writers, config.ssr === true);
-  await assertNoServerFunctions(config, sharedOptions(config));
+  const legacyImports = config.formaAlias ? new Set<string>() : undefined;
+  await assertNoServerFunctions(config, sharedOptions(config), legacyImports);
   // What the config itself deprecates, each said once per build() call,
   // production and watch alike, on the console and in BuildResult.warnings.
-  const deprecations = compatibilityWarnings;
+  const deprecations = [...compatibilityWarnings];
+  if (legacyImports?.size) deprecations.push(
+    `formaAlias is a 3.x migration bridge. Replace bare formajs imports with @getforma/core (preserving any subpath) in: ${[...legacyImports].sort().join(', ')}`,
+  );
   for (const line of deprecations) console.warn(`Warning: ${line}`);
   const withDeprecations = (result: BuildResult): BuildResult =>
     deprecations.length > 0 ? { ...result, warnings: [...result.warnings, ...deprecations] } : result;
@@ -796,7 +801,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       entryNames: '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
-      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin)],
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin), jsxNamespaceFallback()],
     });
     const entryOptionsFor = (entry: BuildEntry, options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
       ...options,
@@ -804,7 +809,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       outfile: join(distDir, entry.outfile),
       metafile: true,
       write: false,
-      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin)],
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), jsxNamespaceFallback()],
     });
 
     // ── The deployment identity (FORMA-186, DR-29; L-6 as amended by L-56) ──
@@ -974,7 +979,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           assetNames: 'asset.[hash]',
           metafile: true,
           write: false,
-          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),{name:'forma-paired-publish',setup(builder){
+          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
             builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),[entry]);}finally{firstBuilt();}});
           }}],
         });

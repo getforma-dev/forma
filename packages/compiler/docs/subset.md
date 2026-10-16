@@ -34,6 +34,38 @@ explicitly. There is no silent placeholder IR or warning-only SSR escape hatch.
   explicitly registered `browserOnly(Impl)` component. A route may opt out of
   SSR with `ssr: false`; no partial native fallback is invented.
 
+## Indexed row updates
+
+`createKeyedRows(initialRows, row => row.id)` and the two-argument
+`createList(rows, item => h('li', null, () => item().label))` use the same
+native LIST, PROP, and key-path section as the array-getter API. The factory
+must resolve to the original core import through immutable local aliases.
+Initial rows must be a required declared array (including required ancestors)
+or a closed dense literal array. Keys use a synchronous expression callback
+reading a literal property path of its own row, and each synchronous row callback
+returns one stable Element; row-root helpers must also be synchronous. The item parameter is a zero-argument getter;
+read fields as `item().field`, not `item.field`.
+
+The factory eagerly validates all keys in the browser. Its native component
+must therefore contain its LIST unconditionally in the same return. Deferred
+or conditional LISTs, unused factories, effectful keys and optional initial
+arrays refuse with BUILD-622. A native component module cannot eagerly create
+a collection at module scope; create it inside the component owning its LIST. Multiple unconditional views of the same handle
+are admitted. The runtime API can share independently disposed views; this
+compiler restriction does not broaden initial adoption or writable state.
+Handle aliases may feed those LISTs. Other handle use must be inside a proved
+deferred intrinsic event callback; local named handlers and immutable handler
+aliases are admitted when every use stays deferred. Eager set/replace calls,
+IIFEs, extracted methods and unknown escapes refuse with BUILD-622. A custom
+component onClick prop is not assumed to defer execution. Declared initial arrays
+and their ancestors obey the same rule before and after the factory: eager
+method calls, writes and unknown escapes refuse. Immutable declared-data aliases,
+array-length reads and disjoint prop reads remain supported; this does not widen
+registered components’ existing refusal of computed declared values.
+Internal item getters never become captured createSignal slots, early-edit
+inputs or authenticated writeback sites. Browser-only routes retain ordinary
+runtime usage. Existing three-argument list source rules remain unchanged.
+
 ## Ownership and parser boundaries
 
 A value-owning `<select>` and its option state must share the same activation
@@ -538,6 +570,14 @@ their real lifecycle tests.
 
 [Refusal fixture](../tests/fixtures/conformance/BUILD-621/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-621/pass/).
 
+### BUILD-622 — Indexed rows without matching eager native validation
+
+**Why.** An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays, effectful key callbacks, eager handle or initial-data mutations and unknown escapes also lack a matching native contract.
+
+**Fix.** Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths. Keep declared initial arrays and their ancestors unmodified and unescaped during construction. Mutate or expose them or the handle only in proved deferred intrinsic event callbacks, including immutable local handler aliases.
+
+[Refusal fixture](../tests/fixtures/conformance/BUILD-622/fail/) · [Admitted near miss](../tests/fixtures/conformance/BUILD-622/pass/).
+
 ### BUILD-701 — Plain array child (`.map()` without createList)
 
 **Why.** This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.
@@ -750,7 +790,7 @@ their real lifecycle tests.
 
 ### BUILD-819 — A route is over its size ceiling
 
-**Why.** What the route loads cold is over the ceiling of its class (decision brief L-58, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 27,500 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.
+**Why.** What the route loads cold is over the ceiling of its class (decision brief L-59, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 28,000 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.
 
 **Fix.** Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings.
 

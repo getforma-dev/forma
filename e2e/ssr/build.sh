@@ -13,6 +13,9 @@ set -euo pipefail
 #                Default: packages/core.
 #   FORMA_DIR    forma checkout (forma-ir, forma-server). Default: this repository.
 #
+# FORMA_SSR_PROFILE may be debug (default) or release. Three-engine product
+# qualification uses release: the server intentionally emits an endpoint-less
+# Trusted Types report-only header in debug, which WebKit logs as a configuration error.
 # Needs Node and cargo. Every step fails loudly; nothing is skipped.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -44,6 +47,13 @@ if [ "$FORMA_DIR" != "$REPO_DIR" ]; then
   exit 1
 fi
 
+PROFILE_ARGS=()
+case "${FORMA_SSR_PROFILE:-debug}" in
+  debug) ;;
+  release) PROFILE_ARGS+=(--release) ;;
+  *) echo "Error: FORMA_SSR_PROFILE must be debug or release" >&2; exit 1 ;;
+esac
+
 echo "FormaJS: $FORMAJS_DIR ($(git -C "$FORMAJS_DIR" rev-parse --short HEAD 2>/dev/null || echo 'not a git checkout'))"
 echo "forma:   $FORMA_DIR ($(git -C "$FORMA_DIR" rev-parse --short HEAD 2>/dev/null || echo 'not a git checkout'))"
 
@@ -62,7 +72,9 @@ node "$SCRIPT_DIR/build-cases.mjs"
 # dependency this fails loudly; refresh the lock by running
 #   cargo generate-lockfile --manifest-path e2e/Cargo.toml
 # and commit e2e/Cargo.lock.
-cargo run --quiet --locked --manifest-path "$SCRIPT_DIR/render/Cargo.toml" -- \
+# Bash 3.2 (macOS) treats an empty array expansion as unset under nounset.
+# Preserve zero debug arguments and exactly one release argument on both shells.
+cargo run --quiet --locked ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"} --manifest-path "$SCRIPT_DIR/render/Cargo.toml" -- \
   "$SCRIPT_DIR/cases" "$SCRIPT_DIR/out/build" "$SCRIPT_DIR/out/site"
 
 echo "✓ SSR e2e site built in $SCRIPT_DIR/out/site/"

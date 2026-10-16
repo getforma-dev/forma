@@ -2,10 +2,33 @@
 
 ## [Unreleased]
 
+### N2 is 28,000 B (L-59)
+
+- The founder approved a one-time increase from 27,500 to **28,000 B gzip -9**
+  on 2026-10-15. The combined indexed-row and deployment-identity route measures
+  27,724 B with its representative fixture and safety checks intact; its Browser
+  mount measures 27,077 B. This changes the shared Forma-code ceiling only.
+  BUILD-819, printed/returned reports and size-report.json retain the same gate:
+  28,000 B passes, 28,001 B refuses before publication. Page/canvas JavaScript
+  ceilings, static zero-JavaScript policy and package-size gates are unchanged.
+
+### Lexical JSX SVG namespaces — FORMA-171
+
+- Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
+- Compiler and build loaders share the original source snapshot with adoption hooks and SSR/Browser entry ownership. Handwritten `h`, separate component bodies, custom JSX factories and the deferred dynamic SVG title adoption boundary keep their existing contracts.
+
 ### Shared physical SSR and Browser entries — FORMA-186
 
 - A split build now gives an explicit Browser root that collides with an SSR client source its own entry identity. It keeps its mount while dependencies and core remain shared. Both role products use the compiler's same source snapshot, graph mapping, deployment identity and watch publication boundary.
 
+
+### Legacy import warning — FORMA-141
+
+- `formaAlias` still resolves bare `formajs` imports throughout 3.x. Each `build()`
+  call now warns once, on the console and in its result, listing the importing
+  source files and `@getforma/core` replacement. Subpaths, TypeScript-only imports
+  and re-exports are covered; duplicate imports and both identity passes share
+  one warning. No legacy import means no warning.
 
 ### Mandatory SSR admission — FORMA-101
 

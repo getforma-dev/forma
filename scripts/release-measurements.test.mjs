@@ -118,3 +118,24 @@ test('the machine block names the platform, the processors and the profile, and 
   assert.match(line, /P17 ran 301 s of 1,800 s/);
   assert.match(line, /25,424 B of 27,500 B gzip -9 \(fauth \/b\)/);
 });
+
+// Preserve historical synthetic policies above; current L-59 is read from the
+// emitted report too, including its exact admitted and refused boundaries.
+test('L-59 report admits 28000 bytes and refuses 28001 without a reader constant', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-l59-'));
+  try {
+    const ceilings = { forma: 28_000, javascript: 75 * 1024 };
+    const report = { version: 1, ceilings: { forma: 28_000, page: 75 * 1024, canvas: 365 * 1024 }, routes: [size('/', 28_000, { ceilings })] };
+    const save = () => writeFileSync(join(dir, 'size-report.json'), JSON.stringify(report));
+    save();
+    const admitted = n2Rows('indexed', readPackedSizes(dir));
+    assert.equal(admitted[0].limit, 28_000);
+    assert.equal(admitted[0].passed, true);
+    assertN2(admitted, [{ app: 'indexed', route: '/' }]);
+    report.routes = [size('/', 28_001, { ceilings, exceeded: ['forma'], over: true })];
+    save();
+    const refused = n2Rows('indexed', readPackedSizes(dir));
+    assert.equal(refused[0].passed, false);
+    assert.throws(() => assertN2(refused, [{ app: 'indexed', route: '/' }]), /28,001 B of Forma code over 28,000 B/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

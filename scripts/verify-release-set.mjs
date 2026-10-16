@@ -15,6 +15,7 @@ import { withOwnedServer } from './owned-server.mjs';
 import { linkPackedPackages, assertPackedResolution } from './release-packed-resolution.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyPackedFixtures } from './release-fixture-apps.mjs';
+import { verifyPackedSkew } from './release-skew-drill.mjs';
 import { completeMeasurements, machineProfile } from './release-measurements.mjs';
 import { verifyPackedSecurity } from './release-security.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
@@ -237,6 +238,7 @@ export async function verify(dir, reportPath) {
   assert([undefined, null, 'declared-v1', 'islands-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.stateBlock), 'P17 has no verifier for the recorded state block contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.fixtureApps), 'P17 has no verifier for the recorded fixture applications contract');
+  assert([undefined, null, 'native-v1'].includes(set.contracts.deploymentSkew), 'P17 has no verifier for the recorded deployment skew contract');
   if (set.contracts.fixtureApps) {
     // The fixtures are 3.0.0 pages: declared props, the state block, strict adoption (FORMA-188).
     assert.equal(set.contracts.props, 'declared-v1', 'fixture applications require declared props');
@@ -571,10 +573,12 @@ export async function verify(dir, reportPath) {
         });
       }
       // The fixture applications (FORMA-188): the same sources and checks as the source lane, against the
-      // packed set. The skew drill is FORMA-186's lane and is not called here yet; stageFixtureProject
-      // returns what it will take (project, build, targetDir, cratesDir).
+      // packed set. The deployment drill uses those same packed libraries and crates in all engines.
       if (set.contracts.fixtureApps) {
         report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report });
+      }
+      if (set.contracts.deploymentSkew === 'native-v1') {
+        report.deploymentSkew = await verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test });
       }
     } finally { await browser.close(); }
     // A live set publishes only for the milestone its tag names, and only when every gate of

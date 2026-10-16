@@ -6,7 +6,7 @@
     "crates/forma-ir/src/walker.rs > value_rule_vectors (DYN_TEXT and DYN_ATTR on a Number slot)",
     "packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts (String(n) as the oracle; h() text and attribute children; adoption expectations)"
   ],
-  "note": "Hand-enumerated finite vectors. NaN and the infinities are not vectors: RENDER-402 refuses a non-finite declared number before it can be rendered, and the walker's spelling of them ('NaN', 'Infinity', '-Infinity') is the same as String(). Not a generator or campaign.",
+  "note": "Finite shared vectors, including the preserved seed1820300/index460 tie regression and adjacent binary64 values. NaN and the infinities are not vectors: RENDER-402 refuses a non-finite declared number before it can be rendered, and the walker's spelling of them ('NaN', 'Infinity', '-Infinity') is the same as String(). The separate e2e/value-rules campaign generates additional cases; this file remains its committed regression oracle.",
   "values": [
     { "id": "zero", "lexeme": "0", "expected": "0" },
     { "id": "negative-zero", "lexeme": "-0.0", "expected": "0" },
@@ -36,6 +36,10 @@
     { "id": "two-to-fifty-three", "lexeme": "9007199254740992", "expected": "9007199254740992" },
     { "id": "float-rounds-past-safe", "lexeme": "9007199254740993", "expected": "9007199254740992" },
     { "id": "min-subnormal", "lexeme": "5e-324", "expected": "5e-324" },
+    { "id": "fuzz-tie-even-negative-seed1820300-index460", "lexeme": "-270129723325078.62", "expected": "-270129723325078.62" },
+    { "id": "fuzz-tie-even-positive-near-miss", "lexeme": "270129723325078.62", "expected": "270129723325078.62" },
+    { "id": "fuzz-tie-lower-neighbour", "lexeme": "-270129723325078.6", "expected": "-270129723325078.6" },
+    { "id": "fuzz-tie-upper-neighbour", "lexeme": "-270129723325078.66", "expected": "-270129723325078.66" },
     { "id": "max-finite", "lexeme": "1.7976931348623157e308", "expected": "1.7976931348623157e+308" }
   ]
 }

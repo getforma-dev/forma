@@ -39,7 +39,11 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * 46,504 B. L-58 permits measured +300 B for these reviewed features, so
  * those gates became 46,777 and 46,804 B (CHANGELOG, FORMA-181/182).
  * The reviewed FORMA-186 deployment guard then measures 46,997 and 47,095 B;
- * L-58 re-anchors the gates to measured +300 B: 47,297 and 47,395 B. They are
+ * L-58 re-anchors the gates to measured +300 B: 47,297 and 47,395 B. Integrating the reviewed F5 text branches, checkpoint D
+ * row focus and INV1 policies measures 47,310 and 47,398 B; L-58 re-anchors
+ * these gates to measured +300 B: 47,610 and 47,698 B.
+ * The separately measured indexed-row stack was 47,994 and 48,148 B;
+ * its approved L-58 gates are 48,294 and 48,448 B pending combined measurement. They are
  * ratchets like the runtime gates below, not a budget: the budget is N2,
  * Forma's code per route, which @getforma/build measures and fails
  * (route-size.ts).
@@ -57,7 +61,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  *
  * Until 3.0.0 the two runtime gates are ratchets, not the size target
  * (decision brief L-51: N2 is, gated per route by @getforma/build's size
- * report at 27,500 B gzip -9 of Forma code, L-58's restatement of DR-35): a
+ * report at 28,000 B gzip -9 of Forma code, L-59's amendment to DR-35): a
  * change that passes one raises it to its new measured size rounded up to the
  * next 500 B, and its CHANGELOG entry states the growth; a change that only
  * refactors never raises one. FORMA-021's cuts put every runtime IIFE back
@@ -83,7 +87,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 47297,
+    limit: 48294,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
@@ -93,7 +97,7 @@ export const GATES = [
   },
   {
     entry: 'dist/forma.esm.js',
-    limit: 47395,
+    limit: 48448,
     note: 'CDN browser ESM bundle (self-contained, inlines alien-signals)',
   },
   {

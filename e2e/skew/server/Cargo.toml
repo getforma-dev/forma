@@ -1,0 +1,13 @@
+[package]
+name = "forma-e2e-skew"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+forma-ir = { path = "../../../crates/forma-ir" }
+forma-server = { path = "../../../crates/forma-server" }
+axum = "0.8"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
+rust-embed = { version = "8", features = ["debug-embed"] }
+serde_json = "1"

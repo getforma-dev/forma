@@ -1,14 +1,4 @@
 {
   "note": "Known divergences (FORMA-183; e2e/parity/README.md, 'Expected divergence'). Each entry is run, must still occur (an entry that matches nothing fails the run as an unexpected pass, so it is removed the day its fix lands) and names the ticket that clears it; Every entry found at step 0 (2026-10-15) was reported to the lead, who named its ticket. FORMA-181 checkpoint B and FORMA-182 rules 2 to 7 add their own entries here as they land.",
-  "entries": [
-    {
-      "module": "props-contract",
-      "index": "*",
-      "check": "P1",
-      "kind": "error",
-      "match": "TypeError: .*insertBefore",
-      "ticket": "FORMA-016: createShow takes a string or number branch as a text node (F5)",
-      "note": "Step 1, found 2026-10-15; assigned by the lead to FORMA-016. createShow(() => props.user.active, () => props.title): the branch returns a string. The walker renders the text; core's createShow inserts the branch's result as a Node and throws when it is a non-empty string (Chromium: parameter 1 is not of type 'Node'; Firefox and WebKit say the same of insertBefore), so core's render cannot be compared in those states. The compiler accepts the string branch. FORMA-016 makes core's createShow accept a string or number branch as a text node, matching the walker and h(); this entry then fails the run as an unexpected pass."
-    }
-  ]
+  "entries": []
 }

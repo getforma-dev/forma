@@ -11,7 +11,7 @@ import {originalPosition} from './diagnostics';
 import {refuseBooleanText} from './value-rules';
 import type {SignalBinding} from './signal-scope';
 const traverse=(typeof _traverse==='function'?_traverse:(_traverse as any).default) as typeof _traverse;
-export interface ClosedBinding { values:readonly unknown[]; slot:()=>number }
+export interface ClosedBinding { values:readonly unknown[]; slot:()=>number;getter?:boolean }
 export type ClosedRows=WeakMap<t.Identifier,ClosedBinding>;
 export interface ClosedEnvironment {
   file:string;
@@ -42,7 +42,11 @@ export function closedBinding(node:t.Node|null|undefined,ctx:IrEmitContext,env:C
   }
   const identifier=t.isIdentifier(node)?node:t.isCallExpression(node)&&node.arguments.length===0&&t.isIdentifier(node.callee)?node.callee:undefined;
   if(identifier) {
-    const row=env.rows?.get(identifier);if(row){if(t.isCallExpression(node))fail(env,node,'a LIST row value is not a callable signal getter');return row;}
+    const row=env.rows?.get(identifier);if(row){
+      if(t.isCallExpression(node)&&!row.getter)fail(env,node,'a LIST row value is not a callable signal getter');
+      if(t.isIdentifier(node)&&row.getter&&!readGetter)fail(env,node,'an indexed row getter must be called before reading its item');
+      return row;
+    }
     const signal=env.signal(identifier);
     if(signal&&!readGetter&&t.isIdentifier(node))fail(env,node,'a signal getter must be called before reading its returned object');
     if(signal?.default.type==='aggregate')return {values:[signal.default.default],slot:()=>signal.slotId};
@@ -81,12 +85,12 @@ export function emitClosedText(node:t.Node,ctx:IrEmitContext,env:ClosedEnvironme
   const slot=closedSlot(node,ctx,env,'text')!;ctx.emit(C.OP_DYN_TEXT);ctx.emitU16(slot);ctx.emitU16(ctx.nextMarker());return true;
 }
 /** Bind only references to this exact callback parameter, never same-spelled shadows. */
-export function closedListRows(fn:t.ArrowFunctionExpression|t.FunctionExpression,values:readonly unknown[],slot:number,parent:ClosedRows|undefined):ClosedRows {
+export function closedListRows(fn:t.ArrowFunctionExpression|t.FunctionExpression,values:readonly unknown[],slot:number,parent:ClosedRows|undefined,getter=false):ClosedRows {
   const rows=new WeakMap<t.Identifier,ClosedBinding>();
   traverse(t.file(t.program([t.expressionStatement(fn)])),{ReferencedIdentifier(path){
     if(!t.isIdentifier(path.node))return;
     const binding=path.scope.getBinding(path.node.name);
-    if(binding?.identifier===fn.params[0])rows.set(path.node,{values,slot:()=>slot});
+    if(binding?.identifier===fn.params[0])rows.set(path.node,{values,slot:()=>slot,getter});
     else {const outer=parent?.get(path.node);if(outer)rows.set(path.node,outer);}
   }});
   return rows;

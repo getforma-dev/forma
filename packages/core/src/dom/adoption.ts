@@ -402,8 +402,18 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
             write=next=>{if(next.kind!=='show')refuse();description=next.description;update(next.value);};
           }});
         }else{
-          const target=cursor.textRange(initial.value);let previous=initial.value;
-          write=next=>{if(next.kind!=='text')refuse();if(next.value!==previous){target.data=next.value;previous=next.value;}};
+          const target=cursor.textRange(initial.value),parent=target.parentNode;
+          const start=target.previousSibling as Comment,end=target.nextSibling as Comment;
+          const startData=start.data,endData=end.data;let previous=initial.value,written=target.data;
+          write=next=>{
+            // A changed binding checks only its owned hole. Initial adoption still
+            // validates the complete island; live keyed item edits need no scan of
+            // unrelated rows, but must not write through a detached/rewritten hole.
+            if(next.kind!=='text'||!target.isConnected||!host.contains(target)||target.parentNode!==parent
+              ||target.previousSibling!==start||target.nextSibling!==end
+              ||start.data!==startData||end.data!==endData||target.data!==written)refuse();
+            if(next.value!==previous){target.data=next.value;written=next.value;previous=next.value;}
+          };
         }
       });return;
     }

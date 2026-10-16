@@ -56,17 +56,17 @@ Or use a CDN — no build step, no bundler:
 
 Any bundler works — Vite, esbuild, tsup, webpack, Rollup. FormaJS ships standard ESM and CJS via `package.json` exports. No plugins, no special config. For JSX, set `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`.
 
-Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build on 2026-10-15, after FORMA-181 checkpoint C and FORMA-182 value rules (that script walks the real ESM import graph, so shared chunks are weighed, and CI fails the build if any entry exceeds its limit):
+Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build on 2026-10-15, after FORMA-181 indexed rows and FORMA-186 deployment identity guard (that script walks the real ESM import graph, so shared chunks are weighed, and CI fails the build if any entry exceeds its limit):
 
 | Artifact | Gzipped | CI limit |
 |---|---|---|
-| `@getforma/core` entry + every chunk it imports | 45.9 KB (46,997 B) | 47,297 B |
-| CDN HTML runtime (`formajs-runtime.global.js`) | 40.3 KB (41,264 B) | 41,500 B |
-| CDN HTML runtime, hardened (`formajs-runtime-hardened.global.js`) | 39.2 KB (40,184 B) | 40,500 B |
-| CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 46.0 KB (47,095 B) | 47,395 B |
-| Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 38.7 KB (39,612 B) | 40,000 B |
+| `@getforma/core` entry + every chunk it imports | 46.9 KB (48,063 B) | 48,294 B |
+| CDN HTML runtime (`formajs-runtime.global.js`) | 40.3 KB (41,310 B) | 41,500 B |
+| CDN HTML runtime, hardened (`formajs-runtime-hardened.global.js`) | 39.3 KB (40,230 B) | 40,500 B |
+| CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 47.1 KB (48,209 B) | 48,448 B |
+| Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 38.7 KB (39,658 B) | 40,000 B |
 
-The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the minimal template's page with its counter as an island loads 25,101 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 27,500 B (N2, decision brief L-58). The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
+The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less: the minimal template's page with its counter as an island loads 25,101 B gzip -9 of Forma code, which `@getforma/build` reports per route and fails over 28,000 B (N2, decision brief L-59). The first and fourth rows grew from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). The gzipped figures are a measurement and rot; the CI limits are not, because a test reads them back out of the gate script.
 
 Verified by `src/__tests__/docs-truth.test.ts` > "the size table quotes the limits the CI gate actually enforces"
 

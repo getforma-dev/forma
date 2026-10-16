@@ -223,7 +223,7 @@ The build then writes `dist/formajs-frame.global.js` from the
 ### The size report: route classes and ceilings
 
 A production build classifies every route and holds it to its class's
-ceilings (N2; decision brief L-55, DR-35). Sizes are gzip at level 9, a KB
+ceilings (N2; decision brief L-59, DR-35). Sizes are gzip at level 9, a KB
 being 1,000 bytes and a KiB 1,024; Brotli is reported beside them. A route over
 a ceiling fails the build with `BUILD-819`, naming the route, its class and
 the bytes, before anything is written.
@@ -231,8 +231,8 @@ the bytes, before anything is written.
 | Class | Which routes | Forma's code | All of the route's JavaScript |
 |---|---|---|---|
 | `no-interactive-region` | A server-rendered page with no island, or a route that lists no script | none | none (a service worker counted) |
-| `islands` | A server-rendered page with islands | 27,500 B | 75 KiB (76,800 B), 365 KiB for a canvas |
-| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 27,500 B | as `islands` |
+| `islands` | A server-rendered page with islands | 28,000 B | 75 KiB (76,800 B), 365 KiB for a canvas |
+| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 28,000 B | as `islands` |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
 from the bundler's metafile, plus the identity banner Forma's build writes at
@@ -251,7 +251,7 @@ routes: {
 ```
 
 A canvas may ship 365 KiB of JavaScript instead of 75 KiB; Forma's code stays
-under 27,500 B either way, and the declaration gives nothing to a route
+under 28,000 B either way, and the declaration gives nothing to a route
 without JavaScript. Only `true` or `false` is accepted (anything else is a
 config error, reported before anything is written). It is provisional public
 configuration at 3.0.0: declare it for a page that really is a canvas, and trim
@@ -280,7 +280,7 @@ a route ships.
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-55, DR-35; the ceilings are not configurable): Forma's code at most 27,500 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-59, DR-35; the ceilings are not configurable): Forma's code at most 28,000 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
@@ -329,6 +329,15 @@ const config: BuildConfig = {
 
 await build(config);
 ```
+
+`formaAlias` remains a migration bridge throughout 3.x. If the build's source
+graph imports `formajs` or one of its subpaths, one warning lists the importing
+files and the `@getforma/core` replacement. The same warning appears in
+`BuildResult.warnings`; duplicate imports and the two production identity passes
+do not repeat it. Erased TypeScript imports and re-exports are included. A
+`build()` call with no legacy imports is quiet, including its initial watch
+build. The alias still resolves as configured; omitting it does not make the
+unavailable bare package resolve.
 
 ### Retention: a tab opened before a deploy
 
@@ -858,3 +867,27 @@ physical entry retain its SSR identity; a re-exporting facade does not opt into
 a second whole-page mount. Keep reusable components and module singletons in
 ordinary shared modules and declare the mount source itself as the Browser
 entry.
+
+### JSX SVG namespaces
+
+With the default `h` JSX factory imported from `@getforma/core` (or the legacy
+`formajs` alias), lexical SVG children such as `<svg><a><title>Icon</title></a></svg>`
+are created in the SVG namespace. HTML inside `foreignObject`, `desc` and `title`
+and the existing MathML integration points keep their original namespace.
+The build emits a private per-file factory; it adds no code to core. Props,
+spreads and children evaluate once in their original order, before element
+creation. The compiler composes these edits with adoption hooks on the same
+captured source for SSR and Browser entries, leaving native IR unchanged.
+
+Inline function children and control-flow callbacks within the JSX subtree inherit
+that lexical namespace; JSX in an attribute expression does not.
+This applies to lexical JSX. A separately declared component returning `<a>`
+has no known lexical SVG parent; use the existing `svg()` scope or a known-parent
+reactive child for that case. Handwritten `h` calls are unchanged. An authored
+custom JSX factory, automatic JSX runtime, or a file with an inner custom `h`
+binding retains its own factory behavior. The existing script construction
+refusal and the deferred dynamic SVG title adoption limitation still apply.
+
+The actual native/CSR/adoption namespace vectors are exercised by
+`e2e/ssr/namespaces.spec.ts`; unit controls cover evaluation order, source drift,
+SSR/Browser ownership, custom factories and generated-name collisions.
