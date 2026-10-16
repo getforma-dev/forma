@@ -118,6 +118,11 @@ See [the decoder contract](ISLAND-STATE.md) and
 [the reviewed wire grammar](../../../docs/proposals/FORMA-103-STATE-WIRE.md).
 `sanitizePropsDeep` remains a standalone utility for other data paths; SSR
 activation uses declared-schema projection rather than the old generic sanitizer.
+The utility mutates and returns the same input. It throws `TypeError` when an
+own `__proto__`, `constructor` or `prototype` key cannot be deleted, including
+inside frozen or sealed data. Earlier deletions are not rolled back on refusal;
+discard that partially sanitized input rather than passing it to a merge or store.
+Frozen data without forbidden own keys remains accepted.
 
 Verified by `src/dom/__tests__/island-state.test.ts` and
 `src/dom/__tests__/island-state-activation.test.ts`.

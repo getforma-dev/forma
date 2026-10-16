@@ -113,18 +113,58 @@ describe('activateIslands root parameter', () => {
 describe('sanitizePropsDeep', () => {
   it('sanitizePropsDeep strips forbidden keys at every depth', () => {
     const props = JSON.parse(
-      '{"a":{"b":{"__proto__":{"isAdmin":true},"keep":1}},"list":[{"constructor":{"x":1},"ok":2}]}',
+      '{"a":{"b":{"__proto__":{"isAdmin":true},"keep":1}},"list":[{"constructor":{"x":1},"prototype":{"x":2},"ok":2}]}',
     );
 
     const out = sanitizePropsDeep(props);
 
+    expect(out).toBe(props);
     const nested = out.a.b as Record<string, unknown>;
     expect(Object.prototype.hasOwnProperty.call(nested, '__proto__')).toBe(false);
     expect(nested['keep']).toBe(1);
     const row = out.list[0] as Record<string, unknown>;
     expect(Object.prototype.hasOwnProperty.call(row, 'constructor')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(row, 'prototype')).toBe(false);
     expect(row['ok']).toBe(2);
     expect(({} as Record<string, unknown>)['isAdmin']).toBeUndefined();
+  });
+
+  for (const lock of ['freeze', 'seal'] as const) {
+    it.each(['__proto__', 'constructor', 'prototype'])(
+      `refuses nested %s when Object.${lock} prevents deletion`,
+      key => {
+        const child = Object[lock](JSON.parse(`{"${key}":{"polluted":true},"keep":1}`));
+        const props = { nested: [child] };
+        const target = {};
+
+        expect(() => Object.assign(target, sanitizePropsDeep(props).nested[0])).toThrow(TypeError);
+        expect(Object.prototype.hasOwnProperty.call(child, key)).toBe(true);
+        expect(Object.getPrototypeOf(target)).toBe(Object.prototype);
+        expect(Object.keys(target)).toEqual([]);
+      },
+    );
+  }
+
+  it('accepts harmless frozen data and cycles without replacing the input', () => {
+    const nested = Object.freeze({ values: Object.freeze([Object.freeze({ keep: 1 })]) });
+    const props: { nested: typeof nested; self?: unknown } = { nested };
+    props.self = props;
+    Object.freeze(props);
+
+    expect(sanitizePropsDeep(props)).toBe(props);
+    expect(props.nested).toBe(nested);
+    expect(props.nested.values[0].keep).toBe(1);
+    expect(props.self).toBe(props);
+  });
+
+  it('retains earlier in-place deletions when a later nested key is refused', () => {
+    const props = JSON.parse('{"__proto__":{"polluted":true},"nested":{"prototype":{},"keep":1}}');
+    Object.freeze(props.nested);
+
+    expect(() => sanitizePropsDeep(props)).toThrow(TypeError);
+    expect(Object.prototype.hasOwnProperty.call(props, '__proto__')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(props.nested, 'prototype')).toBe(true);
+    expect(props.nested.keep).toBe(1);
   });
 
   it('sanitizePropsDeep terminates on cyclic props', () => {

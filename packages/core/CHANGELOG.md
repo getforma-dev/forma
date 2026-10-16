@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-200: make the standalone `sanitizePropsDeep` helper refuse forbidden own keys that cannot be deleted, including frozen/sealed nested objects. Successful calls still sanitize in place and return the same value; a refusal throws `TypeError` and may leave earlier deletions applied. Compiled SSR state continues to use its separate declared-schema projection.
+
 - FORMA-197: keep completed non-assertion mutation failures unqualified, but collect later probes after exact source restoration and a clean recovery baseline. Such a campaign always fails; infrastructure, incomplete execution and timeout failures still stop. Allow 150 minutes for the hosted 252-probe job using observed serial-run durations, without changing child deadlines, detection floors or kill criteria.
 
 - FORMA-197: replace the `untrack-noop` compile-break sentinel with a runnable mutation that retains the public API while allowing unintended signal subscriptions. Compilation failures remain unqualified; the 252-probe corpus count, strict assertion requirement and detection floors are unchanged.
