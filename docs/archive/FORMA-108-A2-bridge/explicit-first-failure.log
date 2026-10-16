@@ -1,0 +1,117 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run --maxWorkers=2 src/__tests__/runtime-explicit-mount.test.ts
+
+
+ RUN  v4.1.10 /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts (6 tests | 5 failed) 326ms
+     × compiled omitted grants confine DOM and refuse fetch and activation 279ms
+     × reviewed omitted grants confine DOM and refuse fetch and activation 10ms
+     × import, DOMContentLoaded, injected nodes and state-attribute changes never bind without a handed root 13ms
+     × exports only explicit mount lifecycle and host inspection helpers 4ms
+     × warns once about the obsolete manual switch and names the replacement mount call 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > compiled omitted grants confine DOM and refuse fetch and activation
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > reviewed omitted grants confine DOM and refuse fetch and activation
+AssertionError: expected 'escaped' to be 'confined' // Object.is equality
+
+Expected: "confined"
+Received: "escaped"
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts:48:55
+     46|     await settle();
+     47|     expect(root.querySelector('#live')?.textContent).toBe('3');
+     48|     expect(root.querySelector('#reach')?.textContent).toBe('confined');
+       |                                                       ^
+     49|     expect(fetch).not.toHaveBeenCalled();
+     50|     expect(activated).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > import, DOMContentLoaded, injected nodes and state-attribute changes never bind without a handed root
+AssertionError: expected '3' to be 'raw' // Object.is equality
+
+Expected: "raw"
+Received: "3"
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts:79:60
+     77|     document.querySelector('[data-forma-state]')!.setAttribute('data-f…
+     78|     await settle();
+     79|     expect(document.getElementById('served')?.textContent).toBe('raw');
+       |                                                            ^
+     80|     expect(document.getElementById('injected')?.textContent).toBe('raw…
+     81|     handles.push(runtime.mountMarkup(document.getElementById('root')!,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > exports only explicit mount lifecycle and host inspection helpers
+AssertionError: expected [ 'applyContainmentHints', …(16) ] to deeply equal [ 'applyContainmentHints', …(8) ]
+
+- Expected
++ Received
+
+  [
+    "applyContainmentHints",
+    "clearDiagnostics",
++   "destroyRuntime",
+    "getDiagnostics",
+    "getScopes",
++   "initRuntime",
++   "mount",
+    "mountMarkup",
++   "reconcile",
+    "resetScope",
++   "setDebug",
++   "setDiagnostics",
++   "setDirectiveMap",
+    "setScopeValue",
+    "trustedHtml",
++   "unmount",
+    "yieldToMain",
+  ]
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts:87:41
+     85|
+     86|   it('exports only explicit mount lifecycle and host inspection helper…
+     87|     expect(Object.keys(runtime).sort()).toEqual([
+       |                                         ^
+     88|       'applyContainmentHints', 'clearDiagnostics', 'getDiagnostics', '…
+     89|       'resetScope', 'setScopeValue', 'trustedHtml', 'yieldToMain',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/__tests__/runtime-explicit-mount.test.ts > FORMA-108: every binding has a named tier and explicit authority > warns once about the obsolete manual switch and names the replacement mount call
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/__tests__/runtime-explicit-mount.test.ts:102:22
+    100|     }
+    101|     const warnings = vi.mocked(console.warn).mock.calls.flat().map(Str…
+    102|     expect(warnings).toHaveLength(1);
+       |                      ^
+    103|     expect(warnings[0]).toContain('mountMarkup(root, markup, { tier, g…
+    104|     delete (globalThis as unknown as Record<symbol, unknown>)[key];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  00:20:47
+   Duration  569ms (transform 239ms, setup 0ms, import 23ms, tests 326ms, environment 129ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core
+npm error workspace @getforma/core@3.0.0-dev
+npm error location /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core
+npm error command failed
+npm error command sh -c vitest run --maxWorkers=2 src/__tests__/runtime-explicit-mount.test.ts
