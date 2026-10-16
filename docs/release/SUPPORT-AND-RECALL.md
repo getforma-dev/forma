@@ -53,6 +53,33 @@ registry before any retry. The final exit code remains 2 and `complete` remains
 false until the founder has performed and verified the web yanks and recorded all
 seven registry outcomes. Completing only the npm half is never a completed recall.
 
-This source slice provides validation, generation and the recall dry run. Wiring
-support generation into DS12/release preflight and proving current toolchain
-floors remain part of FORMA-189; their absence is not a completed-ticket claim.
+## Release wiring and toolchain claims
+
+The tag workflow's `check` job reads the complete GitHub release inventory and
+validates every unified row before filtering drafts or prereleases. It downloads
+all stable DS12 records and the latest prior prerelease, verifies each GitHub
+asset digest, and checks six-month spacing before any publish job can start.
+A rerun may finish the current tag's incomplete DS12, but cannot omit a different
+stable release. Unreadable or malformed history fails closed.
+
+After GitHub acknowledges publication, DS12 records the original `published_at`
+as `publishedAt`, plus the derived support policy and authenticated history.
+`recordedAt` still measures that workflow run and never determines support dates.
+The generated complete `SECURITY.md` is uploaded alongside DS12. After the first
+final, reproduce its marked block in the source document from those exact inputs;
+do not invent a final date while working on prereleases.
+
+All four npm packages declare Node >=22. `toolchain-matrix.mjs` supplies CI's
+22/24 matrix and adds26 at 2026-10-28T00:00:00Z. The parsed workflow policy and its
+seeded-drift controls prove that these versions are actually installed and tested.
+Each crate's exact declared Rust floor is checked with the committed lock and a
+separate fresh dependency resolution. The latter exports the committed source,
+seeds only lock format3 (no dependency entries), resolves with stable Cargo's
+MSRV-aware fallback, then builds with the declared older Rust. It refuses a changed
+format and preserves the original candidate lock. It does not hand-edit a resolved
+lock's format or silently replace the release's dependency graph.
+
+The first S4 maintenance drill remains due after the final release, on `maint/2.x`,
+with a seeded security patch shipped within seven days and two drills per year.
+That future operational event and a founder-only live recall are not claimed by
+these source checks. See `docs/evidence/forma-189/README.md` for actual local proof.

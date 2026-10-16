@@ -116,7 +116,7 @@ export function renderSecurity(template, support) {
 
 /** Compare with the complete paginated GitHub release inventory. A caller may
  * omit obsolete prereleases, but never an advertised stable unified release. */
-export function assertPublishedHistory(releases, inventory) {
+export function validatedReleaseInventory(inventory) {
   assert(Array.isArray(inventory), 'missing GitHub release inventory');
   const all = inventory.flat();
   assert(all.every(r => r && typeof r === 'object' && typeof r.tag_name === 'string'), 'invalid release inventory');
@@ -133,8 +133,17 @@ export function assertPublishedHistory(releases, inventory) {
       assert.equal(metadata.prerelease, metadata.tag_name.includes('-'), 'inventory prerelease classification disagrees with tag');
       if (!metadata.draft) {
         date(metadata.published_at, metadata.tag_name);
-        if (!metadata.prerelease) assert(releases.some(r => r.tag === metadata.tag_name), `missing advertised stable record ${metadata.tag_name}`);
       }
+    }
+  }
+  return byTag;
+}
+
+export function assertPublishedHistory(releases, inventory) {
+  const byTag = validatedReleaseInventory(inventory);
+  for (const metadata of byTag.values()) {
+    if (unifiedTag.test(metadata.tag_name) && !metadata.draft && !metadata.prerelease) {
+      assert(releases.some(r => r.tag === metadata.tag_name), `missing advertised stable record ${metadata.tag_name}`);
     }
   }
   for (const release of releases) {
