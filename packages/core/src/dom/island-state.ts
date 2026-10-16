@@ -38,7 +38,7 @@ export type IslandPreflight = { readonly host: HTMLElement; readonly value: Vali
 
 const MAX_STATE_BYTES = 1_048_576;
 const HASH = /^[0-9a-f]{16}$/;
-const nonAsciiState = /[^\x00-\x7f]/;
+const stateEncoder = new TextEncoder();
 const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
 const registrations = new WeakMap<(...args: never[]) => unknown, Registration>();
 const registeredComponents = new WeakSet<(...args: never[]) => unknown>();
@@ -135,30 +135,6 @@ function copySchema(input: IslandSchema): IslandSchema {
   return Object.freeze(result.map(fields => Object.freeze(fields)));
 }
 
-/** Exact UTF8 byte admission without a per-document scratch buffer. UTF16
- * length is a lower bound; both scans are capped at one MiB code units.
- * Lone surrogates count as TextEncoder's three-byte replacement character. */
-function stateTextBytes(text: string): number {
-  if (text.length > MAX_STATE_BYTES) return -1;
-  if (!nonAsciiState.test(text)) return text.length;
-  let bytes = text.length;
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-    if (code >= 0x80) {
-      if (code < 0x800) bytes++;
-      else {
-        bytes += 2;
-        if (code >= 0xd800 && code <= 0xdbff) {
-          const next = text.charCodeAt(i + 1);
-          if (next >= 0xdc00 && next <= 0xdfff) i++;
-        }
-      }
-      if (bytes > MAX_STATE_BYTES) return -1;
-    }
-  }
-  return bytes;
-}
-
 /** Count encoded bytes without allocating an unbounded TextEncoder result. */
 function schemaTextBytes(text: string): number {
   if (text.length > 65535) return -1;
@@ -214,9 +190,12 @@ function readDocument(doc: Document): DocumentState {
     const block = doc.head?.querySelector('script[type="application/json"][data-island-state]');
     if (!block) refuse('FORMA_E_ISLAND_STATE', 'missing first head state block');
     const text = block.textContent ?? '';
-    // The byte proof retains the initial UTF16 lower-bound refusal and runs
-    // before JSON.parse. No UTF8 scratch buffer or unbounded allocation.
-    if (stateTextBytes(text) < 0) {
+    // A UTF-16 code unit needs at least one encoded byte, so reject before
+    // allocation when that lower bound exceeds the ceiling. encodeInto writes
+    // only to this capped buffer and reports incomplete input on overflow.
+    if (text.length > MAX_STATE_BYTES) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+    const target = new Uint8Array(Math.min(MAX_STATE_BYTES, text.length * 3));
+    if (stateEncoder.encodeInto(text, target).read !== text.length) {
       refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
     }
     let envelope: unknown;
