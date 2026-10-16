@@ -64,9 +64,7 @@ the walker and not guessed.
   `#[props(rename = "hasOAuth")]`, and bind says so (BIND-101 names both spellings).
 - **A reactive boolean `aria-pressed` writes `""`** for true and removes the attribute for false, which is
   not the string a screen reader needs; the fixture writes the string in the click.
-- **An island with a client-side list is over N2 today.** Forma's code on the smallest island is 25,084 B
-  gzip -9, `createShow` adds 241 B and `createList` 1,282 B: a route whose island holds a `createList` is
-  about 26.4 KB against the 25,500 B ceiling (26,366 B when first measured, 26,403 B on `49c6146`) (`negative/list-island`, BUILD-819). The studio's chips and the
-  service's results table are lists in islands on the pages these fixtures are shaped like, so the fixtures
-  keep their lists in the page outside every island (server markup, no client code) and reach them by id.
-  The fixture routes measured 25,399 to 25,447 B on the integration head `49c6146` (FORMA-186's identity banner added about 32 B per route), 53 to 101 B under the ceiling, and `negative/list-island` 26,403 B; the figures move with the tree.
+- **L-58 admits an island with a client-side list.** The positive `positive/list-island` entry builds
+  under the accepted N2 policy. Its test reads the emitted `size-report.json`, requires a single
+  island route, and checks both measured byte counts, their report ceilings and the passing verdict.
+  The full ksx/fauth list migration and packed report measurement follow in FORMA-188's integration slice.
