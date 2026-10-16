@@ -254,7 +254,7 @@ against the walker or core.
 
 The key check against the expected key text (`data-forma-key` is lifted from the server tree; the
 expected text per row is FORMA-181's `canonicalKeyText` once rows are mapped to their list), the
-switch to blocking (when step 1's expected list is empty for P1 and P2), and step 3's fixture
+completed blocking switch (recorded below), and step 3's fixture
 applications (FORMA-188).
 
 ## Render one component at an explicit state (Forma-internal)
@@ -289,3 +289,19 @@ non-blocking Chromium job is removed. Firefox/WebKit release jobs require the
 same empty list and their results now block the calling release workflow.
 The per-run JSONL reports retain actual counts and wall time, including no-setter
 and holder-ambiguity counts. Historical failing products and reports remain intact.
+
+The combined release stack at `622714dc0606efd2ade8c0670cd3edf10119410a`
+passed the actual blocking commands on Node 24.22.0:
+
+| Engine | Generated states per schema | Total states | P1 equal | P2 equal | P3 equal | Seconds |
+|---|---:|---:|---:|---:|---:|---:|
+| Chromium | 100 | 1,018 | 1,018 | 909 | 100 | 70.5 |
+| Firefox | 10 | 118 | 118 | 99 | 10 | 9.0 |
+| WebKit | 10 | 118 | 118 | 99 | 10 | 6.1 |
+
+All 28 modules used the typed server path; every engine had zero expected
+divergences, refusals, errors and structural differences. The 27 `no-setter`
+reports retain their declared meaning. A seeded, structurally valid exception
+also made the exact R17 empty-list command fail; the original list was restored
+byte-for-byte. These are local source qualification figures, not a packed-release
+measurement or a claim that the whole R17 command took 70.5 seconds.
