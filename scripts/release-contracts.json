@@ -69,5 +69,6 @@
   "trustedTypes": "enforced-v1",
   "boundRender": "finalized-v1",
   "assetIntegrity": "sha384-v1",
-  "sourceTemplates": "islands-v1"
+  "sourceTemplates": "islands-v1",
+  "fixtureApps": "declared-v1"
 }

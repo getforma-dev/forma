@@ -69,7 +69,7 @@ function execute(f:ReturnType<typeof fixture>,manifest:AssetManifest) {
 }
 it('publishes actual core hooks/shared chunks, exact native products and a static route together',async()=>{
  const f=fixture(),result=await build(f.config);paired(f,result.manifest);execute(f,result.manifest);
-});
+},30_000);// a real build plus a child process that executes it: seconds on a busy machine
 it('keeps actual package/IR/manifest bytes on refusal and publishes a recovered coherent generation',async()=>{
  const f=fixture();await watching(f.config,async watcher=>{
   await watcher.ready();const accepted=watcher.manifest() as AssetManifest;paired(f,accepted);execute(f,accepted);
@@ -82,7 +82,7 @@ it('keeps actual package/IR/manifest bytes on refusal and publishes a recovered 
    writeFileSync(join(f.src,'shared.ts'),sharedSource+'\n// coherent recovered source');
    const page=join(f.src,'a-page.ts');writeFileSync(page,readFileSync(page,'utf8').replace('a-native','a-recovered'));
   });
-  const recovered=await vi.waitFor(()=>{const current=watcher.manifest() as AssetManifest;expect(current.routes['/a'].ir).not.toBe(accepted.routes['/a'].ir);return current;});
+  const recovered=await vi.waitFor(()=>{const current=watcher.manifest() as AssetManifest;expect(current.routes['/a'].ir,watcher.output()).not.toBe(accepted.routes['/a'].ir);return current;},{timeout:10_000});
   expect(readFileSync(join(f.dist,'manifest.json'))).not.toEqual(manifestBytes);
   paired(f,recovered);execute(f,recovered);
   for(const [file,bytes] of old)expect(readFileSync(join(f.dist,file))).toEqual(bytes);

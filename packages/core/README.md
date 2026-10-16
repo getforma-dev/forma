@@ -56,7 +56,7 @@ Or use a CDN — no build step, no bundler:
 
 Any bundler works — Vite, esbuild, tsup, webpack, Rollup. FormaJS ships standard ESM and CJS via `package.json` exports. No plugins, no special config. For JSX, set `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`.
 
-Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build on 2026-10-15, after FORMA-181 checkpoint C and FORMA-182 value rules (that script walks the real ESM import graph, so shared chunks are weighed, and CI fails the build if any entry exceeds its limit):
+Gzipped sizes, measured by `npm run check:size` on the 3.0.0-dev build on 2026-10-15, after FORMA-181 checkpoint D, FORMA-182 value rules and FORMA-016 F5 (that script walks the real ESM import graph, so shared chunks are weighed, and CI fails the build if any entry exceeds its limit):
 
 | Artifact | Gzipped | CI limit |
 |---|---|---|

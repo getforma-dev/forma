@@ -77,7 +77,7 @@ the same byte. Only the Rust side turns the wrong byte into missing rows.
 | `unicode-emoji` | non-ASCII and emoji in text, static attrs and a signal default (UTF-8 length prefixes) |
 | `jsx-page` | an **all-`.tsx`** app: entry, page, sibling sub-component and island, every one of them reaching the analyzer through esbuild's `export { X }` rewrite |
 | `barrel-exports` | every component reached through an `index.ts` barrel: `export { X } from`, `export * from`, and `export { XImpl as X }` |
-| `sub-component-scopes` | signals declared in the four scopes the old hand-written extractors did not look in, plus the same-name **collision** rule and a truthy `SHOW_IF` default |
+| `sub-component-scopes` | signals declared in the four scopes the old hand-written extractors did not look in, plus a truthy `SHOW_IF` default; the earlier same-name collision is an archived BUILD-503 refusal |
 | `eager-concat` | expressions evaluated EAGERLY — `'Player ' + name()` with no `() => …` wrapper — in **child** and **attribute** position, including a multi-operand concat mixing a string and a **number** |
 | `imported-const-table` | Rule 9's spread unroll over tables declared in **another module** — inside a registered island, through an inert page↔island import cycle, and through a barrel that **aliases** the export |
 | `imported-signal-defaults` | signal defaults declared in **another module** (the store.ts architecture): an href **ternary** folding an imported signal's `''` default into the attribute's SSR value, and page + island reading the same store signal — one through an **aliasing barrel** — sharing **one** slot |
@@ -117,9 +117,10 @@ it was not the failure was silent.
 This case declares its signals in the four places nobody had written a method
 for: the root page FILE's module scope, an inlined file-local sub-component's
 body, an inlined cross-file sub-component's module scope, and below the top
-level of a scope (inside an `if`). It also declares `count` twice, in two
-different components, which is the collision the `#N` occurrence suffix
-resolves.
+level of a scope (inside an `if`). The admitted fixture uses distinct `count`
+and `panelCount` getters. Its earlier duplicate getter names are preserved in
+[the strict corpus archive](../../../../../docs/archive/FORMA-101-strict-corpus/README.md)
+as a BUILD-503 publication refusal, without claiming a broader scope proof.
 
 The `@page defaults` render is what makes it a real check. Before the fix, that
 section of the golden was four zero-width spaces, a missing `class`, a missing

@@ -1,11 +1,11 @@
 /**
- * @getforma/build — coded SSR diagnostics, `--strict` and the JSON report
+ * @getforma/build — coded SSR publication diagnostics and the JSON report
  * (FORMA-119; DR-1, N12)
  *
  * The compiler reports every construct it cannot represent with a stable
  * code, file, line and column, and still prints the line it printed before.
  * The build gathers them from every page, returns them in its result, writes
- * them as JSON on request, and under `--strict` fails with all of them at
+ * them as JSON on request, and fails with all available errors at
  * once, after every page has been compiled, rather than at the first.
  *
  * Verified by: packages/build/tests/strict.test.ts
@@ -29,47 +29,30 @@ export interface CompilerDiagnostic {
   chain?: BuildDiagnostic['chain'];
 }
 
-/** Where the catalogue lives, named in a failing `--strict` build. */
-export const CATALOGUE_URL = 'https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md';
+/** Where the published subset and catalogue live. */
+export const CATALOGUE_URL = 'https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md';
 
 /**
- * `strict` from the config, else from the environment: `FORMA_STRICT=1` (or
- * `true`) turns it on, unset or `0` (or `false`) leaves it off, and any other
- * value is refused rather than read as off, since a strict switch that fails
- * open passes the pages it was set to check. The build reads no command-line
- * flag of its own, as for `ssr` and `watch`: a script that calls `build()`
- * maps its own flags to the config (the templates map `--strict`). The
- * variable is namespaced so it cannot be a flag meant for another tool.
- * `diagnosticsJson` is config only.
- * Verified by: packages/build/tests/strict.test.ts > "takes strict from the config, else from FORMA_STRICT, and reads no command-line flag"
+ * 3.0 always rejects unsupported native constructs. The old config and
+ * environment switches remain accepted no-ops through 3.x; invalid environment
+ * spellings still fail rather than being mistaken for a valid option.
+ * `diagnosticsJson` remains config only. No command-line flag is read here.
+ * Verified by: packages/build/tests/strict-only.test.ts > "accepts old false flags as no-ops while reporting the effective strict mode"
  */
 export function resolveDiagnosticOptions(
   config: BuildConfig,
   env: NodeJS.ProcessEnv = process.env,
 ): { strict: boolean; diagnosticsJson?: string } {
-  let strict = config.strict;
-  if (strict === undefined) {
+  if (config.strict === undefined) {
     const value = env.FORMA_STRICT;
-    if (value === undefined || value === '' || value === '0' || value === 'false') strict = false;
-    else if (value === '1' || value === 'true') strict = true;
-    else {
+    if (value !== undefined && !['', '0', 'false', '1', 'true'].includes(value)) {
       throw new Error(
-        `@getforma/build: FORMA_STRICT is '${value}': set it to 1 to fail the build on SSR diagnostics, or unset it`,
+        `@getforma/build: FORMA_STRICT is '${value}': use 0, 1, false or true, or unset it; 3.0 always rejects unsupported SSR constructs`,
       );
     }
   }
-  return { strict, ...(config.diagnosticsJson ? { diagnosticsJson: config.diagnosticsJson } : {}) };
+  return { strict: true, ...(config.diagnosticsJson ? { diagnosticsJson: config.diagnosticsJson } : {}) };
 }
-
-/**
- * The compiler's mandatory refusals: the build fails on them with or without
- * `--strict`, so the report labels them errors either way (BUILD-610 declared
- * props, BUILD-611 entry policy, BUILD-612/613 list keys and rows, FORMA-181;
- * BUILD-614 a boolean in text and BUILD-615 a condition that is not
- * boolean-typed, FORMA-182's value rules 6 and 7).
- * Verified by: packages/build/tests/strict.test.ts > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are"
- */
-const MANDATORY: ReadonlySet<string> = new Set(['BUILD-610', 'BUILD-611', 'BUILD-612', 'BUILD-613', 'BUILD-614', 'BUILD-615']);
 
 /**
  * The diagnostics of one build, page by page. A page's latest compilation
@@ -81,7 +64,7 @@ export class DiagnosticsCollector {
   private readonly byPage = new Map<string, BuildDiagnostic[]>();
   private readonly buildLevel: BuildDiagnostic[] = [];
 
-  constructor(private readonly strict: boolean, private readonly pageOrder: readonly string[] = []) {}
+  constructor(_strict: boolean, private readonly pageOrder: readonly string[] = []) {}
 
   /** The SSR plugin's `onDiagnostics` callback. */
   readonly onDiagnostics = (diagnostics: CompilerDiagnostic[], page: string): void => {
@@ -103,7 +86,7 @@ export class DiagnosticsCollector {
     return [...this.buildLevel, ...pages.flatMap((page) => this.byPage.get(page)!)];
   }
 
-  /** The ones `--strict` fails the build on. */
+  /** The diagnostics that refuse publication. */
   errors(): BuildDiagnostic[] {
     return this.all().filter((d) => d.severity === 'error');
   }
@@ -111,7 +94,7 @@ export class DiagnosticsCollector {
   private toBuildDiagnostic(d: CompilerDiagnostic, page: string): BuildDiagnostic {
     return {
       code: d.code,
-      severity: MANDATORY.has(d.code) ? 'error' : !d.strict ? 'note' : this.strict ? 'error' : 'warning',
+      severity: d.strict ? 'error' : 'note',
       page,
       file: d.file,
       line: d.line,
@@ -206,11 +189,11 @@ export function formatBuildDiagnostic(d: BuildDiagnostic): string {
   return `${where}  ${d.code}  ${d.message}\n    why: ${d.why}\n    fix: ${d.fix}`;
 }
 
-/** The error a `--strict` build fails with: every error, then the catalogue. */
+/** The aggregate publication refusal: every error, then the catalogue. */
 export function strictFailure(errors: BuildDiagnostic[]): Error & { diagnostics: BuildDiagnostic[] } {
   const count = errors.length === 1 ? '1 SSR diagnostic is an error' : `${errors.length} SSR diagnostics are errors`;
   const error = new Error(
-    `@getforma/build strict mode (strict: true or FORMA_STRICT=1): ${count}; without it they are warnings:\n`
+    `@getforma/build: ${count}; 3.0 requires the published server-renderable subset:\n`
     + errors.map(formatBuildDiagnostic).join('\n')
     + `\nEach code, with its fix: ${CATALOGUE_URL}`,
   ) as Error & { diagnostics: BuildDiagnostic[] };

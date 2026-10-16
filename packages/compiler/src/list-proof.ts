@@ -33,7 +33,7 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   traverse(ast,{enter(path){paths.set(path.node,path);if(callable(path.node))functions.set(path.node.start!,path.node);},CallExpression(path){if(isCoreCall(path,'createList'))calls.push(path);}});
   const result={file,source,paths,calls,functions};modules.set(file,result);return result;
  }
- function fail(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613',detail:string):never {
+ function fail(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'|'BUILD-616',detail:string):never {
   throw new PropsSchemaError(mod.file,node.loc?.start.line??1,(node.loc?.start.column??0)+1,detail,code);
  }
  function binding(mod:Module,node:t.Node,code:'BUILD-612'|'BUILD-613'):Binding {
@@ -145,8 +145,124 @@ export function createListProofs(loadModule:ModuleLoader=rawLoad) {
   const value=singleReturn(target.mod,target.fn,'BUILD-613','LIST row helper');
   active.add(id);try{return roots(target.mod,value,active);}finally{active.delete(id);}
  }
+ /** A getter's visible value source. Capturing a signal's setter makes its initial
+  * value insufficient evidence, even if no direct setter call is visible here.
+  * A computed callback's return still needs the immutable-value proof below. */
+ function getterValue(mod:Module,node:t.Node):t.Node|undefined {
+  if(!t.isIdentifier(node))return undefined;
+  const found=mod.paths.get(node)?.scope.getBinding(node.name),decl=found?.path.node;
+  if(!found||found.constantViolations.length||!t.isVariableDeclarator(decl)||!t.isCallExpression(decl.init))return undefined;
+  const made=core(mod,decl.init.callee),initial=decl.init.arguments[0];
+  if(!initial||t.isSpreadElement(initial)||t.isArgumentPlaceholder(initial))return undefined;
+  if(made==='createSignal'&&t.isArrayPattern(decl.id)&&decl.id.elements[0]===found.identifier
+   &&decl.id.elements.slice(1).every(element=>element===null))return initial;
+  if((made==='createComputed'||made==='createMemo')&&decl.id===found.identifier&&callable(unwrap(initial))) {
+   const fn=unwrap(initial) as ComponentFunction;
+   if(!t.isBlockStatement(fn.body))return fn.body;
+   // Multiple/control-dependent returns have no single provable value.
+   const statements=fn.body.body.filter(statement=>!t.isVariableDeclaration(statement));
+   if(statements.length===1&&t.isReturnStatement(statements[0]))return statements[0].argument??undefined;
+  }
+  return undefined;
+ }
+ /** Follow immutable bindings, not mutable object fields. `const` protects a binding,
+  * not its members; a member may change through an alias or a getter result. */
+ function visibleValue(mod:Module,input:t.Node,active=new Set<Binding>(),depth=0):t.Node|undefined {
+  if(depth>=64)return undefined;
+  const node=unwrap(input);
+  if(t.isIdentifier(node)) {
+   const found=mod.paths.get(node)?.scope.getBinding(node.name),decl=found?.path.node;
+   if(!found)return node;
+   if(found.constantViolations.length||active.has(found))return undefined;
+   if(t.isVariableDeclarator(decl)&&t.isIdentifier(decl.id)&&decl.init) {
+    active.add(found);try{return visibleValue(mod,decl.init,active,depth+1);}finally{active.delete(found);}
+   }
+   return undefined;
+  }
+  if(t.isCallExpression(node)) {
+   const value=getterValue(mod,unwrap(node.callee));
+   return value?visibleValue(mod,value,active,depth+1):undefined;
+  }
+  if(t.isMemberExpression(node))return undefined;
+  return node;
+ }
+ /** An exported binding's declaration in a module: `export const x = …`, `export function x`, or
+  * `export { local as x }` of a local declaration. Undefined for a re-export or anything else. */
+ function exported(mod:Module,name:string):{mod:Module;node:t.Node}|undefined {
+  const program=[...mod.paths.values()].find(path=>path.isProgram()) as NodePath<t.Program>|undefined;
+  for(const statement of program?.node.body??[]) {
+   if(!t.isExportNamedDeclaration(statement)||statement.exportKind==='type')continue;
+   const decl=statement.declaration;
+   if(t.isFunctionDeclaration(decl)&&decl.id?.name===name)return {mod,node:decl};
+   if(t.isVariableDeclaration(decl))for(const item of decl.declarations)if(t.isIdentifier(item.id)&&item.id.name===name&&item.init) {
+    const local=program!.scope.getBinding(name);
+    if(!local||local.constantViolations.length)return undefined;
+    return {mod,node:item.init};
+   }
+   if(!statement.source)for(const spec of statement.specifiers)if(t.isExportSpecifier(spec)&&field(spec.exported)===name){
+    const local=program!.scope.getBinding(spec.local.name),node=local?.path.node;
+    if(!local||local.constantViolations.length)return undefined;
+    if(t.isFunctionDeclaration(node))return {mod,node};
+    if(t.isVariableDeclarator(node)&&t.isIdentifier(node.id)&&node.init)return {mod,node:node.init};
+   }
+  }
+  return undefined;
+ }
+ const literal=(mod:Module,node:t.Node):string|undefined=>t.isArrayExpression(node)?'an array':t.isObjectExpression(node)?'an object'
+  :t.isLiteral(node)||t.isIdentifier(node,{name:'undefined'})&&!mod.paths.get(node)?.scope.getBinding('undefined')?'a literal value':undefined;
+ const dataType=(type:t.Node|null|undefined):boolean=>!!type&&(t.isTSArrayType(type)||t.isTSTupleType(type)
+  ||t.isTSStringKeyword(type)||t.isTSNumberKeyword(type)||t.isTSBooleanKeyword(type)||t.isTSLiteralType(type)
+  ||t.isTSTypeReference(type)&&t.isIdentifier(type.typeName)&&['Array','ReadonlyArray','Date'].includes(type.typeName.name)
+  ||t.isTSTypeOperator(type)&&dataType(type.typeAnnotation)
+  ||t.isTSUnionType(type)&&type.types.every(member=>dataType(member)||t.isTSUndefinedKeyword(member)||t.isTSNullKeyword(member)));
+ /**
+  * F1 (FORMA-183's parity harness): core's createList calls its source to read the rows, so a
+  * source the compiler can prove is not a function refuses with BUILD-616: a literal (an array, an
+  * object, a string, a number…), a binding whose value is one (a local `const`, or a named export
+  * of an imported module), a provably immutable data-valued core getter result (`rows()`),
+  * or a field that an inline parameter annotation types as data (`p.rows` with
+  * `p: {rows: Row[]}`). A function, a getter, and anything the compiler cannot see through (an
+  * untyped parameter's field, another call's result) stay admitted. The refusal names the call's
+  * own argument, wherever the literal was declared.
+  */
+ function source(mod:Module,node:t.Node,at:t.Node,active=new Set<Binding>()):void {
+  node=unwrap(node);
+  if(callable(node))return;
+  const refuse=(what:string):never=>fail(mod,at,'BUILD-616',`LIST source is ${what}, not a function: core calls it to read the rows, so pass the getter itself or a function returning them, such as () => rows`);
+  const value=literal(mod,node);if(value)refuse(value);
+  if(t.isCallExpression(node)&&getterValue(mod,unwrap(node.callee))) {
+   const resolved=visibleValue(mod,node),data=resolved?literal(mod,resolved):undefined;
+   if(data)refuse(`${data} read from an immutable getter value`);
+  }
+  if(t.isMemberExpression(node)) {
+   const name=!node.computed&&t.isIdentifier(node.property)?node.property.name:t.isStringLiteral(node.property)?node.property.value:undefined;
+   const object=unwrap(node.object);
+   if(name!==undefined&&t.isIdentifier(object)) {
+    const found=mod.paths.get(object)?.scope.getBinding(object.name);
+    const annotation=found?.kind==='param'&&t.isIdentifier(found.path.node)?found.path.node.typeAnnotation:undefined;
+    const literalType=t.isTSTypeAnnotation(annotation)&&t.isTSTypeLiteral(annotation.typeAnnotation)?annotation.typeAnnotation:undefined;
+    const member=literalType?.members.find(item=>t.isTSPropertySignature(item)&&field(item.key)===name) as t.TSPropertySignature|undefined;
+    if(dataType(member?.typeAnnotation?.typeAnnotation))refuse(`a field its parameter's type declares as data (${object.name}.${name})`);
+   }
+   return;
+  }
+  if(!t.isIdentifier(node))return;
+  const found=mod.paths.get(node)?.scope.getBinding(node.name);
+  if(!found||found.constantViolations.length||active.has(found))return;
+  active.add(found);
+  const decl=found.path.node;
+  if(t.isVariableDeclarator(decl)&&t.isIdentifier(decl.id)&&decl.init){source(mod,decl.init,at,active);return;}
+  if(t.isImportSpecifier(decl)&&decl.importKind!=='type') {
+   const owner=found.path.parentPath?.node;
+   if(!t.isImportDeclaration(owner)||owner.importKind==='type')return;
+   const loaded=loadModule(mod.file,owner.source.value);if(!loaded)return;
+   const target=module(loaded.path,loaded.source),declared=exported(target,field(decl.imported)!);
+   if(declared&&!callable(declared.node)){const what=literal(target,unwrap(declared.node));if(what)refuse(`${what} (imported)`);}
+  }
+ }
  function prove(mod:Module,path:NodePath<t.CallExpression>):ListProof {
-  const call=path.node,[,key,row]=call.arguments;
+  const call=path.node,[items,key,row]=call.arguments;
+  if(items&&!t.isSpreadElement(items)&&!t.isArgumentPlaceholder(items))source(mod,items,items);
   if(!callable(key)||!t.isIdentifier(key.params[0]))fail(mod,key??call,'BUILD-612','LIST key must be an inline function with a named row parameter');
   const body=singleReturn(mod,key,'BUILD-612','LIST key function');
   const parameter=binding(mod,key.params[0],'BUILD-612'),keyParts=keyPath(mod,body,parameter);

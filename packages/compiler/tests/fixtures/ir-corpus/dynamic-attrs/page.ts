@@ -9,10 +9,9 @@ const [busy] = createSignal(false);
 const [tone] = createSignal('calm');
 const [query] = createSignal('');
 
-// NOT a signal — a plain module arrow. Nothing can evaluate it at compile
-// time, so `href` ships empty and the compiler warns; this case is here to
-// keep an un-evaluable dynamic attribute in the corpus.
-const docsHref = () => '/docs';
+// A closed literal default supplies the same real href in native and browser
+// renders. The original unknown getter is archived as a BUILD-206 refusal.
+const [docsHref] = createSignal('/docs');
 
 export function AttrsPage() {
   // Component-scope signals are named too, and a dynamic attribute whose body

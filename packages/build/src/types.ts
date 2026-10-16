@@ -105,16 +105,9 @@ export interface BuildConfig {
   /** Files that should keep unhashed copies (e.g. for server-inlined assets).
    * A zero-JS SSR owner cannot request executable server inlining. */
   serverInlined?: string[];
-  /**
-   * Fail the build on every coded SSR diagnostic but a note (FORMA-119,
-   * DR-1): each construct the compiler cannot represent, with its code, file,
-   * line and column, all reported at once. Off by default, where they stay
-   * warnings. When unset, `FORMA_STRICT=1` in the environment turns it on; the
-   * build reads no command-line flag, so a build script that takes `--strict`
-   * maps it here, as it does `--ssr` and `--watch`. Needs
-   * `@getforma/compiler` 0.3.7 or later. In watch mode a page with an error
-   * keeps its last good module.
-   */
+  /** Legacy compatibility option. SSR publication always requires the 3.0
+   * server-renderable subset. False and FORMA_STRICT=0 cannot downgrade errors.
+   * Every page is checked; watch retains its previous good product on failure. */
   strict?: boolean;
   /**
    * Also write every SSR diagnostic as JSON to this path (relative to the
@@ -123,6 +116,31 @@ export interface BuildConfig {
    * the build replaces whole and serves.
    */
   diagnosticsJson?: string;
+  /**
+   * The previous release's `dist/`, which the application's pipeline keeps as a
+   * release artifact (FORMA-186, DR-29, L-25). The build copies that release's
+   * own hashed assets into the new `dist/`, listed in the manifest `retained`
+   * and `immutable`, so a tab opened before a deploy still loads its chunks
+   * from the one `dist/` the application embeds. One generation: what the
+   * previous release itself retained is not copied again. A directory other
+   * than `outputDir`, which the build replaces whole. Leave it out for a first
+   * deploy, or when no release is live. The previous dist is trusted like the source: the check below catches a damaged or
+   * altered file, not someone who can also rewrite its manifest. Every copied file is checked against
+   * the SHA-384 the previous manifest recorded (`BUILD-821`); a path that is
+   * not a usable previous release fails the build (`BUILD-820`). Ignored in
+   * watch mode.
+   */
+  previousDist?: string;
+  /**
+   * Mark this release as one that fixes a vulnerability (L-16, SR45): nothing is
+   * retained from `previousDist`, so no earlier build's asset is served and a
+   * revoked build's tabs meet 404s for their lazy chunks. The application's
+   * deploy pipeline must mark every such release, a Forma security upgrade
+   * included. `FORMA_SECURITY_RELEASE=1` (or `true`, any case) in the environment marks it too; any
+   * value other than 1, true, 0, false or empty fails the build (`BUILD-822`); and a
+   * `false` here does not unmark it.
+   */
+  security?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -179,12 +197,12 @@ export interface BuildDiagnosticChainLink {
 
 /**
  * One coded SSR diagnostic (FORMA-119). The catalogue, one entry per code
- * with its fix, is forma-tools' `docs/DIAGNOSTICS.md`.
+ * with its fix, is `packages/compiler/docs/subset.md`.
  */
 export interface BuildDiagnostic {
   /** The stable code, e.g. `BUILD-101`. */
   code: string;
-  /** `error` under `--strict`, `warning` without it; `note` never fails a build. */
+  /** Unsupported SSR constructs are always `error`; `note` never fails a build. */
   severity: 'error' | 'warning' | 'note';
   /** The page (entry outfile without `.js`) whose module reported it. */
   page: string;

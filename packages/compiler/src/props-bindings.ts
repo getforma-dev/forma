@@ -122,7 +122,7 @@ export function propSlot(node: t.Node | null | undefined, scope: PropsScope | un
             return (Array.isArray(child) ? child : [child]).some(item => item?.type && contains(item));
           });
         };
-        if (contains(expression)) invalid(scope, expression, 'computed declared prop expressions are outside the SSR subset; pass the result as a declared prop');
+        if (contains(expression)) invalid(scope, expression, 'computed declared prop expressions are outside the SSR subset; pass the result as its own declared prop, or move the component behind a registered browserOnly boundary');
       }
     }
     return undefined;

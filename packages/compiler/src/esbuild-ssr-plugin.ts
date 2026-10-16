@@ -16,7 +16,6 @@ import { join, dirname, resolve, extname } from 'node:path';
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
 import { IrEmitContext } from './ir-emit';
-import { OP_OPEN_TAG, OP_CLOSE_TAG } from './fmir-constants.js';
 import { ComponentAnalyzer } from './component-analyzer';
 import { readImportBindings, resolveExportedFunction, type ImportBinding } from './export-resolver';
 import { fsModuleLoader, loadComponentSource, resolveFilePath, transformJsxSource } from './module-loader';
@@ -58,16 +57,11 @@ export interface SsrPluginOptions {
   entryPoint?: string;
   /** Browser entry whose literal registry receives the paired metadata. */
   clientEntryPoint?: string;
-  /**
-   * Fail the esbuild build on every coded diagnostic the page reports (except
-   * notes), each as an esbuild error with its code, file, line and column.
-   * Default false: the diagnostics are warnings, printed as at 0.3.6.
-   * `@getforma/build` leaves this off and applies `--strict` itself, across
-   * every page at once.
-   */
+  /** Legacy compatibility option. All unsupported native constructs fail in 3.0;
+   * false cannot restore warning-only publication. */
   strict?: boolean;
   /** Receives the page's diagnostics after each emission (`@getforma/build`
-   *  gathers them for its result, its JSON report and `--strict`). */
+   *  gathers them for its result, its JSON report and aggregate failure). */
   onDiagnostics?: (diagnostics: Diagnostic[], page: string) => void;
 }
 
@@ -190,7 +184,7 @@ function createComponentResolver(
 }
 
 /**
- * Report a page-level failure (a placeholder module, BUILD-6xx), printed as
+ * Report a page-level refusal (BUILD-6xx), printed as
  * at 0.3.6 with its code, plus the file and position it concerns.
  */
 function reportPage(
@@ -213,7 +207,7 @@ function rootLink(component: string, file: string, node: Locatable | null | unde
  * Generate real IR by parsing the entry point, resolving the component,
  * extracting its h() tree, and walking it to produce FMIR binary.
  *
- * Returns the FMIR binary and island info, or null if any step fails (caller falls back to placeholder).
+ * Returns the FMIR binary and island info, or null if any step fails (publication is refused).
  */
 export function generateRealIr(entryPointPath: string): IrResult | null {
   return generateWithRegistry(entryPointPath);
@@ -278,8 +272,8 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   // per-importer. The injected reader judges an imported signal by exactly
   // the rules a local one gets (same collector, same module-const folding)
   // but QUIETLY: the eager scan reads modules whose signals may never
-  // appear on this page, and a warning about a signal nobody reads is
-  // noise — a read of an unfoldable signal still warns at its use site.
+  // appear on this page. Unread signals need no native contract; a read of an
+  // unfoldable signal reports its refusal at the use site.
   const signalImports = createSignalImportResolver(fsModuleLoader, (source, filePath) =>
     collectSignalDeclarations(
       (parse(source, PARSE_OPTS) as unknown as t.File).program.body,
@@ -439,7 +433,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
       onUnresolved: (detail) => reportPage(
         'BUILD-602',
         componentPath,
-        (where) => `${detail} — the page falls back to placeholder IR, so it server-renders as an empty <div id="app"> and shows nothing at all until the client bundle hydrates (${where})`,
+        (where) => `${detail} — no native product can be emitted; publication is refused (${where})`,
       ),
     },
   );
@@ -536,47 +530,6 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder IR Generation
-// ---------------------------------------------------------------------------
-
-/**
- * Generate a placeholder IR for a page.
- *
- * Produces a minimal FMIR binary representing:
- *   <div id="app" data-forma-page="{pageName}"></div>
- *
- * This is the fallback every page lands on when real IR emission fails: the
- * shell the client-side mount hydrates into. Exported so the test suite can
- * exercise THIS function rather than a copy of its body — a re-implementation
- * in the test would keep passing while the shipped fallback was broken.
- * Verified by: packages/compiler/tests/ir-roundtrip.test.ts > "placeholder IR from the SSR plugin has valid structure"
- */
-export function generatePlaceholderIr(pageName: string): Uint8Array {
-  const ctx = new IrEmitContext();
-
-  const divIdx = ctx.addString('div');
-  const idKeyIdx = ctx.addString('id');
-  const idValIdx = ctx.addString('app');
-  const pageKeyIdx = ctx.addString('data-forma-page');
-  const pageValIdx = ctx.addString(pageName);
-
-  // OPEN_TAG "div" with 2 static attrs: id="app" data-forma-page="{pageName}"
-  ctx.emit(OP_OPEN_TAG);
-  ctx.emitU32(divIdx);
-  ctx.emitU16(2); // 2 attributes
-  ctx.emitU32(idKeyIdx);
-  ctx.emitU32(idValIdx);
-  ctx.emitU32(pageKeyIdx);
-  ctx.emitU32(pageValIdx);
-
-  // CLOSE_TAG "div"
-  ctx.emit(OP_CLOSE_TAG);
-  ctx.emitU32(divIdx);
-
-  return ctx.toBinary();
-}
-
-// ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
 
@@ -603,9 +556,9 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
             withSourceSnapshot(snapshot,()=>{
               registry=entry?createIslandRegistry(entry):undefined;
               product=entry?generateWithRegistry(entry,registry):null;
-              bytes=product?.binary??generatePlaceholderIr(options.page);
+              bytes=product?.binary;
               if(client&&registry)edits=collectIslandEntryEdits(client,registry,product,entry);
-              console.log(`   IR emitted (${product?'real':'placeholder'}): ${options.page}.ir (${bytes.length} bytes${product?`, ${product.islands.length} islands`:''})`);
+              if(product&&bytes)console.log(`   IR emitted (real): ${options.page}.ir (${bytes.length} bytes, ${product.islands.length} islands)`);
             });
           } catch(error) {
             fatal=error as Error;
@@ -627,7 +580,7 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
       });
       build.onEnd(result=>{
         if(result.errors.length)return;
-        const errors:PartialMessage[]=diagnostics.filter(d=>(d.code==='BUILD-610'||d.code==='BUILD-611')||(options.strict&&d.strict)).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
+        const errors:PartialMessage[]=diagnostics.filter(d=>d.strict).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
         if(fatal&&!errors.length)errors.push({text:`BUILD-606 IR emission failed for ${options.page}: ${fatal.message}`});
         if(!fatal&&!compilation.unchanged())errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
         if(errors.length)return {errors};

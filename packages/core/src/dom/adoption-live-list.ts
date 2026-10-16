@@ -21,6 +21,26 @@ export interface LiveListOptions {
   rerender:boolean;removeChildren:(element:HTMLElement)=>void;
 }
 function refuse():never {throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');}
+/** Relocate an existing row without discarding browser-owned focus. New nodes do not
+ * qualify for a state-preserving move. On older engines restore only focus lost to
+ * removal itself; a blur callback that focuses another control owns that decision. */
+function moveRowNode(parent:Node,node:Node,anchor:Node,check:()=>void):void {
+  const move=(parent as Node&{moveBefore?:(node:Node,anchor:Node)=>void}).moveBefore;
+  if(node.parentNode===parent&&typeof move==='function'){move.call(parent,node,anchor);return;}
+  const doc=node.ownerDocument,active=doc?.activeElement as HTMLElement|null;
+  const focus=active&&node.contains(active)&&typeof active.focus==='function'?active:null;
+  const input=focus as HTMLInputElement|HTMLTextAreaElement|null;
+  const selection=input&&typeof input.selectionStart==='number'
+    ?[input.selectionStart,input.selectionEnd??input.selectionStart,input.selectionDirection??'none'] as const:null;
+  parent.insertBefore(node,anchor);
+  check();
+  if(doc&&focus&&focus.isConnected&&doc.activeElement!==focus
+    &&(!doc.activeElement||doc.activeElement===doc.body)){
+    focus.focus({preventScroll:true});
+    check();
+    if(selection&&doc.activeElement===focus)input!.setSelectionRange(...selection);
+  }
+}
 /** Items and their canonical keys (`canonicalKeyText`, the walker's
  * `data-forma-key` text). A key outside the domain or a repeated canonical
  * key refuses FORMA_E_HYDRATE_KEY. */
@@ -95,7 +115,7 @@ export function liveList(options:LiveListOptions,initial:LiveListState):{update:
       let anchor:Node=tail[0]??range.end;
       for(let i=rows.length-1;i>=0;i--){
         check();const row=rows[i]!,nodes=row.span.nodes();
-        if(!stationary.has(i))for(const node of nodes){check();parent.insertBefore(node,anchor);}
+        if(!stationary.has(i))for(const node of nodes){check();moveRowNode(parent,node,anchor,check);}
         if(row.span.first)anchor=row.span.first;
       }
     }
