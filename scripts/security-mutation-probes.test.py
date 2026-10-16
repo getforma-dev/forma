@@ -1,6 +1,9 @@
 import importlib.util
+import sys
 from pathlib import Path
 import unittest
+
+sys.dont_write_bytecode = True
 
 spec = importlib.util.spec_from_file_location('probes', Path(__file__).with_name('security-mutation-probes.py'))
 probes = importlib.util.module_from_spec(spec)
