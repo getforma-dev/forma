@@ -870,6 +870,8 @@ spreads and children evaluate once in their original order, before element
 creation. The compiler composes these edits with adoption hooks on the same
 captured source for SSR and Browser entries, leaving native IR unchanged.
 
+Inline function children and control-flow callbacks within the JSX subtree inherit
+that lexical namespace; JSX in an attribute expression does not.
 This applies to lexical JSX. A separately declared component returning `<a>`
 has no known lexical SVG parent; use the existing `svg()` scope or a known-parent
 reactive child for that case. Handwritten `h` calls are unchanged. An authored

@@ -41,3 +41,24 @@ test('compiled namespaces adopt the same nodes with zero writes and live signal 
   const updated=await page.evaluate(()=>{const w=window as any;w.__namespaceWrites.push(...w.__namespaceObserver.takeRecords().map((record:MutationRecord)=>record.type));w.__namespaceObserver.disconnect();return {writes:w.__namespaceWrites,kept:w.__namespaceNodes.every((node:Node)=>node.isConnected),errors:w.__namespaceErrors}});
   expect(updated.kept).toBe(true);expect(updated.errors).toEqual([]);expect(updated.writes).toHaveLength(2);expect(seen).toEqual([]);
 });
+
+test('inline SVG callbacks preserve namespaces initially and on real branch updates',async({page})=>{
+  const seen=errors(page);
+  for(const route of ['/namespaces/csr','/namespaces/']){
+    await page.goto(route);await expect(page.locator('#namespace-shown')).toHaveCount(1);
+    await page.evaluate(()=>{(window as any).__callbackSvg=document.querySelector('#namespace-callback-svg')});
+    for(const [index,visible] of [true,false,true].entries()){
+      if(index>0)await page.locator('#namespace-toggle').click();
+      const id=visible?'#namespace-shown':'#namespace-hidden';await expect(page.locator(id)).toHaveCount(1);
+      expect(await page.locator('#namespace-callback-svg').evaluate(node=>node===(window as any).__callbackSvg)).toBe(true);
+      expect(await page.locator('#namespace-callback-svg').evaluate(node=>[node,...node.querySelectorAll('*')].every(element=>element.namespaceURI==='http://www.w3.org/2000/svg'))).toBe(true);
+    }
+  }
+  const source=await page.locator('script[type="module"][src]').last().getAttribute('src');expect(source).toBeTruthy();
+  const direct=await page.evaluate(async source=>{
+    const module=await import(source!);const control=module.inlineCallback();document.body.appendChild(control.node);
+    const result=[];for(const visible of [true,false,true]){control.setShown(visible);result.push({id:control.node.querySelector('a')?.id,svg:[control.node,...control.node.querySelectorAll('*')].every((element:Element)=>element.namespaceURI==='http://www.w3.org/2000/svg')});}
+    control.node.remove();return result;
+  },source);
+  expect(direct).toEqual([{id:'namespace-direct-shown',svg:true},{id:'namespace-direct-hidden',svg:true},{id:'namespace-direct-shown',svg:true}]);expect(seen).toEqual([]);
+});

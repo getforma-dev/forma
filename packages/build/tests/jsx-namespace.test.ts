@@ -62,3 +62,12 @@ it('lowers style and font through JSX fragments without evaluating either branch
   const {value}=await execute(`const events=[];const value=x=>(events.push(x),x);globalThis.result={tree:<svg><><style>{value('style')}</style><font>{value('font')}</font></></svg>,events};`);
   const fragment=value.tree.children[0];expect(namespaces(fragment.children)).toEqual(['style:svg','font:svg']);expect(value.events).toEqual(['style','font']);
 });
+
+it('keeps the lexical SVG context through inline callbacks and immediate functions',async()=>{
+  const {value}=await execute(`const eager=fn=>fn();globalThis.result=<svg>{(()=> <a>immediate</a>)()}{eager(()=> <title>callback</title>)}<foreignObject>{eager(()=> <a>HTML</a>)}</foreignObject></svg>;`);
+  expect(namespaces(value)).toEqual(['svg:svg','a:svg','title:svg','foreignObject:svg','a:html']);
+});
+it('does not treat JSX in an attribute callback as a descendant',async()=>{
+  const {value}=await execute(`let saved;const capture=fn=>(saved=fn,null);const tree=<svg onClick={capture(()=> <a>HTML</a>)}><a>SVG</a></svg>;globalThis.result={tree,callback:saved()};`);
+  expect(namespaces(value.tree)).toEqual(['svg:svg','a:svg']);expect(namespaces(value.callback)).toEqual(['a:html']);
+});

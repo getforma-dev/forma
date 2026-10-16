@@ -70,8 +70,9 @@ export function collectJsxNamespaceEdits(source, options = {}) {
       for (const child of node.children) visit(child, content);
       return;
     }
-    // Separately declared component bodies retain their existing runtime context.
-    for (const child of children(node)) visit(child, functionTypes.has(node.type) ? 'html' : namespace);
+    // Inline callbacks remain descendants of their lexical JSX parent. Separate
+    // component bodies are visited from the module's HTML context, not a caller.
+    for (const child of children(node)) visit(child, namespace);
   }
   visit(ast.program);
   if (!selected.length) return [];
