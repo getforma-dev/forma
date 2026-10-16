@@ -6,13 +6,15 @@
  * `BuildResult.sizeReport`, and writes it beside the manifest as
  * `size-report.json`.
  *
- * N2 as restated by L-55: Forma's own browser code, `@getforma/core` and its
+ * N2 as restated by L-55 and raised by L-58: Forma's own browser code, `@getforma/core` and its
  * signal library `alien-signals` as the route's bundles carry them, is at most
- * 25,500 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
+ * 27,500 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
  * reported beside it; the application's own code is outside that ceiling. The
  * 10 KB of v2's appendix C is unreachable under the accepted strict adoption
  * (FORMA-104) and the declared island state block (FORMA-103), so the ceiling
- * is the measured Forma code rounded up to the next 500 B (DR-35's fallback).
+ * is the measured Forma code rounded up to the next 500 B (DR-35's fallback):
+ * 25,500 B under L-55, 27,500 B under the founder's L-58, which a client
+ * `createList` in an island needs (26,366 B, FORMA-188's `negative/list-island`).
  *
  * The route classes (DR-35; the manifest decides them, see `generateManifest`)
  * and what each may ship, in gzip -9 bytes (1 KiB = 1,024 B):
@@ -22,7 +24,7 @@
  *   forma-server writes the worker's registration only on a page that publishes
  *   a JavaScript entry.
  * - `islands`: a server-rendered page that activates its islands. Forma's code
- *   at most 25,500 B; all of its JavaScript at most 75 KiB, the "other
+ *   at most 27,500 B; all of its JavaScript at most 75 KiB, the "other
  *   server-rendered pages" ceiling of N2, or 365 KiB if the route is declared a
  *   canvas (`canvas: true` on the route).
  * - `whole-page-mount`: a route whose page the browser mounts whole (a declared
@@ -66,8 +68,8 @@ import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { IDENTITY_BANNER_HEAD } from './identity.js';
 import type { RouteManifest } from './types.js';
 
-/** N2's ceiling: Forma's code per route, bytes gzip -9 (L-55). */
-export const FORMA_CODE_CEILING_GZIP = 25_500;
+/** N2's ceiling: Forma's code per route, bytes gzip -9 (L-55; 27,500 B since L-58). */
+export const FORMA_CODE_CEILING_GZIP = 27_500;
 
 /** N2's "other server-rendered pages": all of a route's JavaScript, bytes gzip -9 (75 KiB). */
 export const PAGE_JAVASCRIPT_CEILING_GZIP = 75 * 1024;
@@ -144,6 +146,12 @@ export interface FileSize extends ByteSizes {
   file: string;
 }
 
+/** The preview frame's runtime in the output: the served file, and core's before the build minified it. */
+export interface FrameSize extends FileSize {
+  /** Raw bytes of core's `dist/formajs-frame.global.js`. */
+  sourceRaw: number;
+}
+
 /** Wall-clock milliseconds, per phase of a production build and in all (N7). */
 export interface BuildTimes {
   totalMs: number;
@@ -168,7 +176,7 @@ export interface SizeReport {
   /** The generated `sw.js`. */
   worker?: FileSize;
   /** The preview frame's runtime, inlined into every preview document and never fetched (`previewFrame`); the frame document row. */
-  frame?: FileSize;
+  frame?: FrameSize;
   /** In the printed report and the build result; never in the file. */
   times?: BuildTimes;
 }
@@ -382,9 +390,14 @@ export function workerSize(source: string): FileSize {
   return { file: WORKER_FILE, ...measureBytes(Buffer.from(source)) };
 }
 
-/** The preview frame's runtime as the build wrote it into `distDir`: the file forma-server inlines into every frame document. */
-export function frameSize(file: string, distDir: string): FileSize {
-  return { file, ...compressed(join(distDir, file)) };
+/**
+ * The preview frame's runtime as the build wrote it into `distDir`: the file
+ * forma-server inlines into every frame document, so its served bytes, with
+ * the length of core's file beside them (`sourceRaw`, before the build
+ * minified it).
+ */
+export function frameSize(file: string, distDir: string, sourceRaw: number): FrameSize {
+  return { file, ...compressed(join(distDir, file)), sourceRaw };
 }
 
 /** The ceilings the report states. */
@@ -441,7 +454,7 @@ export function formatSizeReport(report: SizeReport): string[] {
   }
   if (report.frame) {
     const { file, raw, gzip, brotli } = report.frame;
-    lines.push(`${label('Frame document')}${file}  ${bytes(raw)} B raw, ${bytes(gzip)} B gzip, ${bytes(brotli)} B Brotli; inlined into every preview document, never fetched, and not a route's`);
+    lines.push(`${label('Frame document')}${file}  ${bytes(raw)} B raw (core's file: ${bytes(report.frame.sourceRaw)} B), ${bytes(gzip)} B gzip, ${bytes(brotli)} B Brotli; inlined into every preview document, never fetched, and not a route's`);
   }
   if (report.times) {
     const { totalMs, phases } = report.times;

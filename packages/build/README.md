@@ -161,8 +161,8 @@ turns the setting on:
 await build({ ...config, previewFrame: true });
 ```
 
-The build then copies `dist/formajs-frame.global.js` from the
-`@getforma/core` the bundles import (core 2.1.0 and later), byte for byte, as
+The build then writes `dist/formajs-frame.global.js` from the
+`@getforma/core` the bundles import (core 2.1.0 and later), minified, as
 `forma-runtime.<hash>.js`, and names it in the manifest:
 
 ```json
@@ -188,18 +188,30 @@ The build then copies `dist/formajs-frame.global.js` from the
 - **Never core's `dist/forma-runtime.js`.** That file shares the target's
   name, but it is the CDN alias of the auto-mounting runtime, which would bind
   the whole frame document instead of rendering the host's module in tier (c).
-- **The bytes are core's, unchanged**: no minify, no transform, no line
-  endings rewritten, so the hash forma-server computes is the hash of core's
-  file, and the script the browser runs is the one hashed. It is inlined,
-  never fetched: no route loads it, it gets no `.br` or `.gz` copy, and the
-  worker's lists leave it out.
+- **Minified in the output, as published in core** (FORMA-190, from the A2
+  audit's F1). forma-server writes this runtime into every preview document
+  under `no-store`, so each load pays its bytes: core's file is 164 KB
+  readable. Core's published file stays readable (anything published to npm
+  does); a production build writes an esbuild transform of it (whitespace and
+  names, ES2022, deterministic) into `dist`, before the hashing pass, so the
+  file's name, its SRI in the manifest and the SHA-256 forma-server computes
+  for the frame's policy are those of the bytes served, and the script the
+  browser runs is the one hashed. The size report's frame row reports those
+  served bytes beside core's file. No source map is written: the script is
+  inlined in an opaque-origin frame with `connect-src 'none'`, so a map could
+  not be fetched, and its comment would be part of the hashed bytes. Watch mode
+  copies core's bytes unchanged (a development build, readable in the browser's
+  tools): that is the copy to debug. It is inlined, never
+  fetched: no route loads it, it gets no `.br` or `.gz` copy, and the worker's
+  lists leave it out.
 - **It refuses what forma-server would refuse** (FRAME-103), before anything is
   written, so the previous output stays as it was: `BUILD-805` when the core
   the bundles import has no frame runtime (older than 2.1.0) or no core is
   found, `BUILD-806` when the runtime is empty, not UTF-8, or contains
   `</script` or `<!--` (in any case), a carriage return or a NUL, and
-  `BUILD-807` as above. Each fails the build with or without strict mode
-  (`docs/DIAGNOSTICS.md`).
+  `BUILD-807` as above, and `BUILD-823` when esbuild cannot minify it. The
+  `BUILD-806` check runs on core's file and again on the minified bytes. Each
+  fails the build with or without strict mode (`docs/DIAGNOSTICS.md`).
 - **Watch mode** writes it unhashed as `forma-runtime.js`, and the dev manifest
   names it as itself, as it does every watched asset.
 - **Off** (the default, or `false`), nothing is read and the output is
@@ -219,8 +231,8 @@ the bytes, before anything is written.
 | Class | Which routes | Forma's code | All of the route's JavaScript |
 |---|---|---|---|
 | `no-interactive-region` | A server-rendered page with no island, or a route that lists no script | none | none (a service worker counted) |
-| `islands` | A server-rendered page with islands | 25,500 B | 75 KiB (76,800 B), 365 KiB for a canvas |
-| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 25,500 B | as `islands` |
+| `islands` | A server-rendered page with islands | 27,500 B | 75 KiB (76,800 B), 365 KiB for a canvas |
+| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 27,500 B | as `islands` |
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
 from the bundler's metafile, plus the identity banner Forma's build writes at
@@ -239,7 +251,7 @@ routes: {
 ```
 
 A canvas may ship 365 KiB of JavaScript instead of 75 KiB; Forma's code stays
-under 25,500 B either way, and the declaration gives nothing to a route
+under 27,500 B either way, and the declaration gives nothing to a route
 without JavaScript. Only `true` or `false` is accepted (anything else is a
 config error, reported before anything is written). It is provisional public
 configuration at 3.0.0: declare it for a page that really is a canvas, and trim
@@ -259,8 +271,8 @@ a route ships.
 
 | Step | What happens |
 |------|-------------|
-| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`) |
-| **Frame runtime** | (Optional, `previewFrame: true`) Copies the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, unchanged, as `forma-runtime.js`, hashed with the other assets and left uncompressed |
+| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`, and `BUILD-823` when it cannot be minified) |
+| **Frame runtime** | (Optional, `previewFrame: true`) Writes the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, minified (core's file stays readable; watch mode copies it unchanged), as `forma-runtime.js`, hashed with the other assets and left uncompressed |
 | **Bundle** | esbuild bundles each entry point with JSX transform (`jsxFactory: "h"`) |
 | **CSS** | Runs Tailwind CLI or concatenates CSS files |
 | **Hash** | SHA-256 content hash appended to filenames (`app.a1b2c3d4.js`) |
@@ -268,7 +280,7 @@ a route ships.
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-55, DR-35; the ceilings are not configurable): Forma's code at most 25,500 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-55, DR-35; the ceilings are not configurable): Forma's code at most 27,500 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
@@ -306,7 +318,9 @@ const config: BuildConfig = {
   },
   // strict: true,                   // Fail on every coded SSR diagnostic (or FORMA_STRICT=1); see below
   // diagnosticsJson: "ssr-diagnostics.json", // Also write them as JSON, outside outputDir
-  previewFrame: false,                // true: copy core's frame runtime as forma-runtime.js (forma-server's PageResponse::frame)
+  // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
+  // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
+  previewFrame: false,                // true: write core's frame runtime, minified, as forma-runtime.js (forma-server's PageResponse::frame)
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
   formaAlias: "@getforma/core",       // What bare 'formajs' imports resolve to
@@ -315,6 +329,48 @@ const config: BuildConfig = {
 
 await build(config);
 ```
+
+### Retention: a tab opened before a deploy
+
+While a deploy rolls out, and for as long as a tab stays open, a page of the
+previous release asks for hashed files (a lazily imported chunk) that the new
+binary does not embed. Your pipeline keeps the previous release's `dist/` as a
+release artifact (the one that is live) and passes its path as `previousDist`.
+The build copies that release's own hashed assets into the new `dist/`, listed in
+`manifest.json` as `{ "immutable": true, "retained": true, "integrity": ... }`, and
+forma-server serves them as it serves any immutable asset, so you embed one
+`dist/` and a one-deploy-old tab still loads its chunks.
+
+- **One generation.** What the previous release itself retained is not copied
+  again, so the assets at most double and a tab two deploys old gets a 404 for a
+  chunk it asks for, which your code handles as it handles any failed `import()`.
+- **Never copied:** `manifest.json`, `sw.js`, the `.ir` modules, and files that
+  are not immutable (unhashed fonts). A file the new build also emitted under the
+  same name is its own and is not flagged.
+- **Checked.** Each copied file's bytes must match the SHA-384 the previous
+  manifest recorded; a missing, linked or altered file fails the build with
+  `BUILD-821`. A path that is not a usable previous release fails it with
+  `BUILD-820`: it must be another directory than `outputDir` (which the build
+  replaces whole), of the same `app`, not a watch build. A previous dist whose
+  manifest is not schema 2 (your first 3.0.0 deploy over a 2.x release) retains
+  nothing, and the build says so.
+- **First deploy:** leave `previousDist` out; nothing is copied.
+- **Security releases (L-16, SR45):** mark every release that fixes a
+  vulnerability, a Forma security upgrade included, with `security: true` or
+  `FORMA_SECURITY_RELEASE=1` (a `false` in the config does not unmark it). The
+  build then retains nothing and the revoked build's files are not served; a
+  revoked build's open tabs meet 404s for their lazy chunks.
+- **Trust.** The SHA-384 check catches a damaged or altered file, not someone who can
+  also rewrite the previous `manifest.json`: the previous `dist/` is trusted like your
+  source. Keep it as a protected release artifact.
+- `FORMA_SECURITY_RELEASE` is read like `FORMA_STRICT`: `1` or `true` (any case,
+  trimmed) marks; unset, empty, `0` or `false` does not; anything else fails the build
+  (`BUILD-822`).
+- Watch mode ignores both options.
+
+The identity does not depend on the retained set: the same inputs give the same
+`build`, the same non-retained entries and, with the same previous release, a
+byte-identical `dist/`.
 
 ## Output Structure
 
@@ -327,7 +383,7 @@ dist/
 ├── home.e5f6g7h8.css.br
 ├── dashboard.i9j0k1l2.js
 ├── home.m3n4o5p6.ir          # FMIR binary (if ssr: true)
-├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, unchanged and uncompressed (if previewFrame: true)
+├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, minified and uncompressed (if previewFrame: true)
 ├── inter.woff2                # Copied fonts (never hashed)
 ├── sw.js                      # Service worker (generated last, never hashed)
 └── manifest.json              # Asset manifest (generated last, never compressed)

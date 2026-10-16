@@ -1,6 +1,68 @@
 # Changelog
 
-## Unreleased — the size report with route classes and ceilings (FORMA-190)
+## [Unreleased]
+
+### The preview frame's runtime is minified in the application's output (FORMA-190)
+
+- With `previewFrame: true`, a production build writes core's
+  `dist/formajs-frame.global.js` into `dist/` **minified** (an esbuild
+  transform: whitespace and names, ES2022, no comments, deterministic) instead
+  of copying it unchanged. forma-server writes these bytes into every preview
+  document under `no-store`, so every load paid core's 164 KB readable file
+  (the A2 audit's F1); it is now about half that, and about 29 KB gzip against
+  39.6. Core's published file stays readable: the readable-distribution policy
+  holds for anything published to npm, so the saving is made here, in the
+  application's output. The transform runs before the hashing pass: the
+  `forma-runtime.<hash>.js` name, the manifest's SRI and the SHA-256
+  forma-server computes for the frame's policy are those of the bytes served.
+  `BUILD-806`'s check (`</script`, `<!--`, a carriage return, a NUL, not UTF-8,
+  empty) runs on core's file as before and again on the minified bytes.
+- **`BUILD-823`** is new: esbuild cannot parse core's frame runtime for ES2022
+  (a file something rewrote). It fails the build before anything is written,
+  strict mode or not.
+- The size report's **frame-document row** reports the served bytes and, in
+  `sourceRaw`, core's file before the build minified it.
+- **Watch mode copies core's bytes unchanged**, as before: a development
+  build, readable in the browser's tools.
+- Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
+
+### Retention and the security mark — FORMA-186 (DR-29, L-25, L-16, SR45)
+
+- New `BuildConfig.previousDist`: the previous release's `dist/`, kept by the
+  application's pipeline. The build copies that release's own hashed assets into
+  the new `dist/`, listed in the manifest `{ immutable: true, retained: true,
+  integrity }`, so forma-server serves them as immutable and a tab one deploy old
+  still loads its chunks from the one `dist/` the application embeds. One
+  generation (what the previous release retained is not copied again); never
+  `manifest.json`, `sw.js`, `.ir` modules or non-immutable files; a file both
+  builds emit is the new build's own. Each copied file is checked against the
+  SHA-384 the previous manifest recorded: `BUILD-821` for a missing, linked,
+  altered or colliding file, `BUILD-820` for a path that is not a usable previous
+  release (missing, no manifest, another app, a dev build, flat-name violations,
+  overlapping `outputDir`). A schema-1 previous dist retains nothing and says so.
+  Copied before compression, inside the staging directory, so a failure leaves the
+  existing output untouched (L-21). The identity does not depend on it.
+- New `BuildConfig.security` and `FORMA_SECURITY_RELEASE=1`: a release marked
+  security retains nothing from `previousDist` (a `false` does not unmark it).
+  Both option names, and the environment variable, are approved (L-57).
+- `FORMA_SECURITY_RELEASE` is parsed as `FORMA_STRICT` is (trimmed, case-insensitive):
+  `1`/`true` marks, unset/empty/`0`/`false` does not, any other value fails the build
+  with `BUILD-822`, so a mark can never fail open. The previous `dist/` is trusted like
+  the source: the SHA-384 check catches damage or alteration, not a rewritten manifest.
+- Watch mode ignores both options, with a note.
+
+### N2 is 27,500 B (L-58)
+
+- The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
+  **27,500 B gzip -9**, up from 25,500 B: the founder's decision L-58 (decision
+  brief commit `f27cce6`), one ceiling for all routes, 1 KB = 1,000 B. An island
+  holding a client `createList` loads 26,366 B of Forma code (FORMA-188's
+  `negative/list-island`), over the old figure and under the new. `BUILD-819`,
+  `size-report.json` (`ceilings.forma`, each route's `ceilings.forma`) and the
+  printed report read the constant; the page and canvas JavaScript ceilings (75
+  and 365 KiB) are unchanged. Not configurable.
+
+### The size report with route classes and ceilings — FORMA-190
 
 - **One report, extended.** The size report of FORMA-021 now classifies each
   route (DR-35) and holds it to its class's ceilings, gzip -9 with 1 KB =
@@ -35,7 +97,13 @@
   same route objects, with the new fields `class`, `canvas`, `worker`,
   `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
   empty). Both are empty in watch mode.
-## Unreleased — the deployment identity (FORMA-186, DR-29, L-6 as amended by L-56)
+
+### BUILD-616 is mandatory — FORMA-181, FORMA-183 finding F1
+
+- The compiler's new BUILD-616 (a `createList` source that is provably not a function) is an
+  error in every mode, like BUILD-610 to BUILD-613.
+
+### The deployment identity — FORMA-186 (DR-29, L-6 as amended by L-56)
 
 - `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
   identity: 16 lowercase hex characters, computed first from every output of a
@@ -63,7 +131,7 @@
   after FORMA-021's cuts, becomes about 25,130 B: its headroom under N2's 25,500 B
   falls from 399 B to about 370 B.
 
-## Unreleased — the size report per route and N2's gate (FORMA-021)
+### The size report per route and N2's gate — FORMA-021
 
 - A production build reports, per route, what the route loads cold (its `js`
   files and their `modulepreload` dependencies) in raw, gzip -9 and Brotli-11
@@ -84,19 +152,9 @@
   payload (default 200 KB), is unchanged and separate: it is the application's
   budget, N2 is Forma's.
 
-## Unreleased — verified production workers (FORMA-111)
+### Value rules 6 and 7 are mandatory refusals in the report — FORMA-182
 
-- Production workers use finalized immutable manifest metadata and full SHA-384,
-  including lazy chunks. Cache hits and network responses are verified before
-  serving; corrupt entries are refetched without HTTP-cache reuse. Verification
-  failures cannot fall back to unchecked bytes. Storage failures still permit a
-  verified network response.
-- On-demand is the sole production policy and the default. `precache` fails
-  configuration validation; historical fixtures remain preserved. Per-app waiting,
-  retirement patterns and the exact development worker bytes remain unchanged.
-
-
-## [Unreleased]
+- The diagnostics report and `result.diagnostics` label `BUILD-614` (a boolean in text) and `BUILD-615` (a condition that is not boolean-typed) `error` with or without `--strict`, as they do `BUILD-610` to `BUILD-613`. The compiler refuses both whatever the mode, so a default build already failed on them, but its report and `--diagnostics-json` called them `warning`. Verified by `tests/strict.test.ts` > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are".
 
 ### Static SSR entry products — FORMA-105
 
@@ -108,6 +166,28 @@
 
 - Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.
 - Stage output and rollback failed replacements, validation or final manifest writes. Watch consumers must use manifest aliases, not stable entry or IR filenames. Production still promotes its complete staging directory.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.1. Part of the seven-package set 3.0.0-alpha.1; the verified production workers (FORMA-111), manifest 2 and the start-time checks (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The per-build size report with route classes (FORMA-190) and the restated N2 ceiling (L-55: 25,500 B gzip per route) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
+
+### Verified production workers — FORMA-111
+
+- Production workers use finalized immutable manifest metadata and full SHA-384,
+  including lazy chunks. Cache hits and network responses are verified before
+  serving; corrupt entries are refetched without HTTP-cache reuse. Verification
+  failures cannot fall back to unchecked bytes. Storage failures still permit a
+  verified network response.
+- On-demand is the sole production policy and the default. `precache` fails
+  configuration validation; historical fixtures remain preserved. Per-app waiting,
+  retirement patterns and the exact development worker bytes remain unchanged.
+
+
+### Earlier unreleased entries, also in this alpha
 
 ### Changed — FORMA-112
 

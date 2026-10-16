@@ -1,11 +1,11 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. This is the coordinated 3.0.0-dev source contract; publication remains gated.
+Typed server rendering and explicit browser shells for the Forma stack. This is the 3.0.0-alpha.2 pre-release (milestone M2): a Cargo pre-release version that plain requirements exclude; the first stable 3.0.0 follows the beta and rc.
 
 ```toml
 [dependencies]
-forma-server = "=3.0.0-dev"
-forma-ir = "=3.0.0-dev"
+forma-server = "=3.0.0-alpha.2"
+forma-ir = "=3.0.0-alpha.2"
 ```
 
 The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.

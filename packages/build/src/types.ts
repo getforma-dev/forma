@@ -40,7 +40,7 @@ export interface RouteMapping {
    * Declare the route a canvas (N2, FORMA-190): a page that hosts many modules
    * and is JavaScript-heavy by design. The size report holds all of its
    * JavaScript to 365 KiB gzip -9 instead of the 75 KiB of other pages; Forma's
-   * own code stays under N2's 25,500 B either way. It raises nothing for a
+   * own code stays under N2's 27,500 B either way. It raises nothing for a
    * route without JavaScript. A heavy page that is not a canvas is trimmed or
    * split, not declared.
    */
@@ -123,6 +123,31 @@ export interface BuildConfig {
    * the build replaces whole and serves.
    */
   diagnosticsJson?: string;
+  /**
+   * The previous release's `dist/`, which the application's pipeline keeps as a
+   * release artifact (FORMA-186, DR-29, L-25). The build copies that release's
+   * own hashed assets into the new `dist/`, listed in the manifest `retained`
+   * and `immutable`, so a tab opened before a deploy still loads its chunks
+   * from the one `dist/` the application embeds. One generation: what the
+   * previous release itself retained is not copied again. A directory other
+   * than `outputDir`, which the build replaces whole. Leave it out for a first
+   * deploy, or when no release is live. The previous dist is trusted like the source: the check below catches a damaged or
+   * altered file, not someone who can also rewrite its manifest. Every copied file is checked against
+   * the SHA-384 the previous manifest recorded (`BUILD-821`); a path that is
+   * not a usable previous release fails the build (`BUILD-820`). Ignored in
+   * watch mode.
+   */
+  previousDist?: string;
+  /**
+   * Mark this release as one that fixes a vulnerability (L-16, SR45): nothing is
+   * retained from `previousDist`, so no earlier build's asset is served and a
+   * revoked build's tabs meet 404s for their lazy chunks. The application's
+   * deploy pipeline must mark every such release, a Forma security upgrade
+   * included. `FORMA_SECURITY_RELEASE=1` (or `true`, any case) in the environment marks it too; any
+   * value other than 1, true, 0, false or empty fails the build (`BUILD-822`); and a
+   * `false` here does not unmark it.
+   */
+  security?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -214,7 +239,7 @@ export interface BuildResult {
    * (`@getforma/core` and `alien-signals` as bundled) beside the application's,
    * the service worker it registers, and its ceilings. A production build fails
    * with `BUILD-819` before writing its output when a route is over one:
-   * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (25,500 B; decision brief
+   * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (27,500 B; decision brief
    * L-55), all of its JavaScript over its class's (none for a route without an
    * interactive region, 75 KiB, 365 KiB for a canvas). Empty in watch mode,
    * whose unminified bytes are not what a route ships. The same objects as

@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
+
+### Value rule 7: conditions are boolean-typed — FORMA-182
+
+- **Breaking: a condition that is not boolean-typed no longer builds (`BUILD-615`).** A `createShow` condition or a ternary test the compiler can prove is not a boolean fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 7): a declared prop of another type (an optional boolean is admitted), a signal whose default is a number, a string or `null`, a closed value of another type (an aggregate, an aggregate or list-row field, a module-level `const`), a non-boolean literal, or a mix such as `a() && count()` or `name() || 'x'`. The common shapes are `createShow(() => count(), …)`, `createShow(count, …)` (a getter passed to `createShow` itself is now read as its call; a getter named without its call in a ternary test or an operand, `() => open ? a : b`, is refused with a message naming the missing call, since the browser always takes the first branch), a ternary on a `null`-default signal (`() => user() ? a : b`) and on a string signal (`() => name() ? …`). Fix: compare explicitly, `count() > 0`, `user() !== null`, `name() !== ''`, or `!!x`. A condition the compiler cannot type keeps `BUILD-302`. Conformance pair in `tests/fixtures/conformance/BUILD-615/`.
+- A module-level `const` initialized with `true` or `false`, `Boolean(x)` and a boolean signal passed as a bare getter are folded in a condition, so the server renders the branch the browser takes; each used to report `BUILD-302` and render `else`.
+- Migrated `tests/ir-walk.test.ts` > "writes false when the condition evaluates falsy, including a zero number read through !!" (it read `count()` as the condition); the original fragments are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-615` by `tests/value-rules-archive.test.ts`. The FMIR corpus, the declared-props fixtures, the create-app templates and the SSR e2e cases build unchanged.
+
+### Value rule 6: a boolean in text is a build error — FORMA-182
+
+- **Breaking: a boolean in text no longer builds (`BUILD-614`).** A text position whose value is provably boolean-typed fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 6): a declared boolean prop (optional included; it used to write nothing), a signal whose default is a boolean (it was served as `true`/`false`), a closed boolean (an aggregate or list-row field, a module-level `const` of `true`/`false`), or an expression that can only be a boolean (`!x`, a comparison), read eagerly or through a getter, as a child or a `createShow`/ternary branch. Fix: the message names the form that builds for its source, `String(flag)` on a non-optional declared boolean, a boolean signal or an expression the compiler evaluates, and a ternary, `() => (flag ? 'yes' : 'no')`, on an optional declared boolean, a closed value or a module `const`, where `String()` is itself refused. Conformance pair in `tests/fixtures/conformance/BUILD-614/`.
+- `String(flag)` on a non-optional declared boolean binds `DYN_TEXT` to the boolean slot (the walker writes the word); the evaluator folds `String()` of a boolean, so `() => String(done())` builds where it was refused, also as a ternary branch, where a `String()`/`Number()` cast the evaluator folds is now a value rather than a component. `String()` of an optional declared boolean stays `BUILD-610`.
+- **Rendered output changes with no source change:** the idiom `() => ready() && 'Go'` at a boolean default no longer serves the word `false` (its slot default is empty, an empty range), and a `true` literal in a ternary branch no longer serves `true` (nothing), matching `h()`. A page compiled by an earlier compiler and adopted by this release's core refuses at that idiom (`FORMA_E_HYDRATE_VALUE`); compiler and core move together in 3.0.0.
+- Migrated `tests/props-bindings.test.ts` (a trailing declared boolean child) and `tests/ssr-emission.test.ts` (a boolean signal read as text to name its slot); the originals are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-614` by `tests/value-rules-archive.test.ts`. The FMIR corpus and the declared-props fixtures are byte-identical.
+
+### A list source must be a function: BUILD-616 — FORMA-181 (FORMA-183 finding F1)
+
+- Core's `createList(items, key, row)` calls `items()` to read the rows, and a page list's source is never evaluated by the native module (its array is a named slot), so a plain array compiled and then failed in the browser with `items is not a function`. The original list proof now refuses, on the page and island paths alike, a source it can prove is not a function: a literal, a binding to one (local, or a named export of an imported module), a provably immutable data-valued core getter result (`rows()`), or a field an inline parameter type declares as data (`p.rows` with `p: { rows: Row[] }`). New mandatory code BUILD-616 with a conformance pair; functions, getters and sources the compiler cannot see through stay admitted. A captured signal setter and mutable object fields prevent using their initial values as proof. The js-emitter corpus case `list-same-source` passes `const todos = () => [...]`; its original source is archived in `docs/archive/2026-10-15-pre-list-source/` (still asserted to refuse), and every compiled output of the case is byte-identical.
+
 ### Keyed rows, checkpoint A: original key-path proof and section 6 — FORMA-181
 
 - Prove every server-rendered list's key from the original source before JSX lowering: a nonempty property path of the row parameter (`row.id`, `row.user.id`, `row['id']`, an immutable alias) with one stable owned Element as the row root, resolved through lexical helpers, imported aliases and registered children. Emit FMIR section `0x0006` with one entry per emitted LIST at its exact opcode offset, including repeated helper sites and nested lists.
@@ -12,6 +35,7 @@
 
 - `BUILD-819`, the build package's size-report gate: a route whose Forma code (`@getforma/core` and `alien-signals` as bundled) is over N2's ceiling of 25,500 B gzip -9 (decision brief L-55). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/route-size.test.ts`; no page triggers it.
 - `BUILD-819` now covers every ceiling of the size report's route classes (FORMA-190): a route's JavaScript over 75 KiB, or 365 KiB for a route declared `canvas: true`, and any script on a route with no interactive region, beside Forma's code over 25,500 B. Title, why and fix are reworded; the code and its place are unchanged.
+- `BUILD-823`, the build package's refusal of a preview-frame runtime esbuild cannot minify (FORMA-190: a production build writes the frame's runtime minified into the application's output). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/preview-frame.test.ts`; no page triggers it.
 
 ### Conditional description seam — FORMA-104
 
@@ -32,6 +56,14 @@
 - Preserve bounded array/object initial values as lazy CLIENT constants, including nested list projections and per-row declared island inputs. Keep unused constants out of the emitted program and never infer handler fields from local data.
 - Fold known closed nullish projections before COALESCE; typed optional aggregate fallbacks keep native schema provenance. Scalar list destinations use their actual kind instead of an object hint.
 - Normalize only direct optional access on the proven non-null declared props root; nullable intermediate accesses and optional calls still refuse.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), on npm under `next`; `latest` stays 0.3.7. Part of the seven-package set 3.0.0-alpha.1; the FMIR v3 writer (FORMA-185), declared page props (FORMA-102), the compatibility window and core as a peer (FORMA-112) and the removals (FORMA-110) below are the alpha's gates. The island props block and compiler-bound seeding (FORMA-103) are pending before the beta on the integration branch. See the root CHANGELOG for the set, the pending gates and the restated N2.
 
 ### Fixed — FORMA-103 entry prerequisite
 

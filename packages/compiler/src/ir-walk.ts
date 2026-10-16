@@ -50,10 +50,11 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
 import { islandInputs } from './island-inputs';
 import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
+import { closedKind, moduleLiteral, refuseBooleanText, refuseConditionType, refuseUncalledGetter, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
   lookupSignal,
@@ -328,6 +329,26 @@ function evalEnv(walkCtx: WalkContext): EvalEnv {
   };
 }
 
+/** What value rules 6 and 7 can read to type an expression (value-rules.ts). */
+function kindEnv(walkCtx: WalkContext): KindEnvironment {
+  return {
+    signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
+    constant: (name) => walkCtx.stringConstants?.get(name) ?? moduleLiteral(walkCtx.sourceFile, name),
+  };
+}
+
+/**
+ * Value rule 6 (docs/parity-rules.md): refuse a text value whose every result
+ * is a boolean (BUILD-614). A boolean literal is not refused: it writes nothing
+ * on both sides.
+ */
+function refuseBooleanTextKind(node: t.Node, walkCtx: WalkContext, evaluable: boolean): void {
+  const value = t.isArrowFunctionExpression(node) || t.isFunctionExpression(node) ? getEffectiveBody(node) : node;
+  if (value && t.isBooleanLiteral(value)) return;
+  // String() of it builds only when the compiler can evaluate it.
+  if (valueKind(node, kindEnv(walkCtx)) === 'boolean') refuseBooleanText(walkCtx.sourceFile ?? '', node, `text ${describeNode(node)}`, evaluable ? 'string' : 'ternary');
+}
+
 /** JS truthiness of an evaluated value. */
 function isTruthy(val: EvalValue): boolean {
   if (val === null) return false;
@@ -445,9 +466,11 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
   // Explicit cast: String(expr) / Number(expr). Pages write these around a
   // signal read to pin the type; without folding them the cast alone was
   // enough to turn an otherwise evaluable value into an empty attribute.
-  // Only a string or number operand folds: `String(null)` is "null" in JS but
-  // `null` is also how this evaluator spells "absent", and guessing between
-  // the two would put the wrong text on the page.
+  // Only a string or number operand folds, and a boolean one for String():
+  // `String(null)` is "null" in JS but `null` is also how this evaluator spells
+  // "absent", and guessing between the two would put the wrong text on the
+  // page. `String(flag)` is value rule 6's admitted way to write a boolean's
+  // word (docs/parity-rules.md), the same on both sides.
   if (
     t.isCallExpression(node)
     && t.isIdentifier(node.callee)
@@ -456,8 +479,21 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
     && t.isExpression(node.arguments[0]!)
   ) {
     const inner = evalNode(node.arguments[0] as t.Expression, env);
+    if (typeof inner === 'boolean' && node.callee.name === 'String') return String(inner);
     if (typeof inner !== 'string' && typeof inner !== 'number') return undefined;
     return node.callee.name === 'String' ? String(inner) : Number(inner);
+  }
+
+  // Boolean(expr): JS truthiness, as `!!expr` (value rule 7 types it boolean).
+  if (
+    t.isCallExpression(node)
+    && t.isIdentifier(node.callee)
+    && node.callee.name === 'Boolean'
+    && node.arguments.length === 1
+    && t.isExpression(node.arguments[0]!)
+  ) {
+    const inner = evalNode(node.arguments[0] as t.Expression, env);
+    return inner === undefined ? undefined : isTruthy(inner);
   }
 
   // Unary negation: !expr or !!expr
@@ -1673,6 +1709,7 @@ function emitChild(
   ) {
     const binding = lookupSignal(walkCtx.signalScope, child.callee.name);
     if (binding) {
+      if (binding.default.type === 'bool') refuseBooleanText(walkCtx.sourceFile ?? '', child, `signal ${child.callee.name}()`);
       ctx.recordSlotRef(binding.slotId);
       const markerId = ctx.nextMarker();
       ctx.emit(OP_DYN_TEXT);
@@ -1699,6 +1736,10 @@ function emitChild(
   // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a String() cast child instead of islanding it as a component"
   const folded = evalNode(child, evalEnv(walkCtx));
   if (folded !== undefined) {
+    // Rule 6: a value that can only be a boolean shows nothing in the browser
+    // whatever it is (`!ready()`, `count() > 0`): BUILD-614. A mixed idiom
+    // (`ready() && 'Go'`) folds to nothing below when its value is a boolean.
+    if (typeof folded === 'boolean') refuseBooleanTextKind(child, walkCtx, true);
     // A folded null or boolean emits NOTHING, because that is what the client
     // does with one: `h()` drops `null`, `true` and `false` children outright
     // (packages/core/src/dom/element.ts). Rendering "true" server-side would put text on the page
@@ -1746,12 +1787,14 @@ function emitChild(
     const binding = signalName ? lookupSignal(walkCtx.signalScope, signalName) : undefined;
     let slotId: number;
     if (binding) {
+      if (binding.default.type === 'bool') refuseBooleanText(walkCtx.sourceFile ?? '', arrowOrFunc, `signal ${binding.name}()`);
       slotId = binding.slotId;
       ctx.recordSlotRef(slotId);
     } else {
       // Computed scalar text must have a closed native value. Refuse unknown
       // runtime expressions instead of manufacturing an empty default.
       const evaluated = tryEvalExprDefault(arrowOrFunc, evalEnv(walkCtx));
+      refuseBooleanTextKind(arrowOrFunc, walkCtx, evaluated !== undefined);
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, arrowOrFunc, String(evaluated), 'text value');
       }
@@ -1785,11 +1828,14 @@ function emitChild(
         );
         refuseIsland(walkCtx, arrowOrFunc);
       }
+      // A mixed idiom at a boolean default (`() => ready() && 'Go'` with
+      // ready false) is the "nothing" case: h() writes nothing for it, so the
+      // server writes an empty range, not the word (rule 6).
       slotId = ctx.addSlot(
         textSlotName(childIndex, walkCtx),
         TYPE_TEXT,
         SOURCE_CLIENT,
-        defaultBytesFor(evaluated),
+        defaultBytesFor(typeof evaluated === 'boolean' ? null : evaluated),
       );
     }
     const markerId = ctx.nextMarker();
@@ -1811,6 +1857,11 @@ function emitChild(
       ctx.emitU16(markerId);
       return;
     }
+  }
+
+  // A module-level boolean const read as text (rule 6).
+  if (t.isIdentifier(child) && typeof moduleLiteral(walkCtx.sourceFile, child.name) === 'boolean') {
+    refuseBooleanText(walkCtx.sourceFile ?? '', child, `module constant ${child.name}`, 'ternary');
   }
 
   // Rule 11: Anything else → ISLAND_START / ISLAND_END
@@ -1850,6 +1901,29 @@ function deriveShowSlotName(cond: t.Node | null | undefined, walkCtx: WalkContex
 }
 
 /**
+ * A signal getter named in a condition without its call, where the condition's
+ * value is the function itself: the condition, an operand of `!`, `&&`, `||`,
+ * `??` or a comparison, a ternary's test, or the body of a parameterless
+ * getter. Branch values and call arguments are not conditions and are not read.
+ * Verified by: packages/compiler/tests/value-rule-7-conditions.test.ts
+ */
+function uncalledGetter(node: t.Node | null | undefined, walkCtx: WalkContext): t.Identifier | undefined {
+  if (!node) return undefined;
+  if (t.isIdentifier(node)) return closedEnv(walkCtx).signal(node) ? node : undefined;
+  if (t.isTSAsExpression(node) || t.isTSSatisfiesExpression(node) || t.isTSNonNullExpression(node)
+    || t.isTSTypeAssertion(node) || t.isParenthesizedExpression(node)) return uncalledGetter(node.expression, walkCtx);
+  if ((t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) && node.params.length === 0) {
+    return uncalledGetter(getEffectiveBody(node), walkCtx);
+  }
+  if (t.isUnaryExpression(node)) return uncalledGetter(node.argument, walkCtx);
+  if (t.isLogicalExpression(node) || t.isBinaryExpression(node)) {
+    return uncalledGetter(node.left, walkCtx) ?? uncalledGetter(node.right, walkCtx);
+  }
+  if (t.isConditionalExpression(node)) return uncalledGetter(node.test, walkCtx);
+  return undefined;
+}
+
+/**
  * Mint the TYPE_BOOL slot a SHOW_IF selects its branch with, carrying the
  * branch the CLIENT would take on first paint as its SSR default.
  *
@@ -1871,17 +1945,59 @@ function addShowSlot(
   cond: t.Node | null | undefined,
   ctx: IrEmitContext,
   walkCtx: WalkContext,
+  createShowArgument = false,
 ): number {
-  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx) ?? closedSlot(cond,ctx,closedEnv(walkCtx));
-  if (declaredSlot !== undefined) return declaredSlot;
+  // Value rule 7 (docs/parity-rules.md): a condition must be boolean-typed.
+  // What the compiler can prove is not boolean (a declared, closed or signal
+  // type, a literal, an operator's result) is BUILD-615; what it cannot type
+  // keeps the BUILD-302 path below.
+  const file = walkCtx.sourceFile ?? '', refuse = (): never => refuseConditionType(file, cond!, `condition ${describeNode(cond!)}`);
+  // createShow calls its first argument, so a getter passed itself
+  // (`createShow(open, …)`) is read as `open()` below. Anywhere else a signal
+  // getter named without its call (a ternary's `open ? a : b`, `() => open`,
+  // `ready() && open`) is a function, always truthy in the browser: BUILD-615
+  // naming the missing call.
+  // Type assertions, non-null assertions and parentheses preserve the getter
+  // passed at runtime. Do not unwrap a function body: () => open returns the
+  // getter instead of calling it and must still take the refusal below.
+  let argument = cond;
+  while (argument && (t.isTSAsExpression(argument) || t.isTSSatisfiesExpression(argument)
+    || t.isTSNonNullExpression(argument) || t.isTSTypeAssertion(argument)
+    || t.isParenthesizedExpression(argument))) argument = argument.expression;
+  const passedGetter = createShowArgument && argument && t.isIdentifier(argument)
+    && closedEnv(walkCtx).signal(argument) ? argument : undefined;
+  const uncalled = passedGetter ? undefined : uncalledGetter(cond, walkCtx);
+  if (uncalled) refuseUncalledGetter(file, uncalled, uncalled.name);
+  const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
+  if (declaredSlot !== undefined) {
+    if (declaredKind(cond, walkCtx.propsScope) !== 'boolean') refuse();
+    return declaredSlot;
+  }
+  const closed = closedBinding(cond, ctx, closedEnv(walkCtx));
+  if (closed && closedKind(closed.values) !== 'boolean') refuse();
+  const closedSlotId = closed ? closedSlot(cond, ctx, closedEnv(walkCtx)) : undefined;
+  if (closedSlotId !== undefined) return closedSlotId;
+  // A scalar signal getter passed to createShow itself is read as its call.
+  const read = passedGetter ? t.callExpression(t.identifier(passedGetter.name), []) : cond;
+  if (read && valueKind(read, kindEnv(walkCtx)) === 'other') refuse();
   const slotName = deriveShowSlotName(cond, walkCtx);
 
+  // A condition also folds a module-level boolean const (`const SHOWN = true`),
+  // so the server renders the branch the browser takes instead of ELSE.
+  const base = evalEnv(walkCtx);
+  const env: EvalEnv = { signal: base.signal, ident: (name) => {
+    const known = base.ident(name);
+    if (known !== undefined) return known;
+    const literal = moduleLiteral(walkCtx.sourceFile, name);
+    return typeof literal === 'boolean' ? literal : undefined;
+  } };
   let value: EvalValue | undefined;
-  if (cond && isFunctionExpr(cond)) {
-    value = tryEvalExprDefault(cond as t.ArrowFunctionExpression | t.FunctionExpression, evalEnv(walkCtx));
-  } else if (cond && t.isExpression(cond)) {
-    value = evalNode(cond, evalEnv(walkCtx));
+  if (read && isFunctionExpr(read)) {
+    value = tryEvalExprDefault(read as t.ArrowFunctionExpression | t.FunctionExpression, env);
+  } else if (read && t.isExpression(read)) {
+    value = evalNode(read, env);
   }
+  if (value !== undefined && typeof value !== 'boolean') refuse();
 
   if (value === undefined) {
     warnDegraded(
@@ -1966,7 +2082,7 @@ function emitCreateShow(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
-  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx);
+  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx, true);
 
   ctx.emit(OP_SHOW_IF);
   ctx.emitU16(slotId);
@@ -2200,6 +2316,19 @@ function emitCreateList(
   // the frozen corpus harness; their names never grant handler binding access.
   const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
   const closedArray=declaredArray===undefined?closedBinding(node.arguments[0],ctx,closedEnv(walkCtx)):undefined;
+  let sourceShape = node.arguments[0];
+  while (sourceShape && (t.isTSAsExpression(sourceShape) || t.isTSNonNullExpression(sourceShape)
+    || t.isTSSatisfiesExpression(sourceShape) || t.isParenthesizedExpression(sourceShape))) sourceShape = sourceShape.expression;
+  // A getter result or object field is data provenance, not a proof that core
+  // can call that source. F1 deliberately leaves mutable values undecided;
+  // native admission still requires a getter binding or explicit callback.
+  const sourceCallable = t.isIdentifier(sourceShape) || t.isArrowFunctionExpression(sourceShape) || t.isFunctionExpression(sourceShape);
+  if (walkCtx.listProof && (!sourceCallable || (declaredArray === undefined && !closedArray))) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.arguments[0]?.loc?.start ?? node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      'createList source must read a declared array prop or a closed literal-default signal; pass derived rows as their own declared prop, or move the component behind a registered browserOnly boundary');
+  }
   if(closedArray&&closedArray.values.some(value=>!Array.isArray(value)&&value!==null))throw new PropsSchemaError(walkCtx.sourceFile??'',node.loc?.start.line??1,(node.loc?.start.column??0)+1,'createList closed source must be an array');
   const closedItems=closedArray?.values.flatMap(value=>Array.isArray(value)?value:[]);
   const arraySlotId = declaredArray ?? closedArray?.slot() ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
@@ -2746,8 +2875,8 @@ function emitBranchContent(
     return;
   }
 
-  // null/undefined/false → skip
-  if (isNullish(expr)) return;
+  // null/undefined/false → skip; a true literal writes nothing either (rule 6)
+  if (isNullish(expr) || t.isBooleanLiteral(expr)) return;
 
   // h() call → walk
   if (
@@ -2759,8 +2888,12 @@ function emitBranchContent(
     return;
   }
 
-  // Other call expression
-  if (t.isCallExpression(expr)) {
+  // Other call expression. A String()/Number() cast the evaluator folds is a
+  // value, not a component: it falls through to DYN_TEXT below, as emitChild
+  // folds it before its own call dispatch (value rule 6's `String(flag)`).
+  const cast = t.isCallExpression(expr) && t.isIdentifier(expr.callee)
+    && (expr.callee.name === 'String' || expr.callee.name === 'Number') && evalNode(expr, evalEnv(walkCtx)) !== undefined;
+  if (t.isCallExpression(expr) && !cast) {
     walkCallExpression(expr, hName, ctx, walkCtx);
     return;
   }
@@ -2783,11 +2916,14 @@ function emitBranchContent(
     );
     refuseIsland(walkCtx, expr);
   }
+  // Rule 6: a boolean-only value is BUILD-614; a mixed one at a boolean
+  // default writes an empty range, as h() writes nothing for it.
+  if (typeof evaluated === 'boolean') refuseBooleanTextKind(expr, walkCtx, true);
   const slotId = ctx.addSlot(
     textSlotName(childIndex, walkCtx),
     TYPE_TEXT,
     SOURCE_CLIENT,
-    defaultBytesFor(evaluated),
+    defaultBytesFor(typeof evaluated === 'boolean' ? null : evaluated),
   );
   const markerId = ctx.nextMarker();
   ctx.emit(OP_DYN_TEXT);

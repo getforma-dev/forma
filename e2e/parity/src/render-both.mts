@@ -16,6 +16,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import type { Browser } from '@playwright/test';
 import { launch, type Engine } from './browser.mts';
+import type { PageComponent } from './bundle.mts';
 import { summarize, type Report } from './compare.mts';
 import { check, prepare, readCorpus, type Timings } from './suite.mts';
 
@@ -36,6 +37,12 @@ export interface RenderBothOptions {
    * alters one attribute's text fails P1 naming the fixture, the state and the node).
    */
   readonly alterServerHtml?: (html: string) => string;
+  /**
+   * Test seam, never set by the CLI: the twin's page source in place of the corpus entry's, over
+   * the same module (F1's error-verdict test renders the archived original page, whose list
+   * source core cannot call).
+   */
+  readonly page?: PageComponent;
 }
 
 /** Every report of one module at one state: P1, then P2 when the page has islands. */
@@ -43,7 +50,7 @@ export async function renderBothReports(options: RenderBothOptions): Promise<Rep
   const corpus = readCorpus();
   const entry = corpus.find(module => module.name === options.module);
   if (!entry) throw new Error(`corpus.json has no module ${options.module}; modules: ${corpus.map(module => module.name).join(', ')}`);
-  const plan = await prepare(entry, { seed: options.seed, states: options.index + 1, indices: [options.index] });
+  const plan = await prepare(options.page ? { ...entry, page: options.page } : entry, { seed: options.seed, states: options.index + 1, indices: [options.index] });
   if (!plan.indices.length) throw new Error(`${entry.name} declares no page props: its one state is 0`);
   const browser = options.browser ?? await launch(options.engine);
   const timings: Timings = { prepare: 0, launch: 0, server: 0, browser: 0 };

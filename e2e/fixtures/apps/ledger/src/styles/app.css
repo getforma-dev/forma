@@ -1,0 +1,6 @@
+/* Fixture styles: enough to give the page a stylesheet and a class for each region. */
+body { font-family: system-ui, sans-serif; margin: 0; }
+.household { max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+.arrival h1 { font-size: 1.5rem; }
+.arrival dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+.arrival [role="status"] { color: #555; }

@@ -16,7 +16,7 @@ export interface DeclaredPageProps { schema: PropsSchema; parameter: PropsParame
 
 /** A declared contract can never degrade to placeholder output. */
 export class PropsSchemaError extends Error {
-  constructor(readonly file: string, readonly line: number, readonly column: number, detail: string, readonly code: 'BUILD-610' | 'BUILD-612' | 'BUILD-613' = 'BUILD-610') {
+  constructor(readonly file: string, readonly line: number, readonly column: number, detail: string, readonly code: 'BUILD-610' | 'BUILD-612' | 'BUILD-613' | 'BUILD-614' | 'BUILD-615' | 'BUILD-616' = 'BUILD-610') {
     super(`${code} ${file}:${line}:${column}: ${detail}`);
     this.name = 'PropsSchemaError';
   }

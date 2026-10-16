@@ -168,7 +168,8 @@ counts, the holder count, both canonical trees, the server's document and, when 
 the compiler's diagnostics for the page (BUILD-206 often explains an attribute the server omits).
 The suite's summary totals the holder count over the run. A page error, console error or policy
 violation during the render, or a twin core cannot build, is an `error`, never a pass and never a
-throw.
+throw. Its error test renders the archived pre-F1 `list-same-source` page through the
+`renderBoth` page seam; the current corpus uses a function source under BUILD-616.
 
 ## Expected divergence
 
@@ -187,12 +188,10 @@ The entries today (F1 to F4 found at step 0, F2's step-1 cases, F5 and F6 found 
 
 | | Case | Kind | Clears it |
 |---|---|---|---|
-| F1 | `list-same-source`: the source passes a plain array to `createList`, which core 3.0 calls as an accessor (`items is not a function`) | P1 error | FORMA-181, after checkpoint C: the compiler refuses a non-function list source with a code |
 | F2 | `jsx-page` `span[data-live]`, `sub-component-scopes` `article[data-ready]`, and at step 1 `nullish` and `closed-nullish` `p[data-ready]`: a reactive `true`, bare from the walker, `"true"` from core | P1 attribute value | FORMA-182: the walker writes HTML-boolean presence only for the HTML boolean attribute set |
 | F3 | `dynamic-attrs` `input[value]`: a client signal created with `''` decodes as Null on the server, so the walker omits `value=""` | P1 structural | FORMA-182: an empty string is not null |
 | F4 | `dynamic-attrs` `a[href]`: `href: () => docsHref()` cannot be evaluated at build | P1 structural | FORMA-101 (DR-1, release B) |
 | F5 | `props-contract`: `createShow(() => props.user.active, () => props.title)`, a branch that returns a string; the walker renders the text, core's `createShow` inserts it as a Node and throws | P1 error | FORMA-016: core's `createShow` takes a string or number branch as a text node |
-| F6 | `aggregate-fallback`: a keyed row whose string key holds CR or NUL; the walker writes the rule-1 key text, core's adoption compares the raw key (`String(key)`) and refuses the island | P2 mutation and activation error | FORMA-181, checkpoint C (adoption by `canonicalKeyText`) |
 
 F4 can never become equal: the server has no value to write. In warning mode the compiler reports
 BUILD-206 and omits the attribute from the server HTML, which then appears only on activation
@@ -200,6 +199,8 @@ BUILD-206 and omits the attribute from the server HTML, which then appears only 
 (3.0.0, FORMA-101), where BUILD-206 is a build error. The difference then ends because the page no
 longer compiles, not because the trees agree; the corpus fixture has to move the attribute behind
 `browserOnly()` or drop it, and the entry fails the run as an unexpected pass.
+
+Checkpoint C resolves F6: the merged integration run on 2026-10-15 observed both canonical-key adoption entries as unexpected passes, with all 99 P2 checks equal. The two resolved entries were removed; the original failure report is preserved in the release work evidence.
 
 ## The corpus and its ratchet
 
