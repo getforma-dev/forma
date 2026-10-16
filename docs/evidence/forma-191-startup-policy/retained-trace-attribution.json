@@ -1,0 +1,47 @@
+{
+  "scope": "Read-only application of current source to retained diagnostic trace. Not fresh measurements or acceptance; original failed result unchanged.",
+  "originalInputs": [
+    {
+      "file": "Trace.json",
+      "bytes": 3661977,
+      "sha256": "691c3c78b32f441877c54fb011fd9935f41fd052d33cfb76b915f4fee42fcd4d"
+    },
+    {
+      "file": "LHR.json",
+      "bytes": 392592,
+      "sha256": "4f12f3273c49137430020d37e051655843da0bd5aa0caeca878226469d40af47"
+    }
+  ],
+  "encodedSizes": {
+    "bytes": 3661977,
+    "compressedBytes": 709211,
+    "base64Bytes": 945616
+  },
+  "attribution": {
+    "policy": "L63-startup-v1",
+    "pid": 58012,
+    "tid": 3310426,
+    "frame": "F5853C334661DD4885A19B779EC9E270",
+    "navigationId": "554922D9B0C5C3164A24B747FAE7C0E9",
+    "originUs": 69177573830,
+    "firstScriptUs": 69178176916,
+    "tasks": [
+      {
+        "index": 0,
+        "startTime": 1335.227,
+        "duration": 69.122,
+        "kind": "application-or-unattributed",
+        "reason": "not-proven-pre-application-layout",
+        "traceIndex": 6999
+      },
+      {
+        "index": 1,
+        "startTime": 1201.57,
+        "duration": 61.49,
+        "kind": "application-or-unattributed",
+        "reason": "not-proven-pre-application-layout",
+        "traceIndex": 5818
+      }
+    ]
+  }
+}

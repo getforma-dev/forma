@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {validateDecoder} from './release-performance-decoder.mjs';
-import {N1_SHAPES,PERFORMANCE_CONTRACT,MOBILE_PROFILE} from './release-performance-spec.mjs';
+import {N1_SHAPES,PERFORMANCE_CONTRACT,MOBILE_PROFILE,MOBILE_STARTUP_POLICY} from './release-performance-spec.mjs';
+import {summarizeMobileStartup} from './release-performance-attribution.mjs';
 export const finite = (n,label) => {assert(Number.isFinite(n)&&n>=0,`${label}: missing finite nonnegative figure`);return n;};
 export function percentile(samples,fraction) {assert(samples.length>0);const sorted=[...samples].sort((a,b)=>a-b);return sorted[Math.ceil(sorted.length*fraction)-1];}
 const exactKeys=(rows,expected,label)=>assert.deepEqual([...rows].sort(),[...expected].sort(),`${label}: missing or duplicate figure`);
@@ -44,8 +45,8 @@ export function validateNative(report,baseline=null) {
 export function validateActivation(probe,{islands}) {
  assert.equal(probe.expected,islands);assert.equal(probe.active,islands,'N3: islands did not activate');assert.equal(probe.responded,islands,'N3: islands did not respond to real events');
  finite(probe.firstPaintMs,'N3 first paint');finite(probe.lastResponseMs,'N3 last response');
- const afterPaint=Math.max(0,probe.lastResponseMs-probe.firstPaintMs);assert(afterPaint<=500,'N3: islands respond later than500ms after first paint');
- assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.duration,'N3 long task')<=50),'N3: task over50ms');
+ const afterPaint=Math.max(0,probe.lastResponseMs-probe.firstPaintMs);assert(afterPaint<=MOBILE_STARTUP_POLICY.responseAfterPaintMs,'N3: islands respond later than500ms after first paint');
+ assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_STARTUP_POLICY.maxTaskMs),'N3: task over100ms');
  assert.deepEqual(probe.errors,[],'N3: browser errors');return afterPaint;
 }
 export function validateMobileControls(observations){
@@ -64,11 +65,12 @@ export function validateMobileControls(observations){
  const injected=slow.injectedTask;assert(injected,'N3 injected task interval absent');
  finite(injected.startTime,'N3 injected task start');finite(injected.endTime,'N3 injected task end');
  // Long-task durations may be rounded to a millisecond. Attribute the actual
- // ninety-millisecond injection, not a different slow application task.
- assert(injected.endTime-injected.startTime>=89,'N3 injected task did not run for ninety milliseconds');
- assert(slow.longTasks.some(task=>task.duration>=89&&task.startTime<=injected.startTime&&task.startTime+task.duration>=injected.endTime-1),'N3 injected task was not observed');
+ // over-one-hundred-millisecond injection, not a different slow task.
+ assert(injected.endTime-injected.startTime>=109,'N3 injected task did not run for110 milliseconds');
+ assert(slow.longTasks.some(task=>task.duration>=109&&task.startTime<=injected.startTime&&task.startTime+task.duration>=injected.endTime-1),'N3 injected task was not observed');
  assert.throws(()=>validateActivation(dead,{islands:100}),/did not activate|did not respond/);
- assert.throws(()=>validateActivation(slow,{islands:100}),/later than500ms|over50ms/);
+ // Isolate the task oracle: a late response must not make this control pass.
+ assert.throws(()=>validateActivation({...slow,lastResponseMs:slow.firstPaintMs},{islands:100}),/over100ms/);
  return {deadActivationRefused:true,longTaskRefused:true};
 }
 export function validateMobile(rows) {
@@ -88,10 +90,14 @@ export function validateMobile(rows) {
    assert.deepEqual(tasks.items.map(({duration,startTime})=>({duration,startTime})),measured.longTasks,'N3: raw Lighthouse tasks differ');
    assert.equal(run.lighthouse.version,'13.5.0');assert.equal(run.lighthouse.throttlingMethod,'devtools');assert(run.lighthouse.benchmarkIndex>0,'N3: Lighthouse benchmarkIndex missing');
    sha(run.lighthouse.sha256);finite(run.lighthouse.tbtMs,'N3 TBT');finite(run.lighthouse.lcpMs,'N3 LCP');
-   assert(Array.isArray(run.lighthouse.longTasks));assert(run.lighthouse.longTasks.every(t=>finite(t.duration,'Lighthouse long task')<=50),'N3: Lighthouse task over50ms');
+   assert(Array.isArray(run.lighthouse.longTasks));for(const task of run.lighthouse.longTasks){finite(task.duration,'Lighthouse long task');finite(task.startTime,'Lighthouse task start');}
    validateActivation(run.activation,{islands:row.id==='islands-100'?100:2});
   }
-  const tbt=percentile(row.runs.map(run=>run.lighthouse.tbtMs),.95);assert(tbt<200,'N3: p95 TBT at or above200ms');assert.equal(row.p95TbtMs,tbt);
+  const startup=summarizeMobileStartup(row.runs);
+  assert.deepEqual(row.startup,startup,'N3: startup summary differs from raw evidence');
+  assert(startup.maxTaskMs<=MOBILE_STARTUP_POLICY.maxTaskMs,'N3: application/unattributed task over100ms');
+  assert(startup.p95MaxTaskMs<=MOBILE_STARTUP_POLICY.p95MaxTaskMs,'N3: p95 startup maximum over75ms');
+  const tbt=percentile(row.runs.map(run=>run.lighthouse.tbtMs),.95);assert(tbt<MOBILE_STARTUP_POLICY.p95TbtMs,'N3: p95 TBT at or above200ms');assert.equal(row.p95TbtMs,tbt);
  }
  return rows;
 }

@@ -1,7 +1,9 @@
 // Test evidence only: deterministic complete samples, never release measurements.
 import {createHash} from 'node:crypto';
 import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderPayload} from './release-performance-decoder.mjs';
-import {MOBILE_PROFILE} from './release-performance-mobile.mjs';
+import {MOBILE_PROFILE} from './release-performance-spec.mjs';
+import {traceFixture,traceMeasurement} from './release-performance-trace-fixtures.mjs';
+import {summarizeMobileStartup} from './release-performance-attribution.mjs';
 const hash='a'.repeat(64);
 export function native(){return {schema:1,pilot:false,profile:'cargo build --release --locked',n1:[300,1500,10000,15000,20000].map(n=>{const time=n===300?200000:n*500;return {nominalNodes:n,nodes:n,walks:20000,samplesNanoseconds:Array(20000).fill(time),p50Nanoseconds:time,p99Nanoseconds:time,p50NodesPerSecond:n*1e9/time,p99NodesPerSecond:n*1e9/time,moduleSha256:hash,inputSha256:hash,outputSha256:hash}}),n5:{points:[100,200,400,800,1600,3200].map(rows=>({rows,allocations:rows*12,allocatedBytes:rows*400,samplesNanoseconds:Array(41).fill(rows*500),medianNanoseconds:rows*500,moduleSha256:hash,inputSha256:hash})),pairedRounds:41,pairedTimeRatios:Array(41).fill(32),medianTimeRatio:32},boundaries:{exactPass:true,partialHtmlReturned:false,exactIterations:400,exactBytes:50000,onePastIteration:{code:'RENDER-302',limit:399},onePastOutput:{code:'RENDER-301',limit:49999}}};}
 
@@ -13,10 +15,14 @@ export function comparison(){
  return {schema_version:2,recorded_at:'2026-10-16T00:00:00Z',methodology:{browsers:['chromium','firefox','webkit'],react_compiler_verified:true,production_builds:true,cross_origin_isolated:true,runs:12,warmups:3,mount_counts:[1,50,100,500],update_count:500,list_count:1000,server_state_count:50},environment:{node:'v24.22.0',platform:'darwin',release:'25',architecture:'arm64',cpu:'test CPU',logical_cpus:8,memory_bytes:1000000,git_commit:'b'.repeat(40),git_branch:'test',git_dirty:false},versions:{forma:'3.0.0-beta.1',react:'19.2.8',react_dom:'19.2.8',tanstack_query:'5.101.4',react_compiler:'1.0.0'},bundles:Object.fromEntries(['forma.js','forma-query.js','react.js','react-query.js'].map(k=>[k,{raw_bytes:1000,gzip_bytes:500,brotli_bytes:450}])),browsers:Object.fromEntries(['chromium','firefox','webkit'].map(engine=>[engine,{version:'123',runtime:Object.fromEntries(['forma','react_compiler'].map(f=>[f,{...runtime(),...(engine==='chromium'?{memory_500:{baseline_used_bytes:100,mounted_used_bytes:110,retained_delta_bytes:10,dom_nodes:10}}:{})}])),server_state:Object.fromEntries(['forma_isolated','forma_shared','react_query'].map(k=>[k,metric(true)]))}]))};
 }
 export function mobile(){
- return ['tenant-login','islands-100'].map(id=>({id,pilot:false,profile:MOBILE_PROFILE,p95TbtMs:0,runs:Array.from({length:20},(_,i)=>{
-  const lhr={lighthouseVersion:'13.5.0',configSettings:MOBILE_PROFILE,environment:{benchmarkIndex:123},audits:{'total-blocking-time':{numericValue:0},'largest-contentful-paint':{numericValue:123},'long-tasks':{details:{type:'table',items:[]}}}},rawLhr=JSON.stringify(lhr),count=id==='islands-100'?100:2;
-  return {run:i+1,lighthouse:{version:'13.5.0',throttlingMethod:'devtools',benchmarkIndex:123,tbtMs:0,lcpMs:123,longTasks:[],rawLhr,sha256:createHash('sha256').update(rawLhr).digest('hex')},activation:{expected:count,active:count,responded:count,firstPaintMs:100,lastResponseMs:200,longTasks:[],errors:[]}};
- })}));
+ return ['tenant-login','islands-100'].map(id=>{
+  const runs=Array.from({length:20},(_,i)=>{
+   const {lhr,trace}=traceFixture();lhr.audits['long-tasks'].details.items=[];
+   const count=id==='islands-100'?100:2;
+   return {run:i+1,lighthouse:traceMeasurement(lhr,trace),activation:{expected:count,active:count,responded:count,firstPaintMs:100,lastResponseMs:200,longTasks:[],errors:[]}};
+  });
+  return {id,pilot:false,profile:MOBILE_PROFILE,p95TbtMs:0,runs,startup:summarizeMobileStartup(runs)};
+ });
 }
 export function performanceRecord(){const n=native();return {contract:'measured-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true},controlObservations:controlObservations(),n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
 
@@ -47,5 +53,5 @@ export function decoder() {
 
 export function controlObservations(){
  const common={expected:100,hosts:100,hostStatuses:Array(100).fill('pending'),firstPaintMs:100,longTasks:[],errors:[],done:true};
- return {dead:{...structuredClone(common),active:0,responded:0,lastResponseMs:null},slow:{...structuredClone(common),active:100,responded:100,lastResponseMs:300,longTasks:[{startTime:150,duration:91}],injectedTask:{startTime:150.2,endTime:240.2}}};
+ return {dead:{...structuredClone(common),active:0,responded:0,lastResponseMs:null},slow:{...structuredClone(common),active:100,responded:100,lastResponseMs:300,longTasks:[{startTime:150,duration:111}],injectedTask:{startTime:150.2,endTime:260.2}}};
 }

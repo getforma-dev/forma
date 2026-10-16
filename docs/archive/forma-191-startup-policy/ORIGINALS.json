@@ -1,0 +1,91 @@
+{
+  "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "purpose": "Pre-L63 source including original 50ms gate and actual90ms control. Historical failures are not reclassified.",
+  "files": [
+    {
+      "file": ".gitattributes",
+      "bytes": 11295,
+      "sha256": "e9b4205d93d234ba5510fe8af18b0428341094c2d91c89ea0065f7de05e7930b"
+    },
+    {
+      "file": "CHANGELOG.md",
+      "bytes": 52086,
+      "sha256": "223c9db7fb66958e9fa036d223257b2962a15bd28f94e957aeb744ca9a8410f9"
+    },
+    {
+      "file": "docs/RELEASING.md",
+      "bytes": 21175,
+      "sha256": "6efcc6edeaae56445f94c1888e1c8809dfa739ae3816b24f2c56cf2a7d8f158b"
+    },
+    {
+      "file": "docs/release/3.0-GATE-DISPOSITIONS.md",
+      "bytes": 6498,
+      "sha256": "cd117164e9956095469c2cc7cee85a2be3c4d22dcf8133cfa36f9bed720ea4d8"
+    },
+    {
+      "file": "scripts/check.sh",
+      "bytes": 8775,
+      "sha256": "d765ac004bcf1170494b46556248c6d3a1cf7b7bd886ce37fae74ca0dc360253"
+    },
+    {
+      "file": "scripts/release-performance-baseline.mjs",
+      "bytes": 7802,
+      "sha256": "9e7b70ec7dfb85103cfaa921dec3b87692badcce1c8539f10c1c7c061a7c955f"
+    },
+    {
+      "file": "scripts/release-performance-contract.mjs",
+      "bytes": 14776,
+      "sha256": "eccc640ce266c9221f21c5307c2a8bd4e7939e56949e81b8641e933659c166e6"
+    },
+    {
+      "file": "scripts/release-performance-contract.test.mjs",
+      "bytes": 4872,
+      "sha256": "eb46e507f2ea9462733743a55a858383fff5ef2dc615f61f28a10e561ed32923"
+    },
+    {
+      "file": "scripts/release-performance-decoder.mjs",
+      "bytes": 16211,
+      "sha256": "42a3c6e74f1f2c6c32f7cff9f1b39460eb16df2af1c295d082e3c04571b2acea"
+    },
+    {
+      "file": "scripts/release-performance-evidence.test.mjs",
+      "bytes": 4811,
+      "sha256": "5cebe3cdce76f0e33f608847a4178938c6b26dc6b65dfdcf6c8e499941932e9c"
+    },
+    {
+      "file": "scripts/release-performance-mobile-phases.test.mjs",
+      "bytes": 1141,
+      "sha256": "d4a56a6311512c83a315b74b31deab3df7f81210f16e17e7ee56a63aa6eae748"
+    },
+    {
+      "file": "scripts/release-performance-mobile.mjs",
+      "bytes": 7697,
+      "sha256": "f6881757a2c51fc1d7b1de5695128472dfb2a209dc5abfaa2cd3e09f52d985ad"
+    },
+    {
+      "file": "scripts/release-performance-spec.mjs",
+      "bytes": 962,
+      "sha256": "cc7b528c3264141130dad2a277524a25a319cf7ead57d0f6c67f0241a8846e4e"
+    },
+    {
+      "file": "scripts/release-performance-test-fixtures.mjs",
+      "bytes": 6984,
+      "sha256": "2f71ea4534970ff7e6aed08e5b4210e1bb4913abc208730afc6e802171545973"
+    },
+    {
+      "file": "scripts/release-performance.mjs",
+      "bytes": 8338,
+      "sha256": "f2052a116ab57c2223af41c1f7647e56fde4afd51f0f2bed045ff2082e602613"
+    },
+    {
+      "file": "scripts/release-support-history.mjs",
+      "bytes": 6619,
+      "sha256": "462a8183ac9e0f48415d35fc89cebf5d8e46133682472e44e66ffe3a8336ea2f"
+    },
+    {
+      "file": "scripts/release-support.mjs",
+      "bytes": 10021,
+      "sha256": "338eb4964e2a93ca5c4213ef219426347c46e621f0d7b441b8602d1d8a4db3b2"
+    }
+  ]
+}

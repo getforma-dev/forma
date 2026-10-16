@@ -242,6 +242,10 @@ docs/evidence/rc-burn-in-2026-10-16/** -text
 # Preserve the historical Rust workspace overview byte-for-byte.
 docs/archive/2026-10-16-current-overviews/** -text
 
+# L63 preserves the original startup policy and all historical controls.
+docs/archive/forma-191-startup-policy/** -text
+docs/evidence/forma-191-startup-policy/** -text
+
 # Preserve the original watch-recovery failure and actual regression output.
 docs/archive/watch-recovery-2026-10-16/** -text
 docs/evidence/watch-recovery-2026-10-16/** -text

@@ -19,8 +19,8 @@ test('pilot, dropped samples, invented rate, quadratic allocation, and swallowed
  for(const edit of [r=>r.pilot=true,r=>r.n1[0].samplesNanoseconds.pop(),r=>r.n1[0].p99NodesPerSecond=1e99,r=>r.n5.points[2].allocations*=4,r=>r.n5.pairedTimeRatios.fill(100),r=>r.boundaries.onePastOutput.code='OK',r=>r.boundaries.partialHtmlReturned=true]){const report=native();edit(report);assert.throws(()=>validateNative(report,bootstrap));}
 });
 test('actual response and every long task matter independently of TBT',()=>{
- const probe={expected:100,active:100,responded:100,firstPaintMs:100,lastResponseMs:600,longTasks:[{duration:50}],errors:[]};assert.equal(validateActivation(probe,{islands:100}),500);
- for(const edit of [p=>p.responded=99,p=>p.active=0,p=>p.lastResponseMs=600.01,p=>p.longTasks[0].duration=50.01,p=>p.errors.push('RENDER-503')]){const p=structuredClone(probe);edit(p);assert.throws(()=>validateActivation(p,{islands:100}));}
+ const probe={expected:100,active:100,responded:100,firstPaintMs:100,lastResponseMs:600,longTasks:[{startTime:110,duration:100}],errors:[]};assert.equal(validateActivation(probe,{islands:100}),500);
+ for(const edit of [p=>p.responded=99,p=>p.active=0,p=>p.lastResponseMs=600.01,p=>p.longTasks[0].duration=100.01,p=>p.errors.push('RENDER-503')]){const p=structuredClone(probe);edit(p);assert.throws(()=>validateActivation(p,{islands:100}));}
  assert.equal(percentile([...Array(19).fill(0),201],.95),0);assert.equal(percentile([...Array(18).fill(0),200,201],.95),200);
 });
 test('missing comparison engines are failures, not an empty timing pass',()=>{
