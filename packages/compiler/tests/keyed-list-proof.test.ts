@@ -60,8 +60,8 @@ describe('original identity and legacy precedence',()=>{
   expect(String(result.failure.message)).toContain('no exact original core identity');
  });
  it('proves an imported core alias through JSX lowering',()=>{
-  const result=emitSource(`import {h,mount,createList as list} from '@getforma/core';
- const rows=()=>[{id:'a',label:'A'}];
+  const result=emitSource(`import {h,mount,createSignal,createList as list} from '@getforma/core';
+ const [rows]=createSignal([{id:'a',label:'A'},{id:'b',label:'B'}]);
  mount(()=><ul>{list(rows,(r:any)=>r.id,(r:any)=><li>{r.label}</li>)}</ul>,'#app');`);
   expect(result.failure).toBeUndefined();
   expect(keys(result.binary!).map(x=>x.path)).toEqual([['id']]);

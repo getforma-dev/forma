@@ -708,12 +708,19 @@ declares as data (`p.rows` with `p: { rows: Row[] }`). A function, a getter, and
 compiler cannot see through (an untyped parameter's field, another call's result) stay admitted.
 A signal may hold a function and a computed callback may return one. A captured signal setter
 prevents using its initializer as proof; object fields can change through aliases or getter reads,
-so their initial values are not proof either. Callable and unknown results remain admitted.
+so their initial values are not proof either. Callable and unknown results pass this callability check.
 The refusal names the call's own argument. This refusal is mandatory without strict mode.
 
+Callable sources still need native value provenance. A declared array prop or a
+closed literal-default signal is admitted through its getter or an explicit
+callback. An arbitrary getter, derived filter/map, mutable getter result or
+unproved function field is refused separately with BUILD-610. The current
+list-same-source corpus uses a two-row signal and renders both projections in
+Rust and core; its previous empty-native stage is preserved under
+`docs/archive/FORMA-101-unproved-list-sources/`.
+
 **Fix.** Pass the getter itself or a function returning the rows: `createList(rows, …)` with
-`const [rows] = createSignal([...])`, `createList(() => p.rows, …)`, or
-`const todos = () => [...]`.
+`const [rows] = createSignal([...])` or `createList(() => p.rows, …)`.
 
 **In strict mode.** An error (and an error without strict mode).
 

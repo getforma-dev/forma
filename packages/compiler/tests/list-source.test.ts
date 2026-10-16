@@ -5,7 +5,8 @@
  * evaluates a page list's source (its array is a named slot), so a plain array compiled and then
  * failed in the browser with `items is not a function`. The original key and row proof
  * (`src/list-proof.ts`) now refuses a source it can prove is not a function, on the page path and
- * the island path alike; a function, a getter and anything it cannot see through stay admitted.
+ * the island path alike; a function, a getter and anything it cannot see through avoid BUILD-616.
+ * Native publication separately requires declared array props or closed signal defaults (BUILD-610).
  */
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {createHash} from 'node:crypto';
@@ -40,17 +41,17 @@ describe('BUILD-616: a list source core cannot call', () => {
   const refused=compile(page(declarations,source));
   expect(refused.failure).toMatchObject({code:'BUILD-616',line:4});
   expect(String(refused.failure.message)).toMatch(/LIST source is .*, not a function: core calls it to read the rows/);
-  const near=compile(page(`const rows=()=>[{id:'a',label:'A'}];`,'rows'));
+  const near=compile(page(`const [rows]=createSignal([{id:'a',label:'A'},{id:'b',label:'B'}]);`,'rows'));
   expect(near.failure).toBeUndefined();
   expect(near.binary).toBeInstanceOf(Uint8Array);
  });
 
- it('refuses an imported const array, and admits an imported function', () => {
+ it('separates an imported non-callable array from a callable but unproved native function', () => {
   const app=(name:string)=>`${head}import {${name}} from './data';
 mount(()=><ul>{createList(${name},(r:Row)=>r.id,(r:Row)=><li>{r.label}</li>)}</ul>,'#app');`;
   const data=`export const rows=[{id:'a',label:'A'}];\nexport const read=()=>rows;\n`;
   expect(compile({'app.tsx':app('rows'),'data.ts':data}).failure).toMatchObject({code:'BUILD-616',line:4});
-  expect(compile({'app.tsx':app('read'),'data.ts':data}).failure).toBeUndefined();
+  expect(compile({'app.tsx':app('read'),'data.ts':data}).failure).toMatchObject({code:'BUILD-610'});
  });
 
  it('refuses a page field its parameter type declares as an array, and admits the getter form', () => {
@@ -69,14 +70,14 @@ mount(()=>Board({rows:[{id:'a',label:'A'}]}),'#app');`;
   expect(compile({'app.tsx':app('()=>p.rows')}).failure).toBeUndefined();
  });
 
- it('admits every getter form core can call', () => {
+ it('admits closed signal getters while refusing arbitrary callable native sources', () => {
+  expect(compile(page(`const [rows]=createSignal<Row[]>([{id:'a',label:'A'},{id:'b',label:'B'}]);`,'rows')).failure).toBeUndefined();
   for (const [declarations, source] of [
-   [`const [rows]=createSignal<Row[]>([{id:'a',label:'A'}]);`,'rows'],
    [`const rows=createComputed(()=>[{id:'a',label:'A'}]);`,'rows'],
    [`function rows(){return [{id:'a',label:'A'}];}`,'rows'],
    [``,`()=>[{id:'a',label:'A'}]`],
    [``,`function(){return [{id:'a',label:'A'}];}`],
-  ]) expect(compile(page(declarations!,source!)).failure, source).toBeUndefined();
+  ]) expect(compile(page(declarations!,source!)).failure, source).toMatchObject({code:'BUILD-610'});
  });
 
  it.each<[string,string,string]>([
@@ -95,16 +96,16 @@ mount(()=>Board({rows:[{id:'a',label:'A'}]}),'#app');`;
   ['an object field changed through its getter', `const [data]=createSignal<any>({rows:[]});data().rows=()=>[{id:'a',label:'A'}];`, 'data().rows'],
   ['a computed value reading a mutable object field', `const state:any={rows:[]};state.rows=()=>[{id:'a',label:'A'}];const rows=createComputed(()=>state.rows);`, 'rows()'],
   ['a computed alias of a signal with a captured setter', `const [data,setData]=createSignal<any>([]);const rows=createComputed(()=>data());setData(()=>()=>[{id:'a',label:'A'}]);`, 'rows()'],
- ])('admits %s without assuming a getter returns data', (_label, declarations, source) => {
+ ])('refuses unproved native %s without misclassifying callability', (_label, declarations, source) => {
   const result=compile(page(declarations,source));
-  expect(result.failure).toBeUndefined();
-  expect(result.binary).toBeInstanceOf(Uint8Array);
+  expect(result.failure).toMatchObject({code:'BUILD-610'});
+  expect(result.binary).toBeUndefined();
  });
 
  it.each(['export let rows:any=[];rows=()=>[{id:"a",label:"A"}];', 'let rows:any=[];rows=()=>[{id:"a",label:"A"}];export {rows};'])('does not classify a mutable export by its stale initializer: %s', data => {
   const result=compile({...page('import {rows} from "./data";', 'rows'), 'data.ts':data});
-  expect(result.failure).toBeUndefined();
-  expect(result.binary).toBeInstanceOf(Uint8Array);
+  expect(result.failure).toMatchObject({code:'BUILD-610'});
+  expect(result.binary).toBeUndefined();
  });
 });
 
@@ -113,7 +114,7 @@ describe('archived pre-F1 list source', () => {
  const ARCHIVE=resolve(__dirname,'../../../docs/archive/2026-10-15-pre-list-source');
  const ROOT=resolve(__dirname,'../../..');
  const hash=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
- it('keeps the originals byte-exact under the manifest, and the live files at the ledger', () => {
+ it('keeps the originals byte-exact under the manifest, and the preserved post-F1 stage at its ledger', () => {
   const manifest=JSON.parse(readFileSync(join(ARCHIVE,'manifest.json'),'utf8')) as {sha256:Record<string,{bytes:number;sha256:string}>};
   expect(Object.keys(manifest.sha256).sort()).toEqual(['sources/list-same-source/app.ts','sources/list-same-source/page.ts']);
   for(const [name,entry]of Object.entries(manifest.sha256)){const bytes=readFileSync(join(ARCHIVE,name));expect(bytes.length,name).toBe(entry.bytes);expect(hash(bytes),name).toBe(entry.sha256);}
@@ -122,7 +123,7 @@ describe('archived pre-F1 list source', () => {
   // Only the source text changed: the function source compiles to the same module, dump, HTML and state.
   expect(changed).toEqual(['packages/compiler/tests/fixtures/ir-corpus/list-same-source/page.ts']);
   for(const [path,entry]of Object.entries(ledger.files)){
-   const live=readFileSync(join(ROOT,path));expect(hash(live),path).toBe(entry.after.sha256);expect(live.length,path).toBe(entry.after.bytes);
+   const stage=readFileSync(join(ROOT,'docs/archive/FORMA-101-unproved-list-sources',path));expect(hash(stage),path).toBe(entry.after.sha256);expect(stage.length,path).toBe(entry.after.bytes);
    if(entry.archived)expect(manifest.sha256[entry.archived]!.sha256,path).toBe(entry.before.sha256);
   }
  });

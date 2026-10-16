@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
+
 ### Value rule 7: conditions are boolean-typed — FORMA-182
 
 - **Breaking: a condition that is not boolean-typed no longer builds (`BUILD-615`).** A `createShow` condition or a ternary test the compiler can prove is not a boolean fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 7): a declared prop of another type (an optional boolean is admitted), a signal whose default is a number, a string or `null`, a closed value of another type (an aggregate, an aggregate or list-row field, a module-level `const`), a non-boolean literal, or a mix such as `a() && count()` or `name() || 'x'`. The common shapes are `createShow(() => count(), …)`, `createShow(count, …)` (a getter passed to `createShow` itself is now read as its call; a getter named without its call in a ternary test or an operand, `() => open ? a : b`, is refused with a message naming the missing call, since the browser always takes the first branch), a ternary on a `null`-default signal (`() => user() ? a : b`) and on a string signal (`() => name() ? …`). Fix: compare explicitly, `count() > 0`, `user() !== null`, `name() !== ''`, or `!!x`. A condition the compiler cannot type keeps `BUILD-302`. Conformance pair in `tests/fixtures/conformance/BUILD-615/`.
