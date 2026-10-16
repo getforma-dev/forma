@@ -1,11 +1,15 @@
 # Unified releases
 
 FORMA-187 prepares the merged repository for one release of seven packages.
-The checked-in contract record deliberately has `liveReleaseReady: false`.
-A2 dry runs establish the pipeline; they do not assert that FMIR v3, manifest 2,
-props, the version window, milestone templates or fixture measurements exist.
-Those ticket owners must add their failing tests and update
-`scripts/release-contracts.json` before the first `v3.0.0-alpha.1` tag.
+The checked-in contract record, `scripts/release-contracts.json`, states which
+tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
+every gate of its milestone and of the earlier milestones is done. Today the
+alpha's gates are done and the later milestones' are open, so `v3.0.0-alpha.N`
+may publish and `v3.0.0-beta.1`, `v3.0.0-rc.1` and `v3.0.0` are refused. See
+[the milestone gate](#milestone-gate) below and, for the alpha day itself,
+[docs/release/ALPHA-RUNBOOK.md](release/ALPHA-RUNBOOK.md). A2 dry runs
+establish the pipeline; they do not assert that the later milestones' contracts
+exist.
 
 ## Prepare and test
 
@@ -24,6 +28,37 @@ creates neither tags nor commits. A `3.0.0-dev` version aligns only the packages
 and workspace locks, preserving A2 template pins until FORMA-144 migrates them.
 Add a root CHANGELOG entry headed `## [3.0.0-alpha.1]`, review and commit the
 release PR, and tag the green main commit with `v3.0.0-alpha.1`.
+
+## Milestone gate
+
+A tag names its milestone: `-alpha.N`, `-beta.N`, `-rc.N`, or none for the
+final; `-dev` versions name no milestone and never publish. The contract file
+lists the four milestones in order, each with its plan milestone (`M2` to `M5`)
+and its gates, keyed by ticket (plus a slice or step when one ticket spans
+milestones, such as `FORMA-144 slice 1`), each gate `done` or `pending` with a
+one-line scope. A milestone inherits every earlier milestone's gates. The resolver
+in `scripts/release-set.mjs` (`releaseMilestone`, `assertMilestoneReady`) is
+enforced four times on a live tag, each time from the contract the pack job
+recorded into DS11: `pack` refuses before packing, P17 refuses before passing,
+both publish jobs refuse before uploading, and `record` refuses before writing
+DS12. A dry run resolves the milestone unenforced and records it (null for a
+`-dev` set). Advancing a milestone is a reviewed pull request that flips its
+gates to `done` with the evidence named in the ticket; there is no global switch,
+and the lint rejects one (`liveReleaseReady` or a top-level `pending` list).
+
+The lint (`ruby scripts/check-release-workflow.rb --self-test`) checks the
+contract's shape beside the workflow: exactly `alpha`, `beta`, `rc`, `final` in
+order (C1); each with a plan milestone and non-empty gates whose keys are tickets
+and whose entries carry a `done`/`pending` status and a scope (C2); no gate in
+two milestones (C3); no global switch (C4); the one release version the gates
+are written for, `version`, which the resolver asserts against the tag's base
+version so a `v3.1.0-alpha.1` cannot pass 3.0.0's gates (C5). Its self-test
+seeds thirteen contract violations beside the thirty-two workflow ones, and its
+last line names the
+milestones that may publish today. The GitHub Release names the milestone, where
+it went on npm (`next` for a pre-release, `latest` for the final) and every gate
+still open before the later milestones (`releaseNotes` in
+`scripts/release-record.mjs`); DS12 carries the resolved milestone as `milestone`.
 
 Only tag pushes trigger release.yml. `check` requires the latest readable,
 successful main-push CI run for the exact commit, including the executed R17
@@ -66,7 +101,14 @@ job output, so replacing both an archive and its manifest fails verification.
 `verify`, without OIDC permission, checks DS11 and the recorded lock, installs
 locked tools with scripts off, checks fresh advisories against the root lock and
 each crate archive’s own lock (only internal sources substituted), and checks npm registry signatures,
-then runs the packed compiler/reader corpus and both packed templates. For local
+then runs the packed compiler/reader corpus and both packed templates. Before any
+packed code runs, P17 writes a `node_modules/@getforma` beside the unpacked libraries,
+linking each packed one, and proves with Node's resolver that every bare `@getforma/*`
+specifier in every packed dist resolves inside the packed set
+(`scripts/release-packed-resolution.mjs`): the packed build imports its optional
+compiler peer by name, the `verify` job never builds `packages/*`, and the checkout's
+root `node_modules` holds workspace links, so without the links the import failed on a
+tag (`v3.0.0-alpha.1`) and silently used the workspace build on a built workstation. For local
 installation it substitutes DS11 file URLs and extracted crate paths for internal
 packages only. It checks locked installation, build, serve, browser interaction,
 no pending island and refusal of corrupt IR before binding. These are explicit
@@ -136,7 +178,13 @@ network ingestion latency; the recorded timing basis states this limitation.
 
 ## Current development integration
 
-The current seven-package set is staged at `3.0.0-dev` and the contract record names
+Between releases `main` carries the next version with the `-dev` suffix: the current
+seven-package set is staged at `3.0.0-dev` again after `v3.0.0-alpha.2` published
+(2026-10-15), by the post-release pull request that runs
+`node scripts/release-set.mjs version 3.0.0-dev`; the released sections stay in every
+changelog under a fresh `## [Unreleased]`, and the crate READMEs keep naming the last
+published pre-release, which is what crates.io shows. A `-dev` version names no
+milestone and never publishes. The contract record names
 FMIR v3. P17 compares the packed compiler's writer triple and canonical dumps with
 the packed reader's actual version and frozen corpus. Version preparation updates
 all three Cargo locks (root, e2e and fuzz) without changing external resolutions.
@@ -146,7 +194,7 @@ owns their milestone migration. Packing may stage candidate checksums, but that 
 not make those source requirements compatible with v3. A current-development dry run
 is labeled `v3-development-dry-run`, and a template refusal remains a failed P17 result.
 Do not weaken its locked checks or describe that result as complete template acceptance.
-`liveReleaseReady` stays false while the remaining milestone contracts are pending.
+The later milestones' gates stay `pending` in the contract until their tickets close.
 The archived A2 dry-run evidence continues to describe the original published set.
 
 ## Local dry run
@@ -166,6 +214,37 @@ A run over the previously published A2 archives is recorded separately from newl
 packed merged-tree candidates; the latter include 117's scripts-off policy changes
 and are not claimed byte-identical to the old release. Neither dry run publishes.
 
+## Fixture applications and the measurement step (FORMA-188)
+
+The contract record carries `fixtureApps: "declared-v1"`. For such a set P17 also runs the fixture
+applications of `e2e/fixtures/apps/` against DS11, after the templates:
+
+1. The project is staged in `os.tmpdir()`, outside the checkout, from the committed sources (each file is
+   compared with `git show <commit>:` so a dirty tree cannot be what a tag verified). The three libraries
+   install from DS11's tarballs by `npm ci --ignore-scripts` on a lock built from the tagged tree's own
+   `package-lock.json` (the same staging as the templates, `stageNpmLock`); the signatures are audited as
+   for the templates; and every `@getforma/*` import of the installed libraries is proved to resolve inside
+   the install, never to a workspace link of the checkout (the alpha.1 failure).
+2. Every application is built with the **packed** `build()` in strict mode: anything above a note fails.
+3. The Rust servers build from DS11's crates (`[patch.crates-io]` to the extracted archives, as for the
+   templates) on a lock pruned from `e2e/Cargo.lock` to the crate's graph, third-party versions and
+   checksums untouched, `cargo build --locked`.
+4. Each packed server is started and judged by the same `lib/verify-page.mjs` and `lib/behaviours.mjs` the
+   source lane's `apps.spec.ts` uses: the server's values before any script, strict adoption that writes
+   nothing, the islands working afterwards; the extra checks (a hostile tenant name, an unknown tenant, the
+   other branches); and the packed compiler's refusal of the shapes `negative/` holds.
+
+The measurement step (`scripts/release-measurements.mjs`) then fails P17 naming a figure and both numbers
+when P17's wall time passes G6's 1,800 s, when Forma's code on any fixture route passes N2's ceiling
+(read from the packed build's own constant, never written in the step, and cross-checked against the build's verdict for the route; gzip -9; L-55; the build refuses it too, BUILD-819), or when a fixture route has no figure; and records,
+with the machine and profile, in `report.measurements` (which `release-record.mjs` embeds in DS12 and
+summarises in one line of the Release's notes): P17's time, N2 per route in gzip and Brotli beside the
+application's own bytes, and the walker's node, byte and list counts of the consumer-shaped pages
+(recorded, not gated). FORMA-191 adds N1, N3 and N5 rows to the same record. The skew drill is not called
+yet: it is FORMA-186's lane, and `stageFixtureProject()` returns what its call will take.
+
+Rehearse it as the runner sees it: commit, `pack` a dry-run DS11, delete `packages/*/dist`, then run P17.
+
 ## Staged response contract (FORMA-109)
 
 The DS11 contract records `trustedTypes: "enforced-v1"`. P17 reads the actual
@@ -183,8 +262,8 @@ untouched; candidate packing restores both source files plus all eight manifests
 and locks on success or failure. This adapter does not migrate applications or
 claim FORMA-144 complete. The recurring restoration test and a new actual packed
 rehearsal document this stage; historical A2 and earlier P17 reports stay unchanged.
-`liveReleaseReady` remains false while the remaining milestone contracts are open.
+FORMA-144's later slices remain `pending` gates of the beta and the final.
 
 ## Finalized rendering in candidate templates
 
-The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates and FORMA-144 remain pending, and `liveReleaseReady` stays false.
+The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates' later slices (FORMA-144 slices 2 and 3) remain pending gates of the beta and the final.

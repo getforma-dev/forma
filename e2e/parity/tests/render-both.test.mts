@@ -7,21 +7,22 @@ import assert from 'node:assert/strict';
 import { chromium, type Browser } from '@playwright/test';
 import { summarize } from '../src/compare.mts';
 import { readCorpus, renderBoth } from '../src/render-both.mts';
+import type { PageComponent } from '../src/bundle.mts';
 
 let browser: Browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
 
-const run = (module: string, index: number, alterServerHtml?: (html: string) => string) =>
-  renderBoth({ module, index, seed: 'forma-183', engine: 'chromium', browser, ...(alterServerHtml ? { alterServerHtml } : {}) });
+const run = (module: string, index: number, alterServerHtml?: (html: string) => string, page?: PageComponent) =>
+  renderBoth({ module, index, seed: 'forma-183', engine: 'chromium', browser, ...(alterServerHtml ? { alterServerHtml } : {}), ...(page ? { page } : {}) });
 
-test('corpus.json names the fourteen js-emitter modules, each with an .ir, its entry folder and a page export', () => {
-  const corpus = readCorpus();
+test('corpus.json names the fourteen js-emitter modules at step 0, each with an .ir, its entry and a page export', () => {
+  const corpus = readCorpus(0);
   assert.equal(corpus.length, 14);
   assert.equal(new Set(corpus.map(entry => entry.name)).size, 14);
   for (const entry of corpus) {
-    assert.match(entry.ir, new RegExp(`^crates/forma-ir/tests/fixtures/js-emitter/${entry.name}\\.ir$`));
-    assert.equal(entry.corpus, 'packages/compiler/tests/fixtures/ir-corpus');
+    assert.match(entry.ir ?? "", new RegExp(`^crates/forma-ir/tests/fixtures/js-emitter/${entry.name}\\.ir$`));
+    assert.match(entry.entry, new RegExp(`^packages/compiler/tests/fixtures/ir-corpus/${entry.name}/app\\.tsx?$`));
     assert.match(entry.page.file, new RegExp(`^packages/compiler/tests/fixtures/ir-corpus/${entry.name}/`));
     assert.ok(['none', 'named', 'destructured'].includes(entry.page.props));
   }
@@ -61,7 +62,11 @@ test('a server output with one attribute\'s text altered fails P1 naming the fix
 });
 
 test('a twin core cannot build is the report\'s error verdict, not a throw', async () => {
-  const report = await run('list-same-source', 0);
+  // F1 (BUILD-616): the corpus source now passes a function; the archived original passed the
+  // array itself, which core's createList calls, so it stays this test's twin that cannot build.
+  const report = await run('list-same-source', 0, undefined, {
+    file: 'docs/archive/2026-10-15-pre-list-source/sources/list-same-source/page.ts', exportName: 'ListPage', props: 'none',
+  });
   assert.equal(report.verdict, 'error');
   assert.match(report.error ?? '', /items is not a function/);
   assert.ok(report.server.html?.includes('<!--f:l'), 'the server side rendered and is kept');

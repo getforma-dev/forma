@@ -26,9 +26,12 @@ const README = read('README.md');
 const SECURITY = read('SECURITY.md');
 const CSP = read('CSP.md');
 const CHANGELOG = read('CHANGELOG.md');
-// A -dev staging set has not been published. CDN and support docs must continue
-// to name the last actual release; ordinary release versions retain the old gate.
-const shippedVersion = pkg.version.endsWith('-dev')
+// A -dev staging set has not been published, and a pre-release (-alpha.N, -beta.N,
+// -rc.N) publishes on npm `next`, which plain ranges and the CDN's `latest` never
+// serve (L-41). In both cases the CDN snippets, the CSP history and the support
+// table keep naming the last stable release, the first X.Y.Z heading in the
+// CHANGELOG (a pre-release heading does not match it). A stable version pins itself.
+const shippedVersion = /-(?:dev|alpha|beta|rc)(?:\.|$)/.test(pkg.version)
   ? /^## \[([0-9]+\.[0-9]+\.[0-9]+)\]/m.exec(CHANGELOG)?.[1]
   : pkg.version;
 if (!shippedVersion) throw new Error('CHANGELOG.md must identify the last shipped version');

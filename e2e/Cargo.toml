@@ -1,4 +1,5 @@
-# The Rust halves of the two cross-package e2e lanes, one workspace with one
+# The Rust halves of the cross-package e2e lanes (the SSR lane, the preview
+# frame, the fixture applications), one workspace with one
 # Cargo.lock (FORMA-113; before the repository merge each lane carried its own
 # lock, and the two disagreed on forma's crates). Both depend on this
 # repository's crates by path (../crates/...), so the lanes test the walker and
@@ -9,5 +10,5 @@
 # exist on a clean clone, so `cargo test --workspace` at the root must not try
 # to compile it. The root Cargo.toml excludes `e2e`.
 [workspace]
-members = ["ssr/render", "frame/server"]
+members = ["ssr/render", "frame/server", "fixtures/apps"]
 resolver = "2"

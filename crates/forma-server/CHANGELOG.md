@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Attribute values — FORMA-182
+
+- Pages render through forma-ir's attribute table (rule 6, finding F2): a `true` on a non-boolean attribute is written as `name="true"` (`tests/typed_pages.rs` asserts `data-enabled="true"` on a keyed row where it asserted the bare name).
+
 ### The build's size report is not served — FORMA-190
 
 - `serve_asset` refuses `size-report.json` (404), as it refuses `manifest.json`: `@getforma/build` 3.0 writes the report beside the manifest, in the directory an application embeds, and it lists every route with its class, ceilings and bytes. The report is not an asset, and an embed that carries it never serves it. Tests: `assets::tests::denied_names_are_never_served` (the name), and `assets::tests::an_embedded_size_report_is_not_served_through_the_route` (the route, with the file really embedded).
@@ -20,6 +24,14 @@
 - Refuse island modules paired with an empty SSR JavaScript list at startup/reload (LOAD-109); keep the prior valid module and manifest together, including unchanged-IR and same-byte recovery transitions.
 - Refuse static manifest preloads (MANIFEST-103), executable request configuration and effective request preloads (RENDER-105). Keep CSS/fonts, inert state, strict headers and exact full-response limits.
 - Register enabled workers only from pages with JS entries; preserve worker serving and scoped off-mode retirement. Compiler/browser/template integration remains pending for overall105 acceptance.
+
+## [3.0.0-alpha.2] - 2026-10-15
+
+Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.
+
+## [3.0.0-alpha.1] - 2026-10-15
+
+The first 3.0.0 pre-release (milestone M2), a Cargo pre-release version on crates.io that plain requirements exclude. Part of the seven-package set 3.0.0-alpha.1; bound rendering and `Pages::finalize` (FORMA-107), declared handler props (FORMA-102), `PageResponse` only and Trusted Types enforced (FORMA-109), asset integrity and manifest 2 (FORMA-111, 112), FMIR v3 loading (FORMA-185) and the removals (FORMA-110) below are the alpha's gates. The deployment identity and the skew behaviour (FORMA-186) are pending before the rc. See the root CHANGELOG for the set and the pending gates.
 
 - Require canonical full SHA-384 metadata for every schema2 asset; emit SRI on external scripts, stylesheets and modulepreloads while retaining nonces. Invalid Browser manifests or unavailable preload digests refuse with RENDER-104.
 

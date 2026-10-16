@@ -1,0 +1,10 @@
+/* Fixture styles for the authentication pages: a card, a form, a table. */
+body { font-family: system-ui, sans-serif; margin: 0; background: #0a0a0c; color: #e8e6e3; }
+.lc-page, .ob-page, .bm-page { max-width: 28rem; margin: 3rem auto; padding: 0 1rem; }
+.bm-page { max-width: 48rem; }
+.lc-card { background: #15151a; border-radius: 0.5rem; padding: 1.5rem; }
+.lc-btn { display: block; width: 100%; margin: 0.5rem 0; padding: 0.6rem; }
+.lc-field { margin: 0.75rem 0; }
+.lc-notice, [role="alert"] { margin: 0.75rem 0; padding: 0.5rem; border: 1px solid #4a6fa5; }
+table { width: 100%; border-collapse: collapse; }
+td, th { padding: 0.25rem 0.5rem; text-align: left; }
