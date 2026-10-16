@@ -28,10 +28,15 @@ assert.deepEqual(state.i.map(each => each.p), [JSON.parse(readFileSync(join(sour
 assert.equal(state.i[0].h, emitted.islands.find(each => each.name === 'KeyedRows').contract.digest);
 const dump = Buffer.from(dumpFmir(ir));
 const stateBytes = Buffer.from(found[0][1]);
+const servedAssets = [manifest.routes['/'].ir, ...manifest.routes['/'].js].map(name => {
+  const path = join(here, 'out/site/_assets', name);
+  assert.deepEqual(readFileSync(path), readFileSync(join(dist, name)), `served asset ${name} differs from the build product`);
+  return path;
+});
 const products = [
   ...['app.tsx', 'page.tsx', 'slots.json'].map(name => join(source, name)),
   join(here, 'render/src/main.rs'), join(dist, 'manifest.json'), join(dist, manifest.routes['/'].ir),
-  ...manifest.routes['/'].js.map(name => join(dist, name)),
+  ...manifest.routes['/'].js.map(name => join(dist, name)), ...servedAssets,
   join(site, 'index.html'), join(site, 'index.headers.json'),
 ];
 const files = Object.fromEntries(products.map(path => {
