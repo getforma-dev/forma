@@ -78,6 +78,29 @@ test('same-frame image layout metadata is excluded only with its exact parser re
   events=>{named(events,'ResourceChangePriority').ph='I';},
  ])assert.equal(edit(change),'application-or-unattributed');
 });
+test('native BeginMainThreadFrame sequence is not mistaken for a document frame',()=>{
+ const fixture=()=>traceFixture({duration:60,scriptAt:200,mainThreadFrame:true});
+ const exact=fixture();
+ assert.equal(kind(exact.lhr,exact.trace),'pre-application-browser-layout');
+ const edit=change=>{const {lhr,trace}=fixture();change(trace.traceEvents.find(event=>event.name==='BeginMainThreadFrame'),trace.traceEvents);return kind(lhr,trace);};
+ for(const change of [
+  event=>{delete event.args.data.frameId;},
+  event=>{event.args.data.frameId=-1;},
+  event=>{event.args.data.frameId=.5;},
+  event=>{event.args.data.frameId='0';},
+  event=>{event.args.data.frameId=Number.MAX_SAFE_INTEGER+1;},
+  event=>{delete event.args.layerTreeId;},
+  event=>{event.args.layerTreeId=0;},
+  event=>{event.args.layerTreeId='1';},
+  event=>{event.cat='devtools.timeline';},
+  event=>{event.ph='X';},
+  event=>{event.dur=0;},
+  event=>{event.args.data.frame='other-frame';},
+  (_event,events)=>events.push({...structuredClone(events.find(event=>event.name==='Layout')),name:'FunctionCall'}),
+ ])assert.equal(edit(change),'application-or-unattributed');
+ const postScript=traceFixture({duration:60,scriptAt:50,mainThreadFrame:true});
+ assert.equal(kind(postScript.lhr,postScript.trace),'application-or-unattributed');
+});
 test('missing, malformed or ambiguous trace identity refuses instead of inventing attribution',()=>{
  const {lhr,trace}=traceFixture();
  for(const edit of [t=>t.traceEvents=[],t=>t.traceEvents[0].args.frame='',t=>t.traceEvents[0].args.data.documentLoaderURL='http://another.invalid/',t=>t.traceEvents.splice(1,1),t=>t.traceEvents.push(structuredClone(t.traceEvents[0])),t=>t.traceEvents[3].dur=-1]){
