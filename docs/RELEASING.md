@@ -298,10 +298,10 @@ received bytes, parser-fed bytes and resulting parser subresource requests. The 
 admitted script-related records in that chain are source-bound Lighthouse and
 Puppeteer new-document bootstrap records; any application execution, unexpected script,
 event handler work, foreign identity, mixed or unknown event counts the whole
-task. This attribution keeps N3 on island activation without changing its50ms
+task. This attribution keeps N3 on island activation without changing its 50 ms
 limit. Raw whole-page tasks and `wholePageTargetMiss` remain visible.
 Historical L63
 75ms p95 /100ms individual acceptance and its original evidence remain history;
 they cannot qualify the strict gate. The L63 exception is retired only after
-all twenty fresh runs on each original route pass the restored50ms limit.
+all twenty fresh runs on each original route pass the restored 50 ms limit.
 Changing the validator or passing a pilot does not establish that result.

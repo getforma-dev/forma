@@ -10,7 +10,7 @@
 
 ## [Unreleased]
 
-- Keep N3's unchanged50ms application/activation limit while distinguishing a
+- Keep N3's unchanged 50 ms application/activation limit while distinguishing a
   positively proved main-document commit from island work. The new v2 policy
   requires the exact navigation/frame/request/parser chain before the first
   application script and source-binds the pinned Lighthouse/Puppeteer bootstrap;
