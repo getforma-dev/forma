@@ -74,7 +74,15 @@ export const BEHAVIOURS = {
       await expect(page.locator('#bm-filtered')).toBeVisible();
       await expect(page.locator('#bm-failures')).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('#bm-table')).toHaveClass(/failures-only/);
-      return 'filter bar and toolbar';
+      await page.locator('#bm-failures').click();
+      await page.locator('#bm-table tbody tr').evaluateAll(rows => { globalThis.__fixtureRows = rows; });
+      await page.locator('#bm-reverse').click();
+      await expect(page.locator('#bm-table tbody tr').first()).toHaveAttribute('data-row', '3');
+      expect(await page.locator('#bm-table tbody tr').evaluateAll(rows => rows.map(row => row.getAttribute('data-row')))).toEqual(['3', '2', '1']);
+      expect(await page.locator('#bm-table tbody tr').evaluateAll(rows => rows.every((row, index) => row === globalThis.__fixtureRows[2 - index]))).toBe(true);
+      await page.locator('#bm-reverse').click();
+      await expect(page.locator('#bm-table tbody tr').first()).toHaveAttribute('data-row', '1');
+      return 'filter bar, toolbar and keyed row reorder';
     },
   },
   // Each variant reaches the islands that have something to do on it.
@@ -133,7 +141,14 @@ export const BEHAVIOURS = {
       await expect(page.locator('#echo-count')).toHaveText('Chips lit: 2');
       await page.keyboard.press('w');
       await expect(page.locator('.chip.lit')).toHaveCount(1);
-      return 'frame counter and live echo';
+      await page.locator('#chips li').evaluateAll(chips => { globalThis.__fixtureChips = chips; });
+      await page.locator('#echo-reverse').click();
+      await expect(page.locator('#chips li').first()).toHaveAttribute('data-chip', '6');
+      expect(await page.locator('#chips li').evaluateAll(chips => chips.every((chip, index) => chip === globalThis.__fixtureChips[5 - index]))).toBe(true);
+      // The same adopted chip nodes still participate in the keyboard listener after moving.
+      await page.keyboard.press('g');
+      await expect(page.locator('.chip.lit')).toHaveCount(2);
+      return 'frame counter, live echo and keyed chip reorder';
     },
   },
 };

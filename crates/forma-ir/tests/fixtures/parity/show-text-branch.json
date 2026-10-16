@@ -1,0 +1,24 @@
+{
+  "rule": "5/6 with FORMA-016 F5",
+  "title": "A createShow branch that returns a scalar (FORMA-016 F5, found by the parity harness, FORMA-183)",
+  "contract": "A branch of createShow (and a case of createSwitch, a row of createList) may return a string or a number instead of a Node. It is written as a Text node holding N(String(value)), as h() writes the same value as a child and as the walker writes the branch's DYN_TEXT: between the conditional's markers. null and undefined write nothing; so does a boolean (value rule 6: the compiler refuses a provable boolean in a text position, and every client path writes nothing). Strict adoption of a served text branch makes no write at all.",
+  "consumers": [
+    "crates/forma-ir/src/walker.rs tests (show_text_branch_vectors): the SHOW_IF whose branch is a DYN_TEXT over a slot holding `value`; cases marked clientOnly have no walker form",
+    "packages/core/src/dom/__tests__/show-text-branch.test.ts: createShow, createSwitch and createList over every vector, then strict adoption of the walker's bytes",
+    "packages/core/e2e/show-text-branch.spec.ts: the same bytes parsed by the real engines and strictly adopted with zero mutation records"
+  ],
+  "note": "Hand-enumerated finite vectors. `text` is the text the branch contributes; `nothing` means the client appends no node at all (a string, even an empty one, appends a Text node). `html` is what the walker writes between the conditional markers, with the DYN_TEXT range around the text (an empty value is held by one U+200B).",
+  "values": [
+    { "id": "string", "value": "Title", "text": "Title", "html": "<!--f:t1-->Title<!--/f:t1-->" },
+    { "id": "html-chars", "value": "<b>&\"x\"", "text": "<b>&\"x\"", "html": "<!--f:t1-->&lt;b&gt;&amp;\"x\"<!--/f:t1-->" },
+    { "id": "crlf", "value": "a\r\nb", "text": "a\nb", "html": "<!--f:t1-->a\nb<!--/f:t1-->" },
+    { "id": "empty-string", "value": "", "text": "", "html": "<!--f:t1-->​<!--/f:t1-->" },
+    { "id": "integer", "value": 42, "text": "42", "html": "<!--f:t1-->42<!--/f:t1-->" },
+    { "id": "zero", "value": 0, "text": "0", "html": "<!--f:t1-->0<!--/f:t1-->" },
+    { "id": "negative-fraction", "value": -1.5, "text": "-1.5", "html": "<!--f:t1-->-1.5<!--/f:t1-->" },
+    { "id": "large", "value": 1e21, "text": "1e+21", "html": "<!--f:t1-->1e+21<!--/f:t1-->" },
+    { "id": "null", "value": null, "text": "", "nothing": true, "html": "<!--f:t1-->​<!--/f:t1-->" },
+    { "id": "true", "value": true, "text": "", "nothing": true, "clientOnly": true },
+    { "id": "false", "value": false, "text": "", "nothing": true, "clientOnly": true }
+  ]
+}

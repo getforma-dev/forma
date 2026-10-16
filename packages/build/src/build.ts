@@ -647,10 +647,14 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   ];
   const compatibility = () => { checkProjectCompatibility(project, writers, config.ssr === true); };
   const compatibilityWarnings = checkProjectCompatibility(project, writers, config.ssr === true);
-  await assertNoServerFunctions(config, sharedOptions(config));
+  const legacyImports = config.formaAlias ? new Set<string>() : undefined;
+  await assertNoServerFunctions(config, sharedOptions(config), legacyImports);
   // What the config itself deprecates, each said once per build() call,
   // production and watch alike, on the console and in BuildResult.warnings.
-  const deprecations = compatibilityWarnings;
+  const deprecations = [...compatibilityWarnings];
+  if (legacyImports?.size) deprecations.push(
+    `formaAlias is a 3.x migration bridge. Replace bare formajs imports with @getforma/core (preserving any subpath) in: ${[...legacyImports].sort().join(', ')}`,
+  );
   for (const line of deprecations) console.warn(`Warning: ${line}`);
   const withDeprecations = (result: BuildResult): BuildResult =>
     deprecations.length > 0 ? { ...result, warnings: [...result.warnings, ...deprecations] } : result;

@@ -1,0 +1,29 @@
+{
+  "sourceCommit": "990b3080c60784e9283ae31eec38277a1693d755",
+  "node": "v24.22.0",
+  "cargoBuildJobs": 3,
+  "playwrightWorkers": 2,
+  "sourceFixtureTests": {
+    "passed": 55,
+    "failed": 0,
+    "seconds": 24.8
+  },
+  "distAbsentBeforeP17": [
+    "packages/core/dist",
+    "packages/compiler/dist",
+    "packages/build/dist",
+    "packages/create-app/dist"
+  ],
+  "distStillAbsentAfterP17": [
+    "packages/core/dist",
+    "packages/compiler/dist",
+    "packages/build/dist",
+    "packages/create-app/dist"
+  ],
+  "p17Tests": 46,
+  "p17Seconds": 130.482,
+  "p17Sha256": "77ec0ca35a0955be47bf860c4a9620545fa6c9ef3146fa620aaa984ac83ba458",
+  "ds11Sha256": "eacd9130732fec6da6bd83e20dd85fad9a6ff6e544ec31d40b00659b074a2ede",
+  "publication": "none; dry-run seven-package set",
+  "scope": "packed template gates plus Chromium fixture application qualification; release-wide three-engine and deployment-skew gates remain separate"
+}

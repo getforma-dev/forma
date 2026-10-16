@@ -36,23 +36,7 @@ export function CheckPage(props: CheckProps) {
           </section>
         ),
       )}
-      {createShow(
-        () => props.hasSlots,
-        () => (
-          <ul class="chips" id="chips">
-            {createList(
-              () => props.chips,
-              (chip) => chip.id,
-              (chip) => (
-                <li class="chip" data-slot={chip.slot} data-control={chip.control} data-keys={chip.keys}>
-                  <b>{chip.player}</b> <span>{chip.label}</span>
-                </li>
-              ),
-            )}
-          </ul>
-        ),
-      )}
-      <LiveEcho hint={props.feedHint} />
+      <LiveEcho hint={props.feedHint} chips={props.chips} hasSlots={props.hasSlots} />
     </main>
   );
 }

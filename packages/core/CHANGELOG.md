@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Integrated package size gates — FORMA-181/182
+### Integrated deployment guard package sizes — FORMA-186
 
-- Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
+- The reviewed deployment guard, F5 text branches, checkpoint D row focus and INV1 policies together measure 47,310 B gzip for the core entry and 47,398 B for browser ESM. They exceed the previous 47,297/47,395 B gates by 13/3 B. Under L-58, re-anchor these package gates to measured plus 300 B: 47,610/47,698 B. Runtime, hardened runtime and frame gates remain unchanged; their measured sizes are 41,310/40,230/39,658 B. This package-size change is separate from the per-route N2 requirement.
 
 ### Deployment identity guard — FORMA-186 S4
 
@@ -18,11 +18,28 @@ All notable changes to this project will be documented in this file.
 
 - Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
 
+### Integrated text-branch and row-focus package sizes — FORMA-016/181/182
+
+- The reviewed F5 text branches, Rule 6 attribute fixes and checkpoint D focus preservation together measure 46,823 B gzip for the core entry and 46,833 B for browser ESM. Both exceed the previous 46,777/46,804 B limits. Under L-58, re-anchor these two package limits to measured plus 300 B: 47,123/47,133 B. Runtime, hardened runtime and frame sizes and limits remain unchanged. This package-size adjustment is separate from the founder's L-59 per-route N2 decision, which lands with indexed rows.
+
+### Retained row focus — FORMA-181 checkpoint D, first slice
+
+- A keyed row relocation previously blurred its focused input in Chromium, Firefox and WebKit even though the input node and selection survived. The private live reconciler now uses state-preserving `moveBefore` for retained rows where supported. Its `insertBefore` fallback restores lost focus and text selection only while the owner remains live and no callback has focused another control. Detached new rows still use ordinary insertion.
+- Three-engine controls move exactly one existing row in 2,000, preserve its focused input and backward selection, keep the original row factories and listeners, and prove disposal removes those listeners. Forced fallback and callback focus-redirection controls run alongside the existing keyed-adoption matrix. This establishes row-move behavior; indexed row-edit performance and actual-product qualification remain separate checkpoint D work.
+- The low-level unkeyed adoption path shares the client key cache's domain: fractions and lone surrogates refuse before row callbacks or writes; safe integers and valid Unicode strings remain admitted. The guide and refusal/near-miss tests now state this explicitly.
+- Production sizes on checkpoint C base `8aec868`: core entry 46,720 B gzip (+243 B), browser ESM 46,746 B (+242 B), inside the existing 46,777/46,804 B gates. Runtime, hardened runtime and frame sizes are unchanged; no gate is raised.
 - FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
 
 ### Rule 6's attribute table: findings F2 and F3 — FORMA-182
 
 - **Rendered output changes with no source change.** `true` is bare only on an HTML boolean attribute (`BOOLEAN_ATTRS`, now exported from `src/dom/element.ts` for adoption); on any other attribute it is the word `"true"` on every writer: `h()`'s static path wrote it bare (`aria-hidden: true` gave `aria-hidden=""`, which ARIA reads as no value; `class: true` gave `class=""`), and adoption expected and wrote it bare (FORMA-188's `aria-pressed=""`), where `h()`'s reactive path and now the walker write `"true"` (`docs/parity-rules.md`, rule 6's attribute table). Verified by `src/dom/__tests__/value-rule-6-attributes.test.ts` and `e2e/value-rules.spec.ts` in three engines; `element.test.ts` and `hydrate-svg.test.ts` migrated from the bare expectation; probes `el/static-class-true-bare`, `el/static-true-bare`, `adoption/true-bare-off-boolean-set`.
+### A control-flow branch may be text — FORMA-016 F5
+
+- `createShow` (both branches), `createSwitch` (cases and fallback) and `createList` (rows) accept a function that returns a string or a number and write it as a Text node under rule 1, as `h()` writes the same value as a child and as the server walker writes the branch's `DYN_TEXT`; `null`, `undefined` and booleans write nothing. Before, `createShow(() => props.user.active, () => props.title)` threw a `TypeError` on `insertBefore` in the browser while the compiler accepted it and the server rendered the text (found by FORMA-183's parity harness). Strict adoption of a served text branch writes nothing (the server's Text node is kept; zero mutation records in Chromium, Firefox and WebKit). The `Branch` type widens `thenFn`, `elseFn`, `SwitchCase.render`, the switch fallback and the list `renderFn`. A list row that returns `null` is still not supported (a row is exactly one node). Core's entry grows by 68 B gzip (46,295 to 46,363 B of its 46,500 B cap) and the browser ESM by 60 B (46,288 to 46,348 B); no cap changes. Shared vectors: `crates/forma-ir/tests/fixtures/parity/show-text-branch.json`, read by `walker.rs` (`show_text_branch_vectors`) and `src/dom/__tests__/show-text-branch.test.ts`; browser spec `e2e/show-text-branch.spec.ts`.
+
+### Integrated package size gates — FORMA-181/182
+
+- Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
 
 ### Value rule 6: a boolean in text writes nothing — FORMA-182
 
