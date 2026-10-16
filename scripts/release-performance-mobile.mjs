@@ -17,6 +17,8 @@ export function activationInstrumentation({kind,longTask}) {
  addEventListener('unhandledrejection',event=>result.errors.push(String(event.reason)));
  addEventListener('forma:error',event=>result.errors.push(String(event.detail?.code??event.detail)));
  const completed=new Set();
+ const loginInputs=[['oauth','#oauth-google','#oauth-chosen','Continuing with Google'],['auth','#lc-toggle','#auth-subtitle','Create your account']];
+ let loginInput=0;
  function tick(){
   if(result.done)return;
   const hosts=[...document.querySelectorAll('[data-forma-island]')];result.hostStatuses=hosts.map(h=>h.getAttribute('data-forma-status'));
@@ -32,8 +34,15 @@ export function activationInstrumentation({kind,longTask}) {
      if(Number(output.textContent)===before+1){completed.add(host);result.lastResponseMs=performance.now();}
     }
    }else{
-    if(!completed.has('oauth')){document.querySelector('#oauth-google')?.click();if(document.querySelector('#oauth-chosen')?.textContent==='Continuing with Google'){completed.add('oauth');result.lastResponseMs=performance.now();}}
-    if(!completed.has('auth')){document.querySelector('#lc-toggle')?.click();if(document.querySelector('#auth-subtitle')?.textContent==='Create your account'){completed.add('auth');result.lastResponseMs=performance.now();}}
+    // These two distinct user clicks arrive as separate input tasks. Do not combine their handlers
+    // (including any priority adoption) into one artificial collector callback.
+    // Rotate unfinished inputs so an inert or missing target cannot starve its sibling.
+    for(let checked=0;checked<loginInputs.length;checked++){
+     const [id,selector,output,text]=loginInputs[loginInput++%loginInputs.length];
+     if(completed.has(id))continue;const button=document.querySelector(selector);if(!button)continue;
+     button.click();if(document.querySelector(output)?.textContent===text){completed.add(id);result.lastResponseMs=performance.now();}
+     break;
+    }
    }
    result.responded=completed.size;result.active=completed.size;
    if(result.responded===expected&&result.firstPaintMs!==null){result.done=true;return;}
