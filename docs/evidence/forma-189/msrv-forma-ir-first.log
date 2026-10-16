@@ -1,0 +1,41 @@
+Fresh MSRV evidence: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T//forma-msrv-forma-ir.631fkC
+    Updating crates.io index
+     Locking 88 packages to latest Rust 1.71 compatible versions
+      Adding base64 v0.22.1 (available: v0.23.1)
+      Adding hyper-util v0.1.20 (available: v0.1.21)
+      Adding matchit v0.8.4 (available: v0.8.6)
+      Adding rust-embed v8.11.0 (available: v8.13.0)
+      Adding sha2 v0.11.0 (available: v0.11.1, requires Rust 1.88)
+      Adding syn v2.0.119 (available: v3.0.9)
+warning: /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-msrv-forma-ir.631fkC/crates/forma-server/Cargo.toml: unused manifest key `lints` (may be supported in a future version)
+
+this Cargo does not support nightly features, but if you
+switch to nightly channel you can pass
+`-Zlints` to enable this feature.
+warning: /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-msrv-forma-ir.631fkC/crates/forma-ir/Cargo.toml: unused manifest key `lints` (may be supported in a future version)
+
+this Cargo does not support nightly features, but if you
+switch to nightly channel you can pass
+`-Zlints` to enable this feature.
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.154
+    Checking once_cell v1.21.4
+   Compiling syn v2.0.119
+   Compiling syn v3.0.9
+    Checking tracing-core v0.1.36
+    Checking itoa v1.0.18
+    Checking pin-project-lite v0.2.17
+   Compiling serde v1.0.229
+    Checking memchr v2.8.3
+   Compiling serde_derive v1.0.229
+    Checking ryu-js v1.0.3
+   Compiling tracing-attributes v0.1.31
+   Compiling forma-ir-derive v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-msrv-forma-ir.631fkC/crates/forma-ir-derive)
+    Checking tracing v0.1.44
+    Checking forma-ir v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-msrv-forma-ir.631fkC/crates/forma-ir)
+    Finished dev [unoptimized + debuginfo] target(s) in 6.39s
+Fresh dependency resolve and Rust 1.71 check passed for forma-ir; candidate lock unchanged.

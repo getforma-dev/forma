@@ -76,6 +76,8 @@ step "packed compiler API and actual optional-compiler compatibility"
 node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test.mjs
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
+node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs
+ruby scripts/check-toolchain-policy.rb
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
 node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs
 step "packed decoder: actual built compiler regenerates the timed contracts"
@@ -85,6 +87,9 @@ npm run typecheck -w packages/core
 npm run check:size -w packages/core
 npm run check:pack -w packages/core
 (cd packages/core && node scripts/run-probes.mjs --check)
+step "expression qualification:100000 generated cases, removed-charge control and independent nightly floor"
+node --test packages/core/scripts/expression-probe-floor.test.mjs scripts/release-security.test.mjs
+node packages/core/scripts/qualify-expression-mutation.mjs
 step "build: the packed forma-raw-lint bin"
 node packages/build/scripts/test-raw-lint-bin.mjs
 
@@ -114,6 +119,9 @@ node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.te
 # N3 timing runs as its own required serial phase after all other tests.
 npx playwright test --grep-invert 'indexed products: complete public set'
 npm run test:e2e -w packages/core
+step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
+node packages/core/e2e/hostile-widgets/run.mjs
+node packages/core/e2e/hostile-widgets/qualify-guard.mjs
 
 step "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
 npx tsc --noEmit -p e2e/parity

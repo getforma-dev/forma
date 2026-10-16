@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "d8a8181c68653333d1b04f2cb2c2c5d07e485973",
+  "sourcePath": "packages/core/probes/corpus.json",
+  "sha256": "640107da62c9fc575d6de9aadf9a123660daa03abe043587a80bf1cca5e1f3a4",
+  "bytes": 29769,
+  "probes": 93,
+  "securityTagged": 43,
+  "note": "Historical93 is the complete mutation corpus, not93 security payloads. Retained byte-exact; the executable hostile catalogue maps relevant payload provenance separately."
+}

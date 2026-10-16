@@ -3,7 +3,7 @@
 // from the tagged tree's committed lock. No OIDC permission is needed here.
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -17,6 +17,7 @@ import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyPackedFixtures } from './release-fixture-apps.mjs';
 import { verifyPackedSkew } from './release-skew-drill.mjs';
 import { completeMeasurements, machineProfile } from './release-measurements.mjs';
+import { verifyPackedSecurity } from './release-security.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
 async function freePort() {
@@ -272,6 +273,8 @@ export async function verify(dir, reportPath) {
       report.packedResolution = assertPackedResolution(scratch, set.packages);
       assert(report.packedResolution.some(edge => edge.package === '@getforma/build' && edge.specifier === '@getforma/compiler'), 'the packed build no longer imports its compiler peer; update this check');
     });
+    report.security = {};
+    await verifyPackedSecurity({ set, scratch, test, evidenceDir: join(dirname(reportPath), 'security'), result: report.security });
     if (set.contracts.sourceTemplates) await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
       report.sourceEquality = verifyPackedTemplateSources(cli, set.commit, set.contracts.sourceTemplates);
     });

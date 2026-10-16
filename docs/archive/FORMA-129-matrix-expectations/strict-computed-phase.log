@@ -1,0 +1,29 @@
+packed core: complete hostile widget matrix and actual removed-selector-guard control
+{"commit":"220a1587cb5b63033005d7be3e3de657e41efcd4","passed":false,"scratch":"/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-six7Gr","archive":"/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-six7Gr/getforma-core-3.0.0-dev.tgz","evidenceDir":"/Users/victorvillacis/dev/Forma/work/FORMA-129/tmp/packed-security-final","runtimeSha256":"b9a14f2596b4ec1924297b51146c28efba4926b13b3a83b02c1b773b3495e23c"}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: /Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node /Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs --runtime=/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-six7Gr/packages/core/dist/formajs-runtime.global.js --out=/Users/victorvillacis/dev/Forma/work/FORMA-129/tmp/packed-security-final/hostile-widgets.json
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at run (file:///Users/victorvillacis/dev/Forma/work/FORMA-129/forma/scripts/release-set.mjs:24:10)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-129/forma/scripts/release-security.mjs:98:5
+    at test (file:///Users/victorvillacis/dev/Forma/work/FORMA-129/tmp/run-packed-security.mjs:19:124)
+    at verifyPackedSecurity (file:///Users/victorvillacis/dev/Forma/work/FORMA-129/forma/scripts/release-security.mjs:96:9)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-129/tmp/run-packed-security.mjs:19:9 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '{"passed":false,"completeMatrix":true,"cases":425,"capabilities":0,"elapsedMs":7493.893166,"error":"page.evaluate: Error: expression/constructor/computed/none: expected only FORMA_E_KEY_DENIED, actual [\\"FORMA_E_KEY_DENIED\\",\\"FORMA_E_UNRESOLVED\\"]\\n    at runBrowserCase (eval at evaluate (:311:30), <anonymous>:75:13)\\n    at async <anonymous>:337:30\\n    at /Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:72:33"}\n',
+    null
+  ],
+  pid: 61705,
+  stdout: '{"passed":false,"completeMatrix":true,"cases":425,"capabilities":0,"elapsedMs":7493.893166,"error":"page.evaluate: Error: expression/constructor/computed/none: expected only FORMA_E_KEY_DENIED, actual [\\"FORMA_E_KEY_DENIED\\",\\"FORMA_E_UNRESOLVED\\"]\\n    at runBrowserCase (eval at evaluate (:311:30), <anonymous>:75:13)\\n    at async <anonymous>:337:30\\n    at /Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:72:33"}\n',
+  stderr: null
+}
+
+Node.js v24.22.0
