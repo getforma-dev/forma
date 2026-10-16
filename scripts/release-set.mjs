@@ -14,7 +14,8 @@ import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const NPM = ['core', 'compiler', 'build', 'create-app'];
 export const CRATES = ['forma-ir', 'forma-ir-derive', 'forma-server'];
-export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.(?:0|[1-9]\d*)))?$/;
+// Pre-release counters start at 1: the first alpha is -alpha.1, never -alpha.0.
+export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.[1-9]\d*))?$/;
 export const json = path => JSON.parse(readFileSync(path, 'utf8'));
 export const save = (path, data) => writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
 export const digest = (path, algorithm = 'sha256', encoding = 'hex') => createHash(algorithm).update(readFileSync(path)).digest(encoding);
@@ -43,6 +44,49 @@ export function assertReleaseSet(packages, tag) {
   assert.equal(packages.length, 7);
   for (const p of packages) assert.equal(p.version, version, `${p.name}: manifest disagrees with ${tag}`);
   return version;
+}
+
+// A tag names its milestone: -alpha.N, -beta.N, -rc.N or the final. A -dev version has none.
+export const MILESTONES = ['alpha', 'beta', 'rc', 'final'];
+export function milestoneOf(version) {
+  assert(SEMVER.test(version), `${version}: not a release version`);
+  if (version.endsWith('-dev')) return null;
+  return /-(alpha|beta|rc)\./.exec(version)?.[1] ?? 'final';
+}
+// Which tickets gate which milestone is the contract file's statement, not a switch. A
+// milestone inherits every earlier milestone's gates; it may publish only when all of
+// them are done. The later milestones' open gates are reported, never enforced early.
+export function releaseMilestone(contracts, version) {
+  const name = milestoneOf(version);
+  assert(name, `${version} is a development version; no milestone publishes it`);
+  assert(contracts?.milestones && typeof contracts.milestones === 'object' && !Array.isArray(contracts.milestones), 'contract file names no milestones');
+  assert(!('liveReleaseReady' in contracts) && !('pending' in contracts), 'contract file may not carry a global publish switch beside its milestones');
+  // The gates are written for one release: a later version's pre-release cannot pass them.
+  assert(/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(contracts.version ?? ''), 'contract file names no release version');
+  const base = version.split('-')[0];
+  assert.equal(base, contracts.version, `the contract gates ${contracts.version}, not ${base}; write the next release's contract first`);
+  const order = MILESTONES.indexOf(name);
+  const blocking = [], later = {}, seen = new Set();
+  MILESTONES.forEach((milestone, i) => {
+    const entry = contracts.milestones[milestone];
+    assert(entry?.gates && typeof entry.gates === 'object' && !Array.isArray(entry.gates) && Object.keys(entry.gates).length, `contract names no gates for ${milestone}`);
+    assert(/^M\d$/.test(entry.plan ?? ''), `${milestone}: contract names no plan milestone`);
+    for (const [ticket, gate] of Object.entries(entry.gates)) {
+      assert(/^FORMA-\d{3}(?: [A-Za-z0-9()./-]+)*$/.test(ticket), `${milestone}: ${ticket} is not a ticket gate`);
+      assert(!seen.has(ticket), `${ticket}: gates more than one milestone`);
+      seen.add(ticket);
+      assert(['done', 'pending'].includes(gate?.status) && typeof gate.scope === 'string' && gate.scope.trim(), `${milestone}: ${ticket} needs a done/pending status and a scope`);
+      if (gate.status !== 'pending') continue;
+      if (i <= order) blocking.push(`${ticket} (${milestone}): ${gate.scope}`);
+      else (later[milestone] ??= []).push(`${ticket}: ${gate.scope}`);
+    }
+  });
+  return { name, plan: contracts.milestones[name].plan, version, ready: blocking.length === 0, blocking, later };
+}
+export function assertMilestoneReady(contracts, version) {
+  const milestone = releaseMilestone(contracts, version);
+  assert(milestone.ready, `${milestone.name} (${milestone.plan}) still waits for: ${milestone.blocking.join('; ')}; nothing may publish`);
+  return milestone;
 }
 function internal(name) { return name.startsWith('@getforma/') || CRATES.includes(name); }
 export function compatibilityPeer(version) {
@@ -356,9 +400,16 @@ export function packCargoWorkspace(root, packages, out, { dryRun = false, offlin
 export function pack(out, dryRun = false) {
   mkdirSync(out, { recursive: true });
   const packages = setVersions();
+  const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
+  let milestone = null;
   if (!dryRun) {
-    assertReleaseSet(packages, process.env.GITHUB_REF_NAME);
+    const version = assertReleaseSet(packages, process.env.GITHUB_REF_NAME);
+    // Fail before packing: a tag for a milestone whose gates are open packs nothing.
+    milestone = assertMilestoneReady(contracts, version);
     assert.equal(run('git', ['diff', '--name-only', 'HEAD']).trim(), '', 'live pack needs clean tagged source');
+  } else if (milestoneOf(packages[0].version)) {
+    // A dry run over release-versioned manifests records the milestone it would need, unenforced.
+    milestone = releaseMilestone(contracts, packages[0].version);
   }
   const policy = readFileSync(join(ROOT, 'SECURITY.md'), 'utf8');
   assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
@@ -371,12 +422,11 @@ export function pack(out, dryRun = false) {
   const packedPaths = run('tar', ['-tzf', join(out, `getforma-create-app-${cli.version}.tgz`)]);
   for (const template of ['minimal', 'dashboard']) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
   const recorded = recordPackages(packages, out);
-  const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
   save(join(out, 'release-set.json'), {
     schema: 1, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
     commit: run('git', ['rev-parse', 'HEAD']).trim(),
     run: process.env.GITHUB_RUN_ID ?? null, toolchain: run('rustc', ['--version']).trim(),
-    node: process.version, npm: run('npm', ['--version']).trim(), contracts, packages: recorded,
+    node: process.version, npm: run('npm', ['--version']).trim(), contracts, milestone, packages: recorded,
   });
 }
 

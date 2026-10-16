@@ -8,10 +8,11 @@ import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock } from './release-set.mjs';
+import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { verifyMinimalIsland, verifyStaticTemplate } from './release-template-islands.mjs';
 import { withOwnedServer } from './owned-server.mjs';
+import { linkPackedPackages, assertPackedResolution } from './release-packed-resolution.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { verifyPackedFixtures } from './release-fixture-apps.mjs';
 import { completeMeasurements, machineProfile } from './release-measurements.mjs';
@@ -251,7 +252,7 @@ export async function verify(dir, reportPath) {
   const scratch = join(ROOT, `.release-verify-${process.pid}`);
   mkdirSync(scratch);
   const cli = mkdtempSync(join(tmpdir(), 'forma-packed-cli-'));
-  const report = { schema: 1, commit: set.commit, passed: false, tests: [], pending: set.contracts.pending, signatures: 'registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256', templates: [] };
+  const report = { schema: 1, commit: set.commit, passed: false, tests: [], milestone: set.milestone ?? null, signatures: 'registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256', templates: [] };
   const test = async (name, fn) => { console.log(`P17: ${name}`); const at = Date.now(); await fn(); report.tests.push({ name, passed: true, seconds: (Date.now() - at) / 1000 }); };
   try {
     for (const p of set.packages) {
@@ -261,6 +262,14 @@ export async function verify(dir, reportPath) {
         writeFileSync(manifest, readFileSync(manifest, 'utf8') + '\n[workspace]\n');
       }
     }
+    // The packed libraries resolve one another inside the scratch, never through the root's
+    // workspace links: the verify job never builds packages/*, and a built workstation must
+    // not stand in for the packed bytes (the v3.0.0-alpha.1 tag, run 38764599499).
+    await test('packed npm packages resolve one another inside the packed set, never through the workspace', async () => {
+      report.packedLinks = linkPackedPackages(scratch, set.packages);
+      report.packedResolution = assertPackedResolution(scratch, set.packages);
+      assert(report.packedResolution.some(edge => edge.package === '@getforma/build' && edge.specifier === '@getforma/compiler'), 'the packed build no longer imports its compiler peer; update this check');
+    });
     if (set.contracts.sourceTemplates) await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
       report.sourceEquality = verifyPackedTemplateSources(cli, set.commit, set.contracts.sourceTemplates);
     });
@@ -565,9 +574,12 @@ export async function verify(dir, reportPath) {
         report.fixtures = await verifyPackedFixtures({ set, dir, cratesDir: join(scratch, 'crates'), targetDir: join(scratch, 'target'), browser, test, report });
       }
     } finally { await browser.close(); }
-    // New contracts must provide their tests before the milestone enables live publication.
-    // A2 dry runs deliberately exercise the existing contracts without claiming future coverage.
-    if (!set.dryRun) assert.equal(set.contracts.liveReleaseReady, true, 'new milestone contract tests are still pending; nothing may publish');
+    // A live set publishes only for the milestone its tag names, and only when every gate of
+    // that milestone and the earlier ones is done. Dry runs exercise the contracts unenforced.
+    if (!set.dryRun) {
+      const milestone = assertMilestoneReady(set.contracts, set.tag.slice(1));
+      assert.equal(set.milestone?.name, milestone.name, 'packed set names another milestone');
+    }
     report.elapsedSeconds = (Date.now() - started) / 1000;
     if (report.fixtures) {
       // The measurement step (FORMA-188): P17's time against G6, Forma's code per fixture route against
