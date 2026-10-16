@@ -5,7 +5,7 @@
  * `renderBoth(component, state)` form; this is the harness's CLI.
  *
  *   node e2e/parity/src/render-both.mts --module nested-islands [--state 3] [--seed forma-183]
- *                                       [--engine chromium|firefox|webkit] [--low-level]
+ *                                       [--browser chromium|firefox|webkit] [--low-level]
  *                                       [--json] [--emit-vector <file>]
  *
  * Exit status: 0 equal, 1 different, 2 the server refused the state or the harness failed.
@@ -79,17 +79,18 @@ async function main(): Promise<number> {
       module: { type: 'string' },
       state: { type: 'string', default: '0' },
       seed: { type: 'string', default: 'forma-183' },
-      engine: { type: 'string', default: 'chromium' },
+      browser: { type: 'string' },
+      engine: { type: 'string' },
       'low-level': { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
       'emit-vector': { type: 'string' },
     },
   });
   if (!values.module) {
-    process.stderr.write(`usage: render-both --module <name> [--state n] [--seed s] [--engine chromium|firefox|webkit] [--low-level] [--json] [--emit-vector file]\nmodules: ${readCorpus().map(m => m.name).join(', ')}\n`);
+    process.stderr.write(`usage: render-both --module <name> [--state n] [--seed s] [--browser chromium|firefox|webkit] [--low-level] [--json] [--emit-vector file]\nmodules: ${readCorpus().map(m => m.name).join(', ')}\n`);
     return 2;
   }
-  const engine = values.engine as Engine;
+  const engine = (values.browser ?? values.engine ?? 'chromium') as Engine;
   if (!['chromium', 'firefox', 'webkit'].includes(engine)) throw new Error(`unknown engine ${engine}`);
   const index = Number(values.state);
   if (!Number.isInteger(index) || index < 0) throw new Error(`--state must be a non-negative integer, got ${values.state}`);
