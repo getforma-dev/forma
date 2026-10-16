@@ -8,6 +8,54 @@ import {mobile,controlObservations} from './release-performance-test-fixtures.mj
 import {traceFixture,traceMeasurement} from './release-performance-trace-fixtures.mjs';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const kind=(lhr,trace)=>attributeMobileTasks(lhr,trace).tasks[0].kind;
+const pptrSource='//# sourceURL=pptr:internal';
+const lighthouseSource=['(() => {','      const Promise = globalThis.__nativePromise || globalThis.Promise;','const URL = globalThis.__nativeURL || globalThis.URL;','const performance = globalThis.__nativePerformance || globalThis.performance;','const fetch = globalThis.__nativeFetch || globalThis.fetch;','      ','      ;','      (() => {','      window.__nativePromise = window.Promise;','      window.__nativeURL = window.URL;','      window.__nativePerformance = window.performance;','      window.__nativeFetch = window.fetch;','      window.__ElementMatches = window.Element.prototype.matches;','      window.__HTMLElementBoundingClientRect = window.HTMLElement.prototype.getBoundingClientRect;','    })();','    })()','    //# sourceURL=_lighthouse-eval.js'].join('\n');
+function navigationFixture(){
+ const origin=1000000,frame='test-frame',url='http://fixture.invalid/',navigationId='document-request';
+ const event=(name,offset,{ph='I',dur,cat='loading',args={}}={})=>({name,ph,pid:10,tid:20,ts:origin+offset*1000,...dur===undefined?{}:{dur:dur*1000},cat,args});
+ const rundown=(sourceUrl,scriptId,executionContextId,sourceText)=>[
+  event('ScriptCatchup',125+scriptId,{ph:'X',dur:.1,cat:'disabled-by-default-devtools.v8-source-rundown',args:{data:{executionContextId,hasSourceUrl:true,isModule:false,isolate:'test-isolate',scriptId,sourceUrl,url:''}}}),
+  event('ScriptCatchup',126+scriptId,{ph:'X',dur:.1,cat:'disabled-by-default-devtools.v8-source-rundown-sources',args:{data:{isolate:'test-isolate',length:sourceText.length,scriptId,sourceText}}}),
+ ];
+ const trace={traceEvents:[
+  event('navigationStart',0,{ph:'R',args:{frame,data:{documentLoaderURL:url,isOutermostMainFrame:true,navigationId}}}),
+  {...event('FrameCommittedInBrowser',99,{args:{data:{frame,isOutermostMainFrame:true,processId:10,url}}}),pid:1,tid:2},
+  event('RunTask',100,{ph:'X',dur:150,cat:'disabled-by-default-devtools.timeline'}),
+  event('FrameStartedLoading',101,{cat:'devtools.timeline',args:{frame}}),
+  event('EventDispatch',101.1,{ph:'X',dur:.1,cat:'devtools.timeline',args:{data:{sampleTraceId:1,type:'pagehide'}}}),
+  event('unloadEventStart',101.3,{ph:'R',cat:'blink.user_timing',args:{frame}}),
+  event('unloadEventEnd',101.4,{ph:'R',cat:'blink.user_timing',args:{frame}}),
+  event('markAsMainFrame',101.5,{args:{frame}}),
+  event('ResourceSendRequest',102,{cat:'devtools.timeline',args:{data:{frame,requestId:navigationId,requestMethod:'GET',resourceType:'Document',url}}}),
+  event('ResourceReceiveResponse',103,{cat:'devtools.timeline',args:{data:{frame,fromCache:false,fromServiceWorker:false,mimeType:'text/html',requestId:navigationId,statusCode:200}}}),
+  event('FrameLoader:state_snapshot',103.5,{args:{snapshot:{documentLoaderURL:url,frame:{id_ref:frame},isLoadingMainFrame:true,isOutermostMainFrame:true}}}),
+  event('DocumentLoader::CommitNavigation',104,{ph:'X',dur:70}),
+  event('DocumentLoader::CommitNavigation',104,{ph:'s'}),
+  event('DocumentLoader::CommitNavigation',104.1,{ph:'f'}),
+  event('CommitLoad',106,{ph:'X',dur:.1,cat:'devtools.timeline',args:{data:{frame,isMainFrame:true,isOutermostMainFrame:true,page:frame,url}}}),
+  event('DocumentLoader::CreateParserPostCommit',110,{ph:'X',dur:60}),
+  event('LocalWindowProxy::Initialize',112,{ph:'X',dur:25,cat:'v8',args:{IsMainFrame:true,IsOutermostMainFrame:true}}),
+  ...rundown('pptr:internal',3,2,pptrSource),
+  ...rundown('_lighthouse-eval.js',4,1,lighthouseSource),
+  event('v8.newInstance',135,{ph:'X',dur:.01,cat:'v8'}),
+  event('NavigationBodyLoader::StartLoadingBody',140,{ph:'X',dur:25,args:{url}}),
+  event('NavigationBodyLoader::OnReadable',140.1,{ph:'X',dur:24.8,args:{url}}),
+  event('NavigationBodyLoader::ReadFromDataPipe',140.2,{ph:'X',dur:24.7,args:{url}}),
+  event('DocumentLoader::BodyDataReceivedImpl',140.3,{ph:'X',dur:24.5}),
+  event('ResourceReceivedData',141,{cat:'devtools.timeline',args:{data:{encodedDataLength:3398,frame,requestId:navigationId}}}),
+  event('DocumentLoader::HandleData',141.5,{ph:'X',dur:23}),
+  event('DocumentLoader::CommitData',141.6,{ph:'X',dur:22.8}),
+  event('DecodedDataDocumentParser::AppendBytes',142,{ph:'X',dur:20}),
+  event('HTMLDocumentParser::MaybeFetchQueuedPreloads',145,{ph:'X',dur:10,cat:'blink,devtools.timeline'}),
+  event('ResourceSendRequest',150,{cat:'devtools.timeline',args:{data:{frame,initiator:{type:'parser',url},isLinkPreload:true,requestId:'script-request',requestMethod:'GET',resourceType:'Script',url:`${url}app.js`}}}),
+  event('ResourceSendRequest',151,{cat:'devtools.timeline',args:{data:{frame,initiator:{type:'parser',url},isLinkPreload:false,requestId:'style-request',requestMethod:'GET',resourceType:'Stylesheet',url:`${url}app.css`}}}),
+  event('PreloadRenderBlockingStatusChange',152,{cat:'devtools.timeline',args:{data:{requestId:'script-request',url:`${url}app.js`}}}),
+  event('MetaCharsetCheck',153,{cat:'devtools.timeline'}),
+  event('v8.compileModule',300,{ph:'X',dur:1,cat:'v8,devtools.timeline',args:{data:{url:`${url}app.js`},fileName:`${url}app.js`}}),
+ ]};
+ const lhr={requestedUrl:url,audits:{metrics:{details:{items:[{observedTimeOriginTs:origin}]}},'long-tasks':{details:{items:[{duration:150,startTime:100}]}}}};
+ return {lhr,trace};
+}
 
 test('only complete same-navigation browser layout before observed script is excluded',()=>{
  const {lhr,trace}=traceFixture({duration:120,scriptAt:300});
@@ -48,7 +96,7 @@ test('same-frame image layout metadata is excluded only with its exact parser re
  exact.trace.traceEvents.push({...exact.trace.traceEvents.find(event=>event.name==='v8.evaluateModule'),name:'RunTask',ph:'X',dur:60473});
  assert.deepEqual(attributeMobileTasks(exact.lhr,exact.trace).tasks.map(({kind,reason,traceIndex})=>({kind,reason,matched:traceIndex!==null})),[
   {kind:'pre-application-browser-layout',reason:'same-navigation-pure-layout-before-first-script',matched:true},
-  {kind:'application-or-unattributed',reason:'not-proven-pre-application-layout',matched:true},
+  {kind:'application-or-unattributed',reason:'not-proven-pre-application-browser-work',matched:true},
  ]);
  const edit=(change)=>{const {lhr,trace}=fixture();change(trace.traceEvents);return kind(lhr,trace);};
  const named=(events,name)=>events.find(event=>event.name===name);
@@ -76,6 +124,56 @@ test('same-frame image layout metadata is excluded only with its exact parser re
   events=>{named(events,'ResourceChangePriority').args.data.priority='Unknown';},
   events=>{named(events,'ResourceChangePriority').cat='unknown';},
   events=>{named(events,'ResourceChangePriority').ph='I';},
+ ])assert.equal(edit(change),'application-or-unattributed');
+});
+test('only exact pre-application document commit and pinned audit bootstrap are excluded',()=>{
+ const fixture=()=>navigationFixture();
+ assert.equal(kind(fixture().lhr,fixture().trace),'pre-application-navigation-audit-bootstrap');
+ const named=(events,name)=>events.find(event=>event.name===name);
+ const edit=change=>{const {lhr,trace}=fixture();change(trace.traceEvents);return kind(lhr,trace);};
+ for(const change of [
+  events=>events.push({...structuredClone(named(events,'CommitLoad')),name:'FunctionCall'}),
+  events=>events.push({...structuredClone(named(events,'CommitLoad')),name:'UnknownNavigationWork'}),
+  events=>{named(events,'EventDispatch').args.data.type='click';},
+  events=>{named(events,'EventDispatch').dur=1001;},
+  events=>{delete named(events,'EventDispatch').args.data.sampleTraceId;},
+  events=>{named(events,'ResourceSendRequest').args.data.frame='other-frame';},
+  events=>events.push(structuredClone(named(events,'ResourceSendRequest'))),
+  events=>{named(events,'ResourceReceiveResponse').args.data.requestId='other-request';},
+  events=>{named(events,'ResourceReceiveResponse').args.data.fromCache=true;},
+  events=>{named(events,'ResourceReceiveResponse').ts=named(events,'ResourceSendRequest').ts-1;},
+  events=>{named(events,'DocumentLoader::CommitNavigation').ts=named(events,'ResourceReceiveResponse').ts-1;},
+  events=>{named(events,'ResourceReceivedData').args.data.encodedDataLength=0;},
+  events=>{named(events,'ResourceReceivedData').ts=named(events,'DocumentLoader::BodyDataReceivedImpl').ts+named(events,'DocumentLoader::BodyDataReceivedImpl').dur+1;},
+  events=>{events.find(event=>event.name==='ResourceSendRequest' && event.args.data.resourceType==='Script').args.data.initiator.url='http://other.invalid/';},
+  events=>{events.find(event=>event.name==='ResourceSendRequest' && event.args.data.resourceType==='Script').args.data.url='http://other.invalid/app.js';},
+  events=>{events.find(event=>event.name==='ResourceSendRequest' && event.args.data.resourceType==='Script').args.data.isLinkPreload=false;},
+  events=>{named(events,'PreloadRenderBlockingStatusChange').args.data.requestId='other-request';},
+  events=>{named(events,'CommitLoad').args.data.url='http://other.invalid/';},
+  events=>{named(events,'CommitLoad').ts=named(events,'DocumentLoader::CommitNavigation').ts-1;},
+  events=>events.splice(events.indexOf(named(events,'CommitLoad')),1),
+  events=>events.push(structuredClone(named(events,'CommitLoad'))),
+  events=>events.splice(events.indexOf(named(events,'DocumentLoader::CreateParserPostCommit')),1),
+  events=>{named(events,'DocumentLoader::CreateParserPostCommit').ts=named(events,'DocumentLoader::CommitNavigation').ts+named(events,'DocumentLoader::CommitNavigation').dur;},
+  events=>events.splice(events.indexOf(named(events,'DocumentLoader::BodyDataReceivedImpl')),1),
+  events=>{named(events,'NavigationBodyLoader::StartLoadingBody').ts=named(events,'DocumentLoader::CreateParserPostCommit').ts+named(events,'DocumentLoader::CreateParserPostCommit').dur;},
+  events=>events.splice(events.indexOf(named(events,'DecodedDataDocumentParser::AppendBytes')),1),
+  events=>{named(events,'DecodedDataDocumentParser::AppendBytes').ts=named(events,'DocumentLoader::BodyDataReceivedImpl').ts+named(events,'DocumentLoader::BodyDataReceivedImpl').dur-1;},
+  events=>{named(events,'LocalWindowProxy::Initialize').args.IsMainFrame=false;},
+  events=>{named(events,'LocalWindowProxy::Initialize').ts=named(events,'DocumentLoader::CreateParserPostCommit').ts+named(events,'DocumentLoader::CreateParserPostCommit').dur;},
+  events=>{named(events,'NavigationBodyLoader::StartLoadingBody').args.url='http://other.invalid/';},
+  events=>{named(events,'FrameLoader:state_snapshot').args.snapshot.frame.id_ref='other-frame';},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup' && item.cat.endsWith('v8-source-rundown'));event.args.data.sourceUrl='unknown.js';},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup' && item.cat.endsWith('v8-source-rundown'));event.args.data.scriptId=0;},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup' && item.cat.endsWith('v8-source-rundown'));event.args.data.executionContextId=0;},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup' && item.cat.endsWith('v8-source-rundown-sources'));event.args.data.scriptId=0;},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup');event.ts=named(events,'LocalWindowProxy::Initialize').ts+named(events,'LocalWindowProxy::Initialize').dur+1;},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup' && item.cat.endsWith('v8-source-rundown-sources'));event.args.data.sourceText+=' ';event.args.data.length++;},
+  events=>{const event=events.find(item=>item.name==='ScriptCatchup');event.ph='I';delete event.dur;},
+  events=>{named(events,'DocumentLoader::CommitNavigation').dur=200000;},
+  events=>{events.find(event=>event.name==='ResourceSendRequest' && event.args.data.resourceType==='Script').ts=named(events,'DecodedDataDocumentParser::AppendBytes').ts+named(events,'DecodedDataDocumentParser::AppendBytes').dur+1;},
+  events=>{named(events,'v8.compileModule').ts=events.find(event=>event.name==='RunTask').ts+1000;},
+  events=>events.push({...structuredClone(events[0]),ts:events.find(event=>event.name==='RunTask').ts+1000}),
  ])assert.equal(edit(change),'application-or-unattributed');
 });
 test('native BeginMainThreadFrame sequence is not mistaken for a document frame',()=>{
@@ -132,7 +230,7 @@ function withDurations(values,{observer=false,layout=false}={}){
 }
 test('strict startup requires twenty runs with every counted task at most50ms',()=>{
  const rows=withDurations(Array(20).fill(50));validateMobile(rows);
- assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v1');
+ assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v2');
  assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.maxTaskMs,50);
  for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=true,r=>r[0].startup.policy.maxTaskMs=100,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
   const copy=structuredClone(rows);edit(copy);assert.throws(()=>validateMobile(copy));
