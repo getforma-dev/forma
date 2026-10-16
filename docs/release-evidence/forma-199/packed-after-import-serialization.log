@@ -1,0 +1,112 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/packages/create-app
+
+ ✓ tests/scaffold.test.ts (57 tests | 56 skipped) 10979ms
+     ✓ minimal: packed native island adopts without writes and static route requests no code in all engines  10742ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 56 skipped (57)
+   Start at  16:44:13
+   Duration  11.36s (transform 74ms, setup 0ms, import 283ms, tests 10.98s, environment 0ms)
+
+JSON report written to /Users/victorvillacis/dev/Forma/work/FORMA-199/evidence/minimal-vitest.json
+
+added 64 packages in 579ms
+SSR mode enabled — emitting IR files
+   IR emitted (real): household.ir (1755 bytes, 1 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ledger/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ledger/dist/household.cbd227de.js  77.8kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /household  islands  Forma 26,537 of 28,000 B  JavaScript 28,570 of 76,800 B  (Brotli: Forma 23,691, JavaScript 25,443)  household.cbd227de.js
+   Service worker   sw.js  3,218 B raw, 1,537 B gzip, 1,310 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       267 ms: bundle 175 ms, hash 1 ms, compress 90 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ledger/dist/manifest.json (build: ec0bf869c84f...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ledger/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): tenant-login.ir (4192 bytes, 2 islands)
+   IR emitted (real): onboarding.ir (1740 bytes, 1 islands)
+   IR emitted (real): benchmark.ir (3125 bytes, 2 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/fauth/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/fauth/dist/tenant-login.e9724588.js  79.8kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/fauth/dist/benchmark.e2df2c0e.js  82.9kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/fauth/dist/onboarding.368ded3f.js  77.7kb
+
+   7 assets hashed
+   4 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /t/:slug/login        islands  Forma 26,563 of 28,000 B  JavaScript 29,376 of 76,800 B  (Brotli: Forma 23,641, JavaScript 26,105)  tenant-login.e9724588.js
+   /platform/onboarding  islands  Forma 26,553 of 28,000 B  JavaScript 28,667 of 76,800 B  (Brotli: Forma 23,724, JavaScript 25,567)  onboarding.368ded3f.js
+   /platform/benchmark   islands  Forma 27,886 of 28,000 B  JavaScript 30,403 of 76,800 B  (Brotli: Forma 24,820, JavaScript 27,020)  benchmark.e2df2c0e.js
+   Service worker   sw.js  3,438 B raw, 1,689 B gzip, 1,463 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       564 ms: bundle 289 ms, hash 1 ms, compress 273 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/fauth/dist/manifest.json (build: a33b74fe2997...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/fauth/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): check.ir (4334 bytes, 2 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ksx/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ksx/dist/check.49598203.js  82.9kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /check  islands  Forma 27,887 of 28,000 B  JavaScript 30,260 of 76,800 B  (Brotli: Forma 24,832, JavaScript 26,890)  check.49598203.js
+   Service worker   sw.js  3,208 B raw, 1,532 B gzip, 1,309 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       218 ms: bundle 124 ms, hash 1 ms, compress 93 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ksx/dist/manifest.json (build: 55b7cbc4c39d...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/ksx/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): login300.ir (1989 bytes, 1 islands)
+   IR emitted (real): console1500.ir (1994 bytes, 1 islands)
+   IR emitted (real): doc10000.ir (1439 bytes, 1 islands)
+   IR emitted (real): canvas15000.ir (1371 bytes, 1 islands)
+   IR emitted (real): ledger20000.ir (1750 bytes, 1 islands)
+   IR emitted (real): islands100.ir (1125 bytes, 1 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/canvas15000.265da599.js  77.0kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/login300.265da599.js  77.0kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/islands100.1e107e38.js  77.0kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/console1500.265da599.js  77.0kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/ledger20000.265da599.js  77.0kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/doc10000.265da599.js  77.0kb
+
+   13 assets hashed
+   7 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /pages/300          islands  Forma 26,506 of 28,000 B  JavaScript 28,361 of 76,800 B  (Brotli: Forma 23,691, JavaScript 25,299)  login300.265da599.js
+   /pages/1500         islands  Forma 26,506 of 28,000 B  JavaScript 28,361 of 76,800 B  (Brotli: Forma 23,691, JavaScript 25,299)  console1500.265da599.js
+   /pages/10000        islands  Forma 26,506 of 28,000 B  JavaScript 28,361 of 76,800 B  (Brotli: Forma 23,691, JavaScript 25,299)  doc10000.265da599.js
+   /pages/15000        islands  Forma 26,506 of 28,000 B  JavaScript 28,361 of 76,800 B  (Brotli: Forma 23,691, JavaScript 25,299)  canvas15000.265da599.js
+   /pages/20000        islands  Forma 26,506 of 28,000 B  JavaScript 28,361 of 76,800 B  (Brotli: Forma 23,691, JavaScript 25,299)  ledger20000.265da599.js
+   /pages/islands-100  islands  Forma 26,507 of 28,000 B  JavaScript 28,362 of 76,800 B  (Brotli: Forma 23,681, JavaScript 25,289)  islands100.1e107e38.js
+   Service worker   sw.js  3,766 B raw, 1,652 B gzip, 1,427 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       764 ms: bundle 243 ms, hash 2 ms, compress 518 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/manifest.json (build: 13a8458a2033...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6/out/bench/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling forma-ir-derive v3.0.0-dev (/Users/victorvillacis/dev/Forma/work/FORMA-199/candidate/crates/forma-ir-derive)
+   Compiling forma-ir v3.0.0-dev (/Users/victorvillacis/dev/Forma/work/FORMA-199/candidate/crates/forma-ir)
+   Compiling forma-server v3.0.0-dev (/Users/victorvillacis/dev/Forma/work/FORMA-199/candidate/crates/forma-server)
+   Compiling forma-fixture-apps v0.0.0 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6)
+    Finished `release` profile [optimized] target(s) in 17.03s
