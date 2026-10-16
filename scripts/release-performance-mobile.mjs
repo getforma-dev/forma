@@ -18,6 +18,7 @@ export function activationInstrumentation({kind,longTask}) {
  addEventListener('forma:error',event=>result.errors.push(String(event.detail?.code??event.detail)));
  const completed=new Set();
  function tick(){
+  if(result.done)return;
   const hosts=[...document.querySelectorAll('[data-forma-island]')];result.hostStatuses=hosts.map(h=>h.getAttribute('data-forma-status'));
   result.hosts=hosts.length;
   result.firstPaintMs=performance.getEntriesByName('first-paint')[0]?.startTime??null;
@@ -41,7 +42,7 @@ export function activationInstrumentation({kind,longTask}) {
  }
  if(longTask)addEventListener('DOMContentLoaded',()=>{const startTime=performance.now(),until=startTime+110;while(performance.now()<until){}result.injectedTask={startTime,endTime:performance.now()};},{once:true});
  setTimeout(()=>{result.done=true;},8000);
- const start=()=>requestAnimationFrame(tick);
+ const start=()=>{if(!result.done)requestAnimationFrame(tick);};
  if(document.readyState==='loading')addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
 export async function measureActivation(url,kind,{disabled=false,longTask=false}={}){

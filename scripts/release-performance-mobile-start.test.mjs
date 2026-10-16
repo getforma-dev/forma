@@ -50,6 +50,22 @@ test('interactive and complete documents start immediately without a later dupli
  }
 });
 
+test('the absolute timeout is terminal if DOMContentLoaded arrives later',()=>{
+ const page=probe();page.timeouts[0].callback();assert.equal(page.result.done,true);
+ page.dispatch('DOMContentLoaded');
+ assert.equal(page.frames.length,0);assert.equal(page.scans,0);assert.equal(page.clicks,0);
+ assert.equal(page.result.responded,0);assert.equal(page.result.lastResponseMs,null);
+ assert.equal(page.result.done,true);
+});
+
+test('an already queued response frame does no work after the absolute timeout',()=>{
+ const page=probe();page.dispatch('DOMContentLoaded');assert.equal(page.frames.length,1);
+ page.timeouts[0].callback();page.frame();
+ assert.equal(page.frames.length,0);assert.equal(page.scans,0);assert.equal(page.clicks,0);
+ assert.equal(page.result.responded,0);assert.equal(page.result.lastResponseMs,null);
+ assert.equal(page.result.done,true);
+});
+
 test('early long tasks and errors remain observed before response polling starts',()=>{
  const page=probe();assert.deepEqual(structuredClone(page.observed),[{type:'longtask',buffered:true}]);
  page.longTasks([{startTime:1,duration:57}]);
