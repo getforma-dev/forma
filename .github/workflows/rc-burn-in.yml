@@ -74,4 +74,4 @@ jobs:
         env:
           MANIFEST_SHA256: ${{ steps.result.outputs.manifest-sha256 }}
         run: |
-          printf 'RC burn-in evidence SHA-256: `%s`\n' "$MANIFEST_SHA256" >> "$GITHUB_STEP_SUMMARY"
+          printf 'RC burn-in evidence SHA-256: %s\n' "$MANIFEST_SHA256" >> "$GITHUB_STEP_SUMMARY"

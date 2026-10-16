@@ -97,7 +97,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     outputs:
       report-sha256: ${{ steps.record.outputs.report-sha256 }}
       p17-run-attempt: ${{ steps.record.outputs.p17-run-attempt }}
@@ -135,6 +135,7 @@ jobs:
         timeout-minutes: 5
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
       - name: P17 packed corpus and both templates
+        timeout-minutes: 45
         run: |
           mkdir "$RUNNER_TEMP/p17"
           node scripts/verify-release-set.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"

@@ -21,7 +21,7 @@ failures << 'maintenance Node major is outside the supported matrix' unless line
 private_pkg = JSON.parse(File.read(File.join(root, 'package.json')))
 failures << 'private workspace Node range must agree with the maintenance pin' unless private_pkg.dig('engines', 'node') == ">=#{pin} <#{major + 1}"
 maintenance = {
-  'ci.yml' => %w[check toolchains],
+  'ci.yml' => %w[check toolchains burn-in-setup],
   'e2e-engines.yml' => %w[e2e parity],
   'nightly-probes.yml' => %w[expressions probes],
   'value-rules.yml' => %w[qualify],

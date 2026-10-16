@@ -1,0 +1,77 @@
+name: Packed RC burn-in
+on:
+  workflow_dispatch:
+    inputs:
+      rc_tag:
+        description: 'Exact published v3.0.0-rc.N; dispatch this workflow at that same tag'
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: rc-burn-in-${{ inputs.rc_tag }}
+  cancel-in-progress: false
+jobs:
+  burn-in:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: '3'
+      CARGO_INCREMENTAL: '0'
+      CARGO_TERM_COLOR: never
+      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Require immutable RC dispatch and actual Linux ownership controls
+        env:
+          RC_TAG: ${{ inputs.rc_tag }}
+        run: |
+          test "$GITHUB_REF" = "refs/tags/$RC_TAG"
+          test "$(git rev-parse "$RC_TAG^{commit}")" = "$GITHUB_SHA"
+          python3 scripts/release-owned-linux.test.py
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: '1.93.1'
+      - name: Install the committed tools and pinned sanitizer harness
+        run: |
+          bash scripts/install-deps.sh
+          npm audit signatures
+          rustup toolchain install nightly-2026-10-01 --profile minimal
+          cargo +nightly-2026-10-01 install cargo-fuzz --version 0.13.2 --locked
+          node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
+      - name: Continuous packed RC workloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RC_TAG: ${{ inputs.rc_tag }}
+        run: |
+          python3 scripts/release-owned-linux.py "$RUNNER_TEMP/burn-in-owned" 9900 -- node scripts/release-burn-in.mjs worker "$RC_TAG" "$GITHUB_SHA" "$RUNNER_TEMP/burn-in-evidence" "$RUNNER_TEMP/burn-in-work"
+      - name: Authenticate results and cleanup before recording success
+        id: result
+        run: node scripts/release-burn-in.mjs finalize "$RUNNER_TEMP/burn-in-evidence" "$RUNNER_TEMP/burn-in-owned" "$RUNNER_TEMP/burn-in-work"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: rc-burn-in
+          path: ${{ runner.temp }}/burn-in-evidence/
+          if-no-files-found: error
+          retention-days: 90
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: rc-burn-in-ownership
+          path: ${{ runner.temp }}/burn-in-owned/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Record the exact evidence manifest for final preflight
+        env:
+          MANIFEST_SHA256: ${{ steps.result.outputs.manifest-sha256 }}
+        run: |
+          printf 'RC burn-in evidence SHA-256: `%s`\n' "$MANIFEST_SHA256" >> "$GITHUB_STEP_SUMMARY"

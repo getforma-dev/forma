@@ -107,3 +107,28 @@ binding. Real Linux process controls run in Linux CI. An actual locked nightly
 fuzz build and a bounded packed-product setup/replay are still required before
 the first full RC campaign; the historical FORMA-185 run does not prove the
 repaired current fuzz lock. FORMA-194 tracks that current lock qualification.
+
+The `burn-in-setup` CI job rehearses that setup against the existing
+`candidate-pack` job's exact current seven dry-pack archives. It checks source,
+DS11 and original package hashes, performs all native/consumer staging, and runs
+each precompiled ASan target once for 1,000 seed inputs. It starts no browser and
+retains explicit `rehearsal: true`, `rcAuthenticated: false`,
+`burnInPassed: false`, `releaseAccepted: false`, and zero active-time credit.
+Successful setup is distinct from the authenticated published-RC campaign.
+
+### Release verification time budget
+
+The release verification job allows 60 minutes, including setup; its P17 step
+allows 45 minutes. The browser installation step retains its five-minute bound.
+These orchestration limits do not change samples, performance limits, child
+process deadlines, the existing P17/G6 elapsed-time acceptance ceiling of 1,800
+seconds, or the independent 3,600-second active burn-in requirement.
+
+The sizing basis is indicative rather than a completed new full run: the two
+current pilot Lighthouse audits took 15.89455 and 15.91504 seconds, so forty
+audits imply about 636.2 seconds; independent activation samples imply about
+78.5 seconds and controls about 10.8 seconds. The preserved earlier functional
+P17 path through decoder took 274.532 seconds, and a separate older-source
+native/client continuation took 272.793 seconds. That totals approximately
+21 minutes before checkout, tool installation, signatures and browser setup;
+the former 25-minute job allowance left too little orchestration margin.

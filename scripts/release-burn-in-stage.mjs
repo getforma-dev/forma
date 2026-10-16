@@ -11,7 +11,11 @@ import { preparePackedSkew } from './release-skew-drill.mjs';
 import { FUZZ_TARGETS } from './release-burn-in-report.mjs';
 
 export async function prepareBurnIn({ authenticated, work, test }) {
-  const { set, archives: dir } = authenticated, cratesDir = join(work, 'crates'), targetDir = join(work, 'target');
+  const { set, archives: dir } = authenticated;
+  const version = set.packages[0].version;
+  assert.equal(set.packages.length, 7);
+  assert(set.packages.every(item => item.version === version), 'staged package versions differ');
+  const cratesDir = join(work, 'crates'), targetDir = join(work, 'target');
   mkdirSync(work); mkdirSync(join(work, 'tmp')); process.env.TMPDIR = join(work, 'tmp');
   const extracted = {};
   for (const p of set.packages) {
@@ -31,7 +35,7 @@ export async function prepareBurnIn({ authenticated, work, test }) {
   run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, { stdio: 'inherit' });
   assert.equal(digest(join(cli, 'package-lock.json')), cliLock); const cliSignatures = auditCandidateSignatures(cli, set.packages, dir);
   // The existing scaffold stager authenticates DS11, then localizes only Forma.
-  const ds11Path = join(dir, 'release-set.json'); save(ds11Path, set);
+  const ds11Path = join(dir, 'release-set.json');
   const contextPath = join(work, 'context.json'); save(contextPath, { dir, recordSha256: digest(ds11Path), commit: set.commit, work });
   const templates = {};
   for (const template of ['minimal', 'dashboard']) {
@@ -54,14 +58,14 @@ export async function prepareBurnIn({ authenticated, work, test }) {
   const fuzzManifest = join(fuzz, 'Cargo.toml'), original = readFileSync(fuzzManifest, 'utf8');
   assert(original.includes('path = "../crates/forma-ir"')); // Exact extracted sibling, not a source rewrite.
   writeFileSync(fuzzManifest, `${original}\n[patch.crates-io]\nforma-ir-derive = { path = ${JSON.stringify(join(cratesDir, 'forma-ir-derive'))} }\n`);
-  writeFileSync(join(fuzz, 'Cargo.lock'), pruneCargoLock(readFileSync(join(fuzz, 'Cargo.lock'), 'utf8'), 'forma-ir-fuzz', set.tag.slice(1)));
+  writeFileSync(join(fuzz, 'Cargo.lock'), pruneCargoLock(readFileSync(join(fuzz, 'Cargo.lock'), 'utf8'), 'forma-ir-fuzz', version));
   const fuzzLock = digest(join(fuzz, 'Cargo.lock'));
   const fuzzEnv = { ...process.env, RUSTUP_TOOLCHAIN: 'nightly-2026-10-01', CARGO_TARGET_DIR: join(fuzz, 'target'), CARGO_BUILD_JOBS: '3' };
   run('cargo', ['fetch', '--locked'], fuzz, { stdio: 'inherit', env: fuzzEnv });
   const metadata = JSON.parse(run('cargo', ['metadata', '--locked', '--format-version', '1'], fuzz, { env: fuzzEnv }));
-  const ir = metadata.packages.filter(p => p.name === 'forma-ir'); assert.equal(ir.length, 1); assert.equal(ir[0].version, set.tag.slice(1));
+  const ir = metadata.packages.filter(p => p.name === 'forma-ir'); assert.equal(ir.length, 1); assert.equal(ir[0].version, version);
   assert.equal(realpathSync(ir[0].manifest_path), realpathSync(join(cratesDir, 'forma-ir/Cargo.toml')));
-  const derive = metadata.packages.filter(p => p.name === 'forma-ir-derive'); assert.equal(derive.length, 1); assert.equal(derive[0].version, set.tag.slice(1));
+  const derive = metadata.packages.filter(p => p.name === 'forma-ir-derive'); assert.equal(derive.length, 1); assert.equal(derive[0].version, version);
   assert.equal(realpathSync(derive[0].manifest_path), realpathSync(join(cratesDir, 'forma-ir-derive/Cargo.toml')));
   run('python3', ['seed-corpus.py'], fuzz, { stdio: 'inherit' });
   for (const target of FUZZ_TARGETS) run('cargo', ['fuzz', 'build', target, '--sanitizer', 'address'], fuzz, { stdio: 'inherit', env: { ...fuzzEnv, CARGO_NET_OFFLINE: 'true' } });
