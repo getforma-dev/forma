@@ -1,0 +1,4 @@
+JSON report written to /Users/victorvillacis/dev/Forma/work/FORMA-108/tmp/runtime-mutations-complete/explicit-default-dom.json
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./vitest.config" without a file extension (vitest.runtime-mutation.config.ts:2:18). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.

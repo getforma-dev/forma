@@ -1,0 +1,729 @@
+{
+  "diagnosticOnly": true,
+  "source": "cases/probe/app.tsx",
+  "compilerAccepted": true,
+  "actualTypedNative": true,
+  "results": [
+    {
+      "engine": "chromium",
+      "phase": "ssr",
+      "headers": {
+        "connection": "keep-alive",
+        "date": "Fri, 16 Oct 2026 05:15:08 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "cache-control": "no-store",
+        "content-security-policy": "default-src 'none'; script-src 'nonce-Sef1TJlc0SEEdMgvr4U8BdOW+vyNrv8q8KSdTGn9D08=' 'strict-dynamic' 'self'; style-src 'nonce-Sef1TJlc0SEEdMgvr4U8BdOW+vyNrv8q8KSdTGn9D08=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "permissions-policy": "geolocation=(), camera=(), microphone=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "before": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "1"
+          }
+        }
+      },
+      "after": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "1"
+          }
+        }
+      },
+      "clicked": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "2"
+          }
+        }
+      },
+      "errors": [
+        {
+          "island": "BadTab",
+          "occurrence": 0,
+          "binding": 2,
+          "code": "FORMA_E_HYDRATE_VALUE",
+          "path": "/node[0]/@TabIndex[2]"
+        },
+        {
+          "island": "BadData",
+          "occurrence": 1,
+          "binding": 2,
+          "code": "FORMA_E_HYDRATE_VALUE",
+          "path": "/node[0]/@data-Foo[2]"
+        }
+      ],
+      "consoleErrors": [
+        "[forma] FORMA_E_HYDRATE_VALUE (island \"BadTab\", id=0)",
+        "[forma] FORMA_E_HYDRATE_VALUE (island \"BadData\", id=1)"
+      ],
+      "pageErrors": []
+    },
+    {
+      "engine": "chromium",
+      "phase": "csr",
+      "headers": {
+        "connection": "keep-alive",
+        "date": "Fri, 16 Oct 2026 05:15:08 GMT",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked",
+        "cache-control": "no-store",
+        "content-security-policy": "default-src 'none'; script-src 'nonce-vCZZYnb59SscaegI2eHocFBWV14JDuGENuJOOHYTilU=' 'strict-dynamic' 'self'; style-src 'nonce-vCZZYnb59SscaegI2eHocFBWV14JDuGENuJOOHYTilU=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "permissions-policy": "geolocation=(), camera=(), microphone=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff"
+      },
+      "before": null,
+      "after": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "TabIndex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-Foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "tabindex": "1",
+            "class": "valid",
+            "viewBox": "0 0 100 100"
+          }
+        }
+      },
+      "clicked": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "TabIndex": "2"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-Foo": "2"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "tabindex": "2",
+            "class": "valid",
+            "viewBox": "0 0 100 100"
+          }
+        }
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "engine": "firefox",
+      "phase": "ssr",
+      "headers": {
+        "cache-control": "no-store",
+        "content-security-policy": "default-src 'none'; script-src 'nonce-Sef1TJlc0SEEdMgvr4U8BdOW+vyNrv8q8KSdTGn9D08=' 'strict-dynamic' 'self'; style-src 'nonce-Sef1TJlc0SEEdMgvr4U8BdOW+vyNrv8q8KSdTGn9D08=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "permissions-policy": "geolocation=(), camera=(), microphone=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "date": "Fri, 16 Oct 2026 05:15:10 GMT",
+        "connection": "keep-alive",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked"
+      },
+      "before": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "1"
+          }
+        }
+      },
+      "after": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "1"
+          }
+        }
+      },
+      "clicked": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "2"
+          }
+        }
+      },
+      "errors": [
+        {
+          "island": "BadTab",
+          "occurrence": 0,
+          "binding": 2,
+          "code": "FORMA_E_HYDRATE_VALUE",
+          "path": "/node[0]/@TabIndex[2]"
+        },
+        {
+          "island": "BadData",
+          "occurrence": 1,
+          "binding": 2,
+          "code": "FORMA_E_HYDRATE_VALUE",
+          "path": "/node[0]/@data-Foo[2]"
+        }
+      ],
+      "consoleErrors": [
+        "[forma] FORMA_E_HYDRATE_VALUE (island \"BadTab\", id=0)",
+        "[forma] FORMA_E_HYDRATE_VALUE (island \"BadData\", id=1)"
+      ],
+      "pageErrors": []
+    },
+    {
+      "engine": "firefox",
+      "phase": "csr",
+      "headers": {
+        "cache-control": "no-store",
+        "content-security-policy": "default-src 'none'; script-src 'nonce-vCZZYnb59SscaegI2eHocFBWV14JDuGENuJOOHYTilU=' 'strict-dynamic' 'self'; style-src 'nonce-vCZZYnb59SscaegI2eHocFBWV14JDuGENuJOOHYTilU=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "permissions-policy": "geolocation=(), camera=(), microphone=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-content-type-options": "nosniff",
+        "date": "Fri, 16 Oct 2026 05:15:10 GMT",
+        "connection": "keep-alive",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked"
+      },
+      "before": null,
+      "after": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "TabIndex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-Foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "tabindex": "1",
+            "class": "valid",
+            "viewBox": "0 0 100 100"
+          }
+        }
+      },
+      "clicked": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "TabIndex": "2"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-Foo": "2"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "tabindex": "2",
+            "class": "valid",
+            "viewBox": "0 0 100 100"
+          }
+        }
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "engine": "webkit",
+      "phase": "ssr",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "content-security-policy": "default-src 'none'; script-src 'nonce-Sef1TJlc0SEEdMgvr4U8BdOW+vyNrv8q8KSdTGn9D08=' 'strict-dynamic' 'self'; style-src 'nonce-Sef1TJlc0SEEdMgvr4U8BdOW+vyNrv8q8KSdTGn9D08=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "transfer-encoding": "Identity",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "date": "Fri, 16 Oct 2026 05:15:11 GMT",
+        "cache-control": "no-store",
+        "cross-origin-opener-policy": "same-origin",
+        "connection": "keep-alive",
+        "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "geolocation=(), camera=(), microphone=()"
+      },
+      "before": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "1"
+          }
+        }
+      },
+      "after": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "1"
+          }
+        }
+      },
+      "clicked": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "data-forma-island": "0",
+            "data-forma-component": "BadTab",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "0",
+            "data-forma-h": "cca1824789b7a712",
+            "tabindex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-forma-island": "1",
+            "data-forma-component": "BadData",
+            "data-forma-status": "error",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "1",
+            "data-forma-h": "cde1b000316ffe53",
+            "data-foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "class": "valid",
+            "viewBox": "0 0 100 100",
+            "data-forma-island": "2",
+            "data-forma-component": "Good",
+            "data-forma-status": "pending",
+            "data-forma-hydrate": "load",
+            "data-forma-state": "2",
+            "data-forma-h": "0525e426fdf6826b",
+            "tabindex": "2"
+          }
+        }
+      },
+      "errors": [
+        {
+          "island": "BadTab",
+          "occurrence": 0,
+          "binding": 2,
+          "code": "FORMA_E_HYDRATE_VALUE",
+          "path": "/node[0]/@TabIndex[2]"
+        },
+        {
+          "island": "BadData",
+          "occurrence": 1,
+          "binding": 2,
+          "code": "FORMA_E_HYDRATE_VALUE",
+          "path": "/node[0]/@data-Foo[2]"
+        }
+      ],
+      "consoleErrors": [
+        "[forma] FORMA_E_HYDRATE_VALUE (island \"BadTab\", id=0)",
+        "[forma] FORMA_E_HYDRATE_VALUE (island \"BadData\", id=1)"
+      ],
+      "pageErrors": []
+    },
+    {
+      "engine": "webkit",
+      "phase": "csr",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "content-security-policy": "default-src 'none'; script-src 'nonce-vCZZYnb59SscaegI2eHocFBWV14JDuGENuJOOHYTilU=' 'strict-dynamic' 'self'; style-src 'nonce-vCZZYnb59SscaegI2eHocFBWV14JDuGENuJOOHYTilU=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "transfer-encoding": "Identity",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "date": "Fri, 16 Oct 2026 05:15:12 GMT",
+        "cache-control": "no-store",
+        "cross-origin-opener-policy": "same-origin",
+        "connection": "keep-alive",
+        "content-security-policy-report-only": "require-trusted-types-for 'script'; trusted-types forma forma-runtime; report-uri /__csp-reports",
+        "x-content-type-options": "nosniff",
+        "permissions-policy": "geolocation=(), camera=(), microphone=()"
+      },
+      "before": null,
+      "after": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "TabIndex": "1"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-Foo": "1"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "tabindex": "1",
+            "class": "valid",
+            "viewBox": "0 0 100 100"
+          }
+        }
+      },
+      "clicked": {
+        "bad-tab": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-tab",
+            "TabIndex": "2"
+          }
+        },
+        "bad-data": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "bad-data",
+            "data-Foo": "2"
+          }
+        },
+        "good": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "attributes": {
+            "id": "good",
+            "tabindex": "2",
+            "class": "valid",
+            "viewBox": "0 0 100 100"
+          }
+        }
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  ],
+  "reports": []
+}

@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * `data-forma-state` parsing, observed the only way that matters: through what
  * the page ends up bound to.
@@ -9,7 +10,7 @@
  * parseState breaks the test.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { getScopes, mount, unmount } from '../runtime';
+import { getScopes } from '../runtime';
 
 function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -23,7 +24,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  unmount(container);
+  unmountFixture(container);
   container.remove();
 });
 
@@ -42,7 +43,7 @@ function stateKeysOf(el: Element): string[] {
 
 function mountState(state: string): Element {
   container.innerHTML = `<div data-forma-state='${state}'></div>`;
-  mount(container);
+  mountFixture(container);
   return container.firstElementChild!;
 }
 
@@ -52,7 +53,7 @@ async function textFor(state: string, key = 'value'): Promise<string | null | un
     <div data-forma-state='${state}'>
       <p id="out" data-text="{${key}}"></p>
     </div>`;
-  mount(container);
+  mountFixture(container);
   await tick();
   return container.querySelector('#out')?.textContent;
 }
@@ -86,7 +87,7 @@ describe('data-forma-state parsing', () => {
     // used to bind its indices as state keys named "0" and "1".
     for (const raw of ['null', '7', '"hello"', 'true', '[1,2]', '[]']) {
       expect(stateKeysOf(mountState(raw)), raw).toEqual([]);
-      unmount(container);
+      unmountFixture(container);
     }
     // …and a real object still produces its keys, so the guard is not a blanket.
     expect(stateKeysOf(mountState('{"a":1,"b":2}'))).toEqual(['a', 'b']);
@@ -94,12 +95,12 @@ describe('data-forma-state parsing', () => {
 
   it('a JSON scalar in data-forma-state does not stop the rest of the page from binding', async () => {
     // The regression this pins: `'__proto__' in "hello"` is a TypeError, and it
-    // was thrown from inside mount(), so ONE bad attribute unbound the document.
+    // was thrown from inside mountFixture(), so ONE bad attribute unbound the document.
     container.innerHTML = `
       <div data-forma-state='"hello"'><p id="bad" data-text="{value}"></p></div>
       <div data-forma-state='{"value": "still here"}'><p id="good" data-text="{value}"></p></div>`;
 
-    expect(() => mount(container)).not.toThrow();
+    expect(() => mountFixture(container)).not.toThrow();
     await tick();
 
     expect(container.querySelector('#bad')?.textContent).toBe('');

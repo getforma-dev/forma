@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * The headline promise, at the runtime boundary: this library does not call
  * `new Function()`. Not "unless you opt in", not "in the hardened build" — at
@@ -64,7 +65,7 @@ describe('CSP-safe by construction', () => {
   });
 
   afterEach(() => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     runtime.clearDiagnostics();
     vi.restoreAllMocks();
@@ -78,9 +79,8 @@ describe('CSP-safe by construction', () => {
       expect(Object.keys(runtime), `${gone} must not come back`).not.toContain(gone);
     }
 
-    // The config object and the script attribute are read ONCE, at module
-    // evaluation, so asking for eval has to be set up BEFORE the import or the
-    // test proves nothing. Both channels are loaded together and ignored.
+    // Obsolete global/script configuration is present before a fresh import;
+    // neither channel can restore an eval path.
     (window as unknown as Record<string, unknown>).__FORMA_RUNTIME_CONFIG = {
       allowUnsafeEval: true,
       unsafeEvalMode: 'locked-on',
@@ -94,15 +94,12 @@ describe('CSP-safe by construction', () => {
       vi.resetModules();
       const mod = await import('../runtime');
       expect(Object.keys(mod)).not.toContain('setUnsafeEval');
-      withEvalBlockedByCsp(() => {
-        el.innerHTML = MIXED_MARKUP;
-        mod.mount(el);
-      });
+      const handle = withEvalBlockedByCsp(() => mod.mountMarkup(el, mod.trustedHtml(MIXED_MARKUP), { tier: 'reviewed' }));
       // It bound the whole scope with the Function constructor fatal, and the
       // one expression outside the grammar is refused rather than evaluated.
       expect(el.querySelector('#plain')!.textContent).toBe('bound');
       expect(el.querySelector('#hard')!.getAttribute('data-forma-expr-error')).toBe('unsupported');
-      mod.unmount(el);
+      handle.unmount();
       mod.clearDiagnostics();
     } finally {
       el.remove();
@@ -117,7 +114,7 @@ describe('CSP-safe by construction', () => {
     // expression, a $event handler — under a Function constructor that throws.
     withEvalBlockedByCsp(() => {
       container.innerHTML = MIXED_MARKUP;
-      runtime.mount(container);
+      mountFixture(container);
     });
     await tick();
 
@@ -145,7 +142,7 @@ describe('CSP-safe by construction', () => {
     (globalThis as { Function: FunctionConstructor }).Function = spy as unknown as FunctionConstructor;
     try {
       container.innerHTML = MIXED_MARKUP;
-      runtime.mount(container);
+      mountFixture(container);
       await tick();
       (container.querySelector('#in') as HTMLInputElement)
         .dispatchEvent(new Event('input', { bubbles: true }));
@@ -158,7 +155,7 @@ describe('CSP-safe by construction', () => {
 
   it('marks the element with data-forma-expr-error when an expression cannot be compiled', async () => {
     container.innerHTML = MIXED_MARKUP;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#hard')!.getAttribute('data-forma-expr-error'))
@@ -169,8 +166,7 @@ describe('CSP-safe by construction', () => {
   });
 
   it('is importable with no window and no document (SSR/Node)', async () => {
-    // readRuntimeConfig() reads window/document; a Node import must land in the
-    // same state rather than skipping the config path into a different one.
+    // Explicit mounting has no browser-global startup prerequisite.
     const realWindow = globalThis.window;
     const realDocument = globalThis.document;
     (globalThis as Record<string, unknown>).window = undefined;
@@ -178,7 +174,7 @@ describe('CSP-safe by construction', () => {
     try {
       vi.resetModules();
       const mod = await import('../runtime');
-      expect(typeof mod.mount).toBe('function');
+      expect(typeof mod.mountMarkup).toBe('function');
       expect(Object.keys(mod)).not.toContain('setUnsafeEval');
     } finally {
       (globalThis as Record<string, unknown>).window = realWindow;
@@ -197,7 +193,7 @@ describe('CSP-safe by construction', () => {
         <p id="out" data-text="{q}"></p>
       </div>
     `;
-    withEvalBlockedByCsp(() => runtime.mount(container));
+    withEvalBlockedByCsp(() => mountFixture(container));
     const input = container.querySelector('#in') as HTMLInputElement;
     input.value = 'typed';
     input.dispatchEvent(new Event('input'));
@@ -215,7 +211,7 @@ describe('CSP-safe by construction', () => {
         <p id="out" data-text="{n}"></p>
       </div>
     `;
-    withEvalBlockedByCsp(() => runtime.mount(container));
+    withEvalBlockedByCsp(() => mountFixture(container));
     const input = container.querySelector('#in') as HTMLInputElement;
 
     input.dispatchEvent(Object.assign(new Event('keydown'), { key: 'a' }));
@@ -234,7 +230,7 @@ describe('CSP-safe by construction', () => {
         <input id="in" data-on:input="{q = $event.target.value}">
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     const input = container.querySelector('#in') as HTMLInputElement;
     input.value = 'first';
     input.dispatchEvent(new Event('input'));
@@ -248,34 +244,28 @@ describe('CSP-safe by construction', () => {
     expect(scope.getters.$event).toBeUndefined();
   });
 
-  it('honours a data-forma-* script attribute when document.currentScript is null (ESM builds)', async () => {
-    // document.currentScript is null by spec while a `<script type="module">`
-    // runs, so the ESM builds have to find their config script by attribute or
-    // every `data-forma-*` switch is dead in exactly the builds most apps
-    // import. `data-forma-expr-budget` is the switch used here because it is
-    // observable: a budget of 1 refuses everything.
+  it('ignores script and global configuration while honoring the mount budget', async () => {
     expect(document.currentScript).toBeNull();
     const script = document.createElement('script');
     script.setAttribute('data-forma-expr-budget', '1');
     document.head.appendChild(script);
+    (window as unknown as Record<string, unknown>).__FORMA_RUNTIME_CONFIG = { exprBudget: 1, diagnostics: false };
+    const el = document.createElement('div'); document.body.appendChild(el);
+    const markup = `<div data-forma-state='{"a":1,"b":2}'><p id="p" data-text="{a + b}">kept</p></div>`;
+    let handle: runtime.MountHandle | undefined;
     try {
       vi.resetModules();
       const mod = await import('../runtime');
-      const el = document.createElement('div');
-      document.body.appendChild(el);
-      try {
-        el.innerHTML = `<div data-forma-state='{"a":1,"b":2}'><p id="p" data-text="{a + b}">kept</p></div>`;
-        mod.mount(el);
-        await tick();
-        expect(el.querySelector('#p')!.textContent).toBe('kept');
-        expect(mod.getDiagnostics().map((d) => d.code)).toContain('FORMA_E_BUDGET');
-      } finally {
-        mod.unmount(el);
-        mod.clearDiagnostics();
-        el.remove();
-      }
+      handle = mod.mountMarkup(el, mod.trustedHtml(markup), { tier: 'reviewed' });
+      expect(el.querySelector('#p')!.textContent).toBe('3');
+      expect(mod.getDiagnostics()).toEqual([]);
+      handle.unmount(); await tick();
+      handle = mod.mountMarkup(el, mod.trustedHtml(markup), { tier: 'reviewed', config: { exprBudget: 1 } });
+      expect(el.querySelector('#p')!.textContent).toBe('kept');
+      expect(mod.getDiagnostics().map(d => d.code)).toEqual(['FORMA_E_BUDGET']);
     } finally {
-      script.remove();
+      handle?.unmount(); el.remove(); script.remove();
+      delete (window as unknown as Record<string, unknown>).__FORMA_RUNTIME_CONFIG;
       vi.resetModules();
     }
   });

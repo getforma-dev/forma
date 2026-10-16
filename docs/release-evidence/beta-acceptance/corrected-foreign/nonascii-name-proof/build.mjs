@@ -1,0 +1,2 @@
+import {build} from '../../forma/packages/build/dist/index.js';import {join} from 'node:path';
+const entry=join(import.meta.dirname,'cases/probe/app.tsx');await build({app:'native-name-negative',entryPoints:[{entry,outfile:'probe.js'},{entry,outfile:'probe-csr.js',ssr:false}],routes:{'/':{js:['probe'],css:[]},'/csr':{js:['probe-csr'],css:[]}},outputDir:join(import.meta.dirname,'out/build/probe'),ssr:true,codeSplitting:false});

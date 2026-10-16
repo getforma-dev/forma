@@ -66,15 +66,16 @@ async function mountWidget(page: import('@playwright/test').Page, html: string, 
   // run in order, so after this one the runtime's has run.
   await page.evaluate(() => new Promise((r) => setTimeout(r, 0)));
   return page.evaluate(({ html, state }) => {
-    const w = window as unknown as { FormaRuntime: any; __root?: Element };
-    w.__root?.remove();
+    const w = window as unknown as { FormaRuntime: any; __root?: Element; __handle?: { unmount(): void } };
+    w.__handle?.unmount(); w.__root?.remove();
     w.FormaRuntime.clearDiagnostics();
     const root = document.createElement('div');
-    root.setAttribute('data-forma-state', state);
-    root.innerHTML = html;
+    const scope = document.createElement('div');
+    scope.setAttribute('data-forma-state', state); scope.innerHTML = html; root.append(scope);
+    const markup = w.FormaRuntime.trustedHtml(root.innerHTML);
     document.body.append(root);
     const start = performance.now();
-    w.FormaRuntime.mount(root);
+    w.__handle = w.FormaRuntime.mountMarkup(root, markup, { tier: 'reviewed' });
     const mountMs = performance.now() - start;
     w.__root = root;
     return {

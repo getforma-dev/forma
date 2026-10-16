@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * `data-fetch` gives up on a stalled endpoint after 30 s (FORMA-132, decision
  * brief L-46), as `createFetch` does: before, a request that never answered
@@ -31,7 +32,7 @@ function stalled(url: string, init: RequestInit = {}): Promise<Response> {
 const answersAfter = (ms: number, body: unknown) => (url: string, init: RequestInit = {}): Promise<Response> => {
   requests.push({ url, init });
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => resolve({ json: async () => body } as Response), ms);
+    const timer = setTimeout(() => resolve({ ok: true, status: 200, json: async () => body } as Response), ms);
     init.signal?.addEventListener('abort', () => { clearTimeout(timer); reject(engineAbort()); });
   });
 };
@@ -49,7 +50,7 @@ describe('data-fetch timeout', () => {
   });
 
   afterEach(() => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -66,7 +67,7 @@ describe('data-fetch timeout', () => {
   it('a data-fetch to a stalled endpoint aborts at 30 s into its error: target', async () => {
     vi.stubGlobal('fetch', stalled);
     container.innerHTML = page('/api/stalled');
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/'] } } });
 
     await vi.advanceTimersByTimeAsync(29_999);
     expect(text(container, 'busy')).toBe('true');
@@ -83,7 +84,7 @@ describe('data-fetch timeout', () => {
   it('a data-fetch answered before 30 s lands in its target and is never aborted', async () => {
     vi.stubGlobal('fetch', answersAfter(29_000, 'loaded'));
     container.innerHTML = page('/api/slow');
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/'] } } });
 
     await vi.advanceTimersByTimeAsync(29_000);
     expect(text(container, 'items')).toBe('loaded');
@@ -97,46 +98,48 @@ describe('data-fetch timeout', () => {
     expect(text(container, 'items')).toBe('loaded');
   });
 
-  it('unmount() stops a stalled request: its 30 s timer is cleared and the request aborted', async () => {
+  it('handle.unmount() stops a stalled request: its 30 s timer is cleared and the request aborted', async () => {
     vi.stubGlobal('fetch', stalled);
     container.innerHTML = page('/api/stalled');
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/'] } } });
     await vi.advanceTimersByTimeAsync(1_000);
     expect(vi.getTimerCount()).toBe(1);
     expect(requests[0]!.init.signal!.aborted).toBe(false);
 
-    runtime.unmount(container);
+    unmountFixture(container);
     expect(vi.getTimerCount()).toBe(0);
     expect(requests[0]!.init.signal!.aborted).toBe(true);
     await vi.advanceTimersByTimeAsync(60_000);
     expect(requests).toHaveLength(1);
   });
 
-  it('unmount() stops every in-flight request of a polling data-fetch, and removing the element does too', async () => {
+  it('handle.unmount() stops every in-flight request of a polling data-fetch, and disposal after removing the root does too', async () => {
     vi.stubGlobal('fetch', stalled);
     const polling = `
       <div data-forma-state='{}'>
         <div data-fetch="GET /api/poll → items |error:failed |poll:5000"></div>
       </div>`;
     container.innerHTML = polling;
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/'] } } });
     await vi.advanceTimersByTimeAsync(12_000); // requests at 0, 5 and 10 s
     expect(requests).toHaveLength(3);
-    runtime.unmount(container);
+    unmountFixture(container);
     expect(vi.getTimerCount()).toBe(0);
     expect(requests.map((r) => r.init.signal!.aborted)).toEqual([true, true, true]);
     await vi.advanceTimersByTimeAsync(60_000);
     expect(requests).toHaveLength(3);
 
-    // The same scope removed from the document instead of unmounted.
+    // Removing a root is not a lifecycle call: its owner disposes the handle.
     requests = [];
     const host = document.createElement('div');
     host.innerHTML = polling;
     container.appendChild(host);
-    runtime.mount(host);
+    const handle = mountFixture(host, { grants: { fetch: { paths: ['/api/'] } } });
     await vi.advanceTimersByTimeAsync(7_000); // requests at 0 and 5 s
     expect(requests).toHaveLength(2);
     host.remove();
+    expect(requests.map((r) => r.init.signal!.aborted)).toEqual([false, false]);
+    handle.unmount();
     await vi.advanceTimersByTimeAsync(0);
     expect(requests.map((r) => r.init.signal!.aborted)).toEqual([true, true]);
     expect(vi.getTimerCount()).toBe(0);
@@ -149,7 +152,7 @@ describe('data-fetch timeout', () => {
         <div data-fetch="GET /api/poll → items |error:failed |poll:20000"></div>
         <p id="failed" data-text="{failed}"></p>
       </div>`;
-    runtime.mount(container);
+    mountFixture(container, { grants: { fetch: { paths: ['/api/'] } } });
 
     // Requests at 0 s and 20 s; the first times out at 30 s, the second at 50 s.
     await vi.advanceTimersByTimeAsync(30_000);

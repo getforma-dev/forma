@@ -15,6 +15,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
 const ROOT = process.cwd();
@@ -42,6 +43,24 @@ describe('test policy: the mutation-probe corpus stays honest', () => {
       else if (hits > 1 && !p.all) broken.push(`${p.id} → anchor matches ${hits}× in ${p.file}`);
     }
     expect(broken, 'run `node scripts/run-probes.mjs --check` and re-anchor these').toEqual([]);
+  });
+
+  it('authenticates every historical A2 disposition and every current security probe', () => {
+    const proof = JSON.parse(readFileSync(resolve(ROOT, 'e2e/hostile-widgets/probe-provenance.json'), 'utf8'));
+    for (const inventory of [proof.historical, proof.a2, proof.current]) {
+      const bytes = readFileSync(resolve(ROOT, '../..', inventory.path));
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(inventory.sha256);
+      const originals = JSON.parse(bytes.toString());
+      expect(originals).toHaveLength(inventory.total);
+      const selected = originals.filter((row: { tags?: string[] }) => inventory !== proof.current || row.tags?.includes('security'));
+      expect(inventory.rows.map((row: { id: string }) => row.id)).toEqual(selected.map((row: { id: string }) => row.id));
+    }
+    const currentIds = new Set(corpus.map(row => row.id));
+    for (const row of proof.a2.rows) {
+      expect(row.disposition.reason.length).toBeGreaterThan(30);
+      expect(['retired-api', 'migrated-probe', 'retained-probe']).toContain(row.disposition.kind);
+      expect(currentIds.has(row.id)).toBe(row.disposition.kind !== 'retired-api');
+    }
   });
 
   it('no probe is a no-op', () => {

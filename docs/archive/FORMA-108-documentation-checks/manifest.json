@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "sourceCommit": "a235733d9bee50f3494336fdec721d1a5532def9",
+  "meaning": "First full core gate after explicit runtime migration:3272 passed,3 stale documentation checks failed. No browser qualification had run. Exact original source and failure retained.",
+  "files": {
+    "core-full-before.log": "d57f016c3292194463af10fa89d2e0b6e27ba39d0665d9c40ff9b4e75f3e9caa",
+    "runtime.ts": "ccb155fd8b88ad71134e5e76fb4c64af011da21f7d9997ecb5ab2ef0a26876cc",
+    "docs-truth.test.ts": "1a418229fd8f1a7cfc29e31548892c0b18184310c8d051424eaa2f9b0ea3ca3c"
+  }
+}

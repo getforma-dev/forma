@@ -1,0 +1,358 @@
+{
+  "schema": 1,
+  "passed": true,
+  "sourceCommit": "3c3a48b2855160b0e4734a42b1d268861d3c58e9",
+  "sourceClean": true,
+  "node": "v24.22.0",
+  "corpusSha256": "cd0aaa994e1924a854e16a59cef66855a7a940b5e828a5b79221bb96db81fbe1",
+  "harnessSha256": "474e684bc1ab8ed2faadff85c7fdb22d32e6a9f1bfb375c87f249ee738177e62",
+  "sources": {
+    "src/runtime.ts": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f"
+  },
+  "controls": [
+    {
+      "id": "tiered/el-unbound",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "324c671f8560477d3da522ff2e327edc2e6d9eb8d39c032f9075887e42efbe92",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "L-36: $el, $event and $refs stop at the mount root $el.closest('body') reaches nothing without dom",
+          "messages": [
+            "AssertionError: expected 'reached' to be 'confined' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:165:25\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "sha256": "6f046c1bb8168e81d35d4e8e585502f1f34a002733302d6f3d03cfa6fbbde3d7",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/event-unbound",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "7b4f3d42f71114d5d134f297a5bf226d60c80d4a157dcba84e12e90879d61112",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "L-36: $el, $event and $refs stop at the mount root an element reached through $event or $refs carries the mount's bound",
+          "messages": [
+            "AssertionError: expected 'event reached' to be 'event confined' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:236:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "sha256": "a2945a3dff91ec7d31831fe2eb47004b6fc3a2081257ed26f2dd867a226d1145",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/refs-unbound",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "57598ad1641aacb1cb2c308d98faf336011b935756014a77c5f530300450daa2",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "L-36: $el, $event and $refs stop at the mount root an element reached through $event or $refs carries the mount's bound",
+          "messages": [
+            "AssertionError: expected 'refs reached' to be 'refs confined' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:238:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "sha256": "90092cae7a1cab12b630abe1b6ffc16e637b654a2d4dd06e956915bea5ad4e30",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/child-scope-drops-mount",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "3e682dd41bb3adcde2df7261bafe865b299cc967464b6d7330520b4b1320d785",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "L-36: $el, $event and $refs stop at the mount root an element reached through $event or $refs carries the mount's bound",
+          "messages": [
+            "AssertionError: expected 'event reached' to be 'event confined' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:236:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "sha256": "42e2d8d068c30bf34f2541e2497cae6df096253e6f1a4253282b86d152e3cef0",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/fetch-denial-sent",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "33f26514d34bc6f34984cb810e8b1056f64dab575ad719715b15cfb5fe1b0623",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "DR-15: grants with explicit empty grants a generated tree binds neither data-fetch nor $el.click()",
+          "messages": [
+            "AssertionError: expected [ { url: '/api/transfer', init: { method: 'POST', signal: AbortSignal{ onabort: null, [Symbol(listeners)]: { capturing: Map{}, bubbling: Map{} }, [Symbol(listenerOptions)]: { capturing: Map{}, bubbling: Map{} }, [Symbol(aborted)]: false, [Symbol(reason)]: undefined }, credentials: undefined, redirect: 'error' } } ] to deeply equal []\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:500:22\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "b21f704664282a8a3c99a07c412a41056a6cceb03fa228952e4ad3a5db0508e8",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/non-2xx-as-data",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "eb1e3cff5f7109448f023031b1e9bc524a996f72997ae955370bbb1139e5f4aa",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "DR-15: grants a 404 with a JSON body lands in the error: target, not the data target",
+          "messages": [
+            "AssertionError: expected '' to be 'data-fetch answered HTTP 404' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:532:28\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "dad655d8119a159c4b443a233852796ca88f0af1e9f964e0553bbb20222de23c",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/fetch-timeout-ignored",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "e0e29aabb0cf4ab53d10dab0676c7b52c293b0047866bcbaa253c91c4b83b3e7",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "DR-15: grants a fetch grant's timeout shortens the abort",
+          "messages": [
+            "AssertionError: expected false to be true // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:606:47\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "326d8cf74dff8d004f2eb0d1912aace499d86545fb82965bea89f694312b745b",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/refetch-shared-registry",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "125b28f055cd0817234492596bde67e6b051eddec374e2aa135b1ffa2153a127",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "DR-15: grants $refetch reaches only the fetches of its own mount",
+          "messages": [
+            "AssertionError: expected [ 1, 3, 2 ] to deeply equal [ 2, 1, 1 ]\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:637:69\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "575e62157a6592d4ba3ca7d40ffbff267618ff6d1d480b3cde7c32c93667e1f3",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/denial-silenced",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "0866502668749cb75b54708e50c1e4071cf2276a7a959db0aa193a9f39367616",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "SR37's runtime half: every denied grant is a coded diagnostic a mount takes its diagnostics switch from its call, not the page",
+          "messages": [
+            "AssertionError: expected [ 'FORMA_E_UNRESOLVED' ] to deeply equal [ 'FORMA_E_UNRESOLVED', 'FORMA_E_GRANT_DOM' ]\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:692:39\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "sha256": "558d888f07f4f3c145b898d60c932246066dacc8e17f5e5c217e553f78c75137",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "frame-link/refusal-silenced",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "c37a6d152e022a392b07a5b81d69752bde46db752972abc45f8d01f045c72102",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "tiers and configuration an unreviewed mount renders no <link>: each is removed before the markup reaches the document",
+          "messages": [
+            "AssertionError: expected [] to deeply equal [ 'FORMA_E_UNREVIEWED_LINK' ]\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:838:57\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "12dd7b8887b38f18791a266cd197cc294381b9fa4e01f3e1659b4eeb52f97278",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "tiered/report-fetch-unrecorded",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "5538c59f4b3e5100e65973a02fade3d6ce2376dc9668a4330b7359fc2fc69afe",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "the development report of the grants each mount used the development report lists exactly the grants a fixture widget used",
+          "messages": [
+            "AssertionError: expected { dom: true } to deeply equal { fetch: { methods: [ 'GET', 'POST' ], paths: [ '/api/items', '/api/items/1' ], cookies: true }, dom: true }\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:712:33\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "96e668c2d7ca984d58b8b131e7cb2f5903e3b6cbb6a1d1da099172790be68bc6",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "explicit/default-dom",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "d14490937b6f9a19d0d7cebf324deb7b521a36809b0f29fe79302174dab7dfdf",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority compiled omitted grants confine DOM and refuse fetch and activation",
+          "messages": [
+            "AssertionError: expected 'escaped' to be 'confined' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:48:55\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority reviewed omitted grants confine DOM and refuse fetch and activation",
+          "messages": [
+            "AssertionError: expected 'escaped' to be 'confined' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:48:55\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "bf16eb44aa7732e2dd403f1aeb315d304eaf1838e2228a4636acd01a060e446a",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "explicit/default-navigate",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "7740d749be82e641dae03c29bf16ea379d54993515448bcbeb41e2444bc68761",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority compiled omitted grants confine DOM and refuse fetch and activation",
+          "messages": [
+            "AssertionError: expected \"vi.fn()\" to not be called at all, but actually been called 1 times\n\nReceived:\n\n  1st vi.fn() call:\n\n    Array [\n      PointerEvent {\n        \"AT_TARGET\": 2,\n        \"BUBBLING_PHASE\": 3,\n        \"CAPTURING_PHASE\": 1,\n        \"NONE\": 0,\n        \"altKey\": false,\n        \"altitudeAngle\": 0,\n        \"azimuthAngle\": 0,\n        \"button\": 0,\n        \"buttons\": 0,\n        \"clientX\": 0,\n        \"clientY\": 0,\n        \"coalescedEvents\": Array [],\n        \"ctrlKey\": false,\n        \"detail\": 0,\n        \"getCoalescedEvents\": [Function getCoalescedEvents],\n        \"getPredictedEvents\": [Function getPredictedEvents],\n        \"height\": 1,\n        \"isPrimary\": false,\n        \"layerX\": 0,\n        \"layerY\": 0,\n        \"metaKey\": false,\n        \"movementX\": 0,\n        \"movementY\": 0,\n        \"offsetX\": 0,\n        \"offsetY\": 0,\n        \"pageX\": 0,\n        \"pageY\": 0,\n        \"pointerId\": 0,\n        \"pointerType\": \"\",\n        \"predictedEvents\": Array [],\n        \"pressure\": 0,\n        \"region\": \"\",\n        \"relatedTarget\": null,\n        \"screenX\": 0,\n        \"screenY\": 0,\n        \"shiftKey\": false,\n        \"tangentialPressure\": 0,\n        \"tiltX\": 0,\n        \"tiltY\": 0,\n        \"twist\": 0,\n        \"view\": null,\n        \"width\": 1,\n        Symbol(composed): true,\n        Symbol(bubbles): true,\n        Symbol(cancelable): true,\n        Symbol(defaultPrevented): false,\n        Symbol(eventPhase): 0,\n        Symbol(timeStamp): 465.880583,\n        Symbol(type): \"click\",\n        Symbol(dispatching): false,\n        Symbol(immediatePropagationStopped): false,\n        Symbol(propagationStopped): false,\n        Symbol(target): <a\n          data-ref=\"target\"\n          id=\"target\"\n        >\n          target\n        </a>,\n        Symbol(currentTarget): null,\n        Symbol(isInPassiveEventListener): false,\n      },\n    ]\n\n\nNumber of calls: 1\n\n    at Proxy.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/expect/dist/index.js:1467:10)\n    at Proxy.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/chai/index.js:1700:25)\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:50:27\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        },
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority reviewed omitted grants confine DOM and refuse fetch and activation",
+          "messages": [
+            "AssertionError: expected \"vi.fn()\" to not be called at all, but actually been called 1 times\n\nReceived:\n\n  1st vi.fn() call:\n\n    Array [\n      PointerEvent {\n        \"AT_TARGET\": 2,\n        \"BUBBLING_PHASE\": 3,\n        \"CAPTURING_PHASE\": 1,\n        \"NONE\": 0,\n        \"altKey\": false,\n        \"altitudeAngle\": 0,\n        \"azimuthAngle\": 0,\n        \"button\": 0,\n        \"buttons\": 0,\n        \"clientX\": 0,\n        \"clientY\": 0,\n        \"coalescedEvents\": Array [],\n        \"ctrlKey\": false,\n        \"detail\": 0,\n        \"getCoalescedEvents\": [Function getCoalescedEvents],\n        \"getPredictedEvents\": [Function getPredictedEvents],\n        \"height\": 1,\n        \"isPrimary\": false,\n        \"layerX\": 0,\n        \"layerY\": 0,\n        \"metaKey\": false,\n        \"movementX\": 0,\n        \"movementY\": 0,\n        \"offsetX\": 0,\n        \"offsetY\": 0,\n        \"pageX\": 0,\n        \"pageY\": 0,\n        \"pointerId\": 0,\n        \"pointerType\": \"\",\n        \"predictedEvents\": Array [],\n        \"pressure\": 0,\n        \"region\": \"\",\n        \"relatedTarget\": null,\n        \"screenX\": 0,\n        \"screenY\": 0,\n        \"shiftKey\": false,\n        \"tangentialPressure\": 0,\n        \"tiltX\": 0,\n        \"tiltY\": 0,\n        \"twist\": 0,\n        \"view\": null,\n        \"width\": 1,\n        Symbol(composed): true,\n        Symbol(bubbles): true,\n        Symbol(cancelable): true,\n        Symbol(defaultPrevented): false,\n        Symbol(eventPhase): 0,\n        Symbol(timeStamp): 480.23925,\n        Symbol(type): \"click\",\n        Symbol(dispatching): false,\n        Symbol(immediatePropagationStopped): false,\n        Symbol(propagationStopped): false,\n        Symbol(target): <a\n          data-ref=\"target\"\n          id=\"target\"\n        >\n          target\n        </a>,\n        Symbol(currentTarget): null,\n        Symbol(isInPassiveEventListener): false,\n      },\n    ]\n\n\nNumber of calls: 1\n\n    at Proxy.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/expect/dist/index.js:1467:10)\n    at Proxy.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/chai/index.js:1700:25)\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:50:27\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "89d87c53dd439246725159ec41391bcd795c45a31795d6eeb4164393350cef00",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "explicit/detached-scope-kept",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "69fb3060476e95f1b03e220c2aefa9cc99475b173254437572f1b2a1b08e8105",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority unmount disposes an owned scope that was detached without disposing another mount",
+          "messages": [
+            "AssertionError: expected '2' to be '1' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:108:64\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+          ]
+        },
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority unmount disposes an owned scope that was moved without disposing another mount",
+          "messages": [
+            "AssertionError: expected '2' to be '1' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:108:64\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+          ]
+        }
+      ],
+      "sha256": "16275d4a3b28059625160c4ed9db002dc5a24192cd71a2a4ca43a78b45430b84",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "explicit/ancestry-disposal",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "dad18759e8c948e2f7b6566b292ff2aeb71f98226679b02c48a8a7df8c8e0ba7",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority unmount disposes an owned scope that was detached without disposing another mount",
+          "messages": [
+            "AssertionError: expected '2' to be '1' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:108:64\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+          ]
+        },
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority unmount disposes an owned scope that was moved without disposing another mount",
+          "messages": [
+            "AssertionError: expected '2' to be '1' // Object.is equality\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:108:64\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+          ]
+        }
+      ],
+      "sha256": "61cb000ee9d5d7c3895985163d7f42ce05e057ce387070ed62efcc7afc6b3b81",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "explicit/refusal-without-mount",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "0f9baa9ca78df024b81242c3c94862af684902c684ead7511e0b7b2d02088700",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority attributes identical unreviewed refusals to each mount independently",
+          "messages": [
+            "AssertionError: expected [ { code: 'FORMA_E_UNREVIEWED_LINK', mount: undefined, tier: undefined, count: 2 } ] to deeply equal [ { code: 'FORMA_E_UNREVIEWED_LINK', mount: 'first', tier: 'unreviewed', count: 1 }, { code: 'FORMA_E_UNREVIEWED_LINK', mount: 'second', tier: 'unreviewed', count: 1 } ]\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:93:108\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ]
+        }
+      ],
+      "sha256": "1b43c75f3f8da86c49e413c007cf0fba7cb1cb60458201a076c3607e146a77a2",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    },
+    {
+      "id": "explicit/manual-warning",
+      "source": "src/runtime.ts",
+      "beforeSha256": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+      "mutantSha256": "d840db312d063f7bc34ade3683efb5d55634bcfb4e0aee0603ae2424ec9b42b3",
+      "passed": true,
+      "killedBy": [
+        {
+          "name": "FORMA-108: every binding has a named tier and explicit authority warns once about the obsolete manual switch and names the replacement mount call",
+          "messages": [
+            "AssertionError: expected [] to have a length of 1 but got +0\n    at Proxy.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/expect/dist/index.js:1389:20)\n    at Proxy.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/chai/index.js:1700:25)\n    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-explicit-mount.test.ts:130:22\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ]
+        }
+      ],
+      "sha256": "3aa1259620becf0e0448e0a96034137e46bd8ad464033cae73b6aa817f77ab1a",
+      "errorsSha256": "d27bb5c1d94d1c614e83d8d13241b4dbb83fb8d646a144af6d7f48e0590b68b5"
+    }
+  ],
+  "harnessSources": {
+    "vitest.config.ts": "73ea76e03b05cab89834b49135811f57c722055d4aff3b6e032c61dd1b30fc47",
+    "vitest.runtime-mutation.config.ts": "9106e9216430c7c153f3a5d5273de62519a0bbb3140cfbd741e0bd35626df820",
+    "scripts/runtime-mutation-errors.mjs": "8c6db136195f772212851ed89e4f5a3e67cb7760ba658c9765dff87059b4b434",
+    "scripts/qualify-runtime-migration.mjs": "474e684bc1ab8ed2faadff85c7fdb22d32e6a9f1bfb375c87f249ee738177e62",
+    "src/__tests__/runtime-tiered-mount.test.ts": "fd1e812e4eff1f8e66c993c6c3818dd1ad5b1242a84c1832c2c08a28a3943ea5",
+    "src/__tests__/runtime-explicit-mount.test.ts": "66a6024d3e0fa037ee6113b263ddb9e4a6ffe1293fd2f178950506d8543cfa59"
+  },
+  "before": {
+    "exit": 0,
+    "sha256": "9864624a7042f45d0ffa35e25a5ba870418100adbfd198db38ff4ea7503c1ba0",
+    "errorsSha256": "4c25f8ef3e06336e3c94cad69d5231d984858f60cd0eb9d6c07ec1f2c48dc9fc",
+    "passed": 15
+  },
+  "corrected": {
+    "exit": 0,
+    "sha256": "92d8572ad8a55d9de5fe37536718c328f865aa9f20af4f15baff83e53a4f0520",
+    "errorsSha256": "4c25f8ef3e06336e3c94cad69d5231d984858f60cd0eb9d6c07ec1f2c48dc9fc",
+    "passed": 15
+  },
+  "sourceRestored": {
+    "verified": true,
+    "hashes": {
+      "src/runtime.ts": {
+        "expected": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+        "actual": "84b6e9b4fb05f0c13f331e27e4f9841cc1067f0e6a73927514139635e48b4c8f",
+        "verified": true
+      }
+    }
+  },
+  "elapsedMs": 16483.265583
+}

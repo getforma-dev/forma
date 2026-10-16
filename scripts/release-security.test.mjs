@@ -11,6 +11,10 @@ function hostile() {
     requestedCapabilityControls: capabilityCases.length * profiles.length,
     cases: cases().map(({ id }) => ({ id, live: true, executed: 0, outsideReads: 0, unauthorizedRequests: 0 })),
     capabilities: capabilityCases.flatMap(({ id }) => profiles.map(profile => ({ id: `${id}/${profile}` }))),
+    explicitMount: profiles.flatMap(profile => [
+      { id: `no-auto/${profile}`, served: 'raw', injected: 'raw', unauthorizedRequests: 0 },
+      ...['compiled', 'reviewed'].map(tier => ({ id: `omitted-${tier}/${profile}`, live: true, reach: 'confined', failed: 'data-fetch denied: the mount grants no fetch', activations: 0, outsideReads: 0, unauthorizedRequests: 0, codes: ['FORMA_E_GRANT_FETCH', 'FORMA_E_GRANT_NAVIGATE'] })),
+    ]),
     observers: profiles.map(profile => ({ profile, executions: 1, outsideReads: 1, response: 200, unexpectedResponse: 404, trustedTypesRefused: true })) };
 }
 test('P17 refuses partial, stale, duplicated, disconnected and unsafe hostile proof', () => {
@@ -23,6 +27,11 @@ test('P17 refuses partial, stale, duplicated, disconnected and unsafe hostile pr
     r => r.cases[0].unauthorizedRequests = 1, r => r.cases[0].live = false,
     r => r.observers[0].outsideReads = 0, r => r.observers[1].unexpectedResponse = 200,
     r => r.pageErrors.push('actual browser failure'),
+    r => r.explicitMount.pop(), r => r.explicitMount[1] = r.explicitMount[0],
+    r => r.explicitMount[0].served = '1', r => r.explicitMount[0].injected = '2',
+    r => r.explicitMount[1].activations = 1, r => r.explicitMount[1].live = false,
+    r => r.explicitMount[1].outsideReads = 1, r => r.explicitMount[1].unauthorizedRequests = 1,
+    r => r.explicitMount[1].codes.push('FORMA_E_UNRESOLVED'),
   ]) { const r = hostile(); mutate(r); assert.throws(() => validateHostileProof(r, expected)); }
 });
 function expression() {

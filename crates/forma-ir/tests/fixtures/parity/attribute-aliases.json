@@ -1,0 +1,9 @@
+{
+  "contract": "Only the three exact public prop spellings below map to native attribute names. All other spellings remain unchanged before the browser's namespace-specific attribute casing. Competing normalized prop names in one native element refuse BUILD-610; ordinary browser h retains its object property order.",
+  "aliases": [
+    {"prop":"className","attribute":"class"},
+    {"prop":"htmlFor","attribute":"for"},
+    {"prop":"tabIndex","attribute":"tabindex"}
+  ],
+  "unchanged": ["class","for","tabindex","classname","htmlfor","TabIndex","data-className","data-htmlFor","data-tabIndex"]
+}

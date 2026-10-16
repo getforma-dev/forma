@@ -1,0 +1,109 @@
+[WebServer] (node:23204) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:23235) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 2 workers
+
+(node:23240) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23239) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 [chromium] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (5.6s)
+(node:23275) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [firefox] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (6.4s)
+  ✘  3 [webkit] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (7.1s)
+
+
+  1) [chromium] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('#csp-example > p').first()
+    Expected: "0"
+    Received: ""
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" with timeout 5000ms
+      - waiting for locator('#csp-example > p').first()
+        14 × locator resolved to <p data-text="{count}"></p>
+           - unexpected value ""
+
+
+      77 |     .toEqual(['../../dist/forma-runtime-csp.js', './mount.js']);
+      78 |   const count = page.locator('#csp-example > p').first();
+    > 79 |   await expect(count).toHaveText('0');
+         |                       ^
+      80 |   await page.getByRole('button', { name: 'Increment', exact: true }).click();
+      81 |   await expect(count).toHaveText('1');
+      82 |   await page.getByRole('button', { name: 'Reset', exact: true }).click();
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e/csp-example.spec.ts:79:23
+
+    Error Context: test-results/csp-example-the-shipped-CS-ac4de-nter-filter-and-DOM-handler-chromium/error-context.md
+
+    Error Context: test-results/csp-example-the-shipped-CS-ac4de-nter-filter-and-DOM-handler-chromium/error-context.md
+
+  2) [firefox] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('#csp-example > p').first()
+    Expected: "0"
+    Received: ""
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" with timeout 5000ms
+      - waiting for locator('#csp-example > p').first()
+        14 × locator resolved to <p data-text="{count}"></p>
+           - unexpected value ""
+
+
+      77 |     .toEqual(['../../dist/forma-runtime-csp.js', './mount.js']);
+      78 |   const count = page.locator('#csp-example > p').first();
+    > 79 |   await expect(count).toHaveText('0');
+         |                       ^
+      80 |   await page.getByRole('button', { name: 'Increment', exact: true }).click();
+      81 |   await expect(count).toHaveText('1');
+      82 |   await page.getByRole('button', { name: 'Reset', exact: true }).click();
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e/csp-example.spec.ts:79:23
+
+    Error Context: test-results/csp-example-the-shipped-CS-ac4de-nter-filter-and-DOM-handler-firefox/error-context.md
+
+    Error Context: test-results/csp-example-the-shipped-CS-ac4de-nter-filter-and-DOM-handler-firefox/error-context.md
+
+  3) [webkit] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('#csp-example > p').first()
+    Expected: "0"
+    Received: ""
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" with timeout 5000ms
+      - waiting for locator('#csp-example > p').first()
+        14 × locator resolved to <p data-text="{count}"></p>
+           - unexpected value ""
+
+
+      77 |     .toEqual(['../../dist/forma-runtime-csp.js', './mount.js']);
+      78 |   const count = page.locator('#csp-example > p').first();
+    > 79 |   await expect(count).toHaveText('0');
+         |                       ^
+      80 |   await page.getByRole('button', { name: 'Increment', exact: true }).click();
+      81 |   await expect(count).toHaveText('1');
+      82 |   await page.getByRole('button', { name: 'Reset', exact: true }).click();
+        at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/e2e/csp-example.spec.ts:79:23
+
+    Error Context: test-results/csp-example-the-shipped-CS-ac4de-nter-filter-and-DOM-handler-webkit/error-context.md
+
+    Error Context: test-results/csp-example-the-shipped-CS-ac4de-nter-filter-and-DOM-handler-webkit/error-context.md
+
+  3 failed
+    [chromium] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler 
+    [firefox] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler 
+    [webkit] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler 

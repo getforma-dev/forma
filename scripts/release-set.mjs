@@ -23,6 +23,10 @@ export function run(command, args, cwd = ROOT, options = {}) {
   const invocation = commandInvocation(command, args);
   return execFileSync(invocation.command, invocation.args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 * 1024 * 1024, ...options });
 }
+export function assertModuleTrustPolicy(policy) {
+  assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
+  assert(policy.includes("every FMIR module must come from the application's own build") && policy.includes('any other source requires M9 before admission') && policy.includes('M9, M10 and design5 are deferred'), 'SA4: SECURITY.md must state own-build module provenance and deferred untrusted admission');
+}
 export function setVersions(root = ROOT) {
   const metadata = JSON.parse(run('cargo', ['metadata', '--no-deps', '--format-version', '1'], root));
   return [
@@ -418,7 +422,7 @@ export function pack(out, dryRun = false) {
     milestone = releaseMilestone(contracts, packages[0].version);
   }
   const policy = readFileSync(join(ROOT, 'SECURITY.md'), 'utf8');
-  assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
+  assertModuleTrustPolicy(policy);
   packCargoWorkspace(ROOT, packages, out, { dryRun });
   copyFileSync(join(ROOT, 'Cargo.lock'), join(out, 'Cargo.lock'));
   for (const name of NPM.slice(0, 3)) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));

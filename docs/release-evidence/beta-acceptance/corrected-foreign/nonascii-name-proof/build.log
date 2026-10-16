@@ -1,0 +1,18 @@
+SSR mode enabled — emitting IR files
+   IR emitted (real): probe.ir (153 bytes, 0 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/nonascii-name-proof/out/build/probe/probe-csr.1c872617.js  17.4kb
+
+   2 assets hashed
+   1 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;
+   N2's ceilings are policy (decision brief L-59, DR-35): Forma code 28,000 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     no interactive region  no JavaScript
+   /csr  whole-page mount       Forma 6,787 of 28,000 B  JavaScript 8,267 of 76,800 B  (Brotli: Forma 6,201, JavaScript 7,453)  probe-csr.1c872617.js
+   Service worker   sw.js  3,126 B raw, 1,456 B gzip, 1,230 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       110 ms: bundle 90 ms, hash 0 ms, compress 19 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/nonascii-name-proof/out/build/probe/manifest.json (build: cd09751de969...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/tmp/nonascii-name-proof/out/build/probe/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)

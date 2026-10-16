@@ -6,9 +6,9 @@ import { AdoptionDomError } from './adoption-plan.js';
 import { rawHtml } from './trusted-html.js';
 import { normalizeDomText } from './normalize-text.js';
 import { BOOLEAN_ATTRS } from './element.js';
+import { attributeName } from './attribute-name.js';
 
 const XLINK_NS='http://www.w3.org/1999/xlink';
-const ALIASES:Record<string,string>={className:'class',htmlFor:'for',tabIndex:'tabindex'};
 export interface PreparedAttribute {
   readonly local:string;
   readonly namespace:string|null;
@@ -17,7 +17,7 @@ export interface PreparedAttribute {
 }
 
 export function prepareAttribute(element:Element,key:string,value:unknown):PreparedAttribute {
-  const qualified=Object.hasOwn(ALIASES,key)?ALIASES[key]!:key;
+  const qualified=attributeName(key);
   const safe=isSafeAttrName(qualified);
   const namespace=safe&&qualified.startsWith('xlink:')?XLINK_NS:null;
   const local=namespace?qualified.slice(6):element.namespaceURI==='http://www.w3.org/1999/xhtml'?qualified.toLowerCase():qualified;
