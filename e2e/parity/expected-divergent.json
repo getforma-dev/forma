@@ -70,15 +70,6 @@
       "ticket": "FORMA-182: bool-slot attributes (F2)",
       "note": "Step 1. The same \"data-ready\" binding on the island's occurrences whose seed is true (F2's case).",
       "path": "page > main:nth-child(1) > p:nth-child(2)[data-ready]"
-    },
-    {
-      "module": "props-contract",
-      "index": "*",
-      "check": "P1",
-      "kind": "error",
-      "match": "TypeError: .*insertBefore",
-      "ticket": "FORMA-016: createShow takes a string or number branch as a text node (F5)",
-      "note": "Step 1, found 2026-10-15; assigned by the lead to FORMA-016. createShow(() => props.user.active, () => props.title): the branch returns a string. The walker renders the text; core's createShow inserts the branch's result as a Node and throws when it is a non-empty string (Chromium: parameter 1 is not of type 'Node'; Firefox and WebKit say the same of insertBefore), so core's render cannot be compared in those states. The compiler accepts the string branch. FORMA-016 makes core's createShow accept a string or number branch as a text node, matching the walker and h(); this entry then fails the run as an unexpected pass."
     }
   ]
 }

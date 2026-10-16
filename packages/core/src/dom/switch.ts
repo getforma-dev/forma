@@ -15,18 +15,19 @@
 
 import { internalEffect, untrack, createRoot, registerDisposer } from 'forma/reactive';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
+import { branchNode, type Branch } from './normalize-text.js';
 
 /** A single branch for {@link createSwitch}. */
 export interface SwitchCase<T> {
   /** The value that activates this branch. */
   match: T;
   /** Factory function that renders this branch's DOM. */
-  render: () => Node;
+  render: () => Branch;
 }
 
 /** Cached branch: the rendered DOM node + a dispose function for its root. */
 interface CachedBranch {
-  node: Node;
+  node: Node | null;
   dispose: () => void;
 }
 
@@ -48,7 +49,7 @@ interface CachedBranch {
 export function createSwitch<T>(
   value: () => T,
   cases: SwitchCase<T>[],
-  fallback?: () => Node,
+  fallback?: () => Branch,
 ): DocumentFragment {
   const startMarker = document.createComment('forma-switch');
   const endMarker = document.createComment('/forma-switch');
@@ -110,10 +111,10 @@ export function createSwitch<T>(
         // switch effect (alien-signals disposes child effects on parent
         // re-run, which would kill reactivity in cached branches).
         let branchDispose!: () => void;
-        const node = createRoot((dispose) => {
+        const node = branchNode(createRoot((dispose) => {
           branchDispose = dispose;
           return untrack(() => withNamespace(ns, matchedCase.render));
-        });
+        }));
         entry = { node, dispose: branchDispose };
         cache.set(val, entry);
       }
@@ -121,7 +122,7 @@ export function createSwitch<T>(
     } else {
       // Fallback — not cached, effects are owned by the switch effect
       // and correctly torn down on next re-run.
-      currentNode = fallback ? withNamespace(ns, fallback) : null;
+      currentNode = fallback ? branchNode(withNamespace(ns, fallback)) : null;
     }
 
     if (currentNode) {
