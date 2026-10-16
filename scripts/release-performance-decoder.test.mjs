@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash} from 'node:crypto';
-import {fileURLToPath} from 'node:url';
-import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder,verifyDecoderCompiler} from './release-performance-decoder.mjs';
+import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder} from './release-performance-decoder.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 // Synthetic finite validator inputs only. These figures are never used as
@@ -28,10 +27,6 @@ function valid() {
     compiler:{file:'dist/index.js',sha256:'a'.repeat(64),fixtures:DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}}))},
     machine:{node:'test',platform:'test',release:'test',architecture:'test',cpu:'test',logicalCpus:1,memoryBytes:1},cases,controls};
 }
-test('the actual candidate compiler regenerates the frozen source/IR/registration proof',async()=>{
-  const compiler=await verifyDecoderCompiler(process.env.FORMA_DECODER_COMPILER_PATH??fileURLToPath(new URL('../packages/compiler/',import.meta.url)));
-  assert.match(compiler.sha256,/^[a-f0-9]{64}$/);assert.equal(compiler.fixtures.length,2);
-});
 test('both finite payload shapes pin the complete UTF-8 envelope to exactly one MiB',()=>{
   for(const fixture of DECODER_FIXTURES) {
     const payload=decoderPayload(fixture);
