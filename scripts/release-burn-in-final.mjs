@@ -72,6 +72,7 @@ export function validateFixtureProof(proof, expectedIds = fixtureCheckIds()) {
   assert.equal(proof.templates.dashboard.interacted, true); assert.deepEqual(proof.templates.dashboard.pageErrors, []); assert.deepEqual(proof.templates.dashboard.violations, []);
   const tooltip = proof.templates.dashboard.tooltip;
   assert.equal(tooltip?.apiTextStayedText, true, 'dashboard tooltip safety evidence missing');
+  assert.deepEqual(tooltip.violations, { normal: [], hostile: [] }, 'dashboard navigation CSP evidence missing or violated');
   assert.deepEqual(tooltip.normal.map(point => point.hour), ['00:00', '23:00']);
   assert.equal(tooltip.hostile.hour, '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">');
   for (const point of [...tooltip.normal, tooltip.hostile]) {

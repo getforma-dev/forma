@@ -164,7 +164,15 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
 }
 
 /** The same Browser-template positive interaction used by P17 and RC stress. */
-export async function interactDashboard(page) {
+export async function interactDashboard(page, { violationKey = '__formaTemplateViolations' } = {}) {
+  const collectViolations = async () => {
+    // Native CSP events are queued. Read the caller's navigation-time collector
+    // before reload replaces the document and its init-script-owned array.
+    const violations = await page.evaluate(key => new Promise(resolve => setTimeout(() => resolve(globalThis[key]), 100)), violationKey);
+    assert(Array.isArray(violations), 'dashboard CSP collector was not installed before navigation');
+    assert.deepEqual(violations, [], 'dashboard interaction produced a CSP violation');
+    return violations;
+  };
   const endpoint = '**/api/request-volume';
   const original = await page.request.get(new URL('/api/request-volume', page.url()).href);
   assert.equal(original.status(), 200);
@@ -188,6 +196,7 @@ export async function interactDashboard(page) {
     return { hour: point.hour, values, hiddenOnLeave: true };
   };
   const normal = [await hover(points[0]), await hover(points.at(-1), true)];
+  const normalViolations = await collectViolations();
   const hostile = { hour: '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">', success: 1234, error: 7 };
   let intercepted = 0;
   const handler = async route => { intercepted++; await route.fulfill({ json: [hostile, { hour: 'safe second point', success: 42, error: 2 }] }); };
@@ -201,7 +210,9 @@ export async function interactDashboard(page) {
   } finally { await page.unroute(endpoint, handler); }
   await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
   await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
-  return { normal, hostile: hostileObservation, apiTextStayedText: true };
+  const hostileViolations = await collectViolations();
+  return { normal, hostile: hostileObservation, apiTextStayedText: true,
+    violations: { normal: normalViolations, hostile: hostileViolations } };
 }
 export async function verifyDashboardTemplate(browser, origin) {
   const context = await browser.newContext(), observed = await observe(context);

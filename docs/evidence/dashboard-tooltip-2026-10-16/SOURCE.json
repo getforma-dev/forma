@@ -20,23 +20,23 @@
     },
     {
       "path": "scripts/release-template-islands.mjs",
-      "bytes": 13893,
-      "sha256": "9efa6c45aa1ce2d86153293f3e35b6774b0e4c0509addbc9470f1e67286d53c1"
+      "bytes": 14684,
+      "sha256": "64b86e930fc65c048f12867580650aa14595c584f3d10d1c47e546f00a12c851"
     },
     {
       "path": "scripts/verify-release-set.mjs",
-      "bytes": 45803,
-      "sha256": "2e79eb3d40528918b8c4df25318b527a063b216e2ab62cc450d0bc5aa5a748b9"
+      "bytes": 45845,
+      "sha256": "51695b2f869c94e7d451be4ea94a302ec9a8e38e1acfb177e569dc2aa8e12a14"
     },
     {
       "path": "scripts/release-burn-in-final.mjs",
-      "bytes": 10839,
-      "sha256": "09cc9fa4c59557330c3cdafba5906b1633b78d6e9b058a03ed511cd648db8957"
+      "bytes": 10965,
+      "sha256": "5aa7cfb2caac92675491f54bf7b91b92ae01e5c3ed3147bcb39907c612d91f0e"
     },
     {
       "path": "scripts/release-burn-in-final.test.mjs",
-      "bytes": 7128,
-      "sha256": "fe587225986e1713768524b4846b06e49424707b123e538bd9ee11f5f68e72a9"
+      "bytes": 7450,
+      "sha256": "a3cddef71bb446282eea70e7cac8b6c5f6fcc457fd8b7e08d2b14d7ac8de1388"
     }
   ]
 }

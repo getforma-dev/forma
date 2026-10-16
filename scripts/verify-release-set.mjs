@@ -443,7 +443,7 @@ export async function verify(dir, reportPath) {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
               } else {
-                dashboardTooltip = await interactDashboard(page);
+                dashboardTooltip = await interactDashboard(page, { violationKey: '__formaP17Violations' });
               }
               // Historical activation removed status markers. Strict adoption keeps
               // the original DOM; its separate held-module observer proves success.
