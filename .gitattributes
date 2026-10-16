@@ -109,6 +109,9 @@ docs/archive/FORMA-139-e2e-title/** -text
 # Exact native multi-entry failure products.
 /docs/archive/FORMA-186-native-multiple-entries/** -text
 
+# Original founder comparison source is preserved byte-for-byte on Windows.
+e2e/performance/archive/8bd8b65/** -text
+
 # FORMA-129: the historical93-probe original is authenticated byte-for-byte.
 docs/archive/FORMA-129-historical-probes/** -text
 
@@ -130,6 +133,9 @@ docs/evidence/forma-129/** -text
 # Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
 docs/evidence/forma-189/** -text
 docs/evidence/forma-181-indexed/integrated/*.json -text
+docs/archive/forma-191-performance-durability/** -text
+docs/evidence/forma-191-performance-durability/** -text
+
 
 # FORMA-108: authenticated A2 originals before the explicit-tier migration.
 docs/archive/FORMA-108-A2-bridge/** -text

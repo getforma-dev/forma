@@ -133,3 +133,39 @@ describe('read-only control default and edit observations',()=>{
   const {host,get}=fixture('<input id="i">');const controls=new AdoptionControls(host);controls.add({element:get('i'),key:'value',initial:''});expect(()=>controls.add({element:get('i'),key:'value',initial:''})).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));controls.finish();controls.release();controls.release();expect(()=>controls.check()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));
  });
 });
+
+describe('startup work is limited to the controls this transaction observes',()=>{
+ it('compares attribute snapshots without initializing locale collation',()=>{
+  const {host,get}=fixture('<input id="i" value="saved" data-z="z" data-a="a" data-é="accent">');
+  const locale=vi.spyOn(String.prototype,'localeCompare').mockImplementation(()=>{throw new Error('locale collation is not an attribute identity rule');});
+  let controls:AdoptionControls;
+  try{
+   controls=new AdoptionControls(host);controls.add({element:get('i'),key:'value',initial:'saved'});
+   expect(controls.finish()[0]?.edited).toBe(false);
+   get('i').removeAttribute('data-a');get('i').setAttribute('data-a','a');controls.check();
+  }finally{locale.mockRestore();}
+  get('i').setAttribute('data-é','different');expect(()=>controls!.check()).toThrowError(code('FORMA_E_HYDRATE_VALUE'));
+ });
+ it('does not scan global radios when no owned control has a named radio group',()=>{
+  const {doc,host}=fixture('<input value="saved"><input type="radio">','<input type="radio" name="outside">');
+  const query=vi.spyOn(doc,'querySelectorAll');
+  try{const controls=new AdoptionControls(host);controls.check();controls.finish();expect(query).not.toHaveBeenCalled();}finally{query.mockRestore();}
+ });
+ it('does not construct detached form oracles when there are no bindings',()=>{
+  const {doc,host}=fixture('<button>run</button><span>ready</span>');
+  const oracle=vi.spyOn(doc.implementation,'createHTMLDocument');
+  try{const controls=new AdoptionControls(host);const result=controls.finish();expect(result).toEqual([]);expect(Object.isFrozen(result)).toBe(true);expect(controls.finish()).toBe(result);expect(oracle).not.toHaveBeenCalled();}finally{oracle.mockRestore();}
+ });
+ it('empty observations still validate captured live values on every finish',()=>{
+  const {host,get}=fixture('<input id="i" value="saved">');const controls=new AdoptionControls(host);expect(controls.finish()).toEqual([]);
+  get<HTMLInputElement>('i').value='changed';expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_VALUE'));
+ });
+ it('empty observations still refuse detached topology and released transactions',()=>{
+  const {host}=fixture('<button>run</button>');const controls=new AdoptionControls(host);controls.finish();host.remove();expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));
+  controls.release();expect(()=>controls.finish()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));
+ });
+ it('unbound owned radios still observe same-name outside peers and membership',()=>{
+  const {host,get}=fixture('<input id="inside" type="radio" name="group">','<input id="outside" type="radio" name="group">');
+  const controls=new AdoptionControls(host);expect(controls.finish()).toEqual([]);get<HTMLInputElement>('outside').name='different';expect(()=>controls.check()).toThrowError(code('FORMA_E_HYDRATE_STRUCTURE'));
+ });
+});

@@ -30,7 +30,8 @@ function target(): never { throw new AdoptionScopeError('FORMA_E_HYDRATE_INPUT_T
 function control(element: Element): element is Control {
   return element.namespaceURI === HTML && ['input','textarea','select','option'].includes(element.localName);
 }
-const attributes = (element: Element): Attributes => Array.from(element.attributes, item => [item.name,item.value] as const).sort(([a],[b]) => a.localeCompare(b));
+// Attribute identity needs a deterministic code-unit order, never locale collation.
+const attributes = (element: Element): Attributes => Array.from(element.attributes, item => [item.name,item.value] as const).sort(([a],[b]) => a===b?0:a<b?-1:1);
 function same(a: readonly unknown[], b: readonly unknown[]): boolean { return a.length === b.length && a.every((value,index) => Object.is(value,b[index])); }
 function initial(value: unknown): Initial {
   if (value == null || typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) return value as Initial;
@@ -94,10 +95,11 @@ export class AdoptionControls {
       while(parent&&parent.localName!=='select')parent=parent.parentElement;
       if(parent&&control(parent)&&!this.snapshots.has(parent))this.snapshots.set(parent,snapshot(parent));
     }
-    const radios=Array.from(this.document.querySelectorAll<HTMLInputElement>('input')).filter(input=>input.type==='radio');
+    let radios:HTMLInputElement[]|undefined;
     for(const item of this.snapshots.values())if(item.type==='radio'&&(item.element as HTMLInputElement).name) {
       const name=(item.element as HTMLInputElement).name;
       if(this.groups.some(group=>group.name===name&&group.form===item.form))continue;
+      radios??=Array.from(this.document.querySelectorAll<HTMLInputElement>('input')).filter(input=>input.type==='radio');
       const members=radios.filter(input=>input.name===name&&input.form===item.form);
       this.groups.push({name,form:item.form,members});
       for(const peer of members)if(!this.snapshots.has(peer))this.snapshots.set(peer,snapshot(peer));
@@ -197,6 +199,9 @@ export class AdoptionControls {
    * no binding authority. Reporting cannot replace the original refusal. */
   finish(onFailure?:(token:ControlToken,error:unknown)=>void):readonly ControlObservation[] {
     if(!this.host)structure();this.check();if(this.observations)return this.observations;
+    // No binding can read either oracle. Retain the mandatory snapshot check
+    // above, including unbound controls and outside radio/select peers.
+    if(this.bindings.length===0)return this.observations=Object.freeze([]);
     const defaults=this.mirror(false),expected=this.mirror(true);
     const at=<T>(binding:Binding,read:()=>T):T=>{
       try{return read();}catch(error){
@@ -233,7 +238,7 @@ export class AdoptionControls {
   }
   check():void {
     if(!this.host||!this.document||this.host.ownerDocument!==this.document||!this.document.contains(this.host))structure();
-    const radios=Array.from(this.document.querySelectorAll<HTMLInputElement>('input')).filter(input=>input.type==='radio');
+    const radios=this.groups.length?Array.from(this.document.querySelectorAll<HTMLInputElement>('input')).filter(input=>input.type==='radio'):[];
     for(const group of this.groups)if(!same(group.members,radios.filter(input=>input.name===group.name&&input.form===group.form)))structure();
     for(const [group,old]of this.optgroups){if(group.parentNode!==old.parent||group.previousSibling!==old.previous||group.nextSibling!==old.next)structure();if(!attrEqual(attributes(group),old.attrs))mismatch();}
     for(const item of this.snapshots.values()) {

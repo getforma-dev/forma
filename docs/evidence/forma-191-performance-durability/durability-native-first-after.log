@@ -1,0 +1,20 @@
+     Locking 21 packages to latest compatible versions
+   Compiling typenum v1.20.1
+   Compiling libc v0.2.190
+   Compiling zmij v1.0.23
+   Compiling hybrid-array v0.4.15
+   Compiling serde_core v1.0.229
+   Compiling const-oid v0.10.2
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling serde_json v1.0.154
+   Compiling cpufeatures v0.3.1
+   Compiling itoa v1.0.18
+   Compiling digest v0.11.3
+   Compiling memchr v2.8.3
+   Compiling cfg-if v1.0.5
+   Compiling sha2 v0.11.1
+   Compiling forma-journal-control v0.0.0 (/Users/victorvillacis/dev/Forma/work/FORMA-191/tmp/native-journal-control)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.26s
+     Running unittests /Users/victorvillacis/dev/Forma/work/FORMA-191/forma/e2e/fixtures/apps/src/performance_evidence.rs (/Users/victorvillacis/dev/Forma/work/FORMA-191/tmp/native-journal-control/target/debug/deps/forma_journal_control-8a728fb33191000a)
+   Doc-tests forma_journal_control
