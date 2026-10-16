@@ -124,7 +124,9 @@ export function validateComparison(report){
  assert(Number.isFinite(Date.parse(report.recorded_at)),'client comparison: recording date missing');
  const m=report.methodology;assert.equal(m?.react_compiler_verified,true);assert.equal(m.production_builds,true);assert.equal(m.cross_origin_isolated,true);assert.equal(m.runs,12);assert.equal(m.warmups,3);
  exactKeys(m.browsers??[],['chromium','firefox','webkit'],'client methodology engines');assert.deepEqual(m.mount_counts,[1,50,100,500]);assert.equal(m.update_count,500);assert.equal(m.list_count,1000);assert.equal(m.server_state_count,50);
- for(const key of ['node','platform','release','architecture','cpu','git_branch'])assert(typeof report.environment?.[key]==='string'&&report.environment[key].length>0,`client comparison: missing ${key}`);
+ for(const key of ['node','platform','release','architecture','cpu'])assert(typeof report.environment?.[key]==='string'&&report.environment[key].length>0,`client comparison: missing ${key}`);
+ // Git's branch --show-current returns an empty string for a detached HEAD.
+ assert.equal(typeof report.environment?.git_branch,'string','client comparison: missing git_branch');
  assert(/^[a-f0-9]{40}$/.test(report.environment.git_commit));assert.equal(typeof report.environment.git_dirty,'boolean');
  for(const key of ['logical_cpus','memory_bytes'])assert(Number.isSafeInteger(report.environment[key])&&report.environment[key]>0);
  for(const key of ['forma','react','react_dom','tanstack_query','react_compiler'])assert(typeof report.versions?.[key]==='string'&&report.versions[key].length>0,`client comparison: ${key} version absent`);
