@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Avoid unused control-oracle startup work — FORMA-191
+
+- Attribute snapshots use deterministic code-unit ordering without initializing locale collation. Strict adoption scans document radio peers only when it owns a named radio group, and skips detached form oracles when no control bindings can read them. Every topology, focus, captured-value and radio-peer check remains in place before empty observations are returned.
+
 ### Integrated deployment guard package sizes — FORMA-186
 
 - The reviewed deployment guard, F5 text branches, checkpoint D row focus and INV1 policies together measure 47,310 B gzip for the core entry and 47,398 B for browser ESM. They exceed the previous 47,297/47,395 B gates by 13/3 B. Under L-58, re-anchor these package gates to measured plus 300 B: 47,610/47,698 B. Runtime, hardened runtime and frame gates remain unchanged; their measured sizes are 41,310/40,230/39,658 B. This package-size change is separate from the per-route N2 requirement.
