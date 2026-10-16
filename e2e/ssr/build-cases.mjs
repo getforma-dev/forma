@@ -36,6 +36,7 @@ const assetsDir = join(outDir, 'site', '_assets');
  */
 const expectedIslands = {
   'browser-only': ['Chart'],
+  'mixed-entry': ['Local', 'Panel'],
   'edited-controls': ['Controls'],
   'generic-state': ['Counter'],
   'ledger-arrival': ['Arrival'],
@@ -87,15 +88,18 @@ for (const name of cases) {
   // compiler reduces to island activation, and `/csr` is the explicit Browser
   // route (`ssr: false`, Phase 1), which keeps the entry's mount and renders
   // the page whole from an empty #app.
+  const mixed = name === 'mixed-entry';
   const { manifest } = await build({
     app: 'e2e-ssr',
     entryPoints: [
       { entry, outfile: `${name}.js` },
       { entry, outfile: `${name}-csr.js`, ssr: false },
+      ...(mixed ? [{entry:join(casesDir,name,'addon.ts'),outfile:`${name}-addon.js`,ssr:false}] : []),
     ],
-    routes: { '/': { js: [name], css: [] }, '/csr': { js: [`${name}-csr`], css: [] } },
+    routes: { '/': { js: mixed ? [name, `${name}-addon`] : [name], css: [] }, '/csr': { js: [`${name}-csr`], css: [] } },
     outputDir: dist,
     ssr: true,
+    codeSplitting: mixed,
   });
 
   const route = manifest.routes['/'];
@@ -118,12 +122,20 @@ for (const name of cases) {
     fail(`${name}: expected islands ${JSON.stringify(expected)}, the compiler emitted ${JSON.stringify(islands)}`);
   }
   // A static page ships no script; a page with islands ships exactly its own.
-  if (route.js.length !== (islands.length ? 1 : 0)) {
+  if (route.js.length !== (islands.length ? (mixed ? 2 : 1) : 0)) {
     fail(`${name}: route / with islands ${JSON.stringify(islands)} lists scripts ${JSON.stringify(route.js)}`);
   }
 
-  for (const file of [...route.js, route.ir, ...csr.js]) {
+  for (const file of new Set([...route.js, route.ir, ...csr.js, ...(route.modulepreload??[]), ...(csr.modulepreload??[])])) {
     copyFileSync(join(dist, file), join(assetsDir, file));
+  }
+  if (mixed) {
+    const report=JSON.parse(readFileSync(join(dist,'size-report.json'),'utf8'));
+    for (const [path,kind] of [['/','islands'],['/csr','whole-page-mount']]) {
+      const row=report.routes?.find(row=>row.route===path);
+      const closure=[...new Set([...manifest.routes[path].js,...(manifest.routes[path].modulepreload??[])])].sort();
+      if (!row || row.class!==kind || row.forma.gzip<=0 || row.forma.gzip>row.ceilings.forma || row.javascript.gzip>row.ceilings.javascript || row.over || JSON.stringify(row.files.map(file=>file.file).sort())!==JSON.stringify(closure)) fail(`mixed-entry: incorrect actual shared-graph attribution for ${path}`);
+    }
   }
   console.log(`built ${name}: ${route.js.join(', ') || 'no script'} + ${route.ir} (islands: ${islands.join(', ') || 'none'}); /csr: ${csr.js.join(', ')}`);
 }

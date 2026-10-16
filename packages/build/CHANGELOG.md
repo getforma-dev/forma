@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Shared physical SSR and Browser entries — FORMA-186
+
+- A split build now gives an explicit Browser root that collides with an SSR client source its own entry identity. It keeps its mount while dependencies and core remain shared. Both role products use the compiler's same source snapshot, graph mapping, deployment identity and watch publication boundary.
+
+
 ### Mandatory SSR admission — FORMA-101
 
 - Default SSR, legacy false flags and direct compiler builds all refuse unsupported native constructs. Complete per-entry diagnostic reports use error severity; failed production and watch cycles preserve the prior product. The published subset and catalogue live at `packages/compiler/docs/subset.md`.
