@@ -157,3 +157,6 @@ docs/archive/forma-144-vite7-config/** -text
 
 # Original release workflow and actual failure-retention controls.
 docs/archive/release-p17-failure-retention/** -text
+
+# Original fixture tool path and actual hosted failure are byte-authenticated.
+docs/archive/forma-144-fixture-tool/** -text
