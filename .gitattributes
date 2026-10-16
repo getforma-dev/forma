@@ -234,3 +234,6 @@ docs/evidence/forma-116-live-deferral/** -text
 
 # Original hosted failure and primary parser specification evidence.
 docs/archive/html-document-parser-control/** -text
+
+# Preserve the historical Rust workspace overview byte-for-byte.
+docs/archive/2026-10-16-current-overviews/** -text

@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "reason": "Preserve the pre-3.0 Rust workspace overview before replacing obsolete APIs and repository paths.",
+  "files": [
+    {
+      "file": "crates-README.md",
+      "bytes": 12113,
+      "sha256": "45512ef7023e566c35881d6fd7ce2c30a6000d7e1d8bd43a2dd0e685e5905c4f"
+    }
+  ]
+}
