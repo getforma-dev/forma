@@ -1,7 +1,7 @@
 /** Private strict descriptor walker and owned postcommit updates. */
-import { AdoptionDom, AdoptionDomError, type AdoptionCursor } from './adoption-plan.js';
+import { AdoptionDom, AdoptionDomError, AdoptionCursor } from './adoption-plan.js';
 import { AdoptionRow } from './adoption-row.js';
-import { liveList, listItems, type LiveListRow, type ListItems } from './adoption-live-list.js';
+import { liveList, listItems, type LiveListRow, type ListItems, type ListKey } from './adoption-live-list.js';
 import { liveRanges } from './adoption-live-ranges.js';
 import { materializeAdoption } from './adoption-materialize.js';
 import { withAdoptionDescription, type ComponentDescription } from './adoption-description.js';
@@ -310,57 +310,57 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   }
   function list(desc:ListDescriptor,cursor:AdoptionCursor,ns:string|null):void {
     const range=cursor.range('l');
-    type Key=string|number;
     type Row=LiveListRow;
-    const cache=new Map<Key,Row>(),ordered:Row[]=[],tail:Node[]=[];
+    const cache=new Map<ListKey,Row>(),tail:Node[]=[];
+    let ordered:Row[]=[];
     let owner:PreparedGroup<void>,keyOwner!:PreparedGroup<ListItems>,reconciler:ReturnType<typeof liveList>;
     const keys=(values:unknown)=>listItems(values,desc.keyFn);
-    function contents():Node[] {
-      const result:Node[]=[];
-      for(let node=range.start.nextSibling;node!==range.end;node=node?.nextSibling??null){
-        if(!node)refuse();result.push(node);
-      }
-      return result;
-    }
     owner=scope.group(()=>{
       const initial=scope.observe(desc.items,value=>{
         reconciler.update(value);
       });
       keyOwner=scope.group(()=>keys(initial));
-      const prepared=keyOwner.value,elements=contents().filter(node=>node.nodeType===1) as Element[];
-      const keyed=elements.filter(element=>element.hasAttribute('data-forma-key'));
-      const mismatch=(extent:string)=>new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT',`client has ${prepared.items.length} item${prepared.items.length===1?'':'s'}, ${extent}`);
-      if(keyed.length&&keyed.length!==prepared.items.length)throw mismatch(`server range has ${keyed.length} keyed root elements`);
-      if(keyed.some((element,i)=>element.getAttribute('data-forma-key')!==String(prepared.keys[i])))refuse();
-      const originalRows=new Map<string,Element>();
-      for(const element of keyed){const key=element.getAttribute('data-forma-key')!;if(originalRows.has(key))refuse();originalRows.set(key,element);}
-      const inside=dom.within(range);
-      for(let i=0;i<prepared.items.length;i++){
-        const item=prepared.items[i],key=prepared.keys[i]!;
+      const prepared=keyOwner.value,count=prepared.items.length,units=dom.rows(range);
+      const mismatch=(extent:string)=>new AdoptionDomError('FORMA_E_HYDRATE_LIST_COUNT',`client has ${count} item${count===1?'':'s'}, ${extent}`);
+      // Keyed rows (FORMA-181): each client item adopts the served row whose
+      // decoded data-forma-key equals its canonical key, through a cursor
+      // bounded to that row. Nothing moves; `ordered` keeps the served order,
+      // which the first real update reconciles against the client's order.
+      // Verified by: src/dom/__tests__/adoption-keyed-list.test.ts
+      // Every client key finds its served row before any row runs. The client's
+      // keys are unique, so equal counts and every key found also mean every
+      // served row has a key and no served key repeats.
+      const byKey=new Map(units?.map(unit=>[unit.key,unit]));
+      if(units&&(units.length!==count||prepared.keys.some(key=>!byKey.has(key))))throw new AdoptionDomError('FORMA_E_HYDRATE_KEY');
+      const inside=units?undefined:dom.within(range);
+      for(let i=0;i<count;i++){
+        const item=prepared.items[i],key=prepared.keys[i]!,unit=byKey.get(key);
+        // A cursor bounded to the one served row: it cannot reach the next.
+        const rows=unit?new AdoptionCursor(dom,unit.start,unit.next):inside!;
         let setIndex!:(value:number)=>void,span!:AdoptionRow;
         const child=scope.group(()=>{
           const [getIndex,set]=createSignal(i);setIndex=set;
-          const empty=inside.atEnd;
+          const empty=rows.atEnd;
           try{
-            const captured=inside.capture(()=>walk(construct(()=>desc.renderFn(item,getIndex),ns),inside,ns));
+            const captured=rows.capture(()=>walk(construct(()=>desc.renderFn(item,getIndex),ns),rows,ns));
+            if(unit)rows.finish();
             span=new AdoptionRow(captured.pieces);
           }catch(error){
             if(empty&&error instanceof AdoptionDomError&&(error.code==='FORMA_E_HYDRATE_NODE'||error.code==='FORMA_E_HYDRATE_MARKER'))throw mismatch(`server range exhausted after ${i} prepared items`);
             throw error;
           }
         });
-        if(keyed.length){
-          // The key-to-original-span seam survives multiple-node rows. Initial
-          // order parity remains the explicit pre181 limitation; no bind moves.
-          const firstElement=span.nodes().find(node=>node.nodeType===1);
-          if(originalRows.get(String(key))!==firstElement)refuse();
-        }
-        cache.set(key,{owner:child,span,item,setIndex});ordered.push(cache.get(key)!);
+        const row:Row={owner:child,span,item,setIndex};
+        cache.set(key,row);ordered.push(row);
       }
-      try{inside.finish();}catch(error){if(error instanceof AdoptionDomError&&error.code==='FORMA_E_HYDRATE_STRUCTURE')throw mismatch(inside.remainder());throw error;}
-      let last:Node|null=null;for(const row of ordered)if(row.span.last)last=row.span.last;
-      let node=last?last.nextSibling:range.start.nextSibling;
-      for(;node!==range.end;node=node?.nextSibling??null){if(!node)refuse();tail.push(node);}
+      // The reconciler starts from the served (physical) order.
+      if(units)ordered=units.map(unit=>cache.get(unit.key!)!);
+      else{
+        try{inside!.finish();}catch(error){if(error instanceof AdoptionDomError&&error.code==='FORMA_E_HYDRATE_STRUCTURE')throw mismatch(inside!.remainder());throw error;}
+        let last:Node|null=null;for(const row of ordered)if(row.span.last)last=row.span.last;
+        let node=last?last.nextSibling:range.start.nextSibling;
+        for(;node!==range.end;node=node?.nextSibling??null){if(!node)refuse();tail.push(node);}
+      }
       registerDisposer(()=>reconciler?.clear());
     });
     reconciler=liveList({range,owner,live:()=>scope.phase==='live',

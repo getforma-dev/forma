@@ -101,7 +101,8 @@ including no status change or activation event.
 | `FORMA_E_HYDRATE_MARKER` | Missing, malformed or mismatching marker range |
 | `FORMA_E_HYDRATE_STRUCTURE` | Unsupported description or changed ownership/topology |
 | `FORMA_E_HYDRATE_VALUE` | Original text, attribute or control default differs |
-| `FORMA_E_HYDRATE_LIST_COUNT` | Initial list cannot consume the original range |
+| `FORMA_E_HYDRATE_LIST_COUNT` | Initial unkeyed list cannot consume the original range |
+| `FORMA_E_HYDRATE_KEY` | A keyed row's identity is missing, repeated, outside the key domain or on one side only |
 | `FORMA_E_HYDRATE_INPUT_TARGET` | An early edit has no proven reversible local binding |
 | `FORMA_E_HYDRATE_INPUT_CONFLICT` | Multiple edits disagree for one local signal |
 | `FORMA_E_HYDRATE_EFFECT`, `FORMA_E_HYDRATE_REF`, `FORMA_E_HYDRATE_COMPONENT` | Owned callback/component failure |
@@ -120,9 +121,14 @@ Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an imperative island
 
 ### Server-rendered lists
 
-The server delimits a list with `<!--f:l0-->` / `<!--/f:l0-->`. Where it
-emits `data-forma-key`, the key must match the original item and order; numeric
-key 1 matches attribute `"1"`. For example:
+The server delimits a list with `<!--f:l0-->` / `<!--/f:l0-->`. A list the
+compiler keys (`createList(items, row => row.id, …)`) has each row's
+`data-forma-key` on the row's root, written by the native renderer as the key's
+canonical text: a safe integer in decimal (`-0` as `0`), a string under value
+rule 1 (`docs/parity-rules.md`, "Keyed rows"). Adoption binds each client item
+to the served row whose decoded attribute equals the item's canonical key, in
+any order: numeric key 1 matches attribute `"1"`, and a client key `"a\r\nb"`
+matches the served `"a\nb"`. For example:
 
 ```tsx
 import { activateIslands, createSignal, createList, h } from "@getforma/core";
@@ -139,11 +145,22 @@ function TrackList(props: { items: { id: number; name: string }[] }) {
 activateIslands({ TrackList });
 ```
 
-Initial adoption never creates missing rows, removes extra rows or reorders
-keys. Mismatching keyed-root counts refuse with `FORMA_E_HYDRATE_LIST_COUNT`;
-same-count key/order disagreements refuse with `FORMA_E_HYDRATE_STRUCTURE`.
-Initial keyed reordering remains FORMA-181 work. After successful adoption,
-ordinary keyed reconciliation can insert, remove and reorder rows.
+Initial adoption never creates missing rows, removes extra rows or moves a
+row (FORMA-181). Each keyed row is walked through a cursor bounded to that row
+(its root, or the registered child's `f:i` envelope that wholly encloses it),
+so a row cannot consume its neighbour, and a registered child keeps its own
+served host, state and occurrence whichever position the client gives it. The
+served order is kept until the list source changes; the first real update then
+reconciles the client's order against it, moving rows without rebuilding them.
+A row's index starts at its position in the client's array. A key on one side
+only, a served key twice, a served row without a key beside keyed rows, two
+client keys with the same canonical text (1 and `"1"`), or a client key outside
+the domain (a fraction, `null`, an unpaired surrogate) refuses with
+`FORMA_E_HYDRATE_KEY` before any row runs; text or a range beside keyed rows is
+`FORMA_E_HYDRATE_STRUCTURE`, and a row of another shape is the ordinary node or
+value refusal. FORMA-123's row-count check is no longer the criterion for keyed
+rows. After successful adoption, ordinary keyed reconciliation can insert,
+remove and reorder rows.
 
 An unkeyed range is consumed by the actual row descriptions. A logical row can
 contain multiple nodes, shared literal Text or no nodes, so its server row count
@@ -155,9 +172,14 @@ items used by the native renderer.
 
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "keyed initial count mismatch refuses without removing or replacing any server row"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "binds reversed client keys to the same served nodes with no write through a microtask and a macrotask, then a real update reorders"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "compares the decoded attribute with the canonical key text: numbers, -0, line endings and NUL"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "refuses a key on one side only, a repeated key or a key outside the domain with FORMA_E_HYDRATE_KEY before any row runs"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "binds keyed registered children by key: each client row matches its own host, state and occurrence"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "a duplicate served key fails only its own island with FORMA_E_HYDRATE_KEY; the neighbouring keyed island activates"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "the coded message reports known client items and unconsumed DOM without inventing server row counts"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "equal counts adopt 40 unkeyed rows in place by index, as before, and keep reconciling"
-Verified by `src/dom/__tests__/adoption-list.test.ts` > "retains the explicit pre181 key-order limitation without moving mismatched rows"
+Verified by `src/dom/__tests__/adoption-list.test.ts` > "binds reversed served keys to their own rows without moving them"
 Verified by `src/dom/__tests__/adoption-list.test.ts` > "adopts multiple-element Fragment rows without wrappers and moves their complete spans later"
 Verified by `src/dom/__tests__/adoption-list.test.ts` > "adopts text-only and empty rows with no initial split or synthetic anchors"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "hydrateIsland() called directly keeps no binding it adopted before the list failed"
