@@ -3,6 +3,8 @@
 ## [3.0.0-beta.3] — qualification pending
 
 - Coordinate all seven packages and both template source seeds for the next beta verification. Beta.1 and beta.2 tags remain immutable and unpublished.
+- Retain failed Lighthouse reports and traces before refusing P17. Failed captures never become timing samples and are not automatically retried.
+- Determine native navigation lifecycle origin from the existing complete trace proof, without the internal 1 ms event-duration heuristic. Preserve the 50 ms application/unknown and independent-observer limits, every raw task and the requirement for a fresh twenty-run campaign per route.
 - Browser/P17 qualification and trusted publication remain pending.
 
 ## [3.0.0-beta.2] — verification failed; unpublished
