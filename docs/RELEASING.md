@@ -289,7 +289,7 @@ transport limit accommodates forty complete traces and reports; other release
 metadata bounds and product budgets are unchanged. The previous90ms negative
 control and all historical failures remain archived. A real110ms injected task
 must be observed and refused independently of response latency. Acceptance
-requires a new complete campaign under `N3-startup-strict50-v5`. The earlier
+requires a new complete campaign under `N3-startup-strict50-v6`. The earlier
 `N3-startup-strict50-v1` layout-only classifier remains historical evidence.
 The current classifier may also separate a main-document commit task only when
 the same trace proves the exact navigation request, committed frame, response,
@@ -323,6 +323,11 @@ source proof above, without executable, unknown or foreign-frame children, and
 the whole task must precede the first application script. Raw duration is
 unchanged; the application/unknown 50 ms limit and every independent observer
 task remain in force. Historical failures are not reclassified as P17 passes.
+Version 6 admits the same native lifecycle records in their thread-scoped
+instant form only with the same complete causal proof, exact category, absent
+duration and positive safe-integer sample identity. Instant metadata does not
+prove zero cost or absent listeners; any executable, unknown, foreign-frame or
+post-script task remains counted. A saved-trace replay cannot qualify a release.
 Historical L63
 75ms p95 /100ms individual acceptance and its original evidence remain history;
 they cannot qualify the strict gate. The L63 exception is retired only after

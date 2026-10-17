@@ -296,6 +296,36 @@ test('native navigation lifecycle origin is independent of duration, but mixed a
   }
  }
 });
+test('instant native lifecycle records require thread scope and the complete navigation proof',()=>{
+ const fixture=()=>{
+  const value=navigationFixture(),lifecycle=value.trace.traceEvents.find(event=>event.name==='EventDispatch');
+  lifecycle.ph='I';lifecycle.s='t';delete lifecycle.dur;
+  lifecycle.args.data.type='unload';lifecycle.ts+=250;
+  return {...value,lifecycle};
+ };
+ const exact=fixture(),attributed=attributeMobileTasks(exact.lhr,exact.trace);
+ assert.equal(attributed.tasks[0].kind,'pre-application-navigation-audit-bootstrap');
+ assert.equal(attributed.tasks[0].duration,150);
+ for(const change of [
+  ({trace,lifecycle})=>trace.traceEvents.push({...structuredClone(lifecycle),name:'FunctionCall',ph:'X',dur:1}),
+  ({trace,lifecycle})=>trace.traceEvents.push({...structuredClone(lifecycle),name:'UnknownNavigationWork'}),
+  ({lifecycle})=>{lifecycle.args.data.frame='foreign-frame';},
+  ({trace,lifecycle})=>{trace.traceEvents.find(event=>event.name==='v8.compileModule').ts=lifecycle.ts;},
+  ({lifecycle})=>{lifecycle.s='g';},
+  ({lifecycle})=>{lifecycle.s='p';},
+  ({lifecycle})=>{delete lifecycle.s;},
+  ({lifecycle})=>{lifecycle.dur=0;},
+  ({lifecycle})=>{lifecycle.cat='unknown';},
+  ({lifecycle})=>{lifecycle.ph='R';},
+  ({lifecycle})=>{lifecycle.args.data.type='click';},
+  ({lifecycle})=>{delete lifecycle.args.data.sampleTraceId;},
+  ({lifecycle})=>{lifecycle.args.data.sampleTraceId=0;},
+  ({lifecycle})=>{lifecycle.args.data.sampleTraceId='1';},
+ ]){
+  const modified=fixture();change(modified);
+  assert.equal(kind(modified.lhr,modified.trace),'application-or-unattributed');
+ }
+});
 test('native BeginMainThreadFrame sequence is not mistaken for a document frame',()=>{
  const fixture=()=>traceFixture({duration:60,scriptAt:200,mainThreadFrame:true});
  const exact=fixture();
@@ -350,7 +380,7 @@ function withDurations(values,{observer=false,layout=false}={}){
 }
 test('strict startup requires twenty runs with every counted task at most50ms',()=>{
  const rows=withDurations(Array(20).fill(50));validateMobile(rows);
- assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v5');
+ assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v6');
  assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.maxTaskMs,50);
  for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=true,r=>r[0].startup.policy.maxTaskMs=100,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
   const copy=structuredClone(rows);edit(copy);assert.throws(()=>validateMobile(copy));
@@ -373,7 +403,7 @@ test('historical L63 policy evidence cannot stand in for a fresh strict campaign
   for(const run of row.runs)run.lighthouse.attribution.policy='L63-startup-v1';
  }
  assert.throws(()=>validateMobile(rows),/attribution differs/);
- for(const id of ['N3-startup-strict50-v2','N3-startup-strict50-v4']){
+ for(const id of ['N3-startup-strict50-v2','N3-startup-strict50-v4','N3-startup-strict50-v5']){
   const historical=withDurations(Array(20).fill(50));
   for(const row of historical){row.startup.policy.id=id;for(const run of row.runs)run.lighthouse.attribution.policy=id;}
   assert.throws(()=>validateMobile(historical),/attribution differs/);
