@@ -578,7 +578,7 @@ Verified by `src/__tests__/docs-truth.test.ts` > "documents every symbol the roo
 
 FormaJS never builds markup from strings. `h()` creates elements with
 `document.createElement` and writes text with `textContent`, which is why
-`innerHTML` is not used for library-generated markup. Five APIs, the raw sinks,
+`innerHTML` is not used for library-generated markup. The raw sinks
 deliberately parse trusted markup; **none of them sanitizes**, and all are
 first-party-content-only sinks. The HTML runtime refuses its two `srcdoc`
 binding forms before a sink:
@@ -588,7 +588,7 @@ binding forms before a sink:
 | `dangerouslySetInnerHTML={{ __html }}` | prop on `h()` / JSX | assigns `innerHTML` on the element; `null`, `undefined` and `false` are no prop; give no children beside it (`FORMA_W_INNER_HTML_CHILDREN`) |
 | `setHTMLUnsafe(el, html)` | `@getforma/core` | assigns `innerHTML` on the element |
 | `template(html)`, `templateMany(html)` | `@getforma/core` | parses the markup into a cached `<template>`, which compiled output clones |
-| `reconcile(container, html)` | `@getforma/core/runtime` | parses an HTML string into a `<template>` and diffs it into the live page |
+| `mountMarkup(root, html, options)`, then `handle.update(html)` | `@getforma/core/runtime` | parses trusted markup and reconciles it inside the explicitly owned mount; the required options choose its tier and grants |
 | `srcdoc` attribute | `h()` and adoption | the browser parses the *attribute value* as a document, so escaping does not neutralize it; anything but a trusted value is refused in development and production |
 | `data-bind:srcdoc`, `{item…}` in a list row's `srcdoc` | the HTML runtime | refuses the expression/row binding with `FORMA_E_RUNTIME_SRCDOC`; it does not write an iframe document ([HTML-RUNTIME.md](HTML-RUNTIME.md)) |
 
@@ -620,8 +620,9 @@ made by Forma's policy `forma`, so a page whose policy requires Trusted Types
 accepts it at the sink ([`../CSP.md`](../CSP.md#trusted-types)); elsewhere it
 returns a frozen stand-in that core's sinks recognise and write as its markup.
 The zero-build runtime exports it too (`FormaRuntime.trustedHtml` in the CDN
-bundles), for `reconcile()`. A `TrustedHTML` from an application's own policy
-is accepted as well; TypeScript takes it for the `TrustedHtml` type only
+bundles), for `mountMarkup()` and its returned `MountHandle.update()`.
+Reconciliation is internal, not a public runtime export. A `TrustedHTML` from
+an application's own policy is accepted as well; TypeScript takes it for the `TrustedHtml` type only
 through a cast (`value as unknown as TrustedHtml`).
 
 The v3 type signatures and runtime checks reject raw strings, boxed strings
