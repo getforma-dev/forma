@@ -485,6 +485,7 @@ jobs:
         run: |
           python3 scripts/release-owned-linux.test.py
           python3 scripts/release-unpack.test.py
+          node --test scripts/packed-qualification-workflow.test.mjs
       - name: A packed file altered between jobs fails the publish job's check
         run: bash scripts/test-release-artifacts.sh
       - name: After a publish, a different checksum fails and a late version warns
