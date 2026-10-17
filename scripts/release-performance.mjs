@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {ROOT,json,run,digest} from './release-set.mjs';
 import {readPerformanceBaseline,PERFORMANCE_CONTRACT,compareReleaseTags} from './release-performance-baseline.mjs';
-import {completePerformance,validateNative,validateMobile} from './release-performance-contract.mjs';
+import {completePerformance,validateNative,validateMobile,finalizeMobileAttribution} from './release-performance-contract.mjs';
 import {measureMobileRoute,mobileControls} from './release-performance-mobile.mjs';
 import {measurePackedDecoder,validateDecoder} from './release-performance-decoder.mjs';
 import {machineProfile} from './release-measurements.mjs';
@@ -86,6 +86,7 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
     });
    });
   }
+  finalizeMobileAttribution(mobile);
   validateMobile(mobile);
   let client;
   await test('performance: founder client comparison completes in all three engines over packed core',async()=>{

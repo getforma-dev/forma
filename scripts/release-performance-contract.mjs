@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {validateDecoder} from './release-performance-decoder.mjs';
 import {N1_SHAPES,PERFORMANCE_CONTRACT,MOBILE_PROFILE,MOBILE_STARTUP_POLICY} from './release-performance-spec.mjs';
-import {summarizeMobileStartup} from './release-performance-attribution.mjs';
+import {attributeMobileTasks,decodeMobileTrace,summarizeMobileStartup} from './release-performance-attribution.mjs';
 export const finite = (n,label) => {assert(Number.isFinite(n)&&n>=0,`${label}: missing finite nonnegative figure`);return n;};
 export function percentile(samples,fraction) {assert(samples.length>0);const sorted=[...samples].sort((a,b)=>a-b);return sorted[Math.ceil(sorted.length*fraction)-1];}
 const exactKeys=(rows,expected,label)=>assert.deepEqual([...rows].sort(),[...expected].sort(),`${label}: missing or duplicate figure`);
@@ -73,7 +73,7 @@ export function validateMobileControls(observations){
  assert.throws(()=>validateActivation({...slow,lastResponseMs:slow.firstPaintMs},{islands:100}),/over50ms/);
  return {deadActivationRefused:true,longTaskRefused:true};
 }
-export function validateMobile(rows) {
+function validateMobileObservations(rows) {
  exactKeys(rows?.map(row=>row.id)??[],['tenant-login','islands-100'],'N3 routes');
  for(const row of rows){assert.equal(row.pilot,false,'N3: pilot cannot qualify a release');assert.deepEqual(row.profile,MOBILE_PROFILE,'N3: actual mobile profile differs');assert.equal(row.runs?.length,20,'N3: require20 cold runs');
   for(const [index,run] of row.runs.entries()){
@@ -93,10 +93,26 @@ export function validateMobile(rows) {
    assert(Array.isArray(run.lighthouse.longTasks));for(const task of run.lighthouse.longTasks){finite(task.duration,'Lighthouse long task');finite(task.startTime,'Lighthouse task start');}
    validateActivation(run.activation,{islands:row.id==='islands-100'?100:2});
   }
-  const startup=summarizeMobileStartup(row.runs);
+  const tbt=percentile(row.runs.map(run=>run.lighthouse.tbtMs),.95);assert(tbt<MOBILE_STARTUP_POLICY.p95TbtMs,'N3: p95 TBT at or above200ms');assert.equal(row.p95TbtMs,tbt);
+ }
+ // Corroboration is campaign-wide, never a per-route or per-task opt-in. The
+ // existing activation/response/profile/raw-report checks above run first.
+ return rows.every(row=>row.runs.every(({activation:p})=>p.done===true && p.hosts===p.expected && p.lastResponseMs>=p.firstPaintMs && p.longTasks.length===0));
+}
+export function finalizeMobileAttribution(rows){
+ const correlated=validateMobileObservations(rows);
+ for(const row of rows){
+  for(const run of row.runs)run.lighthouse.attribution=attributeMobileTasks(JSON.parse(run.lighthouse.rawLhr),decodeMobileTrace(run.lighthouse.trace),{correlated});
+  row.startup=summarizeMobileStartup(row.runs,{correlated});
+ }
+ return rows;
+}
+export function validateMobile(rows) {
+ const correlated=validateMobileObservations(rows);
+ for(const row of rows){
+  const startup=summarizeMobileStartup(row.runs,{correlated});
   assert.deepEqual(row.startup,startup,'N3: startup summary differs from raw evidence');
   assert(startup.maxTaskMs<=MOBILE_STARTUP_POLICY.maxTaskMs,'N3: application/unattributed task over50ms');
-  const tbt=percentile(row.runs.map(run=>run.lighthouse.tbtMs),.95);assert(tbt<MOBILE_STARTUP_POLICY.p95TbtMs,'N3: p95 TBT at or above200ms');assert.equal(row.p95TbtMs,tbt);
  }
  return rows;
 }
