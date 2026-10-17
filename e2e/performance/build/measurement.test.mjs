@@ -177,3 +177,14 @@ test('native typed text requires the real matched marker/key envelope and exact 
     ['data-forma-key="1"', 'data-forma-key="9"'], ['<!--/f:t0-->', '<!--/f:t9-->'],
   ]) assert.throws(() => assertPage(rendered.replace(before, after), 0, REVISION), /native typed/);
 });
+
+
+test('timed edit response retains its original body before enforcing the existing no-store condition', async () => {
+  const { retainEditResponse } = await import('./run.mjs');
+  const result = {};
+  const good = { status: 200, headers: { 'cache-control': 'no-store' }, html: html(NEXT_REVISION) };
+  assert.equal(retainEditResponse(result, good), good); assert.equal(result.lastEditResponse, good);
+  const bad = { ...good, headers: { 'cache-control': 'public, max-age=300' } };
+  assert.throws(() => retainEditResponse(result, bad), /no-store/);
+  assert.equal(result.lastEditResponse, bad);
+});

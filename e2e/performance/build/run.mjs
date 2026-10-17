@@ -36,6 +36,12 @@ export function retainOutput(owned, path, part, limit = 8 * 1024 * 1024) {
   }
 }
 
+export function retainEditResponse(result, reply) {
+  result.lastEditResponse = reply;
+  assert.match(reply.headers['cache-control'] ?? '', /no-store/);
+  return reply;
+}
+
 export function finalizeResult(result, processes) {
   for (const owned of processes) {
     if (owned.fault) result.failures.push(`${owned.label}: ${owned.fault.stack ?? owned.fault}`);
@@ -196,7 +202,7 @@ async function sample(directory, sampleNumber, source, pilot) {
     const started = now();
     result.edit = changeRevision(GENERATED);
     result.update = await observeUpdate({
-      started, now, read: async () => (result.lastEditResponse = await response(debug.origin, TIMED_ROUTE)), delay: () => delay(10),
+      started, now, read: async () => retainEditResponse(result, await response(debug.origin, TIMED_ROUTE)), delay: () => delay(10),
       record: row => { result.polls.push(row); },
       reloadAndFrame: async () => {
         await page.reload({ waitUntil: 'load', timeout: 10_000 });
