@@ -93,8 +93,10 @@ run or API failure refuses the release. It does not silently wait forever;
 rerun after CI completes if the tag arrived first.
 
 The credential-free `engines` job also runs the reusable Chromium, Firefox and
-WebKit suite on the tagged commit. P17 depends on all three engines succeeding;
-both publishing jobs depend on P17, so an engine failure blocks publication.
+WebKit suite on the tagged commit. P17 starts after packing and may overlap the
+engine suite. Both publishing jobs and the record job directly require successful
+engines and P17, so either failure blocks every release write. This changes only
+job ordering; all verification and timing limits remain in force.
 
 ## Packed set and template locks
 
