@@ -384,7 +384,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
     if(typeof value==='function'){
       let owner:PreparedGroup<void>,first=true,snapshot:(()=>ConditionalSnapshot)|undefined;
       owner=scope.group(()=>{
-        type Read=ConditionalValue|{kind:'show';value:boolean;description:ShowDescriptor}|{kind:'text';value:string};
+        type Read=ConditionalValue|{kind:'show';value:boolean;description:ShowDescriptor}|string;
         let write:(value:Read)=>void;
         const initial=scope.observe<Read>(()=>{
           const result=withNamespace(ns,()=>withAdoptionDescription(value as ()=>unknown));
@@ -393,27 +393,27 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
             if(description.conditional)return conditionalBranch(description,ns,first,owner,snapshot);
             return {kind:'show',description,value:!!description.condition()};
           }
-          return {kind:'text',value:text(result)};
+          return text(result);
         },next=>write(next));first=false;
-        if(initial.kind==='conditional'){
-          conditional(initial,cursor,ns,(update,read)=>{snapshot=read;write=next=>{if(next.kind!=='conditional')refuse();update(next);};});
-        }else if(initial.kind==='show'){
+        if(typeof initial!=='string'&&initial.kind==='conditional'){
+          conditional(initial,cursor,ns,(update,read)=>{snapshot=read;write=next=>{if(typeof next==='string'||next.kind!=='conditional')refuse();update(next);};});
+        }else if(typeof initial!=='string'&&initial.kind==='show'){
           let description=initial.description;
           show(description,cursor,ns,{initial:initial.value,description:()=>description,connect:update=>{
-            write=next=>{if(next.kind!=='show')refuse();description=next.description;update(next.value);};
+            write=next=>{if(typeof next==='string'||next.kind!=='show')refuse();description=next.description;update(next.value);};
           }});
         }else{
-          const target=cursor.textRange(initial.value),parent=target.parentNode;
+          const target=cursor.textRange(initial),parent=target.parentNode;
           const start=target.previousSibling as Comment,end=target.nextSibling as Comment;
-          const startData=start.data,endData=end.data;let previous=initial.value,written=target.data;
+          const startData=start.data,endData=end.data;let previous=initial,written=target.data;
           write=next=>{
             // A changed binding checks only its owned hole. Initial adoption still
             // validates the complete island; live keyed item edits need no scan of
             // unrelated rows, but must not write through a detached/rewritten hole.
-            if(next.kind!=='text'||!target.isConnected||!host.contains(target)||target.parentNode!==parent
+            if(typeof next!=='string'||!target.isConnected||!host.contains(target)||target.parentNode!==parent
               ||target.previousSibling!==start||target.nextSibling!==end
               ||start.data!==startData||end.data!==endData||target.data!==written)refuse();
-            if(next.value!==previous){target.data=next.value;written=next.value;previous=next.value;}
+            if(next!==previous){target.data=next;written=next;previous=next;}
           };
         }
       });return;
