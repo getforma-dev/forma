@@ -74,18 +74,20 @@ describe('original-source adoption hooks',()=>{
     const f=fixture(`export function Counter(p:{optional?:string;choice:'a'|'b'}){const [a]=createSignal(p.optional);const [b]=createSignal(p.choice);const [c]=createSignal<'x'|'y'>('x');const [d]=createSignal('x' as const);const [e]=createSignal<string|null>('x');const [f]=createSignal(p.optional ?? '');return h('div',null,h('input',{value:a}),h('input',{value:b}),h('input',{value:c}),h('input',{value:d}),h('input',{value:e}),h('input',{value:f}));}`);
     expect(writableCount(f.text)).toBe(1);expect(f.text).toMatch(/__forma_adoptWritable\(f, f, "string"/);expect(f.text).toContain("createSignal<'x'|'y'>('x')");
   });
-  it('retains upstream narrowing through aliases, projected fields and forwarded helper props',()=>{
-    for (const initial of [
-      "const first='x' as const;const second=first;const initial=second",
-      "const source={value:'x' as 'x'|'y'};const initial=source.value",
-      "const source={value:'x'} as const;const alias=source;const initial=alias.value",
-      "const initial:'x'|'y'='x'",
-    ]) {
-      const f=fixture(`export function Counter(){${initial};const [value]=createSignal(initial);return h('input',{value});}`);
-      expect(writableCount(f.text),initial).toBe(0);expect(f.text).toContain('__forma_adoptSignal(');
-    }
+  it.each([
+    "const first='x' as const;const second=first;const initial=second",
+    "const source={value:'x' as 'x'|'y'};const initial=source.value",
+    "const source={value:'x'} as const;const alias=source;const initial=alias.value",
+    "const initial:'x'|'y'='x'",
+  ])('retains upstream narrowing through aliases and projected fields: %s',initial=>{
+    const f=fixture(`export function Counter(){${initial};const [value]=createSignal(initial);return h('input',{value});}`);
+    expect(writableCount(f.text),initial).toBe(0);expect(f.text).toContain('__forma_adoptSignal(');
+  });
+  it('retains upstream narrowing through forwarded helper props',()=>{
     const forwarded=fixture(`function Field(p){const [value]=createSignal(p.initial);return h('input',{value});}function Forward(p){return Field(p);}export function Counter(){const initial='x' as const;return Forward({initial});}`);
     expect(writableCount(forwarded.text)).toBe(0);
+  });
+  it('retains upstream narrowing through destructured helper props',()=>{
     const destructured=fixture(`function Field({initial}){const [value]=createSignal(initial);return h('input',{value});}export function Counter(){const initial=['x'] as const;return Field({initial});}`);
     expect(writableCount(destructured.text)).toBe(0);
   });
