@@ -37,20 +37,40 @@
 /// ```
 pub(crate) struct RemovedBridges;
 
-/// `assets::load_manifest` (L-13; FORMA-120).
+/// Public startup helpers return errors in 3.0 (L-13; DR-12; FORMA-202).
 ///
 /// ```
-/// #![allow(deprecated)]
-/// fn load<A: rust_embed::Embed>() -> forma_server::AssetManifest {
-///     forma_server::assets::load_manifest::<A>()
-/// }
-/// ```
-///
-/// ```compile_fail
 /// #![deny(deprecated)]
+/// fn load<A: rust_embed::Embed>() -> Result<forma_server::AssetManifest, String> {
+///     forma_server::assets::load_manifest::<A>()
+/// }
+/// fn text<A: rust_embed::Embed>(name: &str) -> Result<String, String> {
+///     forma_server::assets::asset::<A>(name)
+/// }
+/// fn nonce() -> Result<forma_server::CspNonce, forma_server::NonceError> {
+///     forma_server::CspNonce::generate()
+/// }
+/// fn nonce_alias() -> Result<forma_server::CspNonce, forma_server::NonceError> {
+///     forma_server::generate_csp_nonce()
+/// }
+/// ```
+///
+/// The old infallible signatures cannot silently discard these errors.
+/// ```compile_fail
 /// fn load<A: rust_embed::Embed>() -> forma_server::AssetManifest {
 ///     forma_server::assets::load_manifest::<A>()
 /// }
+/// ```
+/// ```compile_fail
+/// fn text<A: rust_embed::Embed>(name: &str) -> String {
+///     forma_server::assets::asset::<A>(name)
+/// }
+/// ```
+/// ```compile_fail
+/// fn nonce() -> forma_server::CspNonce { forma_server::CspNonce::generate() }
+/// ```
+/// ```compile_fail
+/// fn nonce() -> forma_server::CspNonce { forma_server::generate_csp_nonce() }
 /// ```
 pub(crate) struct LoadManifest;
 

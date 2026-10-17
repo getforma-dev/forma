@@ -11,7 +11,7 @@
 //! #[derive(PageProps)]
 //! struct HomeProps { title: String }
 //! fn start<A: rust_embed::Embed + 'static>() -> Result<PageHandle<HomeProps>, String> {
-//!     let manifest = assets::try_load_manifest::<A>()?;
+//!     let manifest = assets::load_manifest::<A>()?;
 //!     let pages = load_ir_modules::<A>(&manifest).map_err(|e| format!("{e:?}"))?;
 //!     let home = pages.bind("home").map_err(|e| format!("{e:?}"))?;
 //!     pages.finalize().map_err(|e| format!("{e:?}"))?;
@@ -37,10 +37,8 @@
 // compiler enforces rather than a claim.
 #![forbid(unsafe_code)]
 // No `unwrap`, `expect` or `panic!` in the code that ships (DR-12, SR44): a
-// render returns its failure. Tests may. The 0.2.1 functions whose signatures
-// have no room for an error (`CspNonce::generate`, `assets::asset`, the
-// deprecated `assets::load_manifest`) keep their documented panics under a
-// scoped `allow`, each with its fallible twin; none is on the render path.
+// render returns its failure. Tests may. Public asset/manifest loading and
+// nonce generation also return their errors, including the compatibility aliases.
 #![cfg_attr(
     not(test),
     deny(clippy::unwrap_used, clippy::expect_used, clippy::panic)
