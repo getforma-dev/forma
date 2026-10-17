@@ -25,7 +25,9 @@ export function run(command, args, cwd = ROOT, options = {}) {
 }
 export function assertModuleTrustPolicy(policy) {
   assert(/FMIR is a \*\*trusted input\*\*/.test(policy) && /Only run IR produced by a compiler you trust/.test(policy), 'SR41: SECURITY.md must state the trusted compiler boundary (SA4)');
-  assert(policy.includes("every FMIR module must come from the application's own build") && policy.includes('any other source requires M9 before admission') && policy.includes('M9, M10 and design5 are deferred'), 'SA4: SECURITY.md must state own-build module provenance and deferred untrusted admission');
+  assert(policy.includes("every FMIR module must come from the application's own build") && policy.includes('any other source requires M9 before admission') && policy.includes('M9 and design5 remain deferred') && policy.includes('3.0 does not provide an untrusted-module admission mechanism'), 'SA4: SECURITY.md must state own-build module provenance and deferred untrusted admission');
+  assert(policy.includes('Decoder/walker fuzzing (M10) is implemented:') && policy.includes('runs `parse_raw`, `parse_body`, `parse_mutated` and `walk` under AddressSanitizer') && !policy.includes('M9, M10 and design5 are deferred'), 'SA4: SECURITY.md must state implemented M10 ASan fuzzing separately from deferred admission');
+  assert(policy.includes('Fuzzing does not authenticate module producers.') && policy.includes('Structural validation does not establish who produced a module (SA4).'), 'SA4: SECURITY.md must not equate fuzzing or structural validation with producer authentication');
 }
 export function setVersions(root = ROOT) {
   const metadata = JSON.parse(run('cargo', ['metadata', '--no-deps', '--format-version', '1'], root));
