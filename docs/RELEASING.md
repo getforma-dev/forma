@@ -294,6 +294,16 @@ no timestamp is inferred, failed sample replaced or performance limit relaxed.
 The finite capture diagnostic does not qualify a release: a fresh complete P17
 campaign against the packed candidate is required.
 
+The Lighthouse browser also receives `--enable-automation`. Chromium 156 uses
+this explicit automated-test setting to skip its reading-mode suggestion
+heuristic, whose isolated-world script and context initialization caused the
+retained 99.342 ms task in the failed `a2e61c77` rehearsal. The source was matched
+exactly to that Chromium version. This selects an automated lab browser and also
+suppresses password saving/filling UI and infobar animations. The other launcher
+defaults, mobile profile, raw-task classifier and timing
+limits stay unchanged. The old observation remains failed, and a fresh complete
+packed P17 must qualify the changed setup.
+
 A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (for example `v3.0.0-rc.1`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first published 3.0.0 beta may record the verified absence of a performance contract in its latest published 3.0.0 alpha predecessor and establish the baseline. A beta tag that failed before publication remains immutable; its successor can still be the first published beta. A published beta with missing performance cannot fall back to alpha or bootstrap another beta. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.
 
 
