@@ -29,6 +29,32 @@ CHANGELOG heading (for example `## [3.0.0-beta.3]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
 
+### Hosted packed rehearsal
+
+After `.github/workflows/packed-qualification.yml` is present on the default
+branch, dispatch it on a reviewed immutable preparation ref, for example:
+
+```sh
+gh workflow run packed-qualification.yml --ref 'codex/forma-beta3-qualification-<commit>' -f target_tag=v3.0.0-beta.3
+```
+
+The read-only workflow builds and dry-packs all seven packages from that run's
+exact commit, then passes the original candidate artifact to a separate clean
+Linux checkout. It checks the producer's DS11 digest, source commit, run,
+archive bytes, coordinated versions and Cargo lock before running the unchanged
+whole P17 under the existing Linux process owner. Original archives, failed
+reports, raw observations and cleanup results are retained as run artifacts.
+Its 60-minute job and 45-minute verification step allow setup and cleanup;
+P17's independent 1,800-second acceptance limit remains unchanged.
+
+`target_tag` must match all seven prepared versions. Use `v3.0.0-rc.1` for an RC
+preparation: pending milestone gates remain recorded, so the rehearsal can
+collect evidence before they close. The normal baseline reader still requires
+an actual comparable published beta DS12 for RC performance. The workflow has
+no publication credentials, never writes DS12 to a Release, and neither closes
+gates nor replaces exact-main CI or the tagged release workflow. A failed run
+remains failed; another attempt requires an explicit decision.
+
 ## Milestone gate
 
 A tag names its milestone: `-alpha.N`, `-beta.N`, `-rc.N`, or none for the
