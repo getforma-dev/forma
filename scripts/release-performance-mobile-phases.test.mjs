@@ -16,10 +16,10 @@ test('a Lighthouse capture error preserves its original report and trace, refuse
  const lhr={lighthouseVersion:'13.5.0',runtimeError:{code:'NO_NAVSTART',message:'fixture missing navigation start'}},rawTrace={traceEvents:[{name:'RunTask',ts:7}]};
  const parent=mkdtempSync(join(tmpdir(),'forma-mobile-failure-'));
  const directory=createPerformanceJournal(parent,{fixture:'capture failure'});
- let launches=0,kills=0,activations=0,samples=0,requestedUrl,flags;
+ let launches=0,kills=0,activations=0,samples=0,requestedUrl,flags,launchOptions;
  const load=async name=>{
   if(name==='lighthouse')return {default:async(url,options)=>{requestedUrl=url;flags=options;return {lhr,artifacts:{Trace:rawTrace}};}};
-  if(name==='chrome-launcher')return {launch:async()=>{launches++;return {port:1,kill:async()=>{kills++;}};}};
+  if(name==='chrome-launcher')return {launch:async options=>{launchOptions=options;launches++;return {port:1,kill:async()=>{kills++;}};}};
   if(name==='@playwright/test')return {chromium:{executablePath:()=>'/fixture/chrome'}};
   if(name==='lighthouse/core/config/constants.js')return {defaultSettings:MOBILE_PROFILE};
   throw new Error(`unexpected dependency ${name}`);
@@ -33,6 +33,7 @@ test('a Lighthouse capture error preserves its original report and trace, refuse
   assert.equal(JSON.parse(readFileSync(join(directory,journal.entries[1].file),'utf8')).rawLhr,JSON.stringify(lhr));
   assert.deepEqual(JSON.parse(readFileSync(join(directory,journal.entries[2].file),'utf8')),rawTrace);
   assert.equal(launches,1);assert.equal(kills,1);assert.equal(activations,0);assert.equal(samples,0);
+  assert.deepEqual(launchOptions,{chromePath:'/fixture/chrome',chromeFlags:['--headless','--no-sandbox','--enable-automation'],logLevel:'error'});
   assert.equal(requestedUrl,'http://fixture.invalid/');
   assert.deepEqual(flags,{port:1,logLevel:'error',output:'json',onlyCategories:['performance'],...MOBILE_PROFILE,blankPage:'http://fixture.invalid/__forma_performance_blank'});
  }finally{rmSync(parent,{recursive:true,force:true});}
