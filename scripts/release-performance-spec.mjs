@@ -24,10 +24,9 @@ export const MOBILE_PROFILE=Object.freeze({
   "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36"
 });
 
-// Strict startup qualification; v6 proves native navigation lifecycle origin
-// for complete and thread-scoped instant records. Task limits are unchanged;
-// historical failures remain failed and a fresh full campaign is required.
+// L-66: trace-derived absence of application attribution is corroborated only
+// by all forty complete, clean independent probes. Raw tasks and limits remain.
 export const MOBILE_STARTUP_POLICY = Object.freeze({
- id:'N3-startup-strict50-v6',targetMs:50,maxTaskMs:50,
+ id:'N3-startup-correlated-v1',targetMs:50,maxTaskMs:50,
  runsPerRoute:20,responseAfterPaintMs:500,p95TbtMs:200,
 });

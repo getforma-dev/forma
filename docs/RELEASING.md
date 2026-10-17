@@ -29,6 +29,32 @@ CHANGELOG heading (for example `## [3.0.0-beta.3]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
 
+### Hosted packed rehearsal
+
+After `.github/workflows/packed-qualification.yml` is present on the default
+branch, dispatch it on a reviewed immutable preparation ref, for example:
+
+```sh
+gh workflow run packed-qualification.yml --ref 'codex/forma-beta3-qualification-<commit>' -f target_tag=v3.0.0-beta.3
+```
+
+The read-only workflow builds and dry-packs all seven packages from that run's
+exact commit, then passes the original candidate artifact to a separate clean
+Linux checkout. It checks the producer's DS11 digest, source commit, run,
+archive bytes, coordinated versions and Cargo lock before running the unchanged
+whole P17 under the existing Linux process owner. Original archives, failed
+reports, raw observations and cleanup results are retained as run artifacts.
+Its 60-minute job and 45-minute verification step allow setup and cleanup;
+P17's independent 1,800-second acceptance limit remains unchanged.
+
+`target_tag` must match all seven prepared versions. Use `v3.0.0-rc.1` for an RC
+preparation: pending milestone gates remain recorded, so the rehearsal can
+collect evidence before they close. The normal baseline reader still requires
+an actual comparable published beta DS12 for RC performance. The workflow has
+no publication credentials, never writes DS12 to a Release, and neither closes
+gates nor replaces exact-main CI or the tagged release workflow. A failed run
+remains failed; another attempt requires an explicit decision.
+
 ## Milestone gate
 
 A tag names its milestone: `-alpha.N`, `-beta.N`, `-rc.N`, or none for the
@@ -276,7 +302,7 @@ close FORMA-144's final-version cleanup gate.
 
 ### Per-release performance contract (FORMA-191)
 
-P17 `performance: measured-v1` requires20,000 native walks for each of five consumer-shaped pages in the application release profile, N5 allocation/time growth, public one-past budget refusals,20 cold applied-mobile Lighthouse13.5.0 runs on each of the tenant-login and100-island pages, independent actual event-response observations, and the archived founder comparison in all three browser engines. FORMA-103 also measures the shipped public activation decoder: one MiB of ASCII and one MiB containing20,000 multibyte strings, five warmups then forty fresh-document samples each at four-times Chromium CPU slowdown. Registration is outside timing; timing ends at the first component instruction. Every measured sample must be at most30ms under L61. The actual packed compiler regenerates both original contracts before measurement; raw observations, artifact/compiler hashes, enforced Trusted Types policy and real oversize/malformed refusal controls are recorded. Decoder observations are synchronously flushed beside `p17.json` after each timed sample, and the complete report is saved before threshold validation. Interrupted or refused attempts remain outside disposable fixture directories. The paired mobile controls retain raw host/response observations and the injected110-millisecond interval; the long-task observer must capture that interval, rather than merely any unrelated slow task. New and prior records require the same control evidence. No timing row may be omitted. Native p99 throughput below1,500,000nodes/s or at/below half the prior DS12 rate fails. TBT p95 must be below200ms; responses must complete within500ms of first paint; strict startup qualification requires every application/unattributed task to be at most50ms across each route’s fresh20 runs; p95 is retained as a descriptive measurement, not an outlier allowance. Independent observer tasks all count. Only same-audit trace proof of browser work before the first application script in the committed main renderer can exclude a Lighthouse task: either browser-only layout, or the exact main-document commit/parser/context chain with source-bound pinned audit bootstrap. The exact source-bound Lighthouse idle-check wrapper may also be excluded at any time only with its distinct audit context, same-navigation frame, complete child-event nesting and exact timer stack. Mixed, unknown and other late tasks count in full. DS12 reports the50ms target miss separately, all per-run maxima and the p95. A pilot cannot qualify. The complete raw Lighthouse reports, bounded compressed traces and configuration, per-walk durations, machine/profile, prior-record digest and client comparisons are embedded in DS12. They are measurements of a lab profile, not a phone claim.
+P17 `performance: measured-v1` requires20,000 native walks for each of five consumer-shaped pages in the application release profile, N5 allocation/time growth, public one-past budget refusals,20 cold applied-mobile Lighthouse13.5.0 runs on each of the tenant-login and100-island pages, independent actual event-response observations, and the archived founder comparison in all three browser engines. FORMA-103 also measures the shipped public activation decoder: one MiB of ASCII and one MiB containing20,000 multibyte strings, five warmups then forty fresh-document samples each at four-times Chromium CPU slowdown. Registration is outside timing; timing ends at the first component instruction. Every measured sample must be at most30ms under L61. The actual packed compiler regenerates both original contracts before measurement; raw observations, artifact/compiler hashes, enforced Trusted Types policy and real oversize/malformed refusal controls are recorded. Decoder observations are synchronously flushed beside `p17.json` after each timed sample, and the complete report is saved before threshold validation. Interrupted or refused attempts remain outside disposable fixture directories. The paired mobile controls retain raw host/response observations and the injected110-millisecond interval; the long-task observer must capture that interval, rather than merely any unrelated slow task. New and prior records require the same control evidence. No timing row may be omitted. Native p99 throughput below1,500,000nodes/s or at/below half the prior DS12 rate fails. TBT p95 must be below200ms; responses must complete within500ms of first paint; strict startup qualification requires every application/unattributed task to be at most50ms across each route’s fresh20 runs; p95 is retained as a descriptive measurement, not an outlier allowance. Independent observer tasks all count. Only same-audit trace proof of browser work before the first application script in the committed main renderer can exclude a Lighthouse task: either browser-only layout, or the exact main-document commit/parser/context chain with source-bound pinned audit bootstrap. The exact source-bound Lighthouse idle-check wrapper may also be excluded at any time only with its distinct audit context, same-navigation frame, complete child-event nesting and exact timer stack. Application and mixed tasks count in full. Other unattributed tasks may use the founder-approved L-66 correlation only with readable, source-bound trace evidence and all forty complete independent probes recording zero long tasks, as detailed below. DS12 reports the50ms target miss separately, all per-run maxima and the p95. A pilot cannot qualify. The complete raw Lighthouse reports, bounded compressed traces and configuration, per-walk durations, machine/profile, prior-record digest and client comparisons are embedded in DS12. They are measurements of a lab profile, not a phone claim.
 
 Each Lighthouse audit still starts a fresh browser profile. Before tracing,
 Lighthouse visits the fixed same-origin `/__forma_performance_blank` fixture
@@ -313,10 +339,27 @@ labels. Each compressed and decoded trace is limited to32MiB. DS12’s128MiB
 transport limit accommodates forty complete traces and reports; other release
 metadata bounds and product budgets are unchanged. The previous90ms negative
 control and all historical failures remain archived. A real110ms injected task
-must be observed and refused independently of response latency. Acceptance
-requires a new complete campaign under `N3-startup-strict50-v6`. The earlier
+must be observed and refused independently of response latency.
+The current policy is `N3-startup-correlated-v1` (L-66). A task over 50 ms may be
+classified `browser-internal-unattributed` only if actual trace-derived bundle
+and inline-script identities show no application frames or script URLs in that
+task, and all forty complete, correct independent input-response observations
+have empty long-task arrays. Missing or ambiguous script inventory, unreadable
+traces and unresolved execution sources are not absence evidence. Any application
+attribution or independent observed long task prevents this new exclusion. The
+validator recomputes correlation across both routes and attribution from raw
+traces; it does not trust a producer's classification. This records corroboration,
+not proof of browser-only implementation. Raw durations, whole-page metrics,
+50 ms application and 500 ms response limits remain unchanged.
+
+Do not repeat a full campaign solely for this attribution decision. Retained
+complete raw observations may be analyzed under the named rule in separate
+outputs without rewriting their original report. Missing stages, missing
+observations and changed products still require actual qualification; a mobile
+analytical replay is not a whole-P17 pass. See [L-66 and its source-coverage
+requirements](release/N3-NATIVE-RESOURCE-ATTRIBUTION.md). The earlier
 `N3-startup-strict50-v1` layout-only classifier remains historical evidence.
-The current classifier may also separate a main-document commit task only when
+The retained positive-native-proof branch may also separate a main-document commit task only when
 the same trace proves the exact navigation request, committed frame, response,
 parser and V8-context chain before the first application script. The request
 must precede its response and commit; the commit must contain load, parser and
