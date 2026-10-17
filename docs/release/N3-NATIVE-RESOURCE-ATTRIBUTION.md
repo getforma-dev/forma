@@ -64,8 +64,8 @@ tenant-login audit recorded a 66.737 ms document bootstrap task containing a
 711.757 ms before the first application module compile. Version 4's 1 ms
 heuristic kept that task counted. Separate version 5 analysis preserves the
 66.737 ms raw duration while proving its origin. The ninth audit's separate
-`NO_NAVSTART` capture failure remains unresolved; neither reanalysis nor the
-eight retained pairs constitutes a completed P17 qualification.
+`NO_NAVSTART` capture failure remains a failed observation; neither reanalysis
+nor the eight retained pairs constitutes a completed P17 qualification.
 
 The later beta.3 rehearsal remains failed at 60 of 61 checks. Its tenant-login
 run 1 retained a 52.182 ms navigation task with an instant native `unload`
@@ -73,3 +73,29 @@ record; the task ended 714.431 ms before the first application compile. Separate
 version 6 replay changes only that task's attribution across the 40 saved
 observations, retaining its raw duration and every other task and metric. This
 replay does not qualify the original P17 or replace a fresh complete campaign.
+
+A subsequent beta.3 rehearsal on source `34aa2978` failed after 58 recorded
+checks: its second tenant-login capture lacked the audited main frame's
+`navigationStart`, `fetchStart`, main-document request and `CommitLoad`. The
+main-frame ID stayed unchanged, but the renderer changed from 75033 to 75035.
+That renderer's first positive-timestamp event appeared 596.832 ms after tracing
+began. Its only `navigationStart` belonged to a different, empty-URL document;
+Lighthouse correctly refused to use it. A successful earlier capture contained
+a similar secondary-document event, so that event does not establish a target
+redirect or changed main-frame identity. Late trace enablement during renderer
+creation is a plausible explanation, not a proven Chromium internal cause.
+
+The capture harness now uses a fixed inert same-origin neutral page before
+Lighthouse's normal cache/storage reset, throttling and trace start. Destination
+renderer initialization moves outside measurement; target navigation, resources
+and application work remain cold and measured. The setup contract and remaining
+qualification requirement are described in [RELEASING](../RELEASING.md).
+Six predeclared captures, each with a fresh browser and origin, recorded the real
+target navigation in the initial trace renderer and passed the pinned trace
+processor. Measured response ordinals proved the target HTML and JavaScript
+were first fetched during measurement, with no disk-cache or service-worker
+response. Those diagnostic pages are not the release fixtures and do not
+constitute P17 acceptance. The original missing-navigation trace still fails.
+This change neither rewrites the retained trace nor accepts its missing sample.
+The failed P17 and its scratch/backup evidence remain preserved; only a fresh
+complete P17 can qualify the changed measurement setup.
