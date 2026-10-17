@@ -2,6 +2,7 @@
 
 ## [3.0.0-beta.2] — qualification pending
 
+- Refuse oversized default sorts from their existing length-only cost bound before scanning elements. Preserve the 50 ms SR33 limit and all admitted-sort charges; update the linear-sort mutation to remove the logarithmic factor from both preflight and final cost.
 - Coordinate all seven packages and both template source seeds at beta.2. The immutable beta.1 tag failed its Firefox SR33 timing gate before any package publication; its original evidence remains retained.
 - Allow the first published beta to establish the performance baseline from the authenticated latest alpha record even when an earlier beta tag never published. Published beta records cannot fall back to alpha; RC/final still require comparable performance evidence.
 - Tagged browser/P17 qualification and trusted publication remain pending.

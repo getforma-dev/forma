@@ -297,9 +297,9 @@
   "tags": [
    "security"
   ],
-  "find": "  return per * log2(len(r) + 1);",
-  "replace": "  return per;",
-  "note": "sort is charged per element, not per comparison, so a default sort of 30,000 elements passes. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+  "find": "  const levels = log2(n + 1);",
+  "replace": "  const levels = 1;",
+  "note": "sort is charged per element in both its length-only preflight and final cost, not per comparison, so a default sort of 30,000 elements passes. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
  },
  {
   "id": "expr/cost-sparse-scan-unrowed",
