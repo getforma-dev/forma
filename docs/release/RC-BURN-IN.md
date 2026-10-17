@@ -8,6 +8,14 @@ run and retained evidence.
 
 ## Audit and release chain
 
+Before freezing the RC tree, integrate the accepted beta source, prepare the RC
+versions, and close each non-audit RC contract row only with its actual evidence.
+The RC performance baseline must come from a successfully published beta DS12;
+a local rehearsal or a failed immutable beta tag cannot provide it. Complete
+current packed qualification and the required full mutation campaign before
+accepting the whole-release audit. Gate statuses and future evidence stay
+pending until those results exist.
+
 Prepare the coordinated RC version before freezing the product and harness tree
 for review. Use a different reviewer model, or the founder-authorized L-65
 fallback: a separate reviewer initialized with fresh context, including on the
