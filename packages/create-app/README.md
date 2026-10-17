@@ -70,14 +70,14 @@ exists.
 | `dashboard` | Phase 1 (client mount) | DevOps admin panel — 4 pages, 8 API routes, SVG chart, Tailwind CSS, Gruvbox theme, 16 Playwright tests |
 | `minimal` | Phase 1, or Phase 2 SSR with `npm run build:ssr` | Rust server + a single-file JSX page, ready to build on |
 
-The dashboard is client-rendered on purpose. The FMIR compiler walks source
-rather than executing it, so a construct it cannot prove — with the compiler
-version the templates install, that includes component tags — degrades to an
-empty island shell, and serving those as Phase 2 is worse than not serving them
-at all. The dashboard's README documents the measurement behind that choice;
-the minimal template is where a working Phase 2 setup lives; and
-[docs/RENDERING-PHASES.md](docs/RENDERING-PHASES.md) is the rule itself, for
-whoever writes the next template.
+The dashboard explicitly uses client rendering. The FMIR compiler walks source
+rather than executing it and accepts only the documented native subset. It
+refuses unsupported native source with a coded diagnostic; it does not emit an
+empty placeholder or silently change a native route to client rendering.
+The minimal template demonstrates native rendering with declared island state;
+see [the admitted subset](../compiler/docs/subset.md) and
+[the template rendering guide](docs/RENDERING-PHASES.md) when choosing a mode
+for a new template.
 
 ## What You Get
 
@@ -142,14 +142,14 @@ The gate requires all 17 heavy controls plus the structural suite, with no skips
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | Vite/esbuild plugin — h() optimization, server transforms, FMIR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR generation, coded diagnostics and esbuild SSR integration |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
 
 ### Backend (Rust)
 
 | Package | Description |
 |---|---|
-| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format: parser, walker, WASM exports |
+| [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format, structural validation and native Rust walker |
 | [forma-server](https://crates.io/crates/forma-server) | Axum middleware: SSR, asset serving, CSP headers |
 
 ### Full Framework
