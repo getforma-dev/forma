@@ -94,6 +94,10 @@ test('RC cannot record without a real audit, nor with changed production after r
 
 test('the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones', () => {
   const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
+  // Keep the fixture's later gates open independently of live release progress.
+  contracts.milestones.beta.gates['FORMA-188 fixture applications'].status = 'pending';
+  contracts.milestones.rc.gates['FORMA-145 audit'].status = 'pending';
+  contracts.milestones.final.gates['FORMA-191'].status = 'pending';
   const milestone = releaseMilestone(contracts, '3.0.0-alpha.1');
   const set = { tag: 'v3.0.0-alpha.1', commit: 'a'.repeat(40), run: 1, contracts, milestone, packages: [{ name: 'forma-ir', version: '3.0.0-alpha.1', sha256: 'b'.repeat(64) }] };
   const notes = releaseNotes(set, { ciRun: 2, elapsedSeconds: 12.34 }, '## [3.0.0-alpha.1]\n\nFirst alpha.', milestone);
@@ -111,6 +115,16 @@ test('the GitHub Release names the milestone, where it went on npm, and every ga
   assert.match(measured, /Milestone: alpha \(M2\)/);
   assert.match(measured, /P17 ran 301 s of 1,800 s; the most Forma code on any fixture route is 25,366 B of 27,500 B/);
   assert.equal(releaseTitle('3.0.0-alpha.1', milestone), 'Forma 3.0.0-alpha.1 (alpha, M2)');
+  const betaContracts = structuredClone(contracts);
+  for (const gate of Object.values(betaContracts.milestones.beta.gates)) gate.status = 'done';
+  const beta = releaseMilestone(betaContracts, '3.0.0-beta.1');
+  const betaNotes = releaseNotes({ ...set, tag: 'v3.0.0-beta.1', contracts: betaContracts, milestone: beta,
+    packages: [{ ...set.packages[0], version: '3.0.0-beta.1' }],
+  }, { ciRun: 2, elapsedSeconds: 1 }, '## [3.0.0-beta.1]\n\nBeta.', beta);
+  assert.match(betaNotes, /Milestone: beta \(M3\), pre-release on npm `next`\./);
+  assert.doesNotMatch(betaNotes, /\n- before beta \(M3\):/);
+  assert.match(betaNotes, /\n- before rc \(M4\): .*FORMA-145 audit/);
+  assert.match(betaNotes, /\n- before final \(M5\): .*FORMA-191: the per-release measurements in P17/);
   const done = structuredClone(contracts);
   for (const m of Object.values(done.milestones)) for (const gate of Object.values(m.gates)) gate.status = 'done';
   const final = releaseMilestone(done, '3.0.0');
