@@ -1743,7 +1743,7 @@
   ],
   "find": "  if (ownerOf(root) !== mount) return;\n  // Idempotency guard",
   "replace": "  // Idempotency guard",
-  "note": "Mandatory mountScope context must match the actual nearest owner. The former auto/tierless entry path is removed; this defense-in-depth mutant remains in the corpus without claiming its historical trigger still exists."
+  "note": "Mandatory mountScope context must match the nearest explicit owner. A connected custom element mounts its child, then host insertion leaves a raw scope below it; the later parent scan must not bind that scope. The former auto/tierless entry path remains removed and its historical trigger is retired. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"leaves host-inserted scopes below the connected nested mount unbound\""
  },
  {
   "id": "tiered/outer-scope-binds-mount",
@@ -1751,9 +1751,9 @@
   "tags": [
    "security"
   ],
-  "find": "    if (ownedBelow(el, root)) continue;\n    bindElement(el, scope, disposers);",
-  "replace": "    bindElement(el, scope, disposers);",
-  "note": "Scope binding must skip a descendant already owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
+  "find": "      if (ownedBelow(el, root)) continue;\n      bindElement(el, scope, disposers);",
+  "replace": "      bindElement(el, scope, disposers);",
+  "note": "Parent scope binding must skip a child explicitly mounted by its custom-element connectedCallback before the parent scans. The child retains its own listener/state and confined grants. The former tierless caller remains removed and its historical execution claim is retired. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"does not bind the connected nested mount with its parent scope or grants\""
  },
  {
   "id": "tiered/outer-refs-into-mount",
@@ -1761,9 +1761,9 @@
   "tags": [
    "security"
   ],
-  "find": "    if (ownedBelow(el, root)) continue;\n    const name = el.getAttribute('data-ref');",
-  "replace": "    const name = el.getAttribute('data-ref');",
-  "note": "Scope ref collection must skip a descendant owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
+  "find": "      if (ownedBelow(el, root)) continue;\n      const name = el.getAttribute('data-ref');",
+  "replace": "      const name = el.getAttribute('data-ref');",
+  "note": "Parent ref collection must skip a child explicitly mounted by its custom-element connectedCallback before the parent scans. The real inner data-ref stays absent from parent expressions. The former tierless caller remains removed and its historical execution claim is retired. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"does not collect the connected nested mount refs into the parent scope\""
  },
  {
   "id": "tiered/denial-silenced",
