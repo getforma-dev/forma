@@ -3,6 +3,10 @@
 // same function with a clock and handles whose work is known. Acceptance remains
 // in indexed-products.spec.ts; calibration never examines a relative result.
 export function measureIndexedPublicSet() {
+  // Synchronous diagnostic emission only between measured intervals. No yield,
+  // retry or operation reorder; Node retains each completed original row.
+  const progress = (row: object) => console.debug('[forma:indexed-progress] ' + JSON.stringify(row));
+  progress({ phase: 'warmup', operationsPerOwner: 5000 });
   const handles = (window as any).__indexed;
   const values = [{ id: 'row-0', label: 'Timing A' }, { id: 'row-0', label: 'Timing B' }];
   const samples = { small: [] as number[], large: [] as number[] };
@@ -20,6 +24,7 @@ export function measureIndexedPublicSet() {
   }
   const clockResolution = ticks.length ? Math.min(...ticks) : 0;
   const targetDuration = Math.max(32, 512 * clockResolution);
+  progress({ phase: 'clock', ticks, resolution: clockResolution, targetDuration });
   let batch = 256;
   const maximumBatch = 1_048_576, calibration: { batch: number; small: number; large: number }[] = [];
   for (;;) {
@@ -30,12 +35,14 @@ export function measureIndexedPublicSet() {
       elapsed[name] = performance.now() - began;
     }
     calibration.push(elapsed);
+    progress({ phase: 'calibration', ...elapsed });
     if (Math.min(elapsed.small, elapsed.large) >= targetDuration || batch === maximumBatch) break;
     batch *= 2;
   }
   const resolved = clockResolution > 0 && ticks.length === 16
     && Math.min(calibration.at(-1)!.small, calibration.at(-1)!.large) >= targetDuration;
   const rounds = resolved ? 101 : 0;
+  progress({ phase: 'paired', resolved, batch, rounds });
   for (let round = 0; round < rounds; round++) {
     // Alternate order to avoid assigning every earlier/JIT/GC slot to one size.
     for (const name of (round % 2 ? ['large', 'small'] : ['small', 'large']) as ('small' | 'large')[]) {
@@ -46,15 +53,21 @@ export function measureIndexedPublicSet() {
       maximumSingle = Math.max(maximumSingle, performance.now() - single);
       handles[name].set('row-0', values[1]);
     }
+    progress({ phase: 'paired-row', round, small: samples.small.at(-1), large: samples.large.at(-1), maximumSingle });
   }
   const quantile = (values: number[], q: number) => [...values].sort((a, b) => a - b)[Math.ceil(values.length * q) - 1]!;
   const summary = Object.fromEntries(Object.entries(samples).map(([name, values]) => [name, { median: quantile(values, 0.5), p95: quantile(values, 0.95) }])) as Record<'small' | 'large', { median: number; p95: number }>;
   const noOp = { small: [] as number[], large: [] as number[] };
-  for (let round = 0; round < rounds; round++) for (const name of ['small', 'large'] as const) {
-    const began = performance.now();
-    for (let i = 0; i < batch; i++) handles[name].set('row-0', values[1]);
-    noOp[name].push((performance.now() - began) / batch);
+  progress({ phase: 'noop', batch, rounds });
+  for (let round = 0; round < rounds; round++) {
+    for (const name of ['small', 'large'] as const) {
+      const began = performance.now();
+      for (let i = 0; i < batch; i++) handles[name].set('row-0', values[1]);
+      noOp[name].push((performance.now() - began) / batch);
+    }
+    progress({ phase: 'noop-row', round, small: noOp.small.at(-1), large: noOp.large.at(-1) });
   }
+  progress({ phase: 'complete', rounds, batch, resolved });
   const spread = Object.fromEntries(Object.entries(samples).map(([name, values]) => [name, { min: Math.min(...values), p05: quantile(values, 0.05), max: Math.max(...values) }]));
   return { noOp, spread, clock: { ticks, resolution: clockResolution, targetDuration, maximumBatch, calibration, resolved }, protocol: '101 alternating paired samples of one shared calibrated batch; each sample is mean complete public set duration including synchronous DOM writes; 5000 warmup edits per owner; clock calibration seeks at least 512 ticks and 32ms per batch; no acceptance retries; single-operation maxima sampled separately', batch, rounds, samples, summary, maximumSingle, rows: [document.querySelectorAll('#small li').length, document.querySelectorAll('#large li').length], labels: [...document.querySelectorAll('#small li:first-child b, #large li:first-child b')].map(node => node.textContent), userAgent: navigator.userAgent };
 }

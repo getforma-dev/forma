@@ -1,9 +1,10 @@
-import { expect, test, type Page, type Route } from '@playwright/test';
+import { expect, test, type ConsoleMessage, type Page, type Route } from '@playwright/test';
 import { dirname, join } from 'node:path';
 import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { arch, cpus, platform, release } from 'node:os';
 import { SSR_ORIGIN } from './origin';
 import { measureIndexedPublicSet } from './indexed-timing';
+import { createIndexedProgressWriter } from './indexed-progress.mjs';
 
 test.use({ baseURL: SSR_ORIGIN });
 test.setTimeout(60_000);
@@ -107,12 +108,35 @@ test('indexed products: typed rows adopt without writes; set touches only one ro
 });
 
 test('indexed products: complete public set in 2000 rows stays within a frame and within 10% of 200 rows', async ({ page }, info) => {
-  const errors = await observe(page); await page.goto('/keyed-indexed/'); await arm(page);
-  const report = await page.evaluate(measureIndexedPublicSet);
+  // A default 1ms clock requests 512ms batches: 202 edit batches alone are
+  // about 103s at calibration speed, before power-of-two overshoot and no-ops.
+  // This bounds collection only; the 10% and 16ms operation limits stay below.
+  test.setTimeout(300_000);
+  const progressPath = info.outputPath('indexed-progress.jsonl');
+  mkdirSync(dirname(progressPath), { recursive: true });
+  const writeProgress = createIndexedProgressWriter(progressPath);
+  let progressError: unknown;
+  const receiveProgress = (message: ConsoleMessage) => {
+    if (progressError) return;
+    try { writeProgress(message.text()); } catch (error) { progressError = error; }
+  };
+  page.on('console', receiveProgress);
+  let errors: string[] = [];
+  let report: ReturnType<typeof measureIndexedPublicSet>;
+  try {
+    errors = await observe(page);
+    await page.goto('/keyed-indexed/'); await arm(page);
+    report = await page.evaluate(measureIndexedPublicSet);
+  } finally {
+    page.off('console', receiveProgress);
+    if (progressError) writeFileSync(info.outputPath('indexed-progress-error.txt'), String(progressError));
+    await info.attach('indexed-progress.jsonl', { path: progressPath, contentType: 'application/x-ndjson' });
+  }
   const evidence = info.outputPath('indexed-public-set.json');
   mkdirSync(dirname(evidence), { recursive: true });
   writeFileSync(evidence, JSON.stringify({ ...report, machine: { platform: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length }, engine: info.project.name }, null, 2) + '\n');
   await info.attach('indexed-public-set.json', { path: evidence, contentType: 'application/json' });
+  if (progressError) throw progressError;
   expect(report.clock.resolved, 'clock resolution is insufficient at the bounded maximum batch; no timing acceptance is possible').toBe(true);
   expect(report.rounds).toBe(101);
   expect(report.rows).toEqual([200, 2000]); expect(report.labels).toEqual(['Timing B', 'Timing B']);
