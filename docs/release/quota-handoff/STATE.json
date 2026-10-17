@@ -1,0 +1,15 @@
+{
+  "status": "PAUSED",
+  "at": "2026-10-17T17:07:05.843005+00:00",
+  "decision": "L-66-QUOTA; distinct from prior L-66",
+  "resumeNotBefore": "2026-10-22",
+  "sourcePushed": "72179d43587ffb5f837d4d3282ba95df3ce63bf4",
+  "main": "be8beb7d0a9291944f29881d8eb63712a68bd922",
+  "rcP17": "39049587766 PASS 61/61",
+  "activeSoakSeconds": 0,
+  "monitor": "PAUSED",
+  "workers": "stopped/completed",
+  "releaseDeferralImplemented": false,
+  "handoff": "Tickets/THURSDAY-BACKLOG.md",
+  "instruction": "All older active/running fields are historical. Resume only on founder request."
+}
