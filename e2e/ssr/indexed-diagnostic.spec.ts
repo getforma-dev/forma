@@ -7,7 +7,7 @@ import { arch, cpus, platform, release } from 'node:os';
 import { SSR_ORIGIN } from './origin';
 import { measureIndexedDiagnostic } from './indexed-diagnostic';
 import { createIndexedProgressWriter } from './indexed-progress.mjs';
-import { completeDiagnosticTrace } from './indexed-diagnostic-trace.mjs';
+import { completeDiagnosticTrace, readDiagnosticBrowserMetadata } from './indexed-diagnostic-trace.mjs';
 
 const arms = ['small-large', 'small-small', 'large-large'] as const;
 for (const arm of arms) test(`diagnostic only: ${arm}`, async ({ page, browser }, info) => {
@@ -36,7 +36,7 @@ for (const arm of arms) test(`diagnostic only: ${arm}`, async ({ page, browser }
   const session = await browser.newBrowserCDPSession();
   let tracing = false;
   try {
-    save('browser.json', { version: await session.send('Browser.getVersion'), commandLine: await session.send('Browser.getBrowserCommandLine'), traceCategories: await session.send('Tracing.getCategories') });
+    save('browser.json', await readDiagnosticBrowserMetadata(session));
     const site = await fetch(SSR_ORIGIN + '/__site', { signal: AbortSignal.timeout(5000) }).then(response => response.json());
     save('site.json', site);
     assert.equal(site.site, join(realpathSync(__dirname), 'out', 'site')); assert.equal(site.built, true);

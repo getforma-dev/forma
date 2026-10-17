@@ -1,11 +1,13 @@
 // NEVER MERGE: finite proof for the disclosed diagnostic adaptation only.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { measureIndexedPublicSet } from './indexed-timing.ts';
 import { measureIndexedDiagnostic } from './indexed-diagnostic.ts';
-import { completeDiagnosticTrace } from './indexed-diagnostic-trace.mjs';
+import { completeDiagnosticTrace, readDiagnosticBrowserMetadata } from './indexed-diagnostic-trace.mjs';
 
 const normalize = value => JSON.parse(JSON.stringify(value));
 async function collect(fn, arm, { markCost = 0, refuse = false } = {}) {
@@ -134,4 +136,36 @@ test('actual post-EOF finalization refuses known loss and absent/nonboolean loss
     assert.throws(() => completeDiagnosticTrace(payload, 1234), /trace data loss must be explicitly false/);
   }
   assert.deepEqual(complete, { dataLossOccurred: false, stream: 'actual-stream', traceFormat: 'json' });
+});
+
+
+test('metadata tolerates the actual pinned default by never requesting the unsupported command-line API', async () => {
+  const calls = [], session = { async send(method) {
+    calls.push(method);
+    if (method === 'Browser.getVersion') return { product: 'original pinned Chromium' };
+    if (method === 'Tracing.getCategories') return { categories: ['blink.user_timing'] };
+    throw new Error('Command line not returned because --enable-automation not set.');
+  } };
+  assert.deepEqual(await readDiagnosticBrowserMetadata(session), {
+    version: { product: 'original pinned Chromium' },
+    commandLine: { availableViaCdp: false, source: 'owned worker.log DEBUG=pw:browser launch records' },
+    traceCategories: { categories: ['blink.user_timing'] },
+  });
+  assert.deepEqual(calls, ['Browser.getVersion', 'Tracing.getCategories']);
+  await assert.rejects(readDiagnosticBrowserMetadata({ send: async () => { throw new Error('unexpected CDP failure'); } }), /unexpected CDP failure/);
+});
+
+test('actual config body places every arm and JSON inventory in the uploaded repository root', () => {
+  const file = new URL('./indexed-diagnostic.config.ts', import.meta.url), directory = dirname(fileURLToPath(file));
+  const body = readFileSync(file, 'utf8').replace(/^import .*\n/gm, '').replace('export default defineConfig(', 'globalThis.loaded = defineConfig(');
+  const context = { __dirname: directory, join, resolve, defineConfig: value => value, SSR_ORIGIN: 'http://127.0.0.1:3458', SSR_PORT: 3458 };
+  runInNewContext(body, context);
+  const root = resolve(directory, '../../test-results/indexed-null');
+  assert.equal(context.loaded.outputDir, join(root, 'arms'));
+  assert.equal(context.loaded.reporter[1][1].outputFile, join(root, 'playwright.json'));
+  assert.equal(context.loaded.use.launchOptions, undefined, 'no launch flag changes');
+  const workflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  assert(workflow.includes('fetch-depth: 4'));
+  assert(workflow.includes('DEBUG=pw:browser python3 scripts/release-owned-linux.py'));
+  assert(workflow.includes('            test-results/indexed-null/'));
 });
