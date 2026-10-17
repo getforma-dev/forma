@@ -34,7 +34,7 @@
  * The allowlist expression interpreter is shared by every runtime build.
  * Unreviewed markup is confined to the opaque-origin preview frame.
  */
-import { createSignal, internalEffect, createComputed, batch } from './reactive';
+import { createSignal, internalEffect, createComputed, createUnownedRoot, registerDisposer, batch } from './reactive';
 import { reconcileList, type ListTransitionHooks } from './dom/list';
 import { createReconciler } from './dom/reconcile';
 import { isTrustedHtml, trustedHtml, RUNTIME_SRCDOC_CODE, type TrustedHtml } from './dom/trusted-html';
@@ -1635,6 +1635,29 @@ function parseState(raw: string): Record<string, unknown> {
   return state;
 }
 
+// A binding can throw before internalEffect returns its disposer. Catch inside
+// the root callback so its graph disposer is returned, then tear down all work
+// before rethrowing. Explicit mounts own their work independently of a caller root.
+function ownBindings(bind: (disposers: (() => void)[]) => void): () => void {
+  let failure: { error: unknown } | undefined;
+  const dispose = createUnownedRoot(dispose => {
+    const disposers: (() => void)[] = [];
+    registerDisposer(() => {
+      for (const cleanup of disposers) {
+        try { cleanup(); } catch { /* one cleanup must not strand the others */ }
+      }
+      disposers.length = 0;
+    });
+    try { bind(disposers); } catch (error) { failure = { error }; }
+    return dispose;
+  });
+  if (failure) {
+    dispose();
+    throw failure.error;
+  }
+  return dispose;
+}
+
 // ── DOM scanner ──
 
 function initScope(stateEl: Element, mount: MountCtx): Scope {
@@ -2138,8 +2161,16 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       // second argument. For property-based keying, items pass through raw.
       interface IndexWrapped { __idx: number; __item: unknown }
 
+      // Include rows created before a later row refuses, even when reconcileList
+      // has not returned its new node array yet. Removed rows leave this set.
+      const boundRows = new Set<Node>();
+      disposers.push(() => {
+        for (const node of boundRows) disposeCloneBindings(node);
+      });
+
       /** Dispose all bindings stored on a clone element */
       function disposeCloneBindings(node: Node): void {
+        boundRows.delete(node);
         const el = node as any;
         if (Array.isArray(el.__formaDisposers)) {
           for (const d of el.__formaDisposers) {
@@ -2153,12 +2184,14 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       function createBoundClone(item: unknown, index: number): Element {
         const clone = cloneWithTemplateData(template, item, scope.mount);
         const childScope = createChildScope(scope, { item, index });
-        const itemDisposers: (() => void)[] = [];
-        bindElement(clone, childScope, itemDisposers);
-        for (const desc of Array.from(clone.querySelectorAll('*'))) {
-          bindElement(desc, childScope, itemDisposers);
-        }
-        (clone as any).__formaDisposers = itemDisposers;
+        const dispose = ownBindings(itemDisposers => {
+          bindElement(clone, childScope, itemDisposers);
+          for (const desc of Array.from(clone.querySelectorAll('*'))) {
+            bindElement(desc, childScope, itemDisposers);
+          }
+        });
+        (clone as any).__formaDisposers = [dispose];
+        boundRows.add(clone);
         return clone;
       }
 
@@ -2167,12 +2200,14 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         disposeCloneBindings(node);
         updateTemplateData(node as Element, item);
         const childScope = createChildScope(scope, { item, index });
-        const itemDisposers: (() => void)[] = [];
-        bindElement(node as Element, childScope, itemDisposers);
-        for (const desc of Array.from((node as Element).querySelectorAll('*'))) {
-          bindElement(desc, childScope, itemDisposers);
-        }
-        (node as any).__formaDisposers = itemDisposers;
+        const dispose = ownBindings(itemDisposers => {
+          bindElement(node as Element, childScope, itemDisposers);
+          for (const desc of Array.from((node as Element).querySelectorAll('*'))) {
+            bindElement(desc, childScope, itemDisposers);
+          }
+        });
+        (node as any).__formaDisposers = [dispose];
+        boundRows.add(node);
       }
 
       // Build transition hooks for reconcileList (only when transition attrs present)
@@ -2448,61 +2483,61 @@ function mountScope(root: Element, mount: MountCtx): void {
   }
 
   const scope = initScope(root, mount);
-  const disposers: (() => void)[] = [];
+  const dispose = ownBindings(disposers => {
+    // Build $refs — a lazy proxy that resolves data-ref="name" to elements.
+    // Scanned once at mount time; the proxy resolves lazily on access.
+    const refsMap = new Map<string, Element>();
+    const refEls = root.querySelectorAll('[data-ref]');
+    for (let i = 0; i < refEls.length; i++) {
+      const el = refEls[i]!;
+      if (ownedBelow(el, root)) continue;
+      const name = el.getAttribute('data-ref');
+      if (name) refsMap.set(name, el);
+    }
+    // Also check the root itself
+    const rootRefName = root.getAttribute('data-ref');
+    if (rootRefName) refsMap.set(rootRefName, root);
 
-  // Build $refs — a lazy proxy that resolves data-ref="name" to elements.
-  // Scanned once at mount time; the proxy resolves lazily on access.
-  const refsMap = new Map<string, Element>();
-  const refEls = root.querySelectorAll('[data-ref]');
-  for (let i = 0; i < refEls.length; i++) {
-    const el = refEls[i]!;
-    if (ownedBelow(el, root)) continue;
-    const name = el.getAttribute('data-ref');
-    if (name) refsMap.set(name, el);
-  }
-  // Also check the root itself
-  const rootRefName = root.getAttribute('data-ref');
-  if (rootRefName) refsMap.set(rootRefName, root);
+    // $refs hands back ELEMENT HOSTS, not raw elements. Before this, a `data-ref`
+    // element came out unwrapped and `$refs.r.ownerDocument.location.href` read
+    // the real page URL from inside a "CSP-safe" expression, with no diagnostic.
+    // Verified by: src/expr/__tests__/adversarial.test.ts > "$refs.r.ownerDocument.location.href is denied"
+    const refsHost = hostObject('refs', refsMap, '$refs', mount.bound);
+    scope.getters['$refs'] = () => refsHost;
 
-  // $refs hands back ELEMENT HOSTS, not raw elements. Before this, a `data-ref`
-  // element came out unwrapped and `$refs.r.ownerDocument.location.href` read
-  // the real page URL from inside a "CSP-safe" expression, with no diagnostic.
-  // Verified by: src/expr/__tests__/adversarial.test.ts > "$refs.r.ownerDocument.location.href is denied"
-  const refsHost = hostObject('refs', refsMap, '$refs', mount.bound);
-  scope.getters['$refs'] = () => refsHost;
+    // Bind the root itself
+    bindElement(root, scope, disposers);
 
-  // Bind the root itself
-  bindElement(root, scope, disposers);
+    // The descendant query takes a SNAPSHOT, and binding an earlier element can detach a
+    // later one: `data-list` lifts its first child out as the row template with
+    // `removeChild`, so that node is still in the snapshot and no longer in the
+    // tree. Binding it evaluated the row's expressions against the PARENT scope,
+    // where `item` does not exist — silently undefined under the old parser, and
+    // a bogus "item is not declared" diagnostic under this one. The template's
+    // descendants still have parents inside that detached subtree, so test their
+    // membership in this captured scope root, not only their immediate parent.
+    // A scope may itself be detached or inside a shadow root: document-level
+    // isConnected would incorrectly skip those legitimate descendants.
+    // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
+    let boundCount = 0;
+    const targets = root.querySelectorAll('*');
+    for (let i = 0; i < targets.length; i++) {
+      const el = targets[i]!;
+      if (!root.contains(el)) continue;
+      if (!hasDirective(el)) continue;
+      if (ownedBelow(el, root)) continue;
+      bindElement(el, scope, disposers);
+      boundCount++;
+    }
 
-  // The descendant query takes a SNAPSHOT, and binding an earlier element can detach a
-  // later one: `data-list` lifts its first child out as the row template with
-  // `removeChild`, so that node is still in the snapshot and no longer in the
-  // tree. Binding it evaluated the row's expressions against the PARENT scope,
-  // where `item` does not exist — silently undefined under the old parser, and
-  // a bogus "item is not declared" diagnostic under this one. The template's
-  // descendants still have parents inside that detached subtree, so test their
-  // membership in this captured scope root, not only their immediate parent.
-  // A scope may itself be detached or inside a shadow root: document-level
-  // isConnected would incorrectly skip those legitimate descendants.
-  // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
-  let boundCount = 0;
-  const targets = root.querySelectorAll('*');
-  for (let i = 0; i < targets.length; i++) {
-    const el = targets[i]!;
-    if (!root.contains(el)) continue;
-    if (!hasDirective(el)) continue;
-    if (ownedBelow(el, root)) continue;
-    bindElement(el, scope, disposers);
-    boundCount++;
-  }
-
+    if (_debug) dbg('mountScope: DONE —', boundCount, 'elements bound,', disposers.length, 'disposers');
+  });
   // Store disposers on the root element for cleanup
-  (root as any).__formaDisposers = disposers;
+  (root as any).__formaDisposers = [dispose];
   // Expose scope for devtools (State Inspector panel)
   (root as any).__formaScope = scope;
   (root as any).__formaInitialState = root.getAttribute('data-forma-state') ?? '{}';
   mount.scopes.add(root);
-  if (_debug) dbg('mountScope: DONE —', boundCount, 'elements bound,', disposers.length, 'disposers');
 }
 
 /**
@@ -2684,6 +2719,8 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
  * passes grants only for content whose hash matches what its reviewer
  * approved (L-47); Forma enforces what the mount grants. DOM binding begins
  * only at this call and subsequent handle.update calls; handle.unmount ends it.
+ * An initial binding failure disposes partial and completed scopes before it
+ * rethrows. Already written DOM may remain inert; the root can be mounted again.
  *
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "binds only under the root it is handed: markup injected outside it stays unbound"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount refuses any origin but an opaque one, and any grant"
@@ -2787,7 +2824,10 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
   try {
     render(markup);
   } catch (err) {
-    // A first render refused leaves the root free to mount again.
+    // A refused first render leaves no live work, including earlier scopes
+    // completed before the failing scope. The original error remains the cause.
+    disposeAll();
+    ctx.refetch.clear();
     tieredRoots.delete(root);
     tieredCount--;
     throw err;
