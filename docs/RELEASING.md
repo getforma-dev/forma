@@ -55,6 +55,13 @@ no publication credentials, never writes DS12 to a Release, and neither closes
 gates nor replaces exact-main CI or the tagged release workflow. A failed run
 remains failed; another attempt requires an explicit decision.
 
+R17's separate serial indexed-update lane follows
+[the L-67 per-run cost contract](release/3.0-GATE-DISPOSITIONS.md#indexed-update-cost-l-67-2026-10-17).
+Its all-101 amortized costs, sampled frame guards and across-run summaries do
+not measure startup attribution or individual-edit latency p95.
+[RC qualification](release/RC-QUALIFICATION.md) keeps exact-source R17, internal
+build/rebuild, packed P17 and actual publication clocks separate.
+
 ## Milestone gate
 
 A tag names its milestone: `-alpha.N`, `-beta.N`, `-rc.N`, or none for the
@@ -210,6 +217,11 @@ includes requests and sleeps. Prior DS12 records are authenticated once; changed
 selected history, malformed or unreadable responses, drafts and contradictory
 metadata still fail immediately. The writer never invents an inventory entry or
 changes `published_at`. Ordinary preflight/history reads do not enable this wait.
+
+The actual beta.4 DS12 records 2,461.377 seconds including its record-only
+recovery, above the 1,800-second outer target. Its original P17 invocation
+passed separately in 1,165.054 seconds. That release-time miss remains explicit;
+the reviewed overlap and visibility changes do not predict the next result.
 
 ## Current development integration
 
@@ -386,8 +398,8 @@ received bytes, parser-fed bytes and resulting parser subresource requests. The 
 admitted script-related records in that chain are source-bound Lighthouse and
 Puppeteer new-document bootstrap records; any application execution, unexpected script,
 event handler work, foreign identity, mixed or unknown event counts the whole
-task. This attribution keeps N3 on island activation without changing its 50 ms
-limit. Version 3 additionally recognizes the pinned Lighthouse 13.5.0 idle check
+task. This attribution keeps startup N3 qualification on island activation
+without changing its 50 ms limit. Version 3 additionally recognizes the pinned Lighthouse 13.5.0 idle check
 with exact source bytes, a context distinct from the application module and
 main-world bootstrap, one evaluation span, two microtasks and the exact 150 ms
 single-shot timer stack. Only that five-child trace shape is admitted; foreign,

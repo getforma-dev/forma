@@ -141,8 +141,11 @@ Successful setup is distinct from the authenticated published-RC campaign.
 The release verification job allows 60 minutes, including setup; its P17 step
 allows 45 minutes. The browser installation step retains its five-minute bound.
 These orchestration limits do not change samples, performance limits, child
-process deadlines, the existing P17/G6 elapsed-time acceptance ceiling of 1,800
-seconds, or the independent 3,600-second active burn-in requirement.
+process deadlines, the P17 verifier's hard elapsed-time limit of 1,800 seconds,
+or the independent 3,600-second active burn-in requirement. The outer release
+time is recorded against its separate G6 target; neither clock measures human
+maintainer effort. Beta.4 missed that outer target despite passing P17, as
+recorded in [RC qualification](RC-QUALIFICATION.md).
 
 The sizing basis is indicative rather than a completed new full run: the two
 current pilot Lighthouse audits took 15.89455 and 15.91504 seconds, so forty

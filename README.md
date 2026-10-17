@@ -56,8 +56,11 @@ every push and pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.y
 Within that invocation, the fixture and core browser lanes reuse package builds
 that already succeeded in the same shell; missing required outputs still fail.
 Standalone build and browser commands continue to build normally. This removes
-duplicate work without removing tests or changing the final serial N3 lane;
-the current suite's N7 target still needs its own 20-run hosted measurement.
+duplicate work without removing tests. The serial indexed-update lane follows
+[the L-67 per-run cost contract](docs/release/3.0-GATE-DISPOSITIONS.md#indexed-update-cost-l-67-2026-10-17).
+[RC qualification](docs/release/RC-QUALIFICATION.md) records the original-source
+twenty-run N7 results and distinguishes them from packed P17 and release timing.
+These measurements are not a guarantee for every machine.
 It needs Node 24 (`.node-version`; the parity harness's step runs TypeScript by
 Node's type stripping, and the script stops at once on a Node without it), a
 stable Rust toolchain with `rustfmt`, `clippy` and
