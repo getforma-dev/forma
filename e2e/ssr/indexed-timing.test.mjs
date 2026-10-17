@@ -1,16 +1,22 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { measureIndexedPublicSet } from './indexed-timing.ts';
+import { createIndexedProgressWriter } from './indexed-progress.mjs';
 
 // Run the exact serialized browser collector. The synthetic public operation
 // advances a quantized clock by a known cost, retaining identity no-ops; no
 // real browser time or product performance is inferred from these controls.
-function collect({ largeFactor = 1, singleCost = .02, underresolved = false, tooFast = false } = {}) {
+function collect({ largeFactor = 1, singleCost = .02, resolution = .1, underresolved = false, tooFast = false, messages = [], failAfterPairs = false } = {}) {
   let elapsed = 0, clockCalls = 0;
+  let failed = false;
   const counts = { small: 0, large: 0 }, current = {}, intervals = [];
   let pending = [];
   const handles = Object.fromEntries(['small', 'large'].map(name => [name, { set(key, value) {
+    if (failed) throw new Error('synthetic operation refusal');
     assert.equal(key, 'row-0');
     assert.equal(value.id, 'row-0');
     counts[name]++;
@@ -24,13 +30,18 @@ function collect({ largeFactor = 1, singleCost = .02, underresolved = false, too
     } else pending.push({ name, count: 1, first: value.label, last: value.label });
   } }]));
   const context = {
+    console: { debug(text) {
+      messages.push(text);
+      const row = JSON.parse(text.slice('[forma:indexed-progress] '.length));
+      if (failAfterPairs && row.phase === 'paired-row' && row.round === 1) failed = true;
+    } },
     navigator: { userAgent: 'deterministic collector control; not a browser' },
     window: { __indexed: handles },
     performance: { now() {
       clockCalls++;
       elapsed += underresolved && clockCalls === 2 ? 500 : .01;
       if (pending.length) { intervals.push(...pending); pending = []; }
-      return Math.floor(elapsed / .1) * .1;
+      return Math.floor(elapsed / resolution) * resolution;
     } },
     document: { querySelectorAll(selector) {
       if (selector === '#small li') return Array(200);
@@ -41,7 +52,7 @@ function collect({ largeFactor = 1, singleCost = .02, underresolved = false, too
   };
   const report = runInNewContext(`(${measureIndexedPublicSet.toString()})()`, context);
   // Normalize VM realm prototypes for Node's strict assertion semantics.
-  return { report: JSON.parse(JSON.stringify(report)), counts, intervals };
+  return { report: JSON.parse(JSON.stringify(report)), counts, intervals, messages };
 }
 
 test('fixed calibration resolves >=512 ticks and 32 ms before all 101 alternating pairs; work stays complete', () => {
@@ -104,11 +115,63 @@ test('insufficient clock observations retain calibration but produce no acceptan
 });
 
 test('maximum batch exhaustion retains the bounded attempt and does not retry unresolved sampling', () => {
-  const { report: r } = collect({ tooFast: true });
+  const { report: r, messages } = collect({ tooFast: true });
   assert.equal(r.batch, 1_048_576);
   assert.equal(r.clock.maximumBatch, 1_048_576);
   assert.equal(r.clock.calibration.length, 13);
   assert.equal(r.clock.resolved, false);
   assert.equal(r.rounds, 0);
   assert.deepEqual(r.samples, { small: [], large: [] });
+  const progress = messages.map(text => JSON.parse(text.slice('[forma:indexed-progress] '.length)));
+  assert.equal(progress.filter(row => row.phase === 'calibration').length, 13);
+  assert.equal(progress.filter(row => row.phase === 'paired-row' || row.phase === 'noop-row').length, 0);
+  assert.deepEqual(progress.at(-1), { phase: 'complete', rounds: 0, batch: 1_048_576, resolved: false });
+});
+
+test('a synthetic 1ms clock retains512ms calibration, all101 original pairs/no-ops and unchanged public work', () => {
+  const { report: r, counts, intervals, messages } = collect({ resolution: 1, singleCost: .2 });
+  assert.equal(r.clock.resolution, 1); assert.equal(r.clock.targetDuration, 512);
+  assert.equal(r.clock.resolved, true); assert.equal(r.rounds, 101);
+  for (const name of ['small', 'large']) {
+    assert.equal(counts[name], 5000 + r.clock.calibration.reduce((sum, row) => sum + row.batch, 0) + 101 * (2 * r.batch + 2));
+    assert.equal(r.samples[name].length, 101); assert.equal(r.noOp[name].length, 101);
+  }
+  const batches = intervals.filter(row => row.count === r.batch);
+  assert.deepEqual(batches.map(row => row.name), ['small', 'large', ...Array.from({ length: 101 }, (_, i) => i % 2 ? ['large', 'small'] : ['small', 'large']).flat(), ...Array(101).fill(['small', 'large']).flat()]);
+  const progress = messages.map(text => JSON.parse(text.slice('[forma:indexed-progress] '.length)));
+  assert.deepEqual(progress.find(row => row.phase === 'clock'), { phase: 'clock', ticks: r.clock.ticks, resolution: 1, targetDuration: 512 });
+  for (const [phase, samples] of [['paired-row', r.samples], ['noop-row', r.noOp]]) {
+    const rows = progress.filter(row => row.phase === phase);
+    assert.equal(rows.length, 101);
+    assert.deepEqual(rows.map(row => row.round), Array.from({ length: 101 }, (_, i) => i));
+    for (const name of ['small', 'large']) assert.deepEqual(rows.map(row => row[name]), samples[name]);
+  }
+  assert(messages.length <= 256);
+  assert(Buffer.byteLength(messages.join('\n')) < 128 * 1024);
+});
+
+test('actual progress writer preserves partial original observations on refusal and fails bounded malformed/overflow evidence', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'forma-indexed-progress-'));
+  try {
+    const messages = [];
+    assert.throws(() => collect({ singleCost: .2, messages, failAfterPairs: true }), /synthetic operation refusal/);
+    const path = join(directory, 'partial.jsonl'), write = createIndexedProgressWriter(path);
+    for (const message of messages) write(message);
+    const rows = readFileSync(path, 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(rows.filter(row => row.phase === 'paired-row').length, 2);
+    assert(!rows.some(row => row.phase === 'complete'));
+    const bytes = statSync(path).size;
+    write('unrelated browser log'); assert.equal(statSync(path).size, bytes);
+    assert.throws(() => write('[forma:indexed-progress] ' + 'x'.repeat(128 * 1024)), /evidence limit/);
+    assert.equal(statSync(path).size, bytes);
+    assert.throws(() => write('[forma:indexed-progress] invalid-json'), SyntaxError);
+    assert(readFileSync(path, 'utf8').endsWith('invalid-json\n'), 'malformed original record retained before refusal');
+    const countPath = join(directory, 'count.jsonl'), countWrite = createIndexedProgressWriter(countPath);
+    for (let i = 0; i < 256; i++) countWrite('[forma:indexed-progress] {"phase":"synthetic"}');
+    assert.throws(() => countWrite('[forma:indexed-progress] {"phase":"extra"}'), /evidence limit/);
+    const spec = readFileSync(new URL('./indexed-products.spec.ts', import.meta.url), 'utf8');
+    assert.equal((spec.match(/test\.setTimeout\(300_000\)/g) ?? []).length, 1);
+    assert(spec.indexOf('test.setTimeout(300_000)') > spec.indexOf("test('indexed products: complete public set"));
+    assert(spec.includes('test.setTimeout(60_000)'));
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });

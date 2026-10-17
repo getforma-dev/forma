@@ -1,12 +1,19 @@
 # Changelog
 
-## [3.0.0-beta.3] — qualification pending
+## [3.0.0-beta.4] — qualification pending
+
+- Coordinate all seven packages and both template source seeds for the next beta verification, and update maintained installation examples. Beta.1, beta.2 and beta.3 remain immutable unpublished tags.
+- Give the indexed-update timing collector a bounded 300-second test deadline so its unchanged 101 paired observations can complete with coarse browser clocks. Retain bounded progress outside measured intervals, including partial records on failure; preserve the 512-tick/32-ms precision target and the 10% ratio and 16 ms single-update limits.
+- Keep Node-only control suites in their existing Node runner and explicitly discover the root Playwright browser suites by their `.spec.ts` inventory.
+- Full current-source qualification and trusted publication remain pending.
+
+## [3.0.0-beta.3] — verification failed; unpublished
 
 - Coordinate all seven packages and both template source seeds for the next beta verification. Beta.1 and beta.2 tags remain immutable and unpublished.
 - Retain failed Lighthouse reports and traces before refusing P17. Failed captures never become timing samples and are not automatically retried.
 - Determine native navigation lifecycle origin from the existing complete trace proof, without the internal 1 ms event-duration heuristic. Preserve the 50 ms application/unknown and independent-observer limits, every raw task and the requirement for a fresh twenty-run campaign per route.
 - FORMA-210 corrects the lead-added every-sample decoder rule to the founder’s p95 criterion: each exact one-MiB shape requires nearest-rank p95 at or below 30 ms from all forty original public-activation durations. Retain maximum/raw observations and every correctness/refusal check; a new policy identity rejects older reports. Earlier failed campaigns remain failed.
-- Browser/P17 qualification and trusted publication remain pending.
+- Exact-main CI and the full normal packed rehearsal passed. The tagged release then failed the Firefox and WebKit indexed timing collector's 60-second deadline after functional checks passed; tagged P17 and both publishers were skipped. Original failed results remain retained; the tag is unchanged.
 
 ## [3.0.0-beta.2] — verification failed; unpublished
 
@@ -68,7 +75,7 @@
 ### Packed release measurements — FORMA-191
 
 - P17 records the five consumer-shaped native N1 pages, N5 time/allocation growth, public output/iteration boundary refusals, actual Lighthouse mobile and island response measurements, and the restored three-engine founder client comparison. An authenticated prior DS12 supplies the N1 regression baseline. Missing or invalid declared figures refuse the release.
-- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. L61 treats the original12ms raw-parse estimate as descriptive; missing evidence or any public-decoder sample above30ms refuses.
+- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. L61 treats the original 12 ms raw-parse estimate as descriptive. The historical every-sample 30 ms rule was corrected prospectively by FORMA-210 to the founder's nearest-rank p95 criterion; all raw observations and maxima remain required, and earlier failed campaigns remain failed.
 - Lighthouse13.5.0 and the historical comparison libraries are exact-pinned development tools; no runtime dependency changes. The fixture HTTP server and measurement binary now share their unchanged typed input constructors.
 
 
