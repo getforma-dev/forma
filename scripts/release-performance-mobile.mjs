@@ -73,14 +73,18 @@ export async function measureActivation(url,kind,{disabled=false,longTask=false}
   return await page.evaluate(()=>window.__formaPerformance);
  }finally{await browser.close();}
 }
-export async function audit(url,{saveArtifacts,includeTrace=false}={}){
+export async function audit(url,{saveArtifacts,onFailure=()=>{},includeTrace=false}={}){
  const [{default:lighthouse},chromeLauncher,{chromium},{defaultSettings}]=await Promise.all([import('lighthouse'),import('chrome-launcher'),import('@playwright/test'),import('lighthouse/core/config/constants.js')]);
  assert.deepEqual({...MOBILE_PROFILE,throttling:{...defaultSettings.throttling},screenEmulation:{...defaultSettings.screenEmulation},emulatedUserAgent:defaultSettings.emulatedUserAgent},MOBILE_PROFILE,'installed Lighthouse preset differs from the pinned measurement contract');
  const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox'],logLevel:'error'});
  try{
   const result=await lighthouse(url,{port:chrome.port,logLevel:'error',output:'json',onlyCategories:['performance'],...MOBILE_PROFILE});
   if(saveArtifacts)await saveArtifacts(result?.artifacts);
-  const lhr=result?.lhr;assert(lhr&&!lhr.runtimeError,`Lighthouse did not complete: ${JSON.stringify(lhr?.runtimeError)}`);
+  const lhr=result?.lhr;
+  // A failed capture is evidence too. Persist it before refusing the audit;
+  // callers must not replace a missing navigation trace with a timing sample.
+  if(!lhr||lhr.runtimeError)await onFailure({rawLhr:JSON.stringify(lhr??null),rawTrace:result?.artifacts?.Trace??null});
+  assert(lhr&&!lhr.runtimeError,`Lighthouse did not complete: ${JSON.stringify(lhr?.runtimeError)}`);
   assert.equal(lhr.lighthouseVersion,'13.5.0');assert.equal(lhr.configSettings.throttlingMethod,'devtools');
   assert.deepEqual(lhr.configSettings.throttling,MOBILE_PROFILE.throttling,'Lighthouse applied another mobile profile');
   const rawLhr=JSON.stringify(lhr);
@@ -92,7 +96,10 @@ export async function measureMobileRoute({url,id,runs=20,onProgress=()=>{},onSam
  assert(runs===20||runs===1,'only full measurement or explicit one-run pilot');
  const results=[];
  for(let run=0;run<runs;run++){
-  const {rawTrace,...lighthouse}=await audit(url,{includeTrace:true});
+  const {rawTrace,...lighthouse}=await audit(url,{includeTrace:true,onFailure:async({rawLhr,rawTrace})=>{
+   await onPhase({id,run:run+1,phase:'lighthouse-error',observation:{rawLhr}});
+   await onPhase({id,run:run+1,phase:'lighthouse-error-trace',observation:rawTrace});
+  }});
   // Persist the completed original observations before attribution/validation
   // can fail. This trace phase shares the journal's bounded Lighthouse lane.
   await onPhase({id,run:run+1,phase:'lighthouse',observation:lighthouse});
