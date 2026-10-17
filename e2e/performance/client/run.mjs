@@ -11,6 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {writePerformanceRecord} from '../../../scripts/release-performance-journal.mjs';
+import {createNavigationDiagnostic,observeNavigation,finishDiagnostic} from './navigation-diagnostic.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const packedCore = process.env.FORMA_BENCH_CORE;
@@ -27,6 +28,8 @@ const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "forma-browser-benc
 const options = parseArguments(process.argv.slice(2));
 let server;
 const activeBrowsers = [];
+const diagnostic=createNavigationDiagnostic(process.env.FORMA_CLIENT_NAVIGATION_DIAGNOSTICS);
+let benchmarkError;
 
 try {
   const buildResult = await buildFixtures(temporaryDirectory);
@@ -36,8 +39,12 @@ try {
   const browserTypes = { chromium, firefox, webkit };
   const browserReports = {};
   for (const browserName of options.browserNames) {
+    diagnostic?.engine(browserName,'before');
+    let engineError;
+    try {
     const browser = await browserTypes[browserName].launch({ headless: true });
     activeBrowsers.push(browser);
+    diagnostic?.browser(browser,browserName);
     browserReports[browserName] = await runBrowserBenchmark({
       browser,
       browserName,
@@ -48,6 +55,10 @@ try {
     checkpoint(`client-engine-${browserName}`,browserReports[browserName]);
     await browser.close();
     activeBrowsers.splice(activeBrowsers.indexOf(browser), 1);
+    } catch(error) { engineError=error; throw error; }
+    finally {
+      finishDiagnostic(()=>diagnostic?.engine(browserName,'after'),engineError);
+    }
   }
 
   const report = {
@@ -93,13 +104,15 @@ try {
     process.stdout.write("Quick wiring checks do not overwrite recorded evidence.\n");
   }
   process.stdout.write(`${renderConsoleSummary(report)}\n`);
-} finally {
+} catch(error) { benchmarkError=error; throw error; }
+finally {
   await Promise.all(activeBrowsers.map((browser) => browser.close()));
   await new Promise((resolve) => {
     if (server) server.close(resolve);
     else resolve();
   });
   await rm(temporaryDirectory, { recursive: true, force: true });
+  finishDiagnostic(()=>diagnostic?.finish(),benchmarkError);
 }
 
 function parseArguments(arguments_) {
@@ -247,6 +260,7 @@ async function startServer(assets, broker) {
 *{box-sizing:border-box}html,body{margin:0}#app{contain:layout style}.bench-card,.bench-row{display:block;border:1px solid #333;padding:4px}.bench-card h2{display:inline;margin:0 8px 0 0;font:12px sans-serif}.bench-static,.bench-value{font:12px monospace}.bench-row{height:24px}
 </style></head><body><div id="app"></div><script type="module" src="/assets/__BUNDLE__"></script></body></html>`;
   const server = createServer(async (request, response) => {
+    diagnostic?.request(request,response);
     try {
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
       if (url.pathname === "/api/broker/weather") {
@@ -400,12 +414,14 @@ async function runBrowserBenchmark({ browser, browserName, origin, broker, optio
 
 async function openFixture(browser, origin, bundle) {
   const page = await browser.newPage();
+  return observeNavigation(diagnostic,page,browser,bundle,async()=>{
   await page.goto(`${origin}/?bundle=${encodeURIComponent(bundle)}`, { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(globalThis.__frameworkBench));
   if (!await page.evaluate(() => globalThis.crossOriginIsolated)) {
     throw new Error("benchmark fixture is not cross-origin isolated; high-resolution timing is unavailable");
   }
   return page;
+  });
 }
 
 async function resetPage(page) {
