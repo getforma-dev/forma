@@ -122,7 +122,7 @@ test('indexed products: complete public set in 2000 rows stays within a frame an
   };
   page.on('console', receiveProgress);
   let errors: string[] = [];
-  let report: ReturnType<typeof measureIndexedPublicSet>;
+  let report: Awaited<ReturnType<typeof measureIndexedPublicSet>>;
   try {
     errors = await observe(page);
     await page.goto('/keyed-indexed/'); await arm(page);
