@@ -5,9 +5,11 @@ import {validateBaselineRecord,readPerformanceBaseline,compareReleaseTags,N1_SHA
 const sha='a'.repeat(64),commit='b'.repeat(40);
 const context={tag:'v3.0.0-alpha.2',currentTag:'v3.0.0-beta.1',publishedAt:'2026-10-15T00:00:00Z',before:'2026-10-16T00:00:00Z',digest:sha};
 function record(){return {schema:1,dryRun:false,tag:context.tag,commit,contracts:{},packages:[...['forma-ir','forma-ir-derive','forma-server'].map(name=>({registry:'crates',name})),...['core','compiler','build','create-app'].map(name=>({registry:'npm',name:`@getforma/${name}`}))].map(p=>({...p,version:context.tag.slice(1),sha256:sha})),measurements:{commit,passed:true}};}
-test('only authenticated absent first-beta history establishes a baseline',()=>{
- assert.equal(validateBaselineRecord(record(),context).status,'bootstrap');
- for(const currentTag of ['v3.0.0-beta.2','v3.0.0-rc.1','v3.0.0'])assert.throws(()=>validateBaselineRecord(record(),{...context,currentTag}),/only first beta/);
+test('only authenticated alpha history establishes the first published beta baseline',()=>{
+ for(const currentTag of ['v3.0.0-beta.1','v3.0.0-beta.2','v3.0.0-beta.10'])assert.equal(validateBaselineRecord(record(),{...context,currentTag}).status,'bootstrap');
+ for(const currentTag of ['v3.0.0-rc.1','v3.0.0','v3.0.1-beta.1'])assert.throws(()=>validateBaselineRecord(record(),{...context,currentTag}),/only first published beta/);
+ const prior=record();prior.tag='v3.0.0-beta.1';for(const p of prior.packages)p.version='3.0.0-beta.1';
+ assert.throws(()=>validateBaselineRecord(prior,{...context,tag:prior.tag,currentTag:'v3.0.0-beta.2'}),/only first published beta/);
 });
 test('prior chronology, exact set and successful P17 are mandatory',()=>{
  for(const edit of [r=>r.packages.pop(),r=>r.packages[1]=r.packages[0],r=>r.packages[0].version='3.0.0',r=>r.packages[0].sha256='',r=>r.measurements.passed=false,r=>r.measurements.commit='c'.repeat(40),r=>r.dryRun=true,r=>r.tag='v3.0.0-alpha.1',r=>r.schema=2]){const r=record();edit(r);assert.throws(()=>validateBaselineRecord(r,context));}
@@ -35,6 +37,22 @@ test('reader verifies GitHub metadata digest and refuses transport or asset faul
  await assert.rejects(readPerformanceBaseline({...args,fetchImpl:async()=>new Response('unavailable',{status:503})}),/request failed/);
  asset.digest=`sha256:${sha}`;await assert.rejects(readPerformanceBaseline(args),/digest differs/);
  asset.digest=`sha256:${digest}`;asset.url='https://example.org/asset';await assert.rejects(readPerformanceBaseline(args),/untrusted/);
+});
+test('a failed beta tag without a Release can recover; a published beta cannot disappear behind alpha',async()=>{
+ const bytes=Buffer.from(JSON.stringify(record())),digest=createHash('sha256').update(bytes).digest('hex');
+ const asset={name:'release-record.json',url:'https://api.github.com/repos/getforma-dev/forma/releases/assets/123',size:bytes.length,digest:`sha256:${digest}`};
+ const alpha={id:1,tag_name:context.tag,published_at:context.publishedAt,draft:false,prerelease:true,assets:[asset]};
+ const args={currentTag:'v3.0.0-beta.2',before:context.before};
+ // Failed tags do not create published DS12s. No transport error or missing
+ // record on a published release is used to infer that absence.
+ assert.equal((await readPerformanceBaseline({...args,fetchImpl:async url=>url.includes('/assets/')?new Response(bytes):Response.json([alpha])})).status,'bootstrap');
+ const beta={...alpha,id:2,tag_name:'v3.0.0-beta.1',assets:[]};
+ await assert.rejects(readPerformanceBaseline({...args,fetchImpl:async()=>Response.json([alpha,beta])}),/no unique record asset/);
+ const prior=record();prior.tag=beta.tag_name;for(const p of prior.packages)p.version='3.0.0-beta.1';
+ const priorBytes=Buffer.from(JSON.stringify(prior));
+ beta.assets=[{...asset,size:priorBytes.length,digest:`sha256:${createHash('sha256').update(priorBytes).digest('hex')}`}];
+ await assert.rejects(readPerformanceBaseline({...args,fetchImpl:async url=>url.includes('/assets/')?new Response(priorBytes):Response.json([alpha,beta])}),/only first published beta/);
+ await assert.rejects(readPerformanceBaseline({...args,fetchImpl:async()=>new Response('unavailable',{status:503})}),/request failed/);
 });
 test('malformed newer unified inventory cannot fall back to an older bootstrap record',async()=>{
  const bytes=Buffer.from(JSON.stringify(record())),digest=createHash('sha256').update(bytes).digest('hex');

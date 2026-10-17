@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.0-beta.2] — qualification pending
+
+- Refuse oversized default sorts from their existing length-only cost bound before scanning elements. Preserve the 50 ms SR33 limit and all admitted-sort charges; update the linear-sort mutation to remove the logarithmic factor from both preflight and final cost.
+- Coordinate all seven packages and both template source seeds at beta.2. The immutable beta.1 tag failed its Firefox SR33 timing gate before any package publication; its original evidence remains retained.
+- Allow the first published beta to establish the performance baseline from the authenticated latest alpha record even when an earlier beta tag never published. Published beta records cannot fall back to alpha; RC/final still require comparable performance evidence.
+- Tagged browser/P17 qualification and trusted publication remain pending.
+
 ## Unreleased — typed keyed row product coverage (FORMA-181 D)
 
 - Add a compiler → typed Rust `Pages` → emitted browser island fixture for keyed row movement. Its three-engine checks retain the native rows, focus, backward selection and listeners through activation and a minimal move. A reproducible evidence script records actual source, native state/dump, registration and served asset hashes. The SSR build harness can select the release renderer for production CSP behavior. This slice adds coverage; indexed row replacement and N3 remain separate.

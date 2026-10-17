@@ -1,4 +1,4 @@
-import { deepStrictEqual } from 'node:assert';
+import { deepStrictEqual, strictEqual } from 'node:assert';
 import { compileExpression, compileHandler, evaluateExpression, runHandler, isExprError, LIMITS, type Meter } from '../../index';
 import { COSTS } from '../../cost';
 import { COST_OPERATIONS } from './cost-cases';
@@ -53,7 +53,7 @@ export function executeCase(input: GeneratedCase, astKinds: Record<string, numbe
     refusal = error.code;
   }
   const expectedRefusal = 'refused' in input ? input.refused : undefined;
-  if (refusal !== expectedRefusal) throw new Error(`refusal: expected ${expectedRefusal ?? 'admitted'}, received ${refusal ?? 'admitted'}`);
+  strictEqual(refusal, expectedRefusal, `refusal: expected ${expectedRefusal ?? 'admitted'}, received ${refusal ?? 'admitted'}`);
   if (input.expectedMeterCost !== undefined && meter.cost !== input.expectedMeterCost) {
     throw new Error(`meter cost: expected ${input.expectedMeterCost}, received ${meter.cost}`);
   }

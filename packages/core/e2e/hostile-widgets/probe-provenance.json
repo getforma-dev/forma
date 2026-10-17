@@ -973,7 +973,7 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "7c4aa68f20bd8188e17ff93a652560ce006b58329573aa41014a5c4357b1b738",
+    "sha256": "132e9f57d5d46fc4a267c173601c36d54032a94e151dc987b63c6c45d489c358",
     "total": 252,
     "rows": [
       {
@@ -4639,8 +4639,8 @@
         "source": "src/dom/reconcile.ts",
         "security": false,
         "disposition": {
-          "kind": "retained-probe",
-          "reason": "Unchanged current production mutation retained with its original ID and property."
+          "kind": "retired-api",
+          "reason": "The A2 raw-string reconciliation compatibility path was removed; current reconciliation admits only typed content before all fast paths. Successor trusted/reconcile-admission-before-cache targets that current admission boundary."
         }
       },
       {
@@ -4702,8 +4702,8 @@
         "source": "src/dom/element.ts",
         "security": false,
         "disposition": {
-          "kind": "retained-probe",
-          "reason": "Unchanged current production mutation retained with its original ID and property."
+          "kind": "retired-api",
+          "reason": "The A2 ordinary-element adoption helper no longer receives an adopting caller; public and compiled hydration use prepareRaw. Successor adopt/raw-initial-live-write guards the current initial no-live-write property."
         }
       },
       {
@@ -4711,8 +4711,8 @@
         "source": "src/dom/element.ts",
         "security": false,
         "disposition": {
-          "kind": "retained-probe",
-          "reason": "Unchanged current production mutation retained with its original ID and property."
+          "kind": "retired-api",
+          "reason": "The A2 holdsMarkup serialization helper has no supported adoption caller. Successor adopt/raw-mismatch-admitted guards current prepareRaw normalized-content mismatch refusal before any repair."
         }
       },
       {
@@ -4720,8 +4720,8 @@
         "source": "src/dom/element.ts",
         "security": false,
         "disposition": {
-          "kind": "retained-probe",
-          "reason": "Unchanged current production mutation retained with its original ID and property."
+          "kind": "retired-api",
+          "reason": "The A2 ordinary-element helper no longer receives adopt=true; prepared hydration owns initial fallback separately. Successor adopt/raw-initial-null-clears-fallback guards preservation of null, false and undefined fallback nodes."
         }
       },
       {
@@ -4747,8 +4747,8 @@
         "source": "src/dom/element.ts",
         "security": false,
         "disposition": {
-          "kind": "retained-probe",
-          "reason": "Unchanged current production mutation retained with its original ID and property."
+          "kind": "retired-api",
+          "reason": "The A2 holdsMarkup empty-string parsing branch is no longer reachable through supported typed hydration. Successor adopt/raw-equal-update-rewrites guards live node identity and avoids teardown on equal typed updates."
         }
       },
       {

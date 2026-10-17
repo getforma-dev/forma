@@ -179,6 +179,7 @@ describe('dangerouslySetInnerHTML in adoption', () => {
     const client = h('article', props, h('button', null, 'go'));
     const adopted = adopt(server, () => h('article', props, h('button', { id: 'b', onClick: () => { clicks++; } }, 'go')));
     const button = document.getElementById('b')!;
+    expect(button).not.toBeNull();
     expect(button.parentElement).toBe(adopted);
     button.click();
     button.click();

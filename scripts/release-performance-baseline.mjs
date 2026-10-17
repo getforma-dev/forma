@@ -45,7 +45,11 @@ export function validateBaselineRecord(record, {tag, currentTag, publishedAt, be
   const provenance = {tag, commit:record.commit, publishedAt, sha256:digest};
   const contract = record.contracts.performance;
   if (contract === undefined || contract === null) {
-    assert(/^v3\.0\.0-beta\.1$/.test(currentTag), 'DS12: only first beta may establish an absent performance baseline');
+    // A failed immutable beta tag may never have published a record. The
+    // authenticated inventory reader selects the newest published predecessor:
+    // bootstrap remains possible only while that predecessor is a 3.0 alpha.
+    // A published beta with missing performance must fail, never fall back.
+    assert(/^v3\.0\.0-beta\.[1-9]\d*$/.test(currentTag) && /^v3\.0\.0-alpha\.[1-9]\d*$/.test(tag), 'DS12: only first published beta after alpha may establish an absent performance baseline');
     assert(!record.measurements.measurements?.performance, 'DS12: performance figures without their contract');
     return {...provenance, status:'bootstrap', reason:'previous published DS12 predates the performance contract'};
   }
