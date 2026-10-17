@@ -227,7 +227,6 @@ test('only exact pre-application document commit and pinned audit bootstrap are 
   events=>events.push({...structuredClone(named(events,'CommitLoad')),name:'FunctionCall'}),
   events=>events.push({...structuredClone(named(events,'CommitLoad')),name:'UnknownNavigationWork'}),
   events=>{named(events,'EventDispatch').args.data.type='click';},
-  events=>{named(events,'EventDispatch').dur=1001;},
   events=>{delete named(events,'EventDispatch').args.data.sampleTraceId;},
   events=>{named(events,'ResourceSendRequest').args.data.frame='other-frame';},
   events=>events.push(structuredClone(named(events,'ResourceSendRequest'))),
@@ -267,6 +266,35 @@ test('only exact pre-application document commit and pinned audit bootstrap are 
   events=>{named(events,'v8.compileModule').ts=events.find(event=>event.name==='RunTask').ts+1000;},
   events=>events.push({...structuredClone(events[0]),ts:events.find(event=>event.name==='RunTask').ts+1000}),
  ])assert.equal(edit(change),'application-or-unattributed');
+});
+test('native navigation lifecycle origin is independent of duration, but mixed and unbound work counts',()=>{
+ const fixture=duration=>{
+  const {lhr,trace}=navigationFixture(),events=trace.traceEvents;
+  const lifecycle=events.find(event=>event.name==='EventDispatch');
+  const oldEnd=lifecycle.ts+lifecycle.dur,extension=duration*1000-lifecycle.dur;
+  // Lengthen the lifecycle span without overlapping the later commit/parser
+  // chain or changing its causal nesting and resource/source identities.
+  for(const event of events)if(event.ts>=oldEnd)event.ts+=extension;
+  lifecycle.dur=duration*1000;
+  events.find(event=>event.name==='RunTask').dur+=extension;
+  lhr.audits['long-tasks'].details.items[0].duration+=extension/1000;
+  return {lhr,trace,lifecycle};
+ };
+ for(const duration of [5.815,60]){
+  const {lhr,trace}=fixture(duration),rawDuration=lhr.audits['long-tasks'].details.items[0].duration;
+  const attributed=attributeMobileTasks(lhr,trace);
+  assert.equal(attributed.tasks[0].kind,'pre-application-navigation-audit-bootstrap');
+  assert.equal(attributed.tasks[0].duration,rawDuration);
+  for(const change of [
+   ({trace,lifecycle})=>trace.traceEvents.push({...structuredClone(lifecycle),name:'FunctionCall',ts:lifecycle.ts+1,dur:1}),
+   ({trace,lifecycle})=>trace.traceEvents.push({...structuredClone(lifecycle),name:'UnknownNavigationWork',ts:lifecycle.ts+1,dur:1}),
+   ({lifecycle})=>{lifecycle.args.data.frame='foreign-frame';},
+   ({trace,lifecycle})=>{trace.traceEvents.find(event=>event.name==='v8.compileModule').ts=lifecycle.ts+1;},
+  ]){
+   const modified=fixture(duration);change(modified);
+   assert.equal(kind(modified.lhr,modified.trace),'application-or-unattributed');
+  }
+ }
 });
 test('native BeginMainThreadFrame sequence is not mistaken for a document frame',()=>{
  const fixture=()=>traceFixture({duration:60,scriptAt:200,mainThreadFrame:true});
@@ -322,7 +350,7 @@ function withDurations(values,{observer=false,layout=false}={}){
 }
 test('strict startup requires twenty runs with every counted task at most50ms',()=>{
  const rows=withDurations(Array(20).fill(50));validateMobile(rows);
- assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v4');
+ assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v5');
  assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.maxTaskMs,50);
  for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=true,r=>r[0].startup.policy.maxTaskMs=100,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
   const copy=structuredClone(rows);edit(copy);assert.throws(()=>validateMobile(copy));
@@ -345,9 +373,11 @@ test('historical L63 policy evidence cannot stand in for a fresh strict campaign
   for(const run of row.runs)run.lighthouse.attribution.policy='L63-startup-v1';
  }
  assert.throws(()=>validateMobile(rows),/attribution differs/);
- const v2=withDurations(Array(20).fill(50));
- for(const row of v2){row.startup.policy.id='N3-startup-strict50-v2';for(const run of row.runs)run.lighthouse.attribution.policy='N3-startup-strict50-v2';}
- assert.throws(()=>validateMobile(v2),/attribution differs/);
+ for(const id of ['N3-startup-strict50-v2','N3-startup-strict50-v4']){
+  const historical=withDurations(Array(20).fill(50));
+  for(const row of historical){row.startup.policy.id=id;for(const run of row.runs)run.lighthouse.attribution.policy=id;}
+  assert.throws(()=>validateMobile(historical),/attribution differs/);
+ }
 });
 test('pure layout attribution never erases whole-page TBT, independent observations or mixed tasks',()=>{
  const rows=withDurations(Array(20).fill(120),{layout:true});validateMobile(rows);
