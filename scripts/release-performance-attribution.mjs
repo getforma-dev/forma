@@ -110,6 +110,139 @@ const navigationMarks = new Map([
 const flowNames = new Set([...navigationComplete.keys()].filter(name=>name.startsWith('DocumentLoader::') || name==='HTMLDocumentParser::MaybeFetchQueuedPreloads').concat('FrameLoader:state_snapshot'));
 const sameOrigin = (left,right) => {try{return new URL(left).origin===new URL(right).origin;}catch{return false;}};
 const eventInside = (event,task,end) => event.ts>=task.ts && event.ts<end && (event.dur===undefined || event.ph==='X' && event.ts+event.dur<=end);
+const taskChildren = (thread,task) => thread.filter(e=>e.index!==task.index && (e.ts>=task.ts && e.ts<task.ts+task.dur || e.dur>0 && e.ts<task.ts && e.ts+e.dur>task.ts));
+const only = (events,predicate) => {const found=events.filter(predicate);return found.length===1?found[0]:null;};
+const instant = (e,cat) => e?.cat===cat && e.ph==='I' && e.dur===undefined;
+const complete = (e,cat) => e?.cat===cat && e.ph==='X' && nonnegative(e.dur);
+const positiveInteger = n => Number.isSafeInteger(n) && n>0;
+const frameRefs = e => [...refs(e),e.args?.snapshot?.frame?.id_ref].filter(x=>x!==undefined);
+
+// Native parser subresources need a complete identity chain. A URL, event name
+// or position before script execution alone never proves the work's origin.
+const parserResource = ({children,thread,origin,frame,url,type,mime}) => {
+  const response=only(children,e=>e.name==='ResourceReceiveResponse');
+  const data=only(children,e=>e.name==='ResourceReceivedData');
+  const finish=only(children,e=>e.name==='ResourceFinish');
+  const id=response?.args?.data?.requestId;
+  if(typeof id!=='string' || !id || !instant(response,'devtools.timeline') || !instant(data,'devtools.timeline') || !instant(finish,'devtools.timeline'))return null;
+  const send=only(thread,e=>e.name==='ResourceSendRequest' && e.args?.data?.requestId===id);
+  if(!instant(send,'devtools.timeline') || send.ts<origin || !(send.ts<response.ts && response.ts<data.ts && data.ts<finish.ts))return null;
+  const request=send.args.data,received=response.args.data,bytes=data.args?.data,ended=finish.args?.data;
+  if(request.frame!==frame || request.requestMethod!=='GET' || request.resourceType!==type || request.initiator?.type!=='parser' || request.initiator.url!==url || !sameOrigin(request.url,url))return null;
+  if(received.frame!==frame || received.mimeType!==mime || received.statusCode!==200 || received.fromCache!==false || received.fromServiceWorker!==false)return null;
+  if(bytes?.frame!==frame || bytes.requestId!==id || !positiveInteger(bytes.encodedDataLength) || ended?.requestId!==id || ended.didFail!==false || !positiveInteger(ended.decodedBodyLength) || !positiveInteger(ended.encodedDataLength))return null;
+  // Duplicate delivery identities anywhere in the navigation are ambiguous.
+  if(['ResourceReceiveResponse','ResourceReceivedData','ResourceFinish'].some(name=>thread.filter(e=>e.name===name && e.args?.data?.requestId===id).length!==1))return null;
+  return {send,response,data,finish,url:request.url};
+};
+const exactParserStylesheet = context => {
+  const {children,task,end,frame}=context,resource=parserResource({...context,type:'Stylesheet',mime:'text/css'});
+  const parse=only(children,e=>e.name==='ParseAuthorStyleSheet');
+  return !!resource && children.length===4 && children.every(e=>eventInside(e,task,end) && frameRefs(e).every(ref=>ref===frame)) && complete(parse,'blink,devtools.timeline') && parse.args?.data?.styleSheetUrl===resource.url && resource.data.ts<parse.ts && parse.ts+parse.dur<resource.finish.ts;
+};
+
+// Chromium156 SVGImage::DataChanged creates a script-disabled, nonordinary
+// document with a blank URL. Admit it only when a later PaintImage for the same
+// parser resource contains that exact internal frame's lifecycle. The bridge
+// is mandatory; an arbitrary blank frame is not an image-document exemption.
+const svgComplete = new Map([
+  ['DocumentLoader::DocumentLoader','loading'],['DocumentLoader::CommitNavigation','loading'],
+  ['DocumentLoader::InitializeWindow','loading'],['DocumentLoader::RecordUseCountersForCommit','loading'],
+  ['DocumentLoader::DidInstallNewDocument','loading'],['DocumentLoader::DidCommitNavigation','loading'],
+  ['DocumentLoader::StartLoadingResponse','loading'],['DocumentLoader::FinishedLoading','loading'],
+  ['DecodedDataDocumentParser::AppendBytes','loading'],['EventDispatch','devtools.timeline'],
+  ['UpdateLayoutTree','blink,devtools.timeline'],['Layout','devtools.timeline'],
+]);
+const svgInstant = new Map([
+  ['ResourceReceiveResponse','devtools.timeline'],['ResourceReceivedData','devtools.timeline'],['ResourceFinish','devtools.timeline'],
+  ['FrameLoader:created','loading'],['FrameLoader:state_snapshot','loading'],
+  ['ScheduleStyleRecalculation','disabled-by-default-devtools.timeline'],['InvalidateLayout','disabled-by-default-devtools.timeline'],
+  ['MetaCharsetCheck','devtools.timeline'],['MarkDOMContent','devtools.timeline'],['MarkLoad','devtools.timeline'],
+]);
+const svgMarks = new Map([
+  ['navigationStart','blink.user_timing'],['responseEnd','blink.user_timing'],['loadEventStart','blink.user_timing'],['loadEventEnd','blink.user_timing'],
+  ...['domLoading','domComplete','domInteractive','domContentLoadedEventStart','domContentLoadedEventEnd'].map(name=>[name,'blink.user_timing,rail']),
+]);
+const svgFlowTargets = new Map([
+  ['FrameLoader:created','FrameLoader:state_snapshot'],['FrameLoader:state_snapshot','FrameLoader:state_snapshot'],
+  ['DocumentLoader::DocumentLoader','DocumentLoader::CommitNavigation'],['DocumentLoader::CommitNavigation','DocumentLoader::InitializeWindow'],
+  ['DocumentLoader::InitializeWindow','DocumentLoader::RecordUseCountersForCommit'],['DocumentLoader::RecordUseCountersForCommit','DocumentLoader::DidInstallNewDocument'],
+  ['DocumentLoader::DidInstallNewDocument','DocumentLoader::StartLoadingResponse'],['DocumentLoader::StartLoadingResponse','DocumentLoader::FinishedLoading'],
+]);
+const exactSvgLoad = context => {
+  const {children,thread,events,task,end,frame}=context,resource=parserResource({...context,type:'Image',mime:'image/svg+xml'});
+  const created=only(children,e=>e.name==='FrameLoader:created' && e.ph==='I');
+  const snapshots=children.filter(e=>e.name==='FrameLoader:state_snapshot' && e.ph==='I').sort((a,b)=>a.ts-b.ts);
+  const internal=snapshots[0]?.args?.snapshot?.frame?.id_ref;
+  if(!resource || typeof internal!=='string' || !internal || internal===frame || !created || snapshots.length!==3 || !(resource.data.ts<created.ts && created.ts<snapshots[0].ts))return null;
+  if(events.some(e=>e.name==='FrameCommittedInBrowser' && e.args?.data?.frame===internal))return null;
+  if(snapshots.some(e=>e.args.snapshot.documentLoaderURL!=='' || e.args.snapshot.frame?.id_ref!==internal || e.args.snapshot.isLoadingMainFrame!==true || e.args.snapshot.isOutermostMainFrame!==true))return null;
+  const flow=children.filter(e=>['s','f'].includes(e.ph));
+  const primary=children.filter(e=>!['s','f'].includes(e.ph));
+  for(const e of primary){
+    if(!eventInside(e,task,end) || scriptEvent(e))return null;
+    const known=e.ph==='X' ? svgComplete.has(e.name) && complete(e,svgComplete.get(e.name))
+      : e.ph==='I' ? svgInstant.has(e.name) && instant(e,svgInstant.get(e.name))
+      : e.ph==='R' && svgMarks.has(e.name) && e.cat===svgMarks.get(e.name) && e.dur===undefined;
+    if(!known)return null;
+    const expected=e.name.startsWith('Resource')?frame:internal;
+    if(frameRefs(e).some(ref=>ref!==expected))return null;
+    if(e.name==='EventDispatch' && (!['readystatechange','DOMContentLoaded','load','pageshow'].includes(e.args?.data?.type) || !positiveInteger(e.args?.data?.sampleTraceId)))return null;
+    if(['MarkDOMContent','MarkLoad'].includes(e.name) && (e.args?.data?.frame!==internal || e.args.data.page!==internal || e.args.data.isMainFrame!==true || e.args.data.isOutermostMainFrame!==true))return null;
+  }
+  const one=name=>only(primary,e=>e.name===name);
+  const nav=one('navigationStart'),loader=one('DocumentLoader::DocumentLoader'),commit=one('DocumentLoader::CommitNavigation'),init=one('DocumentLoader::InitializeWindow');
+  const record=one('DocumentLoader::RecordUseCountersForCommit'),install=one('DocumentLoader::DidInstallNewDocument'),didCommit=one('DocumentLoader::DidCommitNavigation'),start=one('DocumentLoader::StartLoadingResponse'),finished=one('DocumentLoader::FinishedLoading');
+  const append=one('DecodedDataDocumentParser::AppendBytes'),style=one('UpdateLayoutTree'),layout=one('Layout');
+  if(!nav || nav.args?.frame!==internal || nav.args.data?.documentLoaderURL!=='' || nav.args.data.isLoadingMainFrame!==true || nav.args.data.isOutermostMainFrame!==true || typeof nav.args.data.navigationId!=='string' || !nav.args.data.navigationId || !loader || !commit || !init || !record || !install || !didCommit || !start || !finished || !append || !style || !layout)return null;
+  if(!(snapshots[0].ts<loader.ts && insideSpan(nav,loader) && loader.ts+loader.dur<snapshots[1].ts && snapshots[1].ts<commit.ts && [init,record,install,didCommit,start].every(e=>insideSpan(e,commit)) && init.ts+init.dur<=record.ts && record.ts+record.dur<=install.ts && install.ts+install.dur<=didCommit.ts && didCommit.ts+didCommit.dur<=start.ts && insideSpan(finished,start) && finished.ts+finished.dur<snapshots[2].ts && snapshots[2].ts<append.ts && append.ts+append.dur<style.ts && style.ts+style.dur<layout.ts && layout.ts+layout.dur<resource.finish.ts))return null;
+  if(style.args?.beginData?.frame!==internal || layout.args?.beginData?.frame!==internal)return null;
+  const ids=new Set(flow.map(e=>e.id));
+  if(flow.length!==18 || ids.size!==9)return null;
+  for(const id of ids){
+    const pair=flow.filter(e=>e.id===id),from=only(pair,e=>e.ph==='s'),to=only(pair,e=>e.ph==='f');
+    if(!Number.isSafeInteger(id) || id<0 || !from || !to || from.name!==to.name || from.cat!=='loading' || to.cat!=='loading' || from.dur!==undefined || to.dur!==undefined || !(from.ts<to.ts) || !eventInside(from,task,end) || !eventInside(to,task,end) || frameRefs(from).length || frameRefs(to).length)return null;
+    if(!svgFlowTargets.has(from.name) || !only(primary,e=>e.name===from.name && e.ts===from.ts) || !only(primary,e=>e.name===svgFlowTargets.get(from.name) && e.ts===to.ts))return null;
+  }
+  return {resource,internal,task};
+};
+const exactSvgPaint = (proof,thread,firstScriptUs) => {
+  const paint=only(thread,e=>e.name==='PaintImage' && e.args?.data?.url===proof.resource.url && e.ts>=proof.task.ts && e.ts<firstScriptUs);
+  const data=paint?.args?.data;
+  if(!complete(paint,'disabled-by-default-devtools.timeline') || paint.ts<proof.resource.finish.ts || paint.ts+paint.dur>firstScriptUs || data?.frame!==proof.resource.send.args.data.frame || data.isCSS!==false || data.isPicture!==false || !positiveInteger(data.nodeId) || ![data.width,data.height,data.srcWidth,data.srcHeight].every(n=>Number.isFinite(n) && n>0))return null;
+  const internal=thread.filter(e=>e.ts>=proof.task.ts+proof.task.dur && e.ts<firstScriptUs && frameRefs(e).includes(proof.internal));
+  if(internal.length===0 || internal.some(e=>!eventInside(e,paint,paint.ts+paint.dur)))return null;
+  const layout=only(internal,e=>e.name==='Layout'),prepaint=only(internal,e=>e.name==='PrePaint'),viewport=only(internal,e=>e.name==='viewport'),stats=only(internal,e=>e.name==='DOMStats');
+  if(!complete(layout,'devtools.timeline') || !complete(prepaint,'devtools.timeline') || !instant(viewport,'loading') || !instant(stats,'disabled-by-default-devtools.timeline') || viewport.args?.data?.width!==data.width || viewport.args.data.height!==data.height || stats.args?.data?.maxDepth?.nodeName!=='svg' || stats.args.data.maxChildren?.nodeName!=='svg' || !positiveInteger(stats.args.data.totalElements))return null;
+  return {...proof,paint};
+};
+const pureLayoutChildren = (children,thread,task,frame,origin,url,svg=null) => children.length>0 && children.every(e=>{
+  const mainThreadFrame=e.name==='BeginMainThreadFrame';
+  if(mainThreadFrame && !nativeMainThreadFrame(e))return false;
+  if(svg && e.index===svg.paint.index)return true;
+  const internal=svg && frameRefs(e).includes(svg.internal);
+  const expected=internal?svg.internal:frame;
+  if(internal && (!eventInside(e,svg.paint,svg.paint.ts+svg.paint.dur) || !['InvalidateLayout','viewport','Layout','SetLayerTreeId','PrePaint','DOMStats'].includes(e.name)))return false;
+  if(internal){
+    const valid=e.name==='Layout' || e.name==='PrePaint' ? complete(e,'devtools.timeline')
+      : instant(e,e.name==='viewport'?'loading':'disabled-by-default-devtools.timeline');
+    if(!valid || e.name==='PrePaint' && (e.args?.data?.isMainFrame!==true || e.args.data.isOutermostMainFrame!==true || e.args.data.page!==svg.internal))return false;
+  }
+  if(!browserEvents.has(e.name) || refs(e,mainThreadFrame).some(f=>f!==expected))return false;
+  if(e.dur!==undefined && (e.ph!=='X' || e.ts<task.ts || e.ts+e.dur>task.ts+task.dur))return false;
+  if(e.name==='LayoutImageUnsized' && (e.cat!=='devtools.timeline' || e.ph!=='I' || e.args?.data?.frameId!==frame || !Number.isInteger(e.args?.data?.nodeId) || e.args.data.nodeId<=0))return false;
+  if(e.name==='ResourceChangePriority'){
+    const data=e.args?.data,requestId=data?.requestId;
+    if(e.cat!=='devtools.timeline' || e.ph!=='X' || !nonnegative(e.dur) || typeof requestId!=='string' || !requestId || !['VeryLow','Low','Medium','High','VeryHigh'].includes(data.priority))return false;
+    const sends=thread.filter(candidate=>candidate.name==='ResourceSendRequest' && candidate.ts>=origin && candidate.ts<=e.ts && candidate.args?.data?.requestId===requestId);
+    if(sends.length!==1)return false;
+    const send=sends[0];
+    if(send.cat!=='devtools.timeline' || send.ph!=='I' || send.dur!==undefined || send.args.data.frame!==frame || send.args.data.resourceType!=='Image' || send.args.data.initiator?.type!=='parser' || send.args.data.initiator.url!==url)return false;
+  }
+  if(e.name==='EventDispatch' && !['resize','pagereveal'].includes(e.args?.data?.type))return false;
+  if(e.name==='WebDXFeatureUsage' && e.args?.scriptId!==-1)return false;
+  return true;
+});
 const exactBootstrapRundown = children => {
   const metadata=children.filter(e=>e.name==='ScriptCatchup' && e.cat==='disabled-by-default-devtools.v8-source-rundown');
   const sources=children.filter(e=>e.name==='ScriptCatchup' && e.cat==='disabled-by-default-devtools.v8-source-rundown-sources');
@@ -231,7 +364,7 @@ const exactIsolatedIdleCheck=({children,thread,task,end,frame,url,origin})=>{
   const bootstrap=thread.filter(e=>e.ts>=origin && e.ts<task.ts && e.args?.data?.isolate===data.isolate && mainContexts.has(e.args.data.executionContextId) && boundSource(e,thread,auditBootstrapSources.get('_lighthouse-eval.js'),frame,true));
   return bootstrap.length===1;
 };
-const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap','isolated-lighthouse-idle-check']);
+const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap','isolated-lighthouse-idle-check','pre-application-parser-stylesheet','pre-application-svg-image']);
 
 export function attributeMobileTasks(lhr,trace) {
   const events = trace?.traceEvents;
@@ -249,6 +382,21 @@ export function attributeMobileTasks(lhr,trace) {
   const tasks=thread.filter(e=>e.name==='RunTask' && e.ph==='X' && e.dur>0);
   const scripts=thread.filter(e=>e.ts>=origin && scriptEvent(e));
   const firstScriptUs=scripts.length?Math.min(...scripts.map(e=>e.ts)):null;
+  const beforeScript=task=>firstScriptUs!==null && task.ts>=origin && task.ts+task.dur<=firstScriptUs && commits.some(e=>e.ts<=task.ts) && !thread.some(e=>e.name==='navigationStart' && e.ts>origin && e.ts<task.ts+task.dur && e.args?.data?.documentLoaderURL!=='');
+  const svgProofs=[];
+  // Only image-response tasks are candidates; no recursive task classification.
+  for(const response of thread.filter(e=>e.name==='ResourceReceiveResponse' && e.args?.data?.mimeType==='image/svg+xml')){
+    const task=only(tasks,t=>eventInside(response,t,t.ts+t.dur));
+    if(!task || !beforeScript(task))continue;
+    const proof=exactSvgLoad({children:taskChildren(thread,task),thread,events,task,end:task.ts+task.dur,origin,frame,url:lhr.requestedUrl});
+    if(!proof)continue;
+    const painted=exactSvgPaint(proof,thread,firstScriptUs);
+    const paintTask=painted && only(tasks,t=>eventInside(painted.paint,t,t.ts+t.dur));
+    if(!paintTask || !beforeScript(paintTask))continue;
+    const children=taskChildren(thread,paintTask);
+    if(!children.some(e=>e.name==='Layout' && e.ph==='X' && e.dur>0 && e.args?.beginData?.frame===frame) || !pureLayoutChildren(children,thread,paintTask,frame,origin,lhr.requestedUrl,painted))continue;
+    svgProofs.push({...painted,paintTask});
+  }
   const rows=lhr.audits?.['long-tasks']?.details?.items;
   assert(Array.isArray(rows),'N3: raw Lighthouse tasks absent');
   const classified=rows.map((row,index)=>{
@@ -261,29 +409,15 @@ export function attributeMobileTasks(lhr,trace) {
       // No later valid navigation may have reused this renderer before the task ends.
       // Chromium marks empty documentLoaderURL navigationStart events as ignorable.
       const anotherNavigation=thread.some(e=>e.name==='navigationStart' && e.ts>origin && e.ts<end && e.args?.data?.documentLoaderURL!=='');
-      const children=thread.filter(e=>e.index!==task.index && (e.ts>=task.ts && e.ts<end || e.dur>0 && e.ts<task.ts && e.ts+e.dur>task.ts));
-      const pure=children.length>0 && children.every(e=>{
-        const mainThreadFrame=e.name==='BeginMainThreadFrame';
-        if(mainThreadFrame && !nativeMainThreadFrame(e))return false;
-        if(!browserEvents.has(e.name) || refs(e,mainThreadFrame).some(f=>f!==frame))return false;
-        if(e.dur!==undefined && (e.ph!=='X' || e.ts<task.ts || e.ts+e.dur>end))return false;
-        if(e.name==='LayoutImageUnsized' && (e.cat!=='devtools.timeline' || e.ph!=='I' || e.args?.data?.frameId!==frame || !Number.isInteger(e.args?.data?.nodeId) || e.args.data.nodeId<=0))return false;
-        if(e.name==='ResourceChangePriority'){
-          const data=e.args?.data,requestId=data?.requestId;
-          if(e.cat!=='devtools.timeline' || e.ph!=='X' || !nonnegative(e.dur) || typeof requestId!=='string' || !requestId || !['VeryLow','Low','Medium','High','VeryHigh'].includes(data.priority))return false;
-          const sends=thread.filter(candidate=>candidate.name==='ResourceSendRequest' && candidate.ts>=origin && candidate.ts<=e.ts && candidate.args?.data?.requestId===requestId);
-          if(sends.length!==1)return false;
-          const send=sends[0];
-          if(send.cat!=='devtools.timeline' || send.ph!=='I' || send.dur!==undefined || send.args.data.frame!==frame || send.args.data.resourceType!=='Image' || send.args.data.initiator?.type!=='parser' || send.args.data.initiator.url!==lhr.requestedUrl)return false;
-        }
-        if(e.name==='EventDispatch' && !['resize','pagereveal'].includes(e.args?.data?.type))return false;
-        if(e.name==='WebDXFeatureUsage' && e.args?.scriptId!==-1)return false;
-        return true;
-      });
+      const children=taskChildren(thread,task);
+      const svg=svgProofs.find(proof=>proof.paintTask.index===task.index);
+      const pure=pureLayoutChildren(children,thread,task,frame,origin,lhr.requestedUrl,svg);
       const layout=children.some(e=>e.name==='Layout' && e.ph==='X' && e.dur>0 && e.args?.beginData?.frame===frame);
       // Require an observed later script boundary: lack of instrumentation is
       // never proof that no application code ran. Preserve the whole task cost.
       if(firstScriptUs!==null && end<=firstScriptUs && task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && pure && layout){kind='pre-application-browser-layout';reason='same-navigation-pure-layout-before-first-script';}
+      else if(beforeScript(task) && exactParserStylesheet({children,thread,task,end,origin,frame,url:lhr.requestedUrl})){kind='pre-application-parser-stylesheet';reason='same-navigation-parser-resource-and-stylesheet-before-first-script';}
+      else if(svgProofs.some(proof=>proof.task.index===task.index)){kind='pre-application-svg-image';reason='same-navigation-parser-image-and-bound-isolated-document-before-first-script';}
       else if(task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && exactNavigationBootstrap({children,thread,task,end,frame,navigationId,url:lhr.requestedUrl,firstScriptUs})){kind='pre-application-navigation-audit-bootstrap';reason='same-navigation-document-commit-before-application-script';}
       else if(task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && exactIsolatedIdleCheck({children,thread,task,end,frame,url:lhr.requestedUrl,origin})){kind='isolated-lighthouse-idle-check';reason='same-navigation-pinned-source-isolated-audit-idle-check';}
     }
