@@ -35,6 +35,25 @@ def children(parent):
     return result
 
 
+def reap_adopted_zombies(main_pid):
+    # This dedicated subreaper creates only the Popen worker. Other direct
+    # children were adopted from its tree. Popen alone owns the worker status.
+    reaped = 0
+    parent = os.getpid()
+    for row in children(parent):
+        if row['pid'] == main_pid or row['state'] != 'Z':
+            continue
+        actual = status(row['pid'])
+        if actual != row:
+            continue
+        try:
+            pid, _ = os.waitpid(row['pid'], os.WNOHANG)
+        except ChildProcessError:
+            continue
+        reaped += pid != 0
+    return reaped
+
+
 def sweep_owned(deadline):
     captured, failures, signalled = {}, [], []
     def capture(row):
@@ -109,7 +128,7 @@ def supervise(command, directory, timeout, max_log_bytes=16 * 1024 * 1024):
     assert hasattr(os, 'pidfd_open') and hasattr(signal, 'pidfd_send_signal')
     libc = ctypes.CDLL(None, use_errno=True)
     assert libc.prctl(36, 1, 0, 0, 0) == 0, 'cannot establish child subreaper'
-    result = {'schema': 1, 'complete': False, 'command': command, 'faults': [], 'exitCode': None}
+    result = {'schema': 1, 'complete': False, 'command': command, 'faults': [], 'exitCode': None, 'reapedDuringRun': 0}
     directory = pathlib.Path(directory)
     directory.mkdir()  # Fresh evidence; no overwrite or deletion on failure.
     interrupted = []
@@ -118,6 +137,7 @@ def supervise(command, directory, timeout, max_log_bytes=16 * 1024 * 1024):
     child = None
     selector = selectors.DefaultSelector()
     at = time.monotonic()
+    next_reap = at
     try:
         with (directory / 'worker.log').open('xb', buffering=0) as output:
             child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)
@@ -135,6 +155,9 @@ def supervise(command, directory, timeout, max_log_bytes=16 * 1024 * 1024):
                     size += len(part)
                     assert size <= max_log_bytes, 'worker log cap exceeded'
                     output.write(part)  # I/O failures follow this same cleanup path.
+                if time.monotonic() >= next_reap:
+                    result['reapedDuringRun'] += reap_adopted_zombies(child.pid)
+                    next_reap = time.monotonic() + 1
                 if child.poll() is not None:
                     # Drain bytes already in the pipe without waiting for a
                     # detached descendant that inherited the write descriptor.
