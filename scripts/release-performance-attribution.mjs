@@ -89,6 +89,7 @@ const navigationComplete = new Map([
   ['EventDispatch','devtools.timeline'],
 ]);
 const navigationInstant = new Map([
+  ['EventDispatch','devtools.timeline'],
   ['FrameStartedLoading','devtools.timeline'],
   ['markAsMainFrame','loading'],
   ['ResourceSendRequest','devtools.timeline'],
@@ -276,9 +277,9 @@ const exactNavigationBootstrap = ({children,thread,task,end,frame,navigationId,u
       // not need a paired span here; only exact loader/parser names are admitted.
       if(event.cat!=='loading' && event.cat!=='blink,devtools.timeline' || event.dur!==undefined || !flowNames.has(event.name))return false;
     }else return false;
-    // Duration does not establish lifecycle origin. The complete navigation
-    // proof below and absence of execution/unknown children establish it.
-    if(event.name==='EventDispatch' && (!['pagehide','visibilitychange','webkitvisibilitychange','unload'].includes(event.args?.data?.type) || !Number.isSafeInteger(event.args.data.sampleTraceId) || event.args.data.sampleTraceId<=0))return false;
+    // Complete and thread-scoped instant lifecycle records use the same origin
+    // proof below; neither record form establishes absence of handler work.
+    if(event.name==='EventDispatch' && (!['pagehide','visibilitychange','webkitvisibilitychange','unload'].includes(event.args?.data?.type) || event.ph==='I' && event.s!=='t' || !Number.isSafeInteger(event.args.data.sampleTraceId) || event.args.data.sampleTraceId<=0))return false;
     if(event.name==='WebDXFeatureUsage' && event.args?.scriptId!==-1)return false;
     if(event.name.startsWith('LocalWindowProxy::') || ['ContextCreatedNotification','InstallConditionalFeatures'].includes(event.name)){
       if(event.args?.IsMainFrame!==true || event.args.IsOutermostMainFrame!==undefined && event.args.IsOutermostMainFrame!==true)return false;
