@@ -48,7 +48,7 @@ class Ownership(unittest.TestCase):
             rows=json.loads(subprocess.check_output([sys.executable,'-c',{intermediate!r}],text=True))
             def remains(row):
                 try: stat=pathlib.Path(f'/proc/{{row[0]}}/stat').read_text()
-                except FileNotFoundError: return False
+                except (FileNotFoundError,ProcessLookupError): return False
                 return stat[stat.rfind(')')+2:].split()[19] == row[1]
             deadline=time.monotonic()+3
             while any(map(remains,rows)) and time.monotonic()<deadline: time.sleep(.01)
