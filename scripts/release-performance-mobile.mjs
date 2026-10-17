@@ -78,7 +78,12 @@ export async function audit(url,{saveArtifacts,onFailure=()=>{},includeTrace=fal
  assert.deepEqual({...MOBILE_PROFILE,throttling:{...defaultSettings.throttling},screenEmulation:{...defaultSettings.screenEmulation},emulatedUserAgent:defaultSettings.emulatedUserAgent},MOBILE_PROFILE,'installed Lighthouse preset differs from the pinned measurement contract');
  const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox'],logLevel:'error'});
  try{
-  const result=await lighthouse(url,{port:chrome.port,logLevel:'error',output:'json',onlyCategories:['performance'],...MOBILE_PROFILE});
+  // Lighthouse visits its neutral page before clearing cache/storage and starting
+  // the trace. A same-origin, inert fixture page creates the destination renderer
+  // before tracing; about:blank can swap into a renderer whose first trace events
+  // are lost. No application document, script or asset is loaded during setup.
+  const blankPage=new URL('/__forma_performance_blank',url).href;
+  const result=await lighthouse(url,{port:chrome.port,logLevel:'error',output:'json',onlyCategories:['performance'],...MOBILE_PROFILE,blankPage});
   if(saveArtifacts)await saveArtifacts(result?.artifacts);
   const lhr=result?.lhr;
   // A failed capture is evidence too. Persist it before refusing the audit;
