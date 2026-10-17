@@ -200,6 +200,7 @@ lanes. CI separately retains MSRV/platform/scaffold/supply-chain gates. Run the
 release pack/verify scripts without publishing to reproduce DS11/P17; reports
 record candidate hashes, locked graphs and explicit pending contracts.
 
-To roll back an application, restore the previously tested A2 package and Cargo
-locks together and rebuild all assets. A v3 manifest/module is not readable by the
-old loader. Maintenance branches and historical artifacts are preserved.
+To roll back an application, restore the previously tested source and coordinated
+npm/Cargo locks together, and restore or rebuild their matching deployment
+artifacts. A v3 manifest/module is not readable by the old loader. Maintenance
+branches and historical artifacts are preserved.
