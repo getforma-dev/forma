@@ -1,0 +1,47 @@
+name: Nightly value rules
+
+# FORMA-182's measured seven-million comparison campaign exceeds G6's
+# ten-minute per-merge budget. scripts/check.sh keeps 1,000 comparisons/rule;
+# this full lane is scheduled and can be dispatched against a release branch.
+on:
+  schedule:
+    - cron: '43 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    # The local bounded pilot projects >16 minutes for the campaign alone.
+    # Allow a cold Rust/browser setup and a slower hosted runner as well.
+    timeout-minutes: 60
+    env:
+      CARGO_BUILD_JOBS: 3
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: value-rules
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run build -w packages/core
+      - run: node --test e2e/value-rules/*.test.mjs
+      - run: node e2e/value-rules/metadata.mjs
+      - run: node e2e/value-rules/run.mjs --count 1000000
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: value-rule-results
+          path: e2e/value-rules/out/
+          retention-days: 30

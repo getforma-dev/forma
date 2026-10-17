@@ -1,0 +1,235 @@
+{
+  "config": {
+    "argv": [
+      "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin/node",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "e2e/full-stack.config.ts",
+      "--workers=2",
+      "--grep",
+      "binds only the owned root",
+      "--reporter=line,json",
+      "--output=../tmp/root-full-stack-disposal-corrected-results"
+    ],
+    "configFile": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e/full-stack.config.ts",
+    "rootDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/tmp/root-full-stack-disposal-corrected-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "full-stack.spec.ts"
+        ],
+        "timeout": 15000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/tmp/root-full-stack-disposal-corrected-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "full-stack.spec.ts"
+        ],
+        "timeout": 15000
+      },
+      {
+        "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/tmp/root-full-stack-disposal-corrected-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/victorvillacis/dev/Forma/work/FORMA-108/forma/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "full-stack.spec.ts"
+        ],
+        "timeout": 15000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 2,
+    "webServer": {
+      "command": "node ../node_modules/serve/build/main.js fixtures -l 7689 --no-clipboard",
+      "port": 7689,
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "full-stack.spec.ts",
+      "file": "full-stack.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "HTML Runtime — data-* directives",
+          "file": "full-stack.spec.ts",
+          "line": 36,
+          "column": 6,
+          "specs": [
+            {
+              "title": "binds only the owned root and stops responding when its handle unmounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 535,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T06:06:11.155Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2dbbd66c5ac68c116146-d9dba72910e5a577c592",
+              "file": "full-stack.spec.ts",
+              "line": 94,
+              "column": 7
+            },
+            {
+              "title": "binds only the owned root and stops responding when its handle unmounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1351,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T06:06:11.158Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2dbbd66c5ac68c116146-5c3cc51e3e78b1a6f8bf",
+              "file": "full-stack.spec.ts",
+              "line": 94,
+              "column": 7
+            },
+            {
+              "title": "binds only the owned root and stops responding when its handle unmounts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1031,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-16T06:06:12.540Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2dbbd66c5ac68c116146-14d09572e31d97d77189",
+              "file": "full-stack.spec.ts",
+              "line": 94,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-16T06:06:10.325Z",
+    "duration": 3621.558,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

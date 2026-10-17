@@ -1,0 +1,42 @@
+{
+  "sourceBase": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "finding": "D14-PRE-001 / FORMA-195",
+  "status": "source repair; browser and hosted qualification pending",
+  "files": [
+    {
+      "path": "packages/create-app/templates/dashboard/admin/src/pages/OverviewPage.tsx",
+      "bytes": 16574,
+      "sha256": "983c7b2646976e84897c7669572fbb16b0db72d055df554fdb9ff718e1f84e16"
+    },
+    {
+      "path": "packages/create-app/tests/scaffold.test.ts",
+      "bytes": 43275,
+      "sha256": "a2dc0257aa043fb16c196b2534ac435e23bb0dbcfb884676316ff6c32dfc92af"
+    },
+    {
+      "path": "scripts/candidate-scaffold.mjs",
+      "bytes": 12642,
+      "sha256": "f800cec8e757ffdb76ba91baf59bb4c2103d004ca9f98e8a040b103f7c89267d"
+    },
+    {
+      "path": "scripts/release-template-islands.mjs",
+      "bytes": 14684,
+      "sha256": "64b86e930fc65c048f12867580650aa14595c584f3d10d1c47e546f00a12c851"
+    },
+    {
+      "path": "scripts/verify-release-set.mjs",
+      "bytes": 45845,
+      "sha256": "51695b2f869c94e7d451be4ea94a302ec9a8e38e1acfb177e569dc2aa8e12a14"
+    },
+    {
+      "path": "scripts/release-burn-in-final.mjs",
+      "bytes": 10965,
+      "sha256": "5aa7cfb2caac92675491f54bf7b91b92ae01e5c3ed3147bcb39907c612d91f0e"
+    },
+    {
+      "path": "scripts/release-burn-in-final.test.mjs",
+      "bytes": 7450,
+      "sha256": "a3cddef71bb446282eea70e7cac8b6c5f6fcc457fd8b7e08d2b14d7ac8de1388"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "fixtureCommit": "681a8c4a231ba35becdbc7d35b4e63d963a6d078",
+  "buildCommit": "a235733d9bee50f3494336fdec721d1a5532def9",
+  "runtimeSha256": "828ce6ac426cb7d4f996e8175ae8003014519aa431309e22dde4899543594259",
+  "meaning": "First actual3-engine runtime migration:183/186 passed;3 flagship assertions expected1 external script while the explicit fixture adds its application script. Preserve all existing CSP/behavior assertions; replace stale count with actual header and exact two URLs.",
+  "files": {
+    "browser-before.log": "1e2e6ad97ef0a1af0e6bba69f2aa291853846cbc2a3b7144d2791525b5124370",
+    "csp.spec.ts": "25d04e3490eeec662a7abdb02f59c5112b4d97a2744facf3ef35e7a575e31daa",
+    "flagship.html": "876fc989f015651428558aedf332434e52c86ad1b9ccbf0a08934c6e8cd15695",
+    "mount-fixture.js": "214595143557698f6d7af7bd4ad95c162fc84c5611835e28a60737fac5a840cb"
+  }
+}

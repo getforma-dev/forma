@@ -25,8 +25,8 @@ export function ScopesPage() {
 // `count` defaults to ZERO, which is the case that proves "no default" and
 // "default 0" are different: with no default the slot is Null and the server
 // renders nothing, while the client renders `0`. `ready` is a boolean bound
-// straight to an attribute, so the server must emit the bare attribute name
-// exactly when the client would.
+// straight to a non-boolean attribute, so native and browser both write
+// data-ready="true" under the shared attribute value rules.
 function Card() {
   const [count] = createSignal(0);
   const [ready] = createSignal(true);

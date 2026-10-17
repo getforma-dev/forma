@@ -7,7 +7,8 @@
  * forma-server application (e2e/frame/server) that embeds the output and, at
  * start, calls `PreviewFrame::load` on it as an application does. This file
  * starts that server on a free port and checks the chain the setting exists
- * for: the build's `forma-runtime.js` is core's frame runtime byte for byte,
+ * for: the build's `forma-runtime.js` is core's frame runtime, minified into
+ * the application's output (core's own file stays as published, FORMA-190),
  * forma-server accepts it from the embedded output and allows it by its hash,
  * and in Chromium, under the frame's policy, it mounts a module the host sends
  * over the port. Off, nothing names a runtime and forma-server refuses the
@@ -40,8 +41,8 @@ interface Report { origin: string; on: Loaded; off: Loaded; tampered: Loaded }
 /** What build-app.mjs built (out/lane.json). */
 interface Lane {
   core: { version: string; dir: string; frameSha256: string; frameBytes: number };
-  on: { dist: string; asset: string; manifest: { assets: Record<string, string>; routes: unknown } };
-  off: { dist: string; manifest: { assets: Record<string, string>; routes: unknown } };
+  on: { dist: string; asset: string; servedSha256: string; servedBytes: number; manifest: { assets: Record<string, { integrity: string }>; aliases: Record<string, string>; routes: unknown } };
+  off: { dist: string; manifest: { assets: Record<string, unknown>; aliases: Record<string, string>; routes: unknown } };
   tamper: string;
 }
 type Received = { type: string; code?: string; message?: string; height?: number };
@@ -52,6 +53,8 @@ let lane: Lane;
 
 const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('base64');
 const coreFrame = () => readFileSync(join(lane.core.dir, 'dist', 'formajs-frame.global.js'));
+/** The runtime the build wrote into the output, which forma-server embeds and inlines. */
+const servedFrame = () => readFileSync(join(lane.on.dist, lane.on.asset));
 
 test.beforeAll(async () => {
   expect(existsSync(LANE) && existsSync(SERVER), 'the preview-frame lane is not built; run e2e/frame/build.sh (npm run test:e2e does)').toBe(true);
@@ -77,21 +80,31 @@ const received = (page: Page): Promise<Received[]> =>
 const send = (page: Page, message: unknown): Promise<void> =>
   page.evaluate((m) => (window as unknown as { send(m: unknown): void }).send(m), message);
 
-test('the build\'s forma-runtime.js is core\'s frame runtime byte for byte, and forma-server\'s PreviewFrame::load accepts it from the embedded output', () => {
+test('the build\'s forma-runtime.js is core\'s frame runtime minified, core\'s file is left as published, and forma-server\'s PreviewFrame::load accepts the served bytes from the embedded output', () => {
   const core = coreFrame();
+  const served = servedFrame();
   expect(lane.on.manifest.aliases['forma-runtime.js']).toBe(lane.on.asset);
   expect(lane.on.asset).toMatch(/^forma-runtime\.[0-9a-f]{8}\.js$/);
-  expect(readFileSync(join(lane.on.dist, lane.on.asset)).equals(core)).toBe(true);
+  // Core's published file: unchanged by the build, and readable.
+  expect(sha256(core)).toBe(lane.core.frameSha256);
+  expect(core.toString('utf8').split('\n').length).toBeGreaterThan(1000);
+  // The application's output: the same script, minified (FORMA-190), named by its own hash, listed with its own SRI.
+  expect(served.equals(core)).toBe(false);
+  expect(served.length).toBeLessThan(core.length * 0.6);
+  expect(served.toString('utf8').split('\n').length).toBeLessThan(100);
+  expect(lane.on.asset).toBe(`forma-runtime.${createHash('sha256').update(served).digest('hex').slice(0, 8)}.js`);
+  expect(lane.on.manifest.assets[lane.on.asset]!.integrity).toBe(`sha384-${createHash('sha384').update(served).digest('base64')}`);
   // Not core's CDN alias of the auto-mounting runtime, which shares the name.
-  expect(readFileSync(join(lane.core.dir, 'dist', 'forma-runtime.js')).equals(core)).toBe(false);
+  expect(readFileSync(join(lane.core.dir, 'dist', 'forma-runtime.js')).equals(served)).toBe(false);
 
-  expect(report.on, report.on.error).toMatchObject({ ok: true, asset: lane.on.asset, embeddedBytes: core.length });
-  // The hash forma-server computed over the bytes it embedded is the one of core's file.
-  expect(report.on.debug).toContain(`runtime_sha256: "${sha256(core)}"`);
+  expect(report.on, report.on.error).toMatchObject({ ok: true, asset: lane.on.asset, embeddedBytes: served.length });
+  // The hash forma-server computed over the bytes it embedded is the one of the served file.
+  expect(report.on.debug).toContain(`runtime_sha256: "${sha256(served)}"`);
+  expect(sha256(served)).toBe(lane.on.servedSha256);
 });
 
 test('in Chromium the frame runs that runtime under its hash-only policy and mounts a module the host sends over the port', async ({ page }) => {
-  const core = coreFrame();
+  const served = servedFrame();
   const violations: string[] = [];
   page.on('console', (message) => {
     if (/Content.Security.Policy|Refused to|Trusted Type/i.test(message.text())) violations.push(message.text());
@@ -102,13 +115,13 @@ test('in Chromium the frame runs that runtime under its hash-only policy and mou
   const response = await frameResponse;
   expect(response.status()).toBe(200);
   const policy = response.headers()['content-security-policy'] ?? '';
-  expect(policy).toContain(`script-src 'sha256-${sha256(core)}'`);
+  expect(policy).toContain(`script-src 'sha256-${sha256(served)}'`);
   expect(policy).toContain('sandbox allow-scripts');
   expect(policy).toContain("connect-src 'none'");
   expect(policy).toContain(`frame-ancestors ${report.origin}`);
   // The runtime is in the document as it is, and is the document's one script.
   const document = await response.text();
-  expect(document).toContain(`<script>${core.toString('utf8')}</script>`);
+  expect(document).toContain(`<script>${served.toString('utf8')}</script>`);
   expect(document.match(/<script/g)).toHaveLength(1);
 
   // `ready` comes only from the runtime, which runs only if its hash matched.
@@ -159,8 +172,10 @@ test('a runtime neither may inline: the build refuses it with BUILD-806, and for
     cpSync(lane.core.dir, core, { recursive: true });
     cpSync(join(lane.core.dir, '..', '..', 'alien-signals'), join(root, 'node_modules', 'alien-signals'), { recursive: true });
     appendFileSync(join(core, 'dist', 'formajs-frame.global.js'), lane.tamper);
-    expect(readFileSync(join(core, 'dist', 'formajs-frame.global.js'))
-      .equals(readFileSync(join(lane.on.dist, '..', 'dist-tampered', lane.on.asset)))).toBe(true);
+    // The same tail goes onto core's file and onto the served one: the build
+    // refuses the first on reading it, forma-server the second on embedding it.
+    expect(readFileSync(join(core, 'dist', 'formajs-frame.global.js')).toString('utf8').endsWith(lane.tamper)).toBe(true);
+    expect(readFileSync(join(lane.on.dist, '..', 'dist-tampered', lane.on.asset)).equals(Buffer.concat([servedFrame(), Buffer.from(lane.tamper)]))).toBe(true);
     mkdirSync(join(root, 'src'));
     writeFileSync(join(root, 'src', 'app.ts'), "import { createSignal } from '@getforma/core';\nexport const count = createSignal(0);\n");
 

@@ -14,8 +14,9 @@
  */
 
 import { internalEffect, untrack, createRoot, registerDisposer } from 'forma/reactive';
-import { hydrating } from './hydrate.js';
+import { describingAdoption } from './adoption-description.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
+import { branchNode, type Branch } from './normalize-text.js';
 
 /**
  * Conditionally render content based on a reactive boolean.
@@ -35,18 +36,11 @@ import { getNamespace, insertNs, withNamespace } from './namespace.js';
  */
 export function createShow(
   when: () => unknown,
-  thenFn: () => Node,
-  elseFn: () => Node | null = () => null,
+  thenFn: () => Branch,
+  elseFn: () => Branch = () => null,
 ): DocumentFragment {
-  if (hydrating) {
-    const branch = when() ? thenFn() : elseFn();
-    return {
-      type: 'show',
-      condition: when,
-      whenTrue: thenFn,
-      whenFalse: elseFn,
-      initialBranch: branch,
-    } as unknown as DocumentFragment;
+  if (describingAdoption) {
+    return { type: 'show', condition: when, whenTrue: thenFn, whenFalse: elseFn } as unknown as DocumentFragment;
   }
 
   const startMarker = document.createComment('forma-show');
@@ -65,22 +59,12 @@ export function createShow(
 
   const showDispose = internalEffect(() => {
     const truthy = !!when();
-    const DEBUG = typeof (globalThis as any).__FORMA_DEBUG__ !== 'undefined';
-    const DEBUG_LABEL = DEBUG ? thenFn.toString().slice(0, 60) : '';
 
-    if (truthy === lastTruthy) {
-      if (DEBUG) console.log('[forma:show] skip (same)', truthy, DEBUG_LABEL);
-      return;
-    }
-    if (DEBUG) console.log('[forma:show]', lastTruthy, '→', truthy, DEBUG_LABEL);
+    if (truthy === lastTruthy) return;
     lastTruthy = truthy;
 
     const parent = startMarker.parentNode;
-    if (!parent) {
-      if (DEBUG) console.warn('[forma:show] parentNode is null! skipping.', DEBUG_LABEL);
-      return;
-    }
-    if (DEBUG) console.log('[forma:show] parent:', parent.nodeName, 'inDoc:', document.contains(parent as any));
+    if (!parent) return;
     // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "a createShow inside an svg renders each branch once, in SVG, inside svg() from its first render and on every toggle"
     const into = insertNs(parent);
     if (into !== undefined) ns = into;
@@ -111,10 +95,10 @@ export function createShow(
     const branchFn = truthy ? thenFn : elseFn;
     if (branchFn) {
       let branchDispose!: () => void;
-      currentNode = createRoot((dispose) => {
+      currentNode = branchNode(createRoot((dispose) => {
         branchDispose = dispose;
         return untrack(() => withNamespace(ns, branchFn));
-      });
+      }));
       currentDispose = branchDispose;
     } else {
       currentNode = null;

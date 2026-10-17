@@ -1,0 +1,119 @@
+[
+  {
+    "engine": "chromium",
+    "before": {
+      "index": -1,
+      "value": "",
+      "options": [
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        },
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        }
+      ]
+    },
+    "mirror": {
+      "index": -1,
+      "value": "",
+      "options": [
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        },
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        }
+      ]
+    }
+  },
+  {
+    "engine": "firefox",
+    "before": {
+      "index": -1,
+      "value": "",
+      "options": [
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        },
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        }
+      ]
+    },
+    "mirror": {
+      "index": -1,
+      "value": "",
+      "options": [
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        },
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        }
+      ]
+    }
+  },
+  {
+    "engine": "webkit",
+    "before": {
+      "index": -1,
+      "value": "",
+      "options": [
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        },
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        }
+      ]
+    },
+    "mirror": {
+      "index": -1,
+      "value": "",
+      "options": [
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        },
+        {
+          "selected": false,
+          "defaultSelected": false,
+          "disabled": false,
+          "selectedAttribute": false
+        }
+      ]
+    }
+  }
+]

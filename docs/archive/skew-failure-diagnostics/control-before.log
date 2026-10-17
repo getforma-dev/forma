@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+(node:45874) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [firefox] › e2e/skew/skew.spec.ts:17:5 › a real navigation timeout retains bounded drill context in its emitted stack (12.6s)
+
+
+  1) [firefox] › e2e/skew/skew.spec.ts:17:5 › a real navigation timeout retains bounded drill context in its emitted stack 
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "
+    Skew drill diagnostics: "
+    Received string:    "P17: page.goto: Timeout 10000ms exceeded.
+    Call log:
+      - navigating to \"http://127.0.0.1:55055/\", waiting until \"commit\"·
+        at inert (/Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/run-drill.mjs:90:16)
+        at runSkewDrill (/Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/run-drill.mjs:148:31)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/skew.spec.ts:43:9"
+
+      49 |   expect(emitted).toContain('page.goto: Timeout 10000ms exceeded');
+      50 |   const marker = '\nSkew drill diagnostics: ';
+    > 51 |   expect(emitted).toContain(marker);
+         |                   ^
+      52 |   const detail = JSON.parse(emitted.slice(emitted.indexOf(marker) + marker.length));
+      53 |   expect(detail.completedChecks).toEqual(SKEW_DRILL_CHECKS.slice(0, 7));
+      54 |   expect(detail.lastRequests.length).toBeLessThanOrEqual(15);
+        at /Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/skew.spec.ts:51:19
+
+    attachment #1: forced-skew-timeout (text/plain) ────────────────────────────────────────────────
+    P17: page.goto: Timeout 10000ms exceeded.
+    Call log:
+      - navigating to "http://127.0.0.1:55055/", waiting until "commit"
+    
+        at inert (/Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/e2e/skew/run-drill.mjs:90:16)
+        at runSkewDrill (/Users/victorvillacis/dev/Forma/work/FOR...
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../tmp/skew-diagnostics-before-results/skew-a-real-navigation-tim-67998-ontext-in-its-emitted-stack-firefox/error-context.md
+
+  1 failed
+    [firefox] › e2e/skew/skew.spec.ts:17:5 › a real navigation timeout retains bounded drill context in its emitted stack 

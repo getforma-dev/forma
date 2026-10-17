@@ -1,0 +1,938 @@
+﻿2026-10-16T18:43:36.0496514Z Current runner version: '2.337.0'
+2026-10-16T18:43:36.0521269Z ##[group]Runner Image Provisioner
+2026-10-16T18:43:36.0522275Z Hosted Compute Agent
+2026-10-16T18:43:36.0523089Z Version: 20261012.601
+2026-10-16T18:43:36.0523851Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-16T18:43:36.0524602Z Build Date: 2026-10-12T17:48:21Z
+2026-10-16T18:43:36.0525275Z Worker ID: {24f13d95-80b3-4449-aba2-5e0b1f0f61dd}
+2026-10-16T18:43:36.0526060Z Region: westcentralus
+2026-10-16T18:43:36.0526681Z Cloud: Azure
+2026-10-16T18:43:36.0527278Z ##[endgroup]
+2026-10-16T18:43:36.0528741Z ##[group]Operating System
+2026-10-16T18:43:36.0529403Z Ubuntu
+2026-10-16T18:43:36.0530059Z 24.04.5
+2026-10-16T18:43:36.0530579Z LTS
+2026-10-16T18:43:36.0531189Z ##[endgroup]
+2026-10-16T18:43:36.0531769Z ##[group]Runner Image
+2026-10-16T18:43:36.0532388Z Image: ubuntu-24.04
+2026-10-16T18:43:36.0533402Z Version: 20261012.334.1
+2026-10-16T18:43:36.0534965Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-16T18:43:36.0536634Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-16T18:43:36.0537614Z ##[endgroup]
+2026-10-16T18:43:36.0538791Z ##[group]GITHUB_TOKEN Permissions
+2026-10-16T18:43:36.0540696Z Contents: read
+2026-10-16T18:43:36.0541452Z Metadata: read
+2026-10-16T18:43:36.0542039Z ##[endgroup]
+2026-10-16T18:43:36.0544534Z Secret source: Actions
+2026-10-16T18:43:36.0545671Z Cache mode: write
+2026-10-16T18:43:36.0546346Z Prepare workflow directory
+2026-10-16T18:43:36.0965205Z Prepare all required actions
+2026-10-16T18:43:36.1013460Z Getting action download info
+2026-10-16T18:43:36.4358364Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-16T18:43:36.5779994Z Download action repository 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+2026-10-16T18:43:37.4557917Z Download action repository 'dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f' (SHA:e2a55d2ffb04f378e9626c28d38b36d230d1e12f)
+2026-10-16T18:43:37.6627180Z Download action repository 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333' (SHA:9000827ccba6bdab643e8b6fd33ac0654aef8333)
+2026-10-16T18:43:38.2093980Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-10-16T18:43:39.0570269Z Complete job name: burn-in-setup
+2026-10-16T18:43:39.1485009Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-10-16T18:43:39.1485734Z with:
+2026-10-16T18:43:39.1485961Z   persist-credentials: false
+2026-10-16T18:43:39.1486220Z   fetch-depth: 0
+2026-10-16T18:43:39.1486452Z   repository: getforma-dev/forma
+2026-10-16T18:43:39.1489083Z   token: ***
+2026-10-16T18:43:39.1489297Z   ssh-strict: true
+2026-10-16T18:43:39.1489507Z   ssh-user: git
+2026-10-16T18:43:39.1489707Z   clean: true
+2026-10-16T18:43:39.1489950Z   sparse-checkout-cone-mode: true
+2026-10-16T18:43:39.1490221Z   fetch-tags: false
+2026-10-16T18:43:39.1490451Z   show-progress: true
+2026-10-16T18:43:39.1490681Z   lfs: false
+2026-10-16T18:43:39.1490883Z   submodules: false
+2026-10-16T18:43:39.1491113Z   set-safe-directory: true
+2026-10-16T18:43:39.1491371Z   allow-unsafe-pr-checkout: false
+2026-10-16T18:43:39.1491824Z env:
+2026-10-16T18:43:39.1492041Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:39.1492283Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:39.1492536Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:39.1493033Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:39.1493272Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:39.1493536Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:39.1493844Z ##[endgroup]
+2026-10-16T18:43:39.2551282Z Syncing repository: getforma-dev/forma
+2026-10-16T18:43:39.2553819Z ##[group]Getting Git version info
+2026-10-16T18:43:39.2554500Z Working directory is '/home/runner/work/forma/forma'
+2026-10-16T18:43:39.2555851Z [command]/usr/bin/git version
+2026-10-16T18:43:39.2690825Z git version 2.55.0
+2026-10-16T18:43:39.2713531Z ##[endgroup]
+2026-10-16T18:43:39.2726789Z Temporarily overriding HOME='/home/runner/work/_temp/168161df-97b1-4761-8c37-90b019b2b43b' before making global git config changes
+2026-10-16T18:43:39.2728518Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-16T18:43:39.2733682Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/forma/forma
+2026-10-16T18:43:39.2788008Z Deleting the contents of '/home/runner/work/forma/forma'
+2026-10-16T18:43:39.2791724Z ##[group]Determining repository object format
+2026-10-16T18:43:39.2793408Z ##[endgroup]
+2026-10-16T18:43:39.2794367Z ##[group]Initializing the repository
+2026-10-16T18:43:39.2799703Z [command]/usr/bin/git init /home/runner/work/forma/forma
+2026-10-16T18:43:39.2923269Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-16T18:43:39.2924842Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-16T18:43:39.2926097Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-16T18:43:39.2927038Z hint: call:
+2026-10-16T18:43:39.2927524Z hint:
+2026-10-16T18:43:39.2928148Z hint: 	git config --global init.defaultBranch <name>
+2026-10-16T18:43:39.2928815Z hint:
+2026-10-16T18:43:39.2929539Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-16T18:43:39.2930570Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-16T18:43:39.2931358Z hint:
+2026-10-16T18:43:39.2931807Z hint: 	git branch -m <name>
+2026-10-16T18:43:39.2932311Z hint:
+2026-10-16T18:43:39.2933171Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-16T18:43:39.2946975Z Initialized empty Git repository in /home/runner/work/forma/forma/.git/
+2026-10-16T18:43:39.2967828Z [command]/usr/bin/git remote add origin https://github.com/getforma-dev/forma
+2026-10-16T18:43:39.3013842Z ##[endgroup]
+2026-10-16T18:43:39.3014270Z ##[group]Disabling automatic garbage collection
+2026-10-16T18:43:39.3017790Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-16T18:43:39.3052216Z ##[endgroup]
+2026-10-16T18:43:39.3053181Z ##[group]Setting up auth
+2026-10-16T18:43:39.3053783Z Removing SSH command configuration
+2026-10-16T18:43:39.3060489Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-16T18:43:39.3098497Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-16T18:43:39.3531642Z Removing HTTP extra header
+2026-10-16T18:43:39.3537381Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-16T18:43:39.3574110Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-16T18:43:39.3793935Z Removing includeIf entries pointing to credentials config files
+2026-10-16T18:43:39.3799426Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-16T18:43:39.3835724Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-16T18:43:39.4060878Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-16T18:43:39.4101575Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/forma/forma/.git.path /home/runner/work/_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:39.4134754Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/forma/forma/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:39.4172038Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:39.4207119Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:39.4239228Z ##[endgroup]
+2026-10-16T18:43:39.4239788Z ##[group]Fetching the repository
+2026-10-16T18:43:39.4246001Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +fe549a5c8a7dd7a748fec5902e516685affeda50:refs/remotes/pull/109/merge
+2026-10-16T18:43:41.2111568Z From https://github.com/getforma-dev/forma
+2026-10-16T18:43:41.2113627Z  * [new branch]        checkpoint/browser-benchmark             -> origin/checkpoint/browser-benchmark
+2026-10-16T18:43:41.2115292Z  * [new branch]        codex/forma-upgrade-review               -> origin/codex/forma-upgrade-review
+2026-10-16T18:43:41.2116959Z  * [new branch]        create-forma-app/fix/template-stale-core -> origin/create-forma-app/fix/template-stale-core
+2026-10-16T18:43:41.2118522Z  * [new branch]        create-forma-app/forma-010-pipelines     -> origin/create-forma-app/forma-010-pipelines
+2026-10-16T18:43:41.2119942Z  * [new branch]        create-forma-app/forma-024-name-validator -> origin/create-forma-app/forma-024-name-validator
+2026-10-16T18:43:41.2121114Z  * [new branch]        create-forma-app/forma-134-release-split -> origin/create-forma-app/forma-134-release-split
+2026-10-16T18:43:41.2122382Z  * [new branch]        create-forma-app/forma-165-esbuild       -> origin/create-forma-app/forma-165-esbuild
+2026-10-16T18:43:41.2123680Z  * [new branch]        create-forma-app/main                    -> origin/create-forma-app/main
+2026-10-16T18:43:41.2124692Z  * [new branch]        docs/deny-intent                         -> origin/docs/deny-intent
+2026-10-16T18:43:41.2125669Z  * [new branch]        forma-010-pipelines                      -> origin/forma-010-pipelines
+2026-10-16T18:43:41.2126721Z  * [new branch]        forma-016-show-text-branch               -> origin/forma-016-show-text-branch
+2026-10-16T18:43:41.2127730Z  * [new branch]        forma-101-strict-subset                  -> origin/forma-101-strict-subset
+2026-10-16T18:43:41.2129091Z  * [new branch]        forma-102-declared-props                 -> origin/forma-102-declared-props
+2026-10-16T18:43:41.2130095Z  * [new branch]        forma-107-bound-render                   -> origin/forma-107-bound-render
+2026-10-16T18:43:41.2131880Z  * [new branch]        forma-108-explicit-runtime               -> origin/forma-108-explicit-runtime
+2026-10-16T18:43:41.2133289Z  * [new branch]        forma-109-trusted-types                  -> origin/forma-109-trusted-types
+2026-10-16T18:43:41.2134495Z  * [new branch]        forma-110-remove-legacy-apis             -> origin/forma-110-remove-legacy-apis
+2026-10-16T18:43:41.2135733Z  * [new branch]        forma-111-asset-integrity                -> origin/forma-111-asset-integrity
+2026-10-16T18:43:41.2136850Z  * [new branch]        forma-112-compatibility                  -> origin/forma-112-compatibility
+2026-10-16T18:43:41.2137849Z  * [new branch]        forma-113-timing                         -> origin/forma-113-timing
+2026-10-16T18:43:41.2138874Z  * [new branch]        forma-116-release-governance             -> origin/forma-116-release-governance
+2026-10-16T18:43:41.2139540Z  * [new branch]        forma-117-supply-chain                   -> origin/forma-117-supply-chain
+2026-10-16T18:43:41.2140140Z  * [new branch]        forma-120-try-render                     -> origin/forma-120-try-render
+2026-10-16T18:43:41.2140720Z  * [new branch]        forma-121-strict-default                 -> origin/forma-121-strict-default
+2026-10-16T18:43:41.2141307Z  * [new branch]        forma-122-list-precheck                  -> origin/forma-122-list-precheck
+2026-10-16T18:43:41.2142271Z  * [new branch]        forma-124-page-response                  -> origin/forma-124-page-response
+2026-10-16T18:43:41.2143315Z  * [new branch]        forma-125-frame-docs-followup            -> origin/forma-125-frame-docs-followup
+2026-10-16T18:43:41.2144847Z  * [new branch]        forma-125-preview-frame                  -> origin/forma-125-preview-frame
+2026-10-16T18:43:41.2146071Z  * [new branch]        forma-126-raw-html                       -> origin/forma-126-raw-html
+2026-10-16T18:43:41.2147329Z  * [new branch]        forma-127-report-only-release            -> origin/forma-127-report-only-release
+2026-10-16T18:43:41.2148674Z  * [new branch]        forma-127-trusted-types-report-only      -> origin/forma-127-trusted-types-report-only
+2026-10-16T18:43:41.2149990Z  * [new branch]        forma-129-hostile-widgets                -> origin/forma-129-hostile-widgets
+2026-10-16T18:43:41.2151111Z  * [new branch]        forma-130-app-name-vectors               -> origin/forma-130-app-name-vectors
+2026-10-16T18:43:41.2152217Z  * [new branch]        forma-130-worker-flag                    -> origin/forma-130-worker-flag
+2026-10-16T18:43:41.2153700Z  * [new branch]        forma-131-deprecate-wasm-assets          -> origin/forma-131-deprecate-wasm-assets
+2026-10-16T18:43:41.2155053Z  * [new branch]        forma-131-deprecate-wasm-feature         -> origin/forma-131-deprecate-wasm-feature
+2026-10-16T18:43:41.2156336Z  * [new branch]        forma-134-release-split                  -> origin/forma-134-release-split
+2026-10-16T18:43:41.2157470Z  * [new branch]        forma-139-html-context                   -> origin/forma-139-html-context
+2026-10-16T18:43:41.2158560Z  * [new branch]        forma-140-inv1-vectors                   -> origin/forma-140-inv1-vectors
+2026-10-16T18:43:41.2159676Z  * [new branch]        forma-141-alias-warning                  -> origin/forma-141-alias-warning
+2026-10-16T18:43:41.2160829Z  * [new branch]        forma-144-final-templates                -> origin/forma-144-final-templates
+2026-10-16T18:43:41.2162053Z  * [new branch]        forma-144-source-templates               -> origin/forma-144-source-templates
+2026-10-16T18:43:41.2163584Z  * [new branch]        forma-145-packed-rc-burn-in              -> origin/forma-145-packed-rc-burn-in
+2026-10-16T18:43:41.2164804Z  * [new branch]        forma-145-release-guide                  -> origin/forma-145-release-guide
+2026-10-16T18:43:41.2166227Z  * [new branch]        forma-166-dev-reload                     -> origin/forma-166-dev-reload
+2026-10-16T18:43:41.2167522Z  * [new branch]        forma-171-jsx-namespace-proposal         -> origin/forma-171-jsx-namespace-proposal
+2026-10-16T18:43:41.2168780Z  * [new branch]        forma-181-checkpoint-b                   -> origin/forma-181-checkpoint-b
+2026-10-16T18:43:41.2169919Z  * [new branch]        forma-181-checkpoint-c                   -> origin/forma-181-checkpoint-c
+2026-10-16T18:43:41.2171032Z  * [new branch]        forma-181-checkpoint-d                   -> origin/forma-181-checkpoint-d
+2026-10-16T18:43:41.2172173Z  * [new branch]        forma-181-f1-list-source                 -> origin/forma-181-f1-list-source
+2026-10-16T18:43:41.2173611Z  * [new branch]        forma-181-indexed-rows                   -> origin/forma-181-indexed-rows
+2026-10-16T18:43:41.2174755Z  * [new branch]        forma-181-keyed-products                 -> origin/forma-181-keyed-products
+2026-10-16T18:43:41.2175782Z  * [new branch]        forma-181-seam                           -> origin/forma-181-seam
+2026-10-16T18:43:41.2176839Z  * [new branch]        forma-182-attribute-values               -> origin/forma-182-attribute-values
+2026-10-16T18:43:41.2177980Z  * [new branch]        forma-182-qualification                  -> origin/forma-182-qualification
+2026-10-16T18:43:41.2179044Z  * [new branch]        forma-182-rules-2-7                      -> origin/forma-182-rules-2-7
+2026-10-16T18:43:41.2180058Z  * [new branch]        forma-183-blocking                       -> origin/forma-183-blocking
+2026-10-16T18:43:41.2181442Z  * [new branch]        forma-183-parity-harness                 -> origin/forma-183-parity-harness
+2026-10-16T18:43:41.2182538Z  * [new branch]        forma-183-parity-step1                   -> origin/forma-183-parity-step1
+2026-10-16T18:43:41.2183877Z  * [new branch]        forma-183-parity-suite                   -> origin/forma-183-parity-suite
+2026-10-16T18:43:41.2184948Z  * [new branch]        forma-184-render-both                    -> origin/forma-184-render-both
+2026-10-16T18:43:41.2185947Z  * [new branch]        forma-185-fmir-v3                        -> origin/forma-185-fmir-v3
+2026-10-16T18:43:41.2186915Z  * [new branch]        forma-186-identity                       -> origin/forma-186-identity
+2026-10-16T18:43:41.2187890Z  * [new branch]        forma-186-retention                      -> origin/forma-186-retention
+2026-10-16T18:43:41.2188962Z  * [new branch]        forma-186-shared-entry                   -> origin/forma-186-shared-entry
+2026-10-16T18:43:41.2190112Z  * [new branch]        forma-186-skew-drill                     -> origin/forma-186-skew-drill
+2026-10-16T18:43:41.2191195Z  * [new branch]        forma-186-skew-guard                     -> origin/forma-186-skew-guard
+2026-10-16T18:43:41.2192171Z  * [new branch]        forma-186-stamp                          -> origin/forma-186-stamp
+2026-10-16T18:43:41.2193479Z  * [new branch]        forma-186-stamp-followup                 -> origin/forma-186-stamp-followup
+2026-10-16T18:43:41.2194655Z  * [new branch]        forma-187-unified-release                -> origin/forma-187-unified-release
+2026-10-16T18:43:41.2195854Z  * [new branch]        forma-188-bench-pages                    -> origin/forma-188-bench-pages
+2026-10-16T18:43:41.2196931Z  * [new branch]        forma-188-fixture-apps                   -> origin/forma-188-fixture-apps
+2026-10-16T18:43:41.2198000Z  * [new branch]        forma-188-list-islands                   -> origin/forma-188-list-islands
+2026-10-16T18:43:41.2199084Z  * [new branch]        forma-188-p17-fixtures                   -> origin/forma-188-p17-fixtures
+2026-10-16T18:43:41.2200193Z  * [new branch]        forma-189-release-support                -> origin/forma-189-release-support
+2026-10-16T18:43:41.2201312Z  * [new branch]        forma-190-frame-minify                   -> origin/forma-190-frame-minify
+2026-10-16T18:43:41.2202424Z  * [new branch]        forma-190-n2-27500                       -> origin/forma-190-n2-27500
+2026-10-16T18:43:41.2204639Z  * [new branch]        forma-190-size-report                    -> origin/forma-190-size-report
+2026-10-16T18:43:41.2205858Z  * [new branch]        forma-191-lazy-prototype                 -> origin/forma-191-lazy-prototype
+2026-10-16T18:43:41.2207040Z  * [new branch]        forma-191-release-measurements           -> origin/forma-191-release-measurements
+2026-10-16T18:43:41.2208208Z  * [new branch]        forma-191-startup-policy                 -> origin/forma-191-startup-policy
+2026-10-16T18:43:41.2209421Z  * [new branch]        forma-3-release-qualification            -> origin/forma-3-release-qualification
+2026-10-16T18:43:41.2210641Z  * [new branch]        forma-beta-acceptance                    -> origin/forma-beta-acceptance
+2026-10-16T18:43:41.2211987Z  * [new branch]        forma-ds12-nested-evidence               -> origin/forma-ds12-nested-evidence
+2026-10-16T18:43:41.2213779Z  * [new branch]        forma-founder-qualification-clarifications -> origin/forma-founder-qualification-clarifications
+2026-10-16T18:43:41.2215266Z  * [new branch]        forma-playwright-firefox-channel         -> origin/forma-playwright-firefox-channel
+2026-10-16T18:43:41.2216601Z  * [new branch]        forma-release-gate-reconciliation        -> origin/forma-release-gate-reconciliation
+2026-10-16T18:43:41.2218046Z  * [new branch]        forma-tools/claude/forma-project-issue-7vfvwf -> origin/forma-tools/claude/forma-project-issue-7vfvwf
+2026-10-16T18:43:41.2219756Z  * [new branch]        forma-tools/feat/build-code-splitting-service-worker -> origin/forma-tools/feat/build-code-splitting-service-worker
+2026-10-16T18:43:41.2221571Z  * [new branch]        forma-tools/feat/lazy-import-frames      -> origin/forma-tools/feat/lazy-import-frames
+2026-10-16T18:43:41.2223206Z  * [new branch]        forma-tools/fix/imported-signal-defaults -> origin/forma-tools/fix/imported-signal-defaults
+2026-10-16T18:43:41.2224658Z  * [new branch]        forma-tools/fix/review-findings-0.3.3    -> origin/forma-tools/fix/review-findings-0.3.3
+2026-10-16T18:43:41.2226129Z  * [new branch]        forma-tools/fix/shadow-fn-and-type-reexport -> origin/forma-tools/fix/shadow-fn-and-type-reexport
+2026-10-16T18:43:41.2227524Z  * [new branch]        forma-tools/forma-010-pipelines          -> origin/forma-tools/forma-010-pipelines
+2026-10-16T18:43:41.2228827Z  * [new branch]        forma-tools/forma-018-atomic-output      -> origin/forma-tools/forma-018-atomic-output
+2026-10-16T18:43:41.2230341Z  * [new branch]        forma-tools/forma-019-vite-deprecate-url-guard -> origin/forma-tools/forma-019-vite-deprecate-url-guard
+2026-10-16T18:43:41.2231815Z  * [new branch]        forma-tools/forma-022-watch-ir           -> origin/forma-tools/forma-022-watch-ir
+2026-10-16T18:43:41.2233437Z  * [new branch]        forma-tools/forma-119-coded-diagnostics  -> origin/forma-tools/forma-119-coded-diagnostics
+2026-10-16T18:43:41.2234846Z  * [new branch]        forma-tools/forma-126-mount-markup       -> origin/forma-tools/forma-126-mount-markup
+2026-10-16T18:43:41.2236124Z  * [new branch]        forma-tools/forma-126-raw-lint           -> origin/forma-tools/forma-126-raw-lint
+2026-10-16T18:43:41.2237374Z  * [new branch]        forma-tools/forma-130-worker-build       -> origin/forma-tools/forma-130-worker-build
+2026-10-16T18:43:41.2239112Z  * [new branch]        forma-tools/forma-131-deprecate-wasm-and-server-functions -> origin/forma-tools/forma-131-deprecate-wasm-and-server-functions
+2026-10-16T18:43:41.2240815Z  * [new branch]        forma-tools/forma-134-release-split      -> origin/forma-tools/forma-134-release-split
+2026-10-16T18:43:41.2242434Z  * [new branch]        forma-tools/forma-169-watch-development-condition -> origin/forma-tools/forma-169-watch-development-condition
+2026-10-16T18:43:41.2244436Z  * [new branch]        forma-tools/forma-175-preview-frame-runtime -> origin/forma-tools/forma-175-preview-frame-runtime
+2026-10-16T18:43:41.2245793Z  * [new branch]        forma-tools/main                         -> origin/forma-tools/main
+2026-10-16T18:43:41.2247127Z  * [new branch]        forma-watch-recovery                     -> origin/forma-watch-recovery
+2026-10-16T18:43:41.2248695Z  * [new branch]        forma-webkit-native-select-baseline      -> origin/forma-webkit-native-select-baseline
+2026-10-16T18:43:41.2250402Z  * [new branch]        formajs/feat/react-tanstack-browser-benchmark -> origin/formajs/feat/react-tanstack-browser-benchmark
+2026-10-16T18:43:41.2251806Z  * [new branch]        formajs/fix/dom-1.3.0                    -> origin/formajs/fix/dom-1.3.0
+2026-10-16T18:43:41.2253318Z  * [new branch]        formajs/fix/reactive-core-1.1.0          -> origin/formajs/fix/reactive-core-1.1.0
+2026-10-16T18:43:41.2254502Z  * [new branch]        formajs/fix/server-1.4.0                 -> origin/formajs/fix/server-1.4.0
+2026-10-16T18:43:41.2255636Z  * [new branch]        formajs/fix/storage-1.5.0                -> origin/formajs/fix/storage-1.5.0
+2026-10-16T18:43:41.2256860Z  * [new branch]        formajs/fix/store-1.2.0                  -> origin/formajs/fix/store-1.2.0
+2026-10-16T18:43:41.2258147Z  * [new branch]        formajs/forma-010-pipelines              -> origin/formajs/forma-010-pipelines
+2026-10-16T18:43:41.2259476Z  * [new branch]        formajs/forma-017-ssr-form-controls-note -> origin/formajs/forma-017-ssr-form-controls-note
+2026-10-16T18:43:41.2260820Z  * [new branch]        formajs/forma-026-svg-namespace          -> origin/formajs/forma-026-svg-namespace
+2026-10-16T18:43:41.2262232Z  * [new branch]        formajs/forma-028-string-growth-task-budget -> origin/formajs/forma-028-string-growth-task-budget
+2026-10-16T18:43:41.2264291Z  * [new branch]        formajs/forma-119-browser-only           -> origin/formajs/forma-119-browser-only
+2026-10-16T18:43:41.2265572Z  * [new branch]        formajs/forma-123-list-count-check       -> origin/formajs/forma-123-list-count-check
+2026-10-16T18:43:41.2266835Z  * [new branch]        formajs/forma-126-trusted-html           -> origin/formajs/forma-126-trusted-html
+2026-10-16T18:43:41.2268126Z  * [new branch]        formajs/forma-128-frame-no-link          -> origin/formajs/forma-128-frame-no-link
+2026-10-16T18:43:41.2269411Z  * [new branch]        formajs/forma-128-frame-runtime          -> origin/formajs/forma-128-frame-runtime
+2026-10-16T18:43:41.2270668Z  * [new branch]        formajs/forma-128-tiered-mount           -> origin/formajs/forma-128-tiered-mount
+2026-10-16T18:43:41.2272064Z  * [new branch]        formajs/forma-131-deprecate-server-wasm-ssr -> origin/formajs/forma-131-deprecate-server-wasm-ssr
+2026-10-16T18:43:41.2273846Z  * [new branch]        formajs/forma-132-remote-call-timeouts   -> origin/formajs/forma-132-remote-call-timeouts
+2026-10-16T18:43:41.2275176Z  * [new branch]        formajs/forma-134-release-split          -> origin/formajs/forma-134-release-split
+2026-10-16T18:43:41.2276393Z  * [new branch]        formajs/forma-137-release-2.0.3          -> origin/formajs/forma-137-release-2.0.3
+2026-10-16T18:43:41.2277655Z  * [new branch]        formajs/forma-169-development-build      -> origin/formajs/forma-169-development-build
+2026-10-16T18:43:41.2278956Z  * [new branch]        formajs/forma-173-deferred-reweigh       -> origin/formajs/forma-173-deferred-reweigh
+2026-10-16T18:43:41.2280257Z  * [new branch]        formajs/forma-176-adopt-inner-html       -> origin/formajs/forma-176-adopt-inner-html
+2026-10-16T18:43:41.2281355Z  * [new branch]        formajs/main                             -> origin/formajs/main
+2026-10-16T18:43:41.2282350Z  * [new branch]        formajs/security/1.0.10                  -> origin/formajs/security/1.0.10
+2026-10-16T18:43:41.2283601Z  * [new branch]        main                                     -> origin/main
+2026-10-16T18:43:41.2284454Z  * [new branch]        maint/0.2.x                              -> origin/maint/0.2.x
+2026-10-16T18:43:41.2285388Z  * [new branch]        merge/forma-stack                        -> origin/merge/forma-stack
+2026-10-16T18:43:41.2286466Z  * [new branch]        sync-main-into-integration               -> origin/sync-main-into-integration
+2026-10-16T18:43:41.2288052Z  * [new branch]        test/imported-signal-defaults-contract   -> origin/test/imported-signal-defaults-contract
+2026-10-16T18:43:41.2289296Z  * [new tag]           create-forma-app/v0.1.0                  -> create-forma-app/v0.1.0
+2026-10-16T18:43:41.2290339Z  * [new tag]           create-forma-app/v0.1.1                  -> create-forma-app/v0.1.1
+2026-10-16T18:43:41.2291316Z  * [new tag]           create-forma-app/v0.1.2                  -> create-forma-app/v0.1.2
+2026-10-16T18:43:41.2292290Z  * [new tag]           create-forma-app/v0.2.0                  -> create-forma-app/v0.2.0
+2026-10-16T18:43:41.2293549Z  * [new tag]           create-forma-app/v0.3.0                  -> create-forma-app/v0.3.0
+2026-10-16T18:43:41.2294515Z  * [new tag]           create-forma-app/v0.4.0                  -> create-forma-app/v0.4.0
+2026-10-16T18:43:41.2295463Z  * [new tag]           create-forma-app/v0.4.1                  -> create-forma-app/v0.4.1
+2026-10-16T18:43:41.2296498Z  * [new tag]           create-forma-app/v0.4.2                  -> create-forma-app/v0.4.2
+2026-10-16T18:43:41.2297444Z  * [new tag]           create-forma-app/v0.5.0                  -> create-forma-app/v0.5.0
+2026-10-16T18:43:41.2298386Z  * [new tag]           create-forma-app/v0.6.0                  -> create-forma-app/v0.6.0
+2026-10-16T18:43:41.2299343Z  * [new tag]           create-forma-app/v0.6.1                  -> create-forma-app/v0.6.1
+2026-10-16T18:43:41.2300284Z  * [new tag]           create-forma-app/v0.6.2                  -> create-forma-app/v0.6.2
+2026-10-16T18:43:41.2301540Z  * [new tag]           forma-tools/build-v0.1.3                 -> forma-tools/build-v0.1.3
+2026-10-16T18:43:41.2302574Z  * [new tag]           forma-tools/build-v0.1.4                 -> forma-tools/build-v0.1.4
+2026-10-16T18:43:41.2303835Z  * [new tag]           forma-tools/build-v0.1.5                 -> forma-tools/build-v0.1.5
+2026-10-16T18:43:41.2304867Z  * [new tag]           forma-tools/build-v0.1.6                 -> forma-tools/build-v0.1.6
+2026-10-16T18:43:41.2305881Z  * [new tag]           forma-tools/build-v0.1.7                 -> forma-tools/build-v0.1.7
+2026-10-16T18:43:41.2306875Z  * [new tag]           forma-tools/build-v0.1.8                 -> forma-tools/build-v0.1.8
+2026-10-16T18:43:41.2307847Z  * [new tag]           forma-tools/build-v0.1.9                 -> forma-tools/build-v0.1.9
+2026-10-16T18:43:41.2308822Z  * [new tag]           forma-tools/build-v0.2.0                 -> forma-tools/build-v0.2.0
+2026-10-16T18:43:41.2309829Z  * [new tag]           forma-tools/build-v0.3.0                 -> forma-tools/build-v0.3.0
+2026-10-16T18:43:41.2310816Z  * [new tag]           forma-tools/build-v0.3.1                 -> forma-tools/build-v0.3.1
+2026-10-16T18:43:41.2311839Z  * [new tag]           forma-tools/compiler-v0.1.3              -> forma-tools/compiler-v0.1.3
+2026-10-16T18:43:41.2313214Z  * [new tag]           forma-tools/compiler-v0.1.4              -> forma-tools/compiler-v0.1.4
+2026-10-16T18:43:41.2314308Z  * [new tag]           forma-tools/compiler-v0.1.5              -> forma-tools/compiler-v0.1.5
+2026-10-16T18:43:41.2315358Z  * [new tag]           forma-tools/compiler-v0.1.6              -> forma-tools/compiler-v0.1.6
+2026-10-16T18:43:41.2316415Z  * [new tag]           forma-tools/compiler-v0.1.7              -> forma-tools/compiler-v0.1.7
+2026-10-16T18:43:41.2317460Z  * [new tag]           forma-tools/compiler-v0.1.8              -> forma-tools/compiler-v0.1.8
+2026-10-16T18:43:41.2318503Z  * [new tag]           forma-tools/compiler-v0.2.0              -> forma-tools/compiler-v0.2.0
+2026-10-16T18:43:41.2319553Z  * [new tag]           forma-tools/compiler-v0.3.0              -> forma-tools/compiler-v0.3.0
+2026-10-16T18:43:41.2320607Z  * [new tag]           forma-tools/compiler-v0.3.1              -> forma-tools/compiler-v0.3.1
+2026-10-16T18:43:41.2321675Z  * [new tag]           forma-tools/compiler-v0.3.2              -> forma-tools/compiler-v0.3.2
+2026-10-16T18:43:41.2323321Z  * [new tag]           forma-tools/compiler-v0.3.3              -> forma-tools/compiler-v0.3.3
+2026-10-16T18:43:41.2324461Z  * [new tag]           forma-tools/compiler-v0.3.4              -> forma-tools/compiler-v0.3.4
+2026-10-16T18:43:41.2325520Z  * [new tag]           forma-tools/compiler-v0.3.5              -> forma-tools/compiler-v0.3.5
+2026-10-16T18:43:41.2326564Z  * [new tag]           forma-tools/compiler-v0.3.6              -> forma-tools/compiler-v0.3.6
+2026-10-16T18:43:41.2327582Z  * [new tag]           forma-tools/compiler-v0.3.7              -> forma-tools/compiler-v0.3.7
+2026-10-16T18:43:41.2328555Z  * [new tag]           forma-tools/v0.1.0                       -> forma-tools/v0.1.0
+2026-10-16T18:43:41.2329402Z  * [new tag]           formajs/v0.1.0                           -> formajs/v0.1.0
+2026-10-16T18:43:41.2330199Z  * [new tag]           formajs/v0.1.1                           -> formajs/v0.1.1
+2026-10-16T18:43:41.2331019Z  * [new tag]           formajs/v0.2.0                           -> formajs/v0.2.0
+2026-10-16T18:43:41.2331894Z  * [new tag]           formajs/v1.0.1                           -> formajs/v1.0.1
+2026-10-16T18:43:41.2333050Z  * [new tag]           formajs/v1.0.10                          -> formajs/v1.0.10
+2026-10-16T18:43:41.2333933Z  * [new tag]           formajs/v1.0.2                           -> formajs/v1.0.2
+2026-10-16T18:43:41.2334747Z  * [new tag]           formajs/v1.0.3                           -> formajs/v1.0.3
+2026-10-16T18:43:41.2335545Z  * [new tag]           formajs/v1.0.4                           -> formajs/v1.0.4
+2026-10-16T18:43:41.2336720Z  * [new tag]           formajs/v1.0.5                           -> formajs/v1.0.5
+2026-10-16T18:43:41.2337513Z  * [new tag]           formajs/v1.0.6                           -> formajs/v1.0.6
+2026-10-16T18:43:41.2338257Z  * [new tag]           formajs/v1.0.7                           -> formajs/v1.0.7
+2026-10-16T18:43:41.2339040Z  * [new tag]           formajs/v1.0.8                           -> formajs/v1.0.8
+2026-10-16T18:43:41.2339854Z  * [new tag]           formajs/v1.0.9                           -> formajs/v1.0.9
+2026-10-16T18:43:41.2340681Z  * [new tag]           formajs/v1.1.0                           -> formajs/v1.1.0
+2026-10-16T18:43:41.2341486Z  * [new tag]           formajs/v1.2.0                           -> formajs/v1.2.0
+2026-10-16T18:43:41.2342277Z  * [new tag]           formajs/v1.3.0                           -> formajs/v1.3.0
+2026-10-16T18:43:41.2343414Z  * [new tag]           formajs/v1.4.0                           -> formajs/v1.4.0
+2026-10-16T18:43:41.2344223Z  * [new tag]           formajs/v1.5.0                           -> formajs/v1.5.0
+2026-10-16T18:43:41.2345008Z  * [new tag]           formajs/v2.0.0                           -> formajs/v2.0.0
+2026-10-16T18:43:41.2345795Z  * [new tag]           formajs/v2.0.1                           -> formajs/v2.0.1
+2026-10-16T18:43:41.2346563Z  * [new tag]           formajs/v2.0.2                           -> formajs/v2.0.2
+2026-10-16T18:43:41.2347341Z  * [new tag]           formajs/v2.0.3                           -> formajs/v2.0.3
+2026-10-16T18:43:41.2348112Z  * [new tag]           formajs/v2.1.0                           -> formajs/v2.1.0
+2026-10-16T18:43:41.2348858Z  * [new tag]           ir-v0.1.3                                -> ir-v0.1.3
+2026-10-16T18:43:41.2349568Z  * [new tag]           ir-v0.1.4                                -> ir-v0.1.4
+2026-10-16T18:43:41.2350299Z  * [new tag]           ir-v0.2.0                                -> ir-v0.2.0
+2026-10-16T18:43:41.2351001Z  * [new tag]           ir-v0.2.1                                -> ir-v0.2.1
+2026-10-16T18:43:41.2351681Z  * [new tag]           ir-v0.2.2                                -> ir-v0.2.2
+2026-10-16T18:43:41.2352423Z  * [new tag]           server-v0.1.3                            -> server-v0.1.3
+2026-10-16T18:43:41.2353576Z  * [new tag]           server-v0.1.4                            -> server-v0.1.4
+2026-10-16T18:43:41.2354379Z  * [new tag]           server-v0.2.0                            -> server-v0.2.0
+2026-10-16T18:43:41.2355434Z  * [new tag]           server-v0.2.1                            -> server-v0.2.1
+2026-10-16T18:43:41.2356338Z  * [new tag]           server-v0.2.2                            -> server-v0.2.2
+2026-10-16T18:43:41.2357077Z  * [new tag]           v0.1.0                                   -> v0.1.0
+2026-10-16T18:43:41.2357740Z  * [new tag]           v0.1.1                                   -> v0.1.1
+2026-10-16T18:43:41.2358408Z  * [new tag]           v3.0.0-alpha.1                           -> v3.0.0-alpha.1
+2026-10-16T18:43:41.2359166Z  * [new tag]           v3.0.0-alpha.2                           -> v3.0.0-alpha.2
+2026-10-16T18:43:41.2359979Z  * [new ref]           fe549a5c8a7dd7a748fec5902e516685affeda50 -> pull/109/merge
+2026-10-16T18:43:41.2361972Z ##[endgroup]
+2026-10-16T18:43:41.2362625Z ##[group]Determining the checkout info
+2026-10-16T18:43:41.2363667Z ##[endgroup]
+2026-10-16T18:43:41.2364111Z [command]/usr/bin/git sparse-checkout disable
+2026-10-16T18:43:41.2365807Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-16T18:43:41.2367404Z ##[group]Checking out the ref
+2026-10-16T18:43:41.2368094Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/109/merge
+2026-10-16T18:43:41.5136627Z Note: switching to 'refs/remotes/pull/109/merge'.
+2026-10-16T18:43:41.5137199Z 
+2026-10-16T18:43:41.5137660Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-16T18:43:41.5138756Z changes and commit them, and you can discard any commits you make in this
+2026-10-16T18:43:41.5140085Z state without impacting any branches by switching back to a branch.
+2026-10-16T18:43:41.5140625Z 
+2026-10-16T18:43:41.5140995Z If you want to create a new branch to retain commits you create, you may
+2026-10-16T18:43:41.5141857Z do so (now or later) by using -c with the switch command. Example:
+2026-10-16T18:43:41.5142366Z 
+2026-10-16T18:43:41.5142568Z   git switch -c <new-branch-name>
+2026-10-16T18:43:41.5143208Z 
+2026-10-16T18:43:41.5143429Z Or undo this operation with:
+2026-10-16T18:43:41.5143705Z 
+2026-10-16T18:43:41.5143865Z   git switch -
+2026-10-16T18:43:41.5144064Z 
+2026-10-16T18:43:41.5144430Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-16T18:43:41.5144960Z 
+2026-10-16T18:43:41.5145627Z HEAD is now at fe549a5c Merge 4cbd098dfe6180c566ee07128219addf1077a0f2 into a3bfe404648e2941634ae08ab625a76fb2bee0d5
+2026-10-16T18:43:41.5164082Z ##[endgroup]
+2026-10-16T18:43:41.5213653Z [command]/usr/bin/git log -1 --format=%H
+2026-10-16T18:43:41.5244953Z fe549a5c8a7dd7a748fec5902e516685affeda50
+2026-10-16T18:43:41.5255993Z ##[group]Removing auth
+2026-10-16T18:43:41.5256531Z Removing SSH command configuration
+2026-10-16T18:43:41.5260463Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-16T18:43:41.5296441Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-16T18:43:41.5539059Z Removing HTTP extra header
+2026-10-16T18:43:41.5544245Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-16T18:43:41.5604692Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-16T18:43:41.5837873Z Removing includeIf entries pointing to credentials config files
+2026-10-16T18:43:41.5841758Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-16T18:43:41.5874012Z includeif.gitdir:/home/runner/work/forma/forma/.git.path
+2026-10-16T18:43:41.5875104Z includeif.gitdir:/home/runner/work/forma/forma/.git/worktrees/*.path
+2026-10-16T18:43:41.5876039Z includeif.gitdir:/github/workspace/.git.path
+2026-10-16T18:43:41.5876841Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-16T18:43:41.5884375Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/forma/forma/.git.path
+2026-10-16T18:43:41.5911676Z /home/runner/work/_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:41.5934380Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/forma/forma/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-f8881991\-11ab\-4e9b\-83b8\-49e8450852a9\.config
+2026-10-16T18:43:41.5968524Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/forma/forma/.git/worktrees/*.path
+2026-10-16T18:43:41.6006529Z /home/runner/work/_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:41.6015223Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/forma/forma/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-f8881991\-11ab\-4e9b\-83b8\-49e8450852a9\.config
+2026-10-16T18:43:41.6051929Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-16T18:43:41.6081697Z /github/runner_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:41.6090364Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-f8881991\-11ab\-4e9b\-83b8\-49e8450852a9\.config
+2026-10-16T18:43:41.6128710Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-16T18:43:41.6179987Z /github/runner_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config
+2026-10-16T18:43:41.6182562Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-f8881991\-11ab\-4e9b\-83b8\-49e8450852a9\.config
+2026-10-16T18:43:41.6250022Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-16T18:43:41.6478183Z Removing credentials config '/home/runner/work/_temp/git-credentials-f8881991-11ab-4e9b-83b8-49e8450852a9.config'
+2026-10-16T18:43:41.6487326Z ##[endgroup]
+2026-10-16T18:43:41.6735989Z ##[group]Run actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+2026-10-16T18:43:41.6736400Z with:
+2026-10-16T18:43:41.6736612Z   node-version-file: .node-version
+2026-10-16T18:43:41.6736890Z   package-manager-cache: false
+2026-10-16T18:43:41.6737143Z   check-latest: false
+2026-10-16T18:43:41.6739647Z   token: ***
+2026-10-16T18:43:41.6739864Z env:
+2026-10-16T18:43:41.6740055Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:41.6740288Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:41.6740502Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:41.6740716Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:41.6740938Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:41.6741192Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:41.6741498Z ##[endgroup]
+2026-10-16T18:43:41.8006707Z Node version file is not JSON file
+2026-10-16T18:43:41.8013284Z Node version file is not TOML file
+2026-10-16T18:43:41.8014140Z Resolved .node-version as 24.22.0
+2026-10-16T18:43:41.8074102Z Attempting to download 24.22.0...
+2026-10-16T18:43:42.8005591Z Acquiring 24.22.0 - x64 from https://github.com/actions/node-versions/releases/download/24.22.0-38668177966/node-24.22.0-linux-x64.tar.gz
+2026-10-16T18:43:43.5267070Z Extracting ...
+2026-10-16T18:43:43.5387432Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/ff44780c-f061-4595-adf5-d3f4b9755918 -f /home/runner/work/_temp/cb33139f-ed27-4697-ac6f-df14e390167e
+2026-10-16T18:43:44.8390358Z Adding to the cache ...
+2026-10-16T18:43:46.8913166Z ##[group]Environment details
+2026-10-16T18:43:47.1118904Z node: v24.22.0
+2026-10-16T18:43:47.1119297Z npm: 11.19.1
+2026-10-16T18:43:47.1119558Z yarn: 1.22.22
+2026-10-16T18:43:47.1120048Z ##[endgroup]
+2026-10-16T18:43:47.1431568Z ##[group]Run dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+2026-10-16T18:43:47.1432003Z with:
+2026-10-16T18:43:47.1432212Z   toolchain: 1.93.1
+2026-10-16T18:43:47.1432435Z env:
+2026-10-16T18:43:47.1432647Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:47.1433255Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:47.1433506Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:47.1433747Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:47.1433987Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:47.1434259Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:47.1434591Z ##[endgroup]
+2026-10-16T18:43:47.1499535Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+2026-10-16T18:43:47.1553920Z ##[group]Run if [[ -z $toolchain ]]; then
+2026-10-16T18:43:47.1554337Z [36;1mif [[ -z $toolchain ]]; then[0m
+2026-10-16T18:43:47.1554909Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2026-10-16T18:43:47.1555551Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2026-10-16T18:43:47.1555875Z [36;1m  exit 1[0m
+2026-10-16T18:43:47.1556229Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2026-10-16T18:43:47.1556676Z [36;1m  if [[ Linux == macOS ]]; then[0m
+2026-10-16T18:43:47.1557233Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-10-16T18:43:47.1557779Z [36;1m  else[0m
+2026-10-16T18:43:47.1558208Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-10-16T18:43:47.1558885Z [36;1m  fi[0m
+2026-10-16T18:43:47.1559207Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2026-10-16T18:43:47.1559780Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2026-10-16T18:43:47.1560269Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2026-10-16T18:43:47.1560813Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2026-10-16T18:43:47.1561335Z [36;1melse[0m
+2026-10-16T18:43:47.1561554Z [36;1m  delimiter=EOF[0m
+2026-10-16T18:43:47.1561884Z [36;1m  while [[ $toolchain == *$delimiter* ]]; do delimiter+=_; done[0m
+2026-10-16T18:43:47.1562414Z [36;1m  printf 'toolchain<<%s\n%s\n%s\n' "$delimiter" "$toolchain" "$delimiter" >> $GITHUB_OUTPUT[0m
+2026-10-16T18:43:47.1563018Z [36;1mfi[0m
+2026-10-16T18:43:47.1851049Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:47.1851531Z env:
+2026-10-16T18:43:47.1851792Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:47.1852111Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:47.1852409Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:47.1852996Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:47.1853308Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:47.1853653Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:47.1854070Z   toolchain: 1.93.1
+2026-10-16T18:43:47.1854344Z ##[endgroup]
+2026-10-16T18:43:47.1987409Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=48]
+2026-10-16T18:43:47.1991524Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+2026-10-16T18:43:47.2011822Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+2026-10-16T18:43:47.2012295Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2026-10-16T18:43:47.2068457Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:47.2068815Z env:
+2026-10-16T18:43:47.2069013Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:47.2069256Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:47.2069474Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:47.2069690Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:47.2069904Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:47.2070346Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:47.2070664Z ##[endgroup]
+2026-10-16T18:43:47.2157473Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=16]
+2026-10-16T18:43:47.2159531Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+2026-10-16T18:43:47.2184119Z ##[group]Run if ! command -v rustup &>/dev/null; then
+2026-10-16T18:43:47.2184487Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2026-10-16T18:43:47.2185258Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2026-10-16T18:43:47.2186044Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2026-10-16T18:43:47.2186330Z [36;1mfi[0m
+2026-10-16T18:43:47.2241404Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:47.2241744Z env:
+2026-10-16T18:43:47.2241941Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:47.2242183Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:47.2242405Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:47.2242622Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:47.2243094Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:47.2243356Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:47.2243673Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:47.2243916Z ##[endgroup]
+2026-10-16T18:43:47.2327965Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=16]
+2026-10-16T18:43:47.2330094Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+2026-10-16T18:43:47.2335564Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-16T18:43:47.2347186Z ##[start-action display=rustup toolchain install 1.93.1;id=__dtolnay_rust-toolchain.__run_4]
+2026-10-16T18:43:47.2365780Z ##[group]Run set -f  # split targets and components on commas and whitespace, without glob expansion
+2026-10-16T18:43:47.2366472Z [36;1mset -f  # split targets and components on commas and whitespace, without glob expansion[0m
+2026-10-16T18:43:47.2366922Z [36;1mflags=()[0m
+2026-10-16T18:43:47.2367208Z [36;1mfor t in ${targets//,/ }; do flags+=(--target "$t"); done[0m
+2026-10-16T18:43:47.2367633Z [36;1mfor c in ${components//,/ }; do flags+=(--component "$c"); done[0m
+2026-10-16T18:43:47.2368138Z [36;1mif [[ $toolchain == nightly && -n $components ]]; then flags+=(--allow-downgrade); fi[0m
+2026-10-16T18:43:47.2368569Z [36;1mlog=$(mktemp)[0m
+2026-10-16T18:43:47.2368804Z [36;1mtrap 'rm -f "$log"' EXIT[0m
+2026-10-16T18:43:47.2369065Z [36;1mfor attempt in 1 2 3 4 5; do[0m
+2026-10-16T18:43:47.2369647Z [36;1m  if rustup toolchain install "$toolchain" "${flags[@]}" --profile minimal --no-self-update --force-non-host 2>&1 | tee "$log"; then[0m
+2026-10-16T18:43:47.2370225Z [36;1m    break[0m
+2026-10-16T18:43:47.2370428Z [36;1m  else[0m
+2026-10-16T18:43:47.2370630Z [36;1m    status=$?[0m
+2026-10-16T18:43:47.2370845Z [36;1m  fi[0m
+2026-10-16T18:43:47.2371150Z [36;1m  if [[ $attempt == 5 ]] || ! grep -Fq 'checksum failed for ' "$log" \[0m
+2026-10-16T18:43:47.2371723Z [36;1m      || ! grep -Fq 'this is likely due to an ongoing update of the official release server' "$log"; then[0m
+2026-10-16T18:43:47.2372189Z [36;1m    exit "$status"[0m
+2026-10-16T18:43:47.2372418Z [36;1m  fi[0m
+2026-10-16T18:43:47.2373053Z [36;1m  echo "Retrying rustup toolchain install in 30 seconds (retry $attempt of 4)" >&2[0m
+2026-10-16T18:43:47.2373505Z [36;1m  sleep 30[0m
+2026-10-16T18:43:47.2373713Z [36;1mdone[0m
+2026-10-16T18:43:47.2429064Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:47.2429411Z env:
+2026-10-16T18:43:47.2429605Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:47.2429843Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:47.2430064Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:47.2430280Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:47.2430506Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:47.2430920Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:47.2431249Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:47.2431493Z   toolchain: 1.93.1
+2026-10-16T18:43:47.2431691Z   targets: 
+2026-10-16T18:43:47.2431872Z   components: 
+2026-10-16T18:43:47.2432074Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-10-16T18:43:47.2432306Z ##[endgroup]
+2026-10-16T18:43:47.3465396Z info: syncing channel updates for 1.93.1-x86_64-unknown-linux-gnu
+2026-10-16T18:43:47.8137657Z info: latest update on 2026-02-12 for version 1.93.1 (01f6ddf75 2026-02-11)
+2026-10-16T18:43:47.8138299Z info: downloading 3 components
+2026-10-16T18:43:55.2352626Z 
+2026-10-16T18:43:55.2422385Z   1.93.1-x86_64-unknown-linux-gnu installed - rustc 1.93.1 (01f6ddf75 2026-02-11)
+2026-10-16T18:43:55.2423220Z 
+2026-10-16T18:43:55.2490938Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=8014]
+2026-10-16T18:43:55.2498428Z ##[start-action display=rustup default 1.93.1;id=__dtolnay_rust-toolchain.__run_5]
+2026-10-16T18:43:55.2539045Z ##[group]Run rustup default "$toolchain" --force-non-host
+2026-10-16T18:43:55.2539475Z [36;1mrustup default "$toolchain" --force-non-host[0m
+2026-10-16T18:43:55.2601907Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.2602264Z env:
+2026-10-16T18:43:55.2602482Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.2603056Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.2603326Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.2603558Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.2603802Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.2604081Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.2604422Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.2604971Z   toolchain: 1.93.1
+2026-10-16T18:43:55.2605191Z ##[endgroup]
+2026-10-16T18:43:55.2728501Z info: using existing install for 1.93.1-x86_64-unknown-linux-gnu
+2026-10-16T18:43:55.2733940Z info: default toolchain set to 1.93.1-x86_64-unknown-linux-gnu
+2026-10-16T18:43:55.2734264Z 
+2026-10-16T18:43:55.2801719Z   1.93.1-x86_64-unknown-linux-gnu unchanged - rustc 1.93.1 (01f6ddf75 2026-02-11)
+2026-10-16T18:43:55.2802333Z 
+2026-10-16T18:43:55.2818408Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=31]
+2026-10-16T18:43:55.2822084Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+2026-10-16T18:43:55.2841470Z ##[group]Run DATE=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-10-16T18:43:55.2842355Z [36;1mDATE=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2026-10-16T18:43:55.2843557Z [36;1mHASH=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2026-10-16T18:43:55.2844096Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2026-10-16T18:43:55.2905392Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.2905728Z env:
+2026-10-16T18:43:55.2905925Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.2906156Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.2906372Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.2906590Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.2906814Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.2907079Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.2907396Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.2907638Z   toolchain: 1.93.1
+2026-10-16T18:43:55.2907847Z ##[endgroup]
+2026-10-16T18:43:55.3247264Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=42]
+2026-10-16T18:43:55.3249737Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+2026-10-16T18:43:55.3268766Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-10-16T18:43:55.3269139Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2026-10-16T18:43:55.3269467Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2026-10-16T18:43:55.3269936Z [36;1mfi[0m
+2026-10-16T18:43:55.3332932Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.3333299Z env:
+2026-10-16T18:43:55.3333494Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.3333731Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.3333945Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.3334159Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.3334374Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.3334625Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.3334942Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.3335183Z ##[endgroup]
+2026-10-16T18:43:55.3418369Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=16]
+2026-10-16T18:43:55.3420424Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+2026-10-16T18:43:55.3438125Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-10-16T18:43:55.3438487Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2026-10-16T18:43:55.3438848Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2026-10-16T18:43:55.3439154Z [36;1mfi[0m
+2026-10-16T18:43:55.3495076Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.3495417Z env:
+2026-10-16T18:43:55.3495612Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.3495846Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.3496063Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.3496275Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.3496491Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.3496741Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.3497067Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.3497494Z ##[endgroup]
+2026-10-16T18:43:55.3580344Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=15]
+2026-10-16T18:43:55.3583591Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+2026-10-16T18:43:55.3602416Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-10-16T18:43:55.3603278Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2026-10-16T18:43:55.3603996Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2026-10-16T18:43:55.3604772Z [36;1m  if rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2026-10-16T18:43:55.3605372Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-10-16T18:43:55.3605940Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2026-10-16T18:43:55.3606473Z [36;1m  elif rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2026-10-16T18:43:55.3607060Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-10-16T18:43:55.3607590Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2026-10-16T18:43:55.3607940Z [36;1m  fi[0m
+2026-10-16T18:43:55.3608130Z [36;1mfi[0m
+2026-10-16T18:43:55.3663719Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.3664056Z env:
+2026-10-16T18:43:55.3664250Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.3664484Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.3664706Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.3664918Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.3665132Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.3665387Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.3665711Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.3665957Z   toolchain: 1.93.1
+2026-10-16T18:43:55.3666163Z ##[endgroup]
+2026-10-16T18:43:55.3981947Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=39]
+2026-10-16T18:43:55.3985936Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+2026-10-16T18:43:55.4004498Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-10-16T18:43:55.4005294Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2026-10-16T18:43:55.4005941Z [36;1mif rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2026-10-16T18:43:55.4006422Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2026-10-16T18:43:55.4006732Z [36;1mfi[0m
+2026-10-16T18:43:55.4069345Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.4069687Z env:
+2026-10-16T18:43:55.4069883Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.4070134Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.4070354Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.4070564Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.4070791Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.4071042Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.4071358Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.4071605Z   toolchain: 1.93.1
+2026-10-16T18:43:55.4071803Z ##[endgroup]
+2026-10-16T18:43:55.4269375Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=28]
+2026-10-16T18:43:55.4274078Z ##[start-action display=rustc +1.93.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+2026-10-16T18:43:55.4292255Z ##[group]Run rustc +"$toolchain" --version --verbose
+2026-10-16T18:43:55.4292630Z [36;1mrustc +"$toolchain" --version --verbose[0m
+2026-10-16T18:43:55.4352071Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-16T18:43:55.4352404Z env:
+2026-10-16T18:43:55.4352615Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.4353416Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.4353634Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.4353845Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.4354063Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.4354314Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.4354647Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.4354892Z   toolchain: 1.93.1
+2026-10-16T18:43:55.4355092Z ##[endgroup]
+2026-10-16T18:43:55.4544191Z rustc 1.93.1 (01f6ddf75 2026-02-11)
+2026-10-16T18:43:55.4545129Z binary: rustc
+2026-10-16T18:43:55.4545995Z commit-hash: 01f6ddf7588f42ae2d7eb0a2f21d44e8e96674cf
+2026-10-16T18:43:55.4546607Z commit-date: 2026-02-11
+2026-10-16T18:43:55.4547109Z host: x86_64-unknown-linux-gnu
+2026-10-16T18:43:55.4547544Z release: 1.93.1
+2026-10-16T18:43:55.4547937Z LLVM version: 21.1.8
+2026-10-16T18:43:55.4563608Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=28]
+2026-10-16T18:43:55.4618129Z ##[group]Run bash scripts/install-deps.sh
+2026-10-16T18:43:55.4618510Z [36;1mbash scripts/install-deps.sh[0m
+2026-10-16T18:43:55.4618807Z [36;1mnpm audit signatures[0m
+2026-10-16T18:43:55.4619161Z [36;1mrustup toolchain install nightly-2026-10-01 --profile minimal[0m
+2026-10-16T18:43:55.4619666Z [36;1mcargo +nightly-2026-10-01 install cargo-fuzz --version 0.13.2 --locked[0m
+2026-10-16T18:43:55.4680855Z shell: /usr/bin/bash -e {0}
+2026-10-16T18:43:55.4681105Z env:
+2026-10-16T18:43:55.4681307Z   CARGO_TERM_COLOR: never
+2026-10-16T18:43:55.4681549Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:43:55.4681769Z   CARGO_NET_RETRY: 10
+2026-10-16T18:43:55.4681982Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:43:55.4682198Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:43:55.4682444Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:43:55.4683045Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:43:55.4683303Z ##[endgroup]
+2026-10-16T18:44:04.4474925Z 
+2026-10-16T18:44:04.4475707Z added 420 packages in 9s
+2026-10-16T18:44:04.4476117Z 
+2026-10-16T18:44:04.4476943Z 80 packages are looking for funding
+2026-10-16T18:44:04.4477872Z   run `npm fund` for details
+2026-10-16T18:44:11.8316330Z audited 416 packages in 6s
+2026-10-16T18:44:11.8316735Z 
+2026-10-16T18:44:11.8321324Z 416 packages have verified registry signatures
+2026-10-16T18:44:11.8321758Z 
+2026-10-16T18:44:11.8322098Z 106 packages have verified attestations
+2026-10-16T18:44:11.8323680Z (use --json --include-attestations to view attestation details)
+2026-10-16T18:44:11.8324303Z 
+2026-10-16T18:44:11.8753235Z info: syncing channel updates for nightly-2026-10-01-x86_64-unknown-linux-gnu
+2026-10-16T18:44:12.3490182Z info: latest update on 2026-10-01 for version 1.101.0-nightly (21b707e3f 2026-09-30)
+2026-10-16T18:44:12.3491242Z info: downloading 3 components
+2026-10-16T18:44:20.6777542Z 
+2026-10-16T18:44:20.6845853Z   nightly-2026-10-01-x86_64-unknown-linux-gnu installed - rustc 1.101.0-nightly (21b707e3f 2026-09-30)
+2026-10-16T18:44:20.6846399Z 
+2026-10-16T18:44:20.7124322Z     Updating crates.io index
+2026-10-16T18:44:20.8220841Z  Downloading crates ...
+2026-10-16T18:44:20.9610493Z   Downloaded cargo-fuzz v0.13.2
+2026-10-16T18:44:21.0168605Z   Installing cargo-fuzz v0.13.2
+2026-10-16T18:44:21.0182010Z     Updating crates.io index
+2026-10-16T18:44:21.5326120Z     Updating crates.io index
+2026-10-16T18:44:21.7466516Z  Downloading crates ...
+2026-10-16T18:44:21.7730174Z   Downloaded anstyle v1.0.14
+2026-10-16T18:44:21.7757469Z   Downloaded anstream v1.0.0
+2026-10-16T18:44:21.7778737Z   Downloaded anstyle-query v1.1.5
+2026-10-16T18:44:21.7898857Z   Downloaded anyhow v1.0.102
+2026-10-16T18:44:21.7943284Z   Downloaded bitflags v2.11.1
+2026-10-16T18:44:21.8057128Z   Downloaded anstyle-parse v1.0.0
+2026-10-16T18:44:21.8115996Z   Downloaded equivalent v1.0.2
+2026-10-16T18:44:21.8248947Z   Downloaded camino v1.2.2
+2026-10-16T18:44:21.8269859Z   Downloaded clap_builder v4.6.0
+2026-10-16T18:44:21.8335446Z   Downloaded thiserror-impl v2.0.18
+2026-10-16T18:44:21.8350057Z   Downloaded colorchoice v1.0.5
+2026-10-16T18:44:21.8359916Z   Downloaded current_platform v0.2.0
+2026-10-16T18:44:21.8368910Z   Downloaded utf8parse v0.2.2
+2026-10-16T18:44:21.8378635Z   Downloaded clap_lex v1.1.0
+2026-10-16T18:44:21.8403588Z   Downloaded itoa v1.0.18
+2026-10-16T18:44:21.8421620Z   Downloaded cfg-if v1.0.4
+2026-10-16T18:44:21.8436076Z   Downloaded is_terminal_polyfill v1.70.2
+2026-10-16T18:44:21.8446576Z   Downloaded cargo-platform v0.3.3
+2026-10-16T18:44:21.8460010Z   Downloaded num_cpus v1.17.0
+2026-10-16T18:44:21.8492393Z   Downloaded errno v0.3.14
+2026-10-16T18:44:21.8605162Z   Downloaded crossbeam-epoch v0.9.18
+2026-10-16T18:44:21.8632687Z   Downloaded once_cell v1.21.4
+2026-10-16T18:44:21.8658495Z   Downloaded heck v0.5.0
+2026-10-16T18:44:21.8670922Z   Downloaded serde_spanned v1.1.1
+2026-10-16T18:44:21.8731404Z   Downloaded rustc_version v0.4.1
+2026-10-16T18:44:21.8755907Z   Downloaded crossbeam-deque v0.8.6
+2026-10-16T18:44:21.8772126Z   Downloaded fastrand v2.4.1
+2026-10-16T18:44:21.8791325Z   Downloaded tempfile v3.27.0
+2026-10-16T18:44:21.8819145Z   Downloaded either v1.16.0
+2026-10-16T18:44:21.8834312Z   Downloaded serde_core v1.0.228
+2026-10-16T18:44:21.8861694Z   Downloaded strsim v0.11.1
+2026-10-16T18:44:21.8874563Z   Downloaded toml_writer v1.1.1+spec-1.1.0
+2026-10-16T18:44:21.8888067Z   Downloaded zmij v1.0.21
+2026-10-16T18:44:21.8910650Z   Downloaded cargo_metadata v0.23.1
+2026-10-16T18:44:21.8927204Z   Downloaded quote v1.0.45
+2026-10-16T18:44:21.8954578Z   Downloaded toml_datetime v1.1.1+spec-1.1.0
+2026-10-16T18:44:21.8968797Z   Downloaded crossbeam-utils v0.8.21
+2026-10-16T18:44:21.8994764Z   Downloaded semver v1.0.28
+2026-10-16T18:44:21.9017813Z   Downloaded unicode-ident v1.0.24
+2026-10-16T18:44:21.9045391Z   Downloaded thiserror v2.0.18
+2026-10-16T18:44:21.9111458Z   Downloaded clap_derive v4.6.1
+2026-10-16T18:44:21.9133388Z   Downloaded clap v4.6.1
+2026-10-16T18:44:21.9229939Z   Downloaded getrandom v0.4.2
+2026-10-16T18:44:21.9268048Z   Downloaded toml_parser v1.1.2+spec-1.1.0
+2026-10-16T18:44:21.9291248Z   Downloaded proc-macro2 v1.0.106
+2026-10-16T18:44:21.9320626Z   Downloaded serde_derive v1.0.228
+2026-10-16T18:44:21.9350810Z   Downloaded rayon-core v1.13.0
+2026-10-16T18:44:21.9387785Z   Downloaded toml v1.1.2+spec-1.1.0
+2026-10-16T18:44:21.9428794Z   Downloaded memchr v2.8.0
+2026-10-16T18:44:21.9484681Z   Downloaded serde v1.0.228
+2026-10-16T18:44:21.9518560Z   Downloaded indexmap v2.14.0
+2026-10-16T18:44:21.9560780Z   Downloaded rayon v1.12.0
+2026-10-16T18:44:21.9656495Z   Downloaded hashbrown v0.17.1
+2026-10-16T18:44:21.9708334Z   Downloaded serde_json v1.0.150
+2026-10-16T18:44:21.9781384Z   Downloaded winnow v1.0.3
+2026-10-16T18:44:21.9879270Z   Downloaded syn v2.0.117
+2026-10-16T18:44:21.9984655Z   Downloaded rustix v1.1.4
+2026-10-16T18:44:22.0260071Z   Downloaded libc v0.2.186
+2026-10-16T18:44:22.0658634Z   Downloaded linux-raw-sys v0.12.1
+2026-10-16T18:44:22.1556009Z    Compiling serde_core v1.0.228
+2026-10-16T18:44:22.1556769Z    Compiling proc-macro2 v1.0.106
+2026-10-16T18:44:22.1557191Z    Compiling quote v1.0.45
+2026-10-16T18:44:22.4214855Z    Compiling unicode-ident v1.0.24
+2026-10-16T18:44:22.4693935Z    Compiling crossbeam-utils v0.8.21
+2026-10-16T18:44:22.5737562Z    Compiling libc v0.2.186
+2026-10-16T18:44:22.9428411Z    Compiling syn v2.0.117
+2026-10-16T18:44:23.5733607Z    Compiling utf8parse v0.2.2
+2026-10-16T18:44:23.6167894Z    Compiling zmij v1.0.21
+2026-10-16T18:44:23.7417193Z    Compiling anstyle-parse v1.0.0
+2026-10-16T18:44:23.8846795Z    Compiling crossbeam-epoch v0.9.18
+2026-10-16T18:44:24.5681520Z    Compiling colorchoice v1.0.5
+2026-10-16T18:44:24.5969524Z    Compiling serde_json v1.0.150
+2026-10-16T18:44:24.6477786Z    Compiling anstyle v1.0.14
+2026-10-16T18:44:24.7826487Z    Compiling is_terminal_polyfill v1.70.2
+2026-10-16T18:44:24.8068346Z    Compiling thiserror v2.0.18
+2026-10-16T18:44:24.9136455Z    Compiling rayon-core v1.13.0
+2026-10-16T18:44:24.9635347Z    Compiling rustix v1.1.4
+2026-10-16T18:44:25.1163028Z    Compiling camino v1.2.2
+2026-10-16T18:44:25.1537594Z    Compiling serde v1.0.228
+2026-10-16T18:44:25.2341344Z    Compiling anstyle-query v1.1.5
+2026-10-16T18:44:25.2598010Z    Compiling getrandom v0.4.2
+2026-10-16T18:44:25.2693171Z    Compiling anstream v1.0.0
+2026-10-16T18:44:25.4587082Z    Compiling semver v1.0.28
+2026-10-16T18:44:25.6308769Z    Compiling crossbeam-deque v0.8.6
+2026-10-16T18:44:25.9874093Z    Compiling bitflags v2.11.1
+2026-10-16T18:44:26.0134200Z    Compiling strsim v0.11.1
+2026-10-16T18:44:26.1804983Z    Compiling thiserror-impl v2.0.18
+2026-10-16T18:44:26.2926111Z    Compiling serde_derive v1.0.228
+2026-10-16T18:44:26.7496794Z    Compiling anyhow v1.0.102
+2026-10-16T18:44:26.8535746Z    Compiling clap_lex v1.1.0
+2026-10-16T18:44:27.0780530Z    Compiling current_platform v0.2.0
+2026-10-16T18:44:27.1016902Z    Compiling memchr v2.8.0
+2026-10-16T18:44:27.1308654Z    Compiling heck v0.5.0
+2026-10-16T18:44:27.2127088Z    Compiling linux-raw-sys v0.12.1
+2026-10-16T18:44:27.4121987Z    Compiling itoa v1.0.18
+2026-10-16T18:44:27.5320728Z    Compiling winnow v1.0.3
+2026-10-16T18:44:27.8379077Z    Compiling cfg-if v1.0.4
+2026-10-16T18:44:27.9852108Z    Compiling toml_parser v1.1.2+spec-1.1.0
+2026-10-16T18:44:29.4200331Z    Compiling clap_derive v4.6.1
+2026-10-16T18:44:30.7105641Z    Compiling clap_builder v4.6.0
+2026-10-16T18:44:32.1287074Z    Compiling cargo-platform v0.3.3
+2026-10-16T18:44:32.4386001Z    Compiling serde_spanned v1.1.1
+2026-10-16T18:44:32.5074612Z    Compiling toml_datetime v1.1.1+spec-1.1.0
+2026-10-16T18:44:32.5146550Z    Compiling toml_writer v1.1.1+spec-1.1.0
+2026-10-16T18:44:32.6399686Z    Compiling once_cell v1.21.4
+2026-10-16T18:44:32.7882061Z    Compiling either v1.16.0
+2026-10-16T18:44:32.8549860Z    Compiling fastrand v2.4.1
+2026-10-16T18:44:32.9337459Z    Compiling rayon v1.12.0
+2026-10-16T18:44:33.0548861Z    Compiling tempfile v3.27.0
+2026-10-16T18:44:33.6542265Z    Compiling clap v4.6.1
+2026-10-16T18:44:33.6763941Z    Compiling toml v1.1.2+spec-1.1.0
+2026-10-16T18:44:35.7885823Z    Compiling cargo_metadata v0.23.1
+2026-10-16T18:44:38.3476163Z    Compiling rustc_version v0.4.1
+2026-10-16T18:44:38.8165079Z    Compiling num_cpus v1.17.0
+2026-10-16T18:44:40.8312059Z    Compiling cargo-fuzz v0.13.2
+2026-10-16T18:44:43.7237814Z     Finished `release` profile [optimized] target(s) in 23.02s
+2026-10-16T18:44:43.7291251Z   Installing /home/runner/.cargo/bin/cargo-fuzz
+2026-10-16T18:44:43.7296536Z    Installed package `cargo-fuzz v0.13.2` (executable `cargo-fuzz`)
+2026-10-16T18:44:43.7726497Z ##[group]Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+2026-10-16T18:44:43.7726960Z with:
+2026-10-16T18:44:43.7727181Z   name: scaffold-candidates
+2026-10-16T18:44:43.7727489Z   path: /home/runner/work/_temp/candidate artifacts
+2026-10-16T18:44:43.7727823Z   digest-mismatch: error
+2026-10-16T18:44:43.7728076Z   merge-multiple: false
+2026-10-16T18:44:43.7728323Z   repository: getforma-dev/forma
+2026-10-16T18:44:43.7728584Z   run-id: 38949340060
+2026-10-16T18:44:43.7728816Z   skip-decompress: false
+2026-10-16T18:44:43.7729059Z env:
+2026-10-16T18:44:43.7729281Z   CARGO_TERM_COLOR: never
+2026-10-16T18:44:43.7729524Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:44:43.7729762Z   CARGO_NET_RETRY: 10
+2026-10-16T18:44:43.7729991Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:44:43.7730221Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:44:43.7730484Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:44:43.7730814Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:44:43.7731111Z ##[endgroup]
+2026-10-16T18:44:43.9137173Z Downloading single artifact
+2026-10-16T18:44:44.1353069Z Preparing to download the following artifacts:
+2026-10-16T18:44:44.1355004Z - scaffold-candidates (ID: 12067950752, Size: 2820350, Expected Digest: sha256:887a3f674c9c14e4f12c8619a837c9787e156c6cc2ea5c91c7763efa19e75586)
+2026-10-16T18:44:44.5209515Z Redirecting to blob download url: https://productionresultssa18.blob.core.windows.net/actions-results/1a4bf34f-e1a4-8900-92c1-dcc5896f4f12/workflow-job-run-450162a8-4dc9-52b3-8a03-f96fa240c296/artifacts/1324f44d6fcff5882e0aea7a8d654df3b94bef1acd9a98b4947adba66fea802e.zip
+2026-10-16T18:44:44.5212636Z Starting download of artifact to: /home/runner/work/_temp/candidate artifacts
+2026-10-16T18:44:44.7801026Z (node:3797) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-16T18:44:44.7802163Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T18:44:45.4176518Z SHA256 digest of downloaded artifact is 887a3f674c9c14e4f12c8619a837c9787e156c6cc2ea5c91c7763efa19e75586
+2026-10-16T18:44:45.4177233Z Artifact download completed successfully.
+2026-10-16T18:44:45.4177620Z Total of 1 artifact(s) downloaded
+2026-10-16T18:44:45.4180694Z Download artifact has finished successfully
+2026-10-16T18:44:45.4298039Z ##[group]Run python3 scripts/release-owned-linux.test.py
+2026-10-16T18:44:45.4298602Z [36;1mpython3 scripts/release-owned-linux.test.py[0m
+2026-10-16T18:44:45.4361484Z shell: /usr/bin/bash -e {0}
+2026-10-16T18:44:45.4361759Z env:
+2026-10-16T18:44:45.4361958Z   CARGO_TERM_COLOR: never
+2026-10-16T18:44:45.4362204Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:44:45.4362435Z   CARGO_NET_RETRY: 10
+2026-10-16T18:44:45.4362657Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:44:45.4363234Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:44:45.4363499Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:44:45.4363845Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:44:45.4364322Z ##[endgroup]
+2026-10-16T18:44:45.8102504Z ./home/runner/work/forma/forma/scripts/release-owned-linux.test.py:28: ResourceWarning: unclosed file <_io.BufferedReader name=6>
+2026-10-16T18:44:45.8104561Z   result = owned.supervise([sys.executable, '-c', 'import os;os.write(1,b"a"*65536+b"FINAL-TAIL")'], directory, 3)
+2026-10-16T18:44:45.8105981Z ResourceWarning: Enable tracemalloc to get the object allocation traceback
+2026-10-16T18:44:45.9087971Z ./home/runner/work/forma/forma/scripts/release-owned-linux.test.py:20: ResourceWarning: unclosed file <_io.BufferedReader name=6>
+2026-10-16T18:44:45.9089254Z   result = owned.supervise([sys.executable, '-c', code], pathlib.Path(root)/'attempt', timeout, cap)
+2026-10-16T18:44:45.9090117Z ResourceWarning: Enable tracemalloc to get the object allocation traceback
+2026-10-16T18:44:46.2209043Z .../usr/lib/python3.12/subprocess.py:1127: ResourceWarning: subprocess 3821 is still running
+2026-10-16T18:44:46.2210273Z   _warn("subprocess %s is still running" % self.pid,
+2026-10-16T18:44:46.2211439Z ResourceWarning: Enable tracemalloc to get the object allocation traceback
+2026-10-16T18:44:46.2212586Z .
+2026-10-16T18:44:46.2213708Z ----------------------------------------------------------------------
+2026-10-16T18:44:46.2214522Z Ran 6 tests in 0.679s
+2026-10-16T18:44:46.2214805Z 
+2026-10-16T18:44:46.2214991Z OK
+2026-10-16T18:44:46.2338327Z ##[group]Run python3 scripts/release-owned-linux.py "$RUNNER_TEMP/burn-in-setup-owned" 2700 -- node scripts/release-burn-in-setup.mjs worker "$RUNNER_TEMP/candidate artifacts" "$RECORD_SHA256" "$GITHUB_SHA" "$RUNNER_TEMP/burn-in-setup-work" "$RUNNER_TEMP/burn-in-setup-evidence"
+2026-10-16T18:44:46.2340320Z [36;1mpython3 scripts/release-owned-linux.py "$RUNNER_TEMP/burn-in-setup-owned" 2700 -- node scripts/release-burn-in-setup.mjs worker "$RUNNER_TEMP/candidate artifacts" "$RECORD_SHA256" "$GITHUB_SHA" "$RUNNER_TEMP/burn-in-setup-work" "$RUNNER_TEMP/burn-in-setup-evidence"[0m
+2026-10-16T18:44:46.2403252Z shell: /usr/bin/bash -e {0}
+2026-10-16T18:44:46.2403519Z env:
+2026-10-16T18:44:46.2403743Z   CARGO_TERM_COLOR: never
+2026-10-16T18:44:46.2403992Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:44:46.2404219Z   CARGO_NET_RETRY: 10
+2026-10-16T18:44:46.2404438Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:44:46.2404665Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:44:46.2404965Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:44:46.2405295Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:44:46.2405691Z   RECORD_SHA256: 5338f99cd4e8cc6c1d9726bfa9d32d31a825c611194a667df83fb3e9b7fd7525
+2026-10-16T18:44:46.2406293Z ##[endgroup]
+2026-10-16T18:46:44.8969819Z ##[error]Process completed with exit code 1.
+2026-10-16T18:46:44.9065433Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-10-16T18:46:44.9065880Z with:
+2026-10-16T18:46:44.9066078Z   name: burn-in-setup
+2026-10-16T18:46:44.9066522Z   path: /home/runner/work/_temp/burn-in-setup-evidence/
+/home/runner/work/_temp/burn-in-setup-owned/
+
+2026-10-16T18:46:44.9067023Z   if-no-files-found: error
+2026-10-16T18:46:44.9067265Z   retention-days: 30
+2026-10-16T18:46:44.9067482Z   compression-level: 6
+2026-10-16T18:46:44.9067696Z   overwrite: false
+2026-10-16T18:46:44.9067911Z   include-hidden-files: false
+2026-10-16T18:46:44.9068153Z   archive: true
+2026-10-16T18:46:44.9068346Z env:
+2026-10-16T18:46:44.9068531Z   CARGO_TERM_COLOR: never
+2026-10-16T18:46:44.9068756Z   CARGO_INCREMENTAL: 0
+2026-10-16T18:46:44.9068971Z   CARGO_NET_RETRY: 10
+2026-10-16T18:46:44.9069183Z   RUSTUP_MAX_RETRIES: 10
+2026-10-16T18:46:44.9069416Z   CARGO_BUILD_JOBS: 3
+2026-10-16T18:46:44.9069663Z   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+2026-10-16T18:46:44.9070017Z   CARGO_HOME: /home/runner/.cargo
+2026-10-16T18:46:44.9070268Z ##[endgroup]
+2026-10-16T18:46:45.0510233Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-10-16T18:46:45.0512610Z The least common ancestor is /home/runner/work/_temp. This will be the root directory of the artifact
+2026-10-16T18:46:45.0513772Z With the provided path, there will be 3 files uploaded
+2026-10-16T18:46:45.0519213Z Artifact name is valid!
+2026-10-16T18:46:45.0519794Z Root directory input is valid!
+2026-10-16T18:46:45.3733671Z Uploading artifact: burn-in-setup.zip
+2026-10-16T18:46:45.3776133Z Beginning upload of artifact content to blob storage
+2026-10-16T18:46:45.6193467Z Uploaded bytes 7272
+2026-10-16T18:46:45.6753492Z Finished uploading artifact content to blob storage!
+2026-10-16T18:46:45.6755138Z SHA256 digest of uploaded artifact is 823cf092333808b580d7492569b810ef8652b672df0b5d6ddf8b6e3a2a4c871f
+2026-10-16T18:46:45.6758796Z Finalizing artifact upload
+2026-10-16T18:46:46.0842126Z Artifact burn-in-setup successfully finalized. Artifact ID 12068105957
+2026-10-16T18:46:46.0843982Z Artifact burn-in-setup has been successfully uploaded! Final size is 7272 bytes. Artifact ID is 12068105957
+2026-10-16T18:46:46.0847868Z Artifact download URL: https://github.com/getforma-dev/forma/actions/runs/38949340060/artifacts/12068105957
+2026-10-16T18:46:46.1042387Z Post job cleanup.
+2026-10-16T18:46:46.1928826Z [command]/usr/bin/git version
+2026-10-16T18:46:46.1979550Z git version 2.55.0
+2026-10-16T18:46:46.2023092Z Temporarily overriding HOME='/home/runner/work/_temp/0c86f374-ab1f-4dde-9ff1-b7ba127d9fce' before making global git config changes
+2026-10-16T18:46:46.2024555Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-16T18:46:46.2029828Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/forma/forma
+2026-10-16T18:46:46.2068323Z Removing SSH command configuration
+2026-10-16T18:46:46.2076775Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-16T18:46:46.2116303Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-16T18:46:46.2394278Z Removing HTTP extra header
+2026-10-16T18:46:46.2400695Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-16T18:46:46.2455016Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-16T18:46:46.2717720Z Removing includeIf entries pointing to credentials config files
+2026-10-16T18:46:46.2725520Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-16T18:46:46.2767412Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-16T18:46:46.3209501Z Cleaning up orphan processes

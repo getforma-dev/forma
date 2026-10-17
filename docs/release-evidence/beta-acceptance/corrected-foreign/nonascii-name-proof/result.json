@@ -1,0 +1,6 @@
+{
+  "nativeExit": 0,
+  "nonAsciiAttributeEmitted": false,
+  "behavior": "Existing native ASCII name guard omits unsafe name; compiler lexical proof neither folds nor widens it.",
+  "htmlSha256": "d11c96ac7af3c416282cd396ecad1679a281cf0939f9679ff0225fd273912839"
+}

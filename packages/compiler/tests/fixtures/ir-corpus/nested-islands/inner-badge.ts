@@ -4,8 +4,8 @@ import { h, createSignal } from 'formajs';
 
 const [badgeLabel] = createSignal('beta');
 
-export function InnerBadge() {
-  return h('span', { class: 'badge', title: () => badgeTitle() },
+export function InnerBadge(props: { title: string }) {
+  return h('span', { class: 'badge', title: () => props.title },
     () => badgeLabel(),
   );
 }

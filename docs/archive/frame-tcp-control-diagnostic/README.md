@@ -1,0 +1,7 @@
+# Frame TCP-control failure diagnosis
+
+The select-repair qualification at 9ac71d6e passed 408 WebKit cases but failed the three existing frame TCP-counter controls with `read ECONNRESET`; that original run remains in `../../evidence/webkit-native-select-baseline/`.
+
+An independently reviewed phase-only diagnostic at 58df2a79 ran the same three cases once. Every original security and positive-control assertion was retained; every recorded socket error was rethrown after cleanup. All three counters recorded zero connections when the protected phase ended. Only after each host Image control started, each port accepted four connections and recorded three ECONNRESET errors. The diagnostic failed all three cases as designed, in 10.553 seconds. Playwright used one worker for the file (cap two). No EADDRINUSE occurred, so this run does not support parallel port contention as its cause. No listeners remained on the fixture/counter ports after process exit.
+
+The original helper ended a raw socket immediately without consuming or answering the Image HTTP request. The proposed repair supplies an HTTP 204 response with Connection: close while counting every raw TCP connection, including a preconnect that sends no HTTP request. All socket, server and HTTP-client errors remain failures. No protocol-error exemption, bind retry, full-suite retry, production behavior change or timing waiver is introduced by the diagnostic. Qualification of the causal repair is recorded separately after source review.

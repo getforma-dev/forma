@@ -1,0 +1,50 @@
+{
+  "sourceCommit": "f42b1d6d3e4801c27819a3411e701445298de943",
+  "files": [
+    {
+      "path": "packages/create-app/templates/minimal/admin/src/home/app.tsx",
+      "sha256": "3b4ba853ccb6ffc14d229777cf9e786edd86ff3c6f85314b7ce027309148d252",
+      "bytes": 898
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/build.ts",
+      "sha256": "e99fcebd3564150d7899b79ead9d010e0d8a36d8c4aa5f9260493a2734074ca5",
+      "bytes": 1135
+    },
+    {
+      "path": "packages/create-app/templates/minimal/src/main.rs",
+      "sha256": "03f785e271eec6a75b21d870b4302320a552aee763de8c967691e9ea37262998",
+      "bytes": 5809
+    },
+    {
+      "path": "packages/create-app/templates/minimal/README.md",
+      "sha256": "2d5f1e4108630834243b80b3c8e832eb306def37883ed86b6466fff78629565b",
+      "bytes": 3527
+    },
+    {
+      "path": "packages/create-app/docs/TEMPLATES.md",
+      "sha256": "e225443559fd4b24aabc1073917cb4431b868a389970d4271d41687e94352c31",
+      "bytes": 3367
+    },
+    {
+      "path": "packages/create-app/src/scaffold.ts",
+      "sha256": "d7cffaddfc5f9de17e0c9aad10d90bf81899cdf40c146dab251f4f29daad03b2",
+      "bytes": 14278
+    },
+    {
+      "path": "packages/create-app/tests/templates.test.ts",
+      "sha256": "bc124b9309405b0d5a80191708673f255e6467c239483d281d96b43f6cafc9b3",
+      "bytes": 36028
+    },
+    {
+      "path": "packages/create-app/docs/RENDERING-PHASES.md",
+      "sha256": "7168c3f6d38f0265f21e0ec70ec19da7c4b37f6dffb4dad65c0fac804a12d445",
+      "bytes": 1767
+    },
+    {
+      "path": "packages/create-app/README.md",
+      "sha256": "02c4a04df3a10450066943c07c011b8e4a8dc9dc316c9958f2196c2864b8a9ee",
+      "bytes": 9788
+    }
+  ]
+}

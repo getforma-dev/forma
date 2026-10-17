@@ -4,12 +4,11 @@
  *
  * The compiler's own conformance corpus pins each code at its line
  * (packages/compiler/tests/diagnostics-conformance.test.ts). This file pins
- * what the build does with them: without `--strict` nothing changes but the
- * report; with it the build fails, after compiling every page, with all of
- * them at once, and leaves the previous output as it was.
+ * how advisory diagnostics become errors under strict mode and how mandatory
+ * BUILD-610 refusals always fail while preserving reports and prior output.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -61,12 +60,12 @@ function config(entries: Record<string, string>, extra: Partial<BuildConfig> = {
   };
 }
 
-/** Two pages, each with one construct the compiler cannot represent. */
+/** Two pages with advisory attribute diagnostics; strict mode promotes both. */
 function twoBrokenPages() {
   return {
     home: page('home', [
-      `const helpers = { extra: () => h('em', null, 'x') };`,
-      `mount(() => h('main', null, h('div', null, helpers.extra())), '#app');`,
+      `function lookupClass() { return 'extra'; }`,
+      `mount(() => h('main', null, h('div', { class: () => lookupClass() })), '#app');`,
     ]),
     about: page('about', [
       `function lookupName() { return 'pad'; }`,
@@ -76,7 +75,7 @@ function twoBrokenPages() {
 }
 
 describe('--strict', () => {
-  it('S6: an unrepresentable construct fails the strict build with its code, file and line', async () => {
+  it('S6: strict mode reports every advisory error with its code, file and line', async () => {
     const entries = twoBrokenPages();
     let failure: (Error & { diagnostics?: BuildDiagnostic[] }) | undefined;
     try {
@@ -87,34 +86,17 @@ describe('--strict', () => {
     expect(failure?.name).toBe('FormaStrictBuildError');
     // Both pages' errors, at once: the build compiled every page before failing.
     expect(failure!.diagnostics!.map((d) => [d.page, d.code, d.file, d.line, d.severity])).toEqual([
-      ['home', 'BUILD-101', entries.home, 3, 'error'],
-      ['about', 'BUILD-207', entries.about, 3, 'error'],
+      ['home', 'BUILD-206', realpathSync(entries.home), 3, 'error'],
+      ['about', 'BUILD-207', realpathSync(entries.about), 3, 'error'],
     ]);
     expect(failure!.message).toContain(`${entries.home}:3:`);
-    expect(failure!.message).toContain('BUILD-101');
+    expect(failure!.message).toContain('BUILD-206');
     expect(failure!.message).toContain(`${entries.about}:3:`);
     expect(failure!.message).toContain('BUILD-207');
     expect(failure!.message).toMatch(/why: .*\n {4}fix: /);
-    expect(failure!.message).toContain('docs/DIAGNOSTICS.md');
+    expect(failure!.message).toContain('packages/compiler/docs/subset.md');
     // A failed build leaves no output (FORMA-018's staging directory).
     expect(existsSync(outDir)).toBe(false);
-  }, 30_000);
-
-  it('without --strict the same build succeeds, prints its lines as before, and returns the diagnostics', async () => {
-    const entries = twoBrokenPages();
-    const result = await build(config(entries));
-    expect(existsSync(join(outDir, 'manifest.json'))).toBe(true);
-    expect(result.diagnostics.map((d) => [d.page, d.code, d.severity])).toEqual([
-      ['home', 'BUILD-101', 'warning'],
-      ['about', 'BUILD-207', 'warning'],
-    ]);
-    // One line each, in the 0.3.6 shape plus the code and the position (the
-    // pages compile in parallel, so the lines come in either order).
-    const irLines = warnings.filter((w) => w.includes('IR: '));
-    expect(irLines).toHaveLength(2);
-    expect(irLines.find((line) => line.includes('home.ts'))).toMatch(
-      /^ {3}IR: BUILD-101 call expression helpers\.extra\(\.\.\.\) in .*home\.ts:3:\d+ — emitted as an empty island shell/,
-    );
   }, 30_000);
 
   it('uses the required application identity without a legacy unnamed-worker diagnostic', async () => {
@@ -125,7 +107,7 @@ describe('--strict', () => {
     expect(result.warnings.some((w) => w.startsWith('BUILD-802 '))).toBe(false);
   }, 30_000);
 
-  it('passes a clean build, and never fails on a note', async () => {
+  it('passes closed aggregate defaults without the retired note', async () => {
     const entries = {
       home: page('home', [
         `const [rows] = createSignal([]);`,
@@ -133,7 +115,7 @@ describe('--strict', () => {
       ]),
     };
     const result = await build(config(entries, { strict: true }));
-    expect(result.diagnostics.map((d) => [d.code, d.severity])).toEqual([['BUILD-504', 'note']]);
+    expect(result.diagnostics).toEqual([]);
   }, 30_000);
 });
 
@@ -151,11 +133,11 @@ describe('the JSON report', () => {
       ]),
     };
     const report = join(tmpRoot, 'diagnostics.json');
-    await build(config(entries, { diagnosticsJson: report }));
+    await expect(build(config(entries, { diagnosticsJson: report }))).rejects.toThrow(/BUILD-610/);
     const json = JSON.parse(readFileSync(report, 'utf8'));
     expect(Object.keys(json)).toEqual(['version', 'strict', 'diagnostics']);
     expect(json.version).toBe(1);
-    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-403']);
+    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-403', 'BUILD-610']);
     expect(Object.keys(json.diagnostics[0])).toEqual(
       ['code', 'severity', 'page', 'file', 'line', 'column', 'message', 'why', 'fix', 'chain'],
     );
@@ -189,7 +171,7 @@ describe('the JSON report', () => {
     // A live previous build, and a strict build that fails: the report must
     // not reach it through a symlink (a junction on Windows) or, where the
     // filesystem ignores case, through another spelling.
-    await build(config(entries));
+    await build(config({ ready: page('ready', [`mount(() => h('main', null, 'previous'), '#app');`]) }));
     const before = readFileSync(join(outDir, 'manifest.json'), 'utf8');
     const link = join(tmpRoot, 'reports');
     symlinkSync(outDir, link, process.platform === 'win32' ? 'junction' : 'dir');
@@ -206,7 +188,7 @@ describe('the JSON report', () => {
 
     // Beside it is fine, `..` as a segment included.
     const beside = join(outDir, '..', 'dist-diagnostics.json');
-    await build(config(entries, { diagnosticsJson: beside }));
+    await expect(build(config(entries, { diagnosticsJson: beside }))).rejects.toThrow(/SSR diagnostics are errors/);
     expect(existsSync(join(tmpRoot, 'dist-diagnostics.json'))).toBe(true);
   }, 60_000);
 
@@ -217,7 +199,7 @@ describe('the JSON report', () => {
     const json = JSON.parse(readFileSync(report, 'utf8'));
     expect(json.version).toBe(1);
     expect(json.strict).toBe(true);
-    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-101', 'BUILD-207']);
+    expect(json.diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-206', 'BUILD-207']);
     for (const d of json.diagnostics as BuildDiagnostic[]) {
       for (const key of ['code', 'severity', 'page', 'file', 'line', 'column', 'message', 'why', 'fix']) {
         expect(d, key).toHaveProperty(key);
@@ -229,20 +211,20 @@ describe('the JSON report', () => {
 });
 
 describe('where strict comes from', () => {
-  it('takes strict from the config, else from FORMA_STRICT, and reads no command-line flag', () => {
+  it('keeps accepted strict switches as no-ops and validates environment spelling', () => {
     const base = config({});
-    expect(resolveDiagnosticOptions(base, {})).toEqual({ strict: false });
+    expect(resolveDiagnosticOptions(base, {})).toEqual({ strict: true });
     expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '1' })).toEqual({ strict: true });
     expect(resolveDiagnosticOptions(base, { FORMA_STRICT: 'true' })).toEqual({ strict: true });
-    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '0' })).toEqual({ strict: false });
-    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '' })).toEqual({ strict: false });
+    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '0' })).toEqual({ strict: true });
+    expect(resolveDiagnosticOptions(base, { FORMA_STRICT: '' })).toEqual({ strict: true });
     // A switch that fails open passes the pages it was set to check: refused.
     expect(() => resolveDiagnosticOptions(base, { FORMA_STRICT: 'yes' })).toThrow(/FORMA_STRICT is 'yes'/);
-    // The config wins over the environment, both ways.
-    expect(resolveDiagnosticOptions({ ...base, strict: false }, { FORMA_STRICT: '1' })).toEqual({ strict: false });
+    // An explicit compatibility flag cannot disable native publication checks.
+    expect(resolveDiagnosticOptions({ ...base, strict: false }, { FORMA_STRICT: '1' })).toEqual({ strict: true });
     expect(resolveDiagnosticOptions({ ...base, strict: true }, {})).toEqual({ strict: true });
     expect(resolveDiagnosticOptions({ ...base, diagnosticsJson: 'a.json' }, {}))
-      .toEqual({ strict: false, diagnosticsJson: 'a.json' });
+      .toEqual({ strict: true, diagnosticsJson: 'a.json' });
   });
 
   it('applies FORMA_STRICT=1 to a build whose config does not set it', async () => {
@@ -250,7 +232,7 @@ describe('where strict comes from', () => {
     vi.stubEnv('FORMA_STRICT', '1');
     try {
       await expect(build(config(entries))).rejects.toThrow(
-        /strict mode \(strict: true or FORMA_STRICT=1\): 2 SSR diagnostics are errors; without it they are warnings/,
+        /2 SSR diagnostics are errors; 3.0 requires the published server-renderable subset/,
       );
     } finally {
       vi.unstubAllEnvs();
@@ -264,8 +246,7 @@ describe('where strict comes from', () => {
     const argv = process.argv;
     process.argv = [...argv, '--strict', '--diagnostics-json=never.json'];
     try {
-      const result = await build(config(entries));
-      expect(result.diagnostics.map((d) => d.severity)).toEqual(['warning', 'warning']);
+      await expect(build(config(entries))).rejects.toThrow(/2 SSR diagnostics are errors/);
       expect(existsSync('never.json')).toBe(false);
     } finally {
       process.argv = argv;
@@ -280,16 +261,53 @@ describe('--strict in watch mode', () => {
       `const helpers = { extra: () => h('em', null, 'x') };`,
       `mount(() => h('main', null, h('div', null, helpers.extra())), '#app');`,
     ]);
-    await watching(config({ home }, { strict: true }), async ({ output }) => {
+    await watching(config({ home }, { strict: true }), async ({ output, manifest, change }) => {
       await vi.waitFor(() => {
-        expect(output()).toMatch(/IR not rewritten for home: BUILD-101 call expression helpers\.extra/);
+        expect(output()).toMatch(/BUILD-610.*helpers\.extra/);
+        expect(output()).toContain('[watch] build finished');
       }, { timeout: 10_000 });
       expect(existsSync(join(outDir, 'home.ir'))).toBe(false);
 
-      page('home', [`mount(() => h('main', null, h('div', null, 'fixed')), '#app');`]);
+      expect(existsSync(join(outDir, 'manifest.json'))).toBe(false);
+      await change(() => { page('home', [`mount(() => h('main', null, h('div', null, 'fixed')), '#app');`]); });
       await vi.waitFor(() => {
-        expect(existsSync(join(outDir, 'home.ir'))).toBe(true);
+        expect(existsSync(join(outDir, manifest().aliases['home.ir']))).toBe(true);
+        expect(manifest().routes['/home']).toMatchObject({mode:'ssr',js:[]});
+        expect(manifest().aliases['home.js']).toBeUndefined();
       }, { timeout: 10_000 });
     });
+  }, 30_000);
+});
+
+describe('FORMA-182 value rules 6 and 7 without --strict', () => {
+  it('reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are', async () => {
+    // Both are mandatory refusals (docs/DIAGNOSTICS.md: "an error, and an
+    // error without strict mode"); a default build fails on them, so its
+    // report must not label them warnings.
+    const entries = {
+      text: page('text', [
+        `const [done] = createSignal(false);`,
+        `mount(() => h('main', null, h('p', null, () => done())), '#app');`,
+      ]),
+      condition: page('condition', [
+        `const [count] = createSignal(0);`,
+        `mount(() => h('main', null, () => count() ? h('b', null, 'some') : h('i', null, 'none')), '#app');`,
+      ]),
+    };
+    for (const [name, code] of [['text', 'BUILD-614'], ['condition', 'BUILD-615']] as const) {
+      const report = join(tmpRoot, `${name}-diagnostics.json`);
+      let failure: (Error & { diagnostics?: BuildDiagnostic[] }) | undefined;
+      try {
+        await build(config({ [name]: entries[name] }, { strict: false, diagnosticsJson: report }));
+      } catch (err) {
+        failure = err as Error & { diagnostics?: BuildDiagnostic[] };
+      }
+      expect(failure, name).toBeDefined();
+      expect(String(failure)).toContain(code);
+      const json = JSON.parse(readFileSync(report, 'utf8'));
+      expect(json.strict).toBe(true);
+      expect(json.diagnostics.map((d: BuildDiagnostic) => [d.page, d.code, d.line, d.severity])).toEqual([[name, code, 3, 'error']]);
+      expect(existsSync(outDir)).toBe(false);
+    }
   }, 30_000);
 });

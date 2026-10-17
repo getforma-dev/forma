@@ -3,6 +3,6 @@ const todos = () => [{ id: 1, title: 'a' }];
 
 mount(() => (
   <main>
-    <ul>{createList(todos, (r) => r.id)}</ul>{/* expect: BUILD-107 */}
+    <ul>{createList(todos, (r) => r.id)}</ul>{/* expect: BUILD-107; expect: BUILD-610 */}
   </main>
 ), '#app');

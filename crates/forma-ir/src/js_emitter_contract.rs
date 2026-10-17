@@ -66,8 +66,8 @@ use std::path::{Path, PathBuf};
 
 use crate::walker::walk_island;
 use crate::{
-    walk_to_html, IrError, IrModule, SlotData, SlotTable, SlotType, SlotValue, StringTable,
-    HEADER_SIZE,
+    walk_to_html, walk_to_html_counted, IrError, IrModule, SlotData, SlotSource, SlotTable,
+    SlotType, SlotValue, StringTable, WalkLimits, HEADER_SIZE,
 };
 
 /// Every case the corpus is required to contain.
@@ -197,20 +197,74 @@ fn list_props(module: &IrModule, array_slot_name: &str) -> Option<(String, Vec<S
     Some((base.to_string(), props))
 }
 
-/// One row of a list: an object carrying every property the body reads, each
-/// value naming its own list, row index and column.
-fn list_row(base: &str, props: &[String], row: usize) -> SlotValue {
-    if props.is_empty() {
+/// The key paths FMIR section `0x0006` declares for the LIST(s) that iterate
+/// `array_slot_id`, as resolved segment names (FORMA-181).
+///
+/// A keyed LIST refuses the render when a row has no identity at its key
+/// path, so the distinguishing rows must carry the field the module keys them
+/// by, as real data would. The LIST's array slot is the `u16` right after its
+/// opcode byte, which the parser has already checked to be a LIST boundary.
+fn list_key_paths(module: &IrModule, array_slot_id: u16) -> Vec<Vec<String>> {
+    module
+        .key_paths
+        .iter()
+        .filter(|path| {
+            let at = path.list_offset as usize;
+            module
+                .opcodes
+                .get(at + 1..at + 3)
+                .map(|bytes| u16::from_le_bytes([bytes[0], bytes[1]]))
+                == Some(array_slot_id)
+        })
+        .map(|path| {
+            path.segments
+                .iter()
+                .map(|segment| string_at(module, *segment).to_string())
+                .collect()
+        })
+        .collect()
+}
+
+/// Set `value` at `path` inside an object's fields, creating the objects on
+/// the way; an existing leaf is kept (the body's own column already names it).
+fn insert_path(fields: &mut Vec<(String, SlotValue)>, path: &[String], value: SlotValue) {
+    let (head, rest) = match path.split_first() {
+        Some(split) => split,
+        None => return,
+    };
+    let position = fields.iter().position(|(name, _)| name == head);
+    if rest.is_empty() {
+        if position.is_none() {
+            fields.push((head.clone(), value));
+        }
+        return;
+    }
+    let mut inner = match position.map(|i| fields.remove(i)) {
+        Some((_, SlotValue::Object(pairs))) => pairs.to_vec(),
+        _ => Vec::new(),
+    };
+    insert_path(&mut inner, rest, value);
+    fields.push((head.clone(), SlotValue::object(inner)));
+}
+
+/// One row of a list: an object carrying every property the body reads and
+/// the identity each key path names, each value naming its own list, row index
+/// and column.
+fn list_row(base: &str, props: &[String], key_paths: &[Vec<String>], row: usize) -> SlotValue {
+    if props.is_empty() && key_paths.is_empty() {
         // A body that reads no property still iterates; give it something that
         // names the row so an off-by-one in the row loop is visible.
         return SlotValue::Text(format!("{base}[{row}]"));
     }
-    SlotValue::object(
-        props
-            .iter()
-            .map(|p| (p.clone(), SlotValue::Text(format!("{base}[{row}].{p}"))))
-            .collect(),
-    )
+    let mut fields: Vec<(String, SlotValue)> = props
+        .iter()
+        .map(|p| (p.clone(), SlotValue::Text(format!("{base}[{row}].{p}"))))
+        .collect();
+    for path in key_paths {
+        let value = SlotValue::Text(format!("{base}[{row}].{}", path.join(".")));
+        insert_path(&mut fields, path, value);
+    }
+    SlotValue::object(fields)
 }
 
 /// Populate every declared slot with a value of its DECLARED type that names
@@ -241,7 +295,12 @@ fn distinguishing_slots(module: &IrModule, bools: bool) -> SlotData {
             SlotType::Number => SlotValue::Number(1000.0 + f64::from(id)),
             SlotType::Array => match list_props(module, name) {
                 Some((base, props)) => {
-                    SlotValue::array((0..LIST_ROWS).map(|r| list_row(&base, &props, r)).collect())
+                    let keys = list_key_paths(module, id);
+                    SlotValue::array(
+                        (0..LIST_ROWS)
+                            .map(|r| list_row(&base, &props, &keys, r))
+                            .collect(),
+                    )
                 }
                 None => SlotValue::array(
                     (0..LIST_ROWS)
@@ -280,6 +339,19 @@ fn empty_text_slots(module: &IrModule) -> SlotData {
     data
 }
 
+/// CLIENT defaults are compiler-owned. Declared SERVER fields have no wire
+/// defaults: use this corpus's distinguishing request values for those fields.
+fn default_slots(module: &IrModule) -> SlotData {
+    let mut defaults = SlotData::new_from_defaults(&module.slots);
+    let request = distinguishing_slots(module, true);
+    for entry in module.slots.entries() {
+        if entry.source == SlotSource::Server {
+            defaults.set(entry.slot_id, request.get(entry.slot_id).clone());
+        }
+    }
+    defaults
+}
+
 // ---------------------------------------------------------------------------
 // Golden rendering
 // ---------------------------------------------------------------------------
@@ -300,7 +372,7 @@ fn render_all(module: &IrModule) -> Result<String, IrError> {
     let on = distinguishing_slots(module, true);
     let off = distinguishing_slots(module, false);
     let empty = empty_text_slots(module);
-    let defaults = SlotData::new_from_defaults(&module.slots);
+    let defaults = default_slots(module);
 
     push_section(&mut out, "page bools=true", &walk_to_html(module, &on)?);
     push_section(&mut out, "page bools=false", &walk_to_html(module, &off)?);
@@ -431,6 +503,36 @@ fn every_case_walks_to_html() {
     }
 }
 
+/// FORMA-101: a callable source once emitted empty default lists. Closed local
+/// rows must reach the real walker in both independently keyed projections.
+#[test]
+fn closed_list_defaults_render_real_rows_in_both_projections() {
+    let module = parse_case("list-same-source");
+    let html = walk_to_html(&module, &default_slots(&module)).unwrap();
+    assert_eq!(html.matches("<li").count(), 4);
+    assert_eq!(html.matches("data-forma-key=").count(), 4);
+    assert_eq!(html.matches("Write the corpus").count(), 2);
+    assert_eq!(html.matches("Feed it to Rust").count(), 2);
+    assert!(html.contains("ada"));
+    assert!(html.contains("grace"));
+}
+
+/// The strict near misses keep the meaningful values, not merely valid bytes.
+#[test]
+fn strict_corpus_near_misses_render_their_real_defaults() {
+    let attributes = parse_case("dynamic-attrs");
+    let html = walk_to_html(&attributes, &default_slots(&attributes)).unwrap();
+    assert!(html.contains("href=\"/docs\""));
+    assert!(html.contains(" value>") || html.contains(" value=\"\""));
+
+    let scopes = parse_case("sub-component-scopes");
+    let html = walk_to_html(&scopes, &default_slots(&scopes)).unwrap();
+    assert!(html.contains("panel is-open"));
+    assert!(html.contains(">THEN</p>"));
+    assert!(html.contains("-->7<!--"));
+    assert!(html.contains("data-ready=\"true\""));
+}
+
 #[test]
 fn every_island_entry_walks_as_a_fragment() {
     let mut islands_seen = 0usize;
@@ -459,7 +561,7 @@ fn every_island_entry_walks_as_a_fragment() {
 }
 
 #[test]
-fn resolution_cases_ship_named_islands_over_named_slots() {
+fn resolution_cases_ship_named_contracts_and_client_defaults() {
     for name in RESOLUTION_CASES {
         let module = parse_case(name);
 
@@ -481,11 +583,16 @@ fn resolution_cases_ship_named_islands_over_named_slots() {
                  nothing server-side and only appears once the client bundle hydrates",
                 entry.id
             );
-            assert!(
-                !entry.slot_ids.is_empty(),
-                "{name}: island '{island}' carries no slot ids, so the walker emits no \
-                 data-forma-props and the client hydrates it with nothing"
+            assert_eq!(
+                entry.slot_ids.len(),
+                module.schema.objects[entry.schema_object as usize].len(),
+                "{name}: ordered inputs must match declared fields, not captured/local signals"
             );
+            assert!(
+                module.island_contract_bytes(entry.id).is_some(),
+                "{name}: missing paired contract"
+            );
+            assert_eq!(entry.digest.len(), 8, "{name}: missing contract identity");
         }
 
         // Slot NAMES are the addressing scheme server-side injection uses. A
@@ -609,5 +716,50 @@ fn canonical_dumps_match_the_typescript_emitter() {
             .join(format!("{name}.dump"));
         let expected = std::fs::read_to_string(path).expect("committed TypeScript canonical dump");
         assert_eq!(crate::dump::dump_ir(&module), expected, "{name}");
+    }
+}
+
+/// The state envelope is a separate channel from body HTML. Pin actual native
+/// snapshots for each request variant without embedding them in body goldens.
+#[test]
+fn state_snapshots_match_golden() {
+    let update = std::env::var_os("UPDATE_GOLDEN").is_some();
+    for name in EXPECTED_CASES {
+        let module = parse_case(name);
+        let variants = [
+            ("bools=true", distinguishing_slots(&module, true)),
+            ("bools=false", distinguishing_slots(&module, false)),
+            ("text-empty", empty_text_slots(&module)),
+            ("defaults", default_slots(&module)),
+        ];
+        let mut states = serde_json::Map::new();
+        for (label, slots) in variants {
+            let output = walk_to_html_counted(&module, &slots, WalkLimits::default()).unwrap();
+            assert_eq!(output.html, walk_to_html(&module, &slots).unwrap());
+            let state: serde_json::Value =
+                serde_json::from_str(output.island_state.as_json()).unwrap();
+            assert_eq!(
+                state["s"],
+                serde_json::json!([]),
+                "captured/local signals are not handler inputs"
+            );
+            assert_eq!(
+                state["i"].as_array().unwrap().len(),
+                module.islands.entries().len()
+            );
+            assert!(!output.html.contains("data-forma-props"));
+            states.insert(label.into(), state);
+        }
+        let actual = serde_json::to_string_pretty(&states).unwrap() + "\n";
+        let path = fixture_dir().join(format!("{name}.state.json"));
+        if update {
+            fs::write(&path, actual).unwrap();
+        } else {
+            assert_eq!(
+                read_golden(&path).as_deref(),
+                Some(actual.as_str()),
+                "{name}: state snapshot drift"
+            );
+        }
     }
 }

@@ -14,8 +14,9 @@ pub enum SlotValue {
     Null,
     /// A string, emitted HTML-escaped.
     Text(String),
-    /// A boolean. As a DYN_ATTR value, `true` emits the bare attribute name
-    /// and `false` omits the attribute entirely.
+    /// A boolean. As a DYN_ATTR value, `true` emits presence on an HTML
+    /// boolean attribute and the word "true" on any other attribute;
+    /// `false` omits the attribute entirely.
     Bool(bool),
     /// A double, rendered exactly as ECMAScript's `Number::toString` would.
     Number(f64),
@@ -29,96 +30,17 @@ pub enum SlotValue {
 /// A static Null reference returned for out-of-bounds slot lookups.
 static NULL_SLOT: SlotValue = SlotValue::Null;
 
-/// Largest integer f64 that ECMAScript renders without exponent games —
-/// `Number.MAX_SAFE_INTEGER + 1` (2^53).
+/// The exclusive integer fast-path boundary for JSON transport (2^53).
 const JS_SAFE_INTEGER_LIMIT: f64 = 9007199254740992.0;
 
 /// Format an `f64` exactly the way ECMAScript's `Number::toString` does.
 ///
-/// The SSR text node has to agree byte-for-byte with what `@getforma/core`
-/// renders client-side for the same value, otherwise hydration reconciles a
-/// difference that is not really there. Rust's `Display` for f64 never uses
-/// exponential notation (`format!("{}", 1e300)` is a 301-character integer),
-/// so the general path is built from `LowerExp` — also shortest-round-trip —
-/// and re-assembled using the spec's exponent rule.
+/// Shortest-round-trip alone is insufficient: Rust's `LowerExp` chooses a
+/// different decimal for exact ties such as -270129723325078.625. Ryū-js
+/// implements ECMAScript's tie choice and exponent boundaries, including
+/// negative zero and non-finite values, for both text and attributes.
 fn format_js_number(n: f64) -> String {
-    if n.is_nan() {
-        // Rust and JS agree here already.
-        return "NaN".to_string();
-    }
-    if n.is_infinite() {
-        return if n > 0.0 { "Infinity" } else { "-Infinity" }.to_string();
-    }
-
-    // Fast path: integers inside the JS safe range. This also deliberately
-    // keeps -0.0 → "0" (matching `String(-0)`); routing it through the general
-    // path would print "-0".
-    if n.fract() == 0.0 && n.abs() < JS_SAFE_INTEGER_LIMIT {
-        return format!("{}", n as i64);
-    }
-
-    // `{:e}` yields "1e300", "1.5e-7", "1.2345678901234568e20", ...
-    let exp_form = format!("{:e}", n);
-    let (mantissa, exp_str) = match exp_form.split_once('e') {
-        Some(parts) => parts,
-        None => return exp_form, // unreachable for finite f64
-    };
-    let exp: i32 = match exp_str.parse() {
-        Ok(e) => e,
-        Err(_) => return exp_form, // unreachable
-    };
-
-    let negative = mantissa.starts_with('-');
-    let digits: String = mantissa
-        .trim_start_matches('-')
-        .chars()
-        .filter(|c| *c != '.')
-        .collect();
-    let k = digits.len() as i32; // significant digits
-    let pos = exp + 1; // the spec's `n`: value = 0.<digits> x 10^pos
-
-    let mut out = String::with_capacity(digits.len() + 8);
-    if negative {
-        out.push('-');
-    }
-
-    if k <= pos && pos <= 21 {
-        // Integer with trailing zeros: 1e16 -> "10000000000000000"
-        out.push_str(&digits);
-        for _ in 0..(pos - k) {
-            out.push('0');
-        }
-    } else if 0 < pos && pos <= 21 {
-        // Decimal point inside the digits: 123.456
-        out.push_str(&digits[..pos as usize]);
-        out.push('.');
-        out.push_str(&digits[pos as usize..]);
-    } else if -6 < pos && pos <= 0 {
-        // Leading zeros: 1e-6 -> "0.000001"
-        out.push_str("0.");
-        for _ in 0..(-pos) {
-            out.push('0');
-        }
-        out.push_str(&digits);
-    } else {
-        // Exponential. JS writes an explicit '+' on positive exponents;
-        // Rust's `{:e}` does not, so insert it.
-        if k == 1 {
-            out.push_str(&digits);
-        } else {
-            out.push_str(&digits[..1]);
-            out.push('.');
-            out.push_str(&digits[1..]);
-        }
-        out.push('e');
-        let e = pos - 1;
-        if e >= 0 {
-            out.push('+');
-        }
-        out.push_str(&e.to_string());
-    }
-
-    out
+    ryu_js::Buffer::new().format(n).to_owned()
 }
 
 impl SlotValue {
@@ -348,6 +270,11 @@ impl SlotData {
     ///
     /// Unknown JSON keys (not in the slot table) are silently ignored.
     /// Starts from slot table defaults so missing keys retain their defaults.
+    /// JSON numbers become IEEE-754 `f64` values. Decimal spellings use
+    /// correctly rounded parsing, so finite `f64` values serialized to JSON
+    /// preserve their bits, including negative zero. This does not make all
+    /// integers above 2^53 exact. Island state serialization subsequently
+    /// canonicalizes negative zero to zero under the Serialize9 contract.
     pub fn from_json(json_str: &str, module: &IrModule) -> Result<Self, IrError> {
         let parsed: serde_json::Value =
             serde_json::from_str(json_str).map_err(|e| IrError::JsonParseError(e.to_string()))?;
@@ -384,6 +311,14 @@ impl SlotData {
         }
 
         Ok(data)
+    }
+
+    pub(crate) fn apply_module_constants(&mut self, module: &IrModule) {
+        if let Some(contracts) = &module.contracts {
+            for (&id, value) in &contracts.constants {
+                self.replace(id, value.clone());
+            }
+        }
     }
 
     /// Create SlotData pre-populated from the IR slot table defaults.

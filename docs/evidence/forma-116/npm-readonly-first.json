@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "repository": "getforma-dev/forma",
+  "mode": "npm",
+  "recordedAt": "2026-10-16T04:11:10.177Z",
+  "complete": false,
+  "delivered": false,
+  "error": "npm create-forma-app: HTTP 404\n\n404 !== 200\n"
+}

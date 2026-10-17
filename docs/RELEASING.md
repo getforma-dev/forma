@@ -3,13 +3,11 @@
 FORMA-187 prepares the merged repository for one release of seven packages.
 The checked-in contract record, `scripts/release-contracts.json`, states which
 tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
-every gate of its milestone and of the earlier milestones is done. Today the
-alpha's gates are done and the later milestones' are open, so `v3.0.0-alpha.N`
-may publish and `v3.0.0-beta.1`, `v3.0.0-rc.1` and `v3.0.0` are refused. See
-[the milestone gate](#milestone-gate) below and, for the alpha day itself,
-[docs/release/ALPHA-RUNBOOK.md](release/ALPHA-RUNBOOK.md). A2 dry runs
-establish the pipeline; they do not assert that the later milestones' contracts
-exist.
+every gate of its milestone and of the earlier milestones is done. Read that
+record for the candidate's current readiness; a version string alone does not
+authorize publication. See [the milestone gate](#milestone-gate) below and the
+historical [alpha runbook](release/ALPHA-RUNBOOK.md). Earlier alpha and A2 results
+retain their original scope and do not establish beta, RC or final qualification.
 
 ## Prepare and test
 
@@ -17,17 +15,19 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version 3.0.0-alpha.1
+node scripts/release-set.mjs version 3.0.0-beta.1
 bash scripts/install-deps.sh
 npm run check
 ```
 
 The version command changes seven manifests, their exact internal requirements,
 the workspace locks, npm repository metadata and release template ranges. It
-creates neither tags nor commits. A `3.0.0-dev` version aligns only the packages
-and workspace locks, preserving A2 template pins until FORMA-144 migrates them.
-Add a root CHANGELOG entry headed `## [3.0.0-alpha.1]`, review and commit the
-release PR, and tag the green main commit with `v3.0.0-alpha.1`.
+creates neither tags nor commits. A `-dev` version also aligns the current
+template source seeds; it names no publishable milestone.
+Use the next unpublished version for the intended milestone. Add its root
+CHANGELOG heading (for example `## [3.0.0-beta.1]`), close only evidenced gates,
+review and merge the release PR, and tag the exact main commit after its required
+CI and packed qualification are green. Use merge commits and never move a tag.
 
 ## Milestone gate
 
@@ -178,24 +178,21 @@ network ingestion latency; the recorded timing basis states this limitation.
 
 ## Current development integration
 
-Between releases `main` carries the next version with the `-dev` suffix: the current
-seven-package set is staged at `3.0.0-dev` again after `v3.0.0-alpha.2` published
-(2026-10-15), by the post-release pull request that runs
-`node scripts/release-set.mjs version 3.0.0-dev`; the released sections stay in every
-changelog under a fresh `## [Unreleased]`, and the crate READMEs keep naming the last
-published pre-release, which is what crates.io shows. A `-dev` version names no
-milestone and never publishes. The contract record names
-FMIR v3. P17 compares the packed compiler's writer triple and canonical dumps with
-the packed reader's actual version and frozen corpus. Version preparation updates
-all three Cargo locks (root, e2e and fuzz) without changing external resolutions.
+Development revisions can use `3.0.0-dev`, which names no milestone and cannot
+publish. Release preparation aligns all seven packages, internal requirements,
+three Cargo locks (root, e2e and fuzz), template ranges and current version
+documentation with the candidate, without changing external resolutions. Keep
+historical changelog entries and archived evidence attached to their released
+versions. The FMIR v3 contract is independent of the package prerelease suffix;
+P17 compares the packed compiler's writer triple and canonical dumps with the
+packed reader's actual version and frozen corpus.
 
-The source templates still carry their A2 Cargo requirements and API usage; FORMA-144
-owns their milestone migration. Packing may stage candidate checksums, but that does
-not make those source requirements compatible with v3. A current-development dry run
-is labeled `v3-development-dry-run`, and a template refusal remains a failed P17 result.
-Do not weaken its locked checks or describe that result as complete template acceptance.
-The later milestones' gates stay `pending` in the contract until their tickets close.
-The archived A2 dry-run evidence continues to describe the original published set.
+The current source templates use the typed 3.0 startup API. Their packed locks
+still require the candidate's actual archive checksums, as described above; a
+source template build does not replace packed template acceptance. A development
+dry run is labeled `v3-development-dry-run`, and any template refusal remains a
+failed P17 result. Later milestone gates remain `pending` until their evidence is
+reviewed. Archived A2 dry runs continue to describe only the original set.
 
 ## Local dry run
 
@@ -204,7 +201,7 @@ bash scripts/install-deps.sh
 npm run build
 node scripts/release-set.mjs pack /absolute/path/to/empty-ds11 --dry-run
 bash scripts/release-artifacts.sh record /absolute/path/to/empty-ds11
-node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
+FORMA_PERFORMANCE_TARGET_TAG=v3.0.0-beta.1 node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
 ruby scripts/check-release-workflow.rb --self-test
 bash scripts/test-release-artifacts.sh
 ```
@@ -213,6 +210,41 @@ The dry-run marker is rejected by the publication helper regardless of environme
 A run over the previously published A2 archives is recorded separately from newly
 packed merged-tree candidates; the latter include 117's scripts-off policy changes
 and are not claimed byte-identical to the old release. Neither dry run publishes.
+
+## Fixture applications and the measurement step (FORMA-188)
+
+The contract record carries `fixtureApps: "declared-v1"`. For such a set P17 also runs the fixture
+applications of `e2e/fixtures/apps/` against DS11, after the templates:
+
+1. The project is staged in `os.tmpdir()`, outside the checkout, from the committed sources (each file is
+   compared with `git show <commit>:` so a dirty tree cannot be what a tag verified). The three libraries
+   install from DS11's tarballs by `npm ci --ignore-scripts` on a lock built from the tagged tree's own
+   `package-lock.json` (the same staging as the templates, `stageNpmLock`); the signatures are audited as
+   for the templates; and every `@getforma/*` import of the installed libraries is proved to resolve inside
+   the install, never to a workspace link of the checkout (the alpha.1 failure).
+2. Every application is built with the **packed** `build()` in strict mode: anything above a note fails.
+3. The Rust servers build from DS11's crates (`[patch.crates-io]` to the extracted archives, as for the
+   templates) on a lock pruned from `e2e/Cargo.lock` to the crate's graph, third-party versions and
+   checksums untouched, `cargo build --locked`.
+4. Each packed server is started and judged by the same `lib/verify-page.mjs` and `lib/behaviours.mjs` the
+   source lane's `apps.spec.ts` uses: the server's values before any script, strict adoption that writes
+   nothing, the islands working afterwards; the extra checks (a hostile tenant name, an unknown tenant, the
+   other branches); the packed compiler's refusal of the shapes `negative/` holds; and the admitted keyed-list island in `positive/`, whose size report is retained.
+
+The measurement step (`scripts/release-measurements.mjs`) then fails P17 naming a figure and both numbers
+when P17's wall time passes G6's 1,800 s, when Forma's code on any fixture route passes N2's ceiling
+(read from each build's emitted `size-report.json`, including the route class's ceiling and both Forma and total-JavaScript verdicts; gzip -9; L-58; the build refuses excess too, BUILD-819), or when a fixture route has no figure; and records,
+with the machine and profile, in `report.measurements` (which `release-record.mjs` embeds in DS12 and
+summarises in one line of the Release's notes): P17's time, N2 per route in gzip and Brotli beside the
+application's own bytes, and the walker's node, byte and list counts of the consumer-shaped pages
+(recorded, not gated). FORMA-191 adds N1, N3 and N5 rows to the same record. For the
+`deploymentSkew: "native-v1"` contract, `scripts/verify-release-set.mjs` calls
+`verifyPackedSkew()` before the fixture applications. The drill exercises the packed
+deployment identity, retained assets, rollback and inert-or-reload behavior in Chromium,
+Firefox and WebKit. Its result is recorded separately; a passing drill does not imply
+that the complete P17 run or its performance checks passed.
+
+Rehearse it as the runner sees it: commit, `pack` a dry-run DS11, delete `packages/*/dist`, then run P17.
 
 ## Staged response contract (FORMA-109)
 
@@ -224,15 +256,60 @@ A passing result requires zero events and errors; separate native browser contro
 prove enforcement actually refuses a raw sink write. Empty `pageerror` alone is
 not evidence of zero CSP reports.
 
-Until FORMA-144 migrates the source templates, packing candidate 3.x removes
-exactly the known `config_script: None,` field from each template's `src/main.rs`.
-Unexpected source or a future major fails before writes. A2 packing leaves source
-untouched; candidate packing restores both source files plus all eight manifests
-and locks on success or failure. This adapter does not migrate applications or
-claim FORMA-144 complete. The recurring restoration test and a new actual packed
-rehearsal document this stage; historical A2 and earlier P17 reports stay unchanged.
-FORMA-144's later slices remain `pending` gates of the beta and the final.
+The current `sourceTemplates: "islands-v1"` contract packs the checked-in
+Rust and TypeScript template sources unchanged. `stageTemplates()` seals the
+eight dependency manifests/locks against the six runtime candidates and retains
+the two Rust main files in its ten-file restoration record. It validates both
+templates before writing and restores the originals after packaging. The older
+candidate source adapters belong to historical evidence; they are not the
+current source-template path. FORMA-144 slice 2 is accepted by the
+[beta qualification](release/BETA-QUALIFICATION.md); final slice 3 remains open.
 
 ## Finalized rendering in candidate templates
 
-The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates' later slices (FORMA-144 slices 2 and 3) remain pending gates of the beta and the final.
+The `finalized-v1` bound-render contract requires the packed server's external
+finalization, budget, typed document-home, browser-mode, panic and topology
+snapshot checks. Both current source templates finalize before opening a
+listener. P17 authenticates the packed source inventory against the exact
+source commit and verifies the generated templates. Beta acceptance does not
+close FORMA-144's final-version cleanup gate.
+
+### Per-release performance contract (FORMA-191)
+
+P17 `performance: measured-v1` requires20,000 native walks for each of five consumer-shaped pages in the application release profile, N5 allocation/time growth, public one-past budget refusals,20 cold applied-mobile Lighthouse13.5.0 runs on each of the tenant-login and100-island pages, independent actual event-response observations, and the archived founder comparison in all three browser engines. FORMA-103 also measures the shipped public activation decoder: one MiB of ASCII and one MiB containing20,000 multibyte strings, five warmups then forty fresh-document samples each at four-times Chromium CPU slowdown. Registration is outside timing; timing ends at the first component instruction. Every measured sample must be at most30ms under L61. The actual packed compiler regenerates both original contracts before measurement; raw observations, artifact/compiler hashes, enforced Trusted Types policy and real oversize/malformed refusal controls are recorded. Decoder observations are synchronously flushed beside `p17.json` after each timed sample, and the complete report is saved before threshold validation. Interrupted or refused attempts remain outside disposable fixture directories. The paired mobile controls retain raw host/response observations and the injected110-millisecond interval; the long-task observer must capture that interval, rather than merely any unrelated slow task. New and prior records require the same control evidence. No timing row may be omitted. Native p99 throughput below1,500,000nodes/s or at/below half the prior DS12 rate fails. TBT p95 must be below200ms; responses must complete within500ms of first paint; strict startup qualification requires every application/unattributed task to be at most50ms across each route’s fresh20 runs; p95 is retained as a descriptive measurement, not an outlier allowance. Independent observer tasks all count. Only same-audit trace proof of browser work before the first application script in the committed main renderer can exclude a Lighthouse task: either browser-only layout, or the exact main-document commit/parser/context chain with source-bound pinned audit bootstrap. The exact source-bound Lighthouse idle-check wrapper may also be excluded at any time only with its distinct audit context, same-navigation frame, complete child-event nesting and exact timer stack. Mixed, unknown and other late tasks count in full. DS12 reports the50ms target miss separately, all per-run maxima and the p95. A pilot cannot qualify. The complete raw Lighthouse reports, bounded compressed traces and configuration, per-walk durations, machine/profile, prior-record digest and client comparisons are embedded in DS12. They are measurements of a lab profile, not a phone claim.
+
+A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (initially `v3.0.0-beta.1`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first beta may record the verified absence of a performance contract in alpha.2 and establish the baseline. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.
+
+
+Startup evidence retains the original whole-page TBT/LCP and every raw task.
+The trace digest is checked before bounded decompression and parsing, and the
+validator recomputes attribution and summaries instead of trusting producer
+labels. Each compressed and decoded trace is limited to32MiB. DS12’s128MiB
+transport limit accommodates forty complete traces and reports; other release
+metadata bounds and product budgets are unchanged. The previous90ms negative
+control and all historical failures remain archived. A real110ms injected task
+must be observed and refused independently of response latency. Acceptance
+requires a new complete campaign under `N3-startup-strict50-v3`. The earlier
+`N3-startup-strict50-v1` layout-only classifier remains historical evidence.
+The current classifier may also separate a main-document commit task only when
+the same trace proves the exact navigation request, committed frame, response,
+parser and V8-context chain before the first application script. The request
+must precede its response and commit; the commit must contain load, parser and
+context creation; and the parser's nested response-body chain must contain the
+received bytes, parser-fed bytes and resulting parser subresource requests. The only
+admitted script-related records in that chain are source-bound Lighthouse and
+Puppeteer new-document bootstrap records; any application execution, unexpected script,
+event handler work, foreign identity, mixed or unknown event counts the whole
+task. This attribution keeps N3 on island activation without changing its 50 ms
+limit. Version 3 additionally recognizes the pinned Lighthouse 13.5.0 idle check
+with exact source bytes, a context distinct from the application module and
+main-world bootstrap, one evaluation span, two microtasks and the exact 150 ms
+single-shot timer stack. Only that five-child trace shape is admitted; foreign,
+ambiguous or unbound identities and application callbacks count in full. This is
+measurement attribution, not a runtime improvement or a new founder latency
+waiver. Raw whole-page tasks and `wholePageTargetMiss` remain visible.
+Historical L63
+75ms p95 /100ms individual acceptance and its original evidence remain history;
+they cannot qualify the strict gate. The L63 exception is retired only after
+all twenty fresh runs on each original route pass the restored 50 ms limit.
+Changing the validator or passing a pilot does not establish that result.

@@ -1,0 +1,759 @@
+/**
+ * THE SHARED RENDERER CONTRACT.
+ *
+ * FormaJS writes attributes and text through six browser code paths, and
+ * every one of them must uphold the same guarantees:
+ *
+ *   1. `src/dom/element.ts`  — `h()` with static props
+ *   2. `src/dom/element.ts`  — `h()` with reactive (function) props
+ *   3. `src/dom/hydrate.ts`  — `applyDynamicProps()` / `adoptNode()` (adoption)
+ *   4. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
+ *   5. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
+ *   6. `src/dom/adoption-attributes.ts` — the private prepared postcommit writer
+ *
+ * Historically each guarantee was asserted thoroughly on exactly ONE of them.
+ * That single habit produced 7 of the 25 code defects in
+ * `docs/archive/2026-08-05-hardening-audit.md`, including the only non-documentation Critical
+ * (`client-url-attr-xss-h`: `h('a', {href:'javascript:alert(1)'})` emitted the
+ * attribute verbatim while the SSR path had blocked it since day one) — and,
+ * when this file was written, two more that no per-path suite could see:
+ *
+ *   - `$el.setAttribute()` in the expression interpreter was the only attribute
+ *     sink in the repo with no safety guard at all, so a CSP-safe handler could
+ *     write the `javascript:` href that `data-bind:href` refuses 20 lines away.
+ *   - `data-bind:` wrote `name="true"` where the other four wrote a bare
+ *     attribute, so an SSR page and its hydrated self disagreed byte-for-byte.
+ *
+ * So the assertions live HERE, parameterised over the paths, and never in one
+ * path's file. When a new renderer or sink is added it joins `SINKS`, or the
+ * test "every module that writes an attribute is represented in SINKS" fails.
+ *
+ * The boolean-attribute rows are a CROSS-IMPLEMENTATION contract: the Rust
+ * walker in `forma` renders `true` as a bare attribute name, and a page that is
+ * server-rendered by Rust and then bound by this runtime has to agree.
+ */
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+import { createSignal, createRoot } from 'forma/reactive';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
+import { h } from '../dom/element';
+import { prepareRaw, prepareStyle } from '../dom/adoption-content';
+import { trustedHtml } from '../dom/trusted-html';
+import { applyDynamicProps, adoptNode } from '../dom/hydrate';
+import { prepareAdoption } from '../dom/adoption';
+import { prepareAttribute } from '../dom/adoption-attributes';
+import { mount, unmount } from '../runtime';
+import { URL_ATTRS } from '../security/url-safety';
+import { compileHandler, runHandler } from '../expr/index';
+import { hostObject } from '../expr/host';
+import type { ScopeLike } from '../expr/interp';
+
+// ---------------------------------------------------------------------------
+// Vectors
+// ---------------------------------------------------------------------------
+
+const TAB = String.fromCharCode(0x09);
+const LF = String.fromCharCode(0x0a);
+const SOH = String.fromCharCode(0x01);
+
+/**
+ * URLs that must never reach a URL-bearing attribute. Three are obfuscated the
+ * way browsers permit: ASCII whitespace and C0 controls are stripped before the
+ * scheme is resolved, so `java\tscript:` executes.
+ */
+const DANGEROUS_URLS = [
+  'javascript:alert(1)',
+  'JaVaScRiPt:alert(1)',
+  `java${TAB}script:alert(1)`,
+  `java${LF}script:alert(1)`,
+  `${SOH}javascript:alert(1)`,
+  '   javascript:alert(1)',
+  'vbscript:msgbox(1)',
+  'data:text/html,<script>alert(1)</script>',
+] as const;
+
+/**
+ * The negative space. `DANGEROUS_SCHEME_RE` is anchored with `^`; drop the
+ * anchor and it becomes a substring match that blocks every one of these.
+ * Without these rows that mutation is invisible, because every hostile fixture
+ * in the repo is a URL that *should* be blocked.
+ */
+const SAFE_URLS = [
+  'https://example.com/guides/javascript',
+  '/relative/javascript-guide',
+  '?q=vbscript',
+  '#javascript',
+  'data:image/png;base64,iVBORw0KGgo=',
+  'mailto:someone@example.com',
+] as const;
+
+/** Every casing an `on…` name can arrive in. Detection is case-INSENSITIVE. */
+const EVENT_HANDLER_ATTRS = ['onclick', 'ONCLICK', 'Onerror', 'onMouseOver'] as const;
+
+/** A tag each URL attribute legitimately appears on. */
+const ATTR_TAG: Record<string, string> = {
+  href: 'a',
+  src: 'img',
+  action: 'form',
+  formaction: 'button',
+  poster: 'video',
+  background: 'table',
+  data: 'object',
+  'xlink:href': 'use',
+};
+
+const SVG_DATA_URL =
+  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>';
+
+/** The benign sibling every "we block X" row renders alongside X (rule P3). */
+const BENIGN_ATTR = 'title';
+const BENIGN_VALUE = 'kept';
+
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+// ---------------------------------------------------------------------------
+// The sinks
+// ---------------------------------------------------------------------------
+
+interface Sink {
+  name: string;
+  /**
+   * Write `name=value` and `title="kept"` onto a fresh `<tag>`, and return the
+   * element that results (for SSR, the element parsed back out of the markup).
+   */
+  write(tag: string, name: string, value: unknown): Element;
+  /** Render `text` as the element's only child. */
+  writeText(tag: string, text: string): Element;
+  /**
+   * False when the sink takes its attribute names from HTML source, so a name
+   * that is not a legal HTML attribute name cannot be expressed at all.
+   */
+  programmaticNames: boolean;
+  /**
+   * False for the imperative escape hatch: `$el.setAttribute(name, true)` is the
+   * DOM method, and the DOM stringifies. The declarative renderers are the ones
+   * that owe the bare-attribute contract.
+   */
+  declarative: boolean;
+  /**
+   * True when the value can be any JavaScript object, with a `toString` of its
+   * own. `data-bind` and `$el.setAttribute` take values from JSON state and the
+   * expression grammar, which cannot carry one.
+   */
+  objectValues: boolean;
+}
+
+const containers: HTMLElement[] = [];
+const disposers: Array<() => void> = [];
+
+function host(): HTMLDivElement {
+  const el = document.createElement('div');
+  document.body.appendChild(el);
+  containers.push(el);
+  return el;
+}
+
+/** Run `fn` in an owned reactive root that this file's afterEach disposes. */
+function owned<T>(fn: () => T): T {
+  return createRoot((dispose) => {
+    disposers.push(dispose);
+    return fn();
+  });
+}
+
+/** Parse SSR markup back into a live element so every sink reads the same way. */
+function parse(html: string): Element {
+  const box = host();
+  box.innerHTML = html;
+  const el = box.firstElementChild;
+  if (!el) throw new Error(`SSR produced no element: ${JSON.stringify(html)}`);
+  return el;
+}
+
+/** Read an attribute by qualified name, including the xlink namespace. */
+function readAttr(el: Element, name: string): string | null {
+  const direct = el.getAttribute(name);
+  if (direct !== null) return direct;
+  if (name.startsWith('xlink:')) return el.getAttributeNS(XLINK_NS, name.slice(6));
+  return null;
+}
+
+/** Attribute names on `el` that a browser would treat as inline event handlers. */
+function liveHandlerAttrs(el: Element): string[] {
+  return [...el.attributes].map((a) => a.name).filter((n) => /^on/i.test(n));
+}
+
+/**
+ * JSON for a `data-forma-state` attribute written with single quotes. `&` has
+ * to be escaped FIRST: the HTML parser entity-decodes attribute values, so a
+ * payload containing `&lt;` would otherwise reach the runtime as `<` and the
+ * fixture would be testing a different string than the one it declared.
+ */
+function stateAttr(obj: Record<string, unknown>): string {
+  return JSON.stringify(obj).replace(/&/g, '&amp;').replace(/'/g, '&#39;');
+}
+
+/** A scope with `$el` bound, matching what `src/runtime.ts` injects. */
+function exprScope(state: Record<string, unknown>, el: Element): ScopeLike {
+  const getters: Record<string, () => unknown> = Object.create(null);
+  const setters: Record<string, (v: unknown) => void> = Object.create(null);
+  for (const k of Object.keys(state)) {
+    getters[k] = () => state[k];
+    setters[k] = (v) => { state[k] = v; };
+  }
+  getters.$el = () => hostObject('element', el, '$el');
+  return { getters, setters };
+}
+
+const SINKS: Sink[] = [
+  {
+    name: 'h-static',
+    programmaticNames: true,
+    declarative: true,
+    objectValues: true,
+    write: (tag, name, value) => h(tag, { [name]: value, [BENIGN_ATTR]: BENIGN_VALUE }),
+    writeText: (tag, text) => h(tag, null, text),
+  },
+  {
+    name: 'h-reactive',
+    programmaticNames: true,
+    declarative: true,
+    objectValues: true,
+    write: (tag, name, value) =>
+      owned(() => h(tag, { [name]: () => value, [BENIGN_ATTR]: () => BENIGN_VALUE })),
+    writeText: (tag, text) => owned(() => h(tag, null, () => text)),
+  },
+  {
+    name: 'adopt',
+    programmaticNames: true,
+    declarative: true,
+    objectValues: true,
+    write: (tag, name, value) =>
+      owned(() => {
+        // Adoption only ever binds FUNCTION props: static ones are already in
+        // the server HTML. The element it adopts is the server's own output.
+        const el = parse(`<${tag}></${tag}>`);
+        applyDynamicProps(el, { [name]: () => value, [BENIGN_ATTR]: () => BENIGN_VALUE });
+        return el;
+      }),
+    writeText: (tag, text) =>
+      owned(() => {
+        // The SSR shape a text marker adopts: <!--f:t0-->text<!--/f:t0-->.
+        const el = parse(`<${tag}><!--f:t0-->placeholder<!--/f:t0--></${tag}>`);
+        adoptNode({ type: 'element', tag, props: null, children: [(): string => text] }, el);
+        return el;
+      }),
+  },
+  {
+    name: 'prepared-adopt',
+    programmaticNames: true,
+    declarative: true,
+    objectValues: false,
+    write: (tag, name, value) => {
+      const el = document.createElement(tag);
+      host().appendChild(el);
+      el.setAttribute(BENIGN_ATTR, BENIGN_VALUE);
+      // Exercise the exact private postcommit attribute writer. Form-control
+      // planning is separately gated; these rows concern the attribute sink.
+      prepareAttribute(el, name, null).write(value);
+      return el;
+    },
+    writeText: (tag, text) => {
+      const el = parse(`<${tag}><!--f:t0-->\u200B<!--/f:t0--></${tag}>`);
+      const [read, set] = createSignal('');
+      const plan = prepareAdoption(el, () => h(tag, null, read));
+      disposers.push(() => plan.dispose());
+      plan.commit();
+      set(text);
+      return el;
+    },
+  },
+  {
+    name: 'data-bind',
+    programmaticNames: false,
+    declarative: true,
+    objectValues: false,
+    write: (tag, name, value) => {
+      const box = host();
+      box.innerHTML =
+        `<div data-forma-state='${stateAttr({ v: value, b: BENIGN_VALUE })}'>` +
+        `<${tag} id="probe" data-bind:${name}="{v}" data-bind:${BENIGN_ATTR}="{b}"></${tag}>` +
+        `</div>`;
+      mount(box);
+      const el = box.querySelector('#probe');
+      if (!el) throw new Error(`data-bind fixture produced no <${tag}>`);
+      return el;
+    },
+    writeText: (tag, text) => {
+      const box = host();
+      box.innerHTML =
+        `<div data-forma-state='${stateAttr({ t: text })}'>` +
+        `<${tag} id="probe" data-text="{t}"></${tag}></div>`;
+      mount(box);
+      return box.querySelector('#probe')!;
+    },
+  },
+  {
+    name: '$el.setAttribute',
+    programmaticNames: true,
+    declarative: false,
+    objectValues: false,
+    write: (tag, name, value) => {
+      const el = document.createElement(tag);
+      host().appendChild(el);
+      const scope = exprScope({ n: name, v: value, bn: BENIGN_ATTR, bv: BENIGN_VALUE }, el);
+      // Two statements: the hostile write, then a benign write on the same
+      // element. If refusing the first tore the element down, or left the
+      // interpreter unusable, the benign write would not land either (P3).
+      try {
+        runHandler(compileHandler('$el.setAttribute(n, v)'), scope);
+      } catch {
+        /* a refusal surfaces as a denial; the page must still bind below */
+      }
+      runHandler(compileHandler('$el.setAttribute(bn, bv)'), scope);
+      return el;
+    },
+    writeText: (tag, text) => {
+      const el = document.createElement(tag);
+      host().appendChild(el);
+      runHandler(compileHandler('$el.textContent = t'), exprScope({ t: text }, el));
+      return el;
+    },
+  },
+];
+
+const NAME_SINKS = SINKS.filter((s) => s.programmaticNames);
+const DECLARATIVE_SINKS = SINKS.filter((s) => s.declarative);
+const OBJECT_SINKS = SINKS.filter((s) => s.objectValues);
+
+beforeEach(() => {
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  for (const dispose of disposers.splice(0)) dispose();
+  for (const box of containers.splice(0)) {
+    unmount(box);
+    box.remove();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Completeness — a new sink joins the table or this fails
+// ---------------------------------------------------------------------------
+
+describe('renderer contract: the table covers every sink', () => {
+  it('lists exactly the sinks this contract claims to cover', () => {
+    expect(SINKS.map((s) => s.name)).toEqual([
+      'h-static',
+      'h-reactive',
+      'adopt',
+      'prepared-adopt',
+      'data-bind',
+      '$el.setAttribute',
+    ]);
+  });
+
+  it('every module that writes an attribute is represented in SINKS', () => {
+    // The mechanism that stops this table going stale. Any production module
+    // that calls setAttribute/setAttributeNS/toggleAttribute either writes
+    // attributes on a caller's behalf — and must be a row above — or is listed
+    // here with the reason it is not a sink.
+    const ROOT = process.cwd();
+    const NON_SINKS: Record<string, string> = {
+      'src/dom-utils/mutate.ts': 'setAttr() helper — covered by mutate.test.ts',
+      'src/dom/activate.ts': 'writes only data-forma-* status, a fixed internal name',
+      'src/dom/adoption-controls.ts': 'fixed control attributes only on new detached-document normalization mirrors; retained native MutationObserver plus live setter controls prove no writes to the observed document (adoption-controls.spec.ts)',
+      'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/adopt sinks and form-control.test.ts',
+      'src/dom/reconcile.ts': 'copies attributes DOM→DOM between two already-guarded elements; writes no on* or script src, and mints a trusted srcdoc (trusted-html.test.ts)',
+    };
+    const DOM_SINK_FILES = [
+      'src/dom/element.ts',
+      'src/dom/hydrate.ts',
+      'src/dom/adoption-attributes.ts',
+      'src/runtime.ts',
+      'src/expr/interp.ts',
+      'src/expr/allowlist.ts',
+    ];
+    // Fixed detached parser-context attributes are not generic caller props.
+    // This module is still a real typed raw/CSS sink, exercised separately below.
+    const SPECIAL_CONTENT_SINK_FILES = ['src/dom/adoption-content.ts'];
+    /** The only module that assembles an attribute into a markup STRING. */
+    const MARKUP_SINK_FILES: string[] = [];
+
+    const domWriters: string[] = [];
+    const markupWriters: string[] = [];
+    const walk = (dir: string): void => {
+      for (const name of readdirSync(dir)) {
+        const p = join(dir, name);
+        if (statSync(p).isDirectory()) {
+          if (name !== '__tests__') walk(p);
+        } else if (/\.ts$/.test(name)) {
+          const rel = relative(ROOT, p).replace(/\\/g, '/');
+          const text = readFileSync(p, 'utf8');
+          if (/setAttribute(NS)?\(|toggleAttribute\(|'setAttribute'/.test(text)) domWriters.push(rel);
+          if (/escapeAttr\(/.test(text)) markupWriters.push(rel);
+        }
+      }
+    };
+    walk(resolve(ROOT, 'src'));
+
+    const unaccounted = [...domWriters, ...markupWriters].filter(
+      (f) => !DOM_SINK_FILES.includes(f) && !SPECIAL_CONTENT_SINK_FILES.includes(f) && !MARKUP_SINK_FILES.includes(f) && !Object.hasOwn(NON_SINKS, f),
+    );
+    expect(
+      unaccounted,
+      'a new attribute-writing module must join SINKS above (or NON_SINKS with a reason)',
+    ).toEqual([]);
+    // And the list may not rot: every file named above still writes attributes.
+    for (const f of [...DOM_SINK_FILES, ...SPECIAL_CONTENT_SINK_FILES, ...Object.keys(NON_SINKS)]) {
+      expect(domWriters, `${f} no longer writes attributes — remove it from the list`).toContain(f);
+    }
+    for (const f of MARKUP_SINK_FILES) {
+      expect(markupWriters, `${f} no longer emits attribute markup`).toContain(f);
+    }
+  });
+
+  it('covers the prepared typed raw sink and shared CSS writer separately from generic attributes', () => {
+    // adoption-content does not write caller-named attributes: its real raw
+    // sink is typed, and CSS delegates to element.ts's declaration writer.
+    // It is not a NON_SINK exemption. Exercise both actual later-write paths.
+    const element = host(), raw = prepareRaw(element, null);
+    expect(() => raw.write({__html: '<b>raw</b>'})).toThrow('FORMA_E_RAW_INNER_HTML');
+    raw.write({__html: trustedHtml('<b>typed</b>')});
+    expect(element.innerHTML).toBe('<b>typed</b>');
+    const style = prepareStyle(element, '');
+    style.write('color:red;font-size:14px'); style.write('font-size:16px');
+    expect(element.style.color).toBe(''); expect(element.style.fontSize).toBe('16px');
+  });
+
+  it('the prepared attribute matrix retains typed srcdoc and refuses raw strings', () => {
+    const prepared = SINKS.find(sink => sink.name === 'prepared-adopt')!;
+    expect(() => prepared.write('iframe', 'srcdoc', '<b>raw</b>')).toThrow('FORMA_E_RAW_SRCDOC');
+    const frame = prepared.write('iframe', 'srcdoc', trustedHtml('<b>typed</b>'));
+    expect(frame.getAttribute('srcdoc')).toBe('<b>typed</b>');
+  });
+
+  it('covers every URL-bearing attribute the security module declares', () => {
+    // Allowlists are tested for COMPLETENESS, not contents: deleting 'poster'
+    // or 'background' from URL_ATTRS used to be invisible because only href and
+    // src were ever exercised.
+    expect(Object.keys(ATTR_TAG).sort()).toEqual([...URL_ATTRS].sort());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G1 — dangerous URLs are refused on every sink, on every URL attribute
+// ---------------------------------------------------------------------------
+
+describe.each(SINKS)('renderer contract [$name]: dangerous URLs', (sink) => {
+  it.each([...URL_ATTRS])('drops every script scheme written to %s', (attr) => {
+    for (const url of DANGEROUS_URLS) {
+      const el = sink.write(ATTR_TAG[attr]!, attr, url);
+      expect(readAttr(el, attr), `${JSON.stringify(url)} on ${attr}`).toBeNull();
+      // …and the element still carries its benign attribute (P3): "we dropped
+      // everything" must not be able to read as "we blocked the payload".
+      expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+    }
+  });
+
+  it.each([...URL_ATTRS])('keeps ordinary URLs on %s', (attr) => {
+    for (const url of SAFE_URLS) {
+      const el = sink.write(ATTR_TAG[attr]!, attr, url);
+      expect(readAttr(el, attr), `${url} on ${attr}`).toBe(url);
+      expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+    }
+  });
+
+  it('keeps data:image/svg+xml on an image sink and drops it on a document sink', () => {
+    // The value is inert through an image decoder and a live document through
+    // <a href>/<object data>, so the guard is only able to judge it if the sink
+    // forwards the element's tag.
+    expect(readAttr(sink.write('img', 'src', SVG_DATA_URL), 'src')).toBe(SVG_DATA_URL);
+    expect(readAttr(sink.write('a', 'href', SVG_DATA_URL), 'href')).toBeNull();
+    expect(readAttr(sink.write('object', 'data', SVG_DATA_URL), 'data')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G1b — the string the URL guard checked is the string written
+// ---------------------------------------------------------------------------
+
+/**
+ * An object whose string is `first` the first time it is converted and
+ * `later` every time after: a sink that converts a value once for its guard
+ * and again for its write checks one string and writes another.
+ */
+function changingString(first: string, later: string): { toString(): string } {
+  let converted = false;
+  return {
+    toString() {
+      const out = converted ? later : first;
+      converted = true;
+      return out;
+    },
+  };
+}
+
+describe.each(OBJECT_SINKS)('renderer contract [$name]: one conversion per write', (sink) => {
+  it.each([...URL_ATTRS])('writes %s as the string the URL guard checked, not a second conversion', (attr) => {
+    // formajs#29's review (B1): the srcdoc path wrote every object as itself,
+    // so setAttribute converted it a second time, after isDangerousUrl had
+    // passed the first string.
+    const el = sink.write(ATTR_TAG[attr]!, attr, changingString('https://example.com/', 'javascript:alert(1)'));
+    expect(readAttr(el, attr)).toBe('https://example.com/');
+    expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G2 — event-handler attribute names are refused on every sink
+// ---------------------------------------------------------------------------
+
+describe.each(SINKS)('renderer contract [$name]: inline event handlers', (sink) => {
+  it.each(EVENT_HANDLER_ATTRS)('never writes %s as an attribute', (name) => {
+    const el = sink.write('div', name, 'alert(1)');
+    // setAttribute ASCII-lowercases qualified names on HTML elements, so the
+    // lower-case form is the one that would actually fire.
+    expect(el.getAttribute(name.toLowerCase())).toBeNull();
+    expect(liveHandlerAttrs(el)).toEqual([]);
+    expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+  });
+
+  it('a refused handler attribute does not become a live listener', () => {
+    delete (globalThis as Record<string, unknown>).__formaPwned;
+    const el = sink.write('button', 'onclick', 'globalThis.__formaPwned = true');
+    el.dispatchEvent(new Event('click'));
+    expect((globalThis as Record<string, unknown>).__formaPwned).toBeUndefined();
+  });
+
+  it.each([[true], [''], [0], [1]])('refuses an on* name whatever the value type: %j', (value) => {
+    // Value TYPE matters, not just value content. Several sinks special-case
+    // `true` into a bare-attribute write that runs before the URL/handler
+    // predicate, so `ONCLICK: () => true` takes a different branch from
+    // `ONCLICK: () => 'alert(1)'` and needs its own row.
+    const el = sink.write('div', 'ONCLICK', value);
+    expect(el.getAttribute('onclick')).toBeNull();
+    expect(liveHandlerAttrs(el)).toEqual([]);
+    expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G3 — attribute names that would break out of the attribute position
+// ---------------------------------------------------------------------------
+
+/**
+ * Names that would break OUT of the attribute position — they contain the
+ * characters an attacker needs to start a second attribute or close the tag.
+ * Every sink that takes a programmatic name must refuse these.
+ */
+const BREAKOUT_NAMES = [
+  'foo bar',
+  'foo"bar',
+  "foo'bar",
+  'foo=bar',
+  'foo<bar',
+  'foo>bar',
+  'a/b',
+] as const;
+
+/**
+ * Names that cannot break out but are outside the well-formed charset. Only the
+ * sinks whose NAME can come from runtime data have to police these:
+ * interpolates the name into markup, and `$el.setAttribute(k, v)` takes `k`
+ * from an expression that can read state. Everywhere else the key is a literal
+ * in author code and the DOM is the backstop.
+ */
+const MALFORMED_NAMES = ['2leading', '-leading', '.leading'] as const;
+
+const DATA_NAME_SINKS = SINKS.filter((s) => s.name === '$el.setAttribute');
+
+describe.each(DATA_NAME_SINKS)(
+  'renderer contract [$name]: attribute names taken from data',
+  (sink) => {
+    it.each(MALFORMED_NAMES)('refuses the malformed name %j', (name) => {
+      let el: Element | null = null;
+      let threw = false;
+      try {
+        el = sink.write('div', name, 'x');
+      } catch {
+        threw = true;
+      }
+      if (!threw) {
+        expect(el!.getAttribute(name)).toBeNull();
+        expect(readAttr(el!, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+      }
+    });
+  },
+);
+
+describe.each(NAME_SINKS)('renderer contract [$name]: attribute-name safety', (sink) => {
+  it.each(BREAKOUT_NAMES)('refuses the name %j without emitting it', (name) => {
+    let el: Element | null = null;
+    let threw = false;
+    try {
+      el = sink.write('div', name, 'x');
+    } catch {
+      // A DOM sink may fail closed with InvalidCharacterError. Refusing loudly
+      // is acceptable; silently emitting the name is not.
+      threw = true;
+    }
+    if (!threw) {
+      expect(el!.getAttribute(name)).toBeNull();
+      expect(el!.outerHTML).not.toContain(name);
+      expect(readAttr(el!, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+    }
+  });
+
+  it.each(['data-x', 'aria-label', 'xml:lang', '_private', 'a.b', 'x-1'])(
+    'keeps the well-formed name %s',
+    (name) => {
+      const el = sink.write('div', name, 'ok');
+      expect(readAttr(el, name)).toBe('ok');
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// G4 — boolean attribute semantics (the cross-implementation contract)
+// ---------------------------------------------------------------------------
+
+describe.each(DECLARATIVE_SINKS)('renderer contract [$name]: boolean attributes', (sink) => {
+  it('true renders a bare attribute — present with an empty value', () => {
+    // The Rust walker in `forma` renders `true` as a bare attribute name.
+    // Parsed back, a bare attribute reads as the empty string, so this is the
+    // one form all five declarative paths and the walker must agree on.
+    const el = sink.write('input', 'disabled', true);
+    expect(el.hasAttribute('disabled')).toBe(true);
+    expect(el.getAttribute('disabled')).toBe('');
+  });
+
+  it('false omits the attribute entirely', () => {
+    const el = sink.write('input', 'disabled', false);
+    expect(el.hasAttribute('disabled')).toBe(false);
+    expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+  });
+
+  it('null omits the attribute entirely', () => {
+    const el = sink.write('input', 'disabled', null);
+    expect(el.hasAttribute('disabled')).toBe(false);
+    expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+  });
+
+  it('the empty string renders present-and-empty, not omitted', () => {
+    const el = sink.write('input', 'value', '');
+    expect(el.hasAttribute('value')).toBe(true);
+    expect(el.getAttribute('value')).toBe('');
+  });
+
+  it('a non-empty string renders verbatim', () => {
+    const el = sink.write('input', 'value', 'hello');
+    expect(el.getAttribute('value')).toBe('hello');
+  });
+});
+
+describe('renderer contract [$el.setAttribute]: is the DOM method, deliberately', () => {
+  it('stringifies its second argument the way setAttribute does', () => {
+    // Documented divergence from the four declarative paths above: this is the
+    // imperative escape hatch, and it may not silently rewrite what the author
+    // passed. The SAFETY guards still apply to it — see the tables above.
+    const el = document.createElement('input');
+    host().appendChild(el);
+    runHandler(compileHandler('$el.setAttribute(n, v)'), exprScope({ n: 'disabled', v: true }, el));
+    expect(el.getAttribute('disabled')).toBe('true');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G5 — text is text on every sink
+// ---------------------------------------------------------------------------
+
+const TEXT_PAYLOADS = [
+  '<script>alert(1)</script>',
+  '</div><img src=x onerror=alert(1)>',
+  '5 > 3 && 2 < 4',
+  `it's a "quote" & an ampersand`,
+  '<!-- not a comment -->',
+  '&lt;already escaped&gt;',
+] as const;
+
+describe.each(SINKS)('renderer contract [$name]: text is never markup', (sink) => {
+  it.each(TEXT_PAYLOADS)('renders %j as text', (payload) => {
+    const el = sink.writeText('div', payload);
+    expect(el.textContent).toBe(payload);
+    expect(el.querySelector('script')).toBeNull();
+    expect(el.querySelector('img')).toBeNull();
+    // No parsed markup at all: the payload produced zero child ELEMENTS.
+    expect([...el.childNodes].filter((n) => n.nodeType === 1)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Namespaces: every renderer builds what the parser builds from the markup
+// (decision brief DR-9, FORMA-026)
+// ---------------------------------------------------------------------------
+
+/** A vector's tree: tag, props, children (a string child is text). */
+type NsTree = [string, Record<string, unknown> | null, ...unknown[]];
+
+/**
+ * The shared namespace vectors. The same file drives the three-engine e2e
+ * (`e2e/adoption.spec.ts`), where each engine's parser reads the markup and
+ * adoption binds it; here h() renders the tree. happy-dom's
+ * parser has no MathML and keeps HTML integration points' content in SVG, so
+ * the parsed side is the browsers', not happy-dom's.
+ */
+const NS_VECTORS = (JSON.parse(readFileSync(resolve(__dirname, 'vectors/namespaces.json'), 'utf8')) as {
+  vectors: Array<{ name: string; server: string; tree: NsTree; namespaces: string[] }>;
+}).vectors;
+
+const NS_URI: Record<string, string> = {
+  html: 'http://www.w3.org/1999/xhtml',
+  svg: 'http://www.w3.org/2000/svg',
+  mathml: 'http://www.w3.org/1998/Math/MathML',
+};
+
+const buildWith = <N>(make: (tag: string, props: Record<string, unknown> | null, ...children: unknown[]) => N) => {
+  const build = ([tag, props, ...children]: NsTree): N =>
+    make(tag, props, ...children.map((c) => (typeof c === 'string' ? c : build(c as NsTree))));
+  return build;
+};
+
+describe('renderer contract: namespaces match the parsed server markup (shared vectors)', () => {
+  it('the vectors cover SVG, its HTML integration points, a name h() did not know, and MathML', () => {
+    expect(NS_VECTORS.length).toBeGreaterThanOrEqual(7);
+    const all = NS_VECTORS.flatMap((v) => v.namespaces);
+    for (const ns of ['svg', 'html', 'mathml']) expect(all.some((e) => e.endsWith(`:${ns}`))).toBe(true);
+  });
+
+  // Each child is built once its parent exists, as a reactive child is (and
+  // as compiled JSX would be, FORMA-171): h() then takes the parser's
+  // namespace from the parent. A child passed eagerly to h() is built before
+  // its parent, so a hand-written tree with a dual-use tag in SVG needs svg()
+  // (docs/API.md); src/dom/__tests__/namespace-resolution.test.ts covers that.
+  const builtWithParent = ([tag, props, ...children]: NsTree): unknown =>
+    h(tag, props, ...children.map((c) => (typeof c === 'string' ? c : () => builtWithParent(c as NsTree))));
+
+  describe.each(NS_VECTORS.map((v) => [v.name, v] as const))('%s', (_name, vector) => {
+    it('h(), building each child with its parent known, gives every element the namespace the parser gives it, with the same markup', () => {
+      // The frozen namespace vector remains a parser reference; v3's h()
+      // cannot construct script elements, including within SVG.
+      const containsScript = ([tag, , ...children]: NsTree): boolean =>
+        tag.toLowerCase() === 'script' || children.some((c) => Array.isArray(c) && containsScript(c as NsTree));
+      if (containsScript(vector.tree)) {
+        expect(() => builtWithParent(vector.tree)).toThrow('FORMA_E_SCRIPT_ELEMENT');
+        return;
+      }
+      const built = builtWithParent(vector.tree) as unknown as Element;
+      const namespaces = [built, ...Array.from(built.querySelectorAll('*'))].map((el) => `${el.localName}:${el.namespaceURI}`);
+      expect(namespaces).toEqual(vector.namespaces.map((e) => {
+        const [name, ns] = e.split(':');
+        return `${name}:${NS_URI[ns!]}`;
+      }));
+      expect(built.outerHTML).toBe(vector.server);
+    });
+
+  });
+});

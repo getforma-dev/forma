@@ -2,6 +2,79 @@
 
 ## [Unreleased]
 
+- FORMA-182 qualification: use `ryu-js` 1.0.3 for ECMAScript number formatting.
+  Rust's `LowerExp` chose the wrong shortest decimal at exact ties: binary64
+  `c2eeb5cf467752d4` rendered as `-270129723325078.63` instead of JavaScript's
+  `-270129723325078.62`. Shared vectors retain the seeded counterexample,
+  its positive counterpart and adjacent binary64 values. Negative zero,
+  exponent thresholds and non-finite spellings retain their existing contract.
+  The dependency has no default runtime dependencies, supports Rust 1.71,
+  and is licensed Apache-2.0 OR BSL-1.0.
+- FORMA-182 qualification: the frozen FORMA-026 namespace vectors now live in
+  `tests/fixtures/parity/namespaces.json`; a native test builds FMIR from each
+  tree and checks the real walker's output. The script reference remains a
+  client construction refusal. This adds no namespace-stack policy.
+
+- FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
+  with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
+  or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one
+  `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
+  the `served` markup the walker writes, pinned by a walker test and decoded by the three
+  browser engines in core's `keyed-adoption.spec.ts`.
+
+### Shared attribute-name and URL policy — FORMA-140
+
+- Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
+
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+- FORMA-182, rule 6's attribute table (finding F2), **rendered output changes with no source
+  change**: a `DYN_ATTR` over a `true` slot writes the bare name only for an HTML boolean
+  attribute (`HTML_BOOLEAN_ATTRIBUTES`, the same list as core's `BOOLEAN_ATTRS`); on any other
+  attribute it writes the word, `data-live="true"`, `aria-pressed="true"`, `class="true"`, as
+  `h()` does. `false` and `Null` still omit the attribute. Shared vectors
+  `tests/fixtures/parity/attributes.json`; test `walker.rs > value_rule_vectors >
+  rule_6_attribute_values_follow_one_table`; the js-emitter goldens `jsx-page.html` and
+  `sub-component-scopes.html` regenerated, originals archived with a ledger in
+  `docs/archive/2026-10-15-pre-attribute-values/`.
+
+- FORMA-181 checkpoint C (review follow-ups of B): `ListKeyViolation` is `#[non_exhaustive]`
+  with a constructor, `ListKeyViolation::new`; a key path segment holding a dot or a bracket,
+  or an empty one, is quoted in the diagnostic (`["user.id"]`); a row's key is held once (one
+  `Rc<str>` shared by the duplicate set and the row's guard). `keys.json` string vectors carry
+  the `served` markup the walker writes, pinned by a walker test and decoded by the three
+  browser engines in core's `keyed-adoption.spec.ts`.
+- FORMA-181 checkpoint B (DR-8, L-7): the walker reads FMIR section `0x0006`. For each
+  `LIST` it names, every row's value at the key path becomes the row root's
+  `data-forma-key`, as canonical text: a string under value rule 1, a safe integer in
+  decimal (`-0` as `0`). A row whose value at the path is missing, declared twice, behind a
+  non-object, or not a string or safe integer, two rows of one list execution sharing a key
+  (each execution of a LIST is its own scope), a row without exactly one balanced root
+  element at its own level (a registered child's island envelope may wholly enclose it), or
+  an authored `data-forma-key` on that root refuse the whole render with the new
+  `IrError::InvalidListKey` (`ListKeyViolation`: LIST offset, zero-based row, path,
+  `ListKeyReason`; displayed as `RENDER-503`; a duplicate names both rows, never the key).
+  The key path is resolved once per LIST execution; a string key is charged to the output
+  budget before it is built; the slot journal, the keyed-row guard and the list depth are
+  restored before any error propagates. A `LIST` without an entry writes no key and renders
+  byte-identically to before. New crate-private `keys` module; shared vectors
+  `tests/fixtures/parity/keys.json` (read by core's `key-text.test.ts` too); the
+  js-emitter contract feeds every keyed list the identity its module declares and the
+  `list-same-source` golden now carries the keys (original archived under
+  `docs/archive/2026-10-15-pre-native-keys/`). The legacy `pending_list_key` field, set
+  by nothing since `LIST_ITEM_KEY` was never emitted, is gone.
+- FORMA-182: the walker writes ordinary text and attribute values under value rule 1
+  (`docs/parity-rules.md`): CRLF and CR become LF and NUL becomes U+FFFD, per value, as
+  the browser parses them; `textarea`, `pre` and `listing` double only an initial
+  normalized LF of their first content token (a marker comment or child consumes that
+  boundary); a bound select or textarea value and an option's value or text are
+  compared normalized; the URL guard classifies the raw value and refuses a NUL
+  anywhere in a URL attribute. The output budget now counts
+  each normalized character's encoded length, so a three-byte U+FFFD or a four-byte
+  astral character can no longer overshoot the limit. Crate-private `text::normalized_chars`;
+  shared vectors in `tests/fixtures/parity/normalization.json`. The state envelope and
+  declared props stay byte-exact.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

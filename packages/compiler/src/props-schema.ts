@@ -1,9 +1,11 @@
+import {readSourceFile} from './source-snapshot';
 /** Declared page data is read before JSX lowering erases TypeScript annotations. */
-import { readFileSync } from 'node:fs';
+
 import { dirname, relative, resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
-import { resolveExportedFunction, readImportBindings } from './export-resolver';
+import { resolveExportedFunction, readImportBindings, type ComponentFunction } from './export-resolver';
 import { resolveFilePath, type ModuleLoader } from './module-loader';
 import { encodePropsSchema, type PropsSchema, type SchemaField, type SchemaType } from './fmir-payload';
 import { MAX_SCHEMA_ITEMS, MAX_TYPE_DEPTH } from './fmir-constants';
@@ -14,9 +16,8 @@ export interface DeclaredPageProps { schema: PropsSchema; parameter: PropsParame
 
 /** A declared contract can never degrade to placeholder output. */
 export class PropsSchemaError extends Error {
-  readonly code = 'BUILD-610';
-  constructor(readonly file: string, readonly line: number, readonly column: number, detail: string) {
-    super(`BUILD-610 ${file}:${line}:${column}: ${detail}`);
+  constructor(readonly file: string, readonly line: number, readonly column: number, detail: string, readonly code: 'BUILD-610' | 'BUILD-612' | 'BUILD-613' | 'BUILD-614' | 'BUILD-615' | 'BUILD-616' | 'BUILD-617' | 'BUILD-618' | 'BUILD-619' | 'BUILD-620' | 'BUILD-621' | 'BUILD-622' | 'BUILD-623' | 'BUILD-624' = 'BUILD-610') {
+    super(`${code} ${file}:${line}:${column}: ${detail}`);
     this.name = 'PropsSchemaError';
   }
 }
@@ -29,15 +30,22 @@ function nameOf(node: t.Node): string | undefined {
 
 /** Empty-parameter pages have an empty contract; a parameter must declare its type. */
 export function readPageProps(file: string, exportedName: string): DeclaredPageProps {
-  const root = dirname(resolve(file));
+  // Resolved imports already use canonical paths. Keep the entry root in the
+  // same coordinate system so symlinked checkouts do not invent ../../ paths.
+  file=realpathSync(file);
   const raw: ModuleLoader = (from, specifier) => {
     if (!specifier.startsWith('.')) return null;
     const path = resolveFilePath(dirname(from), specifier);
-    return path ? { path, source: readFileSync(path, 'utf8') } : null;
+    return path ? { path, source: readSourceFile(path) } : null;
   };
-  const found = resolveExportedFunction(readFileSync(file, 'utf8'), file, exportedName, { loadModule: raw, allowLocal: true });
+  const found = resolveExportedFunction(readSourceFile(file), file, exportedName, { loadModule: raw, allowLocal: true });
   if (found.kind !== 'found') throw new PropsSchemaError(file, 1, 1, `cannot resolve declared page: ${found.detail}`);
-  const fn = found.fn;
+  return readFunctionProps(found.fn, found.filePath, dirname(resolve(file)));
+}
+
+/** A browserOnly implementation has a declared input schema even though its body is client-only. */
+export function readFunctionProps(fn: ComponentFunction, file: string, root = dirname(resolve(file))): DeclaredPageProps {
+  const found = { filePath: file };
   if (!fn.params.length) return { schema: [[]], parameter: { kind: 'none' } };
   if (fn.params.length !== 1) fail(found.filePath, fn, 'a page takes exactly one declared props parameter');
   const param = fn.params[0]!;
@@ -86,7 +94,7 @@ class SchemaReader {
   private ast(file: string): t.File {
     let ast = this.asts.get(file);
     if (!ast) {
-      ast = parse(readFileSync(file, 'utf8'), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
+      ast = parse(readSourceFile(file), { sourceType: 'module', plugins: ['typescript', ...(/\.[jt]sx$/.test(file) ? ['jsx' as const] : [])] });
       this.asts.set(file, ast);
     }
     return ast;

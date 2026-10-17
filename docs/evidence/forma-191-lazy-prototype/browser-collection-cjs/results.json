@@ -1,0 +1,96 @@
+[
+  {
+    "name": "fauth",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--list",
+      "--reporter=list"
+    ],
+    "exitCode": 0,
+    "expected": 51,
+    "actual": 51,
+    "engines": {
+      "chromium": 17,
+      "firefox": 17,
+      "webkit": 17
+    },
+    "finishedAt": "2026-10-16T09:30:50.687735+00:00"
+  },
+  {
+    "name": "namespaces",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine-cjs.config.ts",
+      "e2e/ssr/namespaces.spec.ts",
+      "--workers=2",
+      "--list",
+      "--reporter=list"
+    ],
+    "exitCode": 0,
+    "expected": 12,
+    "actual": 12,
+    "engines": {
+      "chromium": 4,
+      "firefox": 4,
+      "webkit": 4
+    },
+    "finishedAt": "2026-10-16T09:30:51.563239+00:00"
+  },
+  {
+    "name": "conditional",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "e2e/ssr/beta-acceptance.config.ts",
+      "conditional-element.spec.ts",
+      "--workers=2",
+      "--list",
+      "--reporter=list"
+    ],
+    "exitCode": 0,
+    "expected": 3,
+    "actual": 3,
+    "engines": {
+      "chromium": 1,
+      "firefox": 1,
+      "webkit": 1
+    },
+    "finishedAt": "2026-10-16T09:30:52.339189+00:00"
+  },
+  {
+    "name": "core",
+    "command": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "packages/core/playwright.config.ts",
+      "core-regressions.spec.ts",
+      "--workers=2",
+      "--list",
+      "--reporter=list"
+    ],
+    "exitCode": 0,
+    "expected": 15,
+    "actual": 15,
+    "engines": {
+      "chromium": 5,
+      "firefox": 5,
+      "webkit": 5
+    },
+    "finishedAt": "2026-10-16T09:30:53.154159+00:00"
+  }
+]

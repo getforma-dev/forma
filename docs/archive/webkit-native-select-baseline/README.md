@@ -1,0 +1,7 @@
+# WebKit native select baseline
+
+The original test introduced in `431e54c3` assumed every WebKit selects the first option inside an entirely disabled optgroup. The preserved hosted Ubuntu 24.04.5 / Playwright 1.64.1 failure at integration `cf869f83` (PR44 merge checkout `868cf5a3`) reported that option unselected. All other assertions, including `edited: false`, both refusal codes, zero mutations and the observer positive control, passed; 410 other core browser cases passed.
+
+One native-only probe on current Mac Chromium, Firefox and WebKit reproduced unselected options, selectedIndex -1, and the same result in detached native construction. It loaded no Forma module or page script and left the live native state unchanged. Raw results, original probe source, failed log, downloaded artifact and original test are authenticated by `manifest.json`. The archived probe uses its original sibling paths for provenance; it is not a newly wired executable test.
+
+The repair captures native selected bits/index before importing or constructing AdoptionControls. Its observation must preserve that native value with `edited: false`; `check()` and release must leave the bits/index unchanged. All existing ambiguity, unrelated select, mutation-zero and positive-control assertions stay. No browser/platform guess, production behavior, skip, retry or timeout changes. This source record does not claim the repaired browser suite or hosted CI passed; those gates are recorded after execution.

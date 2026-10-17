@@ -12,19 +12,31 @@
     "build": "npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/create-app",
     "test": "npm test --workspaces",
     "emit:corpus": "npm run emit:corpus -w packages/compiler --",
-    "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && npx playwright test",
+    "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && bash e2e/fixtures/apps/build.sh && bash e2e/skew/build.sh && npx playwright test",
     "test:e2e:ci": "npx playwright test",
     "check": "bash scripts/check.sh"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@babel/core": "7.29.7",
+    "@playwright/test": "^1.64.1",
+    "@tanstack/react-query": "5.101.4",
+    "babel-plugin-react-compiler": "1.0.0",
     "esbuild": "^0.28.1",
+    "lighthouse": "13.5.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "serve": "^14.2.6",
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
+    "happy-dom": "^20.11.2"
   },
   "overrides": {
     "esbuild": "^0.28.1",
-    "rollup": "^4.59.0"
+    "rollup": "^4.59.0",
+    "serve": {
+      "compression": "1.8.2"
+    }
   },
   "engines": {
     "node": ">=24.22.0 <25"

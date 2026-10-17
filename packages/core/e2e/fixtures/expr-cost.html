@@ -12,12 +12,15 @@
   </script>
 </head>
 <body>
+<main id="fixture-mount">
   <!-- Audit verification run 4: before FORMA-004 the hostile binding built a
        twelve-million-element array (139 MB, a 300 ms task) and only then was refused. -->
   <div data-forma-state='{"n": 0}'>
     <span id="hostile" data-text="{Array.from({length: 12000000}).length}">unset</span>
     <span id="control" data-text="{Array.from({length: 1000}).length}">unset</span>
   </div>
-  <script src="formajs-runtime.global.js" data-forma-diagnostics="true"></script>
+  </main>
+<script src="formajs-runtime.global.js"></script>
+<script src="/mount-fixture.js"></script>
 </body>
 </html>

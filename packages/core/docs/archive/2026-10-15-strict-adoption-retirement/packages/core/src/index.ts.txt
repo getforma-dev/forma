@@ -1,0 +1,52 @@
+/// <reference path="./jsx.d.ts" />
+
+/**
+ * @getforma/core — Reactive DOM library for building web applications.
+ * Signals, JSX via h(), islands architecture, SSR hydration, and more.
+ * @packageDocumentation
+ */
+
+// Reactive core
+export {
+  createSignal, value, getSignalName, createEffect, createComputed, createMemo, batch,
+  untrack, createRoot, createUnownedRoot, getOwner, runWithOwner, onCleanup, on, onError,
+  createRef, createReducer, createResource,
+  // Reactive introspection (alien-signals 3.x)
+  isSignal, isComputed, isEffect, isEffectScope,
+  getBatchDepth, trigger,
+} from './reactive';
+export type { SignalGetter, SignalSetter, SignalOptions, Owner, Ref, Dispatch, Resource, ResourceOptions, ResourceFetcherInfo, ErrorHandler } from './reactive';
+
+// DOM
+export { h, svg, Fragment, fragment, createText, mount, createList, cleanup, createShow, createSwitch, createPortal, createErrorBoundary, createSuspense, hydrateIsland, activateIslands, deactivateIsland, deactivateAllIslands, sanitizePropsDeep, reconcileList, template, templateMany } from './dom';
+export type { IslandHydrateFn, ReconcileResult, ListTransitionHooks, CreateListOptions, SwitchCase } from './dom';
+// Compiler-internal registry metadata; application code uses activateIslands.
+export { __islandRegistration } from './dom/island-state';
+export { __adoptionSignal, __adoptionWritable } from './reactive/adoption-hooks';
+export { __adoptionChild, __adoptionConditional } from './dom/adoption-description';
+// The browser-only marker (DR-1, L-1): one name, so a search finds every use.
+export { browserOnly } from './dom/browser-only';
+// The raw-HTML entry (DR-19, L-37): one name, so a search finds every use.
+export { trustedHtml } from './dom/trusted-html';
+export type { TrustedHtml } from './dom/trusted-html';
+
+// Component
+export { defineComponent, disposeComponent, trackDisposer, onMount, onUnmount, createContext, provide, inject, unprovide } from './component';
+export type { SetupFn, ComponentDef, CleanupFn, Context } from './component';
+
+// State
+export { createStore, createHistory, persist } from './state';
+export type { StoreSetter, PersistOptions, PersistErrorPhase, HistoryControls } from './state';
+
+// Events
+export { createBus, delegate, onKey } from './events';
+export type { EventBus, KeyOptions } from './events';
+
+// DOM Utils
+export { $, $$, addClass, removeClass, toggleClass, setStyle, setAttr, setText, setHTMLUnsafe,
+         closest, children, siblings, parent, nextSibling, prevSibling,
+         onResize, onIntersect, onMutation } from './dom-utils';
+
+// ─── Subpath imports (not in this bundle — zero network code here) ───
+// HTTP:    import { createFetch, createSSE, createWebSocket } from '@getforma/core/http'
+// Storage: import { createLocalStorage, createIndexedDB } from '@getforma/core/storage'

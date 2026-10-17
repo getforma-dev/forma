@@ -1,35 +1,5 @@
 [
  {
-  "id": "activate/hydrate-node-error-silent",
-  "file": "src/dom/activate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (isIslandPropsError(err) || isHydrateError(err)) reportHydrateError(err, ` (island \"${componentName}\", id=${id})`);\n    else if (__DEV__)",
-  "replace": "    if (__DEV__)",
-  "note": "an island failed by FORMA_E_HYDRATE_NODE leaves no coded log line naming it"
- },
- {
-  "id": "activate/props-error-uncoded",
-  "file": "src/dom/activate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (isIslandPropsError(err) || isHydrateError(err))",
-  "replace": "    if (isHydrateError(err))",
-  "note": "an island refused for its props type is marked error with no FORMA_E_ISLAND_PROPS line in a production build. Verified by: src/dom/__tests__/props-loading.test.ts > \"props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS\""
- },
- {
-  "id": "activate/props-inline-unstripped",
-  "file": "src/dom/activate.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "checkProps(sanitizePropsDeep(JSON.parse(inline)))",
-  "replace": "checkProps(JSON.parse(inline))",
-  "note": "inline data-forma-props reach the island with __proto__ / constructor / prototype at every depth (DR-21). Verified by: src/dom/__tests__/activate-isolation.test.ts > \"island activation strips forbidden keys at every depth, inline and shared, with no opt-out\""
- },
- {
   "id": "activate/props-not-sanitized",
   "file": "src/dom/activate.ts",
   "tags": [
@@ -37,37 +7,7 @@
   ],
   "find": "const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);",
   "replace": "const FORBIDDEN_PROP_KEYS = new Set<string>([]);",
-  "note": "SECURITY.md 'Island props sanitized' — stripping removed"
- },
- {
-  "id": "activate/props-reviver-recursive",
-  "file": "src/dom/activate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "checkProps(sanitizePropsDeep(JSON.parse(inline)))",
-  "replace": "checkProps(JSON.parse(inline, (k: string, v: unknown) => (FORBIDDEN_PROP_KEYS.has(k) ? undefined : v)))",
-  "note": "strip with a JSON.parse reviver: V8 applies it recursively and overflows near 5,000 levels, so deep props fail the island. Verified by: src/dom/__tests__/activate-isolation.test.ts > \"island props nested 10,000 deep are parsed and stripped\""
- },
- {
-  "id": "activate/props-shared-unstripped",
-  "file": "src/dom/activate.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "sanitizePropsDeep(JSON.parse(scriptBlock.textContent ?? ''))",
-  "replace": "JSON.parse(scriptBlock.textContent ?? '')",
-  "note": "props from the shared __forma_islands block reach the island with nested pollution keys (DR-21). Verified by: src/dom/__tests__/activate-isolation.test.ts > \"island activation strips forbidden keys at every depth, inline and shared, with no opt-out\""
- },
- {
-  "id": "activate/props-type-unchecked",
-  "file": "src/dom/activate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (props === null || typeof props !== 'object') {",
-  "replace": "  if (false) {",
-  "note": "props that are null, a number, a string or a boolean reach the island, where 2.0.1 marked it error (FORMA-004 review). Verified by: src/dom/__tests__/props-loading.test.ts > \"props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS\""
+  "note": "SECURITY.md 'Island props sanitized' \u2014 stripping removed"
  },
  {
   "id": "batch/no-batching",
@@ -75,7 +15,7 @@
   "tags": [],
   "find": "  startBatch();\n  try {\n    fn();\n  } finally {\n    endBatch();\n  }",
   "replace": "  fn();",
-  "note": "batch() no longer batches — effects run per write"
+  "note": "batch() no longer batches \u2014 effects run per write"
  },
  {
   "id": "bus/emit-no-snapshot",
@@ -83,7 +23,7 @@
   "tags": [],
   "find": "      for (const handler of [...set]) {",
   "replace": "      for (const handler of set) {",
-  "note": "bus emit iterates live Set — off() during emit corrupts iteration"
+  "note": "bus emit iterates live Set \u2014 off() during emit corrupts iteration"
  },
  {
   "id": "bus/once-no-off",
@@ -102,12 +42,28 @@
   "note": "duplicate of parseCss camel probe with body change"
  },
  {
+  "id": "el/class-null-written",
+  "file": "src/dom/element.ts",
+  "tags": [],
+  "find": "    const v = raw == null || raw === false ? null : normalizeDomText(String(raw));",
+  "replace": "    const v = normalizeDomText(String(raw));",
+  "note": "a null, undefined or false class is written as its word instead of removed (FORMA-182 rule 5)"
+ },
+ {
+  "id": "el/static-class-true-bare",
+  "file": "src/dom/element.ts",
+  "tags": [],
+  "find": "    const v = normalizeDomText(String(value));",
+  "replace": "    const v = value === true ? '' : normalizeDomText(String(value));",
+  "note": "a static class: true is written bare instead of the word \"true\" the walker writes (FORMA-182 rule 6's attribute table, F2)"
+ },
+ {
   "id": "el/generic-url-guard-off",
   "file": "src/dom/element.ts",
   "tags": [
    "security"
   ],
-  "find": "      if (!urlAttr || !isDangerousUrl(strVal, el.localName)) {",
+  "find": "      if (!urlAttr || !isDangerousUrl(raw, el.localName)) {",
   "replace": "      if (true) {",
   "note": "h() reactive attribute path writes javascript: URLs"
  },
@@ -117,7 +73,7 @@
   "tags": [],
   "find": "      const camel = prop.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());",
   "replace": "      const camel = prop;",
-  "note": "kebab-case CSS props no longer camelised — string styles silently drop"
+  "note": "kebab-case CSS props no longer camelised \u2014 string styles silently drop"
  },
  {
   "id": "el/static-onattr-guard-off",
@@ -125,19 +81,19 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isEventHandlerAttr(key)) {\n    if (__DEV__) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
-  "replace": "  checkRawAttr(key, value);\n\n  // true → empty string attribute, else stringified value",
+  "find": "  if (isEventHandlerAttr(key)) {\n    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');\n    return;\n  }\n  checkRawAttr(key, value);\n\n  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,",
+  "replace": "  checkRawAttr(key, value);\n\n  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,",
   "note": "h() static path writes ONCLICK as an inline handler"
  },
  {
-  "id": "el/static-true-as-string",
+  "id": "el/static-true-bare",
   "file": "src/dom/element.ts",
   "tags": [
    "contract"
   ],
-  "find": "  if (value === true) {\n    el.setAttribute(key, '');\n    return;\n  }",
-  "replace": "  if (value === true) {\n    el.setAttribute(key, 'true');\n    return;\n  }",
-  "note": "h() static true writes name=\"true\" instead of a bare attribute"
+  "find": "  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,\n  // docs/parity-rules.md: the walker writes the same), else the value's string.\n  const raw = String(value), strVal = normalizeDomText(raw);",
+  "replace": "  if (value === true) {\n    el.setAttribute(key, '');\n    return;\n  }\n  // `true` is the word \"true\" off the boolean set (rule 6's attribute table,\n  // docs/parity-rules.md: the walker writes the same), else the value's string.\n  const raw = String(value), strVal = normalizeDomText(raw);",
+  "note": "h() static true writes a bare non-boolean attribute where the walker writes \"true\" (FORMA-182 rule 6's attribute table, F2)"
  },
  {
   "id": "el/static-url-guard-off",
@@ -145,7 +101,7 @@
   "tags": [
    "security"
   ],
-  "find": "  if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {\n    if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n    return;\n  }\n  // The string the URL guard checked",
+  "find": "  if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {\n    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');\n    return;\n  }\n  // The string the URL guard checked",
   "replace": "  // The string the URL guard checked",
   "note": "h() static attribute path writes javascript: URLs"
  },
@@ -171,19 +127,9 @@
   "tags": [
    "security"
   ],
-  "find": "    if (isUnsafeAttrWrite(el.localName, key, strVal)) {\n      if (__DEV__) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
+  "find": "    if (isUnsafeAttrWrite(el.localName, key, raw)) {\n      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
   "replace": "",
   "note": "reactive xlink:href writes javascript: URLs"
- },
- {
-  "id": "element/fresh-adoption-listeners-unrecorded",
-  "file": "src/dom/element.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    (el as any)[ABORT_SYM] = controller;\n    listened?.push(el);",
-  "replace": "    (el as any)[ABORT_SYM] = controller;",
-  "note": "a node adoption builds through h() before a failing list (a tag-drift replacement, a fresh keyed row, a show branch) keeps its click handler on an island in error. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"an island failed by the row count answers no click on the nodes adoption built fresh before the list\""
  },
  {
   "id": "element/function-child-outside-namespace",
@@ -383,7 +329,7 @@
   ],
   "find": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff\\u2000-\\u20cf\\u2100-\\u2125]/);",
   "replace": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff\\u2000-\\u20cf\\u2100-\\u214f]/);",
-  "note": "the case-mapped letterlike symbols (Ω U+2126, K U+212A, Å U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+  "note": "the case-mapped letterlike symbols (\u03a9 U+2126, K U+212A, \u00c5 U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
  },
  {
   "id": "expr/costly-set-too-broad",
@@ -403,7 +349,7 @@
   ],
   "find": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff\\u2000-\\u20cf\\u2100-\\u2125]/);",
   "replace": "const costly = RegExp.prototype.exec.bind(/[^\\x00-\\xff]/);",
-  "note": "one curly apostrophe, dash, € or ™ puts a record's lowercasing in the costly tier, refusing an ordinary English search past about 1,700 records (review R4-1). Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+  "note": "one curly apostrophe, dash, \u20ac or \u2122 puts a record's lowercasing in the costly tier, refusing an ordinary English search past about 1,700 records (review R4-1). Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
  },
  {
   "id": "expr/data-args-charged",
@@ -596,36 +542,6 @@
   "note": "text weight ignores a string's length, so 1,000 references to one 300,000-character string weigh 2,000 and convert to 300 MB. Verified by: src/expr/__tests__/native-cost.test.ts > \"every allowlisted native refuses an argument heavier than the budget before it runs\""
  },
  {
-  "id": "form-control/adopt-never-repairs",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (isEditedByUser(el, key) || holdsValue(el, key, value)) return;\n  writeFormControlProperty(el, key, value);",
-  "replace": "  if (isEditedByUser(el, key) || holdsValue(el, key, value)) return;",
-  "note": "adoption never writes the client's value, so an untouched control the server got wrong (an older server's select) stays wrong"
- },
- {
-  "id": "form-control/adopt-overwrites-edits",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (isEditedByUser(el, key) || holdsValue(el, key, value)) return;",
-  "replace": "  if (holdsValue(el, key, value)) return;",
-  "note": "042e353's adoption-time write: text typed before activation is overwritten (FORMA-003, DR-5)"
- },
- {
-  "id": "form-control/adopt-writes-when-agreeing",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (isEditedByUser(el, key) || holdsValue(el, key, value)) return;",
-  "replace": "  if (isEditedByUser(el, key)) return;",
-  "note": "adoption rewrites controls whose server value already equals the client's (DR-5: write nothing on agreement)"
- },
- {
   "id": "form-control/option-null-submits-empty",
   "file": "src/dom/form-control.ts",
   "tags": [
@@ -636,72 +552,12 @@
   "note": "an option bound to undefined/null gets value=\"\" and submits '' instead of its text (FORMA-003 B2)"
  },
  {
-  "id": "form-control/select-first-option-is-an-edit",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (initial < 0 && !(select.size > 1)) {",
-  "replace": "  if (false) {",
-  "note": "a select with no selected option counts its default first option as a user edit, so an older server's select is never repaired"
- },
- {
-  "id": "form-control/textarea-edit-ignored",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (stripMarkerText(server) === text || el.value === server) el.defaultValue = text;",
-  "replace": "  el.defaultValue = text;",
-  "note": "an edited textarea whose server text disagrees gets the client's text as its default, discarding the server's"
- },
- {
-  "id": "form-control/textarea-literal-markers-stripped",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (server === text) return;\n",
-  "replace": "",
-  "note": "server text that only looks like marker text is rewritten at adoption, a write on an agreeing page (FORMA-003 S1)"
- },
- {
-  "id": "form-control/textarea-markers-never-stripped",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "  if (stripMarkerText(server) === text || el.value === server) el.defaultValue = text;",
-  "replace": "  if (el.value === server) el.defaultValue = text;",
-  "note": "an older server's marker text stays in an edited textarea's default, so a form reset restores it"
- },
- {
-  "id": "form-control/textarea-zero-width-kept",
-  "file": "src/dom/form-control.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "(inner === '\\u200B' ? '' : inner)",
-  "replace": "inner",
-  "note": "an older server's zero-width space for empty text stays in an edited textarea's default"
- },
- {
-  "id": "fragment/hydrating-builds-real-fragment",
-  "file": "src/dom/element.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;\n    const frag = document.createDocumentFragment();",
-  "replace": "    const frag = document.createDocumentFragment();",
-  "note": "h(Fragment) builds a detached DocumentFragment while hydrating: a root Fragment stays inert after activation (FORMA-003, DR-7 a)"
- },
- {
   "id": "history/clone-identity",
   "file": "src/state/history.ts",
   "tags": [],
   "find": "function cloneEntry<V>(v: V, seen?: WeakSet<object>): V {",
   "replace": "function cloneEntry<V>(v: V, seen?: WeakSet<object>): V { if (v && typeof v === 'object') return v;",
-  "note": "history entries alias live objects — undo/redo returns mutated state"
+  "note": "history entries alias live objects \u2014 undo/redo returns mutated state"
  },
  {
   "id": "http/ws-random-unchecked",
@@ -724,98 +580,6 @@
   "note": "every client reconnects after exactly 2^(n-1) s, so after a deploy they all reconnect in step (L-46). Verified by: src/http/__tests__/ws-reconnect.test.ts > \"with a seeded random source, the n-th reconnect delay lies between 0 and 2^(n-1) s and differs across simulated clients\""
  },
  {
-  "id": "hydrate/attr-equal-value-rewritten",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness",
-   "contract"
-  ],
-  "find": "        if (el.getAttribute(attrKey) !== str) el.setAttribute(attrKey, typeof v === 'object' && isRawHtmlAttr(attrKey) && isTrustedHtml(v) ? htmlOf(v) : str);",
-  "replace": "        el.setAttribute(attrKey, typeof v === 'object' && isRawHtmlAttr(attrKey) && isTrustedHtml(v) ? htmlOf(v) : str);",
-  "note": "adoption rewrites every reactive attribute the server already holds: a DOM write per binding, and an iframe's src reloads (FORMA-020, DR-5)"
- },
- {
-  "id": "hydrate/attr-true-rewritten",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness",
-   "contract"
-  ],
-  "find": "        if (el.getAttribute(attrKey) !== '') el.setAttribute(attrKey, '');",
-  "replace": "        el.setAttribute(attrKey, '');",
-  "note": "adoption rewrites a boolean attribute the server already rendered (FORMA-020, DR-5)"
- },
- {
-  "id": "hydrate/detached-node-adopted-silently",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    throw hydrateError(\n      HYDRATE_NODE_ERROR,",
-  "replace": "    void hydrateError(\n      HYDRATE_NODE_ERROR,",
-  "note": "a detached DOM node returned while hydrating counts as adopted: data-forma-ssr removed, island active, nothing bound, nothing logged"
- },
- {
-  "id": "hydrate/empty-fragment-is-an-error",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    descriptor instanceof Node && descriptor !== target && !target.contains(descriptor) &&\n    !(descriptor.nodeType === 11 && !descriptor.firstChild)",
-  "replace": "    descriptor instanceof Node && descriptor !== target && !target.contains(descriptor)",
-  "note": "an island that appended its fragment into `el` and returned it (templateMany) is marked error and its effects disposed (FORMA-003 S-b)"
- },
- {
-  "id": "hydrate/eventhandler-guard-off",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "    if (isEventHandlerAttr(attrKey)) {\n      if (__DEV__) console.warn(`[forma] Hydration: dropped \"${attrKey}\" on <${el.localName}> (inline-event-handler) — use the lowercase on* prop form for listeners`);\n      el.removeAttribute(attrKey);\n      continue;\n    }",
-  "replace": "",
-  "note": "hydration writes ONCLICK as an inline handler"
- },
- {
-  "id": "hydrate/failed-adoption-keeps-listeners",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    for (const el of attached) cleanup(el);",
-  "replace": "",
-  "note": "an island whose adoption failed part-way stays error but still answers clicks on the elements adopted before the failure. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"an island failed by the row count keeps no handler or binding that adoption attached before the list\""
- },
- {
-  "id": "hydrate/failed-walk-bindings-live",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    disposeWalk?.();\n",
-  "replace": "",
-  "note": "a binding adopted before a failing list stays live while a hydrateIsland() caller's root lives, writing into the server's DOM. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"hydrateIsland() called directly keeps no binding it adopted before the list failed\""
- },
- {
-  "id": "hydrate/failed-walk-unbatched",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  openBatch();\n  try {\n    createRoot((dispose) => {\n      disposeWalk = dispose;\n      adopt(descriptor, target);\n    });\n  } catch (err) {\n    disposeWalk?.();\n    for (const el of attached) cleanup(el);\n    throw err;\n  } finally {\n    recordListeners(outer);\n    closeBatchWithoutRoot();\n  }",
-  "replace": "  try {\n    createRoot((dispose) => {\n      disposeWalk = dispose;\n      adopt(descriptor, target);\n    });\n  } catch (err) {\n    disposeWalk?.();\n    for (const el of attached) cleanup(el);\n    throw err;\n  } finally {\n    recordListeners(outer);\n  }",
-  "note": "effects that a signal written during adoption triggers in other roots run mid-walk, so a failing walk detaches the listeners of nodes a second mount() root or another island built. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"a failing mount() whose ref writes a shared signal does not detach a second mount() root's new row\""
- },
- {
-  "id": "hydrate/fallback-children-html",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  const inner = contentNs(el);",
-  "replace": "  const inner = null;",
-  "note": "the children of an element adoption rebuilds in SVG or MathML are created as HTML elements (FORMA-020)"
- },
- {
   "id": "hydrate/fallback-ignores-parent-namespace",
   "file": "src/dom/namespace.ts",
   "tags": [
@@ -824,26 +588,6 @@
   "find": "  const ns = el && el.namespaceURI;",
   "replace": "  const ns = null as string | null;",
   "note": "what adoption creates inside an adopted SVG ignores its parent: a title or an a it adds is an HTML element (FORMA-020)"
- },
- {
-  "id": "hydrate/fallback-through-h-only",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    return el ? fillElement(el, desc.props, children) : h(tag, desc.props, ...children);",
-  "replace": "    return h(tag, desc.props, ...children);",
-  "note": "adoption rebuilds through h() alone, which makes a title or an a inside SVG, and all MathML, HTML elements (FORMA-020)"
- },
- {
-  "id": "hydrate/false-not-removed",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "      if (v === false || v == null) {\n        el.removeAttribute(attrKey);",
-  "replace": "      if (v == null) {\n        el.removeAttribute(attrKey);",
-  "note": "adoption leaves disabled=\"false\" on the element"
  },
  {
   "id": "hydrate/foreignObject-content-in-svg",
@@ -856,253 +600,12 @@
   "note": "content adoption creates inside a foreignObject, server-rendered or created by adoption, lands in the SVG namespace instead of HTML (FORMA-020)"
  },
  {
-  "id": "hydrate/form-updates-treated-as-adoption",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "          if (adopted) {\n            writeFormControlProperty(el, key, next);",
-  "replace": "          if (adopted) {\n            adoptFormControlProperty(el, key, next);",
-  "note": "every update after activation skips an edited control, so a controlled input stops following its signal"
- },
- {
-  "id": "hydrate/hydrate-node-error-not-logged",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  console.error(err.message + where);\n  reportError(err, 'hydration');",
-  "replace": "  reportError(err, 'hydration');",
-  "note": "FORMA_E_HYDRATE_NODE is not logged with its code; production builds would show nothing"
- },
- {
-  "id": "hydrate/hydrate-node-error-skips-onerror",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  console.error(err.message + where);\n  reportError(err, 'hydration');",
-  "replace": "  console.error(err.message + where);",
-  "note": "FORMA_E_HYDRATE_NODE never reaches the documented onError hook, so production error reporting misses it (FORMA-003 S-a)"
- },
- {
-  "id": "hydrate/inserted-child-built-as-html",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "descriptorToElement(child, contentNs(parent))",
-  "replace": "descriptorToElement(child)",
-  "note": "content adoption adds where the server rendered nothing is created without its parent's namespace: an a appended to an SVG is HTML (FORMA-020)",
-  "all": true
- },
- {
-  "id": "hydrate/list-count-check-on-keyed-rows",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (useIndexFallback && ssrElements.length !== currentItems.length) {",
-  "replace": "  if (ssrElements.length !== currentItems.length) {",
-  "note": "rows that carry data-forma-key fail the island on a count difference instead of matching by key. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"rows that carry data-forma-key keep matching by key when the counts differ\""
- },
- {
-  "id": "hydrate/list-count-error-uncoded",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  return code === HYDRATE_NODE_ERROR || code === HYDRATE_LIST_COUNT_ERROR;",
-  "replace": "  return code === HYDRATE_NODE_ERROR;",
-  "note": "FORMA_E_HYDRATE_LIST_COUNT is not a coded adoption error: mount() and hydrateIsland() throw it and onError never hears of it. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, mount() and hydrateIsland(), and each keeps the server rows\""
- },
- {
-  "id": "hydrate/list-count-rows-removed",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (useIndexFallback && ssrElements.length !== currentItems.length) {",
-  "replace": "  if (false) {",
-  "note": "unkeyed server rows are matched by index whatever the client's array holds: a shorter array removes the server's rows and a longer one renders rows fresh, silently (ksx #5, DR-8). Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row\""
- },
- {
-  "id": "hydrate/mismatch-rebuilt-as-html",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "descriptorToElement(desc, contentNs(ssrEl?.parentNode))",
-  "replace": "descriptorToElement(desc)",
-  "note": "an element adoption replaces on a tag mismatch inside an SVG is created without its parent's namespace: a title becomes HTML (FORMA-020)"
- },
- {
-  "id": "hydrate/nested-fragment-skipped",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "      cursor = adoptChildren(child.children, parent, cursor, rangeEnd);",
-  "replace": "      void 0;",
-  "note": "a nested Fragment is skipped: its nodes stay unbound and every sibling after it is matched one node off"
- },
- {
-  "id": "hydrate/own-element-is-an-error",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    descriptor instanceof Node && descriptor !== target && !target.contains(descriptor) &&\n    !(descriptor.nodeType === 11 && !descriptor.firstChild)",
-  "replace": "    descriptor instanceof Node",
-  "note": "an island returning its own element (2.0.1's imperative pattern) is marked error and its effects disposed (FORMA-003 B1)"
- },
- {
-  "id": "hydrate/public-hydrate-island-throws",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (!isHydrateError(err)) throw err;\n    reportHydrateError(err);\n    return target;",
-  "replace": "    throw err;",
-  "note": "hydrateIsland() throws for a detached node, which 2.0.1 never did (a breaking change in a patch)"
- },
- {
-  "id": "hydrate/range-root-not-adopted",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  } else if (isFragmentDescriptor(descriptor) || isShowDescriptor(descriptor) || isListDescriptor(descriptor)) {",
-  "replace": "  } else if (false) {",
-  "note": "hydrateIsland ignores a Fragment root and reports success with nothing adopted (FORMA-003)"
- },
- {
-  "id": "hydrate/root-show-list-not-adopted",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  } else if (isFragmentDescriptor(descriptor) || isShowDescriptor(descriptor) || isListDescriptor(descriptor)) {",
-  "replace": "  } else if (isFragmentDescriptor(descriptor)) {",
-  "note": "a root createShow or createList with no wrapping element is left inert after activation"
- },
- {
-  "id": "hydrate/show-fragment-branch-skipped",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    adoptChildren(desc.children, regionStart.parentNode as Element, regionStart.nextSibling, regionEnd);",
-  "replace": "    void 0;",
-  "note": "a Fragment branch of createShow is not adopted: its server nodes keep no handlers until the branch is rebuilt"
- },
- {
-  "id": "hydrate/show-repair-branch-html",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "        const raw = withNamespace(ns, factory);",
-  "replace": "        const raw = factory();",
-  "note": "a show branch adoption builds for an empty region inside an svg, and on later toggles, is HTML. Verified by: src/dom/__tests__/namespace-resolution.test.ts > \"a show branch the server left empty, the branches it toggles to, and fresh keyed rows\""
- },
- {
-  "id": "hydrate/svg-row-rebuilt-as-html",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "descriptorToElement(rendered, contentNs(rowEl.parentNode))",
-  "replace": "descriptorToElement(rendered)",
-  "note": "a list row adoption must rebuild inside an SVG is created without its parent's namespace: an a or title row becomes HTML (FORMA-020)"
- },
- {
-  "id": "hydrate/svg-row-tag-uppercased",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (!sameTag(rowEl, rendered.tag)) {",
-  "replace": "  if (rowEl.tagName !== rendered.tag.toUpperCase()) {",
-  "note": "an adopted list row inside an SVG is taken for tag drift and re-created (FORMA-020, R7)"
- },
- {
-  "id": "hydrate/svg-tag-lowercased",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  return el.localName === tag || el.tagName === tag.toUpperCase();",
-  "replace": "  return el.localName === tag.toLowerCase();",
-  "note": "adoption lower-cases the tag: camelCase SVG tags (clipPath, linearGradient) are mismatches and are rebuilt (FORMA-020)"
- },
- {
-  "id": "hydrate/svg-tag-uppercased",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  return el.localName === tag || el.tagName === tag.toUpperCase();",
-  "replace": "  return el.tagName === tag.toUpperCase();",
-  "note": "adoption compares tagName with the tag upper-cased: every inline SVG is a mismatch and is rebuilt, its title as HTML (FORMA-020, R7)"
- },
- {
-  "id": "hydrate/textarea-title-bound-by-node",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "  if ((ssrEl.localName === 'textarea' || ssrEl.localName === 'title') && isReactiveTextOnly(desc.children)) {",
-  "replace": "  if (false) {",
-  "note": "textarea/title reactive text walked as marker-delimited child nodes, which RCDATA does not have (FORMA-002 output)"
- },
- {
-  "id": "hydrate/textarea-updates-overwrite-typing",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    else if (el.textContent !== text) el.textContent = text;",
-  "replace": "    else if (el.textContent !== text) { el.textContent = text; if (el instanceof HTMLTextAreaElement) el.value = text; }",
-  "note": "an adopted textarea's reactive text overwrites what the user typed on every update (FORMA-003 B3; controlled children are 3.0)"
- },
- {
-  "id": "hydrate/title-never-written",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    else if (el.textContent !== text) el.textContent = text;",
-  "replace": "",
-  "note": "a title's reactive text is never written: marker text from an older server stays, updates never show"
- },
- {
-  "id": "hydrate/true-as-string",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "contract"
-  ],
-  "find": "      } else if (v === true) {\n        if (el.getAttribute(attrKey) !== '') el.setAttribute(attrKey, '');",
-  "replace": "      } else if (v === true) {\n        if (el.getAttribute(attrKey) !== '') el.setAttribute(attrKey, 'true');",
-  "note": "adoption writes name=\"true\" instead of a bare attribute"
- },
- {
-  "id": "hydrate/url-guard-off",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "        if (isUnsafeAttrWrite(tag, attrKey, str)) {",
-  "replace": "        if (false) {",
-  "note": "hydration re-adds the payload SSR refused to emit"
- },
- {
   "id": "keyboard/no-ctrl-check",
   "file": "src/events/keyboard.ts",
   "tags": [],
   "find": "  if (e.ctrlKey !== parsed.ctrl) return false;",
   "replace": "",
-  "note": "ctrl modifier ignored — 's' fires a 'ctrl+s' binding"
+  "note": "ctrl modifier ignored \u2014 's' fires a 'ctrl+s' binding"
  },
  {
   "id": "keyboard/no-meta-check",
@@ -1138,7 +641,7 @@
   ],
   "find": "      if (lisFlags[i]) {",
   "replace": "      if (!lisFlags[i]) {",
-  "note": "the LIS rows are the ones skipped-as-in-place — final order corrupted",
+  "note": "the LIS rows are the ones skipped-as-in-place \u2014 final order corrupted",
   "all": true
  },
  {
@@ -1149,7 +652,7 @@
   ],
   "find": "  for (const li of lisOfReused) {\n    lisFlags[reusedPositions[li]!] = 1;\n  }",
   "replace": "",
-  "note": "every reused row is moved — LIS optimisation dead",
+  "note": "every reused row is moved \u2014 LIS optimisation dead",
   "all": true
  },
  {
@@ -1158,7 +661,7 @@
   "tags": [],
   "find": "export function longestIncreasingSubsequence(arr: number[]): number[] {",
   "replace": "export function longestIncreasingSubsequence(arr: number[]): number[] { if (arr.length > 1) return [];",
-  "note": "LIS always empty — every keyed item moves (O(n) DOM churn, identity loss)"
+  "note": "LIS always empty \u2014 every keyed item moves (O(n) DOM churn, identity loss)"
  },
  {
   "id": "list/no-onInsert-hook",
@@ -1205,8 +708,8 @@
   "tags": [],
   "find": "  if (oldLen < SMALL_LIST_THRESHOLD) {",
   "replace": "  if (oldLen < 1) {",
-  "note": "small-list path never taken — all lists go through the Map path",
-  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes — that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
+  "note": "small-list path never taken \u2014 all lists go through the Map path",
+  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes \u2014 that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
  },
  {
   "id": "list/small-threshold-huge",
@@ -1214,8 +717,8 @@
   "tags": [],
   "find": "  if (oldLen < SMALL_LIST_THRESHOLD) {",
   "replace": "  if (oldLen < 100000) {",
-  "note": "large-list Map path never taken — all lists go through the flat scan",
-  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes — that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
+  "note": "large-list Map path never taken \u2014 all lists go through the flat scan",
+  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes \u2014 that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
  },
  {
   "id": "mount/container-namespace-ignored",
@@ -1223,29 +726,9 @@
   "tags": [
    "correctness"
   ],
-  "find": "      return withNamespace(contentNs(target), component);",
-  "replace": "      return component();",
+  "find": "    return withNamespace(contentNs(target), component);",
+  "replace": "    return component();",
   "note": "mount() into an svg element builds an a as HTML. Verified by: src/dom/__tests__/namespace-resolution.test.ts > \"a portal into an svg, and mount() into an svg, create SVG elements\""
- },
- {
-  "id": "mount/detached-node-leaks-effects",
-  "file": "src/dom/mount.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (failure) {\n      disposeRoot();",
-  "replace": "    if (failure) {",
-  "note": "a mount() that adopted nothing leaves the component's effects running"
- },
- {
-  "id": "mount/detached-node-throws",
-  "file": "src/dom/mount.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "        if (!isHydrateError(err)) throw err;\n        failure = err;",
-  "replace": "        throw err;",
-  "note": "mount() throws for a detached node, aborting the rest of the page's module (FORMA-003 B1)"
  },
  {
   "id": "mutate/setAttr-true-branch",
@@ -1262,7 +745,7 @@
   "find": "    if (value !== undefined) {\n      (el.style as any)[key] = value;\n    }",
   "replace": "    (el.style as any)[key] = value;",
   "note": "undefined style values written through",
-  "equivalent": "CSSOM stringifies an assigned value, and \"undefined\" is not a valid declaration value, so the property is left unchanged either way. The guard saves a wasted assignment, not a wrong one — see the note on setStyle in src/dom-utils/mutate.ts."
+  "equivalent": "CSSOM stringifies an assigned value, and \"undefined\" is not a valid declaration value, so the property is left unchanged either way. The guard saves a wasted assignment, not a wrong one \u2014 see the note on setStyle in src/dom-utils/mutate.ts."
  },
  {
   "id": "mutate/setText-uses-innerHTML",
@@ -1334,7 +817,7 @@
   "tags": [],
   "find": "    return () => {\n      removeMountedNode();\n    };",
   "replace": "    return () => { /* mutation: portal never detaches its node */ };",
-  "note": "portal never detaches the previous node — the target accumulates on every re-render and on dispose"
+  "note": "portal never detaches the previous node \u2014 the target accumulates on every re-render and on dispose"
  },
  {
   "id": "portal/target-namespace-ignored",
@@ -1352,7 +835,7 @@
   "tags": [],
   "find": "  const resolvedTarget = typeof target === 'string'\n    ? document.querySelector(target)\n    : (target ?? document.body);",
   "replace": "  const resolvedTarget = typeof target === 'string'\n    ? document.body\n    : (target ?? document.body);",
-  "note": "string portal selector ignored — always body"
+  "note": "string portal selector ignored \u2014 always body"
  },
  {
   "id": "reactive/batch-flush-under-caller-root",
@@ -1362,15 +845,15 @@
   ],
   "find": "  runWithoutRoot(endBatch);",
   "replace": "  endBatch();",
-  "note": "adoption's batch flushes with the failing island's root current, so another island's row created by the flush is owned by it and loses its bindings when it is disposed. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"another island's row created while a failing island adopts keeps its reactive binding\""
+  "note": "a held adoption batch flushes with an unrelated caller root current, so another list's row created by the flush is owned by that caller and loses its bindings when the caller is disposed. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"another root's batch flush cannot own a list row created by the flush\""
  },
  {
   "id": "reactive/untrack-noop",
   "file": "src/reactive/untrack.ts",
   "tags": [],
-  "find": "export function untrack",
-  "replace": "export function untrackDISABLED_UNUSED_SHIM_NOT_EXPORTED_PLACEHOLDER",
-  "note": "compile-break sentinel (expect CAUGHT — harness sanity check)"
+  "find": "  const prev = setActiveSub(undefined);\n  try {\n    return fn();\n  } finally {\n    setActiveSub(prev);\n  }",
+  "replace": "  return fn();",
+  "note": "untrack preserves its public export and callback result but no longer suppresses dependency tracking. Verified by: src/reactive/__tests__/untrack.test.ts > \"reading signal inside untrack does not create dependency\". Replaces the old compile-break sentinel, which is unqualified under the completed-assertion rule."
  },
  {
   "id": "reconcile/remove-all-skips-hook",
@@ -1508,7 +991,7 @@
   ],
   "find": "const DANGEROUS_SCHEME_RE = /^(?:javascript|vbscript|data:text\\/html)/i;",
   "replace": "const DANGEROUS_SCHEME_RE = /(?:javascript|vbscript|data:text\\/html)/i;",
-  "note": "substring match — https://example.com/guides/javascript now blocked"
+  "note": "substring match \u2014 https://example.com/guides/javascript now blocked"
  },
  {
   "id": "sec/svg-any-tag-is-image",
@@ -1611,14 +1094,6 @@
   "note": "a createShow branch built after a toggle inside an svg is HTML. Verified by: src/dom/__tests__/namespace-resolution.test.ts > \"a createShow inside an svg creates SVG elements on its first render and on every toggle\""
  },
  {
-  "id": "show/hydrating-branch-wrong",
-  "file": "src/dom/show.ts",
-  "tags": [],
-  "find": "    const branch = when() ? thenFn() : elseFn();",
-  "replace": "    const branch = elseFn();",
-  "note": "hydration always picks the else branch"
- },
- {
   "id": "show/no-branch-dispose",
   "file": "src/dom/show.ts",
   "tags": [],
@@ -1638,8 +1113,8 @@
   "id": "show/no-lasttruthy-guard",
   "file": "src/dom/show.ts",
   "tags": [],
-  "find": "    if (truthy === lastTruthy) {",
-  "replace": "    if (false && truthy === lastTruthy) {",
+  "find": "    if (truthy === lastTruthy) return;",
+  "replace": "    if (false && truthy === lastTruthy) return;",
   "note": "show re-renders branch on every effect run (identity churn)"
  },
  {
@@ -1668,7 +1143,7 @@
   ],
   "find": "  if ((v as any)[PROXY]) return false;\n  return true;\n}",
   "replace": "  if ((v as any)[PROXY]) return false;\n  return !Array.isArray(v);\n}",
-  "note": "arrays no longer plain — array reactivity path dead"
+  "note": "arrays no longer plain \u2014 array reactivity path dead"
  },
  {
   "id": "store/deepClone-identity",
@@ -1676,7 +1151,7 @@
   "tags": [],
   "find": "function deepClone(obj: unknown, seen?: WeakSet<object>): unknown {",
   "replace": "function deepClone(obj: unknown, seen?: WeakSet<object>): unknown { if (obj && typeof obj === 'object') return obj;",
-  "note": "store deepClone becomes identity — snapshots alias live state"
+  "note": "store deepClone becomes identity \u2014 snapshots alias live state"
  },
  {
   "id": "store/no-array-method-patch",
@@ -1692,7 +1167,7 @@
   "tags": [],
   "find": "      let entry = cache.get(val);",
   "replace": "      let entry = undefined as any;",
-  "note": "switch branch cache disabled — new node identity each visit"
+  "note": "switch branch cache disabled \u2014 new node identity each visit"
  },
  {
   "id": "switch/cases-outside-namespace",
@@ -1708,9 +1183,9 @@
   "id": "switch/no-scoop-back",
   "file": "src/dom/switch.ts",
   "tags": [],
-  "find": "        let scooped = 0;\n        while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {\n          currentNode.appendChild(startMarker.nextSibling);\n          scooped++;\n        }",
-  "replace": "        let scooped = 0;",
-  "note": "cached fragment branch not scooped back — 3rd visit renders empty/duplicated"
+  "find": "        // Scoop DOM nodes back into the fragment for cache reuse\n        while (startMarker.nextSibling && startMarker.nextSibling !== endMarker) {\n          currentNode.appendChild(startMarker.nextSibling);\n        }\n",
+  "replace": "        // Scoop DOM nodes back into the fragment for cache reuse\n",
+  "note": "cached fragment branch not scooped back \u2014 3rd visit renders empty/duplicated"
  },
  {
   "id": "traverse/siblings-includes-self",
@@ -2126,7 +1601,7 @@
   "tags": [
    "security"
   ],
-  "find": "    $el: hostObject('element', el, '$el', scope.mount?.bound),",
+  "find": "    $el: hostObject('element', el, '$el', scope.mount.bound),",
   "replace": "    $el: hostObject('element', el, '$el'),",
   "note": "a tiered mount's $el is the tierless wrapper: $el.closest('body') reaches the page (SR16, L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
  },
@@ -2136,7 +1611,7 @@
   "tags": [
    "security"
   ],
-  "find": "    const wrapped = hostObject('event', e, '$event', scope.mount?.bound);",
+  "find": "    const wrapped = hostObject('event', e, '$event', scope.mount.bound);",
   "replace": "    const wrapped = hostObject('event', e, '$event');",
   "note": "$event in a tiered mount's handler is the tierless wrapper, so $event.target reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
  },
@@ -2146,7 +1621,7 @@
   "tags": [
    "security"
   ],
-  "find": "  const refsHost = hostObject('refs', refsMap, '$refs', mount?.bound);",
+  "find": "  const refsHost = hostObject('refs', refsMap, '$refs', mount.bound);",
   "replace": "  const refsHost = hostObject('refs', refsMap, '$refs');",
   "note": "$refs in a tiered mount is the tierless wrapper, so $refs.x.closest('section') reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
  },
@@ -2156,9 +1631,9 @@
   "tags": [
    "security"
   ],
-  "find": "  if (parent.mount) {\n    child.mount = parent.mount;\n    child.budget = parent.budget;\n  }",
-  "replace": "",
-  "note": "a child scope (each element's, each handler's, each list row's) loses its mount, so its data-fetch is sent as a tierless one and its failures are reported without the mount. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+  "find": "    mount: parent.mount,",
+  "replace": "    mount: { ...parent.mount, bound: { ...parent.mount.bound, dom: true, navigate: true } },",
+  "note": "A child scope carries escalated authority instead of its parent's captured mount bound. This valid-context mutant tests the current mandatory-context boundary without counting a missing-context TypeError as a kill. Verified by the runtime-tiered event-host control: the actual event target must remain confined by its parent mount."
  },
  {
   "id": "tiered/fetch-denial-sent",
@@ -2166,7 +1641,7 @@
   "tags": [
    "security"
   ],
-  "find": "      if (verdict && !verdict.ok) {",
+  "find": "      if (!verdict.ok) {",
   "replace": "      if (false) {",
   "note": "a data-fetch the mount's grants do not cover is sent anyway (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
  },
@@ -2236,7 +1711,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "            if (verdict && !r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);",
+  "find": "            if (!r.ok) throw new Error(`data-fetch answered HTTP ${r.status}`);",
   "replace": "",
   "note": "a tiered mount's data-fetch answered 404 parses the error body into the data target (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a 404 with a JSON body lands in the error: target, not the data target\""
  },
@@ -2246,8 +1721,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "      const timeoutMs = verdict ? verdict.timeoutMs : FETCH_TIMEOUT_MS;",
-  "replace": "      const timeoutMs = FETCH_TIMEOUT_MS;",
+  "find": "        const timeoutMs = verdict.timeoutMs;",
+  "replace": "        const timeoutMs = FETCH_TIMEOUT_MS;",
   "note": "a fetch grant's shorter timeout is ignored: the request waits 30 s (L-46). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant's timeout shortens the abort\""
  },
  {
@@ -2256,19 +1731,9 @@
   "tags": [
    "security"
   ],
-  "find": "  const registry = mount ? mount.refetch : _refetchRegistry;\n  const refetchHost",
-  "replace": "  const registry = _refetchRegistry;\n  const refetchHost",
-  "note": "a tiered mount's $refetch reaches the page's data-fetch ids. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
- },
- {
-  "id": "tiered/refetch-registers-on-page",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "          const registry = mount ? mount.refetch : _refetchRegistry;",
-  "replace": "          const registry = _refetchRegistry;",
-  "note": "a tiered mount's data-fetch-id registers on the page, where the page's $refetch reaches it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
+  "find": "    refetch: new Map(),",
+  "replace": "    refetch: ((globalThis as any).__formaProbeSharedRefetch ??= new Map()),",
+  "note": "Every explicit mount incorrectly shares the same refetch registry. Verified by runtime-tiered-mount $refetch reaches only the fetches of its own mount, which asserts request paths and counts across three actual handles."
  },
  {
   "id": "tiered/tierless-binds-under-root",
@@ -2278,7 +1743,7 @@
   ],
   "find": "  if (ownerOf(root) !== mount) return;\n  // Idempotency guard",
   "replace": "  // Idempotency guard",
-  "note": "a tierless path (the observer, mount(), the DOMContentLoaded scan) binds markup under a tiered root with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+  "note": "Mandatory mountScope context must match the actual nearest owner. The former auto/tierless entry path is removed; this defense-in-depth mutant remains in the corpus without claiming its historical trigger still exists."
  },
  {
   "id": "tiered/outer-scope-binds-mount",
@@ -2288,7 +1753,7 @@
   ],
   "find": "    if (ownedBelow(el, root)) continue;\n    bindElement(el, scope, disposers);",
   "replace": "    bindElement(el, scope, disposers);",
-  "note": "a tierless scope around a tiered root binds the mount's elements against its own scope, with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+  "note": "Scope binding must skip a descendant already owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
  },
  {
   "id": "tiered/outer-refs-into-mount",
@@ -2298,17 +1763,7 @@
   ],
   "find": "    if (ownedBelow(el, root)) continue;\n    const name = el.getAttribute('data-ref');",
   "replace": "    const name = el.getAttribute('data-ref');",
-  "note": "a scope around a tiered root gets $refs to the mount's elements. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
- },
- {
-  "id": "tiered/tierless-disposes-mount",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (ownerOf(root) !== mount) return;\n  const disposers",
-  "replace": "  const disposers",
-  "note": "the tierless unmount() and destroyRuntime() dispose a tiered mount's bindings, which its handle owns. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+  "note": "Scope ref collection must skip a descendant owned by a nested explicit mount. This defense-in-depth guard remains; the former tierless caller was removed and its old execution claim is retired."
  },
  {
   "id": "tiered/denial-silenced",
@@ -2316,8 +1771,8 @@
   "tags": [
    "security"
   ],
-  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
-  "replace": "  if (kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
+  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && mount?.diagnostics === false) return;",
+  "replace": "  if (kind !== 'markup-refused' && mount?.diagnostics === false) return;",
   "note": "a denied grant is silent when the mount's diagnostics are off: SR37's coded diagnostic for every denial is lost. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a mount takes its diagnostics switch from its call, not the page\""
  },
  {
@@ -2361,32 +1816,12 @@
   "note": "a mount whose grants leave out dom reaches the page anyway. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
  },
  {
-  "id": "tiered/default-none",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "      dom: true,\n      navigate: true,\n    };",
-  "replace": "      dom: false,\n      navigate: false,\n    };",
-  "note": "A2's bridge default of every grant becomes none, a 3.0.0 change shipped in a minor (DR-15, FORMA-108). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
- },
- {
-  "id": "tiered/prior-bindings-kept",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  for (const scope of Array.from(root.querySelectorAll('[data-forma-state]'))) unmountScope(scope);\n  tieredRoots.set(root, ctx);",
-  "replace": "  tieredRoots.set(root, ctx);",
-  "note": "bindings a tierless path made under the root before it was handed over keep running, with every power, on nodes the mount has removed. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"bindings a tierless path made under the root go first, with what they rendered\""
- },
- {
   "id": "tiered/report-fetch-unrecorded",
   "file": "src/runtime.ts",
   "tags": [
    "correctness"
   ],
-  "find": "            mount!.used.methods.add(method);",
+  "find": "            mount.used.methods.add(method);",
   "replace": "",
   "note": "the development report leaves out a mount's data-fetch methods, so a grant written from it denies the widget's own requests (DR-15). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the development report lists exactly the grants a fixture widget used\""
  },
@@ -2399,36 +1834,6 @@
   "find": "      use: used ? (grant: ExprGrant) => { used[grant] = true; } : noUse,",
   "replace": "      use: noUse,",
   "note": "the development report leaves out dom and navigate. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the development report lists exactly the grants a fixture widget used\""
- },
- {
-  "id": "tiered/directive-map-read",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  const known = scope.mount ? null : getDirectives(el);",
-  "replace": "  const known = getDirectives(el);",
-  "note": "a tiered mount reads the page's directive map, configuration not from its call. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a tiered mount ignores the page directive map\""
- },
- {
-  "id": "tiered/directive-selector-read",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  const selector = mount ? null : buildDirectiveSelector();",
-  "replace": "  const selector = buildDirectiveSelector();",
-  "note": "a tiered mount binds only the elements the page's directive map names. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a tiered mount ignores the page directive map\""
- },
- {
-  "id": "runtime/reconcile-no-deprecation",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    warnDeprecated('FORMA_W_DEPRECATED_RECONCILE');",
-  "replace": "",
-  "note": "the tierless reconcile() says nothing in development about its removal in 3.0.0 (DR-14's bridge). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"reconcile behaves as at 2.0.x and warns once in development\""
  },
  {
   "id": "selector/pseudo-element",
@@ -2531,16 +1936,6 @@
   "note": "the module's diagnostics and denials never reach the host. Verified by: src/__tests__/runtime-frame.test.ts > \"takes one port from its parent, renders each module in tier (c) and answers only ready, resize and error\""
  },
  {
-  "id": "frame/auto-mount",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "&& !_manualMount\n  && !(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__)) {",
-  "replace": "&& !_manualMount) {",
-  "note": "the preview frame's runtime mounts the page's data-forma-state on load and watches body, so markup injected outside the root is bound. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
- },
- {
   "id": "frame/source-map",
   "file": "tsup.config.ts",
   "tags": [
@@ -2551,73 +1946,13 @@
   "note": "the frame runtime ends in a sourceMappingURL comment, which an opaque-origin frame would try to fetch. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
  },
  {
-  "id": "tiered/mount-switch-ignored",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "const _manualMount = readMountSwitch();",
-  "replace": "const _manualMount = false;",
-  "note": "data-forma-mount=\"manual\" is ignored: the page auto-mounts and watches body, so markup injected outside a tiered root is bound (SR16 in 2.x). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-own-script-unread",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (own?.getAttribute('data-forma-mount') === 'manual') return true;\n",
-  "replace": "",
-  "note": "a CDN build ignores the switch on its own script element, the place the docs tell a page to put it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount switch is read once, from the runtime's own script element\""
- },
- {
-  "id": "tiered/mount-switch-esm-unread",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  return document.querySelector('script[data-forma-mount=\"manual\"]') !== null;",
-  "replace": "  return false;",
-  "note": "an ESM build, which has no script element of its own, never sees the switch on the application's module script. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-auto-init",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "if (typeof document !== 'undefined' && !_manualMount\n",
-  "replace": "if (typeof document !== 'undefined'\n",
-  "note": "a page with the switch still runs the auto-mount on load. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-calls-bind",
-  "file": "src/runtime.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "  if (_manualMount) {\n    throw mountError(",
-  "replace": "  if (false) {\n    throw mountError(",
-  "note": "on a page with the switch, mount(), initRuntime() and reconcile() still bind with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
- },
- {
-  "id": "tiered/mount-switch-any-value",
-  "file": "src/runtime.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  if (own?.getAttribute('data-forma-mount') === 'manual') return true;",
-  "replace": "  if (own?.hasAttribute('data-forma-mount')) return true;",
-  "note": "any value of the switch turns the auto-mount off, so data-forma-mount=\"auto\" breaks a page that meant the default. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount switch is read once, from the runtime's own script element\""
- },
- {
   "id": "trusted/mount-clear-string",
   "file": "src/dom/mount.ts",
   "tags": [
    "security"
   ],
-  "find": "    target.replaceChildren();\n    target.appendChild(dom);",
-  "replace": "    target.innerHTML = '';\n    target.appendChild(dom);",
+  "find": "  target.replaceChildren();\n  target.appendChild(dom);",
+  "replace": "  target.innerHTML = '';\n  target.appendChild(dom);",
   "note": "mount() empties its container by writing a string to innerHTML, which a page requiring Trusted Types reports or refuses (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
  },
  {
@@ -2626,8 +1961,8 @@
   "tags": [
    "security"
   ],
-  "find": "      target.replaceChildren();\n    } else {",
-  "replace": "      target.innerHTML = '';\n    } else {",
+  "find": "    disposeRoot();\n    target.replaceChildren();",
+  "replace": "    disposeRoot();\n    target.innerHTML = '';",
   "note": "the function mount() returns empties the container by writing a string to innerHTML (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
  },
  {
@@ -2669,16 +2004,6 @@
   "find": "        el.setAttribute(key, typeof v === 'object' && isRawHtmlAttr(key) && isTrustedHtml(v) ? htmlOf(v) : strVal);",
   "replace": "        el.setAttribute(key, strVal);",
   "note": "a reactive srcdoc given trustedHtml() is written as a string (DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
- },
- {
-  "id": "trusted/adoption-srcdoc-stringified",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "        if (el.getAttribute(attrKey) !== str) el.setAttribute(attrKey, typeof v === 'object' && isRawHtmlAttr(attrKey) && isTrustedHtml(v) ? htmlOf(v) : str);",
-  "replace": "        if (el.getAttribute(attrKey) !== str) el.setAttribute(attrKey, str);",
-  "note": "an adopted island's reactive srcdoc given trustedHtml() is written as a string (DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"an adopted island's srcdoc binding writes trustedHtml() typed and warns once for a string\""
  },
  {
   "id": "trusted/policy-per-call",
@@ -2729,16 +2054,6 @@
   "find": "        el.setAttribute(key, typeof v === 'object' && isRawHtmlAttr(key) && isTrustedHtml(v) ? htmlOf(v) : strVal);",
   "replace": "        el.setAttribute(key, typeof v === 'object' ? htmlOf(v) : strVal);",
   "note": "h()'s reactive path converts an object a second time after the URL guard (formajs#29 review B1). Verified by: src/__tests__/renderer-contract.test.ts > \"writes %s as the string the URL guard checked, not a second conversion\""
- },
- {
-  "id": "trusted/adoption-attr-second-conversion",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "security"
-  ],
-  "find": "        if (el.getAttribute(attrKey) !== str) el.setAttribute(attrKey, typeof v === 'object' && isRawHtmlAttr(attrKey) && isTrustedHtml(v) ? htmlOf(v) : str);",
-  "replace": "        if (el.getAttribute(attrKey) !== str) el.setAttribute(attrKey, typeof v === 'object' ? htmlOf(v) : str);",
-  "note": "adoption converts an object a second time after the URL guard (formajs#29 review B1). Verified by: src/__tests__/renderer-contract.test.ts > \"writes %s as the string the URL guard checked, not a second conversion\""
  },
  {
   "id": "trusted/reconcile-srcdoc-unminted",
@@ -2891,16 +2206,6 @@
   "note": ":scope, which names the receiver, counts as local. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
  },
  {
-  "id": "adopt/inner-html-as-attribute",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "    if (key === 'dangerouslySetInnerHTML') {\n      if (typeof value === 'function' || (value != null && value !== false)) bindInnerHTML(el, value, true);\n      continue;\n    }\n",
-  "replace": "",
-  "note": "adoption writes a reactive dangerouslySetInnerHTML as an attribute (\"[object Object]\") and never the content (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"an adopted reactive dangerouslySetInnerHTML shows its content, follows its signal through null and back, and matches client rendering ($name)\""
- },
- {
   "id": "el/inner-html-null-keeps-markup",
   "file": "src/dom/element.ts",
   "tags": [
@@ -2908,7 +2213,7 @@
   ],
   "find": "      cache['innerHTML'] = null;\n",
   "replace": "",
-  "note": "a reactive dangerouslySetInnerHTML going A → null → A stays empty: the null branch keeps A's markup cached (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"A → null → A shows A again, client-rendered and adopted\""
+  "note": "a reactive dangerouslySetInnerHTML going A \u2192 null \u2192 A stays empty: the null branch keeps A's markup cached (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"A \u2192 null \u2192 A shows A again, client-rendered and adopted\""
  },
  {
   "id": "adopt/inner-html-rewritten",
@@ -2919,36 +2224,6 @@
   "find": "    if (!adopting || !holdsMarkup(el, markup, sink)) el.innerHTML = sink;",
   "replace": "    el.innerHTML = sink;",
   "note": "adoption rewrites markup the server's element already holds, replacing its nodes (DR-5, FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"adoption writes nothing where the server already holds the markup\""
- },
- {
-  "id": "adopt/inner-html-markup-walked-as-children",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  } else if (markup == null || markup === false) {",
-  "replace": "  } else {",
-  "note": "adoption walks a dangerouslySetInnerHTML element's markup as the descriptor's children, replacing server nodes (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"the server's markup is the prop's content, not children to adopt: no mismatch and no write\""
- },
- {
-  "id": "adopt/inner-html-falsy-bound",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "      if (typeof value === 'function' || (value != null && value !== false)) bindInnerHTML(el, value, true);",
-  "replace": "      bindInnerHTML(el, value, true);",
-  "note": "adoption binds a static null, undefined or false dangerouslySetInnerHTML: false throws and null wipes the server's children, where h() and ./ssr treat it as no prop (formajs#32 review B1). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and bound (%s)\""
- },
- {
-  "id": "adopt/inner-html-falsy-skips-children",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  } else if (markup == null || markup === false) {",
-  "replace": "  } else if (inner === undefined) {",
-  "note": "adoption skips the children of an element whose dangerouslySetInnerHTML is null or false, so their bindings never attach (formajs#32 review B1). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and bound (%s)\""
  },
  {
   "id": "adopt/inner-html-byte-equality",
@@ -2971,16 +2246,6 @@
   "note": "a reactive dangerouslySetInnerHTML whose first value is null empties the server's fallback child at activation (formajs#32 review S2). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives\""
  },
  {
-  "id": "adopt/inner-html-null-first-skips-children",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  const markup = typeof inner === 'function' ? untrack(inner as () => unknown) : inner;",
-  "replace": "  const markup = inner;",
-  "note": "adoption leaves a fallback child unbound when the reactive dangerouslySetInnerHTML starts at null (formajs#32 review S2). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives\""
- },
- {
   "id": "el/inner-html-children-silent",
   "file": "src/dom/element.ts",
   "tags": [
@@ -2989,16 +2254,6 @@
   "find": "  warnInnerHtmlChildren(props, children);\n",
   "replace": "",
   "note": "h() takes children beside dangerouslySetInnerHTML without the development warning (formajs#32 review S2). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"children beside the prop warn once in development, in h() and in adoption, and a falsy prop does not\""
- },
- {
-  "id": "adopt/inner-html-children-silent",
-  "file": "src/dom/hydrate.ts",
-  "tags": [
-   "correctness"
-  ],
-  "find": "  warnInnerHtmlChildren(desc.props, desc.children);\n",
-  "replace": "",
-  "note": "adoption drops children beside dangerouslySetInnerHTML without the development warning (formajs#32 review S2). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"children beside the prop warn once in development, in h() and in adoption, and a falsy prop does not\""
  },
  {
   "id": "el/inner-html-recorded-before-write",
@@ -3056,8 +2311,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
-  "replace": "  if (kind !== 'grant-denied' && !(mount ? mount.diagnostics : _diagnosticsEnabled)) return;",
+  "find": "  if (kind !== 'grant-denied' && kind !== 'markup-refused' && mount?.diagnostics === false) return;",
+  "replace": "  if (kind !== 'grant-denied' && mount?.diagnostics === false) return;",
   "note": "a removed <link> goes unreported when the mount's diagnostics are off, so the host never learns the module carried one. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no <link>: each is removed before the markup reaches the document\""
  },
  {
@@ -3109,5 +2364,89 @@
   "find": "      if (isRawHtmlAttr(attrName)) {\n",
   "replace": "      if (isRawHtmlAttr(attrName) && attrName === 'never') {\n",
   "note": "data-bind:srcdoc runs in an unreviewed mount and writes a document the strip never saw, from a value the module chose (formajs#35's review, S2). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported\""
+ },
+ {
+  "id": "adoption/boolean-text-word",
+  "file": "src/dom/adoption.ts",
+  "tags": [],
+  "find": "  if(value==null||typeof value==='boolean')return '';\n  if(typeof value==='string'||typeof value==='number')return normalizeDomText(String(value));",
+  "replace": "  if(value==null)return '';\n  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return normalizeDomText(String(value));",
+  "note": "adoption expects and later writes the word of a boolean text value where h() and the walker write nothing (FORMA-182 rule 6)"
+ },
+ {
+  "id": "adoption/true-bare-off-boolean-set",
+  "file": "src/dom/adoption-attributes.ts",
+  "tags": [],
+  "find": "const raw=String(next)",
+  "replace": "const raw=next===true?'':String(next)",
+  "note": "adoption expects and writes a bare data-*/aria-* attribute for true where the walker and h() write \"true\" (FORMA-182 rule 6's attribute table, F2)"
+ },
+ {
+  "id": "adoption/boolean-falsy-presence",
+  "file": "src/dom/adoption-attributes.ts",
+  "tags": [],
+  "find": "if(BOOLEAN_ATTRS.has(qualified))return next?'':null;",
+  "replace": "if(BOOLEAN_ATTRS.has(qualified))return '';",
+  "note": "An empty string or zero enables a boolean attribute during adoption instead of matching fresh core omission (FORMA-182 F3 review)."
+ },
+ {
+  "id": "explicit/default-dom",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  if (grants === undefined) return { fetch: null, dom: false, navigate: false };",
+  "replace": "  if (grants === undefined) return { fetch: null, dom: true, navigate: false };",
+  "note": "Omitted grants escape the handed root. Verified by explicit-mount compiled/reviewed omitted-grants controls: actual closest result must remain confined."
+ },
+ {
+  "id": "explicit/default-navigate",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  if (grants === undefined) return { fetch: null, dom: false, navigate: false };",
+  "replace": "  if (grants === undefined) return { fetch: null, dom: false, navigate: true };",
+  "note": "Omitted grants activate a link. Verified by explicit-mount compiled/reviewed omitted-grants controls: the actual target click listener must never run."
+ },
+ {
+  "id": "explicit/detached-scope-kept",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "    for (const scope of Array.from(ctx.scopes)) unmountScope(scope, ctx);",
+  "replace": "    for (const scope of Array.from(root.querySelectorAll('[data-forma-state]'))) unmountScope(scope, ctx);",
+  "note": "Handle disposal incorrectly relies on current DOM ancestry and leaves moved or detached bound scopes active. Both explicit owned-scope cases assert the original counter remains unchanged after disposal and an independent mount stays live."
+ },
+ {
+  "id": "explicit/ancestry-disposal",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  if (((root as any).__formaScope as Scope | undefined)?.mount !== mount) return;",
+  "replace": "  if (ownerOf(root) !== mount) return;",
+  "note": "Captured scope ownership is replaced by current DOM ancestry. Both explicit owned-scope cases assert an old detached/moved counter cannot run after its owner handle unmounts."
+ },
+ {
+  "id": "explicit/refusal-without-mount",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      code,\n      mount,\n    );",
+  "replace": "      code,\n    );",
+  "note": "Unreviewed refusals lose their mount identity and deduplicate across handles. The actual two-mount explicit control requires two distinct names/tiers/counts."
+ },
+ {
+  "id": "explicit/manual-warning",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    warnDeprecated('FORMA_W_MANUAL_MOUNT_REMOVED');",
+  "replace": "",
+  "note": "The obsolete manual attribute silently loses its development migration hint. The explicit control requires one warning across two imports and the exact replacement call."
  }
 ]

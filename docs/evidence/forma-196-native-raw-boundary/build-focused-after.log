@@ -1,0 +1,13 @@
+
+> @getforma/build@3.0.0-dev test
+> vitest run --maxWorkers=2 tests/native-raw-boundary.test.ts
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/packages/build
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  15:09:20
+   Duration  1.42s (transform 380ms, setup 0ms, import 199ms, tests 1.11s, environment 0ms)
+

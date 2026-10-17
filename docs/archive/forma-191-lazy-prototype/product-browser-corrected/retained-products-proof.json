@@ -1,0 +1,15 @@
+{
+  "original": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-gate-first",
+  "sourceUnchanged": true,
+  "coreFiles": 80,
+  "typedFiles": 323,
+  "coreManifestSha256": "bd8086a6af2664fc13172ee8840c9ed468a191bb4a1006475534f95a0207106f",
+  "typedManifestSha256": "0d1e1d288b99293c15365890c22f097ff4577030d7f84025c17392b95ea019f5",
+  "nativeBinary": [
+    {
+      "path": "e2e/target/debug/fixture-fauth",
+      "bytes": 11308608,
+      "sha256": "c16b0ab665b4deca2391056436841484e148ba060d299c79700492d227aa9eef"
+    }
+  ]
+}

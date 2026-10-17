@@ -53,6 +53,20 @@ describe('parseImportSpecifiers', () => {
     ]);
   });
 
+  it('keeps real require dependencies while ignoring similarly named methods and identifiers', () => {
+    const code = [
+      'this.require("preparing");',
+      'scope.require("live");',
+      'scope?.require("validated");',
+      'scope.  require("seeding");',
+      '$require("not-a-module");',
+      'prerequire("not-a-module-either");',
+      'const cjs = require("./chunk.cjs");',
+      'function load() { return require("alien-signals"); }',
+    ].join('\n');
+    expect(parseImportSpecifiers(code).sort()).toEqual(['./chunk.cjs', 'alien-signals']);
+  });
+
   it('does not mistake an identifier or attribute ending in "from" for an import', () => {
     // dist really contains `el.getAttribute("data-forma-from") ?? el.getAttribute("…")`,
     // which a naive /from\s*["']/ matches.

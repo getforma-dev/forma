@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "aaa6b638f57a6ff6700baf82d50eff261b3aff8c",
+  "meaning": "First failure: two identical unreviewed refusals lost per-mount attribution; detached/moved owned scope remained active after handle disposal. Original positive controls remained passing.",
+  "sha256": {
+    "runtime.ts": "d0d6190fe37dafe0efd22dc64bbc3410765fa3e265adae96a8c64c2a40e24b67",
+    "explicit-owned-first-failure.log": "59b7fd0fb4fb5f907b91c74f6b285b5aedcaedf17f40aaa9cdb2f3d240e36911",
+    "runtime-explicit-mount.test.ts": "66a6024d3e0fa037ee6113b263ddb9e4a6ffe1293fd2f178950506d8543cfa59"
+  }
+}

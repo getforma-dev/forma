@@ -1,0 +1,73 @@
+{
+  "sourceHead": "c281faaf96dc5b61d6242a6c853ae9f2b22531bd",
+  "node": "v24.22.0",
+  "playwright": "1.64.1",
+  "environment": {
+    "CARGO_BUILD_JOBS": 3,
+    "FORMA_TEST_PORT": 3469,
+    "maxWorkers": 2
+  },
+  "focused": {
+    "argv": [
+      "npx",
+      "playwright",
+      "test",
+      "e2e/frame.spec.ts",
+      "--workers=2",
+      "--grep",
+      "a module's <link>|a module's iframe srcdoc",
+      "--reporter=list"
+    ],
+    "cwd": "packages/core",
+    "exitCode": 0,
+    "passed": 9,
+    "reportedSeconds": 13.8
+  },
+  "fullWebkit": {
+    "argv": [
+      "npm",
+      "run",
+      "test:e2e:engines",
+      "--workspace=packages/core",
+      "--",
+      "--project=webkit",
+      "--workers=2",
+      "--reporter=list"
+    ],
+    "exitCode": 0,
+    "coreBuildPassed": true,
+    "passed": 411,
+    "reportedDuration": "1.3m"
+  },
+  "retry": false,
+  "portsAbsentAfterExit": [
+    3469,
+    3903,
+    3906,
+    3909
+  ],
+  "productionSourceChanged": false,
+  "hostedExactHeadCiAndEngines": "pending",
+  "sourceAndArtifactHashes": [
+    {
+      "path": "packages/core/e2e/frame.spec.ts",
+      "bytes": 17302,
+      "sha256": "e3ac3365234e4259e91c231cd6e987278326652bfe600bf359e878cb934d7cb4"
+    },
+    {
+      "path": "packages/core/e2e/adoption-controls.spec.ts",
+      "bytes": 15966,
+      "sha256": "11557fa9dc337d01b5bdcbb480ca320b2b7b7819fdf20e264540b8281dda0815"
+    },
+    {
+      "path": "packages/core/dist/formajs-frame.global.js",
+      "bytes": 159821,
+      "sha256": "9c3db2043219ebcf322ed5db59fd7f7d864b322c37e962ca54c3ccfa5db8b5f3"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 222318,
+      "sha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90"
+    }
+  ]
+}

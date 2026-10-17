@@ -15,6 +15,9 @@ function fixture() {
   const root = mkdtempSync(join(tmpdir(), 'forma-split-')); temporary.push(root);
   const src = join(root, 'src'); const dist = join(root, 'dist'); mkdirSync(src);
   writeFileSync(join(root, 'package.json'), '{"type":"module"}');
+  const core = join(root, 'node_modules', '@getforma', 'core'); mkdirSync(core, {recursive: true});
+  writeFileSync(join(core, 'package.json'), '{"name":"@getforma/core","type":"module","exports":"./index.js"}');
+  writeFileSync(join(core, 'index.js'), 'export const h=()=>{}; export const mount=()=>{};');
   writeFileSync(join(src, 'shared.ts'), 'export const singleton = { value: "one runtime" };');
   writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "LAZY_FINANCIAL_TOOL";');
   writeFileSync(join(src, 'phone.ts'), 'import { singleton } from "./shared"; export const first = singleton; export const open = () => import("./later");');
@@ -53,13 +56,17 @@ describe('Opt-in ESM code splitting', () => {
     expect(route.total_size_br).toBe(firstFiles.reduce((sum, file) => sum + size(file), 0));
     for (const file of readdirSync(dist).filter(file => file.endsWith('.js') && file !== 'sw.js')) expect(Object.values(result.manifest.aliases)).toContain(file);
   });
-  it('invalidates linked entry URLs after a dynamic chunk changes and remains deterministic otherwise', async () => {
+  it('invalidates every entry URL after any input changes (the deployment identity, L-6) and remains deterministic otherwise', async () => {
     const { src, config } = fixture(); const before = await build(config); const identical = await build(config);
     expect(identical.buildHash).toBe(before.buildHash);
+    expect(identical.manifest.aliases).toEqual(before.manifest.aliases);
     writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "CHANGED_FINANCIAL_TOOL";');
     const after = await build(config);
     expect(after.manifest.aliases['phone.js']).not.toBe(before.manifest.aliases['phone.js']);
-    expect(after.manifest.aliases['desktop.js']).toBe(before.manifest.aliases['desktop.js']);
+    // Before FORMA-186 desktop.js kept its name: the edit never reached it. The
+    // identity is in every bundle, so every deploy renames every bundle (L-6);
+    // identity.test.ts > "every JavaScript output carries the identity".
+    expect(after.manifest.aliases['desktop.js']).not.toBe(before.manifest.aliases['desktop.js']);
   });
   it('preserves explicitly server-inlined entry copies without overwriting graph manifest mappings', async () => {
     const { dist, config } = fixture(); const result = await build({ ...config, serverInlined: ['phone.js'] });
@@ -68,22 +75,25 @@ describe('Opt-in ESM code splitting', () => {
   });
   it('still emits genuine SSR IR for each configured page while splitting the browser graph', async () => {
     const { src, dist, config } = fixture();
-    writeFileSync(join(src, 'phone-ssr.tsx'), 'mount(() => <main><h1>Phone arrival</h1></main>, "#app");');
-    writeFileSync(join(src, 'desktop-ssr.tsx'), 'mount(() => <main><h1>Desktop arrival</h1></main>, "#app");');
+    writeFileSync(join(src, 'phone-ssr.tsx'), 'import {h,mount} from "@getforma/core"; mount(() => <main><h1>Phone arrival</h1></main>, "#app");');
+    writeFileSync(join(src, 'desktop-ssr.tsx'), 'import {h,mount} from "@getforma/core"; mount(() => <main><h1>Desktop arrival</h1></main>, "#app");');
     const result = await build({ ...config, ssr: true, ssrEntryPoints: { phone: join(src, 'phone-ssr.tsx'), desktop: join(src, 'desktop-ssr.tsx') } });
     for (const [route, text] of [['/phone', 'Phone arrival'], ['/desktop', 'Desktop arrival']]) {
       const file = result.manifest.routes[route].ir; expect(file).toBeDefined();
+      expect(result.manifest.routes[route]).toMatchObject({mode: 'ssr', js: []});
       const ir = readFileSync(join(dist, file!)); expect(readFmirContainer(ir).writer).toEqual([3, 0, 0]); expect(ir.toString()).toContain(text);
     }
   });
   it('keeps private browser-decrypted routes Phase 1 in a mixed SSR application', async () => {
     const { src, dist, config } = fixture();
-    writeFileSync(join(src, 'phone-ssr.tsx'), 'mount(() => <main>SSR phone shell</main>, "#app");');
+    writeFileSync(join(src, 'phone-ssr.tsx'), 'import {h,mount} from "@getforma/core"; mount(() => <main>SSR phone shell</main>, "#app");');
     const result = await build({ ...config, entryPoints: config.entryPoints.map(entry => ({ ...entry, ...(entry.outfile === 'desktop.js' ? { ssr: false } : {}) })), ssr: true, ssrEntryPoints: { phone: join(src, 'phone-ssr.tsx') } });
     expect(result.manifest.routes['/phone'].ir).toBeDefined(); expect(result.manifest.routes['/desktop'].ir).toBeUndefined();
+    expect(result.manifest.routes['/phone']).toMatchObject({mode: 'ssr', js: []});
+    expect(result.manifest.routes['/desktop'].js).toHaveLength(1);
     expect(readdirSync(dist).filter(file => file.endsWith('.ir'))).toHaveLength(1);
   });
-  it('updates the watched graph and removes obsolete chunks instead of accumulating them', async () => {
+  it('switches the watched graph while retaining files referenced by an older manifest', async () => {
     const { src, dist, config } = fixture();
     await watching(config, async ({ manifest }) => {
       // Each read waits for the state it asserts: the watcher rewrites the
@@ -91,14 +101,14 @@ describe('Opt-in ESM code splitting', () => {
       // not yet mean a manifest that lists it.
       const before = await vi.waitFor(() => { const current = manifest(); expect(current.routes['/phone'].modulepreload).toHaveLength(1); return current; }, { timeout: 5000 });
       const oldChunks = chunks(dist);
-      expect(before.routes['/phone'].js).toEqual(['phone.js']);
+      expect(before.routes['/phone'].js[0]).toMatch(/^phone\.[A-Z0-9]{8}\.js$/);
+      const held=Object.values(before.aliases).map(file=>({file,bytes:readFileSync(join(dist,file as string))}));
       writeFileSync(join(src, 'later.ts'), 'import { singleton } from "./shared"; export const later = singleton; export const label = "WATCHED_CHANGE";');
       const after = await vi.waitFor(() => { const current = manifest(); expect(listedChunks(current).some(file => !oldChunks.includes(file))).toBe(true); return current; }, { timeout: 5000 });
-      expect(after.routes['/phone'].js).toEqual(['phone.js']);
-      // The obsolete chunk is removed before the manifest that drops it is
-      // written, so the disk and the manifest now agree.
-      expect(chunks(dist).sort()).toEqual(listedChunks(after).sort());
-      expect(chunks(dist)).toHaveLength(oldChunks.length);
+      expect(after.routes['/phone'].js[0]).not.toBe(before.routes['/phone'].js[0]);
+      for(const old of held)expect(readFileSync(join(dist,old.file as string))).toEqual(old.bytes);
+      for(const file of listedChunks(after))expect(chunks(dist)).toContain(file);
+      expect(chunks(dist).length).toBeGreaterThan(oldChunks.length);
       expect(readFileSync(join(dist, 'sw.js'), 'utf8')).toContain('network-only');
     });
   }, 15_000);

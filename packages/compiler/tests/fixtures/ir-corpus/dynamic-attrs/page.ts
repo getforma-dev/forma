@@ -2,17 +2,16 @@ import { h, createSignal } from 'formajs';
 
 // Module-scope signals of the ROOT PAGE file. These are named slots carrying
 // their defaults, so the two `class` attributes below can be EVALUATED at
-// compile time ("row" and "calm row") instead of shipping empty. `query` is
-// bound bare by the `value` attribute, so that binding reuses the `query` slot
-// and mints no `attr:value` name at all.
+// compile time ("row" and "calm row") instead of shipping empty. `query`'s ''
+// is a value the server writes: `value` becomes a static value="" (FORMA-182
+// F3), since an empty slot default would read as null and drop the attribute.
 const [busy] = createSignal(false);
 const [tone] = createSignal('calm');
 const [query] = createSignal('');
 
-// NOT a signal — a plain module arrow. Nothing can evaluate it at compile
-// time, so `href` ships empty and the compiler warns; this case is here to
-// keep an un-evaluable dynamic attribute in the corpus.
-const docsHref = () => '/docs';
+// A closed literal default supplies the same real href in native and browser
+// renders. The original unknown getter is archived as a BUILD-206 refusal.
+const [docsHref] = createSignal('/docs');
 
 export function AttrsPage() {
   // Component-scope signals are named too, and a dynamic attribute whose body

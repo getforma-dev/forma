@@ -1,31 +1,33 @@
 # The HTML Runtime — reactivity with no build step
 
-One `<script>` tag. One HTML file. No npm, no bundler, no `node_modules`, no
-config files. Just open it in a browser.
+Load the runtime, then hand reviewed markup to an explicit mount. No npm or bundler is required. Loading the runtime alone never binds the page.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@getforma/core@latest/dist/formajs-runtime.global.js"></script>
-
-<div data-forma-state='{ "count": 0 }'>
-  <p data-text="{count}"></p>
-  <button data-on:click="{count++}">+1</button>
-  <button data-on:click="{count = 0}">Reset</button>
-</div>
+<script src="/vendor/formajs-runtime.global.js"></script>
+<main id="counter">
+  <div data-forma-state='{ "count": 0 }'>
+    <p data-text="{count}"></p>
+    <button data-on:click="{count++}">+1</button>
+    <button data-on:click="{count = 0}">Reset</button>
+  </div>
+</main>
+<script src="/counter.js"></script>
 ```
 
-That is a working reactive counter with no JavaScript file and no build step.
-It shares the signal graph with the `h()` and JSX entry points — this is not a
-separate, lesser runtime. The same counter is the HTML-runtime entry in the
-[README](../README.md)'s "three ways to use it" section, pinned rather than
-`@latest`; both cite the test below, which mounts this markup and clicks it.
+The application's `counter.js` names the tier and retains the lifecycle handle:
+
+```js
+const root = document.getElementById('counter');
+const counter = FormaRuntime.mountMarkup(root, FormaRuntime.trustedHtml(root.innerHTML), { tier: 'reviewed' });
+```
+
+This uses the same signal graph as `h()` and JSX. Omitted grants give no fetch, outside-DOM or navigation authority. `trustedHtml()` marks an application-owned raw entry; it is not a sanitizer.
 
 Verified by `src/__tests__/readme-examples.test.ts` > "the intro counter works without eval"
 
-## Everything in one file
+## A complete widget
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@getforma/core@2.1.0/dist/formajs-runtime.global.js"></script>
-
 <div data-forma-state='{
   "query": "",
   "items": ["Apples", "Bananas", "Cherries", "Dates", "Elderberries"],
@@ -62,8 +64,7 @@ Verified by `src/__tests__/readme-examples.test.ts` > "the intro counter works w
 
 Reactive state, two-way binding, computed values, conditional rendering, list
 rendering *with filtering*, event handling, dynamic classes, dynamic attributes
-and `localStorage` persistence — no JavaScript written, no build tools
-installed.
+and `localStorage` persistence. Hand this reviewed markup to `mountMarkup(root, trustedHtml(markup), { tier: 'reviewed' })` as above; retain the handle for updates and disposal.
 
 That block is not illustrative. It is **extracted from this file at test time**
 and mounted, so the documentation and its proof cannot drift — editing it into
@@ -164,8 +165,13 @@ The hardened build is the same runtime under a second, tree-shaken bundling. It
 is no longer a stronger guarantee — every build is equally eval-free:
 
 ```html
+<!-- Historical published 2.1.0 artifact; not the 3.x mount contract. -->
 <script src="https://cdn.jsdelivr.net/npm/@getforma/core@2.1.0/dist/formajs-runtime-hardened.global.js"></script>
 ```
+
+For 3.x, serve the installed `dist/formajs-runtime-hardened.global.js` locally
+and use the same explicit mount call shown above. No published 3.x CDN URL is
+assumed here.
 
 Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Function or a with() scope wrapper"
 
@@ -226,29 +232,31 @@ request still unanswered then is aborted: its message (`data-fetch timed out
 after 30000 ms`) lands in the `error:` target when the directive names one
 (`data-fetch="GET /api/items → items |loading:busy |error:failed"`), and the
 `loading:` target turns false. Each request of a `poll:` fetch has its own 30
-seconds. Unmounting the scope or removing its element stops every request in
-flight: its timer is cleared and the request aborted.
+seconds, or the shorter timeout in its fetch grant. Calling `handle.unmount()`
+stops every request in flight: its timer is cleared and the request aborted.
+Removing the root alone does not dispose it; retain and unmount its handle.
 
 Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "a data-fetch to a stalled endpoint aborts at 30 s into its error: target"
 Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "a data-fetch answered before 30 s lands in its target and is never aborted"
 Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "each request of a polling data-fetch has its own 30 s"
-Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "unmount() stops a stalled request: its 30 s timer is cleared and the request aborted"
-Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "unmount() stops every in-flight request of a polling data-fetch, and removing the element does too"
+Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "handle.unmount() stops a stalled request: its 30 s timer is cleared and the request aborted"
+Verified by `src/__tests__/runtime-fetch-timeout.test.ts` > "handle.unmount() stops every in-flight request of a polling data-fetch, and disposal after removing the root does too"
 
 ---
 
 ## Mounting markup you did not write: tiers and grants
 
-The script-tag runtime binds every `data-forma-state` on the page and, through
-a `MutationObserver` on `body`, every one inserted later, with every power the
-grammar has. That is right for a page you wrote. For markup a generator wrote,
-such as a widget a model produced and an application admitted, `mountMarkup()`
-(2.1.0) mounts it under a root you hand it, in a **tier**, with **grants**:
+Every 3.x runtime binding belongs to an explicit `mountMarkup()` call, whether
+the application wrote the markup or admitted a generated widget. Loading the
+script and inserting markup do not bind it. Hand the reviewed markup to an
+owned root, name its **tier**, grant only the required authority, and retain
+the handle for updates and disposal. For example, a widget allowed to make
+GET requests only under its own path is mounted with:
 
 ```ts
-import { mountMarkup } from '@getforma/core/runtime';
+import { mountMarkup, trustedHtml } from '@getforma/core/runtime';
 
-const widget = mountMarkup(document.getElementById('widget-slot')!, html, {
+const widget = mountMarkup(document.getElementById('widget-slot')!, trustedHtml(markup), {
   tier: 'reviewed',
   grants: { fetch: { methods: ['GET'], paths: ['/api/widgets/42/'], cookies: false } },
   config: { name: 'widget-42' },
@@ -260,13 +268,13 @@ widget.unmount(); // every binding disposed, the root emptied
 - **Only under the root.** The mount binds the markup it is handed (and what
   `update()` hands it later) under its root, never by watching `body`. The root
   itself is the application's element, not the mount's. The markup is a raw
-  sink, as `reconcile()`'s is: pass `trustedHtml(markup)` for the content your
+  sink: pass `trustedHtml(markup)` for the content your
   review admitted. Plain strings are refused with `FORMA_E_MOUNT_ARGS`.
 - **Configuration only from the call.** The step budget (`config.exprBudget`,
   default 100,000), the expression diagnostics switch (`config.diagnostics`)
   and containment hints (`config.autoContainment`) come from the call; a
   script tag's `data-forma-*`, `window.__FORMA_RUNTIME_CONFIG`,
-  `setDiagnostics()` and the server's directive map do not reach a mount.
+  or a server directive map cannot configure a mount. The global setters were removed.
 - **Tiers** (decision brief DR-14). `'compiled'`: markup the application's own
   build made. `'reviewed'`: a widget the application reviewed and admitted, on
   its own origin. `'unreviewed'`: content nobody reviewed, which mounts only in a
@@ -280,16 +288,11 @@ widget.unmount(); // every binding disposed, the root emptied
 | `dom: true` | an element outside the mount root through `$el`, `$event` or `$refs`, and a selector that asks about one | `FORMA_E_GRANT_DOM`; the binding writes nothing |
 | `navigate: true` | `click()`, which follows a link or submits a form in the user's session, and `$dispatch` of an activation event (`click`, `auxclick`, `DOMActivate`, `submit`, `reset`, in any case), which WebKit or Firefox run as activation | `FORMA_E_GRANT_NAVIGATE`; the click is not made, the event not dispatched |
 
-A grant left out of `grants` is not given; leaving out `grants` altogether
-gives every grant. That default is 2.1.0's bridge, so a host can move its
-call sites to `mountMarkup()` first and write grants second, and 3.0.0 turns
-it to none (FORMA-108). Malformed grants throw `FORMA_E_MOUNT_ARGS` at the
-call; mounting a root twice throws `FORMA_E_MOUNT_TWICE`, and `update()` after
-`unmount()` throws `FORMA_E_MOUNT_GONE`.
+A grant left out of `grants` is not given; leaving out the entire object also gives none. Every call names its tier. Malformed grants throw `FORMA_E_MOUNT_ARGS`; mounting a root twice throws `FORMA_E_MOUNT_TWICE`, and `update()` after `unmount()` throws `FORMA_E_MOUNT_GONE`.
 
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "binds only under the root it is handed: markup injected outside it stays unbound"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a tiered mount takes its step budget from its call, never from a script tag"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a tiered mount ignores the page directive map"
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "binds all declared directives without a global directive map"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount refuses any origin but an opaque one, and any grant"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "with explicit empty grants a generated tree binds neither data-fetch nor $el.click()"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a fetch grant admits only its methods and path prefixes: %j %s"
@@ -332,8 +335,7 @@ target keeps what it had. `$refetch` reaches only the fetches of its own mount.
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a 404 with a JSON body lands in the error: target, not the data target"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "$refetch reaches only the fetches of its own mount"
 
-**Every denial is a coded diagnostic**, whatever `config.diagnostics` or the
-page's switch says: a `formajs:diagnostic` event, once per mount and expression,
+**Every denial is a coded diagnostic**, whatever the mount's `config.diagnostics` says: a `formajs:diagnostic` event, once per mount and expression,
 whose `detail` is `{ kind: 'grant-denied', code, grant, mount, tier, expr,
 reason, count }`, with `code` one of `FORMA_E_GRANT_FETCH`, `FORMA_E_GRANT_DOM`
 and `FORMA_E_GRANT_NAVIGATE`. An application counts denials per tier from it.
@@ -351,20 +353,24 @@ review (L-36: a set derived this way takes effect once the founder approves
 it, after the hostile corpus has run). A production build returns `null`.
 
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "the development report lists exactly the grants a fixture widget used"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build carries neither the grant report nor reconcile's warning"
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build carries neither the grant report nor the obsolete manual-switch warning"
 
 **The preview frame** is where tier `'unreviewed'` renders.
 `dist/formajs-frame.global.js` is its runtime: one classic, self-contained
 script, the same bytes from the same sources, with no `</script`, `<!--` or
 source map comment, so a server writes it inline into the frame document and a
 policy allows it by its SHA-256 hash (forma-server's `PageResponse::frame`;
-an application's build copies it into its assets as `forma-runtime.js`,
-FORMA-175, which is not core's CDN alias of the same name). The file is
+an application's build writes it, minified, into its assets as `forma-runtime.js`,
+FORMA-175, which is not core's CDN alias of the same name). Core's file is
 unminified and uncompressed, about 160 KB raw (40 KB gzipped; the README's
-size table gates the gzipped figure), and the server inlines it into every
-frame document it serves under `no-store`, so the application compresses
-those responses (gzip or brotli at its server or its edge) rather than
-serving the bytes as they are; a minified build of the entry is FORMA-118.
+size table gates the gzipped figure); like every file published to npm it
+stays readable. The build writes a minified copy of it into the application's
+output instead (about 85 KB raw, FORMA-190; its hash is the one of the bytes
+served), and the server inlines that into every frame document it serves
+under `no-store`, so the application still compresses those responses (gzip
+or brotli at its server or its edge) rather than serving the bytes as they
+are. `@getforma/build`'s size report (`previewFrame: true`) carries the served
+bytes as its frame document row.
 It renders into
 `<div id="forma-frame">` and never mounts the page or watches `body`. The host
 posts one message carrying one `MessageChannel` port at the frame's first load
@@ -423,45 +429,15 @@ approved, keeping the hash, the grants and the approver together (L-47);
 markup whose hash differs mounts only in tier `'unreviewed'`. Forma enforces
 what the mount grants. It cannot check which tier content deserves.
 
-**In 2.x the tierless paths still run, unless the page turns them off.** By
-default `@getforma/core/runtime` binds the page's `data-forma-state` on load and
-watches `body`, and `mount()`, `initRuntime()` and `reconcile()` bind what they
-are given with every power, as in 2.0.x; markup injected outside a tiered root
-is bound by those paths. None of them binds or disposes anything under a
-tiered root, and a tierless scope around one never binds the mount's elements
-or hands out `$refs` to them.
+## Migrating the 2.x runtime bridge
 
-A page that hosts tiered mounts turns every tierless path off with
-`data-forma-mount="manual"` on a `<script>` element:
+3.0 removes runtime `initRuntime`, `destroyRuntime`, `mount`, `unmount`, `reconcile`, `setDebug`, `setDiagnostics` and `setDirectiveMap`. These names refer to the HTML runtime entry; the component entry's `mount()` remains available.
 
-```html
-<!-- CDN build: on the runtime's own script element -->
-<script src="/vendor/formajs-runtime.global.js" data-forma-mount="manual"></script>
-<!-- ESM build: on the module script that loads the application -->
-<script type="module" src="/app.js" data-forma-mount="manual"></script>
-```
+Replace an automatic or tierless binding with `mountMarkup(root, trustedHtml(markup), { tier, grants, config })`; replace `reconcile()` with the returned `handle.update()`, and dispose with `handle.unmount()`. A script import, DOMContentLoaded, DOM insertion or state-attribute edit never creates bindings. The handle disposes its bindings even if their scope moved or was detached. Unmount nested handles before replacing their enclosing content.
 
-Then nothing binds but `mountMarkup()`: no auto-mount on load, no `body`
-observer, and `mount()`, `initRuntime()` and `reconcile()` throw
-`FORMA_E_MOUNT_MANUAL` before touching the page, so markup injected outside a
-tiered root stays unbound (SR16, in 2.x). The switch is read once, when the
-runtime first runs, before it binds anything: from its own `<script>` element in
-a CDN build, else from any `<script>` that carries it, since an ESM build has
-no element of its own. Only `manual` counts, and one element saying it is
-enough, so the switch can only take binding paths away; removing or changing
-the attribute later changes nothing. It is an attribute, so it needs no inline
-script. Without it, 3.0.0 makes this the only behaviour (FORMA-108).
+Move diagnostic and budget settings to each call's `config`. There is no global debug or directive-map setter. `data-forma-mount="manual"` is obsolete and may be removed: development logs `FORMA_W_MANUAL_MOUNT_REMOVED` once with the replacement call; production contains no warning. Script `data-forma-*` configuration and `window.__FORMA_RUNTIME_CONFIG` do not change a mount.
 
-`reconcile()` is deprecated: a development build logs
-`FORMA_W_DEPRECATED_RECONCILE` on its first call, and 3.0.0 removes it with
-the auto-mount and the observer. A mount's own `update()` re-renders its whole
-root, including the root of a mount nested in it: unmount nested mounts first.
-
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "no tierless path binds markup under a tiered root"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "the mount switch is read once, from the runtime's own script element"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "reconcile behaves as at 2.0.x and warns once in development"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "bindings a tierless path made under the root go first, with what they rendered"
+Verified by `src/__tests__/runtime-explicit-mount.test.ts` and the actual packed-runtime explicit controls in `e2e/hostile-widgets/explicit-controls.mjs`.
 
 ---
 

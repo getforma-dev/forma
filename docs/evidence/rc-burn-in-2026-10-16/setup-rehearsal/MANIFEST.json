@@ -1,0 +1,74 @@
+{
+  "files": [
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/ORIGINALS.json",
+      "bytes": 2843,
+      "sha256": "8e5eca43815b74a36da10c5138d1f857805fb644e02d313ce362744255e6893d"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/ci-38947468985-release-workflow.log",
+      "bytes": 40381,
+      "sha256": "aae8ef078e2193cd7e4a9d5a9dba1c9ea31c3be55b1017e763afb8c45bf3121c"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/.github/workflows/ci.yml",
+      "bytes": 30736,
+      "sha256": "f576bbf199ccaa75409c17e4abc9256ad70a56c50a6fafbdc61d0511c55e2703"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/.github/workflows/rc-burn-in.yml",
+      "bytes": 3127,
+      "sha256": "3bc8d6d55b281957dd694f5200d774dcd92ee6dc09f934a0516567163c24281f"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/.github/workflows/release.yml",
+      "bytes": 10455,
+      "sha256": "5cb2bd7c90f2a9fe7c1fb3ace42d6576c7475a4ac7281038ad31e6fe2fa61512"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/docs/UPGRADING-3.0.md",
+      "bytes": 13937,
+      "sha256": "a13126823504de356e98f12ee4e943b862a7a5687dd91ee4284d0f3e929dd6e2"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/docs/release/RC-BURN-IN.md",
+      "bytes": 6601,
+      "sha256": "94862f8a65f8b5d86a04fa80ef416d9b3902ecb631d51cccc051118741d328a4"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/scripts/check-toolchain-policy.rb",
+      "bytes": 5748,
+      "sha256": "535adc33c8371109e593951528c19211e3e77d80da4176d1fa4ba698dc6a32a6"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/scripts/release-burn-in-stage.mjs",
+      "bytes": 6827,
+      "sha256": "5e5e185e429dfff6924d48224dc416b33ade86efe7faa1dacb02bec8c6922063"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/setup-rehearsal/original/scripts/release-burn-in-workflow.test.mjs",
+      "bytes": 3049,
+      "sha256": "f4cdae812567543a80f85709af2a75a6863ffbdde2eb83a5574738c3d3657121"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/setup-rehearsal/IMPLEMENTATION.json",
+      "bytes": 2992,
+      "sha256": "53719bcb2ab8eb01aa14d591e73479c2a57659f5ac1a986d5360ee8224b1f37e"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/setup-rehearsal/PLAN.md",
+      "bytes": 3022,
+      "sha256": "379ef73f51537fd26f9afae398a7f724b5ef2a9184a49369f77e143208e06484"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/setup-rehearsal/finite.log",
+      "bytes": 4521,
+      "sha256": "92259048fe5944649fcc9c3a847e298414fae5fd958f82f83d4f32f9b7e1035d"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/setup-rehearsal/timeout-basis.json",
+      "bytes": 1539,
+      "sha256": "e1787439b5c9a5d291c318b75c4539960637d40f9cc6fb716cadf040aef8610b"
+    }
+  ]
+}

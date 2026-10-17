@@ -1,0 +1,50 @@
+{
+  "sourceCommit": "09df01e0f52dc42b2f45010e90d7d214188b6591",
+  "files": {
+    "packages/core/vitest.config.ts": {
+      "bytes": 859,
+      "sha256": "73ea76e03b05cab89834b49135811f57c722055d4aff3b6e032c61dd1b30fc47"
+    },
+    "packages/core/vitest.bench.config.ts": {
+      "bytes": 2864,
+      "sha256": "2c508be74593cfb42ba609f0197d63e5f01c7562daeaa4e17da24ca6d8185e92"
+    },
+    "packages/core/tsconfig.json": {
+      "bytes": 1200,
+      "sha256": "fa84a34bced1f7b0bd390299e2c78e755aa5c1df4eb04eaf970ca60db4e9d717"
+    }
+  },
+  "firstHostedFailure": {
+    "run": 38853346808,
+    "job": "check",
+    "retainedLog": "work/FORMA-144-final/tmp/ci-38853346808-check.log",
+    "bytes": 816970,
+    "sha256": "18c58d6809fddffbf05664569be195cbe5cdf1e6e7a1da20bf8b01371a3ddaa8"
+  },
+  "qualification": {
+    "vite7-typecheck-before.log": {
+      "bytes": 648,
+      "sha256": "85f395a27ef7a5be430b0a434ca40263184153584e36dedfb014cfba918bed28"
+    },
+    "vite7-jsx-before.log": {
+      "bytes": 974,
+      "sha256": "8a723c7c65fc1b4a5e14b16a187df30d3dd86c507049ee068b3c95188be61395"
+    },
+    "vite7-typecheck-after.log": {
+      "bytes": 54,
+      "sha256": "b4d0ae90960eaac9debc2258b68be6a4c6af1ecaf2474294fe3990730e8ab31c"
+    },
+    "vite7-jsx-after.log": {
+      "bytes": 158,
+      "sha256": "41e45f25330b014957181438e58e1245ffbe02d64023aa84154cde6c0dc3606e"
+    },
+    "vite7-core-tests.log": {
+      "bytes": 388,
+      "sha256": "7e886a5b28ebec9e2f8634d6b02bb32507ad71fa7a92ece5efb7164b5b816851"
+    },
+    "vite7-jsx-control.mjs.original": {
+      "bytes": 1912,
+      "sha256": "e7861f5bf3668158016133692fda9761f862bfda2d6cf9452bcea048d2b0e88b"
+    }
+  }
+}

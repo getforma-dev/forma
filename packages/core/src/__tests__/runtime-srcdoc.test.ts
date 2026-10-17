@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * The zero-build runtime's own `srcdoc` writes (formajs#29's review, S3):
  * `data-bind:srcdoc` and `{item…}` in a list row's `srcdoc` write an
@@ -6,7 +7,7 @@
  * identifies the binding through the ordinary diagnostic channel.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mount, unmount, clearDiagnostics, getDiagnostics } from '../runtime';
+import { clearDiagnostics, getDiagnostics } from '../runtime';
 import { RUNTIME_SRCDOC_CODE } from '../dom/trusted-html';
 
 const REGISTRY = Symbol.for('@getforma/core#trusted-types');
@@ -21,7 +22,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  unmount(root);
+  unmountFixture(root);
   root.remove();
   delete (globalThis as Record<symbol, unknown>)[REGISTRY];
   vi.restoreAllMocks();
@@ -35,10 +36,11 @@ describe('the runtime\'s srcdoc bindings', () => {
   /** Mount `children` under a scope holding `state`, and return the root. */
   function mounted(state: Record<string, unknown>, ...children: Element[]): HTMLElement {
     root = document.createElement('div');
-    root.setAttribute('data-forma-state', JSON.stringify(state));
-    root.append(...children);
+    const scope = document.createElement('div');
+    scope.setAttribute('data-forma-state', JSON.stringify(state));
+    scope.append(...children); root.append(scope);
     document.body.append(root);
-    mount(root);
+    mountFixture(root);
     return root;
   }
 
@@ -52,13 +54,14 @@ describe('the runtime\'s srcdoc bindings', () => {
   }
 
   it('data-bind:srcdoc is refused with its binding code while neighboring attributes work', () => {
-    const frame = document.createElement('iframe');
+    let frame = document.createElement('iframe');
     frame.setAttribute('sandbox', '');
     frame.setAttribute('data-bind:srcdoc', '{doc}');
     frame.setAttribute('data-bind:title', '{title}');
-    const button = document.createElement('button');
+    let button = document.createElement('button');
     button.setAttribute('data-on:click', "{doc = '<p>changed</p>'}");
     mounted({ doc: '<p>from data</p>', title: 'not a sink' }, frame, button);
+    frame = root.querySelector('iframe')!; button = root.querySelector('button')!;
 
     // Initial and changed values remain outside the raw sink.
     expect(frame.hasAttribute('srcdoc')).toBe(false);
@@ -69,7 +72,7 @@ describe('the runtime\'s srcdoc bindings', () => {
   });
 
   it("a list row's srcdoc is refused with its binding code", () => {
-    const list = document.createElement('ul');
+    let list = document.createElement('ul');
     list.setAttribute('data-list', '{rows}');
     const row = document.createElement('li');
     const rowFrame = document.createElement('iframe');
@@ -79,6 +82,7 @@ describe('the runtime\'s srcdoc bindings', () => {
     row.append(rowFrame);
     list.append(row);
     mounted({ rows: [{ d: '<p>row one</p>', t: 'one' }, { d: '<p>row two</p>', t: 'two' }] }, list);
+    list = root.querySelector('ul')!;
 
     expect([...list.querySelectorAll('iframe')].map((f) => [f.getAttribute('srcdoc'), f.getAttribute('title')]))
       .toEqual([[null, 'one'], [null, 'two']]);
@@ -86,20 +90,21 @@ describe('the runtime\'s srcdoc bindings', () => {
   });
 
   it('reused rows update neighboring attributes while refused srcdoc stays absent', async () => {
-    const list = document.createElement('ul');
+    let list = document.createElement('ul');
     list.setAttribute('data-list', '{rows}');
     const row = document.createElement('li');
     row.setAttribute('title', '{item.t}');
-    const frame = document.createElement('iframe');
+    let frame = document.createElement('iframe');
     frame.setAttribute('srcdoc', '{item.d}');
     frame.setAttribute('title', '{item.t}');
     const link = document.createElement('a');
     link.setAttribute('href', '{item.url}');
     row.append(frame, link);
     list.append(row);
-    const button = document.createElement('button');
+    let button = document.createElement('button');
     button.setAttribute('data-on:click', "{rows = [{d:'changed',t:'two',url:'javascript:void(0)'}]}");
     mounted({ rows: [{ d: 'first', t: 'one', url: '/safe' }] }, list, button);
+    list = root.querySelector('ul')!; button = root.querySelector('button')!;
     const original = list.firstElementChild!;
     expect(original.getAttribute('title')).toBe('one');
     expect(original.querySelector('a')!.getAttribute('href')).toBe('/safe');
@@ -115,19 +120,15 @@ describe('the runtime\'s srcdoc bindings', () => {
   });
 
   it('a page with no srcdoc binding logs no raw-HTML line', () => {
-    root = document.createElement('div');
-    root.setAttribute('data-forma-state', JSON.stringify({ title: 'plain', rows: [{ t: 'a' }] }));
-    const span = document.createElement('span');
+    let span = document.createElement('span');
     span.setAttribute('data-bind:title', '{title}');
-    const list = document.createElement('ul');
+    let list = document.createElement('ul');
     list.setAttribute('data-list', '{rows}');
     const row = document.createElement('li');
     row.setAttribute('title', '{item.t}');
     list.append(row);
-    root.append(span, list);
-    document.body.append(root);
-
-    mount(root);
+    mounted({ title: 'plain', rows: [{ t: 'a' }] }, span, list);
+    span = root.querySelector('span')!; list = root.querySelector('ul')!;
 
     expect(span.getAttribute('title')).toBe('plain');
     expect(list.querySelector('li')!.getAttribute('title')).toBe('a');

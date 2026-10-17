@@ -1,17 +1,21 @@
-// Declared handler data; browser activation state adoption remains FORMA-103.
+// Handler props are delivered through the native island state channel.
 import { h, createSignal } from '@getforma/core';
 
 type Props = { count: number };
-export function Page(props: Props) {
+export function Counter(props: Props) {
   const [count, setCount] = createSignal(props.count);
   return (
-    <main class="page">
+    <section class="counter">
       <p class="count">
         Count: <span id="count">{() => count()}</span>
       </p>
       <p class="actions">
         <button id="increment" onClick={() => setCount(count() + 1)}>Increment</button>
       </p>
-    </main>
+    </section>
   );
+}
+
+export function Page(props: Props) {
+  return <main class="page">{Counter(props)}</main>;
 }

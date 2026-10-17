@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { chromium, firefox, webkit } from '@playwright/test';
+import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
 import { TEMPLATES, validateProjectName } from '../src/scaffold';
 import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures, recordObservation } from './helpers';
 
@@ -40,7 +42,8 @@ describe('scaffolding', () => {
       const res = runCli([name, '--template', template], tmp);
       expect(res.status, res.stderr || res.stdout).toBe(0);
       dest = path.join(tmp, name);
-    });
+      // Windows candidate CLI/staging exceeded the old 10s hook budget.
+    }, 60_000);
 
     it('produces exactly the template tree, with configuration dotfiles restored', () => {
       const expected = listFiles(path.join(TEMPLATES_DIR, template))
@@ -91,10 +94,9 @@ describe('scaffolding', () => {
       const out = res.stdout.replace(/\x1b\[[0-9;]*m/g, '');
       expect(out).toMatch(/^\s*npm ci$/m);
       expect(out).not.toMatch(/\bnpm install\b/);
-      // It scaffolds a second project, which took up to 2,297 ms on the
-      // Windows scaffold leg: 7 s is about 3x that, where vitest's 5 s default
-      // was barely 2x (FORMA-179).
-    }, 7_000);
+      // Packed Windows CLI + candidate staging reached 10.929s. Each child
+      // is bounded at 25s by runCli; both fit this explicit process budget.
+    }, 60_000);
 
     it('writes a .gitignore and no _gitignore', () => {
       expect(fs.existsSync(path.join(dest, '.gitignore'))).toBe(true);
@@ -317,16 +319,21 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
 
     // The compiler prints "(placeholder)" when it could not walk the entry's
     // tree — that is the failure this template existed in for months, and the
-    // server degrades to a client-mount shell without saying so.
+    // retired renderer degraded to a client-mount shell without saying so.
     expect(out).toContain('IR emitted (real)');
     expect(out).not.toContain('placeholder');
-    // Any island in the emitted IR is a subtree the compiler could NOT
-    // translate, and an anonymous one cannot hydrate.
+    // Counter is a declared native subtree; About has no client definition.
+    expect(out).toContain('1 island');
     expect(out).toContain('0 islands');
 
     const manifest = JSON.parse(
       fs.readFileSync(path.join(admin, 'dist', 'manifest.json'), 'utf8'),
     );
+    expect(manifest.routes['/'].mode).toBe('ssr');
+    expect(manifest.routes['/'].js).toHaveLength(1);
+    expect(manifest.routes['/about']).toMatchObject({mode:'ssr',js:[]});
+    expect(manifest.routes['/about'].ir).toBeTruthy();
+    expect(manifest.routes['/about'].css.length).toBeGreaterThan(0);
     const irFile = manifest.routes['/'].ir;
     expect(irFile, 'route / has no ir entry in the manifest').toBeTruthy();
     const irBytes = fs.statSync(path.join(admin, 'dist', irFile)).size;
@@ -334,15 +341,17 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     expect(irBytes).toBeGreaterThan(300);
 
     // ...and the server actually serves it. Emitting IR is not the claim; the
-    // claim is that the HTML contains the page. render_page silently falls
-    // back to Phase 1 whenever `ir_module` or `slots` is None, which is the
-    // shape the dashboard was stuck in, so this has to be checked over HTTP.
+    // claim is that the HTML contains the page. The retired render_page API
+    // silently fell back to a shell; the typed native path must serve the actual
+    // body, so this remains an HTTP assertion.
     expect(run('cargo', ['build', '--locked'], dest).status).toBe(0);
     await withServer(dest, name, (body) => {
       expect(body).toContain('data-forma-ssr');
       expect(body).toContain(`<h1>${name}</h1>`);
       expect(body).toContain('class="lede"');
-      expect(body).not.toContain('<div id="app"></div>');
+      // The root names its build (FORMA-186), so an empty shell is any `<div id="app" ...></div>`.
+      expect(body).toMatch(/<div id="app" data-forma-build="[^"]+" data-forma-ssr>/);
+      expect(body).not.toMatch(/<div id="app"[^>]*><\/div>/);
     });
   }, 900_000);
 
@@ -407,21 +416,23 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
   }, 900_000);
 
   it('minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line', () => {
-    // A `.map()` child is BUILD-701: the server renders an empty island and
-    // the rows never appear after activation. The template's scripts pass
-    // --strict, so its SSR build refuses it; build.ts maps the flag and adds
-    // nothing without it, so the same build without the flag only warns, and
-    // FORMA_STRICT=1 still turns strict mode on.
+    // Unknown runtime children are mandatory BUILD-610, including an explicit
+    // non-strict invocation. Each refusal preserves the whole accepted output.
     const name = 'e2e-strict';
     expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
     const admin = path.join(tmp, name, 'admin');
     expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
+    const accepted = run('npm', ['run', 'build:ssr'], admin);
+    expect(accepted.status, accepted.stdout + accepted.stderr).toBe(0);
+    const dist = path.join(admin, 'dist');
+    const snapshot = () => Object.fromEntries(listFiles(dist).sort().map(file => [file, fs.readFileSync(path.join(dist, file)).toString('base64')]));
+    const before = snapshot();
     const appPath = path.join(admin, 'src', 'home', 'app.tsx');
     const app = fs.readFileSync(appPath, 'utf8');
     const probe = app.replace(
       '<p class="actions">',
-      '<ul class="probe">{["a", "b"].map((i) => <li>{i}</li>)}</ul>\n      <p class="actions">',
+      '<p class="probe">{unknownRuntimeRows()}</p>\n      <p class="actions">',
     );
     expect(probe, 'app.tsx has no <p class="actions"> to put the probe before').not.toBe(app);
     fs.writeFileSync(appPath, probe);
@@ -430,19 +441,23 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const strict = run('npm', ['run', 'build:ssr'], admin);
     const strictOut = strict.stdout + strict.stderr;
     expect(strict.status, strictOut).not.toBe(0);
-    expect(strictOut).toContain('strict mode');
-    expect(strictOut).toContain('BUILD-701');
+    expect(strictOut).toContain('BUILD-610');
     expect(strictOut).toMatch(at);
+    expect(snapshot()).toEqual(before);
 
     const lenient = run('npx', ['tsx', 'build.ts', '--ssr'], admin);
     const lenientOut = lenient.stdout + lenient.stderr;
-    expect(lenient.status, lenientOut).toBe(0);
-    expect(lenientOut).toContain('BUILD-701');
+    expect(lenient.status, lenientOut).not.toBe(0);
+    expect(lenientOut).toContain('BUILD-610');
+    expect(lenientOut).toMatch(at);
+    expect(snapshot()).toEqual(before);
 
     const fromEnv = run('npx', ['tsx', 'build.ts', '--ssr'], admin, 900_000, { FORMA_STRICT: '1' });
     const fromEnvOut = fromEnv.stdout + fromEnv.stderr;
     expect(fromEnv.status, fromEnvOut).not.toBe(0);
-    expect(fromEnvOut).toContain('BUILD-701');
+    expect(fromEnvOut).toContain('BUILD-610');
+    expect(fromEnvOut).toMatch(at);
+    expect(snapshot()).toEqual(before);
   }, 900_000);
 
   it('minimal: declared count reaches SSR and invalid bindings refuse before listening', async () => {
@@ -464,13 +479,14 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(result.status, result.stderr).toBe(0);
     };
     try {
-      compile(replace(original, 'HomeProps { count: 0 }', 'HomeProps { count: 7 }'));
+      expect(original).toContain('HomeProps { count: 7 }');
+      compile(original);
       await withServer(dest, name, (body, response) => {
         expect(response.status).toBe(200);
         expect(body.replace(/<!--[\s\S]*?-->/g, '')).toMatch(/Count:\s*<span[^>]*>7<\/span>/);
-      }); // Raw HTTP only: slice 2 owns adopting this value during activation.
-      const missing = replace(replace(original, 'count: u32,', 'other: u32,'), 'HomeProps { count: 0 }', 'HomeProps { other: 0 }');
-      const wrong = replace(replace(original, 'count: u32,', 'count: String,'), 'HomeProps { count: 0 }', 'HomeProps { count: "0".into() }');
+      }); // This control remains raw HTTP; the additive browser case checks adoption.
+      const missing = replace(replace(original, 'count: u32,', 'other: u32,'), 'HomeProps { count: 7 }', 'HomeProps { other: 7 }');
+      const wrong = replace(replace(original, 'count: u32,', 'count: String,'), 'HomeProps { count: 7 }', 'HomeProps { count: "7".into() }');
       const unbound = replace(original, 'let home_page = match', 'pages.finalize().unwrap_or_else(|errors| { for error in errors { eprintln!("{error}"); } std::process::exit(1); });\n    let home_page = match');
       for (const [source, code] of [[missing, 'BIND-101'], [wrong, 'BIND-102'], [unbound, 'BIND-110']]) {
         compile(source!);
@@ -480,6 +496,34 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         expect(refused.output).toContain(code!);
       }
     } finally { fs.writeFileSync(mainPath, original); }
+  }, 900_000);
+
+  it('minimal: packed native island adopts without writes and static route requests no code in all engines', async () => {
+    const name = 'e2e-island-static';
+    expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
+    const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
+    const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
+    expect(install.status, install.stderr).toBe(0);
+    const build = run('npm', ['run', 'build:ssr'], admin);
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+    // Release acceptance must exercise the shipped profile. Debug deliberately
+    // includes diagnostic Report-Only TT without an endpoint, which WebKit logs.
+    const cargo = run('cargo', ['build', '--locked', '--release'], dest);
+    expect(cargo.status, cargo.stderr).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist/manifest.json'), 'utf8'));
+    await withServer(dest, name, async (body, response) => {
+      expect(response.headers.get('content-security-policy-report-only')).toBeNull();
+      expect(body.replace(/<!--[\s\S]*?-->/g, '')).toMatch(/Count:\s*<span[^>]*>7<\/span>/);
+      const origin = new URL(response.url).origin;
+      for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
+        const browser = await launcher.launch();
+        try {
+          const island = await verifyMinimalIsland(browser, origin, manifest);
+          const staticRoute = await verifyStaticTemplate(browser, origin, manifest);
+          recordObservation(`minimal: ${engine} actual native island and static route`, {engine, profile: 'release', island, staticRoute});
+        } finally { await browser.close(); }
+      }
+    }, { profile: 'release' });
   }, 900_000);
 
   it('dashboard: serves each page as its browser shell, by declaration (ssr: false)', async () => {
@@ -506,7 +550,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         const res = await get(route);
         const body = await res.text();
         expect(res.status, route).toBe(200);
-        expect(body, route).toContain('<div id="app"></div>');
+        expect(body, route).toMatch(/<div id="app" data-forma-build="[^"]+"><\/div>/);
         expect(body, route).not.toContain('data-forma-ssr');
         // The CSP has to carry a nonce, and the same nonce has to be on the
         // script tag the shell carries, or the page cannot run at all.
@@ -527,6 +571,28 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         expect(body, route).toContain(`nonce="${nonce}"`);
       }
     });
+  }, 900_000);
+
+  it('dashboard: chart tooltip keeps API values as text under enforced policy in all engines', async () => {
+    const name = 'e2e-dashboard-tooltip';
+    expect(runCli([name, '--template', 'dashboard'], tmp).status).toBe(0);
+    const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
+    const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
+    expect(install.status, install.stderr).toBe(0);
+    const build = run('npm', ['run', 'build'], admin);
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+    const cargo = run('cargo', ['build', '--locked', '--release'], dest);
+    expect(cargo.status, cargo.stderr).toBe(0);
+    await withServer(dest, name, async (_body, response) => {
+      expect(response.headers.get('content-security-policy-report-only')).toBeNull();
+      for (const [engine, launcher] of Object.entries({ chromium, firefox, webkit })) {
+        const browser = await launcher.launch();
+        try {
+          const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin);
+          recordObservation(`dashboard: ${engine} tooltip text and policy`, { engine, profile: 'release', ...observation });
+        } finally { await browser.close(); }
+      }
+    }, { profile: 'release' });
   }, 900_000);
   /**
    * The locked crates whose own `rust-version` is above the project's.
@@ -600,20 +666,29 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
   );
 
   it('minimal: build:ssr reads ssrEntryPoints by page name', () => {
-    // @getforma/build looks an SSR entry up by page name and silently falls
-    // back to the browser entry when the key does not match, so a template
-    // whose SSR entry IS its browser entry cannot tell a read key from an
-    // ignored one. Point the template's own key at a different file and check
-    // that the IR came from that file.
+    // Distinct native/browser entries resolve the same actual registered
+    // declarations. The native root is selected only by its explicit page key.
     const name = 'e2e-ssr-key';
     expect(runCli([name, '--template', 'minimal'], tmp).status).toBe(0);
     const admin = path.join(tmp, name, 'admin');
     expect(run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin).status).toBe(0);
 
     const app = fs.readFileSync(path.join(admin, 'src', 'home', 'app.tsx'), 'utf8');
-    const probe = app.replace(`<h1>${name}</h1>`, '<h1>ssr-entry-probe</h1>');
-    expect(probe).not.toBe(app);
-    fs.writeFileSync(path.join(admin, 'src', 'home', 'ssr-probe.tsx'), probe);
+    const activation = app.indexOf('await activateIslands({ Counter });');
+    expect(activation, 'minimal entry must contain its complete awaited activation statement').toBeGreaterThanOrEqual(0);
+    const shared = app.slice(0, activation)
+      .replace(`<h1>${name}</h1>`, '<h1>ssr-entry-probe</h1>')
+      .replace('function Counter(', 'export function Counter(').replace('function Home(', 'export function Home(');
+    expect(shared).toContain('ssr-entry-probe');
+    fs.writeFileSync(path.join(admin, 'src/home/ssr-page.tsx'), shared);
+    fs.writeFileSync(path.join(admin, 'src/home/ssr-probe.tsx'), `import {mount,activateIslands} from '@getforma/core';
+import {Home,Counter} from './ssr-page';
+activateIslands({Counter});
+mount(()=>Home({count:0}),'#app');`);
+    fs.writeFileSync(path.join(admin, 'src/home/app.tsx'), `import {activateIslands} from '@getforma/core';
+import {Counter} from './ssr-page';
+activateIslands({Counter});
+globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
 
     const buildTs = path.join(admin, 'build.ts');
     const config = fs.readFileSync(buildTs, 'utf8');
@@ -629,7 +704,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist', 'manifest.json'), 'utf8'));
     const ir = fs.readFileSync(path.join(admin, 'dist', manifest.routes['/'].ir));
     expect(ir.includes('ssr-entry-probe'), 'the IR was not built from the ssrEntryPoints file').toBe(true);
-    expect(ir.includes(name), 'the IR was built from the browser entry').toBe(false);
+    expect(ir.includes('browser-entry-only-sentinel'), 'the IR was built from browser-only initialization').toBe(false);
+    const browser = fs.readFileSync(path.join(admin, 'dist', manifest.routes['/'].js.at(-1)), 'utf8');
+    expect(browser).toContain('browser-entry-only-sentinel');
   }, 900_000);
 
   it.each(TEMPLATES)(
@@ -660,7 +737,8 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
         expect(build.status, build.stdout + build.stderr).toBe(0);
         const cargo = run('cargo', ['build', '--locked'], dest);
         expect(cargo.status, cargo.stderr).toBe(0);
-        const root = script === 'build:ssr' ? '<div id="app" data-forma-ssr>' : '<div id="app"></div>';
+        // Every root names its build (FORMA-186): the server-rendered form and the empty shell alike.
+        const root = script === 'build:ssr' ? /<div id="app" data-forma-build="[^"]+" data-forma-ssr>/ : /<div id="app" data-forma-build="[^"]+"><\/div>/;
 
         await withServer(dest, name, async (_body, _res, get) => {
           for (const route of pages) {
@@ -674,8 +752,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
               const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
               expect(nonce, `${where}: no nonce in CSP: ${csp}`).toBeTruthy();
               const html = await res.text();
-              expect(html, `${where}: the HTML does not carry its own nonce`).toContain(`nonce="${nonce}"`);
-              expect(html, `${where}: rendered by the wrong path`).toContain(root);
+              if (script !== 'build:ssr' || route !== '/about') expect(html, `${where}: the HTML does not carry its own nonce`).toContain(`nonce="${nonce}"`);
+              else expect(html, `${where}: static route emitted executable code`).not.toMatch(/<script(?![^>]*type="application\/json")[\s>]/);
+              expect(html, `${where}: rendered by the wrong path`).toMatch(root);
               // DR-25: the worker is off, so no page registers one.
               expect(html, `${where}: the page registers a service worker`).not.toMatch(/serviceWorker\.register/);
               nonces.push(nonce!);

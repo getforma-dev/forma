@@ -1,8 +1,8 @@
 {
   "name": "@getforma/core",
   "author": "Forma <victor@getforma.dev>",
-  "version": "3.0.0-dev",
-  "description": "Real DOM reactive library — fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. Untree-shaken core ~29KB gzipped; CDN HTML runtime ~40KB gzipped with a CSP-safe allowlist expression interpreter, zero eval (measured by scripts/check-size.mjs).",
+  "version": "3.0.0-beta.1",
+  "description": "Real DOM reactive library — fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. The CDN HTML runtime uses a CSP-safe allowlist expression interpreter with zero eval. Bundle sizes are measured by scripts/check-size.mjs.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -197,7 +197,7 @@
     "url": "https://github.com/getforma-dev/formajs/issues"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22"
   },
   "devEngines": {
     "runtime": {
@@ -215,8 +215,8 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@playwright/test": "^1.62.1",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@playwright/test": "^1.64.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "esbuild": "^0.28.1",
     "fake-indexeddb": "^6.2.3",
     "happy-dom": "^20.11.2",
@@ -225,6 +225,6 @@
     "tsup": "^8.5.1",
     "typedoc": "^0.28.20",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }

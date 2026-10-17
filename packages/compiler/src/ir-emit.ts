@@ -14,8 +14,12 @@
 import * as C from './fmir-constants.js';
 import { encodeFmirSections, dumpFmir, type FmirSection } from './fmir.js';
 import {
+  encodeClosedConstant, encodeIslandContracts, makeIslandContract,
+  type BindingRecord, type CanonicalSchema, type IslandContract, type IslandRenderMode,
+} from './fmir-contracts.js';
+import {
   assertEmit, uint, encodePropsSchema, encodeKeyPaths, encodeSourcePositions, validateBytecode,
-  type PropsSchema, type KeyPath, type SourcePosition,
+  type PropsSchema, type KeyPath, type SourcePosition, type SchemaType,
 } from './fmir-payload.js';
 export {
   SLOT_TYPE_TEXT, SLOT_TYPE_BOOL, SLOT_TYPE_NUMBER, SLOT_TYPE_ARRAY, SLOT_TYPE_OBJECT,
@@ -42,6 +46,9 @@ export class IrEmitContext {
   /** Interned strings in order */
   private strings: string[] = [];
 
+  /** Look up an already-emitted name without interning new bytes. */
+  stringIndex(value: string): number | undefined { return this.stringMap.get(value); }
+
   /** Slot tracking */
   private slots: Array<{ id: number; name: string; typeHint: number; source: number; defaultBytes: Uint8Array }> = [];
   private nextSlotId: number = 0;
@@ -59,12 +66,40 @@ export class IrEmitContext {
     byteOffset: number;
   }> = [];
 
-  private propsSchema: PropsSchema = [[]];
+  private propsSchema: Array<PropsSchema[number]> = [[]];
+  private readonly islandBindings = new Map<number, { mode: IslandRenderMode; bindings: readonly BindingRecord[] }>();
+  private readonly constants = new Map<number, unknown>();
+  private readonly closedProjections = new Map<number, unknown>();
   private keyPaths: KeyPath[] = [];
   private sourcePositions: SourcePosition[] | undefined;
 
   /** Declared page object zero and its nested object types. */
-  setPropsSchema(schema: PropsSchema): void { this.propsSchema = schema; }
+  setPropsSchema(schema: PropsSchema): void { this.propsSchema = [...schema]; }
+  getPropsSchema(): PropsSchema { return this.propsSchema; }
+  /** Append a declared component schema without changing the page's root object. */
+  appendPropsSchema(schema: PropsSchema): number {
+    const offset = this.propsSchema.length;
+    assertEmit(schema.length > 0 && offset + schema.length <= C.MAX_SCHEMA_ITEMS, 'combined schema exceeds 1024 objects');
+    const type = (value: SchemaType): SchemaType => value.kind === 'object' ? { ...value, object: value.object + offset }
+      : value.kind === 'array' ? { ...value, element: type(value.element) }
+        : value.kind === 'optional' ? { ...value, inner: type(value.inner) } : value;
+    this.propsSchema.push(...schema.map(fields => fields.map(field => ({ ...field, type: type(field.type) }))));
+    return offset;
+  }
+  /** Metadata belongs to one declared component, while input slots belong to its call. */
+  setIslandContract(islandId: number, mode: IslandRenderMode, bindings: readonly BindingRecord[]): void {
+    assertEmit(this.islands.some(island => island.id === islandId), `unknown island ${islandId}`);
+    this.islandBindings.set(islandId, { mode, bindings });
+  }
+  private contracts(): IslandContract[] {
+    return this.islands.map(island => {
+      const contract = this.islandBindings.get(island.id);
+      assertEmit(contract, `island ${island.id} has no declared contract`);
+      assertEmit(island.schemaObject < this.propsSchema.length, 'island contract has no declared schema object');
+      assertEmit(island.slotIds.length === this.propsSchema[island.schemaObject]!.length, 'island input count must equal its declared field count');
+      return makeIslandContract(island.id, this.propsSchema, island.schemaObject, contract.mode, contract.bindings);
+    });
+  }
   /** FORMA-181 may attach a path without changing LIST operands. */
   addKeyPath(listOffset: number, segments: readonly string[]): void { this.keyPaths.push({ listOffset, segments: [...segments] }); }
   /** Optional diagnostics, using 1-based UTF-16 columns. */
@@ -105,10 +140,10 @@ export class IrEmitContext {
    * the island subtree currently being captured. It is true for every slot
    * minted because an opcode needs one, and false for a slot merely DECLARED —
    * a signal the walk found in scope but that no binding on the page reads.
-   * A declared-but-unread slot must not enter an island's `slot_ids`, or the
-   * walker serializes it into `data-forma-props` and every island ships state
-   * nothing on the page renders.
-   * Verified by: packages/compiler/tests/island-registry.test.ts > "island slot ids include the signal slots its own scope minted"
+   * Capture bookkeeping supports the bytecode walk only. Island input lists
+   * are independently constructed from ordered declared fields; local signals
+   * and captured defaults never enter the state envelope as handler props.
+   * Verified by: packages/compiler/tests/island-registry.test.ts > "local signal defaults and list scratch values stay outside declared inputs"
    */
   addSlot(
     name: string,
@@ -137,6 +172,27 @@ export class IrEmitContext {
     return this.addSlot(name, typeHint, C.SLOT_SOURCE_CLIENT);
   }
 
+  /** Explicit closed constants distinguish empty text from an absent legacy default. */
+  addConstantSlot(value: unknown, typeHint: number): number {
+    encodeClosedConstant(value);
+    const id = this.addTemporarySlot(typeHint);
+    this.constants.set(id, value);
+    return id;
+  }
+
+  /** Closed provenance is distinct from a schema hint, including literal null. */
+  constantSlot(id: number): { value: unknown } | undefined {
+    return this.constants.has(id) ? { value: this.constants.get(id) } : this.closedProjections.has(id) ? {value:this.closedProjections.get(id)} : undefined;
+  }
+
+  /** Compiler-known PROP result; still independently validated by native flow. */
+  recordClosedProjection(source:number,key:string,target:number):void {
+    const closed=this.constantSlot(source);if(!closed)return;
+    const value=closed.value;
+    if(value===null)this.closedProjections.set(target,null);
+    else if(typeof value==='object'&&!Array.isArray(value))this.closedProjections.set(target,Object.hasOwn(value,key)?(value as Record<string,unknown>)[key]:null);
+  }
+
   /** Begin capturing slot ids referenced while walking an island subtree. */
   beginSlotCapture(): void {
     this.slotCaptureStack.push(new Set<number>());
@@ -156,24 +212,12 @@ export class IrEmitContext {
     for (const set of this.slotCaptureStack) set.add(id);
   }
 
-  /** Matches per-item list scratch slots (`list:<base>:item`). These are
-   *  TYPE_OBJECT working storage the LIST opcode overwrites per row, so after
-   *  SSR they hold the LAST rendered row — serializing them into an island's
-   *  data-forma-props would leak that row into the page. They are excluded
-   *  from island slot ids; everything else (attr:*, text:*, show:*,
-   *  list:*:array, list:*:<prop>, named signal slots) is kept. */
-  private static readonly LIST_ITEM_SCRATCH_RE = /^list:[^:]+:item$/;
-
-  /** Replace the slot ids of a registered island entry (back-filled after
-   *  the island's component subtree has been walked). Filters out per-item
-   *  list scratch slots — see LIST_ITEM_SCRATCH_RE. */
+  /** Ordered declared inputs may repeat a slot, including a current LIST row.
+   * The native walker snapshots them at ISLAND_START before the row advances. */
   setIslandSlotIds(islandId: number, slotIds: number[]): void {
     const island = this.islands.find(i => i.id === islandId);
     if (!island) return;
-    island.slotIds = slotIds.filter(id => {
-      const slot = this.slots.find(s => s.id === id);
-      return !slot || !IrEmitContext.LIST_ITEM_SCRATCH_RE.test(slot.name);
-    });
+    island.slotIds = [...slotIds];
   }
 
   /** Get a fresh marker id for DYN_TEXT. */
@@ -238,10 +282,12 @@ export class IrEmitContext {
   toBinary(): Uint8Array {
     const slotTable = this.encodeSlotTable(); // Intern slot names before strings.
     const schema = encodePropsSchema(this.propsSchema, s => this.addString(s));
-    const islands = this.encodeIslandTable();
+    const contracts = this.contracts();
+    const islands = this.encodeIslandTable(contracts);
     const bytecode = new Uint8Array(this.opcodes);
     const starts = validateBytecode(bytecode, this.strings.length,
       new Set(this.slots.map(s => s.id)), new Map(this.islands.map(i => [i.id, i.byteOffset])));
+    this.validateConstants(bytecode, starts);
     const keys = this.keyPaths.length ? encodeKeyPaths(this.keyPaths, starts, s => this.addString(s)) : undefined;
     const positions = this.sourcePositions === undefined ? undefined
       : encodeSourcePositions(this.sourcePositions, starts, s => this.addString(s));
@@ -254,7 +300,42 @@ export class IrEmitContext {
     ];
     if (keys) sections.push({ id: C.SECTION_KEY_PATHS, flags: C.SECTION_REQUIRED, bytes: keys });
     if (positions) sections.push({ id: C.SECTION_SOURCE_POSITIONS, flags: 0, bytes: positions });
+    sections.push({ id: C.SECTION_ISLAND_CONTRACTS, flags: C.SECTION_REQUIRED, bytes: encodeIslandContracts(contracts, this.constants) });
     return encodeFmirSections(sections);
+  }
+
+  private validateConstants(bytecode: Uint8Array, starts: ReadonlyMap<number, number>): void {
+    const view = new DataView(bytecode.buffer, bytecode.byteOffset, bytecode.byteLength);
+    const used = new Set(this.islands.flatMap(island => island.slotIds));
+    const definitions = new Map<number, number>(), coalesced = new Set<number>();
+    const read = (id: number): void => { used.add(id); };
+    const define = (id: number): void => {
+      assertEmit(!this.constants.has(id), `constant slot ${id} cannot be a destination`);
+      definitions.set(id, (definitions.get(id) ?? 0) + 1);
+    };
+    for (const [at, op] of starts) {
+      const u16 = (offset: number): number => view.getUint16(at + offset, true);
+      switch (op) {
+        case C.OP_DYN_TEXT: case C.OP_SHOW_IF: read(u16(1)); break;
+        case C.OP_DYN_ATTR: read(u16(5)); break;
+        case C.OP_PROP: read(u16(1)); define(u16(7)); break;
+        case C.OP_LIST: read(u16(1)); define(u16(3)); break;
+        case C.OP_COALESCE: {
+          const source = u16(1), fallback = u16(3), destination = u16(5);
+          assertEmit(source !== destination && fallback !== destination, 'COALESCE destination must differ from both inputs');
+          assertEmit(this.constants.has(fallback), 'COALESCE fallback must be an explicit closed constant');
+          const target = this.slots.find(slot => slot.id === destination)!;
+          assertEmit(target.source === C.SLOT_SOURCE_CLIENT && target.defaultBytes.length === 0, 'COALESCE destination must be CLIENT without a default');
+          read(source); read(fallback); define(destination); coalesced.add(destination); break;
+        }
+      }
+    }
+    for (const id of coalesced) assertEmit(definitions.get(id) === 1, 'COALESCE destination must have one static definition');
+    for (const id of this.constants.keys()) {
+      const slot = this.slots.find(slot => slot.id === id)!;
+      assertEmit(slot.source === C.SLOT_SOURCE_CLIENT && slot.defaultBytes.length === 0, 'constant slot must be CLIENT without a legacy default');
+      assertEmit(used.has(id), `unreferenced constant slot ${id}`);
+    }
   }
 
   /** Encode the string table section. */
@@ -348,17 +429,19 @@ export class IrEmitContext {
   }
 
   /** Get registered island entries (for build.ts to generate client registry). */
-  getIslands(): Array<{ id: number; name: string; trigger: number; slotIds: number[] }> {
+  getIslands(): Array<{ id: number; name: string; trigger: number; slotIds: number[]; contract?: { mode: IslandRenderMode; digest: string; schema: CanonicalSchema } }> {
+    const contracts = new Map(this.contracts().map(contract => [contract.islandId, contract]));
     return this.islands.map(i => ({
       id: i.id,
       name: this.strings[i.nameStrIdx] || `island_${i.id}`,
       trigger: i.trigger,
       slotIds: i.slotIds,
+      contract: { mode: contracts.get(i.id)!.mode, digest: Buffer.from(contracts.get(i.id)!.digest).toString('hex'), schema: contracts.get(i.id)!.schema },
     }));
   }
 
-  /** Length-prefixed v3 islands. Digest emission is reserved for FORMA-105. */
-  private encodeIslandTable(): Uint8Array {
+  /** Declared ordered inputs and the paired browser/native binding identity. */
+  private encodeIslandTable(contracts: readonly IslandContract[]): Uint8Array {
     const declaredSlots = new Set(this.slots.map(slot => slot.id));
     let totalSize = 2;
     for (const island of this.islands) {
@@ -366,8 +449,8 @@ export class IrEmitContext {
       uint(island.schemaObject, 0xffff, 'island schema object');
       assertEmit(island.schemaObject === 0xffff || island.schemaObject < this.propsSchema.length, 'island schema object out of bounds');
       uint(island.byteOffset, 0xffffffff, 'island byte offset');
-      const length = 17 + island.slotIds.length * 2;
-      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32759 slot ids)');
+      const length = 25 + island.slotIds.length * 2;
+      assertEmit(length <= 0xffff, 'island entry exceeds u16 length (at most 32755 slot ids)');
       for (const id of island.slotIds) assertEmit(declaredSlots.has(id), `island references undeclared slot ${id}`);
       totalSize += 2 + length;
     }
@@ -375,14 +458,15 @@ export class IrEmitContext {
     const buf = new Uint8Array(totalSize), view = new DataView(buf.buffer);
     view.setUint16(0, this.islands.length, true);
     let pos = 2;
-    for (const island of this.islands) {
-      view.setUint16(pos, 17 + island.slotIds.length * 2, true); pos += 2;
+    for (const [index, island] of this.islands.entries()) {
+      view.setUint16(pos, 25 + island.slotIds.length * 2, true); pos += 2;
       view.setUint16(pos, island.id, true); pos += 2;
       buf[pos++] = island.trigger; buf[pos++] = 0;
       view.setUint32(pos, island.nameStrIdx, true); pos += 4;
       view.setUint32(pos, island.byteOffset, true); pos += 4;
       view.setUint16(pos, island.schemaObject, true); pos += 2;
-      buf[pos++] = 0; // digest_len; FORMA-105 owns the content and validation.
+      buf[pos++] = 8;
+      buf.set(contracts[index]!.digest, pos); pos += 8;
       view.setUint16(pos, island.slotIds.length, true); pos += 2;
       for (const slot of island.slotIds) { view.setUint16(pos, slot, true); pos += 2; }
     }

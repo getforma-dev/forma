@@ -6,8 +6,8 @@
 use crate::format::{
     le_u16, le_u32, limit, IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, SectionTable,
     SlotEntry, SlotSource, SlotType, HEADER_SIZE, MAX_ISLANDS, MAX_STRINGS, SECTION_BYTECODE,
-    SECTION_ISLANDS, SECTION_KEY_PATHS, SECTION_PROPS_SCHEMA, SECTION_REQUIRED, SECTION_SLOTS,
-    SECTION_SOURCE_POSITIONS, SECTION_STRINGS,
+    SECTION_ISLANDS, SECTION_ISLAND_CONTRACTS, SECTION_KEY_PATHS, SECTION_PROPS_SCHEMA,
+    SECTION_REQUIRED, SECTION_SLOTS, SECTION_SOURCE_POSITIONS, SECTION_STRINGS,
 };
 use crate::schema::{self, Cursor, KeyPath, PropsSchema, SourcePosition};
 
@@ -380,6 +380,7 @@ pub struct IrModule {
     pub source_positions: Vec<SourcePosition>,
     /// Complete original encoding retained for canonical dumps and lossless roundtrips.
     raw: Vec<u8>,
+    pub(crate) contracts: Option<crate::contracts::Contracts>,
     /// Dense `slot_id` → index into `slots.entries()`, `NO_INDEX` if absent.
     /// Replaces a linear scan per DYN_TEXT/DYN_ATTR/SHOW_IF/LIST opcode.
     slot_index: Vec<u32>,
@@ -397,6 +398,7 @@ impl IrModule {
         section_table.validate(data.len())?;
         for section in &section_table.sections {
             if !(SECTION_BYTECODE..=SECTION_SOURCE_POSITIONS).contains(&section.id)
+                && section.id != SECTION_ISLAND_CONTRACTS
                 && section.flags & SECTION_REQUIRED != 0
             {
                 return Err(IrError::UnknownRequiredSection {
@@ -415,6 +417,18 @@ impl IrModule {
             let start = section.offset as usize;
             data.get(start..start + section.size as usize)
                 .ok_or(IrError::InvalidSection)
+        };
+        if let Some(section) = section_table.get(SECTION_ISLAND_CONTRACTS) {
+            if section.flags != SECTION_REQUIRED {
+                return Err(IrError::InvalidSchema("island contracts must be required"));
+            }
+        }
+        let contracts = if section_table.get(SECTION_ISLAND_CONTRACTS).is_some() {
+            Some(crate::contracts::Contracts::parse(payload(
+                SECTION_ISLAND_CONTRACTS,
+            )?)?)
+        } else {
+            None
         };
         let strings = StringTable::parse(payload(SECTION_STRINGS)?)?;
         let slots = SlotTable::parse(payload(SECTION_SLOTS)?)?;
@@ -436,6 +450,7 @@ impl IrModule {
             key_paths: Vec::new(),
             source_positions: Vec::new(),
             raw: data.to_vec(),
+            contracts,
         };
         let starts = module.validation_starts()?;
         if section_table.get(SECTION_KEY_PATHS).is_some() {
@@ -449,7 +464,17 @@ impl IrModule {
                 &starts,
             )?;
         }
+        // Preserve established structural diagnostics (including optional
+        // key paths/source positions) before the new conditional contract gate.
+        module.validate_contracts(&starts)?;
         Ok(module)
+    }
+
+    /// Validated canonical binding/schema bytes for one static island, for diagnostics.
+    /// These bytes are identity metadata, not executable instructions or a binding bypass.
+    pub fn island_contract_bytes(&self, id: u16) -> Option<(&[u8], &[u8])> {
+        let contract = self.contracts.as_ref()?.islands.get(&id)?;
+        Some((&contract.binding_bytes, &contract.schema_bytes))
     }
 
     /// Original bytes, including unknown optional sections and island extensions.
@@ -479,7 +504,8 @@ impl IrModule {
     /// stay cheap and so malformed IR fails at load rather than rendering
     /// mystery HTML on some later request.
     pub fn validate(&self) -> Result<(), IrError> {
-        self.validation_starts().map(|_| ())
+        let starts = self.validation_starts()?;
+        self.validate_contracts(&starts)
     }
 
     fn validation_starts(&self) -> Result<Vec<(u32, Opcode)>, IrError> {
@@ -561,6 +587,15 @@ impl IrModule {
         Ok(starts)
     }
 
+    fn validate_contracts(&self, starts: &[(u32, Opcode)]) -> Result<(), IrError> {
+        if let Some(contracts) = &self.contracts {
+            contracts.validate(self, starts)?;
+        } else if !self.islands.is_empty() || starts.iter().any(|(_, op)| *op == Opcode::Coalesce) {
+            return Err(IrError::MissingSection(SECTION_ISLAND_CONTRACTS));
+        }
+        Ok(())
+    }
+
     /// Linearly decode `opcodes[start..end]`, requiring that it tiles exactly
     /// and that every slot id it names is declared.
     ///
@@ -627,6 +662,12 @@ impl IrModule {
                     pos = bounded(pos, 2, end, op_start)?;
                 }
                 Opcode::ShowElse => {} // Historical stray separator is a no-op.
+                Opcode::Coalesce => {
+                    self.check_slot(read_u16_at(ops, pos, end)?)?;
+                    self.check_slot(read_u16_at(ops, pos + 2, end)?)?;
+                    self.check_slot(read_u16_at(ops, pos + 4, end)?)?;
+                    pos = bounded(pos, 6, end, op_start)?;
+                }
                 Opcode::Prop => {
                     self.check_slot(read_u16_at(ops, pos, end)?)?;
                     self.strings.get(read_u32_at(ops, pos + 2, end)?)?;
@@ -996,6 +1037,110 @@ pub mod test_helpers {
         ])
     }
 
+    /// Explicit declared-contract builder for native scalar/string-array tests.
+    ///
+    /// This is fixture shorthand, not a compiler: SERVER slot tuples declare
+    /// page fields of their named scalar type (Array means string[] here), and
+    /// each island tuple declares the ordered fields named by its input slots.
+    /// More complex schemas use build_ir_sections directly. The original
+    /// build_minimal_ir remains unchanged for old-module refusal controls.
+    pub fn build_declared_fixture(
+        strings: &[&str],
+        slots: &[(u16, u32, u8, u8, &[u8])],
+        opcodes: &[u8],
+        islands: &[(u16, u8, u8, u32, u32, &[u16])],
+    ) -> Vec<u8> {
+        if islands.is_empty() {
+            return build_minimal_ir(strings, slots, opcodes, islands);
+        }
+        fn kind(hint: u8) -> Vec<u8> {
+            match hint {
+                1 => vec![2],
+                2 => vec![1],
+                3 => vec![3],
+                4 => vec![6, 2],
+                _ => panic!("fixture requires an explicit non-scalar schema"),
+            }
+        }
+        fn fields(out: &mut Vec<u8>, declarations: &[(u32, Vec<u8>)]) {
+            out.extend(to_u16(declarations.len()));
+            for (name, kind) in declarations {
+                out.extend(name.to_le_bytes());
+                out.extend(0u32.to_le_bytes());
+                out.extend(1u32.to_le_bytes());
+                out.extend(1u32.to_le_bytes());
+                out.extend(kind);
+            }
+        }
+        let mut page = Vec::new();
+        for &(_, name, hint, source, _) in slots {
+            if source == 0 && !page.iter().any(|(prior, _)| *prior == name) {
+                page.push((name, kind(hint)));
+            }
+        }
+        let mut schema = to_u16(islands.len() + 1).to_vec();
+        fields(&mut schema, &page);
+        let mut island_table = to_u16(islands.len()).to_vec();
+        let mut records = Vec::new();
+        for (index, &(id, trigger, _, name, offset, inputs)) in islands.iter().enumerate() {
+            let declared = inputs
+                .iter()
+                .map(|id| {
+                    let &(_, name, hint, _, _) = slots
+                        .iter()
+                        .find(|slot| slot.0 == *id)
+                        .expect("declared fixture slot");
+                    (name, kind(hint))
+                })
+                .collect::<Vec<_>>();
+            fields(&mut schema, &declared);
+            let mut record = id.to_le_bytes().to_vec();
+            record.extend([trigger, 0]);
+            record.extend(name.to_le_bytes());
+            record.extend(offset.to_le_bytes());
+            record.extend(to_u16(index + 1));
+            record.push(8);
+            record.extend([id as u8; 8]); // Deterministic opaque identity, not a producer hash claim.
+            record.extend(to_u16(inputs.len()));
+            for input in inputs {
+                record.extend(input.to_le_bytes());
+            }
+            island_table.extend(to_u16(record.len()));
+            island_table.extend(record);
+            let mut canonical = vec![1, 1, 0];
+            canonical.extend(to_u16(declared.len()));
+            let mut sorted = declared.iter().collect::<Vec<_>>();
+            sorted.sort_by_key(|(name, _)| strings[*name as usize]);
+            for (name, kind) in sorted {
+                let name = strings[*name as usize].as_bytes();
+                canonical.extend(to_u16(name.len()));
+                canonical.extend(name);
+                canonical.extend(kind);
+            }
+            let mut record = id.to_le_bytes().to_vec();
+            record.extend(4u32.to_le_bytes());
+            record.extend([1, 0, 0, 0]);
+            record.extend(to_u32(canonical.len()));
+            record.extend(canonical);
+            records.push((id, record));
+        }
+        records.sort_by_key(|(id, _)| *id);
+        let mut contracts = to_u16(records.len()).to_vec();
+        for (_, record) in records {
+            contracts.extend(to_u32(record.len()));
+            contracts.extend(record);
+        }
+        contracts.extend([0, 0]);
+        build_ir_sections(&[
+            (1, 1, opcodes),
+            (2, 1, &build_string_table(strings)),
+            (3, 1, &build_slot_table(slots)),
+            (4, 1, &island_table),
+            (5, 1, &schema),
+            (10, 1, &contracts),
+        ])
+    }
+
     /// Build a v3 module from arbitrary sections, for fault injection and protocol tests.
     pub fn build_ir_sections(sections: &[(u16, u16, &[u8])]) -> Vec<u8> {
         let mut buf = Vec::new();
@@ -1019,6 +1164,42 @@ pub mod test_helpers {
         }
         restamp(&mut buf);
         buf
+    }
+
+    /// Add FMIR section `0x0006` (key paths) to a module built by one of the
+    /// builders above: one `(LIST byte offset, segment string indexes)` entry
+    /// per keyed LIST, in ascending offset order, as the compiler writes it.
+    /// Every other section is kept byte for byte.
+    pub fn with_key_paths(ir: &[u8], paths: &[(u32, &[u32])]) -> Vec<u8> {
+        let table = &ir[HEADER_SIZE..];
+        let count = u16::from_le_bytes([table[0], table[1]]) as usize;
+        let mut sections: Vec<(u16, u16, &[u8])> = (0..count)
+            .map(|index| {
+                let entry = &table[TABLE_PREFIX_SIZE + index * SECTION_ENTRY_SIZE..];
+                let field = |at: usize| u32::from_le_bytes(entry[at..at + 4].try_into().unwrap());
+                let (offset, size) = (field(4) as usize, field(8) as usize);
+                (
+                    u16::from_le_bytes([entry[0], entry[1]]),
+                    u16::from_le_bytes([entry[2], entry[3]]),
+                    &ir[offset..offset + size],
+                )
+            })
+            .collect();
+        let mut payload = to_u32(paths.len()).to_vec();
+        for (offset, segments) in paths {
+            payload.extend_from_slice(&offset.to_le_bytes());
+            payload.push(u8::try_from(segments.len()).unwrap());
+            for segment in *segments {
+                payload.extend_from_slice(&segment.to_le_bytes());
+            }
+        }
+        assert!(
+            sections.iter().all(|(id, _, _)| *id != 6),
+            "the module already has a key-path section"
+        );
+        let at = sections.partition_point(|(id, _, _)| *id < 6);
+        sections.insert(at, (6, 1, &payload));
+        build_ir_sections(&sections)
     }
 
     /// Restamp length and checksum after a deliberate structural mutation.
@@ -1216,7 +1397,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_text(1));
         opcodes.push(0x0C); // ISLAND_END
         opcodes.extend_from_slice(&1u16.to_le_bytes());
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["Counter", "Hello"],
             &[],
             &opcodes,
@@ -1230,7 +1411,7 @@ mod tests {
         let entry = &module.islands.entries()[0];
         assert_eq!(entry.id, 1);
         assert_eq!(entry.trigger, IslandTrigger::Load);
-        assert_eq!(entry.schema_object, 0xffff);
+        assert_eq!(entry.schema_object, 1);
         assert_eq!(entry.name_str_idx, 0);
         assert_eq!(module.strings.get(entry.name_str_idx).unwrap(), "Counter");
     }
@@ -1487,7 +1668,7 @@ mod tests {
         opcodes.extend_from_slice(&3u16.to_le_bytes());
         opcodes.push(0x0C);
         opcodes.extend_from_slice(&3u16.to_le_bytes());
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["Comp", "title"],
             &[(4, 1, 0x01, 0x00, &[])],
             &opcodes,

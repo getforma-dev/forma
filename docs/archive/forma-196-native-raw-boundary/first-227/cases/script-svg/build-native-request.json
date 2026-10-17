@@ -1,0 +1,40 @@
+{
+  "modules": [
+    {
+      "name": "script-svg",
+      "route": "/",
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "d151c7325892605d",
+        "aliases": {
+          "home.ir": "home.90a00162.ir"
+        },
+        "assets": {
+          "home.90a00162.ir": {
+            "immutable": true,
+            "integrity": "sha384-PRE4mGlGEwRRrr+1hta1sMhSfV0yDcw3Ggt3O8TSDzBAQfzieKDpXxpR6DSa8Z8J"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "js": [],
+            "css": [],
+            "fonts": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 200000,
+            "ir": "home.90a00162.ir"
+          }
+        }
+      },
+      "files": {
+        "home.90a00162.ir": "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/script-svg/build-with-app/home.90a00162.ir"
+      },
+      "states": [
+        {}
+      ]
+    }
+  ]
+}

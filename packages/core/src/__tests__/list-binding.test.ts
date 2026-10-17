@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * List item binding tests.
  *
@@ -9,7 +10,7 @@
  * ALL 6 TESTS ARE EXPECTED TO FAIL until child scope binding is implemented.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, unmount } from '../runtime';
+
 
 function waitForEffects(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -24,7 +25,7 @@ describe('data-list child binding', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
   });
 
@@ -41,7 +42,7 @@ describe('data-list child binding', () => {
         <p id="result" data-text="{clicked}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
 
     // There should be 2 list items rendered
@@ -68,7 +69,7 @@ describe('data-list child binding', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
 
     const badges = container.querySelectorAll('.badge') as NodeListOf<HTMLElement>;
@@ -92,7 +93,7 @@ describe('data-list child binding', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
 
     const items = container.querySelectorAll('[data-key]');
@@ -117,7 +118,7 @@ describe('data-list child binding', () => {
         <p id="active-display" data-text="{activeId}"></p>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
 
     const listItems = container.querySelectorAll('[data-key]');
@@ -142,7 +143,7 @@ describe('data-list child binding', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
 
     const listEl = container.querySelector('#list-container')!;
@@ -182,7 +183,7 @@ describe('data-list child binding', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     await waitForEffects();
 
     // Outer list should render 1 group
@@ -211,7 +212,7 @@ describe('data-list transitions', () => {
   });
 
   afterEach(() => {
-    unmount(container);
+    unmountFixture(container);
     container.remove();
     vi.useRealTimers();
   });
@@ -227,7 +228,7 @@ describe('data-list transitions', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
 
     root.__formaScope.setters.items([
@@ -255,7 +256,7 @@ describe('data-list transitions', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
 
     root.__formaScope.setters.items([{id: '1', name: 'A'}]);
@@ -278,7 +279,7 @@ describe('data-list transitions', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
 
     root.__formaScope.setters.items([{id: '1', name: 'A'}]);
@@ -298,7 +299,7 @@ describe('data-list transitions', () => {
         </div>
       </div>
     `;
-    mount(container);
+    mountFixture(container);
     const root = container.querySelector('[data-forma-state]') as any;
 
     root.__formaScope.setters.items([

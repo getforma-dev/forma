@@ -6,25 +6,29 @@
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
 
-> **Where this sits.** One product, four repos:
+> **Where this sits.** One repository, seven coordinated packages:
 >
 > ```
-> TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
->          forma-tools                          forma                    formajs
->                              THIS REPO scaffolds a project that uses all three
+> TS/JSX → @getforma/compiler → FMIR 3 → forma-ir → forma-server → HTML
+>          @getforma/build joins the assets       @getforma/core adopts islands
+>          @getforma/create-app supplies the templates; forma-ir-derive types props
 > ```
 >
 > **You are here:** the front door. New to the stack? Read
 > **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)**
-> — it explains the whole pipeline and the reasoning behind it. Neighbours:
-> [formajs](https://github.com/getforma-dev/formajs) (client runtime) ·
-> [forma-tools](https://github.com/getforma-dev/forma-tools) (compiler + build) ·
-> [forma](https://github.com/getforma-dev/forma) (Rust parser, walker, server).
+> — it explains the pipeline. All seven packages live in
+> [getforma-dev/forma](https://github.com/getforma-dev/forma) and publish as one set.
+> Existing 0.6.x projects can follow the
+> [3.0 template migration](docs/UPGRADING-3.0.md).
 
 ## Usage
 
+These registry commands target `3.0.0-beta.1` and require its coordinated
+publication. For an unpublished set, use the packed candidate workflow
+described below. Release records report the qualification of each published set.
+
 ```bash
-npx @getforma/create-app my-app
+npx @getforma/create-app@3.0.0-beta.1 my-app
 cd my-app
 ```
 
@@ -44,11 +48,11 @@ because its `/api/*` routes have no authentication.
 ## Options
 
 ```bash
-npx @getforma/create-app my-app --template dashboard
-npx @getforma/create-app my-app --template minimal
-npx @getforma/create-app my-app --dry-run
-npx @getforma/create-app --help
-npx @getforma/create-app --version
+npx @getforma/create-app@3.0.0-beta.1 my-app --template dashboard
+npx @getforma/create-app@3.0.0-beta.1 my-app --template minimal
+npx @getforma/create-app@3.0.0-beta.1 my-app --dry-run
+npx @getforma/create-app@3.0.0-beta.1 --help
+npx @getforma/create-app@3.0.0-beta.1 --version
 ```
 
 Project names must start with a lowercase letter and use only lowercase
@@ -158,12 +162,14 @@ The gate requires all 17 heavy controls plus the structural suite, with no skips
 
 MIT
 
-## Development staging toward 3.0.0
+## Source staging for 3.0.0-beta.1
 
 The checked-in templates now use the declared-props and finalized Pages APIs.
-Minimal keeps its whole-page mount with matching server/browser defaults;
-island state adoption and the broader template redesign remain FORMA-144
-slices 2 and 3.
+Minimal now declares a Counter island over its static home markup and a
+separate empty-props About page. The native handler starts at7 while explicit
+Browser mode starts at0. Source tests pair its emitted contract and browser
+registration; final integrated adoption/zero-network acceptance and slice3's
+release/size qualification remain required.
 
 Source template locks are explicitly identified **seeds** at the coordinated
 package version. They retain every external registry checksum and omit only

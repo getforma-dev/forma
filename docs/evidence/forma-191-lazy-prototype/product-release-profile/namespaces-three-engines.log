@@ -1,0 +1,37 @@
+[WebServer] (node:660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:705) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 12 tests using 2 workers
+
+(node:711) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:710) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+
+
+[1/12] [chromium] › e2e/ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+[2/12] [firefox] › e2e/ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+[3/12] [chromium] › e2e/ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+[4/12] [chromium] › e2e/ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+[5/12] [chromium] › e2e/ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+(node:733) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/12] [webkit] › e2e/ssr/namespaces.spec.ts:21:5 › actual typed native products parse to the six canonical namespace trees
+[7/12] [firefox] › e2e/ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+[8/12] [firefox] › e2e/ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+[9/12] [webkit] › e2e/ssr/namespaces.spec.ts:24:5 › compiled fresh JSX preserves namespace vectors and the script refusal
+[10/12] [firefox] › e2e/ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+[11/12] [webkit] › e2e/ssr/namespaces.spec.ts:31:5 › compiled namespaces adopt the same nodes with zero writes and live signal bindings
+[12/12] [webkit] › e2e/ssr/namespaces.spec.ts:45:5 › inline SVG callbacks preserve namespaces initially and on real branch updates
+  12 passed (5.0s)

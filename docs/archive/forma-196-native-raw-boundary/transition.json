@@ -1,0 +1,54 @@
+{
+  "sourceHead": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "previousManifest": "docs/archive/FORMA-139-html-context/manifest.json",
+  "previousManifestSha256": "5f7f5da4bf8f1623e1d5d46672e542f7eec3862977c389110db2b6bf24884b8b",
+  "case": {
+    "name": "static script",
+    "source": "import {h,mount,activateIslands,createSignal,createList,createShow,Fragment,browserOnly} from '@getforma/core';\n\nexport function Page(){return h('section',null,h('script',null,'void 0;'));}\nmount(()=>Page(),'#app');\n",
+    "stem": "29",
+    "diagnostics": [],
+    "bytes": 171,
+    "sha256": "2e123da6beeeffdd0c7957263e4debcb82c94773dac7cb89844ca2776ec70544"
+  },
+  "sourceSha256": "600b953a0a55ba9fedbc809c9409030e9674e6ec42327d3ecdb8fefd7caf8d21",
+  "currentDiagnostic": "BUILD-623",
+  "reason": "Reconcile older139 literal-script allowance with public core bundle-only Trusted Types contract; old source/product retained unchanged.",
+  "originalFiles": [
+    {
+      "path": "original/packages/compiler/src/html-context.ts",
+      "sourcePath": "packages/compiler/src/html-context.ts",
+      "sha256": "419a1a0f605428e577aa4ddc70af093ca7de0ffcbeafe30894eb19d5ed1ffc7b",
+      "bytes": 12347
+    },
+    {
+      "path": "original/packages/compiler/src/props-schema.ts",
+      "sourcePath": "packages/compiler/src/props-schema.ts",
+      "sha256": "73b5d3ab1bcfa0e786a144c4aa0957d1f82ec5e843d30bad7f998559dcfba252",
+      "bytes": 12902
+    },
+    {
+      "path": "original/packages/compiler/src/diagnostics.ts",
+      "sourcePath": "packages/compiler/src/diagnostics.ts",
+      "sha256": "88459d8089f7c1e92f7efe0ca4806f013ba2b2c222696e9bc665da5e669d1339",
+      "bytes": 41307
+    },
+    {
+      "path": "original/packages/compiler/tests/html-context.test.ts",
+      "sourcePath": "packages/compiler/tests/html-context.test.ts",
+      "sha256": "cd85adb3c2ad7213034387f182b1b2dfe86638dfb4b8f5a2b3ea7a44e4c59b58",
+      "bytes": 16186
+    },
+    {
+      "path": "original/packages/compiler/docs/subset.md",
+      "sourcePath": "packages/compiler/docs/subset.md",
+      "sha256": "983c53bc56977977164278bff662e3b66b8d27a3bab9cb22560f08ecb43c0356",
+      "bytes": 50125
+    },
+    {
+      "path": "original/docs/TRUSTED-TYPES.md",
+      "sourcePath": "docs/TRUSTED-TYPES.md",
+      "sha256": "bcebb84093326b136d3aea4b76c7af4a15566dd53cd7933245eec1a6195f1512",
+      "bytes": 5822
+    }
+  ]
+}

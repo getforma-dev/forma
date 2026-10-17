@@ -190,6 +190,55 @@ Static item fields (`src: item.art`) bake into the element when the row renders
 — the row is re-created when its key changes. Function props
 (`src: () => coverUrl()`) are reactive and update the attribute in place.
 
+### Indexed item replacement
+
+`createKeyedRows(initial, keyFn)` stores plain items by their canonical keys.
+Pass that handle to the two-argument `createList(rows, renderRow)` overload;
+the row callback receives a stable read-only item getter and the usual index getter.
+Replace items through the handle; passing an argument to the item getter cannot write it.
+
+```ts
+import { createKeyedRows, createList, h } from "@getforma/core";
+
+const rows = createKeyedRows([
+  { id: 1, label: "Alice" },
+  { id: 2, label: "Bob" },
+], item => item.id);
+
+createList(rows, (item, index) => h("li", null,
+  h("span", { title: () => item().label }, () => item().label),
+  h("button", { onClick: () => console.log(item()) }, "Inspect"),
+  () => String(index()),
+));
+
+rows.set(1, { id: 1, label: "Alicia" });
+rows.replace([{ id: 2, label: "Bob" }, { id: 1, label: "Alicia" }]);
+```
+
+`set(key, nextItem)` replaces one existing item. Its canonical key must stay
+the same; missing keys and key changes throw before any value is published.
+Passing the same object is a no-op. Reactive holes read the current item through
+`item()`; a one-time read outside a reactive callback remains a snapshot. The
+row factory, node identity and index are unchanged by `set`.
+
+`replace(nextItems)` changes membership or order. It validates the complete
+dense array and all keys before publishing any retained values, then batches
+the change. Retained keys keep their getters and row nodes; removed rows dispose
+their views. Several lists may share one handle and dispose independently.
+Directly mutating an input object does not notify readers.
+
+Keys follow the keyed-adoption domain: well-formed strings or safe integers.
+Numeric `1` and string `"1"` identify the same key; string line endings and NUL
+follow the shared text normalization. Duplicate canonical keys, sparse arrays,
+fractions and lone surrogates throw. Key callbacks must not reenter mutation
+of the same collection. The indexed overload takes no options and supplies
+no early-edit writeback authority for editable controls.
+
+For native SSR, create the collection inside the component that returns its
+unconditional list, and mutate it through deferred intrinsic event handlers.
+The [indexed native subset](../../compiler/docs/subset.md#indexed-row-updates)
+defines the declared-data and original-binding proof required for admission.
+
 ---
 
 ## Store — deep reactivity
@@ -335,6 +384,21 @@ mount(() => h("p", null, "hello"), "#nonexistent");
 // Error: mount: container not found — "#nonexistent"
 ```
 
+Before rendering, `mount` applies the [deployment identity guard](ISLANDS.md#deployment-mismatch). A mismatch leaves the target intact and returns an inert disposal callback.
+
+Otherwise a target carrying `data-forma-ssr` throws `FORMA_E_MOUNT_SSR` before the
+component, reactive root, effects or listeners run, and before any DOM write.
+Use declared `activateIslands` for SSR interaction. Ordinary Browser mounting
+and unmounting are unchanged; public direct `hydrateIsland` remains separate
+and requires caller-owned reactive cleanup. Both SSR activation and public direct
+hydration now validate the original DOM before publication; neither repairs an
+initial mismatch. Compiled activation requires one owned Element and can seed
+only compiler-proven local early edits. Public hydration has no such setter
+authority. See [strict activation](ISLANDS.md#strict-activation) for diagnostics,
+zero-write success and the distinct Browser-only path.
+
+Verified by `src/dom/__tests__/mount.test.ts` > "refuses a marked %s root by %s before component/root/effects/listeners or DOM writes"
+
 **Global error handler** for effects and lifecycle callbacks:
 
 ```ts
@@ -419,7 +483,12 @@ markup, wherever it can know it.
     once the helper is in the document;
   - a portal into an SVG;
   - `mount()` into an SVG element;
-  - what adoption creates.
+  - ordinary client-rendered control flow.
+
+  Strict initial adoption validates existing namespaces without creating or
+  repairing nodes. Later branches and rows resolve child namespaces from the
+  constructed parent, including nested HTML inside SVG `foreignObject` and SVG
+  inside MathML `annotation-xml`. These paths have separate adoption controls.
 - **A child passed to `h()` is built before its parent exists.** In
   `h("svg", null, h("title", null, "Close"))` the `title` is created first, as
   HTML. Build a hand-written SVG tree with such a tag inside `svg()`, which
@@ -481,8 +550,9 @@ createPortal(() => h("div", { class: "modal" }, "Hi"), "#modal-root");
 
 ## The rest of the export surface
 
-Everything the root entry exports, grouped. These are stable and typed; the
-sections above cover the ones with non-obvious semantics.
+Everything the root entry exports, grouped. The application APIs are stable and typed;
+the explicitly marked compiler helper follows the supported compiler/core version window.
+The sections above cover application APIs with non-obvious semantics.
 
 | Group | Exports |
 |---|---|
@@ -490,10 +560,12 @@ sections above cover the ones with non-obvious semantics.
 | Ownership | `createRoot`, `createUnownedRoot`, `getOwner`, `runWithOwner`, `onCleanup`, `onError`, `trackDisposer` |
 | Introspection | `isSignal`, `isComputed`, `isEffect`, `isEffectScope`, `getBatchDepth`, `trigger`, `getSignalName` |
 | Rendering | `h`, `svg`, `Fragment`, `fragment`, `createText`, `mount`, `template`, `templateMany` |
-| Control flow | `createShow`, `createSwitch`, `createList`, `reconcileList`, `createPortal`, `createSuspense`, `createErrorBoundary`, `cleanup` |
+| Control flow | `createShow`, `createSwitch`, `createList`, `createKeyedRows`, `reconcileList`, `createPortal`, `createSuspense`, `createErrorBoundary`, `cleanup` |
 | Components | `defineComponent`, `disposeComponent`, `onMount`, `onUnmount`, `createContext`, `provide`, `inject`, `unprovide` |
 | State | `createStore`, `createHistory`, `persist(source, key, options?)` — mirrors a `[get, set]` pair into `localStorage` |
 | Islands | `activateIslands`, `hydrateIsland`, `deactivateIsland`, `deactivateAllIslands`, `sanitizePropsDeep`, `browserOnly(component)` — a component that renders in the browser alone ([ISLANDS.md](ISLANDS.md#browser-only-components-browseronly)) |
+| Compiler internal | `__islandRegistration(component, metadata)` — generated registration with canonical schema, digest and render mode; [internal state contract](ISLAND-STATE.md), not an application bypass |
+| Compiler internal | `__adoptionSignal(site, pair)` and `__adoptionWritable(read, getter, codec, site)` retain actual component-local signal identities during strict adoption preparation. `__adoptionChild(undefined, component, args)` defers an admitted child call during private description; outside it the original call keeps its exact argument count. `__adoptionConditional(test, consequent, alternate)` describes an admitted DOM ternary; ordinary execution reads the test once and calls only the selected branch thunk. These helpers grant no claim or setter authority by themselves. The compiled activation path consumes these hooks; public direct hydration remains unprivileged. These exports are not application APIs. |
 | Events | `createBus`, `delegate(container, selector, event, handler)`, `onKey(combo, handler, options?)` |
 | DOM utils | `$`, `$$`, `addClass`, `removeClass`, `toggleClass`, `setStyle`, `setAttr`, `setText`, `setHTMLUnsafe`, `closest`, `children`, `siblings`, `parent`, `nextSibling`, `prevSibling`, `onResize`, `onIntersect`, `onMutation` |
 | Raw HTML | `trustedHtml(markup)` — the one raw-HTML entry, which every raw sink takes ([below](#trustedhtml-the-one-raw-entry)) |
@@ -507,8 +579,9 @@ Verified by `src/__tests__/docs-truth.test.ts` > "documents every symbol the roo
 FormaJS never builds markup from strings. `h()` creates elements with
 `document.createElement` and writes text with `textContent`, which is why
 `innerHTML` is not used for library-generated markup. Five APIs, the raw sinks,
-deliberately break that rule, and the HTML runtime has two `srcdoc` bindings
-that do; **none of them sanitizes**, and all are first-party-content-only sinks:
+deliberately parse trusted markup; **none of them sanitizes**, and all are
+first-party-content-only sinks. The HTML runtime refuses its two `srcdoc`
+binding forms before a sink:
 
 | Sink | Where | What it does |
 |---|---|---|
@@ -516,8 +589,8 @@ that do; **none of them sanitizes**, and all are first-party-content-only sinks:
 | `setHTMLUnsafe(el, html)` | `@getforma/core` | assigns `innerHTML` on the element |
 | `template(html)`, `templateMany(html)` | `@getforma/core` | parses the markup into a cached `<template>`, which compiled output clones |
 | `reconcile(container, html)` | `@getforma/core/runtime` | parses an HTML string into a `<template>` and diffs it into the live page |
-| `srcdoc` attribute | `h()` and adoption | the browser parses the *attribute value* as a document, so escaping does not neutralize it; anything but `trustedHtml()` logs a coded warning in development |
-| `data-bind:srcdoc`, `{item…}` in a list row's `srcdoc` | the HTML runtime | writes an expression's value, or a row's data, as the iframe's document: a string no `trustedHtml()` can reach, refused in 3.0.0 ([HTML-RUNTIME.md](HTML-RUNTIME.md)) |
+| `srcdoc` attribute | `h()` and adoption | the browser parses the *attribute value* as a document, so escaping does not neutralize it; anything but a trusted value is refused in development and production |
+| `data-bind:srcdoc`, `{item…}` in a list row's `srcdoc` | the HTML runtime | refuses the expression/row binding with `FORMA_E_RUNTIME_SRCDOC`; it does not write an iframe document ([HTML-RUNTIME.md](HTML-RUNTIME.md)) |
 
 Everything else is guarded: URL-bearing attributes (`href`, `src`, `action`,
 `formaction`, `xlink:href`, `poster`, `background`, `data`) drop `javascript:`,

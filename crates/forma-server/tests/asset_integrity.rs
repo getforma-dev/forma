@@ -106,7 +106,11 @@ fn both_public_document_paths_write_exact_integrity_and_keep_nonces() {
         for tag in html.split('<').filter(|tag| {
             tag.starts_with("script ") || tag.starts_with("link rel=\"modulepreload\"")
         }) {
-            assert!(tag.split('>').next().unwrap().contains("nonce=\""), "{tag}");
+            if tag.starts_with("script type=\"application/json\" data-island-state>") {
+                assert_eq!(tag, "script type=\"application/json\" data-island-state>{\"v\":1,\"s\":[],\"i\":[]}");
+            } else {
+                assert!(tag.split('>').next().unwrap().contains("nonce=\""), "{tag}");
+            }
         }
         let policy = parts
             .headers

@@ -282,16 +282,19 @@ describe('the frame runtime build (the real tsup config)', () => {
     // It never mounts the page on load or watches body: no tierless path.
     expect(code).not.toContain('DOMContentLoaded');
     expect(code).not.toContain('MutationObserver');
+    // No component adoption runs in the frame, so its signals need no
+    // component-local getter/setter enrollment bridge.
+    expect(code).not.toContain('recordAdoptionSignal');
     // What it is: the frame's connection, mounting in tier (c).
     expect(code).toContain('connectFrame(window)');
     expect(code).toContain('"unreviewed"');
   });
 
-  it('without the frame flag the same entry would auto-mount the page', { timeout: 120_000 }, async () => {
-    // The control for the test above: the flag, not the entry, keeps the
-    // tierless path out.
+  it('without the frame flag the same entry stays inert and does not connect', { timeout: 120_000 }, async () => {
+    // The flag controls the frame connection. Explicit mounting is universal.
     const code = await buildFrame({ define: { ...FRAME_DEFINE, [FRAME_BUILD_FLAG]: 'false' } });
-    expect(code).toContain('DOMContentLoaded');
+    expect(code).not.toContain('DOMContentLoaded');
+    expect(code).not.toContain('MutationObserver');
     expect(code).not.toContain('connectFrame(window)');
   });
 

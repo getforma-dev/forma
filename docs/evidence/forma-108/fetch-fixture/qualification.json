@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "sourceCommit": "e7b3d20dcec5eafe470b6cf2c4e1ef9d6c78fc20",
+  "sourceClean": true,
+  "node": "v24.22.0",
+  "workers": 2,
+  "retries": 0,
+  "engines": [
+    "chromium",
+    "firefox",
+    "webkit"
+  ],
+  "runtime": {
+    "bytes": 162173,
+    "sha256": "828ce6ac426cb7d4f996e8175ae8003014519aa431309e22dde4899543594259"
+  },
+  "sources": {
+    "packages/core/e2e/data-fetch.spec.ts": {
+      "bytes": 2899,
+      "sha256": "15c605ee510fe68dce3b92ad2c73925a8c777de11c984e3c3e589b84e2a09d61"
+    },
+    "packages/core/playwright.config.ts": {
+      "bytes": 1620,
+      "sha256": "d4b72bfc136b1a3ac7b44d5136c9ed076f03b8a8c7d6df03b9175d89ba9c0786"
+    }
+  },
+  "stats": {
+    "startTime": "2026-10-16T06:27:59.762Z",
+    "duration": 5575.769,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "report": {
+    "bytes": 6377,
+    "sha256": "3295c3e47262c5ee9604d791a7cd84a838c3f9dad3476745b0b67ed7ae544950"
+  },
+  "qualification": "Actual original timeout, exact request count, error-target and successful-sibling assertions pass with explicit reviewed mount and two-path GET fetch grant. No production change."
+}

@@ -1,0 +1,51 @@
+# The Rust half of the fixture applications (FORMA-188): one library of start-up
+# and response plumbing and one binary per application. Each binary embeds the
+# `dist/` that build.mjs wrote for its application, loads the build's manifest
+# and native modules, binds every server-rendered route to a `#[derive(PageProps)]`
+# handler type, finalizes, and only then listens, as an application does
+# (docs/DECLARED-PROPS.md).
+#
+# A member of the e2e workspace (../../../Cargo.toml), which holds the one lock.
+# Path dependencies on this repository's crates: the lane tests the server this
+# tree ships. P17 builds the same sources against the packed crates instead
+# (scripts/release-fixture-apps.mjs replaces the two path lines).
+[package]
+name = "forma-fixture-apps"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+forma-ir = { path = "../../../crates/forma-ir" }
+forma-server = { path = "../../../crates/forma-server" }
+axum = "0.8"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
+# `debug-embed`: the debug build embeds the output at compile time, as an
+# application's release binary does, so a binary needs no working directory.
+rust-embed = { version = "8", features = ["debug-embed"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde_json = "=1.0.154"
+sha2 = "=0.11.1"
+
+# One binary per application, named so it cannot be mistaken for the application it is shaped like.
+[[bin]]
+name = "fixture-ledger"
+path = "src/bin/ledger.rs"
+
+[[bin]]
+name = "fixture-fauth"
+path = "src/bin/fauth.rs"
+
+[[bin]]
+name = "fixture-ksx"
+path = "src/bin/ksx.rs"
+
+[[bin]]
+name = "fixture-bench"
+path = "src/bin/bench.rs"
+
+# Release qualification only; the normal application release profile is unchanged.
+[[bin]]
+name = "fixture-measure"
+path = "src/bin/measure.rs"

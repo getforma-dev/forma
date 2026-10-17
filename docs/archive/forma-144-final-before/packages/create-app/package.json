@@ -1,0 +1,39 @@
+{
+  "name": "@getforma/create-app",
+  "version": "3.0.0-dev",
+  "type": "module",
+  "author": "Forma <victor@getforma.dev>",
+  "homepage": "https://getforma.dev",
+  "description": "Create a new Forma app — Rust + TypeScript SSR framework",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getforma-dev/forma.git",
+    "directory": "packages/create-app"
+  },
+  "bin": {
+    "create-forma-app": "dist/index.js",
+    "create-app": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "templates/"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm",
+    "test": "npm run build && vitest run"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/prompts": "^2.4.9",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.3",
+    "validate-npm-package-name": "^7.0.2",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

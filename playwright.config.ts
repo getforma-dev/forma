@@ -6,6 +6,9 @@ if (!Number.isInteger(staticPort) || staticPort < 1 || staticPort > 65535) throw
 
 export default defineConfig({
   testDir: 'e2e',
+  // The parity harness (FORMA-183) is a `node --test` suite with its own browser and its own
+  // step in scripts/check.sh; its `*.test.mts` files are not Playwright tests.
+  testIgnore: ['parity/**'],
   timeout: 15000,
   retries: 0,
   use: {

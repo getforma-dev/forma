@@ -1,0 +1,42 @@
+{
+  "seed": 1820300,
+  "engine": "chromium",
+  "input": {
+    "rule": 2,
+    "index": 460,
+    "before": "\r\n\r\u0000\r\n\u0000",
+    "after": "a\u0000\u0000<&\"",
+    "tag": "p",
+    "attr": "title",
+    "value": "-270129723325078.62"
+  },
+  "native": {
+    "html": "<p title=\"-270129723325078.63\"><!--f:t1-->\n\n�\n�<!--/f:t1--><!--f:t2-->-270129723325078.63<!--/f:t2--><!--f:t3-->a��&lt;&amp;\"<!--/f:t3--></p>",
+    "wire": null
+  },
+  "stage": "fresh",
+  "served": {
+    "tag": "p",
+    "attrs": [
+      [
+        "title",
+        "-270129723325078.63"
+      ]
+    ],
+    "text": "\n\n�\n�-270129723325078.63a��<&\"",
+    "children": []
+  },
+  "client": {
+    "tag": "p",
+    "attrs": [
+      [
+        "title",
+        "-270129723325078.62"
+      ]
+    ],
+    "text": "\n\n�\n�-270129723325078.62a��<&\"",
+    "children": []
+  },
+  "binary64Hex": "c2eeb5cf467752d4",
+  "expectedString": "-270129723325078.62"
+}

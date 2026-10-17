@@ -10,6 +10,33 @@ These files are never imported by the TypeScript build or by any vitest suite;
 they are read off disk exactly as the plugin reads a real page, so the corpus
 exercises the shipped code path rather than a test-only re-implementation.
 
+## Key paths (FORMA-181 checkpoint A)
+
+`list-same-source` is the only case with `createList`; since checkpoint A its `.ir` carries
+section `0x0006` with both LISTs' offsets and the path `["id"]`, and its `.dump` shows that
+section. Its `.html` and `.state.json` are byte-identical to before (no key is rendered until
+checkpoint B). The previous `.ir`/`.dump` and their hashes are in
+`docs/archive/2026-10-15-pre-keyed-rows/` (`js-emitter/`, `ledger.json`).
+
+## Current state contract migration (FORMA-103)
+
+The original 87 source/IR/dump/HTML files are frozen in
+`docs/archive/2026-10-15-pre-state-contract-corpus`. Current binaries include
+section 10; registered islands carry an eight-byte canonical digest and only
+their ordered declared inputs. Local/captured signals retain their own defaults
+and identity, and do not become handler props. HTML uses occurrence/hash markers
+instead of inline `data-forma-props`. Separate `.state.json` goldens pin actual
+native snapshots for all four page variants, including empty state tables.
+
+Only `nested-islands` changes source semantics: its two formerly undeclared
+getters (`panelClass` and `badgeTitle`) now arrive through explicit page and
+component props. The archived source remains a BUILD-610 refusal control.
+Both InnerBadge occurrences use the same contract and shared module getter,
+but have separate occurrence indexes. The default render supplies distinguishing
+values to the two required SERVER fields while retaining all CLIENT defaults.
+The historical audit discussion below describes why the original cases exist;
+its former slot-name injection API is not the typed Pages interface.
+
 ## Why this corpus exists
 
 The compiler's binary output used to be pinned only by hand-written FMIR
@@ -50,7 +77,7 @@ the same byte. Only the Rust side turns the wrong byte into missing rows.
 | `unicode-emoji` | non-ASCII and emoji in text, static attrs and a signal default (UTF-8 length prefixes) |
 | `jsx-page` | an **all-`.tsx`** app: entry, page, sibling sub-component and island, every one of them reaching the analyzer through esbuild's `export { X }` rewrite |
 | `barrel-exports` | every component reached through an `index.ts` barrel: `export { X } from`, `export * from`, and `export { XImpl as X }` |
-| `sub-component-scopes` | signals declared in the four scopes the old hand-written extractors did not look in, plus the same-name **collision** rule and a truthy `SHOW_IF` default |
+| `sub-component-scopes` | signals declared in the four scopes the old hand-written extractors did not look in, plus a truthy `SHOW_IF` default; the earlier same-name collision is an archived BUILD-503 refusal |
 | `eager-concat` | expressions evaluated EAGERLY — `'Player ' + name()` with no `() => …` wrapper — in **child** and **attribute** position, including a multi-operand concat mixing a string and a **number** |
 | `imported-const-table` | Rule 9's spread unroll over tables declared in **another module** — inside a registered island, through an inert page↔island import cycle, and through a barrel that **aliases** the export |
 | `imported-signal-defaults` | signal defaults declared in **another module** (the store.ts architecture): an href **ternary** folding an imported signal's `''` default into the attribute's SSR value, and page + island reading the same store signal — one through an **aliasing barrel** — sharing **one** slot |
@@ -90,9 +117,10 @@ it was not the failure was silent.
 This case declares its signals in the four places nobody had written a method
 for: the root page FILE's module scope, an inlined file-local sub-component's
 body, an inlined cross-file sub-component's module scope, and below the top
-level of a scope (inside an `if`). It also declares `count` twice, in two
-different components, which is the collision the `#N` occurrence suffix
-resolves.
+level of a scope (inside an `if`). The admitted fixture uses distinct `count`
+and `panelCount` getters. Its earlier duplicate getter names are preserved in
+[the strict corpus archive](../../../../../docs/archive/FORMA-101-strict-corpus/README.md)
+as a BUILD-503 publication refusal, without claiming a broader scope proof.
 
 The `@page defaults` render is what makes it a real check. Before the fix, that
 section of the golden was four zero-width spaces, a missing `class`, a missing
@@ -178,9 +206,9 @@ entire trigger — it is what makes the compiler run esbuild over the file at al
 — so a fixture that is not really on disk with that extension tests nothing.
 
 `crates/forma-ir/src/js_emitter_contract.rs` gives these two cases an extra
-assertion (`resolution_cases_ship_named_islands_over_named_slots`): the islands
+assertion (`resolution_cases_ship_named_contracts_and_client_defaults`): the islands
 must carry their real component names rather than a minted `island_<n>`, must
-carry non-empty slot ids, and the page must have slots named after its signals
+carry a valid declared contract and exactly its field inputs, and the page must have slots named after its signals
 carrying their defaults. The golden alone would not catch a relapse — a
 degraded emit is still a valid, walkable module, and `UPDATE_GOLDEN` would
 happily bless the empty div.
@@ -201,13 +229,13 @@ slot data hides binding mix-ups:
 | `page bools=true` | every Text slot a marker naming itself, every list 3 rows of named columns, Bools true | slot → output wiring; a swapped slot id changes the marker |
 | `page bools=false` | same, Bools false | the OTHER side of every `SHOW_IF`, and boolean attrs when off |
 | `page text-empty` | every Text slot `""` | empty is `attr=""`, not an omitted attribute |
-| `page defaults` | `SlotData::new_from_defaults` | the slot table's own `default_bytes`, and Null → attribute omitted |
+| `page defaults` | CLIENT `SlotData::new_from_defaults` plus declared SERVER request values | the slot table's own `default_bytes`, and Null → attribute omitted |
 
 ## Regenerating
 
 ```sh
-npm run emit:corpus                    # writes packages/compiler/ir-corpus/*.ir
-npm run emit:corpus -- <out-dir>       # or to a directory of your choosing
+npm run emit:corpus -w @getforma/compiler # writes crates/forma-ir/tests/fixtures/js-emitter/
+npm run emit:corpus -w @getforma/compiler -- <out-dir>       # or to a directory of your choosing
 ```
 
 The `.ir` files and their golden HTML are committed in the `forma` repo under

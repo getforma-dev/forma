@@ -1,0 +1,27 @@
+{
+  "version": "0.13.2",
+  "commit": "984c861c8dfea28055254c5f1d2659ab2cd63f76",
+  "files": [
+    {
+      "file": "project.rs",
+      "bytes": 44090,
+      "sha256": "c8cf1ef9c9a18f610d8f6c3cb8dc841f78e9704e86ccd1f3e85ea86255f6c4c0",
+      "url": "https://github.com/rust-fuzz/cargo-fuzz/blob/984c861c8dfea28055254c5f1d2659ab2cd63f76/src/project.rs",
+      "equalsInstalledCrate": "cargo-fuzz0.13.2/src/project.rs"
+    },
+    {
+      "file": "build.rs",
+      "bytes": 687,
+      "sha256": "1ac0f3bc4b84a79466d4e2bd3d210be76112bc44fab1b97daa962eee50c9115d",
+      "url": "https://github.com/rust-fuzz/cargo-fuzz/blob/984c861c8dfea28055254c5f1d2659ab2cd63f76/src/options/build.rs",
+      "equalsInstalledCrate": "cargo-fuzz0.13.2/src/options/build.rs"
+    },
+    {
+      "file": "options.rs",
+      "bytes": 12246,
+      "sha256": "0b1b4d8ac3fca3880725592356d8367e04901fd5bb5c2143826d596f68216a8a",
+      "url": "https://github.com/rust-fuzz/cargo-fuzz/blob/984c861c8dfea28055254c5f1d2659ab2cd63f76/src/options.rs",
+      "equalsInstalledCrate": "cargo-fuzz0.13.2/src/options.rs"
+    }
+  ]
+}

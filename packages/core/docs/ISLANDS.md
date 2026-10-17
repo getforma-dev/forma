@@ -1,348 +1,338 @@
 # Islands — hydrating server-rendered HTML
 
-Hydrate independent interactive regions of server-rendered HTML. Each island
-callback receives the root element and parsed props, then returns a component
-tree. The hydration system walks that tree against the existing SSR DOM,
-attaching handlers and reactive bindings without recreating elements.
+Registered components receive one declared props object. The compiler binds each
+literal `activateIslands({ Counter })` registry entry to its schema, mode and
+identity digest; applications do not construct this metadata themselves.
 
-```ts
+```tsx
 import { activateIslands, createSignal, h } from "@getforma/core";
 
-activateIslands({
-  Counter: (el, props) => {
-    const [count, setCount] = createSignal(props?.initial ?? 0);
+function Counter(props: { initial: number }) {
+  const [count, setCount] = createSignal(props.initial);
+  return <div>
+    <span>{() => count()}</span>
+    <button onClick={() => setCount(count() + 1)}>+1</button>
+  </div>;
+}
 
-    el.classList.add("is-hydrated");
-
-    return h("div", null,
-      h("span", null, () => String(count())),
-      h("button", { onClick: () => setCount((c) => c + 1) }, "+1"),
-    );
-  },
-});
+activateIslands({ Counter });
 ```
 
-```html
-<!-- Server-rendered HTML -->
-<div data-forma-island="0" data-forma-component="Counter" data-forma-props='{"initial": 5}'>
-  <span>5</span>
-  <button>+1</button>
-</div>
-```
+The server takes a bounded snapshot of each executed island's declared inputs
+from the same values used to render its body. The browser validates every
+requested host before arming any trigger or invoking any component. Each accepted
+component then runs in an isolated reactive root; a failed sibling does not
+prevent another valid island from activating.
 
-Each island runs in its own `createRoot` scope with error isolation — a broken
-island never takes down its siblings, and a component that throws part-way
-through disposes whatever it had already created rather than leaving live
-effects behind.
+`activateIslands()` returns a `Promise<void>` for the requested **load** islands.
+Preflight and claim reservation remain synchronous. Load activation uses a
+cooperative 12 ms slice, counted from before preflight, and yields between whole
+islands through browser timer tasks. The first slice runs before the call returns
+when preflight leaves time; an individual preflight or island can exceed the
+slice, and repeated separate application calls are not a hard task-duration bound. Await the result when subsequent code requires load activation to finish.
+The promise resolves after those islands activate, fail in isolation, or are
+disposed, including requested load work already pending from another call.
+Visible, idle and interaction islands complete their part when their triggers
+are armed; the promise does not wait for those future triggers. Synchronous
+preflight exceptions still throw, and isolated component errors still use the
+existing diagnostics rather than rejecting the promise.
 
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "disposes effects created before a failing island threw"
-Verified by `src/dom/__tests__/hydrate.test.ts` > "a binding that throws on a shared-signal update does not freeze the other island"
+Queued load islands listen for pointerdown, focusin and click so their first
+input can promote that island synchronously before normal event handling. This
+priority path preserves the first event for retained SSR targets and leaves
+native default actions intact. Browser-only replacement creates a new target,
+which cannot receive an event already dispatching on the old target; callers
+that need its handlers ready must await activation. No event is replayed and
+no island transaction is split. Input promotion can exceed the
+background slice. Other islands continue in FIFO order, and disposal releases
+pending activation and its temporary listeners.
 
----
+This is the 3.0 development contract. Legacy `(element, props)` registrations,
+`data-forma-props` and `#__forma_islands` no longer provide SSR state. Rebuild the
+page and browser entry together. An uncompiled SSR callback is refused; a
+Browser-shell route remains an ordinary browser mount without this preflight.
+
+## Deployment mismatch
+
+Before state preflight or any trigger, `activateIslands` compares the consuming
+bundle's build identity with `data-forma-build` on forma-server's actual page
+root: the direct body child `div#app`. It does not search arbitrary stamped
+elements or descendants. A requested subtree uses its original Document's root,
+and the first verdict is retained for that Document. Either identity absent or
+empty means unchecked, preserving older servers and bundles built without Forma.
+
+On a mismatch, no island component, observer, timer or interaction listener runs.
+Served content and node identity remain intact; island hosts receive
+`data-forma-status="skew"`. Core dispatches a cancelable `forma:skew` CustomEvent
+on the Document with `detail: { page, bundle, reload }`. `reload` is eligibility
+for automatic reload: readable session storage has no record for that full page
+identity. Cancel the event to supply application UI instead. Cancellation keeps
+the page inert and does not consume eligibility.
+
+Otherwise core records the identity before reloading once. A storage access,
+read or write failure leaves the page inert without navigation. The reloaded
+Document can report the mismatch again, but cannot automatically reload for the
+same identity in that tab. Different identities have separate records.
+
+`mount()` applies the same Document guard before component execution or DOM
+replacement and returns an inert disposal callback on mismatch. Public direct
+`hydrateIsland` is caller owned and is not gated. Core does not import island
+chunks; failures of application-owned `import()` calls remain the application's
+to handle. See `src/dom/__tests__/skew.test.ts` and the three-engine
+`e2e/skew.spec.ts` checks. The rolling-deployment product drill is a separate
+release qualification.
 
 ## SSR with server data
 
-When the server renders an island with real data, the island's signals **must
-initialize from the `props` argument** — `createSignal(props?.x ?? fallback)` —
-never from a bare client-side default. That is why the Counter above seeds
-`createSignal(props?.initial ?? 0)` instead of `createSignal(0)`.
-
-The reason is mechanical: adoption binds server-rendered text to your signals
-through effects, and an effect's first run **writes the current client signal
-value over the server-rendered text**. List adoption goes further. SSR rows
-that carry `data-forma-key` and whose keys are missing from the client array
-are **removed**. Rows without keys are matched by index, and when their count
-differs from the client array's length the island **fails** instead (see
-[Server-rendered lists](#server-rendered-lists)). Seed a signal with an empty
-client default and the hydrated page either erases the server's data on load
-or leaves the island inert.
-
-In dev builds a keyed mismatch is loud. Grep your console for:
-
-```
-[FormaJS] Hydration: list item key "…" not found in SSR — rendering fresh
-[FormaJS] Hydration: removing extra SSR list item with key "…"
-```
-
-An unkeyed count mismatch is logged in every build as
-`FORMA_E_HYDRATE_LIST_COUNT`.
+Seed local signals from the declared props argument. A server value of 1001 must
+reach the signal before its first effect; a bare browser default of 42 would
+start from different state. Distinct local signals seeded from the same prop
+remain distinct. Imported or lexical shared getters keep their actual identity
+and are not recreated from a snapshot.
 
 ### Getting props to the island
 
-**Mode 1 — inline attribute** (small props, under about 1 KB). JSON in
-`data-forma-props` on the island root:
+Every SSR response contains exactly one non-executable
+`<script type="application/json" data-island-state>` in its head, including when
+there are no islands. The envelope is `{"v":1,"s":[],"i":[...]}`; each occurrence
+contains exactly `h` (the compiled digest) and `p` (projected declared props).
+The matching original host carries `data-forma-state` and `data-forma-h`.
+This is compiler/server output, not a separate manual serialization API.
 
-```html
-<div data-forma-island="0" data-forma-component="Counter" data-forma-props='{"initial": 5}'>
-  <span>5</span>
-  <button>+1</button>
-</div>
-```
+The complete escaped state envelope is capped at 1 MiB. Every literal `<` in
+state strings is escaped. Finite numbers retain their IEEE-754 value, with
+negative zero canonicalized to zero; signed epoch milliseconds become `Date`
+objects in the browser. Declared arrays, objects and enums are checked before
+activation. Optional null object fields are omitted; optional array positions
+retain null. Undeclared and forbidden fields never reach the component.
 
-**Mode 2 — shared script block** (larger props, or many islands on one page). A
-single JSON block for the whole page, keyed by each island's id (the
-`data-forma-island` value) as a decimal string:
+The decoder reads only the first matching head block once per Document.
+Malformed envelope data refuses the document; a malformed individual entry
+leaves unrelated valid entries eligible. Missing state, mismatched digests,
+duplicate occurrence claims, unknown registrations and schema mismatches log
+stable `FORMA_E_ISLAND_*` codes and leave the host's content and status unchanged.
+They run no component, effect or trigger. Later injected hosts cannot acquire an
+original occurrence claim, even through a subtree activation request.
 
-```html
-<div data-forma-island="0" data-forma-component="TrackList">
-  <!-- server-rendered rows -->
-</div>
+See [the decoder contract](ISLAND-STATE.md) and
+[the reviewed wire grammar](../../../docs/proposals/FORMA-103-STATE-WIRE.md).
+`sanitizePropsDeep` remains a standalone utility for other data paths; SSR
+activation uses declared-schema projection rather than the old generic sanitizer.
+The utility mutates and returns the same input. It throws `TypeError` when an
+own `__proto__`, `constructor` or `prototype` key cannot be deleted, including
+inside frozen or sealed data. Earlier deletions are not rolled back on refusal;
+discard that partially sanitized input rather than passing it to a merge or store.
+Frozen data without forbidden own keys remains accepted.
 
-<script id="__forma_islands" type="application/json">
-{"0": {"items": [{"id": 1, "name": "Track 1"}, {"id": 2, "name": "Track 2"}]}}
-</script>
-```
+Verified by `src/dom/__tests__/island-state.test.ts` and
+`src/dom/__tests__/island-state-activation.test.ts`.
 
-Because the block is `type="application/json"`, the browser treats it as inert
-data and never executes it — no `unsafe-inline` script needed, CSP-friendly. An
-island with an inline `data-forma-props` attribute ignores the script block. A
-malformed or truncated block degrades to "no shared props" instead of aborting
-hydration for the whole page.
+## Strict activation
 
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "a malformed __forma_islands block does not stop islands from hydrating"
+After state preflight, a compiled SSR component describes **one owned Element**
+matching its original host. Preparation reads and validates the existing nodes,
+markers, attributes, text and control defaults before publication. Success makes
+zero initial DOM writes: no node replacement, text normalization, SSR-marker
+removal or lifecycle-status write. The runtime tracks activation privately; an
+unchanged `data-forma-status="pending"` is not evidence that activation failed.
+Effects, refs and listeners become live only after the complete plan validates.
+Later updates use their owned reactive bindings.
 
-**Props are stripped at every depth while they are parsed.** Both channels
-delete `__proto__` / `constructor` / `prototype` keys at every depth, in
-objects and in array elements, before your island sees the props, and there is
-no opt-out (DR-21). Handing props to anything that merges them into another
-object — `createStore`, a deep-merge helper, an `Object.assign` chain — cannot
-carry a nested pollution key into a prototype. The pass is iterative with a
-`WeakSet`, so neither deeply nested nor cyclic props can overflow the stack or
-loop. A shared `__forma_islands` block is parsed and stripped once per
-`activateIslands` call.
-Props must be a JSON object or array: any other JSON value (`null`, a number, a
-string, a boolean) marks the island `error`, and `FORMA_E_ISLAND_PROPS` is
-logged in every build.
+An empty SSR host does not select a browser fallback. Returning an imperative
+DOM Node, an appended fragment or no value is not a description and is refused.
+Compiled Fragment/Show/List roots are not a substitute for the owned Element.
+Keep those ranges inside the component's root. `browserOnly` is an explicit
+separate mode, described below.
 
-`sanitizePropsDeep` (the same pass) stays exported for props that reach an
-island some other way, and calling it on activation props is a harmless no-op.
+An initial mismatch leaves the original content and node identity intact. It
+performs only the required `data-forma-status="error"` write and emits one
+bubbling `forma:error` event for the failed owner. The frozen detail contains
+`island`, `occurrence`, `binding` (or null), `code`, and an optional deterministic
+`path`; it contains no props or payload. Reporting also reaches `onError` with
+source `'hydration'` in development and production. A valid neighbor still runs.
+State/identity preflight refusals happen earlier and make **no DOM writes**,
+including no status change or activation event.
 
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "island activation strips forbidden keys at every depth, inline and shared, with no opt-out"
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "island props nested 10,000 deep are parsed and stripped"
-Verified by `src/dom/__tests__/props-loading.test.ts` > "props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS"
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "sanitizePropsDeep strips forbidden keys at every depth"
+| Code | Refusal |
+|---|---|
+| `FORMA_E_HYDRATE_NODE` | Missing or mismatching original node/tag |
+| `FORMA_E_HYDRATE_MARKER` | Missing, malformed or mismatching marker range |
+| `FORMA_E_HYDRATE_STRUCTURE` | Unsupported description or changed ownership/topology |
+| `FORMA_E_HYDRATE_VALUE` | Original text, attribute or control default differs |
+| `FORMA_E_HYDRATE_LIST_COUNT` | Initial unkeyed list cannot consume the original range |
+| `FORMA_E_HYDRATE_KEY` | A keyed row's identity is missing, repeated, outside the key domain or on one side only |
+| `FORMA_E_HYDRATE_INPUT_TARGET` | An early edit has no proven reversible local binding |
+| `FORMA_E_HYDRATE_INPUT_CONFLICT` | Multiple edits disagree for one local signal |
+| `FORMA_E_HYDRATE_EFFECT`, `FORMA_E_HYDRATE_REF`, `FORMA_E_HYDRATE_COMPONENT` | Owned callback/component failure |
+
+Later failures revoke the owner's callbacks, listeners and reactive work and
+report once; they do not undo application writes already made by a callback.
+Components themselves are not sandboxed: arbitrary imperative application DOM
+writes cannot be rolled back by this contract. Return a supported description.
+
+Verified by `src/dom/__tests__/activation-transaction.test.ts` > "records successful SSR activation internally with zero writes and no duplicate component call"
+Verified by `src/dom/__tests__/activation-transaction.test.ts` > "emits one bubbling coded mismatch with only one status write and keeps its neighbor live"
+Verified by `src/dom/__tests__/activation-transaction.test.ts` > "preserves write-free identity refusal before execution"
+Verified by `src/dom/__tests__/activation-transaction.test.ts` > "never selects a client fallback for an empty SSR host"
+Verified by `src/dom/__tests__/activation-transaction.test.ts` > "isolates a postcommit callback failure and emits one production-shaped diagnostic"
+Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an imperative island returning its own element refuses without running its deferred effect"
 
 ### Server-rendered lists
 
-Server rows carry `data-forma-key` matching the `keyFn` output, wrapped in a
-`<!--f:l0-->` / `<!--/f:l0-->` marker pair that delimits the list region:
+The server delimits a list with `<!--f:l0-->` / `<!--/f:l0-->`. A list the
+compiler keys (`createList(items, row => row.id, …)`) has each row's
+`data-forma-key` on the row's root, written by the native renderer as the key's
+canonical text: a safe integer in decimal (`-0` as `0`), a string under value
+rule 1 (`docs/parity-rules.md`, "Keyed rows"). Adoption binds each client item
+to the served row whose decoded attribute equals the item's canonical key, in
+any order: numeric key 1 matches attribute `"1"`, and a client key `"a\r\nb"`
+matches the served `"a\nb"`. For example:
 
-```html
-<div data-forma-island="0" data-forma-component="TrackList">
-  <ul>
-    <!--f:l0-->
-    <li data-forma-key="1">Track 1</li>
-    <li data-forma-key="2">Track 2</li>
-    <!--/f:l0-->
-  </ul>
-</div>
-
-<script id="__forma_islands" type="application/json">
-{"0": {"items": [{"id": 1, "name": "Track 1"}, {"id": 2, "name": "Track 2"}]}}
-</script>
-```
-
-The client island seeds a signal from `props.items` and passes it to
-`createList`:
-
-```ts
+```tsx
 import { activateIslands, createSignal, createList, h } from "@getforma/core";
 
-activateIslands({
-  TrackList: (el, props) => {
-    // Seed from server data — NOT createSignal([])
-    const [items, setItems] = createSignal(props?.items ?? []);
+function TrackList(props: { items: { id: number; name: string }[] }) {
+  const [items] = createSignal(props.items);
+  return <div><ul>{createList(
+    items,
+    item => item.id,
+    item => <li>{item.name}</li>,
+  )}</ul></div>;
+}
 
-    // Root must match the island root (<div data-forma-island="0">) —
-    // a tag mismatch makes adoption bail and re-render fresh.
-    return h("div", null,
-      h("ul", null,
-        createList(
-          items,
-          (item) => item.id,
-          (item) => h("li", null, item.name),
-        ),
-      ),
-    );
-  },
-});
+activateIslands({ TrackList });
 ```
 
-Keys are compared as strings — `data-forma-key="1"` matches `(item) => item.id`
-for `id: 1`. Matched rows are adopted in place without re-rendering; unmatched
-client items render fresh, and unmatched SSR rows are removed (the two warnings
-above).
+Initial adoption never creates missing rows, removes extra rows or moves a
+row (FORMA-181). Each keyed row is walked through a cursor bounded to that row
+(its root, or the registered child's `f:i` envelope that wholly encloses it),
+so a row cannot consume its neighbour, and a registered child keeps its own
+served host, state and occurrence whichever position the client gives it. The
+served order is kept until the list source changes; the first real update then
+reconciles the client's order against it, moving rows without rebuilding them.
+A row's index starts at its position in the client's array. A key on one side
+only, a served key twice, a served row without a key beside keyed rows, two
+client keys with the same canonical text (1 and `"1"`), or a client key outside
+the domain (a fraction, `null`, an unpaired surrogate) refuses with
+`FORMA_E_HYDRATE_KEY` before any row runs; text or a range beside keyed rows is
+`FORMA_E_HYDRATE_STRUCTURE`, and a row of another shape is the ordinary node or
+value refusal. FORMA-123's row-count check is no longer the criterion for keyed
+rows. After successful adoption, ordinary keyed reconciliation can insert,
+remove and reorder rows.
 
-If **no** row carries `data-forma-key`, adoption matches rows by index, which is
-right only when the client array is the one the server rendered. So it first
-checks the count. When the number of server rows differs from the array's
-length (more items, fewer, or none at all, as before a signal is seeded), no
-row is adopted, removed or rendered. The island keeps the server's rows and is
-marked `error`, and the error `FORMA_E_HYDRATE_LIST_COUNT`, naming both counts,
-is logged in every build and passed to `onError` handlers with the source
-`'hydration'`. An island in `error` is inert. The listeners attached during
-adoption are removed, on the server's elements and on those adoption built
-through `h()` before the failure. The bindings it adopted are disposed, also
-when you call `hydrateIsland()` yourself and your root lives on.
-
-Adoption runs in a batch. A signal its code writes during adoption (in a `ref`,
-say) takes its new value at once. The effects that write triggers elsewhere,
-in another island or another `mount()` root, run when adoption ends. So what
-they build is theirs: it keeps its listeners and its bindings if this island
-fails. Adoption's own bindings still run when they are created. This holds
-for any adoption that fails part-way. Nodes adoption had already replaced or
-added before the failing list (a tag mismatch, a keyed row the server did not
-render) stay as it left them. `mount()` and `hydrateIsland()` keep
-`data-forma-ssr` on the container and do not throw, as for
-`FORMA_E_HYDRATE_NODE` below. Equal counts adopt every row in place, and after
-adoption the list reconciles by key as usual. This check is the bridge until the
-server writes keys for every list (decision brief DR-8).
-
-The server writes an empty list region when the list's data is not an array.
-So a list the client computes for itself, inside a server-rendered island,
-leaves the island inert unless its array starts empty. Start that list's signal
-empty and fill it after activation, or render the list in the browser only. An
-island whose only server content is an empty list region (comments, no element
-or text) is rendered in the browser instead, like any island with no server
-content.
+An unkeyed range is consumed by the actual row descriptions. A logical row can
+contain multiple nodes, shared literal Text or no nodes, so its server row count
+cannot be inferred from child-element count. LIST_COUNT diagnostics report the
+known client item count and exact remaining/exhausted DOM extent instead.
+Its client key function still feeds the shared canonical cache: fractional numbers
+and lone surrogates refuse with `FORMA_E_HYDRATE_KEY` before any row callback or
+DOM write, even when the served range has no `data-forma-key` attributes. Safe
+integers and valid Unicode strings are admitted without adding those attributes.
+Matching empty ranges remain empty until a later array update; they never
+trigger an implicit browser mount. State/props must describe the same initial
+items used by the native renderer.
 
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a server region with no rows and a client array with items fails the island and inserts nothing"
+Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "keyed initial count mismatch refuses without removing or replacing any server row"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "binds reversed client keys to the same served nodes with no write through a microtask and a macrotask, then a real update reorders"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "compares the decoded attribute with the canonical key text: numbers, -0, line endings and NUL"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "refuses a key on one side only, a repeated key or a key outside the domain with FORMA_E_HYDRATE_KEY before any row runs"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "binds keyed registered children by key: each client row matches its own host, state and occurrence"
+Verified by `src/dom/__tests__/adoption-keyed-list.test.ts` > "a duplicate served key fails only its own island with FORMA_E_HYDRATE_KEY; the neighbouring keyed island activates"
+Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "the coded message reports known client items and unconsumed DOM without inventing server row counts"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "equal counts adopt 40 unkeyed rows in place by index, as before, and keep reconciling"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "rows that carry data-forma-key keep matching by key when the counts differ"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "an island failed by the row count keeps no handler or binding that adoption attached before the list"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "an island failed by the row count answers no click on the nodes adoption built fresh before the list"
+Verified by `src/dom/__tests__/adoption-list.test.ts` > "binds reversed served keys to their own rows without moving them"
+Verified by `src/dom/__tests__/adoption-list.test.ts` > "adopts multiple-element Fragment rows without wrappers and moves their complete spans later"
+Verified by `src/dom/__tests__/adoption-list.test.ts` > "adopts text-only and empty rows with no initial split or synthetic anchors"
 Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "hydrateIsland() called directly keeps no binding it adopted before the list failed"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing island's ref that writes a shared signal does not detach another island's new list row"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing island's ref that writes a shared signal does not detach another island's new show branch"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing mount() whose ref writes a shared signal does not detach a second mount() root's new row"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "another island's row created while a failing island adopts keeps its reactive binding"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "the migration: an empty server region adopts an empty array, and rows filled after activation render"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "an island whose only server content is an empty list region is rendered in the browser, not checked"
-Verified by `src/dom/__tests__/list-adoption-count.test.ts` > "onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, mount() and hydrateIsland(), and each keeps the server rows"
 
-### Server data flow
+### Early form edits and exact text
 
-The server renders the HTML and emits the matching props (inline or script
-block) from the same data. On the client, `activateIslands` parses the props
-*before* your island callback runs; the callback seeds signals from them, and
-adoption then binds that already-correct state onto the existing DOM — when the
-first effects run, they write the same values the server rendered, so nothing
-visibly changes. Live updates after hydration (polling, websockets, user input)
-flow through the same signals: `setItems(fresh)` reconciles rows in place, zero
-clobber.
+Preparation first validates the decoded initial value against the server's
+normalized default, then checks any edit the user made before activation. An
+edit cannot excuse a wrong server default. Compiler hooks associate an admitted
+binding with its actual component-local default-equality signal tuple; only that
+proven binding can seed a reversible text, number/range, boolean or string-array
+edit. Captured globals, computed/read-only expressions, custom-equality setters
+and guessed setter names do not gain authority. Conflicting edits refuse.
+Seeding holds notifications until validation completes, preserving the live
+control, focus and selection; dependent updates caused by that earlier user edit
+are distinct from the zero-write initial adoption of an untouched page.
 
----
+A literal initialization with no reactive reader preserves an early edit without
+seeding anything. An edited reactive reader without the compiled association
+refuses `FORMA_E_HYDRATE_INPUT_TARGET`. This includes public direct hydration.
+An edit returned to its original default is indistinguishable from no edit.
 
-## What adoption does with Fragments, form controls, `textarea`, `title` and SVG
+`textarea` and HTML `title` use exact RCDATA text, without hydration comments.
+The runtime does not strip marker-looking strings from older output. Literal
+marker text is valid only when it is the intended matching text. Later textarea
+updates control both the live value and reset default, as ordinary CSR does.
 
-**Fragments.** A component may return a Fragment (`<>…</>`, `h(Fragment, …)`
-or `fragment(…)`) at a `mount()` root, at an island root, inside an element or
-as a `createShow` branch. The server renders a Fragment's children in place, so
-adoption walks them in place: their handlers and bindings attach to the
-server's nodes. A root `createShow` or `createList` with no wrapping element is
-adopted the same way.
-
-**A component that returns a DOM node.** Returning the island's own element, a
-node inside it, or a fragment it already appended into the element (and so
-emptied) means the component wired the server's DOM itself: the island
-activates as usual. A node built while hydrating that is not part of the
-server's HTML cannot be adopted. The server's DOM stays as served, and the
-error `FORMA_E_HYDRATE_NODE` is logged in every build and passed to `onError`
-handlers with the source `'hydration'`. `activateIslands` marks that island
-`error` and carries on with the others. `mount()` and
-`hydrateIsland()` keep `data-forma-ssr` on the container and do not throw;
-`mount()` also disposes the effects the component created. A component that
-returns nothing (an island that sets up its own effects) still activates.
-
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a root Fragment binds its click handler and reactive text after mount() adoption"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a Fragment at an island root is adopted, each island on its own"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a root createShow or createList is adopted against the container's children"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an island that returns its own element stays active and keeps updating"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an island that returns a detached DOM node is marked error with its code, its sibling unaffected"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "mount() of a detached DOM node keeps the server DOM, logs the code, disposes its effects and does not throw"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "an island that appends a fragment into its element and returns it, now empty, stays active"
-Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "onError receives FORMA_E_HYDRATE_NODE from activateIslands, mount() and hydrateIsland()"
-
-**Form controls.** What a user enters between first paint and activation is
-kept. For a bound `value`, `checked` or `selected`, adoption first compares the
-control's live state with the default its markup gives it (`value` with
-`defaultValue`, `checked` with the `checked` attribute, a select's selection
-with its `selected` options). If they differ, the user changed the control, and
-adoption writes nothing to it. If the control already holds the client's value,
-adoption writes nothing either, attributes included. Only an untouched control
-the server rendered differently gets the client's value. A control the user
-changed and then set back to its default counts as untouched. Every update
-after activation is written to the live property, so a controlled input follows
-its signal again from then on.
-
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "keeps text typed into an input before activation, then follows later updates"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "adoption writes nothing when the server and the client agree"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "repairs an untouched control the server rendered with another value"
-
-**`textarea` and `title`.** The HTML parser reads these elements' content as
-text, so a hydration marker inside one is not a comment: it shows in the text
-and, in a textarea, in the value a form submits. forma-ir 0.2.1 writes no
-markers there, and the runtime binds their reactive text by the element. A
-textarea's reactive text is its default value, as it is when client-rendered:
-the value follows it until the user types, and after that an update changes
-what a form reset restores, not the user's text. Bind the `value` prop for a
-controlled textarea. For one release the runtime also accepts the marker text
-older servers write: adoption removes it when it accounts for the whole
-difference from the client's text, and leaves text that only looks like a
-marker alone.
-
+Verified by `src/dom/__tests__/activation-transaction.test.ts` > "uses actual compiled local authority to seed an early edit and later control the live value"
+Verified by `src/dom/__tests__/adoption-controls.test.ts` > "validates every default before considering an edited readonly binding"
+Verified by `src/dom/__tests__/adoption-controls.test.ts` > "does not let an early edit excuse a wrong decoded initial value"
+Verified by `src/dom/__tests__/adoption-controls.test.ts` > "preserves static value checked and textarea edits with explicit initial-only observations"
+Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "refuses an edited public reactive input and leaves its later updates inert"
 Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "binds a marker-free textarea by the element and writes nothing when it agrees"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "keeps text typed into a marker-carrying textarea before activation"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "keeps server text that only looks like marker text, edited or not, without a write"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "after the user types, a textarea's reactive text changes only its default, client-rendered and adopted alike"
-Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "binds a title's reactive text by the element, with or without marker text"
+Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "refuses older textarea marker text without stripping or binding it"
+Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "binds matching title text by the element and refuses older marker-bearing output"
+Verified by `src/dom/__tests__/form-control-adoption.test.ts` > "after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike"
 
-**Inline SVG and MathML.** These are adopted like any other element: the nodes
-stay the server's, so focus and state inside an icon survive activation. The
-parser keeps an SVG or MathML tag's case (`clipPath`), and adoption matches it
-exactly; an HTML element matches a tag in any case. Where adoption must create
-an element, it creates it in the namespace the parser gives that place. This
-covers what the server rendered differently or left out, a show branch it left
-empty, a keyed row it did not render, and every later toggle or row. Inside an
-SVG element that namespace is SVG, inside a MathML element MathML, and HTML at
-the parser's HTML integration points (a `foreignObject`, `desc` or `title`; a
-MathML `mi`, `mo`, `mn`, `ms` or `mtext`; an `annotation-xml` whose `encoding`
-is `text/html` or `application/xhtml+xml`) and in HTML. A `title` it creates in
-an SVG is an SVG `title`, and an `svg` is SVG wherever it appears.
+### Existing namespaces, styles and typed markup
 
-The parser still differs in three cases of markup that is not valid there:
-- an HTML element such as `p` or `div` put directly in SVG or MathML, which the
-  parser moves out of it and adoption leaves where it is;
-- an `svg` directly inside a MathML element that is not an integration point
-  (an `mrow`), which the parser makes a MathML element;
-- a MathML name inside SVG, which the parser makes an SVG element.
+Initial SVG/MathML adoption validates the original namespace and node shape;
+it does not repair a different tag, missing text marker or missing child. Matching
+attributes are not rewritten, including iframe `src`, which would reload even
+when assigned the same URL. Later fresh branches and rows resolve namespaces
+from each constructed parent. Nested HTML links inside SVG `foreignObject` and
+SVG titles inside MathML `annotation-xml` retain their intended namespaces.
+Fresh template children belong to `template.content`; later readers keep their
+own cleanup lifetime when the fragment moves into its live parent.
 
-`h()` creates an `svg` in SVG and a MathML name in MathML wherever it appears.
+Styles are compared through an inert CSSOM model, without assigning a live
+style block. The direct facade accepts strings and own-data object fields with
+string/finite-number values; accessors, arbitrary coercions and `cssText` refuse.
+That facade capability does not extend the compiler's admitted style grammar.
 
-Client rendering gives the same namespaces where `h()` knows the parent: a
-`title` or an `a` built inside `svg()`, or as a reactive child, a control-flow
-branch or row, a portal or a `mount()` into an SVG. One written as a child
-argument outside `svg()` is built before its `svg` exists and is HTML. See the
-SVG and MathML section of [API.md](API.md).
-
-**Reactive attributes.** An attribute the server already rendered with the
-client's value is not written at adoption, on any element; every later change
-is. Setting an attribute to the value it has is still a DOM write, and for an
-`iframe`'s `src` it reloads the frame.
+Raw content and `srcdoc` retain the `trustedHtml()` boundary. Matching normalized
+raw content is opaque, not interpreted as compiler markers. Empty server content
+with a nonempty requested raw value refuses instead of filling it. An initial
+null/false raw value allows ordinary fallback children; later raw replacement
+tears down their owned work first. The private preparation helper refuses
+nonnull raw markup on HTML `noscript` with STRUCTURE because inert normalization
+cannot establish the document's scripting mode. Ordinary CSR is unchanged.
 
 Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "adopts a server-rendered inline SVG with no DOM write and no re-created node"
 Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "adopts case-sensitive SVG tags such as clipPath and linearGradient in place"
-Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "rebuilds a mismatched SVG child in the SVG namespace, title and a included"
-Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "creates the content of a foreignObject in the HTML namespace"
-Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "creates MathML the server did not render in the MathML namespace"
 Verified by `src/dom/__tests__/hydrate-svg.test.ts` > "writes nothing where the server already holds the value, and still writes every change"
-Verified by `src/dom/__tests__/svg-namespace.test.ts` > "an icon built in svg() has the namespaces and markup the parser gives the server HTML"
-Verified by `src/dom/__tests__/namespace-resolution.test.ts` > "a show branch the server left empty, the branches it toggles to, and fresh keyed rows"
-Verified by `src/dom/__tests__/namespace-resolution.test.ts` > "adoption creates what the server left out of a desc or an mtext in HTML, and an svg in SVG anywhere"
+Verified by `src/dom/__tests__/adoption-materialize.test.ts` > "constructs later nested namespace branches with the actual owned Show adapter"
+Verified by `src/dom/__tests__/adoption-postcommit-materialize.test.ts` > "keeps movable template readers and nested compiler conditional values live after insertion"
+Verified by `src/dom/__tests__/adoption-content.test.ts` > "refuses a missing or different served style rather than filling or repairing it"
+Verified by `src/dom/__tests__/adoption-content.test.ts` > "supports own string and finite-number object fields for the direct hydration facade"
+Verified by `src/dom/__tests__/adopt-inner-html.test.ts` > "adoption writes nothing where the server already holds the markup"
+Verified by `src/dom/__tests__/adopt-inner-html.test.ts` > "adoption aborts on untyped markup without writing while ordinary CSR can recover"
 
----
+### Browser mounting and public direct hydration
+
+`mount()` throws `FORMA_E_MOUNT_SSR` on a `data-forma-ssr` target, including
+an empty one, before component/root/effect/listener work or DOM writes.
+Use compiled `activateIslands({ Counter })` for SSR interaction. Browser-shell
+mounting and explicit `browserOnly` remain separate supported paths.
+
+Public `hydrateIsland(component, target)` uses strict preparation under an
+explicit caller-owned `createRoot`. It returns the same target. Coded mismatch
+reports through `onError` and returns; an initial user exception is cleaned up
+and rethrown unchanged. It adds no compiled state or early-edit setter authority.
+A marked Element target is the component root; an unmarked target contains it.
+Direct root Fragment/Show/List descriptions consume the target's exact children;
+this facade behavior does not change the compiled single-Element contract.
+The caller must dispose its root when finished.
+
+Verified by `src/dom/__tests__/mount.test.ts` > "refuses a marked %s root by %s before component/root/effects/listeners or DOM writes"
+Verified by `src/dom/__tests__/owned-adoption.test.ts` > "forwards a thrown component error unchanged and disposes its caller root"
+Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "compiled island Fragment roots refuse while the public facade adopts independent ranges"
+Verified by `src/dom/__tests__/hydrate-fragment.test.ts` > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
 
 ## Browser-only components: `browserOnly()`
 
@@ -351,12 +341,12 @@ viewport, a map, an editor. Wrap such a component in `browserOnly()`, the one
 marker for a subtree that renders in the browser alone (one name, so a search
 finds every use):
 
-```ts
+```tsx
 import { activateIslands, browserOnly, h } from "@getforma/core";
 
 // chart.tsx: declared once, at the top level of a module.
 export const Chart = browserOnly((props: { title: string }) =>
-  h("canvas", { "aria-label": props.title }),
+  <canvas aria-label={props.title} />,
 );
 
 // The page renders it like any component: <Chart title="Sales" />.
@@ -364,85 +354,48 @@ export const Chart = browserOnly((props: { title: string }) =>
 activateIslands({ Chart });
 ```
 
-`@getforma/compiler` 0.3.7 and later emit it as a registered island whose
-server output is its empty host element with its declared props:
+The compiler records mode `browserOnly`, the declared schema and ordered inputs.
+The server emits an empty host plus the same bounded head-state occurrence used
+by other islands. The compiled registry wrapper supplies one projected props
+argument to `Chart`; its browser implementation renders into the empty host.
+A client-rendered page calls the component directly. Without a document it
+renders nothing.
 
-```html
-<div data-forma-island="0" data-forma-component="Chart" data-forma-status="pending"
-     data-forma-hydrate="load" data-forma-props='{"title":"Sales"}'></div>
-```
-
-`activateIslands` finds the host empty and renders the component in its place,
-with those props (or `{}`), carrying the island's `data-forma-*` attributes over
-to the component's root. Register it as `browserOnly()` returns it: activation
-calls it with the island's element and props, and it passes the props to the
-component. In a client-rendered page it renders as any component. Where there
-is no document (Node rendering) it renders nothing.
-
-- **Props.** Only props the compiler can evaluate to a string, number, boolean
-  or null reach the host: literals and module-level consts. A function, a
-  spread, an array or object, or a value only the browser knows is left out
-  and reported (`BUILD-706`); read such a value in the browser. A handler
-  cannot change them; 3.0.0's declared island props do (DR-4).
-- **Registration.** On a page that activates islands from a literal registry,
-  a browser-only component the registry does not name never renders, and the
-  build says so (`BUILD-708`).
-- **Development builds** log, for each browser-only island, that it has no SSR
-  content and falls back to client rendering. For these islands that is what
-  was asked for.
+Browser-only props use the declared type contract, including objects, arrays,
+optional values and server-derived data. Unsupported expressions remain build
+diagnostics; they are not silently omitted from the state. A Browser-shell route
+(`ssr: false`) has no SSR state block and mounts through its own browser entry.
 
 Verified by `src/dom/__tests__/browser-only.test.ts` > "registered in activateIslands, renders the component in its empty host, from the server props"
 Verified by `src/dom/__tests__/browser-only.test.ts` > "called as a component, renders it as any component in a client-rendered tree"
 
 ---
 
-## What adoption skips today
+## Historical qualification
 
-Adoption has no handling for the constructs below, so a server-rendered page
-that uses one is not adopted as written (FORMA-016). Since compiler 0.3.7 each
-is reported at build time with its code, file and line, and `@getforma/build`'s
-strict mode makes it an error; the way out is to render the subtree in the
-browser with `browserOnly()`, or to write it as a construct the server renders.
-
-What each one does, measured in Chromium on a `mount()` root built with
-compiler 0.3.7 and activated by this runtime, with a counter button after the
-construct:
-
-| Construct | What a server-rendered page gets today | Build code | Instead |
-|---|---|---|---|
-| A plain array child: `{rows.map(r => <li>…</li>)}` without `createList` | The server renders an empty island shell nothing registers; adoption skips the array, so the rows never appear. The rest of the page activates | `BUILD-701` | `createList(rows, keyFn, (r) => …)`, or `...CONST.map(…)` over a module-level const |
-| The same in a reactive child: `{() => rows.map(r => <li>…</li>)}` | The server renders empty text; after activation the page shows the elements as text, `[object HTMLLIElement],[object HTMLLIElement]`. The rest of the page activates | `BUILD-701` | The same |
-| `createErrorBoundary` | The server renders an empty shell where it stands, and **activation throws** `TypeError: Failed to execute 'insertBefore' on 'Node': parameter 1 is not of type 'Node'`: nothing after the construct activates (the button stays dead) | `BUILD-702` | Move the boundary out of the server-rendered tree |
-| `createSwitch` | The same: activation throws, and nothing after it activates | `BUILD-703` | A `createShow` per case |
-| `createPortal` | No error, and the rest of the page activates, but the portal's content never appears: the server's empty shell stays where it stood | `BUILD-704` | Create the portal from an effect after activation |
-| `createSuspense` | The same as `createErrorBoundary`: activation throws, and nothing after it activates | `BUILD-705` | Render the loaded state from server data |
-
-A reactive child that returns an element, `{() => c() ? <el /> : null}`,
-renders right on the server, but adoption binds it as text: beside the
-server's element the page shows `[object HTMLElement]` (or `null`), and the
-element is never removed. Write it as `createShow(() => c(), () => <el />)`.
-Client-rendered, all of these work.
-
-Whether adoption learns these constructs, with parity vectors and a browser
-fixture each, or 3.0.0's compiler refuses them in a server-rendered component,
-is decided for 3.0.0 (DR-1).
-
----
+The earlier compiler 0.3.7 whole-page mount observations and repair behavior are
+preserved in the [exact prior guide](archive/2026-10-15-strict-adoption-retirement/packages/core/docs/ISLANDS.md.txt).
+They do not describe this strict activation path. Compiler subset completion,
+package-size limits and integrated template/packed gates
+remain separate development acceptance work; this guide is not a declaration
+that FORMA-104 or the complete 3.0 upgrade is finished.
 
 ## Hydration triggers
 
-Control when an island hydrates via `data-forma-hydrate`:
+The compiler-generated host includes `data-forma-hydrate` to select when an
+already-loaded registration activates. This does not control bundle fetching:
 
 | Trigger | When it hydrates | Use case |
 |---|---|---|
-| `load` (default) | Immediately on page load | Above-the-fold content |
+| `load` (default) | First available slice, then queued browser tasks | Above-the-fold content |
 | `visible` | When the island enters the viewport | Below-the-fold components |
 | `idle` | During browser idle time | Non-critical functionality |
 | `interaction` | On first `pointerdown` or `focusin` | Skeleton + skin pattern |
 
 ```html
+<!-- Excerpt of a generated host; its occurrence/hash attributes are omitted. -->
 <div data-forma-island="1" data-forma-component="Comments" data-forma-hydrate="visible">
-  <!-- JS loads only when scrolled into view -->
+  <!-- Activation waits until visible; this does not defer bundle loading. -->
 </div>
 ```
 
@@ -450,37 +403,40 @@ Control when an island hydrates via `data-forma-hydrate`:
 
 ## Scoping to a subtree, and disposal
 
-`activateIslands(registry, root?)` takes an optional root — pass a `ShadowRoot`
-or a container element to hydrate only the islands inside it. It defaults to
-`document`. When swapping content (for example inside a Shadow DOM stage),
-dispose the old islands first or their effects leak:
+`activateIslands(registry, root?)` accepts a container to request only its
+original document islands. The first call still freezes claims across the whole
+Document, so duplicate claims outside that subtree also refuse their owners.
+A shadow-only host or later injected host was never in that original document
+set and is refused. Deferred activation rechecks the frozen markers immediately
+before running the component.
 
 ```ts
 import { activateIslands, deactivateIsland, deactivateAllIslands } from "@getforma/core";
 
-activateIslands(registry, shadowRoot);   // hydrate one subtree
-deactivateAllIslands(shadowRoot);        // tear the whole subtree down
-deactivateIsland(islandElement);         // or one island
+activateIslands(registry, originalContainer);
+deactivateAllIslands(originalContainer);
+deactivateIsland(islandElement);
 ```
 
-Both `root` parameters accept any `ParentNode`. A shared `__forma_islands`
-block in the main document is still found when activating a shadow subtree that
-has none of its own. An island removed as part of a `createList` row is
-deactivated automatically.
+Dispose islands before removing their content so their effects and deferred
+observers are released. Islands removed inside a `createList` row are disposed
+automatically. Disposal accepts any `ParentNode`; it does not grant a new state
+claim or make later inserted hosts eligible.
 
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "activates islands inside a shadow root when one is passed as root"
-Verified by `src/dom/__tests__/activate-isolation.test.ts` > "falls back to the document props block for a shadow subtree"
-Verified by `src/dom/__tests__/list-disposal.test.ts` > "deactivates an island inside a removed row"
+Verified by `src/dom/__tests__/island-state-activation.test.ts` and
+`src/dom/__tests__/list-disposal.test.ts`.
 
 ---
 
 ## Where the wire format is specified
 
 The marker grammar (`<!--f:t0-->`, `<!--f:s0-->`, `<!--f:l0-->`, `<!--f:i0-->`),
-the `data-forma-*` attributes and the `__forma_islands` props protocol are
+the `data-forma-*` attributes and the head-state envelope are
 **shared contracts**, not implementation details of this library: the Rust
 walker emits them and this runtime consumes them.
 
+- [Island state wire grammar](../../../docs/proposals/FORMA-103-STATE-WIRE.md)
+  — canonical identities, declared input bindings and bounded snapshots
 - [Stack architecture §3](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)
   — the contracts, and where each one is enforced
 - [FMIR format](https://github.com/getforma-dev/forma/blob/main/docs/FMIR-FORMAT.md)

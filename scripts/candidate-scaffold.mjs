@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, pack, packedRuntimeLock, stageNpmLock, stageCargoLock, assertNpmTemplateLock, assertCargoCandidateLock } from './release-set.mjs';
+import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 
 const sourceFiles = ['minimal', 'dashboard'].flatMap(template => ['src/main.rs', 'Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(file => `packages/create-app/templates/${template}/${file}`));
@@ -18,7 +19,8 @@ export function validateCandidate(dir, expectedHash, expectedCommit) {
   assert.equal(digest(join(dir, 'release-set.json')), expectedHash, 'DS11 record digest differs from producer output');
   const set = json(join(dir, 'release-set.json'));
   assert.equal(set.schema, 1); assert.equal(set.commit, expectedCommit, 'DS11 source is not this checkout');
-  assert.equal(set.contracts?.sourceTemplates, 'declared-v1', 'candidate must carry the current source template contract');
+  assert(['declared-v1', 'islands-v1'].includes(set.contracts?.sourceTemplates), 'candidate must carry a supported source template contract');
+  if (set.contracts.sourceTemplates === 'islands-v1') assert.equal(set.contracts.stateBlock, 'declared-v1', 'islands candidate requires declared state');
   const expected = [...CRATES.map(name => ({name, registry:'crates', path:`crates/${name}`})), ...NPM.map(name => ({name:`@getforma/${name}`, registry:'npm', path:`packages/${name}`}))];
   assert(Array.isArray(set.packages)); assert.equal(set.packages.length, expected.length);
   const version = set.packages[0].version; assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3);
@@ -54,12 +56,7 @@ export function prepareCandidate(dir, expectedHash, expectedCommit, work) {
     appendFileSync(join(dest, 'Cargo.toml'), '\n[workspace]\n');
   }
   assert(!existsSync(join(cli, 'template-lock-seeds.json')), 'source seed identity must not ship');
-  const sourceEquality = [];
-  for (const relative of ['minimal/src/main.rs', 'dashboard/src/main.rs', 'minimal/admin/src/home/app.tsx']) {
-    const original = run('git', ['show', `${expectedCommit}:packages/create-app/templates/${relative}`], ROOT, {encoding:'buffer'});
-    assert.deepEqual(readFileSync(join(cli, 'templates', relative)), original, `${relative}: packed source changed`);
-    sourceEquality.push({file:relative, sha256:digest(join(cli, 'templates', relative))});
-  }
+  const sourceEquality = verifyPackedTemplateSources(cli, expectedCommit, set.contracts.sourceTemplates);
   for (const template of ['minimal', 'dashboard']) {
     const project = join(cli, 'templates', template), admin = join(project, 'admin');
     assertNpmTemplateLock(json(join(admin, 'package.json')), json(join(admin, 'package-lock.json')), set.packages, dir);
@@ -108,6 +105,8 @@ export const REQUIRED_HEAVY = [
   'minimal: build:ssr reads ssrEntryPoints by page name',
   'cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses',
   'minimal: declared count reaches SSR and invalid bindings refuse before listening',
+  'minimal: packed native island adopts without writes and static route requests no code in all engines',
+  'dashboard: chart tooltip keeps API values as text under enforced policy in all engines',
 ];
 export function requireHeavyResults(report) {
   assert.equal(report.success, true, 'scaffold suite failed');

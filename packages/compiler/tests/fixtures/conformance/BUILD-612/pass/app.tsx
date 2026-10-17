@@ -1,0 +1,8 @@
+import { h, mount, createList, createSignal } from '@getforma/core';
+const [todos] = createSignal([{ id: 1, title: 'a' }, { id: 2, title: 'b' }]);
+
+mount(() => (
+  <main>
+    <ul>{createList(todos, (r) => r.id, (r) => <li>{r.title}</li>)}</ul>
+  </main>
+), '#app');

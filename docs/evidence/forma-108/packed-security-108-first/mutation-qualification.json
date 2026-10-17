@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "seed": 1290300,
+  "cases": 100000,
+  "passed": true,
+  "runs": [
+    {
+      "mode": "before",
+      "status": 0,
+      "report": "mutation-before.json",
+      "sha256": "11c3eeac287a70e04f29f1e990777253ea55ec5eaa2d324577b9b76bcc3b7165",
+      "sourceSha256": "3ede2d9a1ead447fb0a6e54f9cf7b66d7e2478856e5330c5b0bd54136f6ec46e",
+      "workerSha256": "dcba7e999ce986ad4d1d3b3d95192e7dace072150a14cfd1a22dd02384866f82"
+    },
+    {
+      "mode": "mutant",
+      "status": 1,
+      "report": "mutation-mutant.json",
+      "sha256": "3cdc6ae6e0e9193cbbf4bd3259e54ca7b463a5da083ee12207e8841e5ecd17ef",
+      "sourceSha256": "3ede2d9a1ead447fb0a6e54f9cf7b66d7e2478856e5330c5b0bd54136f6ec46e",
+      "workerSha256": "d72a1f9dd0b3e0d3681299475d2d7b69a0ed98e39b9da497982a0f13b88ed660"
+    },
+    {
+      "mode": "corrected",
+      "status": 0,
+      "report": "mutation-corrected.json",
+      "sha256": "8ad6d23d8f30cbf559f4bf2f8be7a73ae48d9344f505ab95299b1ce271543b6b",
+      "sourceSha256": "3ede2d9a1ead447fb0a6e54f9cf7b66d7e2478856e5330c5b0bd54136f6ec46e",
+      "workerSha256": "dcba7e999ce986ad4d1d3b3d95192e7dace072150a14cfd1a22dd02384866f82"
+    }
+  ],
+  "failure": {
+    "index": 37,
+    "input": {
+      "operation": "Array.from",
+      "source": "Array.from(shape)",
+      "state": {
+        "shape": {
+          "length": 32
+        }
+      },
+      "expected": [
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        },
+        {
+          "$formaFuzzValue": "undefined"
+        }
+      ],
+      "minimumCost": 42
+    },
+    "error": "expression campaign seed1290300 case37: cost undercharge for Array.from: actual 0, independent floor 42"
+  }
+}

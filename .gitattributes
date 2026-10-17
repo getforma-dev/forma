@@ -37,7 +37,223 @@ crates/forma-ir/tests/fixtures/js-emitter/*.dump text eol=lf
 packages/compiler/src/fmir-constants.ts text eol=lf
 crates/forma-ir/src/fmir_constants.rs text eol=lf
 
+# The island-emitter registration golden is compared byte-for-byte with the
+# compiler's JSON.stringify output plus one LF
+# (packages/compiler/tests/island-emission.test.ts), so checkout must keep its
+# LF bytes on Windows too.
+crates/forma-ir/tests/fixtures/island-emitter/*.json text eol=lf
+
 # Packed candidates use the actual template source bytes on every platform.
 packages/create-app/templates/*/src/main.rs text eol=lf
 # Original source/doc bytes are authenticated by the migration archive index.
 docs/archive/2026-10-15-template-slice1/** -text
+# FORMA-181: archived originals and frozen keyed-list sources are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-keyed-rows/** -text
+packages/compiler/tests/fixtures/keyed-lists/** -text
+# FORMA-181: the archive test hashes the live list-same-source.state.json byte-for-byte.
+crates/forma-ir/tests/fixtures/js-emitter/*.state.json text eol=lf
+# FORMA-181: the archive test hashes the declared-props SRI manifest byte-for-byte.
+crates/forma-server/tests/fixtures/props-contract/manifest.json text eol=lf
+# FORMA-182: archived pre-value-rules sources are authenticated by SHA-256
+# (packages/compiler/tests/value-rules-archive.test.ts), so checkout must keep their LF bytes.
+docs/archive/2026-10-15-pre-value-rules/** -text
+# FORMA-181 checkpoint B: the pre-native-keys originals are authenticated by SHA-256, and the
+# shared key vectors are hashed by nothing but read by both suites as exact bytes.
+docs/archive/2026-10-15-pre-native-keys/** -text
+crates/forma-ir/tests/fixtures/parity/*.json text eol=lf
+
+# FORMA-182 F2/F3: archived pre-attribute-values corpus outputs are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-attribute-values/** -text
+
+docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
+# FORMA-181 F1: the pre-list-source originals are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-list-source/** -text
+# FORMA-181 F1: tests/list-source.test.ts hashes the live corpus sources against the ledger.
+packages/compiler/tests/fixtures/ir-corpus/list-same-source/*.ts text eol=lf
+# FORMA-181 checkpoint C: the pre-key-adoption test originals are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-key-adoption/** -text
+# FORMA-182 F2/F3: archived pre-attribute-values corpus outputs are authenticated by SHA-256.
+docs/archive/2026-10-15-pre-attribute-values/** -text
+
+docs/archive/2026-10-15-boolean-attribute-review/** text eol=lf
+
+# FORMA-101: authenticated historical sources/products and live migration ledgers.
+docs/archive/FORMA-101-* -text
+docs/archive/FORMA-101-*/** -text
+packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/*.ts text eol=lf
+packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/*.ts text eol=lf
+packages/compiler/tests/attribute-values-archive.test.ts text eol=lf
+
+# FORMA-101: preserved pre-native-source originals and wire products are authenticated byte-for-byte.
+docs/archive/FORMA-101-unproved-list-sources/** -text
+
+# FORMA-101: the native LIST migration ledger also hashes these live sources and tests.
+packages/compiler/tests/fixtures/conformance/BUILD-701/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-612/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-613/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-616/pass/app.tsx text eol=lf
+packages/compiler/tests/fixtures/conformance/BUILD-107/pass/app.tsx text eol=lf
+packages/compiler/tests/list-source.test.ts text eol=lf
+packages/compiler/tests/keyed-list-archive.test.ts text eol=lf
+packages/compiler/tests/keyed-list-proof.test.ts text eol=lf
+
+# Actual N3 timing/product evidence hashes are byte-exact across checkouts.
+docs/evidence/forma-181-indexed/*.json -text
+
+# Authentic pre-139 compiler source/product evidence, never checkout-normalized.
+docs/archive/FORMA-139-html-context/** -text
+
+# FORMA-139: byte-exact original R17 title fixture and observed CI refusal.
+docs/archive/FORMA-139-e2e-title/** -text
+
+# Exact native multi-entry failure products.
+/docs/archive/FORMA-186-native-multiple-entries/** -text
+
+# FORMA-129: the historical93-probe original is authenticated byte-for-byte.
+docs/archive/FORMA-129-historical-probes/** -text
+
+# FORMA-129: authentic real-server redirect failure and corrected replay.
+docs/archive/FORMA-129-fetch-redirect/** -text
+
+# FORMA-129: observed detached-template failures and corrected unit replay.
+docs/archive/FORMA-129-list-template/** -text
+
+# FORMA-129: source/probe evidence is authenticated across platform checkouts.
+packages/core/probes/corpus.json text eol=lf
+packages/core/e2e/hostile-widgets/*.mjs text eol=lf
+packages/core/e2e/hostile-widgets/probe-provenance.json text eol=lf
+
+# FORMA-129: original calibration failures and actual source qualification bytes.
+docs/archive/FORMA-129-matrix-expectations/** -text
+docs/evidence/forma-129/** -text
+
+# Original founder comparison source is preserved byte-for-byte on Windows.
+e2e/performance/archive/8bd8b65/** -text
+
+# Actual release-support and fresh-MSRV evidence is authenticated by SHA-256.
+docs/evidence/forma-189/** -text
+docs/evidence/forma-181-indexed/integrated/*.json -text
+
+docs/evidence/forma-116/** -text
+
+# FORMA-116: preserve pre-convergence workflow and policy source bytes.
+docs/archive/forma-116-maintenance-node/** -text
+
+# Attribute alias transition preserves original source/products byte-for-byte.
+docs/archive/attribute-alias-transition/** -text
+
+# Immutable recovered beta measurements and first-failure evidence.
+docs/release-evidence/beta-acceptance/decoder/** -text
+docs/release-evidence/beta-acceptance/products/** -text
+docs/release-evidence/beta-acceptance/first-svg-case/** -text
+docs/release-evidence/beta-acceptance/corrected-foreign/** -text
+
+# FORMA-108: authenticated A2 originals before the explicit-tier migration.
+docs/archive/FORMA-108-A2-bridge/** -text
+
+docs/archive/FORMA-108-owned-scope-cleanup/** -text
+
+# Exact first failure/source bytes for FORMA-108 documentation migration.
+docs/archive/FORMA-108-documentation-checks/** -text
+
+# Exact first actual browser migration evidence.
+docs/archive/FORMA-108-browser-migration/** -text
+
+# Original strict qualifier refusal, with byte-exact actual JSON/logs.
+docs/archive/FORMA-108-mutation-reporting/** -text
+
+# Exact explicit-runtime qualification reports and logs.
+docs/evidence/forma-108/** -text
+
+# FORMA-144 archived sources and qualification evidence use byte-exact hashes.
+docs/archive/forma-144-final-before/** -text
+docs/evidence/forma-144-final/** -text
+
+# Original Vite configuration and its first failure are byte-authenticated.
+docs/archive/forma-144-vite7-config/** -text
+
+# Original release workflow and actual failure-retention controls.
+docs/archive/release-p17-failure-retention/** -text
+
+# Original fixture tool path and actual hosted failure are byte-authenticated.
+docs/archive/forma-144-fixture-tool/** -text
+
+# Byte-exact watch-readiness original source and failure evidence.
+docs/archive/forma-watch-readiness/** -text
+
+# FORMA-145 preserves prior staged guides byte-for-byte.
+docs/archive/forma-145-guide-before/** -text
+
+docs/archive/FORMA-108-root-full-stack/** -text
+
+docs/archive/forma-191-performance-durability/** -text
+docs/evidence/forma-191-performance-durability/** -text
+
+# Exact dynamic fetch fixture source and authoritative integrated failure.
+docs/archive/FORMA-108-fetch-fixture/** -text
+# Preserve the original shipped CSP example as byte-exact qualification evidence.
+docs/archive/FORMA-108-csp-example/** -text
+# Original runtime guides retain their exact pre-correction bytes.
+docs/archive/FORMA-108-guide-residue/** -text
+
+# Original nested P17 failure and actual files-only transfer qualification.
+docs/archive/p17-nested-evidence/** -text
+docs/evidence/p17-nested-evidence/** -text
+
+# Exact pre-repair Node policy sources and hosted warning evidence.
+docs/archive/forma-maintenance-node-pin/** -text
+
+# Preserve original deployment-drill failures and actual browser controls.
+docs/archive/skew-failure-diagnostics/** -text
+
+# Preserve the actual same-target reload interruption and scoped controls.
+docs/archive/skew-expected-reload/** -text
+
+# Original Playwright graph and actual transport investigation retain exact bytes.
+docs/archive/playwright-firefox-channel/** -text
+docs/evidence/playwright-firefox-channel/** -text
+
+# Preserve the actual WebKit failure and native baseline byte-for-byte.
+docs/archive/webkit-native-select-baseline/** -text
+
+# Preserve the first exact select-repair qualification and frame failures.
+docs/evidence/webkit-native-select-baseline/** -text
+
+# Preserve the exact phase-only frame TCP diagnostic and original failures.
+docs/archive/frame-tcp-control-diagnostic/** -text
+
+# Preserve the causal frame-control repair qualification.
+docs/evidence/frame-tcp-control-repair/** -text
+# Byte-exact lazy native prototype originals and scoped correctness evidence.
+docs/archive/forma-191-lazy-prototype/** -text
+docs/evidence/forma-191-lazy-prototype/** -text
+
+# Preserve the original FORMA-116 rollout and approved L-60 disposition evidence.
+docs/archive/forma-116-live-deferral/** -text
+docs/evidence/forma-116-live-deferral/** -text
+
+# Original hosted failure and primary parser specification evidence.
+docs/archive/html-document-parser-control/** -text
+
+# RC burn-in original sources and immutable qualification evidence.
+docs/archive/rc-burn-in-2026-10-16/** -text
+docs/evidence/rc-burn-in-2026-10-16/** -text
+
+# Preserve the historical Rust workspace overview byte-for-byte.
+docs/archive/2026-10-16-current-overviews/** -text
+
+# L63 preserves the original startup policy and all historical controls.
+docs/archive/forma-191-startup-policy/** -text
+docs/evidence/forma-191-startup-policy/** -text
+
+# Preserve the original watch-recovery failure and actual regression output.
+docs/archive/watch-recovery-2026-10-16/** -text
+docs/evidence/watch-recovery-2026-10-16/** -text
+
+# Preserve dashboard tooltip originals and actual regression evidence.
+docs/archive/dashboard-tooltip-2026-10-16/** -text
+docs/evidence/dashboard-tooltip-2026-10-16/** -text
+# Preserve FORMA-196 original raw-boundary sources/products and actual qualification.
+docs/archive/forma-196-native-raw-boundary/** -text
+docs/evidence/forma-196-native-raw-boundary/** -text
+docs/release-evidence/forma-199/** -text

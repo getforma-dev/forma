@@ -1,0 +1,160 @@
+{
+  "sourceCommit": "b0376441aff2187290ce37d751f66b098e7b5f72",
+  "reason": "Strict publication preserves the original206/503 refusals; live corpus uses a real closed href and distinct panel getter. Compiler emits both IR/dumps, Rust regenerates HTML. Other12cross-language modules remain byte-identical.",
+  "files": {
+    "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/app.ts": {
+      "archived": "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/app.ts",
+      "before": {
+        "bytes": 524,
+        "sha256": "6d93ab99a201653a49c3d009b1915385991cba67fb491579dd6265d6f136bed8"
+      },
+      "after": {
+        "bytes": 524,
+        "sha256": "6d93ab99a201653a49c3d009b1915385991cba67fb491579dd6265d6f136bed8"
+      }
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/page.ts": {
+      "archived": "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/page.ts",
+      "before": {
+        "bytes": 1986,
+        "sha256": "5b475323020e8ac206492304bface444ecc573fd956eaad2cb66f51162cd0d42"
+      },
+      "after": {
+        "bytes": 1940,
+        "sha256": "1969dd0c049cb1ef491e04bc44035a6e427bc32b4421b45a78ccf7419b301977"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.ir": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.ir",
+      "before": {
+        "bytes": 700,
+        "sha256": "ce269a921cec1c11cff90687d90756f0aebbb8146b09dc08538a7ae1dcdf5405"
+      },
+      "after": {
+        "bytes": 704,
+        "sha256": "d1af1e0551f54bd7b094fca86a482da8e4cd24462a61c2b26a7f19e4a3037bb6"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.dump": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.dump",
+      "before": {
+        "bytes": 1565,
+        "sha256": "0e1975a03912bcb17769d29616f14ab6ff65497cd95b3a314146d8ed48385933"
+      },
+      "after": {
+        "bytes": 1573,
+        "sha256": "35c6f64c69305e9e6f22e344d046c863661eb75510020c555735607703469e29"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.html": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.html",
+      "before": {
+        "bytes": 1284,
+        "sha256": "95de660efb9524f64d486f5859da6588fc96bcfb52ee3d70f9f933291d4bfdbd"
+      },
+      "after": {
+        "bytes": 1295,
+        "sha256": "5c73b7507437276dbae669e8c6bf14cbf8f44742bfc0d4306ce7811d516a57e0"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.state.json": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.state.json",
+      "before": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      },
+      "after": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      }
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/panel.ts": {
+      "archived": "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/panel.ts",
+      "before": {
+        "bytes": 1499,
+        "sha256": "114b2e76db602a05133da67cf95f0ea9936dfd71fd092bfc3499d0a418db5ac9"
+      },
+      "after": {
+        "bytes": 1352,
+        "sha256": "a791c53da6b6977ed30cdb9a54fd43991ee627e9d03e5538e30a608807da047e"
+      }
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/app.ts": {
+      "archived": "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/app.ts",
+      "before": {
+        "bytes": 1572,
+        "sha256": "e47a0080cb935e9b3ee723ad8c3453129669c8b1ab2c42a9affff7b726ea9bae"
+      },
+      "after": {
+        "bytes": 1518,
+        "sha256": "d79d673fb72f740cd0e78f39ccf16f7fb753786cfa6f65ef77b65588b1cd778a"
+      }
+    },
+    "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/page.ts": {
+      "archived": "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/page.ts",
+      "before": {
+        "bytes": 1742,
+        "sha256": "09f14ccdad80ba041806c6377c8a91d461561332fe3bd883f87957782a30278d"
+      },
+      "after": {
+        "bytes": 1765,
+        "sha256": "566a00f726cb487bef5736e72d38b2aaac369ccb3e14668af1154cc3aa500091"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.ir": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.ir",
+      "before": {
+        "bytes": 675,
+        "sha256": "2e5aece32db10165fc66895a1baf4456d827eebc690a30fc3fc9732bb37bd668"
+      },
+      "after": {
+        "bytes": 678,
+        "sha256": "16c02b24d101c473de279dcc2bbabae3e496a62db83e3c64331a41aa183ac498"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.dump": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.dump",
+      "before": {
+        "bytes": 1515,
+        "sha256": "2e6f73af875990f0c8b8724c5145ffa0e6a81a4a5b75a911126ce0efe3503dd9"
+      },
+      "after": {
+        "bytes": 1521,
+        "sha256": "5bf5ac5eb2299d7cb86b8be5637628e7c6868a28314a51ff6e124ee1b6012dbe"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.html": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.html",
+      "before": {
+        "bytes": 1548,
+        "sha256": "8a7e6933f4f65de0f728a1ec5e2e4285c7910cc7c2e5541bef817c5d38a721d4"
+      },
+      "after": {
+        "bytes": 1548,
+        "sha256": "8a7e6933f4f65de0f728a1ec5e2e4285c7910cc7c2e5541bef817c5d38a721d4"
+      }
+    },
+    "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.state.json": {
+      "archived": "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.state.json",
+      "before": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      },
+      "after": {
+        "bytes": 242,
+        "sha256": "b85e505af8476929300e82264d29354ae578f3b5f5d3292ee5a3ad7a8a6c2e42"
+      }
+    },
+    "packages/compiler/tests/attribute-values-archive.test.ts": {
+      "archived": "packages/compiler/tests/attribute-values-archive.test.ts",
+      "before": {
+        "bytes": 2600,
+        "sha256": "56e3f50ff22f01ca70ffb660748f82fd72240a1c29a9c2de461a9341ea97d499"
+      },
+      "after": {
+        "bytes": 2782,
+        "sha256": "15ec5639d1e8699c7062c95d31796e2ef3b74521795a432e33688dd0ce8d90b9"
+      }
+    }
+  }
+}

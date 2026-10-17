@@ -1,0 +1,202 @@
+{
+  "kind": "native baseline only",
+  "formaLoaded": false,
+  "fixtureSha256": "4aa85ef73acf81c9924e28b43831fe2c137e07fa247772ae117d7986c934492a",
+  "rows": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4",
+      "executable": "/Users/victorvillacis/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+      "observation": {
+        "before": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "detachedMirror": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "after": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "plainSelected": true,
+        "scriptCount": 0,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+        "platform": "MacIntel"
+      }
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0",
+      "executable": "/Users/victorvillacis/Library/Caches/ms-playwright/firefox-1555/firefox/Nightly.app/Contents/MacOS/firefox",
+      "observation": {
+        "before": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "detachedMirror": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "after": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "plainSelected": true,
+        "scriptCount": 0,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0",
+        "platform": "MacIntel"
+      }
+    },
+    {
+      "engine": "webkit",
+      "version": "27.2",
+      "executable": "/Users/victorvillacis/Library/Caches/ms-playwright/webkit-2370/pw_run.sh",
+      "observation": {
+        "before": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "detachedMirror": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "after": {
+          "index": -1,
+          "value": "",
+          "options": [
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            },
+            {
+              "selected": false,
+              "defaultSelected": false,
+              "disabled": false,
+              "selectedAttribute": false
+            }
+          ]
+        },
+        "plainSelected": true,
+        "scriptCount": 0,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+        "platform": "MacIntel"
+      }
+    }
+  ]
+}

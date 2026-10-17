@@ -1,0 +1,78 @@
+{
+  "scope": "source audit of every persisted P17 producer; pattern placeholders are naming constraints, not literal output names",
+  "base": "f01150fe50aa096aea8b008360a3930ac83057b0",
+  "sources": [
+    {
+      "path": "scripts/verify-release-set.mjs",
+      "sha256": "6f78f368644a385d02729ecd7f777ce9893450aa9cc0820ae1f07e36ddab300a",
+      "names": [
+        "p17.json",
+        "security/"
+      ]
+    },
+    {
+      "path": "scripts/release-security.mjs",
+      "sha256": "1aa9b7045b1eb420bce8eb7b7f4148e5c004e733175f0af26ab0b3679497d478",
+      "names": [
+        "security/hostile-widgets.json",
+        "security/guard-qualification.json",
+        "security/guard-before.json",
+        "security/guard-mutant.json",
+        "security/guard-corrected.json",
+        "security/mutation-qualification.json",
+        "security/mutation-before.json",
+        "security/mutation-mutant.json",
+        "security/mutation-corrected.json"
+      ]
+    },
+    {
+      "path": "scripts/release-performance.mjs",
+      "sha256": "f2052a116ab57c2223af41c1f7647e56fde4afd51f0f2bed045ff2082e602613",
+      "names": [
+        "decoder-attempt-<mkdtemp>/attempt.json",
+        "decoder-attempt-<mkdtemp>/observations.jsonl",
+        "decoder-attempt-<mkdtemp>/report.json"
+      ]
+    },
+    {
+      "path": "scripts/release-performance-journal.mjs",
+      "sha256": "fba3acc7c194306344eaa72c88dbf1dd7d860c1c592377ffd0eaee77ad220bab",
+      "names": [
+        "performance-attempt-<mkdtemp>/manifest.jsonl",
+        "performance-attempt-<mkdtemp>/<validated-kind>.json"
+      ]
+    },
+    {
+      "path": "e2e/fixtures/apps/src/performance_evidence.rs",
+      "sha256": "491ef25c6f72ae7ac46926120b5057e6b560bd1157764ba62d4661482f706296",
+      "names": [
+        "performance-attempt-<mkdtemp>/native-n1-<nodes>.json",
+        "performance-attempt-<mkdtemp>/native-n5-<rows>.json",
+        "performance-attempt-<mkdtemp>/native-report.json"
+      ]
+    },
+    {
+      "path": "e2e/performance/client/run.mjs",
+      "sha256": "6ef318073be5c90a4c7e3cfbf2c865e073161561f1ba5c2f55243e07d38d7660",
+      "names": [
+        "performance-attempt-<mkdtemp>/client-<engine>-<case>.json",
+        "performance-attempt-<mkdtemp>/client-report.json",
+        "performance-attempt-<mkdtemp>/client-markdown.json"
+      ]
+    }
+  ],
+  "constraints": [
+    "JS journal kind is /^[a-z][a-z0-9-]{0,95}$/ and native writer checks matching portable kind policy",
+    "Node mkdtemp appends generated safe alphanumeric suffixes",
+    "Successful security, decoder and performance calls necessarily populate each created evidence directory",
+    "No current successful P17 producer emits a dotfile; hidden names refuse rather than being excluded",
+    "Source temporary bundle/build directories live outside the P17 report directory and are not transfer evidence"
+  ],
+  "upstream": {
+    "uploadCommit": "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+    "searchSourceBlobPrefix": "e573f83",
+    "artifactPackage": "@actions/artifact@6.3.1",
+    "behavior": "pinned uploader filters all directory entries; both pinned action locks select same verified artifact implementation",
+    "independentReview": "work/codex-review-ds12 (source and package integrity reviewed by independent release-plan agent)"
+  }
+}

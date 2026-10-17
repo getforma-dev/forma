@@ -1,0 +1,18 @@
+{
+  "sourceBase": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "node": "24.22.0",
+  "command": "node ../../node_modules/vitest/vitest.mjs run --maxWorkers=2 tests/worker-build-contract.test.ts tests/watch-readiness.test.ts",
+  "cwd": "packages/build",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2392,
+      "sha256": "de53b6bdb7e003bf44326344dda4c454e0245a9701a3398443f358bd9d6ea5ba"
+    },
+    {
+      "path": "watch-control-after.log",
+      "bytes": 4280,
+      "sha256": "8dbdc5cd34325fee374cd5c77874f8315cd30b9164d9c9249ab397cb7f54c394"
+    }
+  ]
+}

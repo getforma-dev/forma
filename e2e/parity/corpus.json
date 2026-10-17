@@ -1,0 +1,188 @@
+{
+  "note": "The parity corpus (FORMA-183; e2e/parity/README.md, 'The corpus and its ratchet'). Step 0: the 14 modules of crates/forma-ir/tests/fixtures/js-emitter/, read from their sources under `corpus` as they are (each module's entry is `<corpus>/<name>/app.ts` or `.tsx`). Step 1 adds the props-contract page (every declared type), the island-emitter family (rebuilt from the compiler's own test, each proved exact by the .ir pairing check) and the harness's P3 fixture. `page` names the file exporting the page function and how it takes its props (`none`: called with no argument; `named`: the state is the one argument). `transition` names a module-exported setter for P3; a module without one reports P3 `no-setter`. Nothing is copied from an application repository (L-54, DR-34).",
+  "corpus": "packages/compiler/tests/fixtures/ir-corpus",
+  "modules": [
+    {
+      "name": "barrel-exports",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/barrel-exports.ir",
+      "kind": "islands",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/barrel-exports/components/index.ts",
+        "exportName": "BarrelPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "create-show",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/create-show.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/create-show/page.ts",
+        "exportName": "ShowPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "dynamic-attrs",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/dynamic-attrs.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/dynamic-attrs/page.ts",
+        "exportName": "AttrsPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "dynamic-text",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/dynamic-text.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/dynamic-text/page.ts",
+        "exportName": "TextPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "eager-concat",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/eager-concat.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/eager-concat/page.ts",
+        "exportName": "ConcatPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "imported-const-table",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/imported-const-table.ir",
+      "kind": "islands",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/imported-const-table/page.ts",
+        "exportName": "KeyPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "imported-signal-defaults",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/imported-signal-defaults.ir",
+      "kind": "islands",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/imported-signal-defaults/page.ts",
+        "exportName": "InvitePage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "jsx-page",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/jsx-page.ir",
+      "kind": "islands",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/jsx-page/page.tsx",
+        "exportName": "JsxPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "list-same-source",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/list-same-source.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/list-same-source/page.ts",
+        "exportName": "ListPage",
+        "props": "none"
+      },
+      "note": "keyed rows: the key check waits for FORMA-181 checkpoint B"
+    },
+    {
+      "name": "nested-islands",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/nested-islands.ir",
+      "kind": "islands",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/nested-islands/page.ts",
+        "exportName": "NestedPage",
+        "props": "named"
+      },
+      "note": "the one module with declared page props: panelClass and badgeTitle"
+    },
+    {
+      "name": "static-page",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/static-page.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/static-page/page.ts",
+        "exportName": "StaticPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "sub-component-scopes",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/sub-component-scopes.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/sub-component-scopes/page.ts",
+        "exportName": "ScopesPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "ternary-asymmetric",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/ternary-asymmetric.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/ternary-asymmetric/page.ts",
+        "exportName": "TernaryPage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "unicode-emoji",
+      "ir": "crates/forma-ir/tests/fixtures/js-emitter/unicode-emoji.ir",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/ir-corpus/unicode-emoji/page.ts",
+        "exportName": "UnicodePage",
+        "props": "none"
+      }
+    },
+    {
+      "name": "props-contract",
+      "step": 1,
+      "ir": "crates/forma-server/tests/fixtures/props-contract/home.ir",
+      "entry": "packages/compiler/tests/fixtures/props-contract/app.ts",
+      "kind": "page",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/props-contract/page.ts",
+        "exportName": "Page",
+        "props": "named"
+      },
+      "note": "FORMA-102's cross-language fixture: nine declared fields covering every type, two keyed views of rows"
+    },
+    {
+      "name": "transition",
+      "step": 1,
+      "entry": "e2e/parity/fixtures/transition/app.ts",
+      "kind": "islands",
+      "page": {
+        "file": "e2e/parity/fixtures/transition/page.ts",
+        "exportName": "Page",
+        "props": "named"
+      },
+      "transition": {
+        "file": "e2e/parity/fixtures/transition/island.ts",
+        "export": "parityTransition"
+      },
+      "note": "the harness's P3 fixture: no committed .ir, the module the compiler emits for it is the one served"
+    }
+  ],
+  "families": [
+    {
+      "family": "island-emitter",
+      "step": 1,
+      "source": "packages/compiler/tests/island-emission.test.ts",
+      "ir": "crates/forma-ir/tests/fixtures/island-emitter",
+      "exclude": {
+        "browser": "a browserOnly() island: the server writes an empty host by design (DR-1's marker) and the browser constructs it (mode 1), so neither P1 nor P2 compares anything"
+      }
+    }
+  ]
+}

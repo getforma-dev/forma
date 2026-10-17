@@ -1,0 +1,382 @@
+33 SR13/SR43 workflow and 13 milestone-contract seeded violations rejected
+✔ recorded Cargo runtime closure adds derive and a second exact external version without changing old resolutions (2.728958ms)
+✔ new runtime records use Cargo order and preserve original package bytes (0.829084ms)
+✔ Cargo identity order uses numeric versions, prereleases, build identifiers and source ties (0.60425ms)
+✔ Cargo closure refuses an already ambiguous original reference instead of guessing its old target (0.38925ms)
+✔ Cargo closure distinguishes same name/version from a different source and qualifies new references (0.216166ms)
+✔ Cargo closure rejects incomplete or inconsistent recorded runtime graphs (0.699208ms)
+✔ unchanged packed runtime requirements retain the application external version instead of forcing a workspace downgrade (0.514292ms)
+✔ packed Cargo metadata inspection is offline and locked even for an unpublished dependency (106.641959ms)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on shared package cache
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-tyefNw)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.92s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-tyefNw/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-tyefNw/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+
+running 9 tests
+test corpus_contains_every_expected_case ... ok
+test corpus_exercises_multibyte_utf8 ... ok
+test every_case_walks_to_html ... ok
+test every_island_entry_walks_as_a_fragment ... ok
+test every_case_parses_as_fmir ... ok
+test resolution_cases_ship_named_islands_over_named_slots ... ok
+test rendered_html_matches_golden ... ok
+test slot_ids_are_pairwise_unique ... ok
+test slot_names_are_pairwise_unique ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-vO2EEp)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-vO2EEp/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-vO2EEp/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+
+running 10 tests
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-JZQ5uv)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-JZQ5uv/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+    Blocking waiting for file lock on package cache
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-1fxYGm)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-1fxYGm/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-Cquhtz)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-Cquhtz/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-Cquhtz/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+
+running 9 tests
+test corpus_contains_every_expected_case ... ok
+test corpus_exercises_multibyte_utf8 ... ok
+test every_case_parses_as_fmir ... ok
+test every_case_walks_to_html ... ok
+test rendered_html_matches_golden ... ignored
+test every_island_entry_walks_as_a_fragment ... ok
+test resolution_cases_ship_named_islands_over_named_slots ... ok
+test slot_ids_are_pairwise_unique ... ok
+test slot_names_are_pairwise_unique ... ok
+
+test result: ok. 8 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Blocking waiting for file lock on package cache
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-ziEbhI)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-ziEbhI/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-ziEbhI/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+
+running 10 tests
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ignored
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+
+test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-Sl7Svf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-Sl7Svf/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-Sl7Svf/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+error: test failed, to rerun pass `--lib`
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-EMQESJ)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-EMQESJ/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-EMQESJ/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+
+running 9 tests
+test corpus_contains_every_expected_case ... ok
+test corpus_exercises_multibyte_utf8 ... ok
+test every_case_walks_to_html ... ok
+test every_island_entry_walks_as_a_fragment ... ok
+test every_case_parses_as_fmir ... ok
+test rendered_html_matches_golden ... ok
+test resolution_cases_ship_named_islands_over_named_slots ... ok
+test slot_names_are_pairwise_unique ... ok
+test slot_ids_are_pairwise_unique ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-vUNzLr)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-vUNzLr/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-vUNzLr/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+
+running 10 tests
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-lrjuHC)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running tests/js_emitter_contract.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-lrjuHC/target/debug/deps/js_emitter_contract-ee0f9dfec8ae4653)
+   Compiling forma-release-corpus-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-dKeSpn)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-corpus-dKeSpn/target/debug/deps/forma_release_corpus_fixture-5e5ebf44bb027c62)
+✔ packed corpus executes immutable A2 integration tests and private v3 unit tests (1500.896541ms)
+✔ packed corpus refuses an empty filter, missing fragment check or ignored semantic check (1099.052083ms)
+✔ packed corpus propagates a failing Rust semantic check (270.081584ms)
+✔ packed corpus removes the golden-update variable from the actual Rust child environment (542.236083ms)
+✔ packed corpus requires the resolution semantic check for its recorded wire version (454.010792ms)
+✔ the pruned lock keeps what the crate reaches in the committed order, with checksums untouched and the Forma packages at the packed version (1.419666ms)
+✔ the pruned lock refuses a dependency the committed lock does not hold, an ambiguous one, and a Forma crate with a registry source (0.689ms)
+✔ the committed fixture crate prunes against the committed e2e lock to exactly the crate's graph (1.600042ms)
+✔ the fixture manifest names the crates exactly and patches DS11's extracted crates; anything else refuses (1.539084ms)
+✔ the npm install is the three libraries from DS11's bytes, locked, with every external package copied from the tagged tree's own lock (68.607084ms)
+✔ an import resolves inside the packed install, and one that would reach the checkout's workspace link is refused (the alpha.1 failure) (7.205458ms)
+✔ the expectations come from the index: hosts by island name, the state as occurrences, a prefix kept as a prefix (0.22425ms)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling forma-packed-integrity v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-XTfapj)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.92s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-XTfapj/target/debug/deps/asset_integrity-d91923b9b56850c6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-XTfapj/target/debug/deps/asset_integrity-d91923b9b56850c6)
+
+running 3 tests
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-packed-integrity v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-ufoTWf)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-ufoTWf/target/debug/deps/asset_integrity-d91923b9b56850c6)
+   Compiling forma-packed-integrity v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-g030BQ)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-g030BQ/target/debug/deps/asset_integrity-d91923b9b56850c6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-g030BQ/target/debug/deps/asset_integrity-d91923b9b56850c6)
+
+running 3 tests
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ignored
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+✔ packed resource observations require exact digests and preserved nonce/crossorigin (2.232167ms)
+✔ packed native integrity checks execute and refuse missing or skipped coverage (1789.695208ms)
+✔ packed worker reports require every named browser control to execute (1.419166ms)
+✔ N2 reads the emitted JSON policy and each route ceiling without reading bundle source (6.625917ms)
+✔ N2 requires both route verdicts, and checks JavaScript excess separately from Forma code (0.664792ms)
+✔ N2: a route over the report ceiling fails naming the app, the route and both numbers (12.882583ms)
+✔ N2: missing routes, ceilings, or bytes fail instead of substituting a default (0.340667ms)
+✔ P17 time: inside thirty minutes passes, one second over fails with both numbers (0.283791ms)
+✔ shape rows come from the walker's own counts and refuse a missing header (0.283ms)
+✔ the machine block names the platform, the processors and the profile, and the notes line reads the worst route (0.210208ms)
+✔ L-59 report admits 28000 bytes and refuses 28001 without a reader constant (1.606375ms)
+✔ without the harness links, the packed build resolves its compiler peer through the unbuilt workspace and fails as the tag did (49.970209ms)
+✔ with the links, every internal specifier resolves inside the packed set and the packed bytes load, workspace built or not (84.907958ms)
+✔ a built workspace never stands in for the packed bytes: a missing link is refused, not silently substituted (44.676166ms)
+✔ an internal specifier the packed set does not provide is refused even when the workspace could serve it (171.880375ms)
+✔ the specifier scan sees static, dynamic and require forms with subpaths, and ignores policy-name strings (1.899209ms)
+✔ real npm installs enforce the compatibility peers and narrow prerelease exception (5975.230208ms)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on shared package cache
+   Compiling forma-release-props-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-UC9Get)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.15s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-UC9Get/target/debug/deps/typed_pages-9afe65cc0875796f)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-UC9Get/target/debug/deps/typed_pages-9afe65cc0875796f)
+
+running 7 tests
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Blocking waiting for file lock on package cache
+   Compiling forma-release-props-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-ZGm0o0)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-ZGm0o0/target/debug/deps/typed_pages-9afe65cc0875796f)
+   Compiling forma-release-props-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-ALAFTc)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-ALAFTc/target/debug/deps/typed_pages-9afe65cc0875796f)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-ALAFTc/target/debug/deps/typed_pages-9afe65cc0875796f)
+
+running 7 tests
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ignored
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+
+test result: ok. 6 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-release-props-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-HamF9Y)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-HamF9Y/target/debug/deps/typed_pages-9afe65cc0875796f)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-HamF9Y/target/debug/deps/typed_pages-9afe65cc0875796f)
+error: test failed, to rerun pass `--test typed_pages`
+   Compiling forma-release-props-fixture v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-WQqEp0)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running tests/typed_pages.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-release-props-WQqEp0/target/debug/deps/typed_pages-9afe65cc0875796f)
+✔ packed typed Pages executes every required check with immutable fixtures (1364.500083ms)
+✔ packed typed Pages refuses missing, ignored and failing semantic checks (985.651209ms)
+✔ packed declared fixture comparison refuses stale bytes and placeholder fallback (2.951125ms)
+✔ recorded finalized rendering refuses a package with only interim typed checks (267.421542ms)
+✔ the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones (14.026125ms)
+✔ release notes retain paragraphs, bullets and subheadings up to the next release (0.257958ms)
+✔ last release extends to true EOF and an unbracketed version is accepted (0.071458ms)
+✔ stable tags cannot select prereleases or other version prefixes (0.155666ms)
+✔ the Release notes carry one line of P17's measurements when it took them, and nothing otherwise (0.118ms)
+✔ P17 refuses partial, stale, duplicated, disconnected and unsafe hostile proof (61.771708ms)
+✔ P17 requires full current-source campaigns and a numerical, bounded real-row mutant (7.5415ms)
+✔ an unpublished exact peer edge remains local while every external edge is audited (1641.374ms)
+✔ external signature errors, missing signatures and unreadable responses remain failures (2827.689833ms)
+✔ an unauthenticated candidate is refused before signature exclusions (228.161834ms)
+✔ the standalone deployment lock preserves pinned dependencies without unrelated workspace features (2.893458ms)
+✔ P17 refuses unknown deployment contracts before inspecting packages (5.079458ms)
+✔ complete paginated history authenticates published DS12 and original publication (15.847125ms)
+✔ unreadable, missing, substituted and malformed prior history all refuse (3.949125ms)
+✔ first final and rerun use real publication metadata; preflight can recover an unfinished current DS12 (0.95725ms)
+✔ rerunning a first final after a published patch retains the original support start (0.610792ms)
+✔ prospective release guard rejects too-close next majors before publication without printing a provisional date (0.814042ms)
+✔ exact set recall covers every registry version and has no shell interpolation (2.081708ms)
+✔ record authentication and identity refuse incomplete, duplicate, dry, failed and mismatched sets (2.00125ms)
+✔ publication comes from matching non-draft GitHub metadata, never the DS12 generation time (1.430875ms)
+✔ six calendar months clamp month ends and preserve UTC time including leap years (0.122375ms)
+✔ prereleases start no window; patch records never restart it (0.352958ms)
+✔ missing history and too-close unified majors refuse; exact six-month boundary admits (0.561458ms)
+✔ generated support block preserves reviewed threat policy and refuses ambiguous marker ownership (0.219833ms)
+✔ complete published inventory cannot hide an advertised stable record or change its first publication (0.342708ms)
+✔ omitted unified inventory entries are validated before draft and prerelease filtering (0.289917ms)
+✔ local template substitution rejects shipped npm checksum, version, graph and manifest defects (34.531ms)
+✔ local Cargo substitution rejects a shipped candidate checksum, source or version defect (0.989833ms)
+✔ packed CLI executes with only its declared locked runtime closure and refuses an undeclared import (1016.608ms)
+✔ candidate runtime additions use a recorded nested closure without changing existing template resolutions (504.947042ms)
+✔ 3.0.0-dev: template ranges preserve exact locks and unchanged typed Rust source (320.063584ms)
+✔ 3.0.0-beta.1: template ranges preserve exact locks and unchanged typed Rust source (350.87775ms)
+✔ 3.0.0: template ranges preserve exact locks and unchanged typed Rust source (440.481917ms)
+✔ all ten source, manifest and lock files restore after a packaging callback fails (372.592542ms)
+✔ islands template capability verifies all exact sources while dependency staging remains separate (318.167ms)
+✔ islands template capability refuses a changed static source and an extra runtime file (372.330834ms)
+✔ historical declared source verification remains available and unknown capabilities refuse (230.869833ms)
+✔ P17 checks enforced headers, refusing absent, report-only and incomplete policies (2.190292ms)
+✔ P17 refuses wildcard, default and duplicate policy creation permissions (0.544208ms)
+✔ actual release workflow retains failed P17 bytes without changing publish success dependencies (123.504667ms)
+✔ release evidence refuses missing failure retention (118.946292ms)
+✔ release evidence refuses failure-only upload loses successful proof (145.811125ms)
+✔ release evidence refuses different evidence path (127.232125ms)
+✔ release evidence refuses different artifact name (116.166709ms)
+✔ release evidence refuses missing-file warning (143.043916ms)
+✔ release evidence refuses unpinned evidence action (124.116084ms)
+✔ release evidence refuses upload before P17 (114.931167ms)
+✔ release evidence refuses duplicate evidence upload (133.704583ms)
+✔ release evidence refuses ignored P17 failure (114.079042ms)
+✔ release evidence refuses ignored verify failure (110.17275ms)
+✔ release evidence refuses success record runs after failure (101.076584ms)
+✔ release evidence refuses P17 condition skips verification (107.022625ms)
+✔ release evidence refuses P17 shell swallows failure (102.684833ms)
+✔ release evidence refuses record replaces proof hash (98.873625ms)
+✔ release evidence refuses publisher ignores failed needs (103.904292ms)
+✔ release evidence refuses publisher drops verify dependency (108.464083ms)
+warning: manifest has no documentation, homepage or repository
+  |
+  = note: see https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info
+   Packaging forma-release-test-first v3.0.0-alpha.1 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-cargo-package-FhV0Pa/first)
+    Packaged 5 files, 1.2KiB (892B compressed)
+warning: manifest has no documentation, homepage or repository
+  |
+  = note: see https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info
+   Packaging forma-release-test-second v3.0.0-alpha.1 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-cargo-package-FhV0Pa/second)
+    Packaged 5 files, 1.6KiB (1.0KiB compressed)
+warning: manifest has no documentation, homepage or repository
+  |
+  = note: see https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info
+   Packaging forma-release-test-first v3.0.0-alpha.1 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-cargo-package-FhV0Pa/first)
+    Packaged 5 files, 1.2KiB (892B compressed)
+warning: manifest has no documentation, homepage or repository
+  |
+  = note: see https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info
+   Packaging forma-release-test-second v3.0.0-alpha.1 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-cargo-package-FhV0Pa/second)
+    Packaged 5 files, 1.6KiB (1.0KiB compressed)
+warning: manifest has no documentation, homepage or repository
+  |
+  = note: see https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info
+   Packaging forma-release-test-first v3.0.0-alpha.1 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-cargo-package-FhV0Pa/first)
+    Packaged 5 files, 1.2KiB (892B compressed)
+warning: manifest has no documentation, homepage or repository
+  |
+  = note: see https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info
+   Packaging forma-release-test-second v3.0.0-alpha.1 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-cargo-package-FhV0Pa/second)
+    Packaged 5 files, 1.6KiB (1.0KiB compressed)
+✔ milestone gate: the checked-in contract lets the alpha publish; beta, rc and final still wait (4.025583ms)
+✔ milestone gate: an open gate in the milestone or any earlier one refuses; a malformed contract refuses every milestone (1.842667ms)
+✔ npm pre-releases publish on next and finals on latest; Cargo publishes the pre-release version itself (0.961875ms)
+✔ SR13 accepts only the latest exact-SHA main CI run (0.4185ms)
+✔ SR13 missing or unreadable status refuses publication (0.152167ms)
+✔ SR13 a skipped or missing R17/probe job cannot be a successful gate (0.721667ms)
+✔ a live tag cannot publish mixed A2 versions, dev versions or a partial set (0.420125ms)
+✔ version preparation changes seven manifests, exact internal requirements and repositories without publishing (38.770709ms)
+✔ version preparation keeps every Cargo workspace aligned without changing external pins (39.489625ms)
+✔ version preparation remains valid under the actual internal dependency guard (261.453875ms)
+✔ Cargo repacks identical source deterministically and changed source with fresh predecessor checksums (492.997458ms)
+✔ template Cargo.lock staging preserves third-party resolutions and never invents checksums (0.638375ms)
+✔ stable template ranges advance with the set while development and prereleases stay exact (0.238958ms)
+✔ staged 3.0.0-beta.1 npm locks authenticate actual packed bytes despite manifest ranges (17.677792ms)
+✔ staged 3.0.0 npm locks authenticate actual packed bytes despite manifest ranges (21.361334ms)
+✔ partial-release rerun accepts only byte-identical existing packages; network failures never mean missing (1.33675ms)
+✔ registry polling never starts a request after its fixed deadline (0.304041ms)
+✔ malformed second template leaves every source file unchanged during staging (5.988458ms)
+✔ version preparation keeps the window peers and exact packed crate pins distinct (30.526708ms)
+ℹ tests 116
+ℹ suites 0
+ℹ pass 116
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6044.7765
+release workflow: tag → exact CI → locked pack + three engines → P17 → crates → npm → record; credential jobs constrained; milestones ready to publish: alpha

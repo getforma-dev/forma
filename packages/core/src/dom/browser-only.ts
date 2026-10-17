@@ -11,7 +11,7 @@
 /**
  * A browser-only component. Called with props, it renders `Impl`, as in a
  * client-rendered tree; registered in `activateIslands`, it is called with the
- * island's element and props and renders `Impl` from those props.
+ * compiler-bound projected props and renders `Impl` from those props.
  */
 export interface BrowserOnlyComponent<P> {
   (props: P): unknown;
@@ -28,13 +28,13 @@ export interface BrowserOnlyComponent<P> {
  * export const Chart = browserOnly((props: { title: string }) => <canvas aria-label={props.title} />);
  *
  * // The page renders <Chart title="Sales" /> where the chart goes; the server
- * // sends <div data-forma-component="Chart" data-forma-props='{"title":"Sales"}'></div>.
+ * // sends its empty host and the matching declared head-state occurrence.
  * // The entry registers it under the name it is rendered with:
  * activateIslands({ Chart });
  * ```
  *
  * `activateIslands` finds the host empty and renders the component in its
- * place, with the props the server wrote (or `{}`). Called as a component, in
+ * place, with its validated declared props. Called as a component, in
  * a client-rendered page, it renders `component(props)`. Where there is no
  * document (Node rendering), it renders nothing: the subtree is the browser's.
  *
@@ -45,7 +45,8 @@ export function browserOnly<P extends object>(
 ): BrowserOnlyComponent<P> {
   function rendered(this: unknown, first?: unknown, second?: unknown): unknown {
     if (typeof document === 'undefined') return null;
-    // activateIslands calls a registry entry with (element, props).
+    // Legacy direct two-argument calls remain accepted here. Compiled SSR
+    // registration wrappers invoke the component with one projected argument.
     if (arguments.length >= 2 && typeof Element !== 'undefined' && first instanceof Element) {
       return component((second ?? {}) as P);
     }

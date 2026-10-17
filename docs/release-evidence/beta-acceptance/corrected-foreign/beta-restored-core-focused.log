@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/victorvillacis/dev/Forma/work/FORMA-beta-acceptance/forma/packages/core
+
+
+ Test Files  2 passed (2)
+      Tests  101 passed (101)
+   Start at  01:33:55
+   Duration  626ms (transform 231ms, setup 0ms, import 279ms, tests 291ms, environment 455ms)
+

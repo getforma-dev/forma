@@ -1,0 +1,1 @@
+{"passed":false,"completeMatrix":true,"cases":1665,"capabilities":22,"elapsedMs":28158.025583000002,"error":"AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:102:16"}

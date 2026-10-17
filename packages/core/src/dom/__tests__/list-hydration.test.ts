@@ -1,208 +1,51 @@
-/**
- * Tests for createList hydration path (descriptor + adoption).
- *
- * Covers:
- * - createList returns ListDescriptor when hydrating=true
- * - createList returns DocumentFragment when hydrating=false
- * - collectMarkers collects list markers (f:l / /f:l pairs)
- * - adoptNode handles ListDescriptor: adopts SSR items by key, subsequent setItems reconciles
- * - adoptNode handles empty SSR list: subsequent update populates
- * - adoptNode handles SSR/client key mismatch: extra removed, missing rendered fresh
- */
-
+/** Strict list descriptions, native marker authority and later reconciliation. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createSignal, createRoot, createEffect } from 'forma/reactive';
 import { createList } from '../list';
 import { createShow } from '../show';
-import {
-  hydrating,
-  setHydrating,
-  isListDescriptor,
-  collectMarkers,
-  adoptNode,
-  type HydrationDescriptor,
-  type ListDescriptor,
-} from '../hydrate';
+import { withAdoptionDescription, type HydrationDescriptor, type ListDescriptor } from '../adoption-description';
+import { AdoptionDom } from '../adoption-plan';
 import { h } from '../element';
+import { connect, fixture, prepareAndCommit, expectRefusal, refusalAttempt } from './helpers/prepared-fixture';
 
-afterEach(() => {
-  setHydrating(false);
-});
-
-// ---------------------------------------------------------------------------
-// createList returns ListDescriptor when hydrating
-// ---------------------------------------------------------------------------
-
-describe('createList hydration branch', () => {
-  it('returns ListDescriptor when hydrating=true', () => {
-    setHydrating(true);
-
-    const items = () => [{ id: 1, text: 'A' }];
-    const keyFn = (item: { id: number }) => item.id;
-    const renderFn = (item: { id: number; text: string }, index: () => number) =>
-      h('li', null, item.text);
-
-    const result = createList(items, keyFn, renderFn);
-
-    // It's cast as DocumentFragment but is actually a ListDescriptor
-    expect(isListDescriptor(result)).toBe(true);
-
-    const desc = result as unknown as ListDescriptor;
-    expect(desc.type).toBe('list');
-    expect(typeof desc.items).toBe('function');
-    expect(typeof desc.keyFn).toBe('function');
-    expect(typeof desc.renderFn).toBe('function');
+describe('createList description contract', () => {
+  it('describes the exact original readers/options without invoking a row', () => {
+    const items = vi.fn(() => [{ id: 1 }]), keyFn = vi.fn((item: { id: number }) => item.id), renderFn = vi.fn((item: { id: number }) => h('li', null, String(item.id)));
+    const result = withAdoptionDescription(() => createList(items, keyFn, renderFn, { updateOnItemChange: 'rerender' })) as unknown as ListDescriptor;
+    expect(result).toEqual({ type: 'list', items, keyFn, renderFn, options: { updateOnItemChange: 'rerender' } });
+    expect(result).not.toBeInstanceOf(DocumentFragment); expect(items).not.toHaveBeenCalled(); expect(keyFn).not.toHaveBeenCalled(); expect(renderFn).not.toHaveBeenCalled();
   });
-
-  it('returns DocumentFragment when hydrating=false', () => {
-    setHydrating(false);
-
-    let result: DocumentFragment | undefined;
-    let dispose: (() => void) | undefined;
-
-    createRoot((d) => {
-      dispose = d;
-      const items = () => [{ id: 1, text: 'A' }];
-      const keyFn = (item: { id: number }) => item.id;
-      const renderFn = (item: { id: number; text: string }, index: () => number) =>
-        h('li', null, item.text);
-
-      result = createList(items, keyFn, renderFn);
-    });
-
-    expect(result).toBeInstanceOf(DocumentFragment);
-    expect(isListDescriptor(result)).toBe(false);
-
-    dispose?.();
+  it('returns a DocumentFragment outside the private description scope', () => {
+    createRoot(dispose => { try { expect(createList(() => [{ id: 1 }], item => item.id, item => h('li', null, String(item.id)))).toBeInstanceOf(DocumentFragment); } finally { dispose(); } });
   });
-
-  it('preserves options in ListDescriptor', () => {
-    setHydrating(true);
-
-    const items = () => [{ id: 1 }];
-    const keyFn = (item: { id: number }) => item.id;
-    const renderFn = (item: { id: number }, index: () => number) =>
-      h('li', null, String(item.id));
-
-    const result = createList(items, keyFn, renderFn, { updateOnItemChange: 'rerender' });
-    const desc = result as unknown as ListDescriptor;
-
-    expect(desc.options).toEqual({ updateOnItemChange: 'rerender' });
+  it('keeps retired private list guards absent from the public facade', async () => {
+    const facade = await import('../hydrate'); expect(facade).not.toHaveProperty('isListDescriptor'); expect(facade).not.toHaveProperty('collectMarkers'); expect(facade).not.toHaveProperty('adoptNode');
+  });
+  it.each([[null,'STRUCTURE'], [undefined,'STRUCTURE'], ['hello','NODE'], [{type:'element',tag:'div',props:null,children:[]},'NODE'], [{type:'show',condition:()=>true,whenTrue:()=>null},'MARKER'], [{type:'other'},'STRUCTURE']] as const)('refuses a non-list value against an owned list range: %j', (value,code) => {
+    const host=fixture('<ul><!--f:l0--><li>A</li><!--/f:l0--></ul>');
+    expect(refusalAttempt(host,()=>h('ul',null,value))).toThrow('FORMA_E_HYDRATE_'+code);
   });
 });
 
-// ---------------------------------------------------------------------------
-// isListDescriptor type guard
-// ---------------------------------------------------------------------------
-
-describe('isListDescriptor', () => {
-  it('returns true for a valid ListDescriptor', () => {
-    const desc: ListDescriptor = {
-      type: 'list',
-      items: () => [],
-      keyFn: (item: any) => item.id,
-      renderFn: (item: any, index: () => number) => document.createElement('li'),
-    };
-    expect(isListDescriptor(desc)).toBe(true);
+describe('strict native list marker ranges', () => {
+  it('collects a single f:l/closing pair by exact original comments', () => {
+    const root=fixture('<ul><!--f:l0--><li data-forma-key="a">A</li><!--/f:l0--></ul>'),dom=new AdoptionDom(root);dom.children();const range=dom.rangeAt(root.firstChild!);
+    expect(range?.kind).toBe('l'); expect(range?.id).toBe(0); expect(range?.start).toBe(root.firstChild);expect(range?.end).toBe(root.lastChild);dom.release();
   });
-
-  it('returns false for null', () => {
-    expect(isListDescriptor(null)).toBe(false);
+  it('collects multiple list marker pairs without mixing their identities',()=>{
+    const root=fixture('<ul><!--f:l0--><li>A</li><!--/f:l0--><!--f:l1--><li>B</li><!--/f:l1--></ul>'),dom=new AdoptionDom(root);dom.children();
+    expect(dom.rangeAt(root.childNodes[0]!)?.end).toBe(root.childNodes[2]);expect(dom.rangeAt(root.childNodes[3]!)?.end).toBe(root.childNodes[5]);dom.release();
   });
-
-  it('returns false for undefined', () => {
-    expect(isListDescriptor(undefined)).toBe(false);
+  it('refuses orphan list start markers without repairing the range',()=>{
+    const root=fixture('<ul><!--f:l0--><li>orphan</li></ul>');expect(refusalAttempt(root,()=>h('ul',null,createList(()=>[],()=>0,()=>h('li'))))).toThrow('FORMA_E_HYDRATE_MARKER');
   });
-
-  it('returns false for a string', () => {
-    expect(isListDescriptor('hello')).toBe(false);
-  });
-
-  it('returns false for a HydrationDescriptor', () => {
-    const desc: HydrationDescriptor = {
-      type: 'element',
-      tag: 'div',
-      props: null,
-      children: [],
-    };
-    expect(isListDescriptor(desc)).toBe(false);
-  });
-
-  it('returns false for a ShowDescriptor', () => {
-    expect(isListDescriptor({ type: 'show', condition: () => true })).toBe(false);
-  });
-
-  it('returns false for a plain object with wrong type', () => {
-    expect(isListDescriptor({ type: 'other' })).toBe(false);
+  it('coexists with paired text and show markers',()=>{
+    const root=fixture('<div><!--f:t0-->Hello<!--/f:t0--><!--f:s0--><span></span><!--/f:s0--><!--f:l0--><li></li><!--/f:l0--></div>'),dom=new AdoptionDom(root);dom.children();
+    expect([0,3,6].map(index=>dom.rangeAt(root.childNodes[index]!)?.kind)).toEqual(['t','s','l']);dom.release();
   });
 });
 
-// ---------------------------------------------------------------------------
-// collectMarkers collects list markers
-// ---------------------------------------------------------------------------
-
-describe('collectMarkers list markers', () => {
-  it('collects a single f:l/closing pair', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:l0--><li data-forma-key="a">A</li><!--/f:l0-->';
-
-    const markers = collectMarkers(root);
-    expect(markers.list.size).toBe(1);
-
-    const entry = markers.list.get(0)!;
-    expect(entry).toBeDefined();
-    expect((entry.start as Comment).data).toBe('f:l0');
-    expect((entry.end as Comment).data).toBe('/f:l0');
-  });
-
-  it('collects multiple list marker pairs', () => {
-    const root = document.createElement('div');
-    root.appendChild(document.createComment('f:l0'));
-    root.appendChild(document.createElement('li'));
-    root.appendChild(document.createComment('/f:l0'));
-    root.appendChild(document.createComment('f:l1'));
-    root.appendChild(document.createElement('li'));
-    root.appendChild(document.createComment('/f:l1'));
-
-    const markers = collectMarkers(root);
-    expect(markers.list.size).toBe(2);
-    expect(markers.list.get(0)!.start.data).toBe('f:l0');
-    expect(markers.list.get(0)!.end.data).toBe('/f:l0');
-    expect(markers.list.get(1)!.start.data).toBe('f:l1');
-    expect(markers.list.get(1)!.end.data).toBe('/f:l1');
-  });
-
-  it('ignores orphan list start markers (no closing)', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<!--f:l0--><li>orphan</li>';
-
-    const markers = collectMarkers(root);
-    expect(markers.list.size).toBe(0);
-  });
-
-  it('coexists with text and show markers', () => {
-    const root = document.createElement('div');
-    root.appendChild(document.createComment('f:t0'));
-    root.appendChild(document.createTextNode('Hello'));
-    root.appendChild(document.createComment('f:s0'));
-    root.appendChild(document.createElement('span'));
-    root.appendChild(document.createComment('/f:s0'));
-    root.appendChild(document.createComment('f:l0'));
-    root.appendChild(document.createElement('li'));
-    root.appendChild(document.createComment('/f:l0'));
-
-    const markers = collectMarkers(root);
-    expect(markers.text.size).toBe(1);
-    expect(markers.show.size).toBe(1);
-    expect(markers.list.size).toBe(1);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// adoptNode handles ListDescriptor
-// ---------------------------------------------------------------------------
-
-describe('adoptNode list descriptor handling', () => {
+describe('strict prepared list adoption', () => {
   it('adopts SSR items by data-forma-key and attaches reconciler', () => {
     let dispose: (() => void) | undefined;
 
@@ -234,10 +77,7 @@ describe('adoptNode list descriptor handling', () => {
         items: items as () => unknown[],
         keyFn: (item: any) => item.id,
         renderFn: (item: any, index: () => number) => {
-          const li = document.createElement('li');
-          li.setAttribute('data-forma-key', item.id);
-          li.textContent = item.text;
-          return li;
+          return h('li', { 'data-forma-key': item.id }, item.text);
         },
       };
 
@@ -248,7 +88,8 @@ describe('adoptNode list descriptor handling', () => {
         children: [listDesc],
       };
 
-      adoptNode(desc, ssrEl);
+      connect(ssrEl);
+      prepareAndCommit(ssrEl, () => desc);
 
       // SSR nodes should be reused (same references)
       const children = Array.from(ssrEl.children);
@@ -291,10 +132,7 @@ describe('adoptNode list descriptor handling', () => {
         items: items as () => unknown[],
         keyFn: (item: any) => item.id,
         renderFn: (item: any, index: () => number) => {
-          const li = document.createElement('li');
-          li.setAttribute('data-forma-key', item.id);
-          li.textContent = item.text;
-          return li;
+          return h('li', { 'data-forma-key': item.id }, item.text);
         },
       };
 
@@ -305,7 +143,8 @@ describe('adoptNode list descriptor handling', () => {
         children: [listDesc],
       };
 
-      adoptNode(desc, ssrEl);
+      connect(ssrEl);
+      prepareAndCommit(ssrEl, () => desc);
 
       // Initially empty
       expect(ssrEl.querySelectorAll('li').length).toBe(0);
@@ -325,7 +164,7 @@ describe('adoptNode list descriptor handling', () => {
     dispose?.();
   });
 
-  it('handles SSR/client key mismatch: extra SSR nodes removed, missing rendered fresh', () => {
+  it('refuses extra/missing initial keyed rows without repairing them', () => {
     let dispose: (() => void) | undefined;
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -362,10 +201,7 @@ describe('adoptNode list descriptor handling', () => {
         items: items as () => unknown[],
         keyFn: (item: any) => item.id,
         renderFn: (item: any, index: () => number) => {
-          const li = document.createElement('li');
-          li.setAttribute('data-forma-key', item.id);
-          li.textContent = item.text;
-          return li;
+          return h('li', { 'data-forma-key': item.id }, item.text);
         },
       };
 
@@ -376,24 +212,21 @@ describe('adoptNode list descriptor handling', () => {
         children: [listDesc],
       };
 
-      adoptNode(desc, ssrEl);
+      connect(ssrEl);
+      // FORMA-181 checkpoint C: keys present on one side only are a key refusal, not a count.
+      expectRefusal(ssrEl, () => desc, 'FORMA_E_HYDRATE_KEY');
+      expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
+      setItems([]); expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
 
-      // liA should still be there (reused)
-      const lis = ssrEl.querySelectorAll('li');
-      expect(lis.length).toBe(2);
-      expect(lis[0]).toBe(liA); // reused
-      expect(lis[1]!.textContent).toBe('D'); // fresh rendered
-
-      // b and c should have been removed
-      expect(ssrEl.contains(liB)).toBe(false);
-      expect(ssrEl.contains(liC)).toBe(false);
     });
 
     warnSpy.mockRestore();
     dispose?.();
   });
 
-  it('reorders adopted nodes to match client item order', () => {
+  // FORMA-181 checkpoint C: the original refused this order (archived in
+  // docs/archive/2026-10-15-pre-key-adoption/); keyed rows now bind by key without a move.
+  it('adopts initial reordered keys in place and reconciles only on a real update', () => {
     let dispose: (() => void) | undefined;
 
     createRoot((d) => {
@@ -430,10 +263,7 @@ describe('adoptNode list descriptor handling', () => {
         items: items as () => unknown[],
         keyFn: (item: any) => item.id,
         renderFn: (item: any, index: () => number) => {
-          const li = document.createElement('li');
-          li.setAttribute('data-forma-key', item.id);
-          li.textContent = item.text;
-          return li;
+          return h('li', { 'data-forma-key': item.id }, item.text);
         },
       };
 
@@ -444,14 +274,15 @@ describe('adoptNode list descriptor handling', () => {
         children: [listDesc],
       };
 
-      adoptNode(desc, ssrEl);
+      connect(ssrEl);
+      prepareAndCommit(ssrEl, () => desc);
+      // Adoption moved nothing: the served order stays until the list source changes.
+      expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
+      setItems([{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }, { id: 'c', text: 'C' }]);
+      expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liA, liB, liC]);
+      setItems([{ id: 'c', text: 'C' }, { id: 'b', text: 'B' }, { id: 'a', text: 'A' }]);
+      expect(Array.from(ssrEl.querySelectorAll('li'))).toEqual([liC, liB, liA]);
 
-      // All SSR nodes reused but reordered
-      const lis = ssrEl.querySelectorAll('li');
-      expect(lis.length).toBe(3);
-      expect(lis[0]).toBe(liC);
-      expect(lis[1]).toBe(liB);
-      expect(lis[2]).toBe(liA);
     });
 
     dispose?.();
@@ -494,10 +325,7 @@ describe('adoptNode list descriptor handling', () => {
         items: items as () => unknown[],
         keyFn: (item: any) => item.id, // returns number, not string
         renderFn: (item: any, index: () => number) => {
-          const li = document.createElement('li');
-          li.setAttribute('data-forma-key', String(item.id));
-          li.textContent = item.text;
-          return li;
+          return h('li', { 'data-forma-key': String(item.id) }, item.text);
         },
       };
 
@@ -508,7 +336,8 @@ describe('adoptNode list descriptor handling', () => {
         children: [listDesc],
       };
 
-      adoptNode(desc, ssrEl);
+      connect(ssrEl);
+      prepareAndCommit(ssrEl, () => desc);
 
       // All SSR nodes should be reused despite numeric vs string key mismatch
       const lis = ssrEl.querySelectorAll('li');
@@ -558,10 +387,7 @@ describe('adoptNode list descriptor handling', () => {
         items: items as () => unknown[],
         keyFn: (item: any) => item.id,
         renderFn: (item: any, index: () => number) => {
-          const li = document.createElement('li');
-          li.setAttribute('data-forma-key', item.id);
-          li.textContent = item.text;
-          return li;
+          return h('li', { 'data-forma-key': item.id }, item.text);
         },
       };
 
@@ -572,7 +398,8 @@ describe('adoptNode list descriptor handling', () => {
         children: [listDesc],
       };
 
-      adoptNode(desc, ssrEl);
+      connect(ssrEl);
+      prepareAndCommit(ssrEl, () => desc);
 
       // Initial state: 1 item, SSR node reused
       expect(ssrEl.querySelectorAll('li').length).toBe(1);
@@ -612,7 +439,6 @@ describe('adoptNode list descriptor handling', () => {
 
 describe('adopted list rows', () => {
   afterEach(() => {
-    setHydrating(false);
     document.body.innerHTML = '';
   });
 
@@ -656,7 +482,7 @@ describe('adopted list rows', () => {
           h('li', { 'data-forma-key': item.id, onClick: () => clicked.push(item.id) }, item.text),
       };
 
-      adoptNode(listParent(listDesc), ul);
+      prepareAndCommit(ul, () => listParent(listDesc));
 
       // Same nodes, no re-render.
       expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
@@ -675,6 +501,7 @@ describe('adopted list rows', () => {
     createRoot((d) => {
       dispose = d;
       const { ul, lis } = ssrList([['a', 'A']]);
+      lis[0]!.innerHTML = '<!--f:t0-->A<!--/f:t0-->';
       const [items] = createSignal([{ id: 'a' }]);
       const [label, setLabel] = createSignal('A');
 
@@ -685,7 +512,7 @@ describe('adopted list rows', () => {
         renderFn: (item: any) => h('li', { 'data-forma-key': item.id }, label),
       };
 
-      adoptNode(listParent(listDesc), ul);
+      prepareAndCommit(ul, () => listParent(listDesc));
 
       setLabel('A2');
       expect(lis[0]!.textContent).toBe('A2');
@@ -713,11 +540,11 @@ describe('adopted list rows', () => {
         keyFn: (item: any) => item.id,
         renderFn: (item: any) => {
           createEffect(() => { tick(); spy(item.id); });
-          return h('li', { 'data-forma-key': item.id }, item.id);
+          return h('li', { 'data-forma-key': item.id }, item.id.toUpperCase());
         },
       };
 
-      adoptNode(listParent(listDesc), ul);
+      prepareAndCommit(ul, () => listParent(listDesc));
       expect(spy).toHaveBeenCalledTimes(2);
 
       // Adopted row 'b' leaves.
@@ -755,11 +582,11 @@ describe('adopted list rows', () => {
         keyFn: (item: any) => item.id,
         renderFn: (item: any) => {
           createEffect(() => { tick(); spy(item.id); });
-          return h('li', { 'data-forma-key': item.id }, item.id);
+          return h('li', { 'data-forma-key': item.id }, item.id.toUpperCase());
         },
       };
 
-      adoptNode(listParent(listDesc), ul);
+      prepareAndCommit(ul, () => listParent(listDesc));
       expect(spy).toHaveBeenCalledTimes(2);
     });
 
@@ -775,7 +602,7 @@ describe('adopted list rows', () => {
     expect(spy).toHaveBeenCalledTimes(0);
   });
 
-  it('removes a duplicate data-forma-key row instead of leaving a ghost', () => {
+  it('refuses a duplicate initial data-forma-key row without dropping a ghost', () => {
     let dispose: (() => void) | undefined;
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -793,15 +620,11 @@ describe('adopted list rows', () => {
         renderFn: (item: any) => h('li', { 'data-forma-key': item.id }, item.id),
       };
 
-      adoptNode(listParent(listDesc), ul);
+      // FORMA-181 checkpoint C: a repeated served key is a key refusal before any row is walked.
+      expectRefusal(ul, () => listParent(listDesc), 'FORMA_E_HYDRATE_KEY');
+      expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
+      setItems([]); expect(Array.from(ul.querySelectorAll('li'))).toEqual(lis);
 
-      expect(ul.querySelectorAll('li').length).toBe(2);
-      expect(ul.contains(lis[1]!)).toBe(false);
-      expect(Array.from(ul.querySelectorAll('li'))).toEqual([lis[0], lis[2]]);
-
-      // The reconciler owns the survivors, so removals still clear the region.
-      setItems([]);
-      expect(ul.querySelectorAll('li').length).toBe(0);
     });
 
     warn.mockRestore();
@@ -810,7 +633,7 @@ describe('adopted list rows', () => {
 
   it('adopts a list that is a show branch with no wrapper element', () => {
     // createShow(cond, () => createList(...)) puts the f:lN region directly
-    // between the show markers, where adoptNode element walk never reaches it.
+    // between the show markers, so the strict planner must consume the nested range.
     let dispose: (() => void) | undefined;
 
     createRoot((d) => {
@@ -825,12 +648,10 @@ describe('adopted list rows', () => {
       const [items, setItems] = createSignal([{ id: 'a', text: 'A' }]);
       const renderFn = (item: any) => h('li', { 'data-forma-key': item.id }, item.text);
 
-      setHydrating(true);
-      const showDesc = createShow(
+      const showDesc = withAdoptionDescription(() => createShow(
         visible,
         () => createList(items as () => any[], (item: any) => item.id, renderFn) as unknown as Node,
-      );
-      setHydrating(false);
+      ));
 
       const parentDesc = {
         type: 'element' as const,
@@ -838,7 +659,7 @@ describe('adopted list rows', () => {
         props: null,
         children: [showDesc],
       } as unknown as HydrationDescriptor;
-      adoptNode(parentDesc, root);
+      prepareAndCommit(root, () => parentDesc);
 
       const original = root.querySelector('li')!;
       expect(original.textContent).toBe('A');

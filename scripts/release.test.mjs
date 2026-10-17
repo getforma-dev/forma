@@ -5,22 +5,75 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { selectRun, checkJobs } from './check-release-ci.mjs';
 import { registryStatus, waitForPackage, npmPublishArgs, cargoPublishArgs } from './release-publish.mjs';
-import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, digest, run, json, packCargoWorkspace, milestoneOf, releaseMilestone, assertMilestoneReady, MILESTONES } from './release-set.mjs';
+import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, templateRequirement, digest, run, json, packCargoWorkspace, milestoneOf, releaseMilestone, assertMilestoneReady, MILESTONES } from './release-set.mjs';
 
 const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
 const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
-test('milestone gate: the checked-in contract lets the alpha publish; beta, rc and final still wait', () => {
-  const alpha = assertMilestoneReady(contracts(), '3.0.0-alpha.1');
+const milestoneNames = ['alpha', 'beta', 'rc', 'final'];
+const seededMilestones = statuses => seededContract(c => {
+  for (const milestone of milestoneNames) {
+    assert(['done', 'pending'].includes(statuses[milestone]), `${milestone}: explicit seeded status required`);
+    for (const gate of Object.values(c.milestones[milestone].gates)) gate.status = statuses[milestone];
+  }
+});
+test('L-60 defers live governance only; source probes and other release gates still block', () => {
+  const c = contracts();
+  const live = c.informational['FORMA-116 live rollout'];
+  assert.equal(live?.status, 'deferred');
+  assert.equal(live.decision, 'L-60 (2026-10-16)');
+  assert.equal(live.owner, 'Victor');
+  for (const milestone of Object.values(c.milestones)) assert(!('FORMA-116 live rollout' in milestone.gates));
+  assert.match(c.milestones.rc.gates['FORMA-116'].scope, /SR14/);
+  const complete = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: 'done' });
+  assert.equal(assertMilestoneReady(complete, '3.0.0').ready, true);
+  assert.equal(complete.informational['FORMA-116 live rollout'].status, 'deferred');
+  for (const [milestone, ticket] of [
+    ['rc', 'FORMA-116'], ['rc', 'FORMA-145 audit'],
+    ['final', 'FORMA-191'], ['final', 'FORMA-145 soak'],
+  ]) {
+    const pending = structuredClone(complete);
+    pending.milestones[milestone].gates[ticket].status = 'pending';
+    const result = releaseMilestone(pending, '3.0.0');
+    assert.equal(result.ready, false);
+    assert.deepEqual(result.blocking, [`${ticket} (${milestone}): ${pending.milestones[milestone].gates[ticket].scope}`]);
+    assert.throws(() => assertMilestoneReady(pending, '3.0.0'), /nothing may publish/);
+  }
+  const invalid = structuredClone(c);
+  invalid.milestones.rc.gates['FORMA-116'].status = 'deferred';
+  assert.throws(() => releaseMilestone(invalid, '3.0.0'), /done\/pending status/);
+});
+test('L-57 external application runs are informational while documentation and the required RC burn-in still block', () => {
+  const c = contracts();
+  for (const ticket of ['FORMA-192', 'FORMA-147']) {
+    assert.equal(c.informational[ticket].status, 'not-run');
+    for (const milestone of Object.values(c.milestones)) assert(!(ticket in milestone.gates));
+  }
+  const required = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: 'done' });
+  required.milestones.rc.gates['FORMA-145 documentation'].status = 'pending';
+  required.milestones.final.gates['FORMA-145 soak'].status = 'pending';
+  const final = releaseMilestone(required, '3.0.0');
+  assert.deepEqual(final.blocking.map(gate => gate.slice(0, gate.indexOf(':'))), [
+    'FORMA-145 documentation (rc)',
+    'FORMA-145 soak (final)',
+  ]);
+});
+test('milestone gate: explicit earned states publish while later seeded gates still wait', () => {
+  const alphaState = seededMilestones({ alpha: 'done', beta: 'pending', rc: 'pending', final: 'pending' });
+  const alpha = assertMilestoneReady(alphaState, '3.0.0-alpha.1');
   assert.equal(alpha.name, 'alpha'); assert.equal(alpha.plan, 'M2'); assert.equal(alpha.ready, true); assert.deepEqual(alpha.blocking, []);
-  for (const ticket of ['FORMA-110', 'FORMA-185', 'FORMA-112', 'FORMA-102', 'FORMA-107', 'FORMA-109', 'FORMA-111', 'FORMA-144 slice 1']) assert.equal(contracts().milestones.alpha.gates[ticket].status, 'done', ticket);
   assert.deepEqual(Object.keys(alpha.later), ['beta', 'rc', 'final']);
   assert(alpha.later.beta.some(gate => gate.startsWith('FORMA-188 fixture applications:')));
   assert(alpha.later.final.some(gate => gate.startsWith('FORMA-191:')));
-  for (const version of ['3.0.0-beta.1', '3.0.0-rc.1', '3.0.0']) assert.throws(() => assertMilestoneReady(contracts(), version), /still waits for: .*nothing may publish/);
-  const beta = releaseMilestone(contracts(), '3.0.0-beta.1');
-  assert.equal(beta.ready, false);
-  assert(beta.blocking.every(gate => gate.includes('(beta)')), 'the beta is blocked by its own gates only');
-  assert.deepEqual(Object.keys(beta.later), ['rc', 'final']);
+  for (const version of ['3.0.0-beta.1', '3.0.0-rc.1', '3.0.0']) assert.throws(() => assertMilestoneReady(alphaState, version), /still waits for: .*nothing may publish/);
+  const betaState = seededMilestones({ alpha: 'done', beta: 'done', rc: 'pending', final: 'pending' });
+  const beta = assertMilestoneReady(betaState, '3.0.0-beta.1');
+  assert.equal(beta.name, 'beta'); assert.equal(beta.ready, true); assert.deepEqual(beta.blocking, []); assert.deepEqual(Object.keys(beta.later), ['rc', 'final']);
+  const rcState = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: 'pending' });
+  const rc = assertMilestoneReady(rcState, '3.0.0-rc.1');
+  assert.equal(rc.name, 'rc'); assert.equal(rc.ready, true); assert.deepEqual(rc.blocking, []); assert.deepEqual(Object.keys(rc.later), ['final']);
+  const finalState = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: 'done' });
+  const final = assertMilestoneReady(finalState, '3.0.0');
+  assert.equal(final.name, 'final'); assert.equal(final.ready, true); assert.deepEqual(final.blocking, []); assert.deepEqual(final.later, {});
   assert.throws(() => releaseMilestone(contracts(), '3.0.0-dev'), /development version/);
   assert.equal(milestoneOf('3.0.0-dev'), null); assert.equal(milestoneOf('3.0.0-alpha.1'), 'alpha'); assert.equal(milestoneOf('3.0.0-rc.2'), 'rc'); assert.equal(milestoneOf('3.1.0'), 'final');
   assert.deepEqual(MILESTONES, ['alpha', 'beta', 'rc', 'final']);
@@ -38,15 +91,26 @@ test('milestone gate: the checked-in contract lets the alpha publish; beta, rc a
   assert.throws(() => assertReleaseSet(seven, 'v3.0.0-alpha.0'), /release requires/);
 });
 test('milestone gate: an open gate in the milestone or any earlier one refuses; a malformed contract refuses every milestone', () => {
-  assert.throws(() => assertMilestoneReady(seededContract(c => { c.milestones.alpha.gates['FORMA-185'].status = 'pending'; }), '3.0.0-alpha.1'), /FORMA-185 \(alpha\)/);
-  const betaDone = c => { for (const gate of Object.values(c.milestones.beta.gates)) gate.status = 'done'; };
-  assert.throws(() => assertMilestoneReady(seededContract(c => { betaDone(c); c.milestones.alpha.gates['FORMA-110'].status = 'pending'; }), '3.0.0-beta.1'), /FORMA-110 \(alpha\)/);
-  const beta = releaseMilestone(seededContract(betaDone), '3.0.0-beta.1');
-  assert.equal(beta.ready, true); assert.deepEqual(Object.keys(beta.later), ['rc', 'final']);
-  assert.equal(releaseMilestone(seededContract(betaDone), '3.0.0-rc.1').ready, false);
-  const everyGate = c => { for (const m of Object.values(c.milestones)) for (const gate of Object.values(m.gates)) gate.status = 'done'; };
-  const final = releaseMilestone(seededContract(everyGate), '3.0.0');
-  assert.equal(final.ready, true); assert.deepEqual(final.later, {});
+  const complete = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: 'done' });
+  const versions = { alpha: '3.0.0-alpha.1', beta: '3.0.0-beta.1', rc: '3.0.0-rc.1', final: '3.0.0' };
+  for (const milestone of milestoneNames) for (const ticket of Object.keys(complete.milestones[milestone].gates)) {
+    const oneOpen = structuredClone(complete);
+    oneOpen.milestones[milestone].gates[ticket].status = 'pending';
+    const result = releaseMilestone(oneOpen, versions[milestone]);
+    assert.equal(result.ready, false, `${milestone}: ${ticket}`);
+    assert.equal(result.blocking.length, 1, `${milestone}: ${ticket}`);
+    assert(result.blocking[0].startsWith(`${ticket} (${milestone}):`), `${milestone}: ${ticket}`);
+    assert.throws(() => assertMilestoneReady(oneOpen, versions[milestone]), /nothing may publish/);
+  }
+  for (const [milestone, ticket, version] of [
+    ['alpha', 'FORMA-110', '3.0.0-beta.1'],
+    ['beta', 'FORMA-103', '3.0.0-rc.1'],
+    ['rc', 'FORMA-101', '3.0.0'],
+  ]) {
+    const inherited = structuredClone(complete);
+    inherited.milestones[milestone].gates[ticket].status = 'pending';
+    assert.throws(() => assertMilestoneReady(inherited, version), new RegExp(`${ticket} \\(${milestone}\\)`));
+  }
   for (const [pattern, mutate] of [
     [/global publish switch/, c => { c.liveReleaseReady = true; }],
     [/global publish switch/, c => { c.pending = {}; }],
@@ -207,17 +271,23 @@ test('template Cargo.lock staging preserves third-party resolutions and never in
   assert(!local.includes('c'.repeat(64)));
   assert.throws(() => stageCargoLock(source.replace('checksum = "old"\n', ''), packages));
 });
-test('staged npm locks point at the actual packed bytes; local P17 substitutions retain all external locks', () => {
+test('stable template ranges advance with the set while development and prereleases stay exact', () => {
+  for (const version of ['3.0.0', '3.2.1', '4.0.0']) assert.equal(templateRequirement(version), `^${version}`);
+  for (const version of ['3.0.0-dev', '3.0.0-alpha.1', '3.0.0-beta.1', '3.0.0-rc.1']) assert.equal(templateRequirement(version), `=${version}`);
+  for (const version of ['2.1.0', '^3.0.0', '3.0.0-rc.0', '3.0.0-next']) assert.throws(() => templateRequirement(version));
+});
+for (const version of ['3.0.0-beta.1', '3.0.0']) test(`staged ${version} npm locks authenticate actual packed bytes despite manifest ranges`, () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-release-test-'));
   try {
     mkdirSync(join(dir, 'package'));
-    writeFileSync(join(dir, 'package/package.json'), JSON.stringify({ name: '@getforma/core', version: '3.0.0', dependencies: { 'alien-signals': '3.1.2' } }));
+    writeFileSync(join(dir, 'package/package.json'), JSON.stringify({ name: '@getforma/core', version, dependencies: { 'alien-signals': '3.1.2' } }));
     run('tar', ['-czf', join(dir, 'core.tgz'), '-C', dir, 'package']);
     const manifest = { dependencies: { '@getforma/core': '^2.1.0', external: '1.0.0' } };
     const lock = { lockfileVersion: 3, packages: { '': manifest, 'node_modules/@getforma/core': { version: '2.1.0' }, 'node_modules/external': { version: '1.0.0', integrity: 'exact-lock' } } };
-    const packages = [{ registry: 'npm', name: '@getforma/core', version: '3.0.0', file: 'core.tgz' }];
+    const packages = [{ registry: 'npm', name: '@getforma/core', version, file: 'core.tgz' }];
     const shipped = stageNpmLock(manifest, lock, packages, dir);
-    assert.equal(shipped.manifest.dependencies['@getforma/core'], '=3.0.0');
+    assert.equal(shipped.manifest.dependencies['@getforma/core'], version.includes('-') ? `=${version}` : `^${version}`);
+    assert.equal(shipped.lock.packages['node_modules/@getforma/core'].version, version);
     assert.equal(shipped.lock.packages['node_modules/@getforma/core'].integrity, `sha512-${digest(join(dir, 'core.tgz'), 'sha512', 'base64')}`);
     assert.deepEqual(shipped.lock.packages['node_modules/external'], lock.packages['node_modules/external']);
     const local = stageNpmLock(shipped.manifest, shipped.lock, packages, dir, true);

@@ -1,0 +1,25 @@
+
+Running 9 tests using 2 workers
+
+(node:46792) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:46791) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/9] [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation
+[2/9] [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation
+[3/9] [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation
+[4/9] [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation
+[5/9] [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:35:5 › DOMContentLoaded can precede TLA completion; importing the existing module awaits it without reexecution
+[6/9] [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:35:5 › DOMContentLoaded can precede TLA completion; importing the existing module awaits it without reexecution
+(node:46836) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/9] [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation
+[8/9] [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation
+[9/9] [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:35:5 › DOMContentLoaded can precede TLA completion; importing the existing module awaits it without reexecution
+  9 passed (11.8s)

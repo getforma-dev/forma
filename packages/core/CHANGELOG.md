@@ -4,6 +4,167 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-200: make the standalone `sanitizePropsDeep` helper refuse forbidden own keys that cannot be deleted, including frozen/sealed nested objects. Successful calls still sanitize in place and return the same value; a refusal throws `TypeError` and may leave earlier deletions applied. Compiled SSR state continues to use its separate declared-schema projection.
+
+- FORMA-197: keep completed non-assertion mutation failures unqualified, but collect later probes after exact source restoration and a clean recovery baseline. Such a campaign always fails; infrastructure, incomplete execution and timeout failures still stop. Allow 150 minutes for the hosted 252-probe job using observed serial-run durations, without changing child deadlines, detection floors or kill criteria.
+
+- FORMA-197: replace the `untrack-noop` compile-break sentinel with a runnable mutation that retains the public API while allowing unintended signal subscriptions. Compilation failures remain unqualified; the 252-probe corpus count, strict assertion requirement and detection floors are unchanged.
+
+- FORMA-198: repair stale island microbenchmarks with fresh-document declared head state and registered callbacks. Retain 10/100-island payload and reactive work, await activation, and compare complete bulk/individual disposal cycles against markup parsing. These Happy DOM measurements do not replace packed N3 qualification.
+
+- Serialize mutation-probe files and explicitly concurrent tests under fail-fast execution, so one assertion cannot interrupt another worker's completion evidence. Incomplete test results remain unqualified; the corpus, clean/restored baselines and detection floors are unchanged.
+
+- `activateIslands()` now returns load-readiness as `Promise<void>`. After synchronous preflight and enrollment, load work starts in a timer and yields between whole island transactions after a cooperative 12 ms slice. Overlapping calls share queued ownership, input promotes pending SSR activation without event replay, and trigger setup failures remain isolated. This changes completion semantics; callers requiring all load islands must await the result. Deferred triggers settle once armed, and a single island or preflight remains atomic rather than subject to a hard duration bound.
+
+- FORMA-193's reviewed activation stack measures 48,602 B gzip for the core entry and 48,836 B for browser ESM. Under L-58, their package gates become measured +300 B: 48,902 and 49,136 B. The three runtime bundle gates remain unchanged. At that checkpoint, L-59 kept N2 at 28,000 B per route: the Counter SSR route measured 26,213 B while indexed SSR measured 28,071 B and failed. L-64 subsequently permits 28,100 B only if the full 20-run campaign passes the original 50 ms N3 ceiling; this policy change does not itself claim that performance result, and the historical refusal remains evidence.
+
+- Allocate detached HTML prototypes when their tags are first requested, instead of creating 40 common-tag prototypes on the first `h()` call. Later calls still return independent shallow clones; this change makes no timing-gate claim.
+
+- Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.
+
+
+### Explicit HTML runtime mounts — FORMA-108
+
+- HTML bindings now require `mountMarkup(root, trustedHtml(markup), { tier, grants, config })` and the returned update/unmount handle. Removed auto scanning, the body observer, tierless lifecycle calls and global configuration setters. Omitted grants refuse fetch and activation and confine DOM traversal to the handed root; every fetch keeps the grant's method/path/cookie/timeout policy and treats non-2xx responses as errors.
+- A handle captures its scopes, so unmount also disposes a scope the application detached or moved. Unreviewed refusals retain distinct mount names, tiers and counts. The obsolete manual attribute produces one development-only migration hint; it has no binding authority.
+- Monorepo fixtures and measurement helpers use actual explicit mounts. Byte-exact A2 sources and all260 old mutation records remain archived with per-ID dispositions; current qualification and its nine extra explicit-mount controls are reported separately from historical results. FMIR remains restricted to modules from the application's own build; external module admission requires the deferred M9 boundary.
+
+- FORMA-129: skip every descendant of a detached list template when binding a captured parent scope. Nested row bindings retain their own item scope, including detached and shadow-root mounts; real forbidden row expressions still report their diagnostics.
+
+- FORMA-129: tiered `data-fetch` refuses redirects before another URL can escape its grant. Network/redirect rejection before a response has stable generic `FORMA_E_FETCH_REQUEST` error-target text; existing HTTP, JSON and abort handling remains intact. The old tierless path remains unchanged until FORMA-108 retires it.
+
+- Stop listener installation when a reentrant callback disposes the adoption plan. The currently installing callback is removed even if disposal happens before native attachment or installation then throws; unrelated listeners are retained.
+
+- Reduce temporary allocation while capturing an adoption DOM snapshot. The constructor keeps the same observed fields, traversal order, template contents, opaque child boundaries and validation, without an intermediate position object or work record per node.
+- Store captured attribute namespace/local/value triples without a temporary object per attribute, and reuse private property-descriptor pairs after taking the complete descriptor snapshot. Attribute checks, descriptor order, accessor refusal and symbol handling are unchanged.
+
+### Avoid unused control-oracle startup work — FORMA-191
+
+- Attribute snapshots use deterministic code-unit ordering without initializing locale collation. Strict adoption scans document radio peers only when it owns a named radio group, and skips detached form oracles when no control bindings can read them. Every topology, focus, captured-value and radio-peer check remains in place before empty observations are returned.
+
+### Indexed item replacement — FORMA-181
+
+- `createKeyedRows(initial, keyFn)` supplies a nominal keyed collection to the two-argument `createList(rows, renderRow)` overload. The callback receives a stable item getter and index getter. `set` validates and replaces an existing canonical key, notifying that item's readers without rerunning row factories or structural reconciliation; `replace` validates the whole candidate and batches retained values with membership/order changes. Missing keys, key changes, sparse arrays and duplicate canonical keys refuse before publication.
+- Views retain their owned effects and listeners independently. Internal item signals grant no early-edit writeback authority. Adopted text holes check their own retained markers, parent, ownership and last-written text before a live write; detached or rewritten holes abort through the existing owner failure path. Initial whole-island validation is unchanged.
+- The reviewed indexed implementation with the deployment guard measures 47,994 B gzip for the core entry (+997 B) and 48,148 B for browser ESM (+1,053 B). L-58 re-anchors their gates to measured +300 B: 48,294 and 48,448 B. All three runtime bundles remain at the prior guard stack's measured sizes and under unchanged gates. The actual typed 200/2,000-row route passes L-59 at 27,724 B Forma gzip for SSR and 27,077 B for Browser mounting, against N2's 28,000 B ceiling. The original over-budget measurement remains recorded in the qualification evidence.
+- Typed native products and three-engine functional controls verify adoption, selected-row DOM writes, movement, focus, selection, current listeners, disposal and isolated tamper refusal. The serial three-engine public-set measurement passes the unchanged N3 median/p95 ratio and 16 ms limits on Apple M1 Pro: largest median ratio 1.01150, largest p95 ratio 1.01786, sampled single-edit maximum 1 ms. Raw calibrated samples and actual products are recorded in `docs/evidence/forma-181-indexed/`; final integrated release qualification remains separate.
+- The final integrated local stack measures 48,063/48,209 B for core entry/browser ESM, within the existing 48,294/48,448 gates; indexed SSR/Browser Forma gzip is 27,745/27,108 B, within N2 28,000 B. The first integrated serial timing run and all six behavioral checks pass across three engines, with zero CSP violation events/reports. Full core 3,254, compiler 1,543 and build 363 tests pass. Exact products, raw timing samples and limitations are recorded separately in `docs/evidence/forma-181-indexed/integrated/`; the earlier frozen evidence is preserved.
+
+
+### Integrated deployment guard package sizes — FORMA-186
+
+- The reviewed deployment guard, F5 text branches, checkpoint D row focus and INV1 policies together measure 47,310 B gzip for the core entry and 47,398 B for browser ESM. They exceed the previous 47,297/47,395 B gates by 13/3 B. Under L-58, re-anchor these package gates to measured plus 300 B: 47,610/47,698 B. Runtime, hardened runtime and frame gates remain unchanged; their measured sizes are 41,310/40,230/39,658 B. This package-size change is separate from the per-route N2 requirement.
+
+### Deployment identity guard — FORMA-186 S4
+
+- The reviewed guard measures 46,997 B for the core entry and 47,095 B for browser ESM, exceeding the previous gates by 220 and 291 B. L-58 re-anchors these two gates to measured +300 B: 47,297 and 47,395 B. All three runtime artifacts are unchanged. The actual Counter route measures 25,585 B of Forma code gzip -9 (Browser mount 24,944 B), both below N2's unchanged 27,500 B ceiling.
+
+- `activateIslands` and `mount` compare the consuming build identity against forma-server's actual root before any component, preflight or trigger. A mismatch preserves served content, marks island hosts as skew, and dispatches the cancelable Document event `forma:skew` with `{ page, bundle, reload }`. Reload happens at most once per full page identity with working session storage; cancellation or unavailable storage leaves the page inert. Absent identities remain unchecked; direct `hydrateIsland` stays caller owned. Published artifacts retain the guarded free `__FORMA_BUILD__` identifier for the consuming build to define.
+
+### Shared attribute-name and URL policy — FORMA-140
+
+- Native rendering and core now run one INV1 vector table for names, URL values and ordinary output payloads. Fresh core and strict adoption apply the native ASCII name rule: rejected names are omitted, and a served rejected attribute refuses that island with `FORMA_E_HYDRATE_VALUE` without repair. Existing URL, typed raw-content and event-listener policies remain explicit in `docs/INV1.md`.
+
+### Integrated text-branch and row-focus package sizes — FORMA-016/181/182
+
+- The reviewed F5 text branches, Rule 6 attribute fixes and checkpoint D focus preservation together measure 46,823 B gzip for the core entry and 46,833 B for browser ESM. Both exceed the previous 46,777/46,804 B limits. Under L-58, re-anchor these two package limits to measured plus 300 B: 47,123/47,133 B. Runtime, hardened runtime and frame sizes and limits remain unchanged. This package-size adjustment is separate from the founder's L-59 per-route N2 decision, which lands with indexed rows.
+
+### Retained row focus — FORMA-181 checkpoint D, first slice
+
+- A keyed row relocation previously blurred its focused input in Chromium, Firefox and WebKit even though the input node and selection survived. The private live reconciler now uses state-preserving `moveBefore` for retained rows where supported. Its `insertBefore` fallback restores lost focus and text selection only while the owner remains live and no callback has focused another control. Detached new rows still use ordinary insertion.
+- Three-engine controls move exactly one existing row in 2,000, preserve its focused input and backward selection, keep the original row factories and listeners, and prove disposal removes those listeners. Forced fallback and callback focus-redirection controls run alongside the existing keyed-adoption matrix. This establishes row-move behavior; indexed row-edit performance and actual-product qualification remain separate checkpoint D work.
+- The low-level unkeyed adoption path shares the client key cache's domain: fractions and lone surrogates refuse before row callbacks or writes; safe integers and valid Unicode strings remain admitted. The guide and refusal/near-miss tests now state this explicitly.
+- Production sizes on checkpoint C base `8aec868`: core entry 46,720 B gzip (+243 B), browser ESM 46,746 B (+242 B), inside the existing 46,777/46,804 B gates. Runtime, hardened runtime and frame sizes are unchanged; no gate is raised.
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** `true` is bare only on an HTML boolean attribute (`BOOLEAN_ATTRS`, now exported from `src/dom/element.ts` for adoption); on any other attribute it is the word `"true"` on every writer: `h()`'s static path wrote it bare (`aria-hidden: true` gave `aria-hidden=""`, which ARIA reads as no value; `class: true` gave `class=""`), and adoption expected and wrote it bare (FORMA-188's `aria-pressed=""`), where `h()`'s reactive path and now the walker write `"true"` (`docs/parity-rules.md`, rule 6's attribute table). Verified by `src/dom/__tests__/value-rule-6-attributes.test.ts` and `e2e/value-rules.spec.ts` in three engines; `element.test.ts` and `hydrate-svg.test.ts` migrated from the bare expectation; probes `el/static-class-true-bare`, `el/static-true-bare`, `adoption/true-bare-off-boolean-set`.
+### A control-flow branch may be text — FORMA-016 F5
+
+- `createShow` (both branches), `createSwitch` (cases and fallback) and `createList` (rows) accept a function that returns a string or a number and write it as a Text node under rule 1, as `h()` writes the same value as a child and as the server walker writes the branch's `DYN_TEXT`; `null`, `undefined` and booleans write nothing. Before, `createShow(() => props.user.active, () => props.title)` threw a `TypeError` on `insertBefore` in the browser while the compiler accepted it and the server rendered the text (found by FORMA-183's parity harness). Strict adoption of a served text branch writes nothing (the server's Text node is kept; zero mutation records in Chromium, Firefox and WebKit). The `Branch` type widens `thenFn`, `elseFn`, `SwitchCase.render`, the switch fallback and the list `renderFn`. A list row that returns `null` is still not supported (a row is exactly one node). Core's entry grows by 68 B gzip (46,295 to 46,363 B of its 46,500 B cap) and the browser ESM by 60 B (46,288 to 46,348 B); no cap changes. Shared vectors: `crates/forma-ir/tests/fixtures/parity/show-text-branch.json`, read by `walker.rs` (`show_text_branch_vectors`) and `src/dom/__tests__/show-text-branch.test.ts`; browser spec `e2e/show-text-branch.spec.ts`.
+
+### Integrated package size gates — FORMA-181/182
+
+- Keyed adoption (FORMA-181 checkpoint C) and the value rules (FORMA-182) together measure 46,477 B gzip for the core entry and 46,504 B for browser ESM. The latter exceeded the previous 46,500 B gate by 4 B. Under decision L-58, the two package gates are re-anchored to the measured sizes plus 300 B: 46,777 and 46,804 B. The runtime gates remain 41,500, 40,500 and 40,000 B; the route budget remains 27,500 B gzip -9 of Forma code. Measurements come from the actual production build's import graph via `scripts/check-size.mjs`.
+
+### Value rule 6: a boolean in text writes nothing — FORMA-182
+
+- **Rendered output changes with no source change:** strict adoption maps a boolean text value to the empty string, as `h()` does (`docs/parity-rules.md`, rule 6). A reactive child returning `false` or `true` over a served range used to be expected, and later written, as the word, so an adopted page showed `false` where a fresh render showed nothing, and the empty range the walker now serves for `() => ready() && 'Go'` at `false` was refused with `FORMA_E_HYDRATE_VALUE`. A page compiled by an earlier compiler, which served the word there, is now refused at that idiom: compiler and core move together in 3.0.0. Verified by `src/dom/__tests__/value-rule-6-boolean-text.test.ts` and `e2e/value-rules.spec.ts` in three engines; mutation probe `adoption/boolean-text-word`.
+
+### Value rule 5: `null` writes nothing — FORMA-182
+
+- **Rendered output changes with no source change:** `h()`'s `class`/`className` writer follows the attribute presence table, static and reactive (`docs/parity-rules.md`, rule 5): `null`, `undefined` and `false` remove the attribute, `true` writes it bare, anything else its string. In the published `3.0.0-alpha.2` and earlier, a reactive class getter returning `null`, `undefined` or `false` wrote `class="null"`, `class="undefined"` or `class="false"` (and since rule 1's normalizer it threw inside its effect and kept the previous class); it now removes the attribute, as the walker does. A static `class: true` wrote `class="true"` and now writes the bare attribute the walker writes. Verified by `src/dom/__tests__/value-rule-5-null.test.ts` and `e2e/value-rules.spec.ts` in three engines.
+
+### Keyed rows: adoption by key — FORMA-181
+
+- Strict adoption binds a keyed list's rows by key (checkpoint C). When a served list range's row roots carry `data-forma-key` (the native renderer writes it on every row of a list the compiler keys), each client item adopts the served row whose decoded attribute equals the item's canonical key, in any order, through a cursor bounded to that row; nothing moves, the served order is kept until the list source changes, and a row's index starts at its client position. A registered child that is a row keeps its own served host, state and occurrence. A key on one side only, a repeated served key, a row without a key beside keyed rows, two client keys with the same canonical text, or a key outside the domain refuses the island with the new `FORMA_E_HYDRATE_KEY` before any row runs; text or a range beside keyed rows is `FORMA_E_HYDRATE_STRUCTURE`. FORMA-123's row-count check is no longer the criterion for keyed rows; unkeyed rows keep it (`FORMA_E_HYDRATE_LIST_COUNT`). The pre-181 initial key-order limitation is retired. Later keyed updates cache rows by canonical key text, so a type-only change (1 to `"1"`) keeps the row. Size: core ESM entry 46,295 to 46,466 B gzip, CDN ESM 46,288 to 46,488 B, the minimal template's Counter route 25,101 to 25,195 B.
+- `src/dom/key-text.ts` (private) builds the canonical text of a list key: a safe integer prints as its decimal integer (`-0` as `0`), and a string without an unpaired surrogate goes through FORMA-182's shared `normalizeDomText` (CRLF and CR become LF, NUL becomes U+FFFD), so `"a\r\nb"` and `"a\nb"` are the same row and `1` and `"1"` are too; any other value gives undefined (adoption's `FORMA_E_HYDRATE_KEY`). `src/dom/__tests__/key-text.test.ts` runs 182's `values` vectors (`crates/forma-ir/tests/fixtures/parity/normalization.json`) and 181's shared key vectors (`keys.json`, the same ones forma-ir's walker reads) through `canonicalKeyText`, and asserts the module carries no normalizer of its own and returns `normalizeDomText`'s result.
+
+### Documentation
+
+- **The preview frame's runtime in an application's output (FORMA-190).** `docs/HTML-RUNTIME.md`'s frame section says core's `dist/formajs-frame.global.js` stays readable and that `@getforma/build` writes a minified copy of it into the application's output (about 85 KB raw against 164 KB), which is what forma-server inlines and hashes. No change to this package's files.
+
+### Value rule 1: line endings and NUL — FORMA-182
+
+- Every ordinary text and scalar attribute writer (`createText`, `h()` children and attributes, form-control text and value writes, adoption text and attribute expectations and later writes, the control oracle's expected defaults, the materializer) now applies rule 1 per value: CRLF and CR become LF, NUL becomes U+FFFD, everything else is preserved. This is what the browser does to the served HTML, so strict adoption matches a server-rendered `"\0"` label instead of refusing it. Props, state and keys are untouched; raw HTML, `srcdoc`, style and event sinks keep their own paths. The URL guard classifies the raw value and refuses a NUL anywhere in a URL attribute (normalized it would be a fetchable same-origin relative reference); the normalized value is what is written. `h('pre', null, '\nline')` now agrees with the walker's `<pre>\n\nline</pre>` in every engine. Private helper `src/dom/normalize-text.ts`; shared vectors in `crates/forma-ir/tests/fixtures/parity/normalization.json`; rules in `docs/parity-rules.md`.
+
+### Size: the safe cuts, the ratcheted package gates and N2 restated — FORMA-021
+
+- **Every development warning is folded out of every production artifact (C1).**
+  The warnings of `h()` (a dropped prop), `createStore` (a prototype-polluting
+  key), `createList` (a duplicate key, a non-array), `createSignal`'s debug
+  name, the instance registry and `reportError`'s console fallback are now guarded at their sites by the build flag, in the shape esbuild
+  folds while parsing, instead of by an imported `__DEV__` constant that esbuild
+  never inlines and that Rollup folds only inside one chunk. The code-split
+  entries (`dist/index.js` and its chunks) shipped ten such guards with their
+  warning bodies, dead but paid for, and the runtime IIFEs a `__DEV__` binding; no production artifact binds `__DEV__` now. The development build (the `development`
+  condition) keeps every warning; `scripts/verify-dist.mjs` now checks the
+  texts themselves, present in the development twin's graph and absent from
+  each production file, where it used to look for a `__DEV__` binding.
+- **The `__FORMA_DEBUG__` console tracing is gone (C2).** `createShow` and
+  `createSwitch` logged their transitions, and `h()` warned about nested arrays
+  in a function child, when a page set an undocumented `globalThis.__FORMA_DEBUG__`;
+  no document, test or application referenced it. Behaviour is unchanged.
+- **The duplicate-instance registry is development-only (C3).** The
+  `Symbol.for('@getforma/core#instances')` counter and its 467-byte warning no
+  longer ship in production builds, the CDN bundles included; the development
+  build keeps them and warns once for a second development copy. Two physical
+  copies of core in one bundle remain `@getforma/build`'s `BUILD-816`
+  diagnostic, found on the bundler's metafile. A page mixing two production
+  copies gets no console line from core (`docs/CDN-AND-EXPORTS.md`).
+- **Measured** (`npm run check:size`, gzip; the Counter route at gzip -9 by
+  `@getforma/build`'s model of the minimal template's page): core entry 47,546
+  to 46,097 B, browser ESM 47,203 to 46,115 B, HTML runtime 41,648 to 41,254 B,
+  hardened runtime 40,509 to 40,175 B, frame runtime 39,997 to 39,603 B, the
+  Counter route 25,759 to 25,101 B (Brotli 23,004 to 22,482 B). The three runtime
+  gates (41,500, 40,500, 40,000 B) are unchanged and pass again.
+- **The core and browser-ESM gates ratchet to 46,500 B each** (L-51; decision
+  brief L-55). The growth from 2.1.0's 29,515 and 28,369 B is two accepted
+  contracts, not dead code: strict island activation (FORMA-104, DR-5: +19,043 B
+  gzip on the core entry) and the declared island state block (FORMA-103, DR-4:
+  +3,620 B), minus the retired repairing walker.
+- **N2 restated** (DR-35's fallback, decision brief L-55): Forma's code per
+  route, `@getforma/core` and `alien-signals` as bundled, at most **25,500 B
+  gzip -9** (1 KB = 1,000 B), Brotli reported beside it; `@getforma/build`
+  reports it per route and fails the build over it (`BUILD-819`). The 10 KB of
+  v2 appendix C is unreachable under strict adoption: the floor without it is
+  11 to 12 KB, and 2.1.0's island was 13.9 KB.
+
+### Strict island activation — FORMA-104 development integration
+
+- Connect the checked transaction to compiled SSR activation. It requires one matching owned Element, validates before publication, and makes zero initial DOM writes on success. Private phase replaces success-status/SSR-marker writes. Empty SSR, imperative Node/void returns and mismatches no longer select a repair or client fallback.
+- Defer owned effects, refs and listeners until validation. A refused owner preserves original content, makes one error-status write and emits one bubbling `forma:error` with bounded identity/binding context and no props or payload. Earlier state preflight remains entirely write-free. Later failures dispose owned work without claiming rollback of application side effects.
+- Preserve early edits only through compiler-proven local signal associations and reversible codecs; validate server defaults first, reject conflicts and hold seed notifications until commit. Literal initial controls preserve edits without seeding. Public `hydrateIsland()` uses strict caller-owned preparation but grants no compiled setter authority.
+- Keep textarea/title text exact: no marker stripping or initial default repair. List diagnostics report known client items and actual DOM extent, not an inferred row count. Initial key-order parity remains required until FORMA-181.
+- Materialize later branches and rows in their actual parent namespaces, with owned list/conditional ranges and template content. Construct a replacement before retiring its previous reader resources; failed construction retains the preceding DOM. Scalar Text identity and controlled textarea live/default writes stay shared with ordinary rendering.
+- Preserve old tests/docs in the exact retirement archive and migrate current controls to matching preparation or explicit refusal. Historical benchmark figures remain historical; no fresh timing, bundle-size acceptance or overall FORMA-104 completion is claimed.
+
+### Staged whole-page mount retirement — FORMA-105
+
+- `mount()` refuses a `data-forma-ssr` target with `FORMA_E_MOUNT_SSR` before component/root/effect/listener creation or DOM writes. Ordinary Browser mounting, explicit browserOnly islands and public caller-owned `hydrateIsland()` are retained.
+- Adoption-specific regression tests now call the retained public hydrator under explicit roots; the old mount/fallback assertions are archived exactly. Strict activation is now connected; compiler/static entry selection, the template successor and final packed qualification remain separate acceptance gates.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

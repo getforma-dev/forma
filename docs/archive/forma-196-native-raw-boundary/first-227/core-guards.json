@@ -1,0 +1,52 @@
+[
+  {
+    "id": "srcdoc-static",
+    "accepted": false,
+    "error": "TypeError: [forma] FORMA_E_RAW_SRCDOC: srcdoc requires trustedHtml()\n    at rawHtml (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:120:9)\n    at checkRawAttr (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:130:26)\n    at applyStaticProp (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:590:3)\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:699:7)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at core.h.SrCdOc (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:71:28)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "srcdoc-mixed-case",
+    "accepted": false,
+    "error": "TypeError: [forma] FORMA_E_RAW_SRCDOC: srcdoc requires trustedHtml()\n    at rawHtml (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:120:9)\n    at checkRawAttr (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:130:26)\n    at applyStaticProp (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:590:3)\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:699:7)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:72:32\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "script-html",
+    "accepted": false,
+    "error": "TypeError: [forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle\n    at refuseScriptElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:134:11)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:671:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:73:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "script-html-case",
+    "accepted": false,
+    "error": "TypeError: [forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle\n    at refuseScriptElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:134:11)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:671:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:74:31\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "script-svg",
+    "accepted": false,
+    "error": "TypeError: [forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle\n    at refuseScriptElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:134:11)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:671:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:75:38\n    at withNamespace (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:147:12)\n    at Module.svg (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:239:10)\n    at core.h.title (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:75:25)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "safe-iframe",
+    "accepted": false,
+    "error": "ReferenceError: HTMLTextAreaElement is not defined\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:705:21)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:76:26\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "literal-style",
+    "accepted": false,
+    "error": "ReferenceError: HTMLTextAreaElement is not defined\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:705:21)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at core.h.srcdoc (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:77:28)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "srcdoc-null",
+    "accepted": false,
+    "error": "ReferenceError: HTMLTextAreaElement is not defined\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:705:21)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at core.h.srcdoc (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:78:26)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "srcdoc-false",
+    "accepted": false,
+    "error": "ReferenceError: HTMLTextAreaElement is not defined\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:705:21)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:79:27\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  },
+  {
+    "id": "typed-srcdoc",
+    "accepted": false,
+    "error": "ReferenceError: HTMLTextAreaElement is not defined\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:705:21)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at coreCases (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:80:27)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/reproduce.mjs:83:57"
+  }
+]

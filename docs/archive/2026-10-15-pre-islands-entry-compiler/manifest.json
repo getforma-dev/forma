@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "1c0d09cc73b2821d4b8463d2bb803bbdd5cc47ab",
+  "files": [
+    {
+      "path": "packages/compiler/tests/supported-surface.test.ts",
+      "archive": "supported-surface.test.ts",
+      "bytes": 2529,
+      "sha256": "39fb04dc460dd7109225b9db6211b973869de47da9056948f1dd29a741acf52d"
+    }
+  ]
+}

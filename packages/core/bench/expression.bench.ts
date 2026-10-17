@@ -27,7 +27,7 @@
 
 import { bench, describe } from 'vitest';
 import { createSignal, internalEffect, createRoot } from 'forma/reactive';
-import { mount, unmount, setScopeValue } from 'forma/runtime';
+import { mountMarkup, trustedHtml, setScopeValue } from 'forma/runtime';
 import { MICRO, MACRO, attachedContainer } from './_support';
 
 // ---------------------------------------------------------------------------
@@ -168,15 +168,15 @@ describe('expression compile', () => {
   bench(`CSP parser: mount unique arithmetic expressions (×${DIRECTIVES})`, () => {
     const s = salt++;
     const host = attachedContainer(scopeMarkup((i) => `count * 2 + ${s * DIRECTIVES + i}`));
-    mount(host.firstElementChild!);
-    unmount(host.firstElementChild!);
+    const handle = mountMarkup(host, trustedHtml(host.innerHTML), { tier: 'reviewed' });
+    handle.unmount();
     host.remove();
   }, MACRO);
 
   bench(`CSP parser: mount bare identifiers, plumbing control (×${DIRECTIVES})`, () => {
     const host = attachedContainer(scopeMarkup(() => 'count'));
-    mount(host.firstElementChild!);
-    unmount(host.firstElementChild!);
+    const handle = mountMarkup(host, trustedHtml(host.innerHTML), { tier: 'reviewed' });
+    handle.unmount();
     host.remove();
   }, MACRO);
 
@@ -195,11 +195,11 @@ describe('expression compile', () => {
 
   {
     const host = attachedContainer(grammarMarkup);
+    const handle = mountMarkup(host, trustedHtml(host.innerHTML), { tier: 'reviewed' });
     const root = host.firstElementChild!;
-    mount(root);
     const failed = Array.from(root.querySelectorAll('[data-forma-expr-error]'), (el) =>
       el.getAttribute('data-text'));
-    unmount(root);
+    handle.unmount();
     host.remove();
     if (failed.length > 0) {
       throw new Error(`outside the CSP-safe grammar: ${JSON.stringify(failed)}`);
@@ -208,8 +208,8 @@ describe('expression compile', () => {
 
   bench(`CSP parser: mount every supported grammar shape (×${GRAMMAR.length})`, () => {
     const host = attachedContainer(grammarMarkup);
-    mount(host.firstElementChild!);
-    unmount(host.firstElementChild!);
+    const handle = mountMarkup(host, trustedHtml(host.innerHTML), { tier: 'reviewed' });
+    handle.unmount();
     host.remove();
   }, MACRO);
 });
@@ -230,8 +230,8 @@ describe('expression evaluate: CSP-safe interpreter (shipped)', () => {
     const host = attachedContainer(
       `<div data-forma-state='${JSON.stringify(INITIAL_STATE)}'>${spans}</div>`,
     );
+    const handle = mountMarkup(host, trustedHtml(host.innerHTML), { tier: 'reviewed' });
     const root = host.firstElementChild!;
-    mount(root);
     return root;
   }
 

@@ -1,0 +1,45 @@
+{
+  "head": "24a6c0b0157baa434524ffc8431041ebb1b3854b",
+  "node": "v24.22.0",
+  "source": [
+    {
+      "path": "packages/core/src/dom/element.ts",
+      "bytes": 48043,
+      "sha256": "52cfc8f6f9b689662dda06c125656d86810f3353130b21e17e8cfa4238b82f51"
+    },
+    {
+      "path": "packages/core/src/dom/__tests__/element-prototype-cache.test.ts",
+      "bytes": 8253,
+      "sha256": "fd022550021ecc30b7fb416cee663d7aac28451d4db863c08318ff2d756ceca3"
+    },
+    {
+      "path": "packages/core/e2e/core-regressions.spec.ts",
+      "bytes": 10210,
+      "sha256": "3fa57832d69554bcce79d965e856b2697fe2b315af7c1923925d39ed6f0dfcbe"
+    },
+    {
+      "path": "packages/core/CHANGELOG.md",
+      "bytes": 163533,
+      "sha256": "392ad514458328be09a70993832f6a97ed85271e768a933daa51f83aa4603283"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 222318,
+      "sha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90"
+    }
+  ],
+  "playwright": {
+    "test": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/node_modules/@playwright/test/package.json",
+    "runner": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/node_modules/playwright/package.json",
+    "version": "1.64.1"
+  },
+  "environment": {
+    "CARGO_BUILD_JOBS": "3",
+    "PLAYWRIGHT_SKIP_BROWSER_GC": "1",
+    "FORMA_STATIC_E2E_PORT": "35627",
+    "FORMA_SSR_E2E_PORT": "35628",
+    "FORMA_TEST_PORT": "35629"
+  },
+  "coreWebServerCwd": "packages/core: installed runner/index.js defaults omitted cwd to configDir (line841)",
+  "startedAt": "2026-10-16T09:27:51.695Z"
+}

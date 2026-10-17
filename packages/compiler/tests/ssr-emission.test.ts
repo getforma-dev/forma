@@ -25,7 +25,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { generateRealIr, generatePlaceholderIr } from '../src/esbuild-ssr-plugin';
+import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import { getIslands, getSlots, parseOpcodeList } from './helpers/fmir';
 
 let tmpDir: string;
@@ -56,25 +56,19 @@ function warnings(): string {
   return warnSpy.mock.calls.map((c) => c.join(' ')).join('\n');
 }
 
-/** The opcode shape `generatePlaceholderIr` produces: one empty div, nothing else. */
-const PLACEHOLDER_SHAPE = parseOpcodeList(generatePlaceholderIr('page'));
+/** Historical empty-div shape: a current build refuses instead of publishing it. */
+const PLACEHOLDER_OPCODE_COUNT = 2;
 
-/**
- * Emit and assert the result is REAL IR, not the placeholder the plugin
- * silently falls back to. `generateRealIr` returning null is that fallback —
- * and it is the ONLY signal, because the plugin then writes a perfectly valid
- * .ir file and the build stays green. Every test that asserts on emitted IR
- * goes through here so none of them can pass on an empty div.
- */
+/** Assert a real native tree; null refuses publication and is never substituted. */
 function emitReal(entryPath: string) {
   const result = generateRealIr(entryPath);
   expect(
     result,
-    `generateRealIr returned null — the page would ship placeholder IR. Warnings:\n${warnings()}`,
+    `generateRealIr returned null — publication would be refused. Warnings:\n${warnings()}`,
   ).not.toBeNull();
   const ops = parseOpcodeList(result!.binary);
   expect(
-    ops.length === PLACEHOLDER_SHAPE.length && ops[0]!.includes('data-forma-page'),
+    ops.length === PLACEHOLDER_OPCODE_COUNT && ops[0]!.includes('data-forma-page'),
     'emitted IR is the placeholder empty-div shell',
   ).toBe(false);
   return result!;
@@ -170,11 +164,14 @@ describe('generateRealIr — .tsx root pages', () => {
     expect(slotNames(result.binary)).toEqual(['hits']);
     expect(slotByName(result.binary, 'hits')!.default).toBe('42');
 
-    // And the island carries that slot, or the walker emits no
-    // data-forma-props and the client hydrates it with nothing.
+    // The local signal stays a CLIENT default used by the body, not a declared
+    // input copied into the head-state props. These are independent contracts.
+    expect(slotByName(result.binary, 'hits')!.source).toBe(1);
+    expect(parseOpcodeList(result.binary)).toContain('DYN_TEXT hits marker=0');
     expect(getIslands(result.binary)).toEqual([
-      expect.objectContaining({ name: 'Counter', slotIds: [0] }),
+      expect.objectContaining({ name: 'Counter', slotIds: [] }),
     ]);
+    expect(result.islands[0]!.contract).toMatchObject({ mode: 'ssr', schema: [[]] });
     expect(warnings()).toBe('');
   });
 });
@@ -473,11 +470,17 @@ describe('generateRealIr — signals in the scopes the walk inlines', () => {
       `,
     }, 'app.ts');
 
-    const result = emitReal(entry);
-    // The page's binding gets an anonymous slot with no default — and says so.
-    expect(slotNames(result.binary)).toEqual(['hidden', 'text:0']);
-    expect(slotByName(result.binary, 'text:0')!.default).toBe('');
+    expect(() => emitReal(entry)).toThrow(/BUILD-610.*page\.ts:5:63/s);
     expect(warnings()).toContain('dynamic text child');
+    // Removing the out-of-scope read leaves the actual local signal intact.
+    writeProject({ 'page.ts': `
+      import { h } from 'formajs';
+      import { Sub } from './sub';
+      export function Page() { return h('div', { id: 'app' }, Sub()); }
+    ` }, 'app.ts');
+    const result = emitReal(entry);
+    expect(slotNames(result.binary)).toEqual(['hidden']);
+    expect(slotByName(result.binary, 'hidden')!.default).toBe('inner');
   });
 });
 
@@ -487,6 +490,9 @@ describe('generateRealIr — signals in the scopes the walk inlines', () => {
 
 describe('generateRealIr — inline mount', () => {
   it('names signal slots on an inline-mount entry', () => {
+    // FORMA-182 rule 6: `open` is read by an attribute, not as text; the
+    // original `h('i', null, () => open())` is a boolean in text (BUILD-614),
+    // archived in docs/archive/2026-10-15-pre-value-rules.
     // The old code asked for an exported function literally named
     // `__inline__`, a lookup that could never match, so an inline-mount page
     // had ZERO named slots and every binding landed in an anonymous one.
@@ -496,7 +502,7 @@ describe('generateRealIr — inline mount', () => {
         const [status] = createSignal('idle');
         mount(() => {
           const [open] = createSignal(false);
-          return h('div', { id: 'app' }, h('b', null, () => status()), h('i', null, () => open()));
+          return h('div', { id: 'app' }, h('b', null, () => status()), h('i', { hidden: () => open() }));
         }, '#app');
       `,
     }, 'app.ts');
@@ -708,8 +714,8 @@ describe('generateRealIr — imported constant tables in a spread unroll', () =>
     ]);
   });
 
-  it('still degrades a table that is built at runtime, naming the module that declares it', () => {
-    const result = emitReal(writeProject({
+  it('refuses a runtime table and names its declaring module', () => {
+    const entry = writeProject({
       'app.ts': `
         import { mount } from 'formajs';
         import { Page } from './page';
@@ -723,22 +729,22 @@ describe('generateRealIr — imported constant tables in a spread unroll', () =>
           return h('ul', { id: 'app' }, ...KEYS.map((r) => h('li', null, r.k)));
         }
       `,
-    }, 'app.ts'));
+    }, 'app.ts');
 
-    expect(result.islands.map((i) => i.name)).toEqual(['island_0']);
+    expect(() => emitReal(entry)).toThrow(/BUILD-610.*spread child/);
 
     const warned = warnings();
     expect(warned).toContain('...KEYS.map(...)');          // the construct
     expect(warned).toContain('tables.ts');                 // the file to edit
     expect(warned).toContain('CallExpression');            // why it is not static
-    expect(warned).toContain('empty island shell');        // the consequence
+    expect(warned).toContain('refused with BUILD-610');     // the consequence
   });
 
-  it('still degrades a table the declaring module mutates in place', () => {
+  it('refuses a table mutated in its declaring module', () => {
     // `const` freezes the binding, not the contents. Unrolling the literal
     // would bake a stale snapshot into the server's HTML that the client then
-    // disagrees with — worse than an island, because nothing repairs it.
-    const result = emitReal(writeProject({
+    // disagrees with. The candidate must refuse instead of shipping stale HTML.
+    const entry = writeProject({
       'app.ts': `
         import { mount } from 'formajs';
         import { Page } from './page';
@@ -755,16 +761,16 @@ describe('generateRealIr — imported constant tables in a spread unroll', () =>
           return h('ul', { id: 'app' }, ...KEYS.map((r) => h('li', null, r.k)));
         }
       `,
-    }, 'app.ts'));
+    }, 'app.ts');
 
-    expect(result.islands.map((i) => i.name)).toEqual(['island_0']);
+    expect(() => emitReal(entry)).toThrow(/BUILD-610.*spread child/);
     expect(warnings()).toContain('tables.ts');
   });
 
-  it('still degrades when a nested declaration shadows the imported table', () => {
+  it('refuses a nested runtime binding shadowing an imported table', () => {
     // The identifier at the spread reads the INNER binding. Unrolling the
     // imported table there would ship rows the client never renders.
-    const result = emitReal(writeProject({
+    const entry = writeProject({
       'app.ts': `
         import { mount } from 'formajs';
         import { Page } from './page';
@@ -779,16 +785,16 @@ describe('generateRealIr — imported constant tables in a spread unroll', () =>
           return h('ul', { id: 'app' }, ...KEYS.map((r) => h('li', null, r.k)));
         }
       `,
-    }, 'app.ts'));
+    }, 'app.ts');
 
-    expect(result.islands.map((i) => i.name)).toEqual(['island_0']);
+    expect(() => emitReal(entry)).toThrow(/BUILD-610.*spread child/);
     const warned = warnings();
     expect(warned).toContain('declared in a nested scope');
     expect(warned).toContain('page.ts');
   });
 
-  it('terminates on a re-export cycle instead of hanging the build', () => {
-    const result = emitReal(writeProject({
+  it('refuses a re-export cycle instead of hanging the build', () => {
+    const entry = writeProject({
       'app.ts': `
         import { mount } from 'formajs';
         import { Page } from './page';
@@ -803,9 +809,9 @@ describe('generateRealIr — imported constant tables in a spread unroll', () =>
           return h('ul', { id: 'app' }, ...KEYS.map((r) => h('li', null, r.k)));
         }
       `,
-    }, 'app.ts'));
+    }, 'app.ts');
 
-    expect(result.islands.map((i) => i.name)).toEqual(['island_0']);
+    expect(() => emitReal(entry)).toThrow(/BUILD-610.*spread child/);
     expect(warnings()).toContain('cycle');
   });
 });
@@ -830,8 +836,8 @@ describe('generateRealIr — diagnostics when a page cannot be resolved', () => 
     const warned = warnings();
     expect(warned).toContain('page.ts');            // the file to edit
     expect(warned).toContain('StringLiteral');      // the construct
-    expect(warned).toContain('placeholder IR');     // the consequence
-    expect(warned).toContain('empty <div id="app">');
+    expect(warned).toContain('publication is refused'); // the consequence
+    expect(warned).not.toContain('falls back');
   });
 
   it('says a name is missing rather than blaming the return statement', () => {
@@ -944,18 +950,19 @@ describe('generateRealIr — signals imported from a store module', () => {
       `,
     }, 'app.ts'));
 
-    // One signal, one slot — the page's binding and the island's binding both
-    // resolve to the store module's frame, so a server injecting 'status'
-    // reaches every reader. 'status#2' existing would be the one-signal-two-
-    // slots hazard.
+    // One captured store getter, one CLIENT slot. Page and island readers both
+    // retain the same source identity; it is never seeded as a per-island prop.
+    // A second status#2 slot would split the actual captured identity.
     const statusSlots = slotNames(result.binary).filter((n) => n.startsWith('status'));
     expect(statusSlots).toEqual(['status']);
     expect(slotByName(result.binary, 'status')!.default).toBe('idle');
-    // The island must CARRY the shared slot in its slot_ids — that is what a
-    // server uses to inject the island's props, and a mis-bound id would ship
-    // a well-formed table over a stale island.
+    expect(slotByName(result.binary, 'status')!.source).toBe(1);
+    const readers = parseOpcodeList(result.binary).filter((op) => op.startsWith('DYN_TEXT status '));
+    expect(readers).toEqual(['DYN_TEXT status marker=0', 'DYN_TEXT status marker=1']);
     const badge = getIslands(result.binary).find((i) => i.name === 'Badge')!;
-    expect(badge.slotIds).toContain(slotByName(result.binary, 'status')!.id);
+    expect(badge.slotIds).toEqual([]);
+    expect(result.islands.find((island) => island.name === 'Badge')!.contract)
+      .toMatchObject({ mode: 'ssr', schema: [[]] });
     expect(warnings()).toBe('');
   });
 });

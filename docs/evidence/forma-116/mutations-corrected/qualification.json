@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "passed": true,
+  "commit": "b3d1904cab6bb93b46ad960abcfe5fb5fa586c5f",
+  "scratch": "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8",
+  "startedAt": 1792123993.038156,
+  "probes": [
+    {
+      "id": "text-fast",
+      "test": "walker::tests::walk_text_escaping",
+      "path": "crates/forma-ir/src/walker.rs",
+      "mutantSha256": "1cdb2ba0a39b6fff908fe857e65f69ad546ee9056c6731a254d4b79e71de7912",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "text-fast-before.log",
+          "sha256": "d013a5790368655566ff80b1d6cf2d1aeda2a2b4d611e2be22575af2d4bf0f46"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "killed",
+          "log": "text-fast-mutant.log",
+          "sha256": "8efdd590d829a74e311c9356b745f807d82ca2a58e8e79c8b4a828265f0654bb"
+        },
+        {
+          "mode": "corrected",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "text-fast-corrected.log",
+          "sha256": "4f866ba7212313baca6ba9b3c09a78063bcd2f878e452b2556081d8a0459de75"
+        }
+      ]
+    },
+    {
+      "id": "text-bounded",
+      "test": "walker::tests::security_probe_bounded_text_escaping",
+      "path": "crates/forma-ir/src/walker.rs",
+      "mutantSha256": "67862ebf8956e111531ce42eedb1b40a4dbd6b5056d750f9f90b78c6efd79f8d",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "text-bounded-before.log",
+          "sha256": "857db6cb2cf14af3a039d9d96347820f546faab512de6a6ecf19b8ba058d1ef1"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "killed",
+          "log": "text-bounded-mutant.log",
+          "sha256": "28a2add687036dea118257a2af346fd6b3b6968347865c2e4fe95905c3f60077"
+        },
+        {
+          "mode": "corrected",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "text-bounded-corrected.log",
+          "sha256": "b52df545e2c806061518389f340acc9a4b7f994b90494438fd202721a9af3008"
+        }
+      ]
+    },
+    {
+      "id": "attribute-fast",
+      "test": "walker::tests::walk_attr_escaping",
+      "path": "crates/forma-ir/src/walker.rs",
+      "mutantSha256": "f789cfad75780d727f52af6c5c4a90fa675ca4ff7fd2835c00f72a03836318d5",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "attribute-fast-before.log",
+          "sha256": "393ca4c571235f8e18b95e6d55a81cafd7119a5ae586052db5a39380c4c0f700"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "killed",
+          "log": "attribute-fast-mutant.log",
+          "sha256": "5eea235a74d41b0de14f7020c7684c2a38ad7ea5f0a45271670e9c422eed27f3"
+        },
+        {
+          "mode": "corrected",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "attribute-fast-corrected.log",
+          "sha256": "1421bc515b601c41de04a6c0ed3f27e86f45bc5e631ddb10a0ab2f5df50ae8d7"
+        }
+      ]
+    },
+    {
+      "id": "attribute-bounded",
+      "test": "walker::tests::security_probe_bounded_attribute_escaping",
+      "path": "crates/forma-ir/src/walker.rs",
+      "mutantSha256": "1662132c8743814d4463c3626b23864feaeb7b51d1babbb970ed7692d198d7ad",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "attribute-bounded-before.log",
+          "sha256": "e2f825355133c39e409cad02afc0f5a9d37123ef0af54a172f1e264d5872048d"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "killed",
+          "log": "attribute-bounded-mutant.log",
+          "sha256": "8434faff80c0848f36d51c027f543fe58e7b5122be2874100cff77ae2f33ad03"
+        },
+        {
+          "mode": "corrected",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "attribute-bounded-corrected.log",
+          "sha256": "d1cb391951733da74aacde55c2c62b09e446f716549f9dea30fe745c47bcee3a"
+        }
+      ]
+    },
+    {
+      "id": "name-tail",
+      "test": "walker::tests::walk_rejects_hostile_tag_name",
+      "path": "crates/forma-ir/src/walker.rs",
+      "mutantSha256": "bebf9c1838df43c90a8c90c6679e54796afea3718302bc30aed45ab8e1047a1e",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "name-tail-before.log",
+          "sha256": "cee76ade78eae663f3ff130c4b4733e1f89df6da08079eb55df2ecd7616147b7"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "killed",
+          "log": "name-tail-mutant.log",
+          "sha256": "dd5d335baa85c27e260e57354fd53e482364cd44532a618341b03e978d29cdc2"
+        },
+        {
+          "mode": "corrected",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "name-tail-corrected.log",
+          "sha256": "0ad5c266cbaed1b7a98dd3377502f74cdc6b90f41225fffc838b316c7485ef60"
+        }
+      ]
+    },
+    {
+      "id": "script-policy",
+      "test": "csp::tests::csp_is_strict",
+      "path": "crates/forma-server/src/csp.rs",
+      "mutantSha256": "4c07a9134c25d8d5fc4b2af1e9c5eb015913f86a7072a5a9cc491143c2b3166d",
+      "runs": [
+        {
+          "mode": "before",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "script-policy-before.log",
+          "sha256": "5a0bbedc1ae32f938088474594e9a07320a337823762360a73533fab7a48e4df"
+        },
+        {
+          "mode": "mutant",
+          "exit": 101,
+          "verdict": "killed",
+          "log": "script-policy-mutant.log",
+          "sha256": "ea501e8ce91a426dc136a5c76eb894c7866ff04aa9d813de9900e15789fada3b"
+        },
+        {
+          "mode": "corrected",
+          "exit": 0,
+          "verdict": "pass",
+          "log": "script-policy-corrected.log",
+          "sha256": "373f491c30d0ad7b9a32ac47f03928e071e3db52e673439f2849ea3bbe01e8e9"
+        }
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "crates/forma-server/src/csp.rs": "730ef695389b74b1d916f6c10cc26573f27291a07a79045832a5c27c5d8a6245",
+    "crates/forma-ir/src/walker.rs": "9e0934093a5f27f183a6ae140db6056bd81e20141e9e5e3d32de1b9eed561ec7"
+  },
+  "elapsedSeconds": 40.143900871276855,
+  "sourceRestored": true
+}

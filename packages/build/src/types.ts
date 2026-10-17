@@ -4,6 +4,8 @@
  * Configuration and result types for the Forma build pipeline.
  */
 
+import type { RouteSize, SizeReport } from './route-size.js';
+
 // ---------------------------------------------------------------------------
 // Configuration Types
 // ---------------------------------------------------------------------------
@@ -27,12 +29,22 @@ export interface CssEntry {
 }
 
 export interface RouteMapping {
-  /** Base names (without extension) of JS files for this route */
+  /** Configured entry base names. The first selects the native owner before
+   * static SSR removes its browser output; additional entries must be Browser. */
   js: string[];
   /** Base names (without extension) of CSS files for this route */
   css: string[];
   /** Font file names for this route (optional, defaults to all fonts in outputDir) */
   fonts?: string[];
+  /**
+   * Declare the route a canvas (N2, FORMA-190): a page that hosts many modules
+   * and is JavaScript-heavy by design. The size report holds all of its
+   * JavaScript to 365 KiB gzip -9 instead of the 75 KiB of other pages; Forma's
+   * own code stays under N2's 28,100 B either way. It raises nothing for a
+   * route without JavaScript. A heavy page that is not a canvas is trimmed or
+   * split, not declared.
+   */
+  canvas?: boolean;
 }
 
 export interface BuildConfig {
@@ -44,7 +56,7 @@ export interface BuildConfig {
   cssEntries?: CssEntry[];
   /** Output directory for all built assets */
   outputDir: string;
-  /** Package name to resolve 'formajs' imports to (e.g. '@getforma/core') */
+  /** 3.x migration bridge for 'formajs'; warns once per build() with importing files. Prefer '@getforma/core'. */
   formaAlias?: string;
   /** Bundle one shared ESM graph, preserving import() as separately loaded chunks. */
   codeSplitting?: boolean;
@@ -90,18 +102,12 @@ export interface BuildConfig {
   watch?: boolean;
   /** Budget threshold in bytes (Brotli-compressed), default 200_000 */
   budgetThreshold?: number;
-  /** Files that should keep unhashed copies (e.g. for server-inlined assets) */
+  /** Files that should keep unhashed copies (e.g. for server-inlined assets).
+   * A zero-JS SSR owner cannot request executable server inlining. */
   serverInlined?: string[];
-  /**
-   * Fail the build on every coded SSR diagnostic but a note (FORMA-119,
-   * DR-1): each construct the compiler cannot represent, with its code, file,
-   * line and column, all reported at once. Off by default, where they stay
-   * warnings. When unset, `FORMA_STRICT=1` in the environment turns it on; the
-   * build reads no command-line flag, so a build script that takes `--strict`
-   * maps it here, as it does `--ssr` and `--watch`. Needs
-   * `@getforma/compiler` 0.3.7 or later. In watch mode a page with an error
-   * keeps its last good module.
-   */
+  /** Legacy compatibility option. SSR publication always requires the 3.0
+   * server-renderable subset. False and FORMA_STRICT=0 cannot downgrade errors.
+   * Every page is checked; watch retains its previous good product on failure. */
   strict?: boolean;
   /**
    * Also write every SSR diagnostic as JSON to this path (relative to the
@@ -110,6 +116,31 @@ export interface BuildConfig {
    * the build replaces whole and serves.
    */
   diagnosticsJson?: string;
+  /**
+   * The previous release's `dist/`, which the application's pipeline keeps as a
+   * release artifact (FORMA-186, DR-29, L-25). The build copies that release's
+   * own hashed assets into the new `dist/`, listed in the manifest `retained`
+   * and `immutable`, so a tab opened before a deploy still loads its chunks
+   * from the one `dist/` the application embeds. One generation: what the
+   * previous release itself retained is not copied again. A directory other
+   * than `outputDir`, which the build replaces whole. Leave it out for a first
+   * deploy, or when no release is live. The previous dist is trusted like the source: the check below catches a damaged or
+   * altered file, not someone who can also rewrite its manifest. Every copied file is checked against
+   * the SHA-384 the previous manifest recorded (`BUILD-821`); a path that is
+   * not a usable previous release fails the build (`BUILD-820`). Ignored in
+   * watch mode.
+   */
+  previousDist?: string;
+  /**
+   * Mark this release as one that fixes a vulnerability (L-16, SR45): nothing is
+   * retained from `previousDist`, so no earlier build's asset is served and a
+   * revoked build's tabs meet 404s for their lazy chunks. The application's
+   * deploy pipeline must mark every such release, a Forma security upgrade
+   * included. `FORMA_SECURITY_RELEASE=1` (or `true`, any case) in the environment marks it too; any
+   * value other than 1, true, 0, false or empty fails the build (`BUILD-822`); and a
+   * `false` here does not unmark it.
+   */
+  security?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +164,7 @@ export interface AssetMetadata {
   immutable: boolean;
   /** Full SHA-384 of the final uncompressed file, used by SRI and the worker. */
   integrity: string;
-  /** Older deployment artifact retained by the deployment-identity implementation. */
+  /** A file of the previous release kept for tabs still open on it (FORMA-186, L-25). */
   retained?: boolean;
 }
 
@@ -141,7 +172,15 @@ export interface AssetManifest {
   version: 2;
   writer: string;
   app: string;
-  /** Opaque build ID; input-derived deployment identity is a separate contract. */
+  /**
+   * The deployment identity (FORMA-186, DR-29): 16 lowercase hexadecimal
+   * characters computed from the build's own outputs and the writers'
+   * versions before anything is named, compiled into every JavaScript bundle
+   * (`__FORMA_BUILD__`, which core compares with the page's
+   * `data-forma-build`), and the same for identical inputs however often they
+   * are built, from any directory when built from the project root (esbuild
+   * hashes input paths relative to its working directory). `dev` in watch mode.
+   */
   build: string;
   aliases: Record<string, string>;
   assets: Record<string, AssetMetadata>;
@@ -158,12 +197,12 @@ export interface BuildDiagnosticChainLink {
 
 /**
  * One coded SSR diagnostic (FORMA-119). The catalogue, one entry per code
- * with its fix, is forma-tools' `docs/DIAGNOSTICS.md`.
+ * with its fix, is `packages/compiler/docs/subset.md`.
  */
 export interface BuildDiagnostic {
   /** The stable code, e.g. `BUILD-101`. */
   code: string;
-  /** `error` under `--strict`, `warning` without it; `note` never fails a build. */
+  /** Unsupported SSR constructs are always `error`; `note` never fails a build. */
   severity: 'error' | 'warning' | 'note';
   /** The page (entry outfile without `.js`) whose module reported it. */
   page: string;
@@ -187,4 +226,25 @@ export interface BuildResult {
   warnings: string[];
   /** Every coded SSR diagnostic the build reported, page by page. */
   diagnostics: BuildDiagnostic[];
+  /**
+   * The size report's routes (FORMA-021, FORMA-190): per route, its class, what
+   * it loads cold in raw, gzip -9 and Brotli bytes, Forma's code
+   * (`@getforma/core` and `alien-signals` as bundled) beside the application's,
+   * the service worker it registers, and its ceilings. A production build fails
+   * with `BUILD-819` before writing its output when a route is over one:
+   * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (28,100 B; decision brief
+   * L-64), all of its JavaScript over its class's (none for a route without an
+   * interactive region, 75 KiB, 365 KiB for a canvas). Empty in watch mode,
+   * whose unminified bytes are not what a route ships. The same objects as
+   * `sizeReport.routes`.
+   */
+  sizes: RouteSize[];
+  /**
+   * The one report (FORMA-190): `sizes` with the service worker, the preview
+   * frame's runtime when `previewFrame` is on (the frame document row), and the
+   * build's times by phase. A production build prints it and writes it, without
+   * the times (so the output stays the same bytes for the same sources), as
+   * `size-report.json` beside `manifest.json`. No routes in watch mode.
+   */
+  sizeReport: SizeReport;
 }

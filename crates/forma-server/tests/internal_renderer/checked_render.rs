@@ -18,7 +18,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use forma_ir::fault_injection::FAULT_TRIGGER;
 use forma_ir::parser::test_helpers::{
-    build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_text,
+    build_declared_fixture, encode_close_tag, encode_list, encode_open_tag, encode_text,
 };
 use forma_ir::{IrModule, SlotData, SlotValue, WalkLimits};
 use forma_server::{AssetManifest, PolicyExtensions, RenderCtx, RenderError, RouteAssets};
@@ -83,12 +83,12 @@ fn branding_module() -> IrModule {
     body.extend_from_slice(&dyn_text(0, 0));
     body.extend_from_slice(&encode_list(1, 2, &row));
     body.extend_from_slice(&encode_close_tag(0));
-    let data = build_minimal_ir(
+    let data = build_declared_fixture(
         &["div", "Branding", "i", "name", "colors", "color"],
         &[
             (0, 3, 0x01, 0x00, &[]),
             (1, 4, 0x04, 0x00, &[]),
-            (2, 5, 0x01, 0x00, &[]),
+            (2, 5, 0x01, 0x01, &[]),
         ],
         &island(0, &body, true),
         &[(0, 0x01, 0x01, 1, 0, &[])],
@@ -208,6 +208,11 @@ async fn a_panicking_component_returns_fault_the_handler_answers_500_and_the_nex
     let (status, html) = body(app.get("acme")).await;
     assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Acme") && html.contains("data-forma-ssr"));
+    // A server-rendered page names the build too, on the same root (FORMA-186, DR-29).
+    assert!(html.contains(&format!(
+        "<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+        app.manifest.build
+    )));
 }
 
 #[tokio::test]
@@ -252,7 +257,7 @@ fn render_102_a_module_the_walk_refuses_names_its_island() {
     // All string references are load-validated. An invalid HTML name inside
     // "Branding" still reaches the renderer's semantic check and names its island.
     let body = encode_open_tag(0, &[]);
-    let data = build_minimal_ir(
+    let data = build_declared_fixture(
         &["bad tag", "Branding"],
         &[],
         &island(0, &body, true),
@@ -376,20 +381,27 @@ fn render_303_nesting_past_the_walker_s_depth() {
     // Five LISTs nested over the same one-row array, inside a "Deep" island:
     // past the walker's list depth of four.
     let mut ops = encode_text(2);
-    for _ in 0..5 {
-        ops = encode_list(0, 1, &ops);
+    for item in 1..=5 {
+        ops = encode_list(0, item, &ops);
     }
     let mut root = encode_open_tag(4, &[]);
     root.extend_from_slice(&ops);
     root.extend_from_slice(&encode_close_tag(4));
-    let data = build_minimal_ir(
+    let data = build_declared_fixture(
         &["items", "item", "x", "Deep", "div"],
-        &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
+        &[
+            (0, 0, 0x04, 0x00, &[]),
+            (1, 1, 0x01, 0x01, &[]),
+            (2, 1, 0x01, 0x01, &[]),
+            (3, 1, 0x01, 0x01, &[]),
+            (4, 1, 0x01, 0x01, &[]),
+            (5, 1, 0x01, 0x01, &[]),
+        ],
         &island(0, &root, true),
         &[(0, 0x01, 0x01, 3, 0, &[])],
     );
     let module = IrModule::parse(&data).expect("parses");
-    let mut slots = SlotData::new(2);
+    let mut slots = SlotData::new(6);
     slots.set(0, SlotValue::array(vec![SlotValue::Text("a".into())]));
     let manifest = manifest();
     let error = err(
@@ -468,8 +480,8 @@ fn try_render_never_serves_a_shell_in_place_of_a_failure() {
     let module = branding_module();
     let slots = branding(FAULT_TRIGGER, 1);
     let walk_error = encode_open_tag(0, &[]);
-    let bad =
-        IrModule::parse(&build_minimal_ir(&["bad tag"], &[], &walk_error, &[])).expect("parses");
+    let bad = IrModule::parse(&build_declared_fixture(&["bad tag"], &[], &walk_error, &[]))
+        .expect("parses");
     let empty = SlotData::new(0);
 
     // Every failure class returns an error rather than a successful shell.
@@ -504,7 +516,11 @@ async fn render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_pa
     let headers = response.headers().clone();
     let (status, html) = body(response).await;
     assert_eq!(status, StatusCode::OK);
-    assert!(html.contains("<div id=\"app\"></div>"));
+    // The shell's root names the build the manifest names (FORMA-186, DR-29).
+    assert!(html.contains(&format!(
+        "<div id=\"app\" data-forma-build=\"{}\"></div>",
+        manifest.build
+    )));
     assert!(!html.contains("data-forma-ssr") && !html.contains("Acme"));
     let start = html
         .find("<script type=\"module\" nonce=\"")

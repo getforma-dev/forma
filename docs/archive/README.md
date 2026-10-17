@@ -22,8 +22,16 @@ it was wrong the first time.
 
 | File | Retired | Replacement and reason |
 |---|---|---|
+| [`2026-10-15-pre-key-adoption/`](2026-10-15-pre-key-adoption/) | 2026-10-15 | The three core list adoption test files from before FORMA-181 checkpoint C bound keyed rows by key. Five cases changed expectation on purpose (initial key order, keyed counts and duplicate served keys now adopt or refuse `FORMA_E_HYDRATE_KEY`); the mapping is in its README. |
+| [`2026-10-15-pre-attribute-values/`](2026-10-15-pre-attribute-values/) | 2026-10-15 | The js-emitter contract corpus outputs from before FORMA-182's attribute table (findings F2 and F3): a reactive `true` on a non-boolean attribute is the word `"true"`, and an attribute whose server value is `""` is a static `value=""`. Regenerated with a before/after ledger (`dynamic-attrs` `.ir`/`.dump`/`.html`, `jsx-page.html`, `sub-component-scopes.html`). |
+| [`2026-10-15-pre-value-rules/`](2026-10-15-pre-value-rules/) | 2026-10-15 | The inline compiler test sources from before FORMA-182's value rules 6 and 7 refused a boolean in text (BUILD-614) and a condition that is not boolean-typed (BUILD-615). The tests were migrated to the admitted forms; the archived sources stay executable as refusal evidence ([`docs/parity-rules.md`](../parity-rules.md)). |
+
+| [`2026-10-15-pre-list-source/`](2026-10-15-pre-list-source/) | 2026-10-15 | The `list-same-source` corpus sources from before BUILD-616 refused a `createList` source that is not a function (FORMA-183 finding F1): the page passed its array itself. Only the source text changed; every compiled output is byte-identical. The archived page still compiles to BUILD-616 and is the parity harness's twin that cannot build. |
+| [`2026-10-15-pre-native-keys/`](2026-10-15-pre-native-keys/) | 2026-10-15 | The `list-same-source` js-emitter contract golden from before FORMA-181 checkpoint B made the walker write `data-forma-key` on every keyed row. Regenerated with a before/after ledger; the module bytes, dump and state snapshot are unchanged. |
+| [`2026-10-15-pre-keyed-rows/`](2026-10-15-pre-keyed-rows/) | 2026-10-15 | The native `island-emitter` fixtures, the `list-same-source` contract corpus outputs and the inline test sources from before FORMA-181 checkpoint A proved list key paths and emitted FMIR section `0x0006`. Four native binaries and one corpus case were regenerated with a before/after ledger; row-root conditionals and scalar keys became BUILD-613/BUILD-612 refusals, and the archived sources stay executable as refusal evidence. |
 | [`2026-10-15-declared-props/`](2026-10-15-declared-props/) | 2026-10-15 | Server guide and FMIR format before FORMA-102 replaced the lenient loader and caller-supplied slots with declared props and typed page handles. [`DECLARED-PROPS.md`](../DECLARED-PROPS.md) describes the current contract. |
 | [`2026-10-15-legacy-apis/`](2026-10-15-legacy-apis/) | 2026-10-15 | Compiler/build and crate guides, architecture and diagnostics before FORMA-110 removed the Vite plugins, Node RPC/SSR and WASM walker. The live guides describe the remaining native FMIR pipeline. |
+| [`2026-10-15-islands-only-e2e/`](2026-10-15-islands-only-e2e/) | 2026-10-15 | The SSR e2e lane before FORMA-105's entry contract: conditional entries, whole-page adoption by `mount()`, Phase 1 from the server route's bundle, activation observed as `data-forma-status="active"`. The live lane (`e2e/ssr/`, [`e2e/README.md`](../../e2e/README.md)) uses the one entry shape `BUILD-611` accepts, islands only, an explicit Browser route for Phase 1, and strict activation's contract. |
 | [`2026-10-15-FMIR-FORMAT-v2.md`](2026-10-15-FMIR-FORMAT-v2.md) | 2026-10-15 | [`FMIR-FORMAT.md`](../FMIR-FORMAT.md) defines v3: new signature, exact writer version, CRC, variable sections and schema metadata. The old fixed-header promise is superseded; legacy modules require rebuilding. |
 
 ## FORMA-112 compatibility transition (2026-10-15)
@@ -43,6 +51,7 @@ migration; historical release evidence remains unchanged.
 |---|---|---|---|
 | `CONTRIBUTING.md` described setup and PR mechanics only, and named no standard for tests or docs | `CONTRIBUTING.md` | 2026-08-05 | Superseded, not deleted: the file was rewritten to point at [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) and [`docs/TESTING.md`](../TESTING.md) and to state the citation contract. The mechanics it carried are all still in the new file. |
 | The root `README.md` was the only narrative documentation for the whole server framework, and the pipeline diagram in it was the only place the stack was explained | `README.md` | 2026-08-05 | The design rationale now lives in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) and the binary contract in [`docs/FMIR-FORMAT.md`](../FMIR-FORMAT.md), both written 2026-08-05. The README keeps the four questions a README should answer and delegates the rest. |
+| `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` were tracked, as "auto-synced from the formajs build" | `e2e/fixtures/`, last refreshed in `495c459` | 2026-10-15 | Untracked and ignored (FORMA-105). The tracked bundles predated `trustedHtml()` (FORMA-126, `366d40e`), so the five template and cross-cutting cases of `e2e/full-stack.spec.ts` failed with `trustedHtml is not a function` whenever Playwright ran without `e2e/sync-fixtures.sh`, and passed after it; the same stale-copy finding is `FD-003` in `packages/core/docs/DOGFOOD.md`. The originals are in git history at `495c459`; `e2e/README.md` states the rule, and the spec now refuses to run without the synced bundles. |
 
 ## Retirements in the other repos
 
@@ -128,6 +137,8 @@ source and log are preserved in `work/FORMA-103/tmp/same-file-entry/` and
 `same-file-entry.log`; ordinary regression tests cover the corrected roots and
 the unchanged inline path. No historical FMIR fixture or report was replaced.
 
+- [Pre-state-contract corpus](2026-10-15-pre-state-contract-corpus/README.md): immutable compiler inputs, emitted bytes/dumps/HTML and native corpus at FORMA-103 wire start; old island modules become explicit refusal inputs.
+- [Pre-keyed-rows originals](2026-10-15-pre-keyed-rows/README.md): the native island-emitter directory, the list-same-source corpus outputs and the inline sources from before FORMA-181 checkpoint A, with the migration map and the regeneration ledger.
 ## FORMA-144 source-template migration — 2026-10-15
 
 [The slice 1 archive](2026-10-15-template-slice1/README.md) preserves the A2
@@ -135,3 +146,12 @@ source templates, the temporary candidate source adapter and superseded
 rendering/lock guidance, with original path/SHA-256 records. Current package
 inputs use typed handlers and identified source lock seeds; packed candidates
 carry actual archive checksums. Island adoption remains a later slice.
+
+- [Signal defaults before explicit closed constants](2026-10-15-state-signal-defaults/README.md): original array/object warning and handler-injection advice, replaced by FORMA-103 native constant provenance.
+
+- [Boolean attribute review originals](2026-10-15-boolean-attribute-review/README.md): FORMA-182 native/core tests before scalar-presence correction, authenticated at b5f1905.
+- [FORMA-101 strict subset migration](FORMA-101-strict-subset/README.md): original warning-only/placeholder guides, tests and list-source evidence; replaced by mandatory native admission and explicit select ownership.
+
+- [FORMA-101 strict corpus originals](FORMA-101-strict-corpus/README.md): exact BUILD-206 unknown-getter and BUILD-503 duplicate-name pages with their pre-migration native products; executable publication refusals remain beside the admitted corpus.
+
+- [FORMA-139 HTML context/root originals](FORMA-139-html-context/README.md): exact sources and compiler products before the finite refusals.

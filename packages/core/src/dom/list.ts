@@ -15,9 +15,22 @@
  */
 
 import { createSignal, internalEffect, untrack, createRoot, registerDisposer, __DEV__ } from '../reactive';
-import { hydrating } from './hydrate.js';
+import { describingAdoption } from './adoption-description.js';
 import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
+import { keyedRowsSource, type KeyedRows } from './keyed-rows.js';
+import { cleanup } from './element.js';
+
+import { branchNode } from './normalize-text.js';
+
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the two list warnings leave the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -519,12 +532,44 @@ export function reconcileList<T>(
  * ```
  */
 export function createList<T>(
+  items: KeyedRows<T>,
+  renderFn: (item: () => T, index: () => number) => HTMLElement,
+): DocumentFragment;
+export function createList<T>(
   items: () => T[],
   keyFn: (item: T) => string | number,
-  renderFn: (item: T, index: () => number) => HTMLElement,
+  renderFn: (item: T, index: () => number) => HTMLElement | string | number,
+  options?: CreateListOptions,
+): DocumentFragment;
+export function createList<T>(
+  items: (() => T[]) | KeyedRows<T>,
+  keyFn: ((item: T) => string | number) | ((item: () => T, index: () => number) => HTMLElement),
+  renderFn?: (item: T, index: () => number) => HTMLElement | string | number,
   options?: CreateListOptions,
 ): DocumentFragment {
-  if (hydrating) {
+  const indexed = keyedRowsSource<T>(items);
+  if (indexed) {
+    if (arguments.length !== 2) throw new TypeError('createList: indexed rows need one callback');
+    const render = keyFn as (item: () => T, index: () => number) => HTMLElement;
+    return createArrayList(indexed, entry => entry.key, (entry, index) => {
+      const node = render(entry.get, index);
+      if (!describingAdoption) registerDisposer(() => {
+        cleanup(node);
+        for (const child of node.querySelectorAll('*')) cleanup(child);
+      });
+      return node;
+    });
+  }
+  return createArrayList(items as () => T[], keyFn as (item: T) => string | number, renderFn!, options);
+}
+
+function createArrayList<T>(
+  items: () => T[],
+  keyFn: (item: T) => string | number,
+  renderFn: (item: T, index: () => number) => HTMLElement | string | number,
+  options?: CreateListOptions,
+): DocumentFragment {
+  if (describingAdoption) {
     return { type: 'list', items, keyFn, renderFn, options } as unknown as DocumentFragment;
   }
 
@@ -569,7 +614,7 @@ export function createList<T>(
       dispose();
       throw failure;
     }
-    return { element: element!, dispose };
+    return { element: branchNode(element) as HTMLElement, dispose };
   };
 
   internalEffect(() => {
@@ -589,7 +634,7 @@ export function createList<T>(
 
     // Edge case: non-array
     if (!Array.isArray(newItems)) {
-      if (__DEV__) {
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
         console.warn('[forma] createList: value is not an array, treating as empty');
       }
       // Remove all nodes between the markers
@@ -616,7 +661,7 @@ export function createList<T>(
     }
 
     // Dev-mode duplicate key detection
-    if (__DEV__) {
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
       const seen = new Set<string | number>();
       for (const item of cleanItems) {
         const key = keyFn(item);

@@ -1,0 +1,104 @@
+{
+  "files": [
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/ORIGINALS.json",
+      "bytes": 3810,
+      "sha256": "fa6abbca724c13aba39388600cab60c33182fcff06836eafcd8258428df91837"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/first-yaml-failure.log",
+      "bytes": 4974,
+      "sha256": "360058d3ee405c60cde09d323ec83130e8383c3d0991939d362868e55e336064"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-lock-repair.json",
+      "bytes": 462,
+      "sha256": "fbdd1983ca3424fb3839fc44ec0600a6d9aa91c26b94df96a2f83c2e1c0227de"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/.github/workflows/ci.yml",
+      "bytes": 30559,
+      "sha256": "e76348bae9542bb7c135908dd1fbc65560ed6b932c898160dff6964dee093757"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/.github/workflows/release.yml",
+      "bytes": 9930,
+      "sha256": "e4c2a74eebf6527977518e9e1d966d1b7938f2dd46319030e6c5cf09e78dec81"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/e2e/fixtures/apps/lib/behaviours.mjs",
+      "bytes": 13296,
+      "sha256": "c8a7eeb22cc6d047b4d1c420104f33ded10b0cb78a6af090d5dcb25f24092f6e"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/fuzz/Cargo.lock",
+      "bytes": 5270,
+      "sha256": "231803cef00d2aa61708959fdf98decc20aaca515ca1efa09a02996d293e0420"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/check-release-workflow.rb",
+      "bytes": 18697,
+      "sha256": "bd3731ba951b389547517f9493cec781eef17f2df5a84c2da0f5299405be810f"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/check-toolchain-policy.rb",
+      "bytes": 5713,
+      "sha256": "6adc0dc16da180e8c05bba56ef39f6ad7364cbf6599663b61963ab4954e31378"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/release-fixture-apps.mjs",
+      "bytes": 19369,
+      "sha256": "3afd574e39989cb60cff58959dee1971d3319dae9d51e8f31c30122c57ead6cf"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/release-record.mjs",
+      "bytes": 7006,
+      "sha256": "e0893b9c2d30142aaf2844cb78f2e864de5e88b2d14f6299c7180ad0c7d11c7b"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/release-record.test.mjs",
+      "bytes": 4467,
+      "sha256": "e0b8db9006bb4fc621691e4640786c3d687e7fde10b73b3dccecbcfe2b5ad9ff"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/release-skew-drill.mjs",
+      "bytes": 5534,
+      "sha256": "cb357396fc3ad0f0ac5b7bb645f3a2a0868d58511a7ebc9eeea4506b21e19da6"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/release-template-islands.mjs",
+      "bytes": 10529,
+      "sha256": "6b9cb548cddaf8163fbb9a7b7efe90bcb97f46670a5ccd831d623c20a042b537"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/release-workflow-evidence.test.mjs",
+      "bytes": 5944,
+      "sha256": "9ffcd4a104204aac37f697a20313f75a1acb2ffee08e1a37c8fcb729ef6df8a9"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/toolchain-policy.test.mjs",
+      "bytes": 7193,
+      "sha256": "f670b375277df3bf8cdeadf2ebb64052e812cef1596954536bde1a6e1522f31d"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/original/scripts/verify-release-set.mjs",
+      "bytes": 45792,
+      "sha256": "6f78f368644a385d02729ecd7f777ce9893450aa9cc0820ae1f07e36ddab300a"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/IMPLEMENTATION.json",
+      "bytes": 7729,
+      "sha256": "5524455d94e672626b5308fe7f0a66955f60ac5aa334ea4ab9303a370c278ecc"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/finite.log",
+      "bytes": 4523,
+      "sha256": "99135641117d37ff68cc564ce8ac84b10125578f2f968966c3dad0ad8be32c0d"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/unpack.log",
+      "bytes": 101,
+      "sha256": "372ee57a30b8a8b17bb056a0814266786a922da7dcf4139f4f9a2457745d6424"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
  * FormaJS Full-Stack E2E Tests
  *
  * Verifies the complete Forma pipeline in a real browser:
- *   1. HTML Runtime (data-* directives) — zero JS, reactive via CDN
+ *   1. HTML Runtime (data-* directives) — explicitly owned reviewed markup
  *   2. Programmatic h() API — createSignal + h() + mount()
  *   3. Reviewed template path — template(trustedHtml()) + cloneNode()
  *
@@ -10,6 +10,20 @@
  * Guide: See e2e/README.md
  */
 import { test, expect } from '@playwright/test';
+
+// The two FormaJS bundles the page loads are written by e2e/sync-fixtures.sh
+// from packages/core/dist and are not tracked: a committed copy is only ever
+// stale (the one tracked until 2026-10-15 predated trustedHtml() and failed
+// five cases here, FORMA-105). Refuse to run against a missing bundle, and
+// against one that lacks the public API full-stack.html calls, naming the fix.
+test('the bundles are the fresh sync, not a stale copy', async ({ request }) => {
+  for (const name of ['formajs-runtime.global.js', 'formajs.global.js']) {
+    const response = await request.get(`/${name}`);
+    expect(response.status(), `e2e/fixtures/${name} is missing; run bash e2e/sync-fixtures.sh`).toBe(200);
+  }
+  const bundle = await (await request.get('/formajs.global.js')).text();
+  expect(bundle, 'e2e/fixtures/formajs.global.js is stale (no trustedHtml); run bash e2e/sync-fixtures.sh').toContain('trustedHtml');
+});
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/full-stack.html');
@@ -75,6 +89,28 @@ test.describe('HTML Runtime — data-* directives', () => {
 
   test('$refs resolves data-ref elements', async ({ page }) => {
     await expect(page.locator('#rt-ref-check')).toHaveText('ref-found');
+  });
+
+  test('binds only the owned root and stops responding when its handle unmounts', async ({ page }) => {
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+    await page.click('#rt-outside-inc');
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+    // The same bundle is demonstrably live inside the explicitly handed root.
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    const button = await page.locator('#rt-inc').elementHandle();
+    const counter = await page.locator('#rt-count').elementHandle();
+    expect(button).not.toBeNull();
+    expect(counter).not.toBeNull();
+    await page.evaluate(() => {
+      (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
+    });
+    await expect(page.locator('#test-runtime')).toBeEmpty();
+    // The handle clears its root. Exercise the retained detached node to prove
+    // its former listener and reactive binding were disposed, not just hidden.
+    await button!.evaluate(element => (element as HTMLButtonElement).click());
+    expect(await counter!.textContent()).toBe('1');
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
   });
 });
 

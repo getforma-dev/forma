@@ -2,6 +2,40 @@
 
 ## [Unreleased]
 
+- Execute every declared route JavaScript entry in manifest order with its nonce, integrity and crossorigin attributes. Earlier entries are no longer merely preloaded while only the last runs; dependency-only modulepreloads remain hints. Both typed SSR and Browser documents charge all entry tags to their complete output budget.
+
+### Ordinary document metadata — FORMA-182
+
+- Normalize CRLF/CR to LF and NUL to U+FFFD before escaping ordinary title,
+  body class, typed head fields and resource URL values on both SSR and browser
+  shell paths. Shared rule-1 vectors cover both actual document writers.
+  Request state, configuration JSON, nonces, integrity digests, build identity
+  and raw CSS retain their existing encoding. URL refusal and exact complete
+  document byte-budget checks remain active.
+
+### Attribute values — FORMA-182
+
+- Pages render through forma-ir's attribute table (rule 6, finding F2): a `true` on a non-boolean attribute is written as `name="true"` (`tests/typed_pages.rs` asserts `data-enabled="true"` on a keyed row where it asserted the bare name).
+
+### The build's size report is not served — FORMA-190
+
+- `serve_asset` refuses `size-report.json` (404), as it refuses `manifest.json`: `@getforma/build` 3.0 writes the report beside the manifest, in the directory an application embeds, and it lists every route with its class, ceilings and bytes. The report is not an asset, and an embed that carries it never serves it. Tests: `assets::tests::denied_names_are_never_served` (the name), and `assets::tests::an_embedded_size_report_is_not_served_through_the_route` (the route, with the file really embedded).
+
+### The deployment identity on the page's root — FORMA-186 (DR-29)
+
+- Every page's root names the build the manifest names: `<div id="app" data-forma-build="<manifest.build>" data-forma-ssr>` for a server-rendered page, `<div id="app" data-forma-build="<manifest.build>"></div>` for a browser shell. `@getforma/core` compares it with the identity `@getforma/build` compiled into the bundle before it activates anything (a later FORMA-186 slice); a page from an older server has no attribute and is unchecked. The value is the manifest's `build`, escaped as any attribute value is; no render input can set or override it. The preview-frame document is not stamped.
+- A manifest that lists a `retained` asset that is not `immutable` is refused at start (`MANIFEST-103`): a retained file is the previous release's, served as any content-named asset (`serve_asset` is unchanged: it already serves what the manifest marks immutable as immutable).
+
+### Keyed list rows — FORMA-181
+
+- `RenderError::code()` reports `RENDER-503` for a walk refused by forma-ir's `IrError::InvalidListKey` (a keyed row without a usable identity, a duplicate key, a row without one root): a new cause with its own code, still carried by `RenderError::Walk` with the route, component path and counts. Every other walk refusal stays `RENDER-102`.
+
+### Staged static SSR policy — FORMA-105
+
+- Refuse island modules paired with an empty SSR JavaScript list at startup/reload (LOAD-109); keep the prior valid module and manifest together, including unchanged-IR and same-byte recovery transitions.
+- Refuse static manifest preloads (MANIFEST-103), executable request configuration and effective request preloads (RENDER-105). Keep CSS/fonts, inert state, strict headers and exact full-response limits.
+- Register enabled workers only from pages with JS entries; preserve worker serving and scoped off-mode retirement. Compiler/browser/template integration remains pending for overall105 acceptance.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

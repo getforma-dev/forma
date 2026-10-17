@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-16T04:15:56.648826+00:00",
+  "readOnly": true,
+  "currentIdentity": {
+    "id": 15230422,
+    "login": "Victor-Villacis"
+  },
+  "organizationAdmins": [
+    {
+      "id": 15230422,
+      "login": "Victor-Villacis"
+    }
+  ],
+  "repositoryAdmins": [
+    {
+      "id": 15230422,
+      "login": "Victor-Villacis",
+      "role_name": "admin"
+    }
+  ]
+}

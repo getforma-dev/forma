@@ -1,0 +1,69 @@
+{
+  "files": [
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/artifact.json",
+      "bytes": 698,
+      "sha256": "0e8f66ab1a331fc0f1934c489c2975355bc0d797c27cdb46f40acac0eb5416dd"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/artifact.zip",
+      "bytes": 7272,
+      "sha256": "823cf092333808b580d7492569b810ef8652b672df0b5d6ddf8b6e3a2a4c871f"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/files/burn-in-setup-evidence/setup.json",
+      "bytes": 4008,
+      "sha256": "ad92060741aec4a1357bece49db5dac5b52aa67028c38d899a1b9783a5fe0aff"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/files/burn-in-setup-owned/supervisor.json",
+      "bytes": 1763,
+      "sha256": "6c785163959389935aee9ed539b8d55c679a6e74778b271bd8676ec8c7c78a19"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/files/burn-in-setup-owned/worker.log",
+      "bytes": 30690,
+      "sha256": "f5cf94e07468830bd91825b9ebe94abba5f7a4d93034598a417ed2d2b62a8d4b"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/upstream/MANIFEST.json",
+      "bytes": 1091,
+      "sha256": "63293ecda5934786c2add462fa52e6c69081569bff172c34cc46d680d6f2f9e8"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/upstream/build.rs",
+      "bytes": 687,
+      "sha256": "1ac0f3bc4b84a79466d4e2bd3d210be76112bc44fab1b97daa962eee50c9115d"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/upstream/options.rs",
+      "bytes": 12246,
+      "sha256": "0b1b4d8ac3fca3880725592356d8367e04901fd5bb5c2143826d596f68216a8a"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/hosted-first/upstream/project.rs",
+      "bytes": 44090,
+      "sha256": "c8cf1ef9c9a18f610d8f6c3cb8dc841f78e9704e86ccd1f3e85ea86255f6c4c0"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/job.log",
+      "bytes": 82181,
+      "sha256": "ed8af7f43b87731c19be5f9eb791f47802868d927c9f0077b45be2ccfd7530d8"
+    },
+    {
+      "path": "docs/archive/rc-burn-in-2026-10-16/fuzz-directory/release-burn-in-stage.original.mjs",
+      "bytes": 8090,
+      "sha256": "0624bc056939d57ff5dd90a10ae2169c3616ef82625f70a710da8fc41d33dcb3"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/fuzz-directory/FINDING.md",
+      "bytes": 2119,
+      "sha256": "6c868a66b6de5d26ad86632f67dcca415a9b1465a12926c8b3d89ec89f591821"
+    },
+    {
+      "path": "docs/evidence/rc-burn-in-2026-10-16/fuzz-directory/IMPLEMENTATION.json",
+      "bytes": 641,
+      "sha256": "f9d119f25b8ba322143b0350ae7b565f1458aa062c77b41bf77b2b34d3a5914f"
+    }
+  ]
+}

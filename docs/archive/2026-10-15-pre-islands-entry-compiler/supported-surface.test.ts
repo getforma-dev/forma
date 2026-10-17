@@ -1,0 +1,45 @@
+import { afterEach, expect, it } from 'vitest';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { build } from 'esbuild';
+import * as compiler from '../src/index';
+import { renderDefaults } from './helpers/render';
+
+const scratch: string[] = [];
+afterEach(() => { for (const path of scratch.splice(0)) rmSync(path, { recursive: true, force: true }); });
+
+it('exposes native FMIR compilation without the retired plugin APIs or Vite peer', () => {
+  for (const name of ['formaCompiler', 'formaServer', 'transformServerFunctions', 'compileFormaJSX']) {
+    expect(compiler, name).not.toHaveProperty(name);
+  }
+  expect(compiler.formaSsrPlugin).toBeTypeOf('function');
+  expect(compiler.generateRealIr).toBeTypeOf('function');
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  expect(pkg.peerDependencies).toEqual({ esbuild: '>=0.17.0', '@getforma/core': '^3.0.0 || =3.0.0-dev' });
+});
+
+it('preserves runtime h() and the root core import while emitting a native FMIR module', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'forma-supported-compiler-')); scratch.push(root);
+  const entry = join(root, 'app.ts');
+  writeFileSync(entry, 'import { h, mount } from "@getforma/core"; function App() { return h("p", null, "native SSR"); } mount(() => App(), "#app");');
+  const result = await build({
+    entryPoints: [entry], outdir: root, bundle: true, write: false,
+    format: 'esm', packages: 'external', logLevel: 'silent',
+    plugins: [compiler.formaSsrPlugin({ page: 'app', outDir: root, entryPoint: entry, strict: true })],
+  });
+  const js = result.outputFiles![0]!.text;
+  expect(js).toContain('from "@getforma/core"');
+  expect(js).toContain('h("p", null, "native SSR")');
+  expect(js).not.toMatch(/(?:from|import)\s*[('"]+formajs(?:['"/])|@getforma\/core\/server/);
+  const ir = result.outputFiles!.find(file=>file.path.endsWith('/app.ir'))!.contents;
+  expect(renderDefaults(ir)).toBe('<p>native SSR</p>');
+});
+
+it('exports only documented compilation, emission and diagnostic entrypoints', () => {
+  expect(Object.keys(compiler).sort()).toEqual([
+    'COMPILER_WRITER_VERSION', 'DIAGNOSTIC_CATALOGUE', 'FmirContainerError', 'IrEmitContext',
+    'baseWriterVersion', 'collectDiagnostics', 'crc32', 'diagnosticEntry', 'dumpFmir',
+    'encodeFmirSections', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'makeDiagnostic', 'readFmirContainer',
+  ].sort());
+});

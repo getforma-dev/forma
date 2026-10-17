@@ -24,13 +24,41 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const KNOWN_WARNING = '[forma] Dropped unsafe-URL prop "href" on <a>';
 
 const APP = `
-import { h, mount, setHTMLUnsafe, trustedHtml } from '@getforma/core';
-mount(() => h('section', null,
+import { h, mount, createEffect, setHTMLUnsafe, trustedHtml } from '@getforma/core';
+window.__unmount = mount(() => h('section', null,
   h('a', { id: 'link', href: 'javascript:alert(1)' }, 'unsafe link'),
   h('div', { id: 'typed', dangerouslySetInnerHTML: { __html: trustedHtml('<i>typed</i>') } }),
   h('div', { id: 'raw' }),
 ), '#app');
 // FORMA-109: every raw string is refused in both package conditions.
+window.__mountSsrProbe = async () => {
+  const results = [];
+  for (const empty of [true, false]) {
+    const root = document.createElement('div');
+    root.setAttribute('data-forma-ssr', empty ? '' : 'false');
+    if (!empty) root.append(document.createElement('input'), document.createTextNode('server'));
+    document.body.append(root);
+    const original = root.outerHTML;
+    const originalNodes = [...root.childNodes];
+    const input = root.querySelector('input');
+    if (input) input.value = 'edited';
+    const records = [];
+    const observer = new MutationObserver(batch => records.push(...batch));
+    observer.observe(root, { subtree: true, childList: true, attributes: true, characterData: true });
+    let components = 0, effects = 0, code = '';
+    try {
+      mount(() => { components++; createEffect(() => effects++); return h('button', { onClick() {} }, 'client'); }, root);
+    } catch (error) { code = String(error); }
+    await Promise.resolve();
+    records.push(...observer.takeRecords()); observer.disconnect();
+    results.push({ empty, code, components, effects, mutations: records.length,
+      sameHtml: root.outerHTML === original,
+      sameNodes: root.childNodes.length === originalNodes.length && originalNodes.every((node, index) => root.childNodes[index] === node),
+      edited: input ? input.value : null });
+    root.remove();
+  }
+  return results;
+};
 window.__rawRefusals = ['<b>first</b>', '<b>second</b>'].map(markup => {
   try { setHTMLUnsafe(document.getElementById('raw'), markup); return 'accepted'; }
   catch (error) { return String(error); }
@@ -142,3 +170,22 @@ test('a production bundle of the same application resolves the production files 
   await expect(page.locator('#raw')).toBeEmpty();
   await expect(page.locator('#typed')).toHaveText('typed');
 });
+
+for (const mode of ['development', 'production'] as const) {
+  test(`a packed ${mode} bundle refuses SSR mount before work and retains Browser unmount`, async ({ page }) => {
+    await run(page, mode);
+    const results = await page.evaluate(() => (window as any).__mountSsrProbe());
+    expect(results).toHaveLength(2);
+    for (const result of results) {
+      expect(result.code).toContain('FORMA_E_MOUNT_SSR');
+      expect(result.components).toBe(0);
+      expect(result.effects).toBe(0);
+      expect(result.mutations).toBe(0);
+      expect(result.sameHtml).toBe(true);
+      expect(result.sameNodes).toBe(true);
+      expect(result.edited).toBe(result.empty ? null : 'edited');
+    }
+    await page.evaluate(() => { (window as any).__unmount(); (window as any).__unmount(); });
+    await expect(page.locator('#app')).toBeEmpty();
+  });
+}

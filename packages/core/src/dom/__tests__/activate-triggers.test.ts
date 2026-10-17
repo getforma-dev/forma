@@ -1,3 +1,5 @@
+import { h } from '../element.js';
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 /**
  * Tests for idle and interaction hydration triggers in activateIslands().
  */
@@ -6,6 +8,7 @@ import { activateIslands } from '../activate.js';
 
 // Mock IntersectionObserver (needed because activate.ts references it for 'visible')
 beforeEach(() => {
+  vi.stubGlobal('cancelIdleCallback', vi.fn());
   const MockIO = vi.fn(function (this: any, cb: IntersectionObserverCallback) {
     this.observe = vi.fn();
     this.disconnect = vi.fn();
@@ -30,6 +33,7 @@ function makeIsland(id: number, component: string, trigger?: string): HTMLElemen
   el.setAttribute('data-forma-ssr', '');
   el.innerHTML = '<p>SSR content</p>';
   document.body.appendChild(el);
+  installState();
   return el;
 }
 
@@ -46,8 +50,8 @@ describe('activateIslands idle trigger', () => {
     }));
 
     const el = makeIsland(1, 'Counter', 'idle');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     expect(globalThis.requestIdleCallback).toHaveBeenCalledOnce();
     expect(hydrateFn).not.toHaveBeenCalled();
@@ -56,7 +60,7 @@ describe('activateIslands idle trigger', () => {
     // Fire the idle callback
     idleCallback!();
     expect(hydrateFn).toHaveBeenCalledOnce();
-    expect(el.getAttribute('data-forma-status')).toBe('active');
+    expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 
   it('falls back to setTimeout(200) when requestIdleCallback is unavailable', () => {
@@ -66,8 +70,8 @@ describe('activateIslands idle trigger', () => {
     vi.useFakeTimers();
 
     const el = makeIsland(1, 'Counter', 'idle');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // Should not hydrate immediately
     expect(hydrateFn).not.toHaveBeenCalled();
@@ -80,12 +84,12 @@ describe('activateIslands idle trigger', () => {
     // Advance to 200ms — now hydrated
     vi.advanceTimersByTime(1);
     expect(hydrateFn).toHaveBeenCalledOnce();
-    expect(el.getAttribute('data-forma-status')).toBe('active');
+    expect(el.getAttribute('data-forma-status')).toBe('pending');
 
     vi.useRealTimers();
   });
 
-  it('transitions status pending -> hydrating -> active for idle trigger', () => {
+  it('retains the pending attribute before, during and after successful activation for idle trigger', () => {
     let idleCallback: (() => void) | undefined;
     vi.stubGlobal('requestIdleCallback', vi.fn((cb: () => void) => {
       idleCallback = cb;
@@ -97,18 +101,18 @@ describe('activateIslands idle trigger', () => {
 
     const hydrateFn = vi.fn(() => {
       statusDuringHydration.push(el.getAttribute('data-forma-status')!);
-      return null;
+      return h('div', null, h('p', null, 'SSR content'));
     });
 
-    activateIslands({ StatusTrack: hydrateFn });
+    activateIslands(emptyRegistry({ StatusTrack: hydrateFn }));
 
     // Before idle fires, status should still be pending
     expect(el.getAttribute('data-forma-status')).toBe('pending');
 
     // Fire idle
     idleCallback!();
-    expect(statusDuringHydration).toContain('hydrating');
-    expect(el.getAttribute('data-forma-status')).toBe('active');
+    expect(statusDuringHydration).toEqual(['pending']);
+    expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 });
 
@@ -119,8 +123,8 @@ describe('activateIslands idle trigger', () => {
 describe('activateIslands interaction trigger', () => {
   it('does NOT hydrate immediately', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     expect(hydrateFn).not.toHaveBeenCalled();
     expect(el.getAttribute('data-forma-status')).toBe('pending');
@@ -128,34 +132,34 @@ describe('activateIslands interaction trigger', () => {
 
   it('hydrates on pointerdown event', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     expect(hydrateFn).not.toHaveBeenCalled();
 
     el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 
     expect(hydrateFn).toHaveBeenCalledOnce();
-    expect(el.getAttribute('data-forma-status')).toBe('active');
+    expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 
   it('hydrates on focusin event', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     expect(hydrateFn).not.toHaveBeenCalled();
 
     el.dispatchEvent(new Event('focusin', { bubbles: true }));
 
     expect(hydrateFn).toHaveBeenCalledOnce();
-    expect(el.getAttribute('data-forma-status')).toBe('active');
+    expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 
   it('listeners are cleaned up after hydration (no double-hydrate)', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // First interaction hydrates
     el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
@@ -169,8 +173,8 @@ describe('activateIslands interaction trigger', () => {
 
   it('focusin after pointerdown does not double-hydrate', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // Hydrate via pointerdown
     el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
@@ -183,8 +187,8 @@ describe('activateIslands interaction trigger', () => {
 
   it('pointerdown after focusin does not double-hydrate', () => {
     const el = makeIsland(1, 'Counter', 'interaction');
-    const hydrateFn = vi.fn(() => null);
-    activateIslands({ Counter: hydrateFn });
+    const hydrateFn = vi.fn(() => h('div', null, h('p', null, 'SSR content')));
+    activateIslands(emptyRegistry({ Counter: hydrateFn }));
 
     // Hydrate via focusin
     el.dispatchEvent(new Event('focusin', { bubbles: true }));
@@ -195,23 +199,25 @@ describe('activateIslands interaction trigger', () => {
     expect(hydrateFn).toHaveBeenCalledOnce();
   });
 
-  it('transitions status pending -> hydrating -> active for interaction trigger', () => {
+  it('retains the pending attribute before, during and after successful activation for interaction trigger', () => {
     const el = makeIsland(1, 'StatusTrack', 'interaction');
     const statusDuringHydration: string[] = [];
 
     const hydrateFn = vi.fn(() => {
       statusDuringHydration.push(el.getAttribute('data-forma-status')!);
-      return null;
+      return h('div', null, h('p', null, 'SSR content'));
     });
 
-    activateIslands({ StatusTrack: hydrateFn });
+    activateIslands(emptyRegistry({ StatusTrack: hydrateFn }));
 
     // Before interaction, status should still be pending
     expect(el.getAttribute('data-forma-status')).toBe('pending');
 
     // Trigger interaction
     el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    expect(statusDuringHydration).toContain('hydrating');
-    expect(el.getAttribute('data-forma-status')).toBe('active');
+    expect(statusDuringHydration).toEqual(['pending']);
+    expect(el.getAttribute('data-forma-status')).toBe('pending');
   });
 });
+
+useFreshDocument();

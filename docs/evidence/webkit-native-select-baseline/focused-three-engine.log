@@ -1,0 +1,18 @@
+[WebServer] (node:9526) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:9558) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 2 workers
+
+(node:9560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9559) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [chromium] › e2e/adoption-controls.spec.ts:89:1 › external select peers and ordinary implicit defaults remain eligible while ambiguous winners refuse (285ms)
+(node:9572) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [firefox] › e2e/adoption-controls.spec.ts:89:1 › external select peers and ordinary implicit defaults remain eligible while ambiguous winners refuse (933ms)
+  ✓  3 [webkit] › e2e/adoption-controls.spec.ts:89:1 › external select peers and ordinary implicit defaults remain eligible while ambiguous winners refuse (690ms)
+
+  3 passed (3.4s)

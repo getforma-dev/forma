@@ -78,13 +78,17 @@ export function runCli(args: string[], cwd: string, env: Record<string, string> 
   const result = spawnSync(process.execPath, [CLI, ...args], {
     cwd,
     encoding: 'utf8',
+    // Two bounded child processes fit the CLI-backed tests' 60s budget.
+    timeout: 25_000,
     // An empty stdin makes `prompts` give up instead of waiting forever if a
     // future change ever makes one of these paths interactive.
     input: '',
     env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
+  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, result.stdout].filter(Boolean).join('\n');
   if (CANDIDATE_CONTEXT && result.status === 0 && args[0] && !args[0].startsWith('-') && !args.includes('--dry-run')) {
-    const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', maxBuffer:64*1024*1024, env:process.env});
+    const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', timeout:25_000, maxBuffer:64*1024*1024, env:process.env});
+    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, staged.stdout].filter(Boolean).join('\n');
     if (staged.status !== 0) return staged;
   }
   return result;
@@ -116,10 +120,11 @@ export function run(cmd: string, args: string[], cwd: string, timeout = 900_000,
 }
 
 /** A scaffolded project's compiled server, or a thrown error naming the missing path. */
-function serverBinary(projectDir: string, binaryName: string): string {
+function serverBinary(projectDir: string, binaryName: string, profile: 'debug' | 'release' = 'debug'): string {
+  if (profile !== 'debug' && profile !== 'release') throw new Error(`unsupported server profile: ${profile}`);
   const exe = path.join(
     process.env.CARGO_TARGET_DIR ?? path.join(projectDir, 'target'),
-    'debug',
+    profile,
     process.platform === 'win32' ? `${binaryName}.exe` : binaryName,
   );
   if (!fs.existsSync(exe)) throw new Error(`server binary missing: ${exe}`);
@@ -131,8 +136,9 @@ export async function withServer<T>(
   projectDir: string,
   binaryName: string,
   visit: (body: string, res: Response, get: (path: string) => Promise<Response>, output: () => string) => T | Promise<T>,
+  { profile = 'debug' }: { profile?: 'debug' | 'release' } = {},
 ): Promise<T> {
-  return withOwnedServer(serverBinary(projectDir, binaryName), [], projectDir,
+  return withOwnedServer(serverBinary(projectDir, binaryName, profile), [], projectDir,
     async (res: Response, origin: string, output: () => string) =>
       visit(await res.text(), res, route => fetch(origin + route, { signal: AbortSignal.timeout(5_000) }), output));
 }

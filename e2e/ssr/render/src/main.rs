@@ -9,8 +9,8 @@ use std::path::{Path, PathBuf};
 
 use forma_ir::PageProps;
 use forma_server::{
-    load_ir_modules, render_browser_shell, AssetManifest, PageConfig, PageResponse, RenderCtx,
-    RouteMode,
+    load_ir_modules, render_browser_shell, AssetManifest, PageConfig, PageResponse,
+    PolicyExtensions, RenderCtx,
 };
 use rust_embed::Embed;
 use std::borrow::Cow;
@@ -44,18 +44,53 @@ struct ArrivalProps {
     arrival_status: String,
     arrival_summary: bool,
 }
+// This fixture is served over plain HTTP. Use the public HTTP reporting API
+// with a real receiver rather than an endpoint-free debug diagnostic policy.
+fn fixture_ctx() -> RenderCtx {
+    RenderCtx::new().with_policy(PolicyExtensions::new().report_uri("/__csp-reports"))
+}
+
+#[derive(PageProps)]
+struct KeyedMoveRow {
+    id: String,
+    label: String,
+}
+#[derive(PageProps)]
+struct KeyedMoveProps {
+    rows: Vec<KeyedMoveRow>,
+}
+#[derive(PageProps)]
+struct IndexedProps {
+    small: Vec<KeyedMoveRow>,
+    large: Vec<KeyedMoveRow>,
+}
+fn indexed_rows(count: &serde_json::Value) -> Result<Vec<KeyedMoveRow>, Box<dyn Error>> {
+    let count = count.as_u64().ok_or("missing indexed row count")?;
+    if count != 200 && count != 2000 {
+        return Err("indexed fixture count must be 200 or 2000".into());
+    }
+    Ok((0..count)
+        .map(|index| KeyedMoveRow {
+            id: format!("row-{index}"),
+            label: format!("Label {index}"),
+        })
+        .collect())
+}
 fn render_typed<P: PageProps>(
     manifest: &AssetManifest,
     props: &P,
+    title: &str,
 ) -> Result<PageResponse, Box<dyn Error>> {
     let pages = load_ir_modules::<FixtureAssets>(manifest).map_err(|e| format!("{e:?}"))?;
     let page = pages.bind::<P>(ROUTE).map_err(|e| format!("{e:?}"))?;
     pages.finalize().map_err(|e| format!("{e:?}"))?;
-    Ok(page.render(props, &RenderCtx::new().with_title(TITLE))?)
+    Ok(page.render(props, &fixture_ctx().with_title(title))?)
 }
 
 /// The route every case is built and rendered under.
 const ROUTE: &str = "/";
+/// The same entry built as an explicit Browser route (`ssr: false`): Phase 1.
+const CSR_ROUTE: &str = "/csr";
 /// The page title the renderer writes into `<head>`.
 const TITLE: &str = "Forma SSR fixture";
 
@@ -111,6 +146,11 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
     } else {
         serde_json::json!({})
     };
+    let title = if name == "title" {
+        "Server-owned fixture title"
+    } else {
+        TITLE
+    };
     let ssr = match name {
         "generic-state" => render_typed(
             &manifest,
@@ -120,6 +160,32 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     .and_then(|n| n.try_into().ok())
                     .ok_or("missing u32 count")?,
             },
+            title,
+        )?,
+        "keyed-indexed" => render_typed(
+            &manifest,
+            &IndexedProps {
+                small: indexed_rows(&input["small"])?,
+                large: indexed_rows(&input["large"])?,
+            },
+            title,
+        )?,
+        "keyed-moves" => render_typed(
+            &manifest,
+            &KeyedMoveProps {
+                rows: input["rows"]
+                    .as_array()
+                    .ok_or("missing rows")?
+                    .iter()
+                    .map(|row| {
+                        Ok(KeyedMoveRow {
+                            id: row["id"].as_str().ok_or("missing row id")?.into(),
+                            label: row["label"].as_str().ok_or("missing row label")?.into(),
+                        })
+                    })
+                    .collect::<Result<Vec<_>, Box<dyn Error>>>()?,
+            },
+            title,
         )?,
         "ledger-arrival" => render_typed(
             &manifest,
@@ -140,34 +206,36 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
                     .as_bool()
                     .ok_or("missing arrivalSummary")?,
             },
+            title,
         )?,
-        _ => render_typed(&manifest, &Empty {})?,
+        _ => render_typed(&manifest, &Empty {}, title)?,
     };
-    // The paired CSR comparison is an explicit Browser route declaration.
-    let mut browser = manifest.clone();
-    let route = browser
-        .routes
-        .get_mut(ROUTE)
-        .ok_or("missing browser route")?;
-    route.mode = RouteMode::Browser;
-    route.ir = None;
+    // The paired CSR comparison (Phase 1) is the case's explicit Browser route,
+    // `/csr`, which the build declared `ssr: false` from the same entry: its
+    // script keeps the entry's mount, where the `/` route's product has only
+    // island activation (FORMA-105, DR-6).
     let csr = render_browser_shell(
         &PageConfig {
-            title: TITLE,
-            route_pattern: ROUTE,
-            manifest: &browser,
+            title,
+            route_pattern: CSR_ROUTE,
+            manifest: &manifest,
             config_json: None,
             body_class: None,
             personality_css: None,
             body_prefix: None,
         },
-        &RenderCtx::new(),
+        &fixture_ctx(),
     )?;
     fs::create_dir_all(out)?;
     for (file, is_ssr, response) in [("index", true, ssr), ("csr", false, csr)] {
         let page = response.into_parts_unchecked();
 
-        let server_rendered = page.html.contains("<div id=\"app\" data-forma-ssr>");
+        // The root also names the build (FORMA-186, DR-29).
+        let ssr_root = format!(
+            "<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+            manifest.build
+        );
+        let server_rendered = page.html.contains(&ssr_root);
         if server_rendered != is_ssr {
             return Err(format!(
                 "{file}.html: expected SSR={is_ssr}, but the page {} server-rendered \

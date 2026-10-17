@@ -1,0 +1,2576 @@
+{
+  "schema": 1,
+  "historicalCommit": "d8a8181c68653333d1b04f2cb2c2c5d07e485973",
+  "note": "Mutation provenance is not an executed payload count. Existing regressions are retained; only actual matrix cases count as new hostile executions.",
+  "historical": {
+    "path": "docs/archive/FORMA-129-historical-probes/corpus.json",
+    "sha256": "640107da62c9fc575d6de9aadf9a123660daa03abe043587a80bf1cca5e1f3a4",
+    "total": 93,
+    "rows": [
+      {
+        "id": "activate/props-not-sanitized",
+        "source": "src/dom/activate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: SECURITY.md 'Island props sanitized' — stripping removed"
+        }
+      },
+      {
+        "id": "batch/no-batching",
+        "source": "src/reactive/batch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: batch() no longer batches — effects run per write"
+        }
+      },
+      {
+        "id": "bus/emit-no-snapshot",
+        "source": "src/events/bus.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: bus emit iterates live Set — off() during emit corrupts iteration"
+        }
+      },
+      {
+        "id": "bus/once-no-off",
+        "source": "src/events/bus.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: once() fires on every emit"
+        }
+      },
+      {
+        "id": "el/attr-null-not-removed",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: duplicate of parseCss camel probe with body change"
+        }
+      },
+      {
+        "id": "el/generic-url-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() reactive attribute path writes javascript: URLs"
+        }
+      },
+      {
+        "id": "el/parseCss-drops-camel",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: kebab-case CSS props no longer camelised — string styles silently drop"
+        }
+      },
+      {
+        "id": "el/static-onattr-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() static path writes ONCLICK as an inline handler"
+        }
+      },
+      {
+        "id": "el/static-true-as-string",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: h() static true writes name=\"true\" instead of a bare attribute"
+        }
+      },
+      {
+        "id": "el/static-url-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() static attribute path writes javascript: URLs"
+        }
+      },
+      {
+        "id": "el/style-cssText-instead-of-cssom",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: CSP.md's central claim (never cssText) violated"
+        }
+      },
+      {
+        "id": "el/style-remove-stale-off",
+        "source": "src/dom/element.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: stale style properties never removed on reactive style change"
+        }
+      },
+      {
+        "id": "el/xlink-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: reactive xlink:href writes javascript: URLs"
+        }
+      },
+      {
+        "id": "history/clone-identity",
+        "source": "src/state/history.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: history entries alias live objects — undo/redo returns mutated state"
+        }
+      },
+      {
+        "id": "hydrate/eventhandler-guard-off",
+        "source": "src/dom/hydrate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: hydration writes ONCLICK as an inline handler"
+        }
+      },
+      {
+        "id": "hydrate/false-not-removed",
+        "source": "src/dom/hydrate.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: adoption leaves disabled=\"false\" on the element"
+        }
+      },
+      {
+        "id": "hydrate/true-as-string",
+        "source": "src/dom/hydrate.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: adoption writes name=\"true\" instead of a bare attribute"
+        }
+      },
+      {
+        "id": "hydrate/url-guard-off",
+        "source": "src/dom/hydrate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: hydration re-adds the payload SSR refused to emit"
+        }
+      },
+      {
+        "id": "keyboard/no-ctrl-check",
+        "source": "src/events/keyboard.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: ctrl modifier ignored — 's' fires a 'ctrl+s' binding"
+        }
+      },
+      {
+        "id": "keyboard/no-meta-check",
+        "source": "src/events/keyboard.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: meta/cmd modifier ignored"
+        }
+      },
+      {
+        "id": "list/dup-key-bucket-collapse",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: duplicate keys collapse in the LARGE-list path (the documented regression)"
+        }
+      },
+      {
+        "id": "list/dup-key-bucket-shift",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: duplicate keys all collapse onto the first occurrence"
+        }
+      },
+      {
+        "id": "list/lis-flag-inverted",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: the LIS rows are the ones skipped-as-in-place — final order corrupted"
+        }
+      },
+      {
+        "id": "list/lis-flags-never-set",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: every reused row is moved — LIS optimisation dead"
+        }
+      },
+      {
+        "id": "list/lis-returns-empty",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: LIS always empty — every keyed item moves (O(n) DOM churn, identity loss)"
+        }
+      },
+      {
+        "id": "list/no-onInsert-hook",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: onInsert transition hook not fired on initial create-all"
+        }
+      },
+      {
+        "id": "list/removal-skipped",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: rows dropped from the model stay in the DOM"
+        }
+      },
+      {
+        "id": "list/small-threshold-1",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: small-list path never taken — all lists go through the Map path"
+        }
+      },
+      {
+        "id": "list/small-threshold-huge",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: large-list Map path never taken — all lists go through the flat scan"
+        }
+      },
+      {
+        "id": "mutate/setAttr-true-branch",
+        "source": "src/dom-utils/mutate.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: boolean attr emitted as 'true' instead of ''"
+        }
+      },
+      {
+        "id": "mutate/setStyle-drop-undef-guard",
+        "source": "src/dom-utils/mutate.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: undefined style values written through"
+        }
+      },
+      {
+        "id": "mutate/setText-uses-innerHTML",
+        "source": "src/dom-utils/mutate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: setText (documented safe for user content) becomes an XSS sink"
+        }
+      },
+      {
+        "id": "mutation/applyRevalidation-noop",
+        "source": "src/server/mutation.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: public applyRevalidation() never mutates the resource"
+        }
+      },
+      {
+        "id": "mutation/autoRevalidation-noop",
+        "source": "src/server/mutation.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: enableAutoRevalidation() never subscribes"
+        }
+      },
+      {
+        "id": "mutation/registerResource-noop",
+        "source": "src/server/mutation.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: public registerResource() does nothing"
+        }
+      },
+      {
+        "id": "observe/onIntersect-noop",
+        "source": "src/dom-utils/observe.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: onIntersect never observes the element"
+        }
+      },
+      {
+        "id": "observe/onResize-noop",
+        "source": "src/dom-utils/observe.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: onResize never observes the element"
+        }
+      },
+      {
+        "id": "persist/migrate-off",
+        "source": "src/state/persist.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: persist version migration never runs"
+        }
+      },
+      {
+        "id": "persist/skip-validate",
+        "source": "src/state/persist.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: persist hydrate() ignores validate()"
+        }
+      },
+      {
+        "id": "portal/no-remove-prev",
+        "source": "src/dom/portal.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: portal never detaches the previous node — the target accumulates on every re-render and on dispose"
+        }
+      },
+      {
+        "id": "portal/target-string-ignored",
+        "source": "src/dom/portal.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: string portal selector ignored — always body"
+        }
+      },
+      {
+        "id": "reactive/untrack-noop",
+        "source": "src/reactive/untrack.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: compile-break sentinel (expect CAUGHT — harness sanity check)"
+        }
+      },
+      {
+        "id": "reconcile/remove-all-skips-hook",
+        "source": "src/dom/list.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: onBeforeRemove exit transition skipped when clearing a list"
+        }
+      },
+      {
+        "id": "runtime/bind-false-not-removed",
+        "source": "src/runtime.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: data-bind: leaves disabled=\"false\" on the element"
+        }
+      },
+      {
+        "id": "runtime/bind-guard-off",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:* writes javascript: URLs and inline handlers"
+        }
+      },
+      {
+        "id": "runtime/bind-no-eventhandler",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:onclick installs an inline handler"
+        }
+      },
+      {
+        "id": "runtime/bind-tag-not-forwarded",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind: judges every sink as an image sink"
+        }
+      },
+      {
+        "id": "sec/attrname-allow-quote",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: attribute-name breakout (quotes/space/=) now allowed"
+        }
+      },
+      {
+        "id": "sec/attrname-allows-slash",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: attribute/tag names may contain quote, space and = (breakout)"
+        }
+      },
+      {
+        "id": "sec/eventhandler-case-sensitive",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: ONCLICK/Onerror no longer detected as event-handler names"
+        }
+      },
+      {
+        "id": "sec/parsestate-no-proto-strip",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-forma-state prototype-pollution keys no longer stripped"
+        }
+      },
+      {
+        "id": "sec/rpc-no-arg-strip",
+        "source": "src/server/rpc-handler.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: RPC args no longer sanitized for prototype pollution"
+        }
+      },
+      {
+        "id": "sec/rpc-no-endpoint-guard",
+        "source": "src/server/rpc-handler.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: endpoint-name prototype pollution guard removed"
+        }
+      },
+      {
+        "id": "sec/scheme-re-unanchored",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: substring match — https://example.com/guides/javascript now blocked"
+        }
+      },
+      {
+        "id": "sec/svg-any-tag-is-image",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data:image/svg+xml accepted on <a>/<iframe> document sinks"
+        }
+      },
+      {
+        "id": "sec/unsafe-attr-write-url-off",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: the shared client-side URL predicate always allows"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-action",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: action no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-background",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: background no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-data",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: <object data> no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-formaction",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: formaction no longer treated as a URL attr"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-poster",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: poster no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-xlink",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: xlink:href no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-dangerous-off",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: control-char scheme smuggling no longer normalized (java\\tscript:)"
+        }
+      },
+      {
+        "id": "show/hydrating-branch-wrong",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: hydration always picks the else branch"
+        }
+      },
+      {
+        "id": "show/no-branch-dispose",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: previous show branch effects never disposed (leak across toggles)"
+        }
+      },
+      {
+        "id": "show/no-fragment-sweep",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: fragment branch content not cleared between markers (duplicate content)"
+        }
+      },
+      {
+        "id": "show/no-lasttruthy-guard",
+        "source": "src/dom/show.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: show re-renders branch on every effect run (identity churn)"
+        }
+      },
+      {
+        "id": "ssr/attr-false-emitted",
+        "source": "src/ssr/render.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: boolean false emitted as disabled=\"false\" (still disables the control)"
+        }
+      },
+      {
+        "id": "ssr/attr-no-eventhandler-guard",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR emits on* attributes verbatim"
+        }
+      },
+      {
+        "id": "ssr/attr-no-name-guard",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR emits attribute names that break out of the attribute position"
+        }
+      },
+      {
+        "id": "ssr/attr-no-url-guard",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: SSR emits javascript: URLs"
+        }
+      },
+      {
+        "id": "ssr/attr-true-as-value",
+        "source": "src/ssr/render.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: boolean true no longer emits a bare attribute name"
+        }
+      },
+      {
+        "id": "ssr/escape-html-amp",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: escapeHtml no longer escapes & (double-encode / entity smuggling)"
+        }
+      },
+      {
+        "id": "ssr/escapeAttr-drop-amp",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: escapeAttr no longer escapes & (entity smuggling)"
+        }
+      },
+      {
+        "id": "ssr/escapeAttr-drop-dquote",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR attribute values no longer escape double quotes — attribute breakout"
+        }
+      },
+      {
+        "id": "ssr/escapeAttr-drop-lt",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: escapeAttr no longer escapes <"
+        }
+      },
+      {
+        "id": "ssr/escapeHtml-drop-all-but-quote",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR text nodes no longer escape < > & ' — raw XSS"
+        }
+      },
+      {
+        "id": "ssr/escapeHtml-drop-apos",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: escapeHtml no longer escapes single quote"
+        }
+      },
+      {
+        "id": "ssr/escapeHtml-drop-lt",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: escapeHtml no longer escapes < "
+        }
+      },
+      {
+        "id": "ssr/escapeHtml-drop-quot",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: escapeHtml no longer escapes double quote"
+        }
+      },
+      {
+        "id": "ssr/no-tagname-guard",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR interpolates an attacker-controlled tag name verbatim"
+        }
+      },
+      {
+        "id": "ssr/prop-to-attr-classname",
+        "source": "src/ssr/render.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: className no longer maps to class in SSR output"
+        }
+      },
+      {
+        "id": "ssr/ref-emitted-as-attr",
+        "source": "src/ssr/render.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: ref serialised into the SSR markup"
+        }
+      },
+      {
+        "id": "ssr/text-child-not-escaped",
+        "source": "src/ssr/render.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: SSR text children emitted raw — live <script> in the page"
+        }
+      },
+      {
+        "id": "ssr/void-element-closed",
+        "source": "src/ssr/render.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: void elements get a closing tag"
+        }
+      },
+      {
+        "id": "storage/local-skip-validate",
+        "source": "src/storage/local.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: localStorage validate() option ignored"
+        }
+      },
+      {
+        "id": "store/array-version-not-subscribed",
+        "source": "src/state/store.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: array reads no longer subscribe to the array-version signal"
+        }
+      },
+      {
+        "id": "store/arrays-not-wrapped",
+        "source": "src/state/store.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: arrays no longer plain — array reactivity path dead"
+        }
+      },
+      {
+        "id": "store/deepClone-identity",
+        "source": "src/state/store.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: store deepClone becomes identity — snapshots alias live state"
+        }
+      },
+      {
+        "id": "store/no-array-method-patch",
+        "source": "src/state/store.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: reverse/fill/copyWithin no longer trigger array reactivity"
+        }
+      },
+      {
+        "id": "switch/cache-never-reused",
+        "source": "src/dom/switch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: switch branch cache disabled — new node identity each visit"
+        }
+      },
+      {
+        "id": "switch/no-scoop-back",
+        "source": "src/dom/switch.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: cached fragment branch not scooped back — 3rd visit renders empty/duplicated"
+        }
+      },
+      {
+        "id": "traverse/siblings-includes-self",
+        "source": "src/dom-utils/traverse.ts",
+        "security": false,
+        "disposition": {
+          "kind": "non-security-mutation",
+          "reason": "Historical mutation of non-security behavior; it is not a hostile payload. Original note: siblings() now includes the element itself"
+        }
+      }
+    ]
+  },
+  "current": {
+    "path": "packages/core/probes/corpus.json",
+    "sha256": "6967bde7d4638aeee863e3e383e709d8724a0b4af402298d06d102df2a5cadab",
+    "total": 260,
+    "rows": [
+      {
+        "id": "activate/props-not-sanitized",
+        "source": "src/dom/activate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: SECURITY.md 'Island props sanitized' — stripping removed"
+        }
+      },
+      {
+        "id": "el/generic-url-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() reactive attribute path writes javascript: URLs"
+        }
+      },
+      {
+        "id": "el/static-onattr-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() static path writes ONCLICK as an inline handler"
+        }
+      },
+      {
+        "id": "el/static-url-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() static attribute path writes javascript: URLs"
+        }
+      },
+      {
+        "id": "el/xlink-guard-off",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: reactive xlink:href writes javascript: URLs"
+        }
+      },
+      {
+        "id": "expr/array-index-write-unbounded",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a handler can write items[4294967294] or items[999999], giving the array that length of holes for a scan or data-list to visit (review B1, R3). Verified by: src/expr/__tests__/native-cost.test.ts > \"a handler cannot grow an array past the allocation budget\""
+        }
+      },
+      {
+        "id": "expr/budget-not-cumulative",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: each call is checked alone, so one evaluation of many calls just under the budget spends many budgets (DR-16). Verified by: src/expr/__tests__/native-cost.test.ts > \"the budget is per evaluation and cumulative across its calls\""
+        }
+      },
+      {
+        "id": "expr/compound-assign-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: x += list in a handler converts an array of any text weight through join. Verified by: src/expr/__tests__/native-cost.test.ts > \"an operator does not convert a value heavier than the budget\""
+        }
+      },
+      {
+        "id": "expr/computed-key-unbounded",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: items[list] converts the array to a key through join before the length check. Verified by: src/expr/__tests__/native-cost.test.ts > \"an operator does not convert a value heavier than the budget\""
+        }
+      },
+      {
+        "id": "expr/concat-args-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: concat is charged its receiver only, so concatenating a huge argument array is free. Verified by: src/expr/__tests__/native-cost.test.ts > \"a native that reads its argument as data is charged its element count, not its text\""
+        }
+      },
+      {
+        "id": "expr/cost-array-from-length-ignored",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: Array.from of an array-like is charged nothing for the length it is asked for (audit run 4). Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\"; Verified by: src/expr/__tests__/native-preflight.test.ts > \"is refused before the native allocates\""
+        }
+      },
+      {
+        "id": "expr/cost-array-search-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: includes/indexOf/lastIndexOf scan their receiver for free, so repeating one over a large array is unbounded. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-flat-depth-ignored",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: flat is charged without expanding its receiver, so 1,000 references to a 1,000-element array flatten to a million. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-object-keys-unweighted",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: Object.keys/values/entries are charged one unit per key, a fraction of their measured cost. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-repeat-count-ignored",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: repeat is charged its receiver only, so a 1,000-character string repeated 10,000 times passes. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-replaceall-one-occurrence",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: replaceAll is charged as one replacement, so inserting at every position of a 250,000-character string passes. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-scan-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: string searches (includes, indexOf, lastIndexOf) are free, so repeating one over a large receiver is unbounded. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-sliced-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: slice, substring, startsWith and endsWith are free, so flattening a long concatenated receiver over and over is unbounded. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-sort-linear",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: sort is charged per element, not per comparison, so a default sort of 30,000 elements passes. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-sparse-scan-unrowed",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: every/some/reduce have no row: on a sparse array they visit every hole without a callback, so no step is charged (review B1). Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/cost-trim-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: trim is free, so trimming a long whitespace run over and over is unbounded. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/costly-letterlike-too-broad",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: the case-mapped letterlike symbols (Ω U+2126, K U+212A, Å U+212B) are charged as symbols that map to themselves. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+        }
+      },
+      {
+        "id": "expr/costly-set-too-broad",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: Greek letters, which measured up to 34 ns a character to case-map, are charged as Latin-1. Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+        }
+      },
+      {
+        "id": "expr/dom-method-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a DOM host method's arguments are converted uncharged: $el.setAttribute('title', list) joins a list of any text weight (review S5). Verified by: src/expr/__tests__/native-cost.test.ts > \"a DOM host method does not receive an argument heavier than the budget\""
+        }
+      },
+      {
+        "id": "expr/flatmap-results-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: the arrays a flatMap callback returns are copied uncharged. Verified by: src/expr/__tests__/native-cost.test.ts > \"flatMap charges each array its callback returns\""
+        }
+      },
+      {
+        "id": "expr/fn-callback-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: rows.map(String) converts every row uncharged. Verified by: src/expr/__tests__/native-cost.test.ts > \"an operator does not convert a value heavier than the budget\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"a predicate native reads a large argument for free\""
+        }
+      },
+      {
+        "id": "expr/host-write-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: $el.textContent = list converts an array of any text weight in the DOM. Verified by: src/expr/__tests__/native-cost.test.ts > \"an operator does not convert a value heavier than the budget\""
+        }
+      },
+      {
+        "id": "expr/loose-equality-charges-none",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: == and != against a primitive convert an object of any text weight through join, uncharged. Verified by: src/expr/__tests__/native-cost.test.ts > \"loose equality charges only an operand it converts\""
+        }
+      },
+      {
+        "id": "expr/lowercase-wide-as-latin1",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: lowercasing text above Latin-1 (Greek, Cyrillic, CJK, Latin Extended, and the costlier Georgian or Cherokee) is charged as Latin-1, an eighth to a sixteenth of its measured cost. Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\"; Verified by: src/expr/__tests__/native-cost.test.ts > \"a text search over records is answered as on main\""
+        }
+      },
+      {
+        "id": "expr/object-keys-of-object-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: Object.keys/values/entries of a plain object are charged nothing, whatever its key count. Verified by: src/expr/__tests__/native-cost.test.ts > \"a native that reads its argument as data is charged its element count, not its text\""
+        }
+      },
+      {
+        "id": "expr/operator-coercion-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: '' + list, list < 1 and list == x convert an array of any text weight through join. Verified by: src/expr/__tests__/native-cost.test.ts > \"an operator does not convert a value heavier than the budget\""
+        }
+      },
+      {
+        "id": "expr/preflight-args-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a native's arguments are not charged as text, so String(list) can build hundreds of MB before any check (DR-16). Verified by: src/expr/__tests__/native-cost.test.ts > \"every allowlisted native refuses an argument heavier than the budget before it runs\""
+        }
+      },
+      {
+        "id": "expr/preflight-cost-row-skipped",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: no cost row is charged: Array.from({length: 12000000}) builds 139 MB in a 300 ms task before the refusal (audit run 4, DR-16). Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\"; Verified by: src/expr/__tests__/native-preflight.test.ts > \"is refused before the native allocates\""
+        }
+      },
+      {
+        "id": "expr/replace-receiver-insert-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a $` or $' replacement inserting the receiver at every position is charged as its two characters, so replaceAll grows quadratically (review S4). Verified by: src/expr/__tests__/native-cost.test.ts > \"a $ in a replacement is charged only for what it can insert\""
+        }
+      },
+      {
+        "id": "expr/split-pieces-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: split is charged its scan only, not a slot per piece, so splitting a long string into characters is nearly free. Verified by: src/expr/__tests__/native-cost.test.ts > \"every size-driven cost refuses a hostile size before the native runs\""
+        }
+      },
+      {
+        "id": "expr/template-coercion-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a template literal converts an array of any text weight through join. Verified by: src/expr/__tests__/native-cost.test.ts > \"an operator does not convert a value heavier than the budget\""
+        }
+      },
+      {
+        "id": "expr/uppercase-tiers-flattened",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: uppercasing Latin-1 or wider text is charged as ASCII, though it measured up to 64 ns a character (review R1). Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+        }
+      },
+      {
+        "id": "expr/weigh-elements-skipped",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: text weight stops at an array's length and never weighs its elements. Verified by: src/expr/__tests__/native-cost.test.ts > \"every allowlisted native refuses an argument heavier than the budget before it runs\""
+        }
+      },
+      {
+        "id": "expr/weigh-string-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: text weight ignores a string's length, so 1,000 references to one 300,000-character string weigh 2,000 and convert to 300 MB. Verified by: src/expr/__tests__/native-cost.test.ts > \"every allowlisted native refuses an argument heavier than the budget before it runs\""
+        }
+      },
+      {
+        "id": "mutate/setText-uses-innerHTML",
+        "source": "src/dom-utils/mutate.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: setText (documented safe for user content) becomes an XSS sink"
+        }
+      },
+      {
+        "id": "persist/skip-validate",
+        "source": "src/state/persist.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: persist hydrate() ignores validate()"
+        }
+      },
+      {
+        "id": "runtime/bind-guard-off",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:* writes javascript: URLs and inline handlers"
+        }
+      },
+      {
+        "id": "runtime/bind-no-eventhandler",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:onclick installs an inline handler"
+        }
+      },
+      {
+        "id": "runtime/bind-tag-not-forwarded",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind: judges every sink as an image sink"
+        }
+      },
+      {
+        "id": "sec/attrname-allow-quote",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: attribute-name breakout (quotes/space/=) now allowed"
+        }
+      },
+      {
+        "id": "sec/attrname-allows-slash",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: attribute/tag names may contain quote, space and = (breakout)"
+        }
+      },
+      {
+        "id": "sec/eventhandler-case-sensitive",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: ONCLICK/Onerror no longer detected as event-handler names"
+        }
+      },
+      {
+        "id": "sec/parsestate-no-proto-strip",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-forma-state prototype-pollution keys no longer stripped"
+        }
+      },
+      {
+        "id": "sec/scheme-re-unanchored",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: substring match — https://example.com/guides/javascript now blocked"
+        }
+      },
+      {
+        "id": "sec/svg-any-tag-is-image",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data:image/svg+xml accepted on <a>/<iframe> document sinks"
+        }
+      },
+      {
+        "id": "sec/unsafe-attr-write-url-off",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: the shared client-side URL predicate always allows"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-action",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: action no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-background",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: background no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-data",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: <object data> no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-formaction",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: formaction no longer treated as a URL attr"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-poster",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: poster no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-attrs-drop-xlink",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: xlink:href no longer scheme-checked"
+        }
+      },
+      {
+        "id": "sec/url-dangerous-off",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value",
+            "expression",
+            "markup"
+          ],
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: control-char scheme smuggling no longer normalized (java\\tscript:)"
+        }
+      },
+      {
+        "id": "storage/local-skip-validate",
+        "source": "src/storage/local.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: localStorage validate() option ignored"
+        }
+      },
+      {
+        "id": "store/arrays-not-wrapped",
+        "source": "src/state/store.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: arrays no longer plain — array reactivity path dead"
+        }
+      },
+      {
+        "id": "expr/grow-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a string `+` or a template builds is charged nothing, so 19 doublings build a 524,288-character rope and reading copies of it runs for seconds (formajs#14 round 2, FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"every round-2 rope case is refused before the long task\""
+        }
+      },
+      {
+        "id": "expr/template-grow-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a template literal builds strings for free while `+` is charged (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"a template literal and += are charged by the length they produce\""
+        }
+      },
+      {
+        "id": "expr/compound-grow-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a handler's `x += s` builds strings for free while `x = x + s` is charged (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"a template literal and += are charged by the length they produce\""
+        }
+      },
+      {
+        "id": "expr/compare-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: comparing two long strings reads both whole for free, so twenty thousand comparisons of 200,000 characters run for seconds (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"comparing long strings is charged by the characters compared\""
+        }
+      },
+      {
+        "id": "expr/parse-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: `s * 1`, `-s` or `s < 1` parse a long string for free: a thousand conversions of a million digits is eleven seconds at 4x (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"an operator that parses a long string as a number is charged for it\""
+        }
+      },
+      {
+        "id": "expr/sort-strings-unweighed",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a default sort compares string elements whole at every level for the price of numbers (round 2: 2,000 long strings sorted in 1.5 s at 4x; FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"comparing long strings is charged by the characters compared\""
+        }
+      },
+      {
+        "id": "expr/array-search-long-free",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: searching an array for a long string compares every same-length element whole for free (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"comparing long strings is charged by the characters compared\""
+        }
+      },
+      {
+        "id": "expr/string-args-free",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a string method's non-string argument is still weighed, but a string one costs nothing however long (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"a string method reads a string argument for a thirty-second of a unit a character\""
+        }
+      },
+      {
+        "id": "expr/case-cap-after-call",
+        "source": "src/expr/cost.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: lowercasing a receiver past the 1 MiB result cap runs before the cap refuses it: 115 ms for 8 million two-byte characters at 4x (FORMA-028). Verified by: src/expr/__tests__/native-cost.test.ts > \"case mapping is charged by the costliest character of its receiver\""
+        }
+      },
+      {
+        "id": "expr/nested-eval-fresh-budget",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a computed read inside a binding gets a budget of its own, so a chain of computeds spends one budget each in one task (FORMA-028). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a chain of computeds spends one budget between them\""
+        }
+      },
+      {
+        "id": "expr/spend-not-handed-back",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: an evaluation's units are never added to the task's meter, so every binding in a task gets the whole allocation budget (FORMA-028). Verified by: src/__tests__/runtime-task-budget.test.ts > \"ten bindings at the cap spend one budget per task and all of them render\""
+        }
+      },
+      {
+        "id": "runtime/meter-not-passed",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: bindings do not count on from the task's meter: ten bindings at the cap in one widget ran 382 ms in one task at 4x (FORMA-028). Verified by: src/__tests__/runtime-task-budget.test.ts > \"ten bindings at the cap spend one budget per task and all of them render\""
+        }
+      },
+      {
+        "id": "runtime/data-text-unpriced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: data-text converts a list of a thousand references to a 300,000-character string with String(): 300 million characters (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"data-text of a value heavier than the budget is refused before it is converted\""
+        }
+      },
+      {
+        "id": "runtime/list-rows-unpriced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a data-list writes each row's {item.x} values and key into text unpriced: a thousand rows placing one long string (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
+        }
+      },
+      {
+        "id": "runtime/persist-unpriced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: data-persist JSON-stringifies a state value heavier than the budget (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
+        }
+      },
+      {
+        "id": "expr/fresh-rope-copy-uncharged",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: comparing or reading a character of a string the expression just built copies it for free: 12,400 comparisons of two 511-character ropes ran 56 ms inside the step budget at 4x (FORMA-028). Verified by: src/expr/__tests__/string-growth.test.ts > \"comparing or reading a string just built is charged for copying it\""
+        }
+      },
+      {
+        "id": "expr/cap-admits-lower-bound",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a charge counted only to the cap is a lower bound, and is admitted against the room left: a value heavier than the cap is converted in full in a task that had no room for it (FORMA-173). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a light binding after one that waits renders in the same task\""
+        }
+      },
+      {
+        "id": "tiered/reach-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: every hop from a tiered mount's $el, $event or $refs reaches past the mount root without the dom grant (L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no hop from $el reaches past the mount root: %s\""
+        }
+      },
+      {
+        "id": "tiered/reach-root-inside",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: the mount root, the application's own element, counts as inside the mount: its attributes and its siblings become reachable. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount root itself is outside the mount\""
+        }
+      },
+      {
+        "id": "tiered/reach-drops-bound",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: an element one hop from $el is wrapped without the mount's bound, so the next hop reaches the whole page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no hop from $el reaches past the mount root: %s\""
+        }
+      },
+      {
+        "id": "tiered/grants-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a tiered mount's $el.click() runs without navigate and its selectors read the page without dom (DR-15, SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.click() is denied without navigate and runs with it\""
+        }
+      },
+      {
+        "id": "tiered/navigate-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: $el.click() follows a link or submits a form in the user's session from a mount granted no navigate (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.click() is denied without navigate and runs with it\""
+        }
+      },
+      {
+        "id": "tiered/selector-unchecked",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a selector asks about the page outside the mount root (matches('[data-email^=\"a\"] *')) from a mount granted no dom: an attribute value read one character at a time. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a selector that reads past the element needs dom: %s\""
+        }
+      },
+      {
+        "id": "tiered/scope-budget-ignored",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "expression-cost-campaign",
+          "reason": "Budget/native-cost mutation; covered by semantic charge campaign and retained existing native/operator tests, not a literal markup payload. Original note: a tiered mount takes its step budget from any script tag's data-forma-expr-budget, up to 100 times the default (TH11), not from its call. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a tiered mount takes its step budget from its call, never from a script tag\""
+        }
+      },
+      {
+        "id": "selector/combinator-accepted",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a selector with a descendant, child or sibling combinator counts as local, so it asks about an ancestor or a sibling outside the mount. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
+        }
+      },
+      {
+        "id": "selector/function-args-unchecked",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: :nth-child(2 of .x) and its family pass whatever they hold, so `of <selector>` filters siblings by a selector. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
+        }
+      },
+      {
+        "id": "selector/any-function",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: any functional pseudo-class counts as local: :has(+ .x) asks about a sibling and :lang() about an ancestor. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
+        }
+      },
+      {
+        "id": "tiered/el-unbound",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a tiered mount's $el is the tierless wrapper: $el.closest('body') reaches the page (SR16, L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
+        }
+      },
+      {
+        "id": "tiered/event-unbound",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: $event in a tiered mount's handler is the tierless wrapper, so $event.target reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
+        }
+      },
+      {
+        "id": "tiered/refs-unbound",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: $refs in a tiered mount is the tierless wrapper, so $refs.x.closest('section') reaches the page. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an element reached through $event or $refs carries the mount's bound\""
+        }
+      },
+      {
+        "id": "tiered/child-scope-drops-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a child scope (each element's, each handler's, each list row's) loses its mount, so its data-fetch is sent as a tierless one and its failures are reported without the mount. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+        }
+      },
+      {
+        "id": "tiered/fetch-denial-sent",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a data-fetch the mount's grants do not cover is sent anyway (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+        }
+      },
+      {
+        "id": "tiered/no-fetch-grant-allows",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a mount with no fetch grant sends every data-fetch with the user's cookies (SR31). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with explicit empty grants a generated tree binds neither data-fetch nor $el.click()\""
+        }
+      },
+      {
+        "id": "tiered/fetch-method-unchecked",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a fetch grant for GET also sends POST, PUT, PATCH and DELETE. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant admits only its methods and path prefixes: %j %s\""
+        }
+      },
+      {
+        "id": "tiered/fetch-prefix-sibling",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a fetch grant for /api/widgets also covers /api/widgets-admin. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant admits only its methods and path prefixes: %j %s\""
+        }
+      },
+      {
+        "id": "tiered/fetch-escaped-separator",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a path that hides a slash in an escape (/api/widgets/a%2Fb) passes a prefix a server may decode it out of. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant admits only its methods and path prefixes: %j %s\""
+        }
+      },
+      {
+        "id": "tiered/fetch-prefix-any-origin",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a same-origin path prefix also covers that path on any other origin: https://evil.example/api/widgets/1. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant admits only its methods and path prefixes: %j %s\""
+        }
+      },
+      {
+        "id": "tiered/fetch-cookies-always",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "fetch"
+          ],
+          "reason": "Real-server method/path/cookie admission and denial cases. Original note: a fetch grant without cookies sends the user's cookies anyway (DR-15). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a fetch grant's cookies decide the request's credentials\""
+        }
+      },
+      {
+        "id": "tiered/refetch-shared-registry",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tiered mount's $refetch reaches the page's data-fetch ids. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
+        }
+      },
+      {
+        "id": "tiered/refetch-registers-on-page",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tiered mount's data-fetch-id registers on the page, where the page's $refetch reaches it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$refetch reaches only the fetches of its own mount\""
+        }
+      },
+      {
+        "id": "tiered/tierless-binds-under-root",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tierless path (the observer, mount(), the DOMContentLoaded scan) binds markup under a tiered root with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+        }
+      },
+      {
+        "id": "tiered/outer-scope-binds-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a tierless scope around a tiered root binds the mount's elements against its own scope, with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+        }
+      },
+      {
+        "id": "tiered/outer-refs-into-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a scope around a tiered root gets $refs to the mount's elements. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"no tierless path binds markup under a tiered root\""
+        }
+      },
+      {
+        "id": "tiered/denial-silenced",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a denied grant is silent when the mount's diagnostics are off: SR37's coded diagnostic for every denial is lost. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a mount takes its diagnostics switch from its call, not the page\""
+        }
+      },
+      {
+        "id": "tiered/unreviewed-any-origin",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: content nobody reviewed mounts on the application's own origin, not only in an opaque-origin frame (DR-14). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount refuses any origin but an opaque one, and any grant\""
+        }
+      },
+      {
+        "id": "tiered/unreviewed-takes-grants",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: an unreviewed mount accepts grants and silently drops them, so a host that passed some believes they apply. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount refuses any origin but an opaque one, and any grant\""
+        }
+      },
+      {
+        "id": "tiered/explicit-dom-ignored",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a mount whose grants leave out dom reaches the page anyway. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
+        }
+      },
+      {
+        "id": "tiered/prior-bindings-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: bindings a tierless path made under the root before it was handed over keep running, with every power, on nodes the mount has removed. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"bindings a tierless path made under the root go first, with what they rendered\""
+        }
+      },
+      {
+        "id": "selector/pseudo-element",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: a pseudo-element (p::before) counts as local. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
+        }
+      },
+      {
+        "id": "selector/host",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: :host, which names the shadow host outside the mount, counts as local. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
+        }
+      },
+      {
+        "id": "frame/port-from-anyone",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the frame takes a port from any window, not only its parent: a frame the module nests, or the frame itself, hands it a channel. Verified by: src/__tests__/runtime-frame.test.ts > \"ignores a port from any window but its parent, and every port after the first\""
+        }
+      },
+      {
+        "id": "frame/many-ports",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: a message carrying several ports is taken. Verified by: src/__tests__/runtime-frame.test.ts > \"ignores a port from any window but its parent, and every port after the first\""
+        }
+      },
+      {
+        "id": "frame/keeps-listening",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the frame keeps listening on its window after the first port, so a later port replaces the host's channel. Verified by: src/__tests__/runtime-frame.test.ts > \"ignores a port from any window but its parent, and every port after the first\""
+        }
+      },
+      {
+        "id": "frame/extra-keys",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: a message with more than the module's two fields is accepted. Verified by: src/__tests__/runtime-frame.test.ts > \"refuses every message but the module, and changes nothing\""
+        }
+      },
+      {
+        "id": "frame/any-type",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: a message of any type carrying html renders. Verified by: src/__tests__/runtime-frame.test.ts > \"refuses every message but the module, and changes nothing\""
+        }
+      },
+      {
+        "id": "frame/reviewed-tier",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the frame mounts unreviewed content in tier (b), with every grant A2 gives by default: its data-fetch is sent. Verified by: src/__tests__/runtime-frame.test.ts > \"takes one port from its parent, renders each module in tier (c) and answers only ready, resize and error\""
+        }
+      },
+      {
+        "id": "frame/auto-mount",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the preview frame's runtime mounts the page's data-forma-state on load and watches body, so markup injected outside the root is bound. Verified by: src/__tests__/runtime-frame.test.ts > \"the frame runtime is one classic script a server can inline as it is\""
+        }
+      },
+      {
+        "id": "tiered/mount-switch-ignored",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: data-forma-mount=\"manual\" is ignored: the page auto-mounts and watches body, so markup injected outside a tiered root is bound (SR16 in 2.x). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
+        }
+      },
+      {
+        "id": "tiered/mount-switch-own-script-unread",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a CDN build ignores the switch on its own script element, the place the docs tell a page to put it. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"the mount switch is read once, from the runtime's own script element\""
+        }
+      },
+      {
+        "id": "tiered/mount-switch-esm-unread",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: an ESM build, which has no script element of its own, never sees the switch on the application's module script. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
+        }
+      },
+      {
+        "id": "tiered/mount-switch-auto-init",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: a page with the switch still runs the auto-mount on load. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
+        }
+      },
+      {
+        "id": "tiered/mount-switch-calls-bind",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-mount-lifecycle-regression",
+          "reason": "Mount lifecycle/registry wiring mutation; retained existing tiered-mount tests, not counted as a new payload. Original note: on a page with the switch, mount(), initRuntime() and reconcile() still bind with every power. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"with the page's mount switch only mountMarkup binds: markup injected outside a tiered root stays unbound\""
+        }
+      },
+      {
+        "id": "trusted/mount-clear-string",
+        "source": "src/dom/mount.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: mount() empties its container by writing a string to innerHTML, which a page requiring Trusted Types reports or refuses (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
+        }
+      },
+      {
+        "id": "trusted/unmount-clear-string",
+        "source": "src/dom/mount.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: the function mount() returns empties the container by writing a string to innerHTML (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
+        }
+      },
+      {
+        "id": "trusted/null-clear-string",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: a reactive dangerouslySetInnerHTML that becomes null empties the element with a string write (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
+        }
+      },
+      {
+        "id": "trusted/reconcile-writes-trusted-as-string",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: reconcile() trims a trustedHtml() value and parses the trimmed string, which a page requiring Trusted Types refuses: the runtime parser's forma-runtime policy is skipped (DR-20). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
+        }
+      },
+      {
+        "id": "trusted/srcdoc-stringified",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: a static srcdoc given trustedHtml() is written as a string, which a page requiring Trusted Types refuses (DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
+        }
+      },
+      {
+        "id": "trusted/reactive-srcdoc-stringified",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: a reactive srcdoc given trustedHtml() is written as a string (DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
+        }
+      },
+      {
+        "id": "trusted/policy-per-call",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: each trustedHtml() asks the browser for the forma policy again; an enforcing page refuses a second policy of one name, so the second raw entry on a page fails (DR-20). Verified by: src/dom/__tests__/trusted-html.test.ts > \"trustedHtml() returns a TrustedHTML from the forma policy where the browser has Trusted Types\""
+        }
+      },
+      {
+        "id": "trusted/look-alike-accepted",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: any object passes for trusted HTML, so a value an attacker shapes reaches a raw sink without trustedHtml() (DR-19). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a look-alike object is not trusted HTML\""
+        }
+      },
+      {
+        "id": "trusted/static-attr-second-conversion",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: h()'s static path writes any object as itself, so setAttribute converts it again after the URL guard passed its first string: a toString that changes writes javascript: (formajs#29 review B1). Verified by: src/__tests__/renderer-contract.test.ts > \"writes %s as the string the URL guard checked, not a second conversion\""
+        }
+      },
+      {
+        "id": "trusted/reactive-attr-second-conversion",
+        "source": "src/dom/element.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: h()'s reactive path converts an object a second time after the URL guard (formajs#29 review B1). Verified by: src/__tests__/renderer-contract.test.ts > \"writes %s as the string the URL guard checked, not a second conversion\""
+        }
+      },
+      {
+        "id": "trusted/reconcile-srcdoc-unminted",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: reconcile()'s diff writes a changed srcdoc of trusted markup as a string, which an enforcing page refuses (formajs#29 review S1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src\""
+        }
+      },
+      {
+        "id": "trusted/reconcile-writes-script-attrs",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: reconcile()'s diff writes a changed on* handler or script src, a Trusted Types script sink core writes nowhere else (formajs#29 review S1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src\""
+        }
+      },
+      {
+        "id": "trusted/runtime-handle-mints-strings",
+        "source": "src/dom/runtime-parser.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: the shared forma-runtime handle on globalThis mints a string, so any script launders markup past Trusted Types with no trustedHtml() in its source (formajs#29 review S2). Verified by: src/dom/__tests__/trusted-html.test.ts > \"the shared registry holds no policy, and its forma-runtime handle mints nothing from a string\""
+        }
+      },
+      {
+        "id": "trusted/runtime-parser-mints-any-srcdoc",
+        "source": "src/dom/runtime-parser.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: the runtime parser mints the srcdoc of any element, so a string planted on a div is minted (formajs#29 review S2). Verified by: src/dom/__tests__/trusted-html.test.ts > \"the shared registry holds no policy, and its forma-runtime handle mints nothing from a string\""
+        }
+      },
+      {
+        "id": "trusted/registry-exposes-policy",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: the registry on globalThis holds a live policy (formajs#29 review S2). Verified by: src/dom/__tests__/trusted-html.test.ts > \"the shared registry holds no policy, and its forma-runtime handle mints nothing from a string\""
+        }
+      },
+      {
+        "id": "trusted/registry-has-prototype",
+        "source": "src/dom/trusted-html.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: the registry inherits from Object.prototype, so a polluted Object.prototype.forma stands in for the policy (formajs#29 review S2). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a polluted Object.prototype does not stand in for a policy\""
+        }
+      },
+      {
+        "id": "tiered/closest-unconfined",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: closest() without dom tests the ancestors outside the root and refuses a match, so the refusal against no match reads an outside ancestor's attribute a character at a time (formajs#30 review, B1). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time\""
+        }
+      },
+      {
+        "id": "tiered/closest-walks-past-root",
+        "source": "src/expr/interp.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: the confined closest() walk does not stop at the root, so it tests the outside ancestors again. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time\""
+        }
+      },
+      {
+        "id": "tiered/dispatch-activation-ungated",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: $dispatch('click') runs a link's or a form's activation in WebKit, and $dispatch('submit') submits in Firefox, from a mount granted no navigate (formajs#30 review, S1). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$dispatch of an activation event needs navigate: %s\""
+        }
+      },
+      {
+        "id": "tiered/dispatch-activation-case",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: an activation event named in another case (DOMActivate, Click) passes the navigate check. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$dispatch of an activation event needs navigate: %s\""
+        }
+      },
+      {
+        "id": "selector/scope",
+        "source": "src/expr/selector.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-capability",
+          "families": [
+            "outside",
+            "selector",
+            "activation"
+          ],
+          "reason": "Real DOM and activation capability controls under every profile; existing slot/ref regressions retained. Original note: :scope, which names the receiver, counts as local. Verified by: src/expr/__tests__/selector.test.ts > \"refuses every selector that reads past the element\""
+        }
+      },
+      {
+        "id": "frame/spoofed-diagnostic-forwarded",
+        "source": "src/runtime-frame.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: a module's own $dispatch('formajs:diagnostic', {code, reason, expr}) reaches the host as an error the runtime never raised, with a code and text the module chose (formajs#31 review). Verified by: src/__tests__/runtime-frame.test.ts > \"forwards the runtime's diagnostics, never a module's own formajs:diagnostic\""
+        }
+      },
+      {
+        "id": "frame-link/not-stripped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: unreviewed markup is written as a string, unstripped, so a previewed module's <link rel=\"preconnect\"> opens a connection to any host from inside the frame in WebKit (the A2 audit, S1); the live check then refuses every render that carried one, so nothing of the module renders. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no <link>: each is removed before the markup reaches the document\""
+        }
+      },
+      {
+        "id": "frame-link/nested-template-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: a <link> inside a nested <template> of unreviewed markup survives, ready for anything that stamps the template. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no <link>: each is removed before the markup reaches the document\""
+        }
+      },
+      {
+        "id": "frame-link/reparsed",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the reconciler writes unreviewed markup to the root as a string again, a second parse in the root's insertion mode, which re-creates a <link> the strip in the first parse did not see (formajs#35's review, B1: nested <form>, <math>, <mglyph>, <style>; WebKit connected). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount parses its markup once, in the root's context, and writes no string to the root\""
+        }
+      },
+      {
+        "id": "frame-link/live-check-skipped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the live check after the write is gone: a <link> that reaches the root by any path the strip did not see stays in the document and the render stands (formajs#35's review, B1's defence in depth). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a <link> that reaches the root after the strip is removed, reported, and the markup refused\""
+        }
+      },
+      {
+        "id": "frame-link/reached-but-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: a render that carried a <link> past the strip is refused but not cleared: the rest of the module stays in the document after the <link> is removed, so the fail-closed path fails open. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a <link> that reaches the root after the strip is removed, reported, and the markup refused\""
+        }
+      },
+      {
+        "id": "frame-srcdoc/not-stripped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: an <iframe srcdoc> in unreviewed markup keeps its document, and a <link rel=\"preconnect\"> inside it, out of the strip's reach, connects in WebKit (formajs#35's review, S2). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported\""
+        }
+      },
+      {
+        "id": "frame-srcdoc/binding-kept",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: data-bind:srcdoc runs in an unreviewed mount and writes a document the strip never saw, from a value the module chose (formajs#35's review, S2). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported\""
+        }
+      }
+    ]
+  }
+}

@@ -3,6 +3,6 @@ const helpers = { extra: () => <em>extra</em> };
 
 mount(() => (
   <main>
-    <div>{helpers.extra()}</div>{/* expect: BUILD-101 */}
+    <div>{helpers.extra()}</div>{/* expect: BUILD-101; expect: BUILD-610 */}
   </main>
 ), '#app');

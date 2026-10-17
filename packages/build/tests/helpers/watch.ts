@@ -24,9 +24,11 @@ export interface Watcher {
   manifest(): any;
   /** Everything the child has printed so far. */
   output(): string;
-  /** Wait for initial watch registration; initial-refusal tests intentionally omit this. */
+  /** Wait for every initial watch registration; initial-refusal tests intentionally omit this. */
   ready(): Promise<void>;
-  /** Apply a change only between completed watch cycles, then await the next one. */
+  /** Apply a change after initial registration, then await a completed cycle.
+   * An already-running cycle may finish first. Callers must separately await
+   * the semantic publication they need, including recovery from a failed cycle. */
   change(update: () => void): Promise<void>;
 }
 
@@ -75,17 +77,22 @@ export async function watching(config: BuildConfig, body: (watcher: Watcher) => 
   // The initial marker comes from setWatchData, with the initial watch-mode
   // scan already captured: pkg/api/api_impl.go#L1105-L1122 (the earlier rebuild is not watched).
   const completed = () => (output.match(/\[watch\] build finished/g) ?? []).length;
+  // Non-split builds register one context per entry. A later initial marker
+  // must not stand in for the rebuild triggered by the test's first edit.
+  const expectedInitials = config.codeSplitting && config.entryPoints.length ? 1 : config.entryPoints.length;
+  const ready = async () => vi.waitFor(() => {
+    expect(child.exitCode, output).toBeNull();
+    expect((output.match(/\[watch\] build finished, watching for changes/g) ?? []).length, output).toBe(expectedInitials);
+  }, {timeout: 10_000});
   const watcher: Watcher = {
     manifest: () => {
       expect(child.exitCode, output).toBeNull();
-      return JSON.parse(readFileSync(join(config.outputDir, 'manifest.json'), 'utf8'));
+      try { return JSON.parse(readFileSync(join(config.outputDir, 'manifest.json'), 'utf8')); } catch (error) { throw new Error(String(error)+'\n'+output); }
     },
     output: () => output,
-    ready: async () => vi.waitFor(() => {
-      expect(child.exitCode, output).toBeNull();
-      expect(output).toContain('[watch] build finished, watching for changes');
-    }, {timeout: 10_000}),
+    ready,
     change: async update => {
+      await ready();
       const previous = completed();
       update();
       await vi.waitFor(() => {

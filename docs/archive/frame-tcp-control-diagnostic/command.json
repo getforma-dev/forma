@@ -1,0 +1,23 @@
+{
+  "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core",
+  "environment": {
+    "PATH": "/Users/victorvillacis/.nvm/versions/node/v24.22.0/bin:$PATH",
+    "CARGO_BUILD_JOBS": "3",
+    "FORMA_TEST_PORT": "3469"
+  },
+  "argv": [
+    "npx",
+    "playwright",
+    "test",
+    "e2e/frame.spec.ts",
+    "--project=webkit",
+    "--workers=2",
+    "--grep",
+    "a module's <link>|a module's iframe srcdoc",
+    "--reporter=list",
+    "--output",
+    "/Users/victorvillacis/dev/Forma/work/FORMA-webkit-select-baseline/socket-diagnostic/test-results"
+  ],
+  "stdoutAndStderr": "/Users/victorvillacis/dev/Forma/work/FORMA-webkit-select-baseline/socket-diagnostic/run.log",
+  "scope": "Exactly the three existing failing frame TCP-counter cases, once; existing built runtime; no full-suite retry or timing acceptance."
+}

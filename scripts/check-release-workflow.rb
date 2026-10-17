@@ -21,6 +21,17 @@ NEEDS = {
   'record' => %w[check pack verify publish-crates publish-npm]
 }.freeze
 ACTIONS = %w[actions/checkout actions/setup-node actions/download-artifact dtolnay/rust-toolchain rust-lang/crates-io-auth-action].freeze
+P17_RUN = "mkdir \"$RUNNER_TEMP/p17\"\nnode scripts/verify-release-set.mjs \"$RUNNER_TEMP/release\" \"$RUNNER_TEMP/p17/p17.json\"\n".freeze
+P17_RECORD = {
+  'name' => "Record P17's evidence", 'id' => 'record',
+  'run' => "REPORT_SHA256=$(node scripts/release-evidence.mjs record \"$RUNNER_TEMP/p17\")\necho \"report-sha256=$REPORT_SHA256\" >> \"$GITHUB_OUTPUT\"\necho \"p17-run-attempt=$GITHUB_RUN_ATTEMPT\" >> \"$GITHUB_OUTPUT\"\n"
+}.freeze
+P17_VERIFY = 'node scripts/release-evidence.mjs verify "$RUNNER_TEMP/p17" "$RECORD_SHA256"'.freeze
+P17_UPLOAD = {
+  'uses' => 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
+  'if' => 'always()',
+  'with' => { 'name' => 'release-p17', 'path' => '${{ runner.temp }}/p17/', 'if-no-files-found' => 'error', 'overwrite' => true }
+}.freeze
 
 def steps(job)
   job.is_a?(Hash) && job['steps'].is_a?(Array) ? job['steps'] : []
@@ -60,7 +71,10 @@ def violations(doc)
     end
     out << "E2 #{name} cannot skip a gate" if job.key?('if') && !PUBLISH.key?(name)
     steps(job).each do |step|
-      out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || step.key?('if')
+      # Only this exact diagnostic upload may run after failure. The failed verify
+      # job still blocks every downstream publisher; its success record is not run.
+      evidence_upload = name == 'verify' && step == P17_UPLOAD
+      out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || (step.key?('if') && !evidence_upload)
       out << "E5 #{name} shell must fail fast" if step.key?('shell') && !%w[bash sh].include?(step['shell'])
       if step['uses']
         out << "S3 #{name} action must be SHA-pinned" unless step['uses'].match?(%r{\A[\w-]+/[\w./-]+@[a-f0-9]{40}\z})
@@ -111,6 +125,13 @@ def violations(doc)
     'record' => 'node scripts/release-record.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"'
   }
   required.each { |name, line| out << "K1 #{name} missing mandatory gate" unless steps(jobs[name]).any? { |s| s['run'] == line } }
+  out << 'K6 support history must be checked before any publishing dependency' unless steps(jobs['check']).any? { |s| s['run'] == 'node scripts/check-release-support.mjs' }
+  qualification = steps(jobs['check']).select { |s| s['run'] == 'node scripts/check-release-qualification.mjs' }
+  out << 'K9 exact release qualification must run before publishing' unless qualification.length == 1 && qualification.first['env'] == { 'GH_TOKEN' => '${{ github.token }}' }
+  %w[check record].each do |name|
+    checkout = steps(jobs[name]).select { |s| action(s) == 'actions/checkout' }
+    out << "K9 #{name} requires the tagged full history without credentials for the audit binding" unless checkout.length == 1 && checkout.first['with'] == { 'persist-credentials' => false, 'fetch-depth' => 0 }
+  end
   %w[pack verify].each do |name|
     out << "K2 #{name} must install locked dependencies with scripts off" unless steps(jobs[name]).any? { |s| s['run'] == 'bash scripts/install-deps.sh' }
     steps(jobs[name]).each do |s|
@@ -122,6 +143,26 @@ def violations(doc)
   end
   out << 'K4 pack must consume committed locks (no fresh resolution)' if steps(jobs['pack']).any? { |s| s.fetch('run', '').match?(/generate-lockfile|npm\s+install/) }
   out << 'K5 P17 must run before publishing' unless steps(jobs['verify']).any? { |s| s.fetch('run', '').lines.map(&:strip).include?('node scripts/verify-release-set.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"') }
+  verify_steps = steps(jobs['verify'])
+  # Pin the gate, success-only hash record, and final diagnostic upload together.
+  # This must not become a general exception for conditional or ignored gates.
+  p17_positions = verify_steps.each_index.select { |i| verify_steps[i]['run'] == P17_RUN }
+  uploads = verify_steps.select { |s| action(s) == 'actions/upload-artifact' }
+  retention = p17_positions.length == 1 && uploads == [P17_UPLOAD] && verify_steps[-1] == P17_UPLOAD &&
+              verify_steps[-2] == P17_RECORD && p17_positions.first == verify_steps.length - 3 &&
+              jobs['verify']['outputs'] == { 'report-sha256' => '${{ steps.record.outputs.report-sha256 }}', 'p17-run-attempt' => '${{ steps.record.outputs.p17-run-attempt }}' }
+  out << 'K7 exact final P17 upload must retain diagnostics after failure without changing the success proof' unless retention
+  record_steps = steps(jobs['record'])
+  downloads = record_steps.each_index.select { |i| action(record_steps[i]) == 'actions/download-artifact' && record_steps[i].dig('with', 'name') == 'release-p17' }
+  evidence_checks = record_steps.each_index.select { |i| record_steps[i]['run'] == P17_VERIFY }
+  writers = record_steps.each_index.select { |i| record_steps[i]['run'] == required['record'] }
+  anchored = downloads.length == 1 && evidence_checks.length == 1 && writers.length == 1 &&
+             downloads.first < evidence_checks.first && evidence_checks.first < writers.first &&
+             record_steps[downloads.first]['with'] == { 'name' => 'release-p17', 'path' => '${{ runner.temp }}/p17', 'digest-mismatch' => 'error' } &&
+             record_steps[evidence_checks.first]['env'] == { 'RECORD_SHA256' => '${{ needs.verify.outputs.report-sha256 }}' }
+  out << 'K8 record must authenticate the complete nested P17 tree against the verifier output before writing DS12' unless anchored
+  out << 'K9 DS12 must retain the verifier manifest identity' unless writers.length == 1 && record_steps[writers.first].dig('env', 'P17_MANIFEST_SHA256') == '${{ needs.verify.outputs.report-sha256 }}'
+  out << 'K9 DS12 must retain the verifier attempt on partial reruns' unless writers.length == 1 && record_steps[writers.first].dig('env', 'P17_RUN_ATTEMPT') == '${{ needs.verify.outputs.p17-run-attempt }}'
   out
 end
 
@@ -197,6 +238,7 @@ if ARGV.include?('--self-test') && errors.empty?
     ['a status failure ignored', 'E1', ->(d) { d['jobs']['verify']['continue-on-error'] = true }],
     ['skip P17', 'E2', ->(d) { d['jobs']['verify']['if'] = 'false' }],
     ['missing live CI check', 'K1', ->(d) { d['jobs']['check']['steps'].reject! { |s| s['run'] == 'node scripts/check-release-ci.mjs' } }],
+    ['missing support history check', 'K6', ->(d) { d['jobs']['check']['steps'].reject! { |s| s['run'] == 'node scripts/check-release-support.mjs' } }],
     ['no release record', 'K1', ->(d) { d['jobs']['record']['steps'].reject! { |s| s['run'] } }]
   ]
   ['if false; then CHECK; fi', 'exit 0\nCHECK', 'f() { CHECK; }', 'CHECK || true', '"set" +e\nCHECK'].each do |wrapper|

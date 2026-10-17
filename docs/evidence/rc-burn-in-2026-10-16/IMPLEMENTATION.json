@@ -1,0 +1,226 @@
+{
+  "base": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "scope": "L62 burn-in implementation and pre-publication D14/final provenance; not a completed audit or campaign",
+  "sources": [
+    {
+      "path": ".gitattributes",
+      "bytes": 11453,
+      "sha256": "14a054e58925b2cf39331b61c5af289c3843e29c4966f33e177020443762ec19"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 30736,
+      "sha256": "f576bbf199ccaa75409c17e4abc9256ad70a56c50a6fafbdc61d0511c55e2703"
+    },
+    {
+      "path": ".github/workflows/rc-burn-in.yml",
+      "bytes": 3127,
+      "sha256": "3bc8d6d55b281957dd694f5200d774dcd92ee6dc09f934a0516567163c24281f"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "bytes": 10455,
+      "sha256": "5cb2bd7c90f2a9fe7c1fb3ace42d6576c7475a4ac7281038ad31e6fe2fa61512"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 52632,
+      "sha256": "71bfa8fa79df3245876bee9563860315013e168480117f2a877eec116688fa64"
+    },
+    {
+      "path": "docs/release/RC-BURN-IN.md",
+      "bytes": 6601,
+      "sha256": "94862f8a65f8b5d86a04fa80ef416d9b3902ecb631d51cccc051118741d328a4"
+    },
+    {
+      "path": "e2e/fixtures/apps/lib/behaviours.mjs",
+      "bytes": 12960,
+      "sha256": "3f7cf6e82ee1a2302c18005c5288a7de4871e8a8bdbc3b103fd49ba9216eaf6d"
+    },
+    {
+      "path": "e2e/fixtures/apps/lib/check-identities.mjs",
+      "bytes": 1319,
+      "sha256": "3ae1af7610627fed84df671a1ac8df3772a20ef4c2dac6fffb829ac5b3bab943"
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "bytes": 5471,
+      "sha256": "68c81455290f299db56c084e7d53876e8386914394e428578a951899d2aaad9d"
+    },
+    {
+      "path": "scripts/check-release-qualification.mjs",
+      "bytes": 1494,
+      "sha256": "e1217cf9b043e2b1d6ebe0d03c8a522871ceb81b23b39c5ab10a76e604b06122"
+    },
+    {
+      "path": "scripts/check-release-workflow.rb",
+      "bytes": 19860,
+      "sha256": "1c0647c9f04ee7fab4203fe7cbf239bcc3927edca8a0e9719d740703d5d88c2a"
+    },
+    {
+      "path": "scripts/check-toolchain-policy.rb",
+      "bytes": 5748,
+      "sha256": "535adc33c8371109e593951528c19211e3e77d80da4176d1fa4ba698dc6a32a6"
+    },
+    {
+      "path": "scripts/release-audit.mjs",
+      "bytes": 7438,
+      "sha256": "26a4316e48e65c6899df1d8573d7aaced4f65d9bdf057601cacd5981c7add1df"
+    },
+    {
+      "path": "scripts/release-audit.test.mjs",
+      "bytes": 4731,
+      "sha256": "3bc4092b9ee09646bf7c5635631368b72e365f6d4a9d92035e68bf4b67e5ab4e"
+    },
+    {
+      "path": "scripts/release-burn-in-driver.test.mjs",
+      "bytes": 1456,
+      "sha256": "502fbd06a876856292d6dc36a4a6dba76b3f26f5669ba022d6c0074bc2373204"
+    },
+    {
+      "path": "scripts/release-burn-in-final.mjs",
+      "bytes": 10199,
+      "sha256": "eaaae17f96b6213ed73b24d3485129ec35e8fcd4e08e8aee9269a4a0d8fc497b"
+    },
+    {
+      "path": "scripts/release-burn-in-final.test.mjs",
+      "bytes": 6418,
+      "sha256": "728864afd97dd1ad4f7f7f5c3f600b143788eb164d4c4629a71cbaac236f4008"
+    },
+    {
+      "path": "scripts/release-burn-in-identities.mjs",
+      "bytes": 616,
+      "sha256": "b6da1b7b460c5644d4cd507e5e8e87716c34946cb09abbd798d8c4d6f752c5a1"
+    },
+    {
+      "path": "scripts/release-burn-in-inputs.mjs",
+      "bytes": 12763,
+      "sha256": "d3a1fb9ee2996608fed1a2f21d5c8d0124a06de391acfaf24c760f7dd627f1f3"
+    },
+    {
+      "path": "scripts/release-burn-in-inputs.test.mjs",
+      "bytes": 5856,
+      "sha256": "184ae7cbac61419bfdda7953f84cb5346248273ff4e5ee896752ebc3d685febe"
+    },
+    {
+      "path": "scripts/release-burn-in-report.mjs",
+      "bytes": 8867,
+      "sha256": "dfee8759c46ece04f6a150d87cf50cf1039779a38260f027e9937db74d92a2ef"
+    },
+    {
+      "path": "scripts/release-burn-in-report.test.mjs",
+      "bytes": 6718,
+      "sha256": "6c5252ef57ef35630f6f9afae54fff71bd2905ce26ccfafcf70e0d8ccd4f158c"
+    },
+    {
+      "path": "scripts/release-burn-in-stage.mjs",
+      "bytes": 6827,
+      "sha256": "5e5e185e429dfff6924d48224dc416b33ade86efe7faa1dacb02bec8c6922063"
+    },
+    {
+      "path": "scripts/release-burn-in-storage.mjs",
+      "bytes": 1657,
+      "sha256": "3a57fe94456771bc6b9a5a56ed749d3bb6bcead91722cc0f09f07529055bb852"
+    },
+    {
+      "path": "scripts/release-burn-in-storage.test.mjs",
+      "bytes": 1240,
+      "sha256": "ab79336ecc81c3e7852ff72da8918f41549ab530e95347678547da79a92406f9"
+    },
+    {
+      "path": "scripts/release-burn-in-workflow.test.mjs",
+      "bytes": 3049,
+      "sha256": "f4cdae812567543a80f85709af2a75a6863ffbdde2eb83a5574738c3d3657121"
+    },
+    {
+      "path": "scripts/release-burn-in.mjs",
+      "bytes": 14643,
+      "sha256": "e77a028ebf9867bc48ad783291e0178d7ea2d191a05547ef43d8222248bec7cc"
+    },
+    {
+      "path": "scripts/release-fixture-apps.mjs",
+      "bytes": 20196,
+      "sha256": "3923e218d6bbab117b9b044843b64aedd3caaa0f7a092022e2948c10d3e6643a"
+    },
+    {
+      "path": "scripts/release-owned-linux.py",
+      "bytes": 7620,
+      "sha256": "09e58a11afd38e978c581fe4192a5459847bc69d5d84616f67861c248c0d4d7c"
+    },
+    {
+      "path": "scripts/release-owned-linux.test.py",
+      "bytes": 4533,
+      "sha256": "5598e944eafb5f9c7a18c43d908c43a3bbaf55dd6fa199ac4e00fb6cd47fc4ab"
+    },
+    {
+      "path": "scripts/release-record-limits.mjs",
+      "bytes": 1502,
+      "sha256": "fe44cddfe35f35746135b948d320011c1ff879ad7da03990ac43fe32ca5399a9"
+    },
+    {
+      "path": "scripts/release-record.mjs",
+      "bytes": 10795,
+      "sha256": "bab69c87a47fd10501951002750669bd459df863443e7afa1e2534edfa886023"
+    },
+    {
+      "path": "scripts/release-record.test.mjs",
+      "bytes": 12375,
+      "sha256": "99e8012e65a449f3e2ec575e4918d6898e6f66895ee81ac4f7af7abff74c83a4"
+    },
+    {
+      "path": "scripts/release-skew-drill.mjs",
+      "bytes": 6110,
+      "sha256": "5e59fa2faa72350330f57ce86e2f937a82501855baf1eb6035f6792bec7a6384"
+    },
+    {
+      "path": "scripts/release-template-islands.mjs",
+      "bytes": 11485,
+      "sha256": "453ddecdfc14d7ee35468726ee4899cfb59fc7bcea84f3296d73d75ab3206f42"
+    },
+    {
+      "path": "scripts/release-unpack.py",
+      "bytes": 2542,
+      "sha256": "2a67506491eedb5d3f73111902a6eeadbf3cc27cf1d2edce018000e54ccd792d"
+    },
+    {
+      "path": "scripts/release-unpack.test.py",
+      "bytes": 2343,
+      "sha256": "11b5bcf75382b7f41aa50cd7bebe2b260dce19990a10ffad58403f8520d9d9b7"
+    },
+    {
+      "path": "scripts/release-workflow-evidence.test.mjs",
+      "bytes": 7273,
+      "sha256": "00aa1b45f224a7063bad9ee53068b0587e917652084cd11ed097b2e353eea528"
+    },
+    {
+      "path": "scripts/toolchain-policy.test.mjs",
+      "bytes": 7258,
+      "sha256": "85e93a6896b812d896a6454ef256a4f98b14cbda33f843a47ae3e3213b26f88e"
+    },
+    {
+      "path": "scripts/verify-release-set.mjs",
+      "bytes": 45681,
+      "sha256": "1bee3a9e0468589959526d18c027d1138af22bf349e8464568a2cf8ae0f8549f"
+    }
+  ],
+  "qualification": {
+    "node": {
+      "count": 46,
+      "passed": 46,
+      "durationMs": 5976.940958,
+      "log": "finite.log"
+    },
+    "safeUnpack": {
+      "count": 3,
+      "passed": 3,
+      "log": "unpack.log"
+    },
+    "linuxOwnership": "not executed on this Mac; mandatory Linux CI tests",
+    "packedSetup": "not executed; required before RC campaign",
+    "nightlyLockedASan": "not executed; FORMA-194 open",
+    "actualD14": "not performed",
+    "hourBurnIn": "not performed"
+  },
+  "sharedHelper": "release-record-limits.mjs copied byte-identically from agent2 in-progress source for finite controls; final independent review pending",
+  "postFiniteChanges": "unused imports removed; documentation, original/evidence archives, and their -text rules added; no producer or validation logic changed after the recorded finite batch"
+}

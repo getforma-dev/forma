@@ -2,6 +2,214 @@
 
 ## [Unreleased]
 
+- L-64: raise the enforced N2 Forma-code route ceiling from 28,000 to 28,100 gzip bytes for cooperative island activation, conditional on the full 20-run campaign satisfying the original 50 ms N3 task ceiling. Exact 28,100 acceptance and 28,101 refusal remain tested. Other route classifications, attribution, JavaScript ceilings and zero-JavaScript rules are unchanged; the historical 28,071/28,000 refusal is retained. No performance pass is inferred from this policy change.
+
+### N2 is 28,000 B (L-59)
+
+- The founder approved a one-time increase from 27,500 to **28,000 B gzip -9**
+  on 2026-10-15. The combined indexed-row and deployment-identity route measures
+  27,724 B with its representative fixture and safety checks intact; its Browser
+  mount measures 27,077 B. This changes the shared Forma-code ceiling only.
+  BUILD-819, printed/returned reports and size-report.json retain the same gate:
+  28,000 B passes, 28,001 B refuses before publication. Page/canvas JavaScript
+  ceilings, static zero-JavaScript policy and package-size gates are unchanged.
+
+### Lexical JSX SVG namespaces — FORMA-171
+
+- Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
+- Compiler and build loaders share the original source snapshot with adoption hooks and SSR/Browser entry ownership. Handwritten `h`, separate component bodies, custom JSX factories and the deferred dynamic SVG title adoption boundary keep their existing contracts.
+
+### Shared physical SSR and Browser entries — FORMA-186
+
+- A split build now gives an explicit Browser root that collides with an SSR client source its own entry identity. It keeps its mount while dependencies and core remain shared. Both role products use the compiler's same source snapshot, graph mapping, deployment identity and watch publication boundary.
+
+
+### Legacy import warning — FORMA-141
+
+- `formaAlias` still resolves bare `formajs` imports throughout 3.x. Each `build()`
+  call now warns once, on the console and in its result, listing the importing
+  source files and `@getforma/core` replacement. Subpaths, TypeScript-only imports
+  and re-exports are covered; duplicate imports and both identity passes share
+  one warning. No legacy import means no warning.
+### N2 is 28,000 B (L-59)
+
+- The founder approved a one-time increase from 27,500 to **28,000 B gzip -9**
+  on 2026-10-15. The combined indexed-row and deployment-identity route measures
+  27,724 B with its representative fixture and safety checks intact; its Browser
+  mount measures 27,077 B. This changes the shared Forma-code ceiling only.
+  BUILD-819, printed/returned reports and size-report.json retain the same gate:
+  28,000 B passes, 28,001 B refuses before publication. Page/canvas JavaScript
+  ceilings, static zero-JavaScript policy and package-size gates are unchanged.
+
+### Mandatory SSR admission — FORMA-101
+
+- Default SSR, legacy false flags and direct compiler builds all refuse unsupported native constructs. Complete per-entry diagnostic reports use error severity; failed production and watch cycles preserve the prior product. The published subset and catalogue live at `packages/compiler/docs/subset.md`.
+
+### The preview frame's runtime is minified in the application's output (FORMA-190)
+
+- With `previewFrame: true`, a production build writes core's
+  `dist/formajs-frame.global.js` into `dist/` **minified** (an esbuild
+  transform: whitespace and names, ES2022, no comments, deterministic) instead
+  of copying it unchanged. forma-server writes these bytes into every preview
+  document under `no-store`, so every load paid core's 164 KB readable file
+  (the A2 audit's F1); it is now about half that, and about 29 KB gzip against
+  39.6. Core's published file stays readable: the readable-distribution policy
+  holds for anything published to npm, so the saving is made here, in the
+  application's output. The transform runs before the hashing pass: the
+  `forma-runtime.<hash>.js` name, the manifest's SRI and the SHA-256
+  forma-server computes for the frame's policy are those of the bytes served.
+  `BUILD-806`'s check (`</script`, `<!--`, a carriage return, a NUL, not UTF-8,
+  empty) runs on core's file as before and again on the minified bytes.
+- **`BUILD-823`** is new: esbuild cannot parse core's frame runtime for ES2022
+  (a file something rewrote). It fails the build before anything is written,
+  strict mode or not.
+- The size report's **frame-document row** reports the served bytes and, in
+  `sourceRaw`, core's file before the build minified it.
+- **Watch mode copies core's bytes unchanged**, as before: a development
+  build, readable in the browser's tools.
+- Tests: `tests/preview-frame.test.ts` > "writes core's dist/formajs-frame.global.js minified as a hashed forma-runtime.<hash>.js, names it in the manifest's assets, and leaves core's file as published", "the minified runtime does what core's does, and two builds write the same bytes", "BUILD-823: a runtime that is not JavaScript the build can minify fails the build, naming it, and leaves the previous output as it was"; the frame e2e lane (`e2e/frame/`) asserts the served file is minified, named and listed by its own hash, embedded and allowed by forma-server, and run in Chromium under the hash-only policy.
+
+### Retention and the security mark — FORMA-186 (DR-29, L-25, L-16, SR45)
+
+- New `BuildConfig.previousDist`: the previous release's `dist/`, kept by the
+  application's pipeline. The build copies that release's own hashed assets into
+  the new `dist/`, listed in the manifest `{ immutable: true, retained: true,
+  integrity }`, so forma-server serves them as immutable and a tab one deploy old
+  still loads its chunks from the one `dist/` the application embeds. One
+  generation (what the previous release retained is not copied again); never
+  `manifest.json`, `sw.js`, `.ir` modules or non-immutable files; a file both
+  builds emit is the new build's own. Each copied file is checked against the
+  SHA-384 the previous manifest recorded: `BUILD-821` for a missing, linked,
+  altered or colliding file, `BUILD-820` for a path that is not a usable previous
+  release (missing, no manifest, another app, a dev build, flat-name violations,
+  overlapping `outputDir`). A schema-1 previous dist retains nothing and says so.
+  Copied before compression, inside the staging directory, so a failure leaves the
+  existing output untouched (L-21). The identity does not depend on it.
+- New `BuildConfig.security` and `FORMA_SECURITY_RELEASE=1`: a release marked
+  security retains nothing from `previousDist` (a `false` does not unmark it).
+  Both option names, and the environment variable, are approved (L-57).
+- `FORMA_SECURITY_RELEASE` is parsed as `FORMA_STRICT` is (trimmed, case-insensitive):
+  `1`/`true` marks, unset/empty/`0`/`false` does not, any other value fails the build
+  with `BUILD-822`, so a mark can never fail open. The previous `dist/` is trusted like
+  the source: the SHA-384 check catches damage or alteration, not a rewritten manifest.
+- Watch mode ignores both options, with a note.
+
+### N2 is 27,500 B (L-58)
+
+- The ceiling on Forma's code per route (`FORMA_CODE_CEILING_GZIP`, N2) is
+  **27,500 B gzip -9**, up from 25,500 B: the founder's decision L-58 (decision
+  brief commit `f27cce6`), one ceiling for all routes, 1 KB = 1,000 B. An island
+  holding a client `createList` loads 26,366 B of Forma code (FORMA-188's
+  `negative/list-island`), over the old figure and under the new. `BUILD-819`,
+  `size-report.json` (`ceilings.forma`, each route's `ceilings.forma`) and the
+  printed report read the constant; the page and canvas JavaScript ceilings (75
+  and 365 KiB) are unchanged. Not configurable.
+
+### The size report with route classes and ceilings — FORMA-190
+
+- **One report, extended.** The size report of FORMA-021 now classifies each
+  route (DR-35) and holds it to its class's ceilings, gzip -9 with 1 KB =
+  1,000 B and 1 KiB = 1,024 B: `no-interactive-region` (a server-rendered page
+  without an island, or a route that lists no script) ships no JavaScript, a
+  service worker counted; `islands` and `whole-page-mount` (a declared
+  `ssr: false` entry, or any route of an application built without `ssr`) carry
+  at most 25,500 B of Forma code (N2, unchanged) and at most 75 KiB of
+  JavaScript in all; a route declared `canvas: true` may ship 365 KiB. A route
+  over a ceiling fails the build with `BUILD-819`, now naming the route, its
+  class and each figure against its ceiling (the code is the same; its message
+  and catalogue entry cover the new ceilings).
+- `RouteMapping.canvas` (optional boolean) declares a route a canvas: a page
+  that hosts many modules. It raises only the JavaScript ceiling of a route that
+  has JavaScript; anything else but `true` or `false` is refused before the
+  build writes anything.
+- The generated `sw.js` counts as JavaScript in each route that lists a script
+  (forma-server registers it only on such pages) and is reported as a row of its
+  own. With `previewFrame`, a **frame document** row reports the runtime
+  forma-server inlines into every preview document (raw, gzip -9, Brotli; it is
+  not a route's and carries no ceiling here: core's package gate holds it).
+- **Written beside the manifest.** A production build writes `size-report.json`
+  next to `manifest.json` (and prints the report): the routes with class,
+  ceilings, files, Forma and application bytes and verdict, the worker, the
+  frame row. The file holds no clock reading, so the same sources are the same
+  bytes (the application embeds this directory); forma-server refuses to serve
+  it, as it refuses the manifest. The manifest does not list it.
+- **Build times** (N7) by phase (`bundle`, `hash`, `compress`, `manifest`) are
+  printed with the report and returned in `BuildResult.sizeReport.times`; they
+  are not in the file, for the same reason.
+- `BuildResult.sizeReport` is the whole report; `BuildResult.sizes` stays, the
+  same route objects, with the new fields `class`, `canvas`, `worker`,
+  `javascript`, `ceilings` and `exceeded` (`over` is true when `exceeded` is not
+  empty). Both are empty in watch mode.
+
+### BUILD-616 is mandatory — FORMA-181, FORMA-183 finding F1
+
+- The compiler's new BUILD-616 (a `createList` source that is provably not a function) is an
+  error in every mode, like BUILD-610 to BUILD-613.
+
+### The deployment identity — FORMA-186 (DR-29, L-6 as amended by L-56)
+
+- `manifest.build` (and `BuildResult.buildHash`) is now the build's deployment
+  identity: 16 lowercase hex characters, computed first from every output of a
+  first bundling pass (bundles, `.ir` modules, css entries, fonts) and the
+  writers' versions, before any file is named. It was a hash of the hashed
+  filenames. The same inputs give the same identity wherever they are built
+  (from the project root); an edit that changes no output byte changes nothing;
+  the previous `dist/` is not an input. `dev` in watch mode, as before.
+- The identity is compiled into every production bundle twice: the constant
+  `__FORMA_BUILD__` (esbuild `define`; what core compares with the page's
+  `data-forma-build`) and a `/*forma-build:<id>*/` banner in every JavaScript
+  output, so every deploy renames every bundle, including entries and lazy
+  chunks the change did not touch. A chunk that kept its name across deploys
+  now does not; a build's names are unique to the build.
+- Cost: one more bundling pass per production build; the SSR plugin's
+  "IR emitted" and "IR: ..." lines are printed once, as before.
+- **N2's figure rises.** The banner is Forma's code in the size report (the lead's
+  ruling: Forma's build writes it), and a 16-hex id does not compress: a route's
+  Forma figure rises by about 30 B gzip for each JavaScript file it loads cold, and a
+  route with none of core's bytes now reports the banner's 33 raw bytes. Measured on
+  the SSR lane's Counter (the minimal template's shape, whole-route gzip -9 of Forma
+  code): `/` 25,091 B to 25,120 B (+29), the client-rendered `/csr` 24,418 B to
+  24,451 B (+33), and the same page code-split into an entry and a chunk, 25,091 B
+  to 25,165 B (+74, two cold files). The minimal template's Counter route, 25,101 B
+  after FORMA-021's cuts, becomes about 25,130 B: its headroom under N2's 25,500 B
+  falls from 399 B to about 370 B.
+
+### The size report per route and N2's gate — FORMA-021
+
+- A production build reports, per route, what the route loads cold (its `js`
+  files and their `modulepreload` dependencies) in raw, gzip -9 and Brotli-11
+  bytes, with Forma's code (`@getforma/core` and `alien-signals` as bundled)
+  beside the application's own, attributed from the bundler's metafile
+  (`bytesInOutput`, Forma's share of the raw bytes applied to the compressed
+  size). The lines are printed after the bundle summary and returned as
+  `BuildResult.sizes`; a route with no JavaScript reports 0 bytes. Watch mode
+  reports nothing: its unminified bytes are not what a route ships.
+- **N2's gate** (decision brief L-55, DR-35's fallback): a route whose Forma
+  code is over **25,500 B gzip -9** (`FORMA_CODE_CEILING_GZIP`, 1 KB = 1,000 B)
+  fails the build with `BUILD-819`, naming each such route and its bytes,
+  before the manifest is written and the staging directory swapped in, so the
+  previous output stays as it was. The ceiling is not configurable. The
+  minimal template's Counter route measures 25,101 B after core's FORMA-021
+  cuts.
+- `BuildConfig.budgetThreshold`, the Brotli warning over a route's whole
+  payload (default 200 KB), is unchanged and separate: it is the application's
+  budget, N2 is Forma's.
+
+### Value rules 6 and 7 are mandatory refusals in the report — FORMA-182
+
+- The diagnostics report and `result.diagnostics` label `BUILD-614` (a boolean in text) and `BUILD-615` (a condition that is not boolean-typed) `error` with or without `--strict`, as they do `BUILD-610` to `BUILD-613`. The compiler refuses both whatever the mode, so a default build already failed on them, but its report and `--diagnostics-json` called them `warning`. Verified by `tests/strict.test.ts` > "reports BUILD-614 (a boolean in text) and BUILD-615 (a condition that is not boolean-typed) as errors, as BUILD-610 to 613 are".
+
+### Static SSR entry products — FORMA-105
+
+- Consume exact-result compiler products before publishing browser/native output. Keep the configured native route owner and IR when its reachable island set is empty; publish no JS or module preload for that route.
+- Retain active static/dynamic chunk closures, CSS/font resources and explicit non-static inlined resources. Watch commits candidate metadata only with the manifest and preserves old generation URLs through static/island transitions and failed publication.
+- Refuse contradictory extra native/script or server-inlined static route mappings with `BUILD-611`.
+
+### Paired publication — FORMA-103
+
+- Compile watched browser and native output together, including SSR-only and type-only dependencies. Publish immutable JS/chunk and SHA-256 IR generations, then switch the manifest by rename; retain older files for requests holding an earlier manifest.
+- Stage output and rollback failed replacements, validation or final manifest writes. Watch consumers must use manifest aliases, not stable entry or IR filenames. Production still promotes its complete staging directory.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

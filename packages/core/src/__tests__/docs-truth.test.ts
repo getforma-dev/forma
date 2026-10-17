@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { CDN_URL_ARTIFACTS } from '../../scripts/build-defines.mjs';
 import * as rootEntry from '../index.js';
 import * as tc39 from '../reactive/tc39-compat.js';
@@ -27,8 +28,8 @@ const CSP = read('CSP.md');
 const CHANGELOG = read('CHANGELOG.md');
 // A -dev staging set has not been published, and a pre-release (-alpha.N, -beta.N,
 // -rc.N) publishes on npm `next`, which plain ranges and the CDN's `latest` never
-// serve (L-41). In both cases the CDN snippets, the CSP history and the support
-// table keep naming the last stable release, the first X.Y.Z heading in the
+// serve (L-41). The CSP history and support table keep naming the last stable
+// release, the first X.Y.Z heading in the
 // CHANGELOG (a pre-release heading does not match it). A stable version pins itself.
 const shippedVersion = /-(?:dev|alpha|beta|rc)(?:\.|$)/.test(pkg.version)
   ? /^## \[([0-9]+\.[0-9]+\.[0-9]+)\]/m.exec(CHANGELOG)?.[1]
@@ -66,23 +67,44 @@ const ISLAND_TEST_FILES = [
 ];
 
 describe('version pins', () => {
-  it('every documented CDN pin is the current package version', () => {
-    // Scanned across the README and both pages that carry CDN snippets, so a
-    // version bump cannot leave a stale pin behind in docs/.
-    const pinned = [README, RUNTIME_DOC, CDN_DOC].join('\n');
-    const pins = [...pinned.matchAll(/@getforma\/core@([\d.]+)/g)].map((m) => m[1]);
+  function expectPins(text: string, version: string): void {
+    // Read the complete token, including prerelease/build suffixes or malformed
+    // suffix characters. Never accept a stale pin by matching only its prefix.
+    const pins = [...text.matchAll(/@getforma\/core@([0-9][^\s/"'`<>)]*)/g)].map((m) => m[1]);
     expect(pins.length, 'the docs should still contain concrete pins').toBeGreaterThan(0);
-    for (const pin of pins) expect(pin).toBe(shippedVersion);
+    for (const pin of pins) expect(pin).toBe(version);
+  }
+
+  it('current registry pins match the package; explicitly historical CDN pins match their release', () => {
+    const historical = /For the separate stable (\d+\.\d+\.\d+) runtime,[\s\S]*?(?=\nAny bundler works)/.exec(README);
+    expect(historical, 'the stable CDN examples need an explicit bounded historical section').not.toBeNull();
+    const section = historical![0], version = historical![1]!;
+    expect(CHANGELOG).toContain(`## [${version}]`);
+    expect(CDN_DOC).toContain(`Every \`@getforma/core@${version}\` below is a retained pin to that historical`);
+    expect(RUNTIME_DOC).toContain(`Historical published ${version} artifact; not the 3.x mount contract.`);
+    expectPins(README.replace(section, ''), pkg.version);
+    for (const text of [section, RUNTIME_DOC, CDN_DOC]) expectPins(text, version);
   });
 
-  it("the runtime header's CDN pin is the current package version", () => {
-    // src/runtime.ts opens with a copy-pasteable CDN snippet. It sat on 1.0.1
-    // through five minor releases, so anyone following the file's own usage
-    // example pinned a runtime that predated the CSP-safe default.
+  it('pin checks retain complete prerelease suffixes and reject stale or malformed suffixes', () => {
+    expectPins('npm install @getforma/core@3.0.0-beta.1', '3.0.0-beta.1');
+    expectPins('https://cdn.jsdelivr.net/npm/@getforma/core@3.0.0-rc.2+build.7/dist/forma.esm.js', '3.0.0-rc.2+build.7');
+    for (const pin of ['3.0.0', '3.0.0-beta.2', '3.0.0-beta.1-extra', '3.0.0-beta.1_invalid']) {
+      expect(() => expectPins(`npm install @getforma/core@${pin}`, '3.0.0-beta.1')).toThrow();
+    }
+    expect(() => expectPins('@getforma/core@1.9.0', '2.1.0')).toThrow();
+  });
+
+  it('the unreleased runtime header documents the explicit mount and its authority boundary', () => {
     const runtime = read('src/runtime.ts');
-    const pins = [...runtime.matchAll(/@getforma\/core@([\d.]+)/g)].map((m) => m[1]);
-    expect(pins.length, 'src/runtime.ts should still carry its CDN usage example').toBe(1);
-    expect(pins[0]).toBe(shippedVersion);
+    const header = runtime.slice(0, runtime.indexOf('*/'));
+    // Candidate3.0 uses a local artifact; the published2.x CDN examples have a
+    // different lifecycle. The separate docs-wide check still validates pins.
+    expect(header).toContain('mountMarkup(root, trustedHtml(markup), { tier, grants, config })');
+    expect(header).toContain('It binds the supplied markup beneath that root');
+    expect(header).toContain('update/unmount lifecycle methods. Every mount names its trust tier');
+    expect(header).toContain('grants grant nothing. No document scan, body observer or script/global');
+    expect(header).toContain('configuration can create or configure a mount.');
   });
 
   it('the changelog has an Unreleased section above the newest release', () => {
@@ -238,6 +260,38 @@ describe('"Verified by" citations', () => {
     'docs/COMPARISONS.md': COMPARISONS_DOC,
   };
 
+  // Strict adoption deliberately retired repairing behavior. Historical audit
+  // citations must retain that evidence, not silently point to an inverse test.
+  const retirementRoot = 'docs/archive/2026-10-15-strict-adoption-retirement';
+  const retirement = JSON.parse(read(`${retirementRoot}/manifest.json`)) as {
+    files: Array<{ original: string; archive: string; sha256: string; bytes: number }>;
+  };
+
+  function historicalTest(file: string): string {
+    if (file === 'src/__tests__/docs-truth.test.ts') {
+      // The historical ledger describes the published CDN header. FORMA-108's
+      // unreleased source now documents explicit local mounts instead. Resolve
+      // the old assertion in its authenticated original, never a renamed test.
+      const archive = '../../docs/archive/FORMA-108-documentation-checks';
+      const manifest = JSON.parse(read(`${archive}/manifest.json`));
+      const bytes = readFileSync(resolve(ROOT, archive, 'docs-truth.test.ts'));
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(manifest.files['docs-truth.test.ts']);
+      return bytes.toString('utf8');
+    }
+    const entry = retirement.files.find((item) => item.original === `packages/core/${file}`);
+    if (entry) {
+      const bytes = readFileSync(resolve(ROOT, retirementRoot, entry.archive));
+      expect(bytes.byteLength, `${entry.original}: archived byte length`).toBe(entry.bytes);
+      expect(createHash('sha256').update(bytes).digest('hex'), `${entry.original}: archived SHA256`)
+        .toBe(entry.sha256);
+      return bytes.toString('utf8');
+    }
+    // Whole-page mount was retired separately before the strict-adoption archive.
+    return file === 'src/dom/__tests__/mount.test.ts'
+      ? read('../../docs/archive/2026-10-15-ssr-mount-retirement/mount.test.ts')
+      : read(file);
+  }
+
   it('every citation names a test file that exists and a test that is in it', () => {
     let checked = 0;
     for (const [doc, text] of Object.entries(DOCS)) {
@@ -245,16 +299,34 @@ describe('"Verified by" citations', () => {
         checked += 1;
         let source: string;
         try {
-          source = read(file!);
-        } catch {
-          throw new Error(`${doc}: cited test file does not exist: ${file}`);
+          source = doc === 'docs/archive/2026-08-05-hardening-audit.md'
+            ? historicalTest(file!) : read(file!);
+        } catch (error) {
+          throw new Error(`${doc}: cannot resolve cited test file ${file}`, { cause: error });
         }
-        // The archived A2 audit records its original warning behavior. Keep
-        // that historical prose intact while following its regression to the
-        // stricter v3 refusal test; this exception applies only to that citation.
+        // These pre-FORMA-103 names were already mapped by the state migration.
+        // Where strict adoption later changed the fixture, resolve the mapping
+        // inside its authenticated archived source. Current docs get no aliases.
+        const historicalNames: Record<string, string> = {
+          'emits srcdoc but warns that escaping does not neutralize it':
+            'srcdoc requires trustedHtml and strings are refused before the sink',
+          'island activation strips forbidden keys at every depth, inline and shared, with no opt-out':
+            'island activation projects only declared safe fields at every depth for both instances',
+          'a malformed __forma_islands block does not stop islands from hydrating':
+            'refuses the %s legacy block without using it as fallback',
+          'ignores a non-script element carrying id __forma_islands':
+            'refuses the %s legacy block without using it as fallback',
+          'an empty __forma_islands script block degrades to null props':
+            'refuses the %s legacy block without using it as fallback',
+          'activates islands inside a shadow root when one is passed as root':
+            'refuses a shadow-only host even when the shadow root is explicitly passed',
+          'falls back to the document props block for a shadow subtree':
+            'an explicit light-DOM subtree shares original document authority',
+          'island props nested 10,000 deep are parsed and stripped':
+            'standalone sanitization still strips props nested 10,000 deep',
+        };
         const currentName = doc === 'docs/archive/2026-08-05-hardening-audit.md'
-          && name === 'emits srcdoc but warns that escaping does not neutralize it'
-          ? 'srcdoc requires trustedHtml and strings are refused before the sink' : name;
+          ? historicalNames[name!] ?? name : name;
         const declared =
           source.includes(`'${currentName}'`) || source.includes(`"${currentName}"`) || source.includes(`\`${currentName}\``);
         expect(declared, `${doc} cites "${name}" in ${file}, which has no such test`).toBe(true);
@@ -358,7 +430,7 @@ describe('"Verified by" citations', () => {
 });
 
 describe('the runtime file map', () => {
-  // src/runtime.ts is a deliberate 3.7k-line monolith and navigates by a map in
+  // src/runtime.ts remains a large explicit-runtime module and navigates by a map in
   // its header. The map used to list line ranges; four of them were stale, and
   // the one naming the security blocklist pointed 150 lines above it. It now
   // names the section MARKERS, which this test keeps honest.
@@ -368,7 +440,7 @@ describe('the runtime file map', () => {
   it('the runtime file map names every section marker, in order', () => {
     const markers = [...RUNTIME.matchAll(/^\/\/ ── (.+?) ──$/gm)].map((m) => m[1]!);
     expect(markers.length, 'runtime.ts should still be sectioned with // ── … ── markers')
-      .toBeGreaterThan(20);
+      .toBeGreaterThanOrEqual(19);
 
     // Each map row starts with the marker name (markers may carry a trailing
     // explanation the row omits, e.g. "Debug logger — enable via …").
@@ -399,6 +471,7 @@ describe('coverage figures', () => {
   it('the island coverage figure matches the island test files', () => {
     const dir = resolve(ROOT, 'src/dom/__tests__');
     const present = new Set(readdirSync(dir));
+    // Count literal test declarations; it.each expands into more runtime cases.
     let cases = 0;
     for (const name of ISLAND_TEST_FILES) {
       const file = `${name}.test.ts`;

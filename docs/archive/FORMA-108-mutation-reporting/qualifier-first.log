@@ -1,0 +1,30 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: expected assertion signature absent
+    at assertIntendedKill (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/scripts/qualify-runtime-migration.mjs:47:14)
+    at qualifyRuntimeMigration (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/scripts/qualify-runtime-migration.mjs:106:24)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/scripts/qualify-runtime-migration.mjs:134:18
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: "AssertionError: expected [ 'FORMA_E_UNRESOLVED' ] to deeply equal [ 'FORMA_E_UNRESOLVED', …(1) ]\n" +
+    '    at /Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/src/__tests__/runtime-tiered-mount.test.ts:692:39\n' +
+    '    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n' +
+    '    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n' +
+    '    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n' +
+    '    at new Promise (<anonymous>)\n' +
+    '    at runWithCancel (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n' +
+    '    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n' +
+    '    at new Promise (<anonymous>)\n' +
+    '    at runWithTimeout (file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n' +
+    '    at file:///Users/victorvillacis/dev/Forma/work/FORMA-108/forma/packages/core/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64',
+  expected: /FORMA_E_GRANT_DOM/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.0

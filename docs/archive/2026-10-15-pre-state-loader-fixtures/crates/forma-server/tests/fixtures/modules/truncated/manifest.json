@@ -1,0 +1,70 @@
+{
+  "aliases": {},
+  "app": "ledger",
+  "assets": {
+    "app.js": {
+      "immutable": false,
+      "integrity": "sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
+    },
+    "header.ir": {
+      "immutable": false,
+      "integrity": "sha384-pzRWUvqj6y02UcI69kLOR9ix9b860CwInlBGc7rIMpBOFuk9IV4+7+oqFK90JKEL"
+    },
+    "page.0f0f.ir": {
+      "immutable": false,
+      "integrity": "sha384-qQtXZrJ4d/Jzdol9HkgUqKe2D6qEkGfr7KfwYAwrck9zTmF30ySPL4OPAXrPNFXI"
+    },
+    "tail.ir": {
+      "immutable": false,
+      "integrity": "sha384-ADCBIHDnokIKis9hNhXvIC5Oo7HkObtJdYCnEFwBuvIdjQwmlpc7SYc8IiklnZdU"
+    }
+  },
+  "build": "fixture",
+  "routes": {
+    "/": {
+      "budget_warn_threshold": 0,
+      "css": [],
+      "fonts": [],
+      "ir": "page.0f0f.ir",
+      "js": [
+        "app.js"
+      ],
+      "mode": "ssr",
+      "total_size_br": 0
+    },
+    "/app": {
+      "budget_warn_threshold": 0,
+      "css": [],
+      "fonts": [],
+      "js": [
+        "app.js"
+      ],
+      "mode": "browser",
+      "total_size_br": 0
+    },
+    "/header": {
+      "budget_warn_threshold": 0,
+      "css": [],
+      "fonts": [],
+      "ir": "header.ir",
+      "js": [
+        "app.js"
+      ],
+      "mode": "ssr",
+      "total_size_br": 0
+    },
+    "/tail": {
+      "budget_warn_threshold": 0,
+      "css": [],
+      "fonts": [],
+      "ir": "tail.ir",
+      "js": [
+        "app.js"
+      ],
+      "mode": "ssr",
+      "total_size_br": 0
+    }
+  },
+  "version": 2,
+  "writer": "3.0.0"
+}

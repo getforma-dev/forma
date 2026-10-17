@@ -124,7 +124,11 @@ pub struct AssetManifest {
     pub writer: String,
     /// Application identity; the same grammar as the worker namespace.
     pub app: String,
-    /// Opaque build identifier. Deployment identity is owned by FORMA-186.
+    /// The build's deployment identity (FORMA-186, DR-29): `@getforma/build` computes
+    /// it from the build's own outputs and compiles it into every bundle, and this
+    /// server writes it on the page's root as `data-forma-build`, where core
+    /// compares it with its bundle's before it activates anything. Opaque here: any
+    /// non-empty string, written escaped.
     pub build: String,
     /// Logical names mapped to emitted filenames.
     pub aliases: HashMap<String, String>,
@@ -141,7 +145,9 @@ pub struct AssetMetadata {
     pub immutable: bool,
     /// Canonical SHA-384 of uncompressed final bytes (`sha384-` and 64 base64 characters).
     pub integrity: String,
-    /// Metadata for a retained asset; retention discovery belongs to FORMA-186.
+    /// A file of the previous release that the build copied in for tabs still open on
+    /// it (FORMA-186, DR-29, L-25). It is served as any immutable asset is, and a
+    /// retained entry that is not immutable is refused at start.
     #[serde(default)]
     pub retained: bool,
 }
@@ -161,7 +167,8 @@ pub enum RouteMode {
 pub struct RouteAssets {
     /// Explicit browser or server rendering, independent of file availability.
     pub mode: RouteMode,
-    /// JS modules for this route, in load order.
+    /// JS modules for this route, in load order. An empty list on an SSR route
+    /// declares static output: no island definitions or module preloads.
     pub js: Vec<String>,
     /// Stylesheets for this route.
     pub css: Vec<String>,
@@ -177,6 +184,13 @@ pub struct RouteAssets {
     /// Required for SSR, absent for an intentional browser route.
     #[serde(default)]
     pub ir: Option<String>,
+}
+
+impl RouteAssets {
+    /// A native route whose accepted product publishes no browser entry.
+    pub(crate) fn is_static_ssr(&self) -> bool {
+        self.mode == RouteMode::Ssr && self.js.is_empty()
+    }
 }
 
 impl<'de> Deserialize<'de> for AssetManifest {
@@ -295,6 +309,11 @@ impl AssetManifest {
                     "MANIFEST-103 invalid SHA-384 integrity for {name:?}"
                 ));
             }
+            if meta.retained && !meta.immutable {
+                return Err(format!(
+                    "MANIFEST-103 retained asset {name:?} must be immutable: a retained file is the previous release's, served as a content-named asset"
+                ));
+            }
         }
         for (alias, file) in &self.aliases {
             if !filename(alias) || !self.assets.contains_key(file) {
@@ -311,6 +330,9 @@ impl AssetManifest {
                 (RouteMode::Ssr,Some(file)) if file.ends_with(".ir")=>{},
                 (RouteMode::Browser,None)=>{},
                 _=>return Err(format!("MANIFEST-103 route {pattern}: ssr requires an .ir module; browser must not declare one")),
+            }
+            if route.is_static_ssr() && !route.modulepreload.is_empty() {
+                return Err(format!("MANIFEST-103 route {pattern}: static SSR must not declare module preloads without a JavaScript entry"));
             }
             for file in route
                 .js

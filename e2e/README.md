@@ -6,10 +6,25 @@ Browser-level verification of the entire Forma pipeline. Tests run in a real Chr
 
 | Test Group | Tests | What It Verifies |
 |------------|-------|-----------------|
-| **HTML Runtime** | 8 | data-text, data-on:click, data-model, data-show, data-class, data-computed, $refs |
+| **HTML Runtime** | 9 | data-text, data-on:click, data-model, data-show, data-class, data-computed, $refs, explicit root ownership and handle disposal |
 | **Programmatic h() API** | 2 | createSignal + h() + mount() renders DOM, signals update reactively |
 | **Reviewed template path** | 3 | template(trustedHtml()) + cloneNode() creates working DOM with reactive effects |
 | **Cross-cutting** | 2 | No console errors on page load, all three approaches coexist |
+
+The runtime fixture's application script explicitly calls `mountMarkup()` with
+its reviewed subtree and retains the handle. It grants no fetch, outside-DOM or
+navigation access. Loading the runtime bundle does not bind directives; a
+deliberately unowned sibling remains inert, and disposing the handle stops the
+owned controls. The component `mount()` tests remain a separate public API.
+The prior auto-binding fixture and its nine actual CI failures are preserved in
+[`docs/archive/FORMA-108-root-full-stack/`](../docs/archive/FORMA-108-root-full-stack/).
+
+Run this static fixture in all three engines after syncing the current bundles:
+
+```bash
+bash e2e/sync-fixtures.sh
+npx playwright test --config e2e/full-stack.config.ts --workers=2
+```
 
 ## The SSR lane: compiler, forma walker, FormaJS (`e2e/ssr/`)
 
@@ -17,13 +32,17 @@ Browser-level verification of the entire Forma pipeline. Tests run in a real Chr
 exercises the whole Phase 2 chain, one page per case in `e2e/ssr/cases/`:
 
 1. `e2e/ssr/build-cases.mjs` builds each case with `@getforma/build` (`ssr: true`)
-   from this working tree, and fails unless the served `.ir` is byte-identical to
-   what `generateRealIr` emits (no silent placeholder) and the islands are the
-   ones the case declares.
+   from this working tree, its one `app.tsx` declared twice as an application
+   declares a page in both modes: route `/` server-rendered, and route `/csr`
+   an explicit Browser route (`ssr: false`). It fails unless the served `.ir` is
+   byte-identical to what `generateRealIr` emits (no silent placeholder), the
+   islands are the ones the case declares, a page with islands ships exactly
+   its own script and a page with none ships no script.
 2. `e2e/ssr/render/` (Rust) renders each page with forma's real walker and page
-   template, `forma_server::render_page`, from a forma checkout: `index.html`
-   (Phase 2, slots from the case's `slots.json`) and `csr.html` (the same build,
-   client-rendered), each with the response headers `render_page` produced.
+   template through the typed Pages API: `index.html` (Phase 2, props from the
+   case's `slots.json`) and `csr.html` (Phase 1, the `/csr` route's shell, which
+   the entry's `mount()` fills from an empty `#app`), each with the response
+   headers the server produced.
 3. `e2e/ssr/serve.mjs` serves them on port 3458 with those headers (the page's
    own CSP nonce), and Playwright reads the parsed DOM, live control values and
    `FormData` before JavaScript, after activation and after interaction.
@@ -37,20 +56,69 @@ When the fix lands, Playwright reports an unexpected pass and the job goes red
 until that line is removed. `ledger-arrival` is the positive fixture: Ledger's
 pattern of seeding an island's signals from its props before the component runs.
 
+Since 3.0.0 (FORMA-105, DR-6) every entry has the one shape the compiler
+accepts (`BUILD-611`, [`docs/DIAGNOSTICS.md`](../docs/DIAGNOSTICS.md)): a
+standalone literal `activateIslands({ ... })` and a standalone top-level
+`mount()`. The compiler selects the page through the mount and removes it from
+the `/` route's browser product, which activates the registered islands alone;
+a page with no island loads no JavaScript. `mount()` no longer adopts a
+server-marked root (`FORMA_E_MOUNT_SSR`), so each case's interactive subtree is
+an island seeded from declared props, and `root-fragment` is a static page. The
+`/csr` build of the same entry keeps the mount. Activation is observed as core
+documents it ([`ISLANDS.md`](../packages/core/docs/ISLANDS.md), "Strict
+activation"): a successful island makes no DOM write, so `data-forma-status`
+stays `pending`; the spec waits for the module to run, requires no host in
+`error` and no `forma:error` event; that row cannot tell a silent no-op from
+success, so each behaviour test exercises the island through a reactive reader
+(a text the island's signal drives, or a control it updates). The lane's pre-3.0.0 shape is kept under
+[`docs/archive/2026-10-15-islands-only-e2e/`](../docs/archive/2026-10-15-islands-only-e2e/).
+
 | Case | What it pins | Today |
 |------|--------------|-------|
-| `generic-state` | server value 7 survives activation of a `mount()` root | expected-fail, FORMA-103 / FORMA-104 |
-| `root-fragment` | a root JSX Fragment's button works after Phase 2 activation | passes (flipped by FORMA-003) |
-| `textarea-child`, `title` | no marker text before JavaScript | passes (flipped by FORMA-002) |
-| `textarea-value` | value before JavaScript (FORMA-002); live value after activation and client-rendered (FORMA-003) | passes (flipped by both) |
-| `select` | `b` selected and submitted before JavaScript (FORMA-002), after activation and client-rendered (FORMA-003) | passes (flipped by both) |
-| `edited-controls` | text, checkbox and option edited before activation survive it | passes (fails with formajs `042e353`) |
+| `generic-state` | the server value 7 survives activation of the `Counter` island, and it counts on | passes (FORMA-103) |
+| `root-fragment` | a page with no island: the walker renders a root JSX Fragment's children; no script is served and the button is inert (DR-6); client-rendered, the button works | passes |
+| `textarea-child`, `title` | no marker text before JavaScript (FORMA-002); live text after the island activates | passes |
+| `textarea-value` | value before JavaScript (FORMA-002); live value after activation and client-rendered (FORMA-003) | passes |
+| `select` | `b` selected and submitted before JavaScript (FORMA-002), after activation and client-rendered (FORMA-003) | passes |
+| `edited-controls` | text, checkbox and option edited before the island activates survive it (DR-5, FORMA-104) | passes |
 | `ledger-arrival` | seeded values survive activation; Retry runs | passes |
 | `browser-only` | a `browserOnly()` component: the server sends its empty host with its declared props, the browser renders it there and it works; client-rendered it renders as any component (FORMA-119) | passes |
 
+### Keyed product qualification (FORMA-181 D)
+
+`keyed-moves` is a typed native product: Rust passes three declared rows through
+`Pages`, the compiler emits the island registration and native key metadata, and
+the production browser bundle activates that server markup. Its test holds the
+module, verifies real keys/state/control values, then requires zero initial writes
+and retained row/input identity. F2 rotates the focused first row to the end with
+exactly one removal and insertion; backward selection, typing and the row's click
+listener remain attached to that key.
+
+Run the dedicated product checks in all three engines:
+
+```bash
+CARGO_BUILD_JOBS=3 FORMA_SSR_PROFILE=release bash e2e/ssr/build.sh
+FORMA_SSR_PROFILE=release node e2e/ssr/keyed-products-evidence.mjs
+npx playwright test --config e2e/ssr/keyed-products.config.ts --workers=2
+```
+
+`FORMA_SSR_PROFILE` defaults to `debug` and accepts `release`. The product check
+uses release because the server deliberately emits an endpoint-less Trusted Types
+report-only header in debug, which WebKit reports as a configuration error. The
+production enforced CSP and zero-console-error assertions remain intact.
+
+`out/keyed-products-evidence.json` records the source commit, Node/native profile,
+source/compiler/runtime/native/browser/HTML/header hashes, the native state and the
+emitted registration contract; `out/keyed-products.dump` is the actual native dump.
+The script requires current compiler IR to match the built/served bytes and the
+native state to match the declared Rust inputs. HTML includes a per-render nonce,
+so its hash records that run. This qualifies row movement through actual products;
+it does not measure or claim the separate N3 indexed replacement requirement.
+
 The table "every case is server-rendered and activates" adds the shared
-controls for every case: the walker's HTML, activation, the Phase 1 mount, and
-no console error.
+controls for every case: the walker's HTML; island activation, or for a static
+page no script referenced or requested; the Phase 1 mount; and no console
+error.
 
 The SSR server listens on port 3458, or on `FORMA_SSR_E2E_PORT` when set.
 Playwright reuses a server already on that port, which may be another clone's,
@@ -74,15 +142,17 @@ runtime):
    (`e2e/frame/build-app.mjs`): `out/dist-on` with `previewFrame: true`,
    `out/dist-off` without it, and `out/dist-tampered`, dist-on with a
    `</script>` appended to its runtime. The script fails unless the build's
-   `forma-runtime.<hash>.js` is core's `dist/formajs-frame.global.js` byte for
-   byte, and never core's `dist/forma-runtime.js`.
+   `forma-runtime.<hash>.js` is core's `dist/formajs-frame.global.js` minified
+   (FORMA-190: the application's output carries the small file, core's own
+   stays as published and readable, and the file is named by its own hash and
+   listed with its own SRI), and never core's `dist/forma-runtime.js`.
 2. `e2e/frame/server/` (Rust) is a small forma-server application from a
    forma checkout that embeds the three outputs at compile time and, at start,
    calls `PreviewFrame::load` on each as an application does; it serves the
    frame (`PageResponse::frame` from dist-on) and a host page that frames it
    as forma-server's `frame` module docs prescribe.
 3. The spec starts the server on a free port (so clones never meet) and checks
-   that forma-server accepts dist-on's runtime and hashes core's bytes; that in
+   that forma-server accepts dist-on's runtime and hashes the bytes served; that in
    Chromium, under the frame's hash-only policy, the runtime answers `ready`
    and mounts a module sent over the port, in tier (c), with an opaque origin
    and no CSP violation; that dist-off is refused with FRAME-101 and
@@ -91,6 +161,18 @@ runtime):
 
 The spec fails, naming `build.sh`, when the lane is not built; running
 `e2e/full-stack.spec.ts` alone does not need it.
+
+## The parity lane: walker against core, state by state (`e2e/parity/`)
+
+FORMA-183's harness renders each corpus module at generated states through the
+server's typed path (`crates/forma-server/examples/parity_render.rs`) and
+through core in Chromium, compares the two parsed trees with transport removed
+(P1), and checks that the page's production entry activates its islands
+without a single DOM write (P2). Its own tests are a `node --test` suite with
+its own browser, not Playwright test files, so `playwright.config.ts` ignores
+the folder and `scripts/check.sh` runs them as their own step; the corpus run
+is CI's non-blocking `parity` job. [`e2e/parity/README.md`](parity/README.md) says what it compares,
+how states are generated, the corpus and its ratchet, and the stop rule.
 
 ## How to Run
 
@@ -112,6 +194,14 @@ This automatically:
 5. Starts the static server on port 3457 and the SSR server on port 3458 (the
    frame spec starts its own server on a free port)
 6. Runs the Playwright tests in headless Chromium
+
+The two FormaJS bundles in `e2e/fixtures/` exist only after step 2; git does
+not track them. Until 2026-10-15 it did, and the tracked copies predated
+`trustedHtml()` (FORMA-126), so `npx playwright test` run without the sync, or
+after a `git checkout -- e2e/fixtures`, failed the five template and
+cross-cutting cases with `trustedHtml is not a function` while a fresh sync
+passed them all. `full-stack.spec.ts` now refuses to run without the bundles
+and names the sync script.
 
 ### Custom FormaJS or forma path, or another SSR port
 
@@ -138,10 +228,10 @@ The GitHub Actions CI workflow runs E2E automatically on every push to main and 
 e2e/
 ├── fixtures/
 │   ├── full-stack.html              ← Test page with all three entry points
-│   ├── formajs-runtime.global.js    ← Auto-synced from formajs build
-│   ├── formajs.global.js            ← Auto-synced from formajs build
+│   ├── formajs-runtime.global.js    ← Written by sync-fixtures.sh; not tracked (a committed copy is only ever stale)
+│   ├── formajs.global.js            ← Written by sync-fixtures.sh; not tracked
 │   └── compiled-counter.js          ← Reviewed template/clone reference (the old JSX transform is retired)
-├── full-stack.spec.ts               ← 15 Playwright tests
+├── full-stack.spec.ts               ← 16 Playwright tests (one guards the synced bundles)
 ├── sync-fixtures.sh                 ← Builds FormaJS and copies dist files
 ├── ssr/
 │   ├── cases/<case>/app.tsx         ← One page per case (+ slots.json)
@@ -181,3 +271,12 @@ e2e/
 | "formajs-frame.global.js not found" | FORMAJS_DIR must be a FormaJS checkout with FORMA-128's frame runtime, built |
 | "@getforma/core depends on …, which e2e/frame/app/package-lock.json does not pin" | core gained or moved a dependency: add it to `e2e/frame/app/package.json`, run `npm install --package-lock-only` there, commit both |
 | "the lock file needs to be updated" (cargo, frame lane) | `cargo build --manifest-path e2e/frame/server/Cargo.toml` once, commit `e2e/frame/server/Cargo.lock` |
+
+## The fixture applications (`e2e/fixtures/apps/`)
+
+Three consumer-shaped applications (a household finance page, an authentication service's pages, a
+controller studio's check screen), each built in strict mode and served by forma-server through a
+`#[derive(PageProps)]` handler bound at start (FORMA-188). `e2e/fixtures/apps/build.sh` builds them from
+this working tree; `apps.spec.ts` starts each server and checks the values, strict adoption and
+behaviour of every page. P17 runs the same sources against the packed set. See
+[`fixtures/apps/README.md`](fixtures/apps/README.md).

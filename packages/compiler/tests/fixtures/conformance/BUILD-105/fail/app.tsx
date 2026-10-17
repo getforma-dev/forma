@@ -3,6 +3,6 @@ import { ROWS } from 'fixture-rows-package';
 
 mount(() => (
   <main>
-    {h('ul', null, ...ROWS.map((r) => h('li', null, r.name)))}{/* expect: BUILD-105 */}
+    {h('ul', null, ...ROWS.map((r) => h('li', null, r.name)))}{/* expect: BUILD-105; expect: BUILD-610 */}
   </main>
 ), '#app');

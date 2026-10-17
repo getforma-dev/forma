@@ -1,108 +1,99 @@
 import { describe, it, expect, vi } from 'vitest';
-import { applyDynamicProps } from '../hydrate';
-import { cleanup } from '../element';
+import { prepareAdoption } from '../adoption';
+import { h, cleanup } from '../element';
 
-// ---------------------------------------------------------------------------
-// C3: applyDynamicProps uses AbortController so cleanup(el) removes listeners
-// ---------------------------------------------------------------------------
+function target(tag = 'button'): Element {
+  const doc = document.implementation.createHTMLDocument();
+  const element = doc.createElement(tag);
+  doc.body.appendChild(element);
+  return element;
+}
 
-describe('applyDynamicProps — AbortController cleanup', () => {
-  it('hydrated event listeners fire before cleanup', () => {
-    const el = document.createElement('button');
-    const handler = vi.fn();
-
-    applyDynamicProps(el, { onClick: handler });
-
-    el.click();
-    expect(handler).toHaveBeenCalledTimes(1);
+// The retired applyDynamicProps/element-controller implementation is archived.
+// Strict listeners belong to the prepared owner; plan disposal is the boundary.
+describe('prepared adoption listener cleanup', () => {
+  it('hydrated event listeners fire only after commit', () => {
+    const el = target(), handler = vi.fn();
+    const plan = prepareAdoption(el, () => h('button', { onClick: handler }));
+    try {
+      el.dispatchEvent(new Event('click'));
+      expect(handler).not.toHaveBeenCalled();
+      plan.commit();
+      el.dispatchEvent(new Event('click'));
+      expect(handler).toHaveBeenCalledOnce();
+    } finally { plan.dispose(); }
   });
 
-  it('after cleanup(el), event listeners no longer fire', () => {
-    const el = document.createElement('button');
-    const handler = vi.fn();
-
-    applyDynamicProps(el, { onClick: handler });
-
-    // Listener fires before cleanup
-    el.click();
-    expect(handler).toHaveBeenCalledTimes(1);
-
-    // Cleanup removes the listener
-    cleanup(el);
-
-    // Listener should NOT fire after cleanup
-    el.click();
-    expect(handler).toHaveBeenCalledTimes(1);
+  it('after owner disposal, event listeners no longer fire', () => {
+    const el = target(), handler = vi.fn();
+    const plan = prepareAdoption(el, () => h('button', { onClick: handler }));
+    plan.commit();
+    el.dispatchEvent(new Event('click'));
+    expect(handler).toHaveBeenCalledOnce();
+    plan.dispose();
+    el.dispatchEvent(new Event('click'));
+    expect(handler).toHaveBeenCalledOnce();
   });
 
-  it('multiple event listeners on the same element share one AbortController', () => {
-    const el = document.createElement('div');
-    const clickHandler = vi.fn();
-    const mouseoverHandler = vi.fn();
-
-    applyDynamicProps(el, { onClick: clickHandler, onMouseover: mouseoverHandler });
-
-    // Both fire before cleanup
-    el.click();
+  it('one owner disposal revokes every adopted listener on the element', () => {
+    const el = target('div'), click = vi.fn(), mouseover = vi.fn();
+    const plan = prepareAdoption(el, () => h('div', { onClick: click, onMouseover: mouseover }));
+    plan.commit();
+    el.dispatchEvent(new Event('click'));
     el.dispatchEvent(new Event('mouseover'));
-    expect(clickHandler).toHaveBeenCalledTimes(1);
-    expect(mouseoverHandler).toHaveBeenCalledTimes(1);
-
-    // A single cleanup call removes both listeners
-    cleanup(el);
-
-    el.click();
+    expect(click).toHaveBeenCalledOnce();
+    expect(mouseover).toHaveBeenCalledOnce();
+    plan.dispose();
+    el.dispatchEvent(new Event('click'));
     el.dispatchEvent(new Event('mouseover'));
-    expect(clickHandler).toHaveBeenCalledTimes(1);
-    expect(mouseoverHandler).toHaveBeenCalledTimes(1);
+    expect(click).toHaveBeenCalledOnce();
+    expect(mouseover).toHaveBeenCalledOnce();
   });
 
-  it('shares AbortController with element.ts (same Symbol.for key)', () => {
-    const el = document.createElement('button');
-    const handler = vi.fn();
+  it('keeps ordinary h listener cleanup independent of an adopted owner', () => {
+    const ordinaryClick = vi.fn(), adoptedClick = vi.fn();
+    const ordinary = h('button', { onClick: ordinaryClick }), adopted = target();
+    const plan = prepareAdoption(adopted, () => h('button', { onClick: adoptedClick }));
+    try {
+      plan.commit();
+      ordinary.click();
+      adopted.dispatchEvent(new Event('click'));
+      expect(ordinaryClick).toHaveBeenCalledOnce();
+      expect(adoptedClick).toHaveBeenCalledOnce();
+      cleanup(ordinary);
+      ordinary.click();
+      adopted.dispatchEvent(new Event('click'));
+      expect(ordinaryClick).toHaveBeenCalledOnce();
+      expect(adoptedClick).toHaveBeenCalledTimes(2);
+      plan.dispose();
+      adopted.dispatchEvent(new Event('click'));
+      expect(adoptedClick).toHaveBeenCalledTimes(2);
+    } finally { cleanup(ordinary); plan.dispose(); }
+  });
 
-    applyDynamicProps(el, { onClick: handler });
-
-    // Verify the ABORT_SYM property exists on the element
-    const sym = Symbol.for('forma-abort');
-    expect((el as any)[sym]).toBeInstanceOf(AbortController);
-
-    // cleanup() from element.ts aborts the controller created by hydrate.ts
-    cleanup(el);
-
-    // Controller should be removed after cleanup
-    expect((el as any)[sym]).toBeUndefined();
-
-    // Listener should not fire
-    el.click();
+  it('owner disposal is idempotent', () => {
+    const el = target(), handler = vi.fn();
+    const plan = prepareAdoption(el, () => h('button', { onClick: handler }));
+    plan.commit();
+    plan.dispose();
+    expect(() => plan.dispose()).not.toThrow();
+    el.dispatchEvent(new Event('click'));
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('cleanup is idempotent — calling twice does not throw', () => {
-    const el = document.createElement('button');
-    const handler = vi.fn();
-
-    applyDynamicProps(el, { onClick: handler });
-
-    cleanup(el);
-    expect(() => cleanup(el)).not.toThrow();
-  });
-
-  it('element can receive new listeners after cleanup', () => {
-    const el = document.createElement('button');
-    const handler1 = vi.fn();
-    const handler2 = vi.fn();
-
-    applyDynamicProps(el, { onClick: handler1 });
-    el.click();
-    expect(handler1).toHaveBeenCalledTimes(1);
-
-    cleanup(el);
-
-    // Attach new listener after cleanup
-    applyDynamicProps(el, { onClick: handler2 });
-    el.click();
-    expect(handler1).toHaveBeenCalledTimes(1); // old handler still not called again
-    expect(handler2).toHaveBeenCalledTimes(1); // new handler fires
+  it('element can receive a new adopted owner after disposal', () => {
+    const el = target(), first = vi.fn(), second = vi.fn();
+    const one = prepareAdoption(el, () => h('button', { onClick: first }));
+    one.commit();
+    el.dispatchEvent(new Event('click'));
+    expect(first).toHaveBeenCalledOnce();
+    one.dispose();
+    const two = prepareAdoption(el, () => h('button', { onClick: second }));
+    try {
+      two.commit();
+      el.dispatchEvent(new Event('click'));
+      expect(first).toHaveBeenCalledOnce();
+      expect(second).toHaveBeenCalledOnce();
+    } finally { two.dispose(); }
   });
 });

@@ -3,6 +3,6 @@ const [tab] = createSignal('a');
 
 mount(() => (
   <main>
-    {createSwitch(() => tab(), [{ match: 'a', render: () => <p>a</p> }])}{/* expect: BUILD-703 */}
+    {createSwitch(() => tab(), [{ match: 'a', render: () => <p>a</p> }])}{/* expect: BUILD-703; expect: BUILD-610 */}
   </main>
 ), '#app');

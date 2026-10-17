@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 #[test]
 fn reviewed_v3_fixture_codes_are_exact() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fmir-v3");
-    let index = fs::read_to_string(root.join("window-expectations.tsv")).unwrap();
+    let index = fs::read_to_string(root.join("state-expectations.tsv")).unwrap();
     let mut checked = 0;
     for row in index.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
@@ -193,7 +193,7 @@ fn module_ceiling_is_checked_before_decoding_but_includes_its_boundary() {
 fn canonical_dump_losslessly_rebuilds_every_accepted_review_fixture() {
     use forma_ir::parser::test_helpers::build_ir_sections;
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fmir-v3");
-    let index = fs::read_to_string(root.join("window-expectations.tsv")).unwrap();
+    let index = fs::read_to_string(root.join("state-expectations.tsv")).unwrap();
     for row in index.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
         if fields[1] != "PASS" {

@@ -1,3 +1,5 @@
+import { h } from '../element.js';
+import { emptyRegistry, installState, useFreshDocument } from './helpers/compiled-island.js';
 // F1 (1.3.0): a second activateIslands() must not double-run/double-bind islands.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { activateIslands } from '../activate';
@@ -5,56 +7,59 @@ import { activateIslands } from '../activate';
 afterEach(() => { document.body.innerHTML = ''; });
 
 describe('activateIslands re-invocation guard (F1)', () => {
-  it('does not re-run a load island when activateIslands is called twice', () => {
+  it('does not re-run a load island when activateIslands is called twice', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Dup" data-forma-status="pending">' +
       '<span>x</span></div>';
-    const hydrateFn = vi.fn(() => null);
+    installState();
+    const hydrateFn = vi.fn(() => h('div', null, h('span', null, 'x')));
 
-    activateIslands({ Dup: hydrateFn });
+    await activateIslands(emptyRegistry({ Dup: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
-    expect(island.getAttribute('data-forma-status')).toBe('active');
+    expect(island.getAttribute('data-forma-status')).toBe('pending');
 
-    activateIslands({ Dup: hydrateFn });
+    await activateIslands(emptyRegistry({ Dup: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
-    expect(island.getAttribute('data-forma-status')).toBe('active');
+    expect(island.getAttribute('data-forma-status')).toBe('pending');
   });
 
-  it('does not attach duplicate handlers on re-activation', () => {
+  it('does not attach duplicate handlers on re-activation', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Btn" data-forma-status="pending">' +
       '<button>click</button></div>';
+    installState();
     let attachCount = 0;
-    const hydrateFn = vi.fn((el: HTMLElement) => {
-      const btn = el.querySelector('button')!;
-      btn.addEventListener('click', () => { attachCount++; });
-      return null;
+    const hydrateFn = vi.fn(() => {
+      return h('div', null, h('button', { onClick: () => { attachCount++; } }, 'click'));
     });
 
-    activateIslands({ Btn: hydrateFn });
-    activateIslands({ Btn: hydrateFn });
+    await Promise.all([
+      activateIslands(emptyRegistry({ Btn: hydrateFn })),
+      activateIslands(emptyRegistry({ Btn: hydrateFn })),
+    ]);
 
     const btn = document.querySelector('button') as HTMLButtonElement;
     btn.dispatchEvent(new Event('click', { bubbles: true }));
     expect(attachCount).toBe(1);
   });
 
-  it('re-activates a freshly re-rendered island (status reset to pending)', () => {
+  it('does not grant a second activation by resetting the public status attribute', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Fresh" data-forma-status="pending">' +
       '<span>x</span></div>';
-    const hydrateFn = vi.fn(() => null);
+    installState();
+    const hydrateFn = vi.fn(() => h('div', null, h('span', null, 'x')));
 
-    activateIslands({ Fresh: hydrateFn });
+    await activateIslands(emptyRegistry({ Fresh: hydrateFn }));
     expect(hydrateFn).toHaveBeenCalledTimes(1);
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     island.setAttribute('data-forma-status', 'pending');
 
-    activateIslands({ Fresh: hydrateFn });
-    expect(hydrateFn).toHaveBeenCalledTimes(2);
-    expect(island.getAttribute('data-forma-status')).toBe('active');
+    await activateIslands(emptyRegistry({ Fresh: hydrateFn }));
+    expect(hydrateFn).toHaveBeenCalledTimes(1);
+    expect(island.getAttribute('data-forma-status')).toBe('pending');
   });
 
   it('does not double-register a visible-trigger observer on re-invocation', () => {
@@ -66,13 +71,16 @@ describe('activateIslands re-invocation guard (F1)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Vis" data-forma-hydrate="visible"' +
       ' data-forma-status="pending"><span>x</span></div>';
-    const hydrateFn = vi.fn(() => null);
+    installState();
+    const hydrateFn = vi.fn(() => h('div', null, h('span', null, 'x')));
 
-    activateIslands({ Vis: hydrateFn });
-    activateIslands({ Vis: hydrateFn });
+    activateIslands(emptyRegistry({ Vis: hydrateFn }));
+    activateIslands(emptyRegistry({ Vis: hydrateFn }));
 
     expect(observe).toHaveBeenCalledTimes(1);
     expect(hydrateFn).not.toHaveBeenCalled();
     delete (globalThis as any).IntersectionObserver;
   });
 });
+
+useFreshDocument();

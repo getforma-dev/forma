@@ -1,0 +1,34 @@
+{
+  "rule": 4,
+  "title": "Dates as epoch milliseconds, no Intl on the server (FORMA-182; DR-9 rule 4, design 4 rule 4, design 3 line 91)",
+  "contract": "A date travels as a signed integer count of milliseconds since the Unix epoch, truncated toward zero to whole milliseconds, within plus or minus 8.64e15 (the range ECMAScript's TimeClip accepts); beyond it the render refuses with RENDER-403. The server never formats a date as text: a declared Date in a text position, bare or through String(), is a build error, so no locale, time zone or ICU table on the server can reach the page. Formatting is the component's, in the browser, from the number.",
+  "consumers": [
+    "crates/forma-ir/tests/page_props.rs > date_vectors_are_epoch_milliseconds_truncated_toward_zero (encode_props on SystemTime origins)",
+    "packages/compiler/tests/value-rule-4-dates.test.ts (a declared Date in text is refused)",
+    "packages/core/src/dom/__tests__/value-rule-4-dates.test.ts (new Date(ms).getTime() as the oracle for admission and truncation)"
+  ],
+  "note": "Hand-enumerated. `lexeme` is the exact signed decimal; `truncation` builds the instant from `sign`, whole `millis` and extra `nanos` so the sub-millisecond part is exact on both sides (the client parses sign * (millis + nanos / 1e6)).",
+  "epochMs": [
+    { "id": "epoch", "lexeme": "0", "admitted": true },
+    { "id": "before-epoch", "lexeme": "-1", "admitted": true },
+    { "id": "after-epoch", "lexeme": "1", "admitted": true },
+    { "id": "ordinary-instant", "lexeme": "1700000000000", "admitted": true },
+    { "id": "positive-limit", "lexeme": "8640000000000000", "admitted": true },
+    { "id": "negative-limit", "lexeme": "-8640000000000000", "admitted": true },
+    { "id": "positive-over", "lexeme": "8640000000000001", "admitted": false },
+    { "id": "negative-over", "lexeme": "-8640000000000001", "admitted": false },
+    { "id": "safe-integer-past-date-range", "lexeme": "9007199254740991", "admitted": false }
+  ],
+  "truncation": [
+    { "id": "sub-millisecond-dropped", "sign": 1, "millis": 1, "nanos": 999999, "expected": "1" },
+    { "id": "negative-toward-zero", "sign": -1, "millis": 1, "nanos": 999999, "expected": "-1" },
+    { "id": "just-under-one-millisecond", "sign": 1, "millis": 0, "nanos": 999999, "expected": "0" },
+    { "id": "negative-just-under-is-zero", "sign": -1, "millis": 0, "nanos": 999999, "expected": "0" },
+    { "id": "whole-milliseconds-kept", "sign": 1, "millis": 1700000000123, "nanos": 500000, "expected": "1700000000123" }
+  ],
+  "compiledText": [
+    { "id": "declared-date-in-text", "props": "{ when: Date }", "child": "props.when", "code": "BUILD-610" },
+    { "id": "string-of-declared-date", "props": "{ when: Date }", "child": "String(props.when)", "code": "BUILD-610" },
+    { "id": "declared-date-in-attribute", "props": "{ when: Date }", "attribute": "title", "value": "props.when", "code": "BUILD-610" }
+  ]
+}

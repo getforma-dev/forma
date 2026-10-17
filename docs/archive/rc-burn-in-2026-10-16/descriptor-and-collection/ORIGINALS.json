@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "sourceCommit": "8b1cd7fa1428fd760563f2694f33f3399c0531ae",
+      "sourcePath": "e2e/fixtures/apps/lib/behaviours.mjs",
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/e2e/fixtures/apps/lib/behaviours.mjs",
+      "bytes": 12960,
+      "sha256": "3f7cf6e82ee1a2302c18005c5288a7de4871e8a8bdbc3b103fd49ba9216eaf6d"
+    },
+    {
+      "sourceCommit": "8b1cd7fa1428fd760563f2694f33f3399c0531ae",
+      "sourcePath": "scripts/release-burn-in-setup.mjs",
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/scripts/release-burn-in-setup.mjs",
+      "bytes": 6361,
+      "sha256": "29b3c95cc80953a0cf458dd5776a8279aa03021d31f1d98b8627367bef0d08f8"
+    },
+    {
+      "sourceCommit": "8b1cd7fa1428fd760563f2694f33f3399c0531ae",
+      "sourcePath": "scripts/release-burn-in-stage.mjs",
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/scripts/release-burn-in-stage.mjs",
+      "bytes": 6968,
+      "sha256": "dee8c779bd71a2172e0c039ebfb1a57346cccf2309742ea21eaff052e02716f2"
+    },
+    {
+      "sourceCommit": "8b1cd7fa1428fd760563f2694f33f3399c0531ae",
+      "sourcePath": "scripts/release-burn-in.mjs",
+      "path": "docs/archive/rc-burn-in-2026-10-16/descriptor-and-collection/original/scripts/release-burn-in.mjs",
+      "bytes": 14643,
+      "sha256": "e77a028ebf9867bc48ad783291e0178d7ea2d191a05547ef43d8222248bec7cc"
+    }
+  ]
+}

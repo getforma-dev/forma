@@ -1,0 +1,24 @@
+[
+  {
+    "name": "fauth-three-engines",
+    "args": [
+      "npx",
+      "playwright",
+      "test",
+      "--config",
+      "../root-three-engine.config.mts",
+      "e2e/fixtures/apps/apps.spec.ts",
+      "--grep",
+      "fixture application fauth",
+      "--workers=2",
+      "--reporter=line,json",
+      "--output",
+      "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/tmp/product-browser-corrected/fauth-test-results"
+    ],
+    "cwd": "/Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma",
+    "startedAt": "2026-10-16T09:27:51.804Z",
+    "code": 1,
+    "signal": null,
+    "finishedAt": "2026-10-16T09:27:52.781Z"
+  }
+]

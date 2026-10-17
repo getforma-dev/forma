@@ -1,0 +1,54 @@
+{
+  "sourceCommit": "cf869f8302ea0a07d144f39b808a8452485df970",
+  "originalTestIntroduction": "431e54c355c5788c61c24c96bf6930f10f31cf36",
+  "failedRun": 38875500569,
+  "failedCheckout": "868cf5a3390fe39cc0371fe69e9a35a2bd1ca93d",
+  "artifactId": 12035740121,
+  "nativeProbe": {
+    "executions": 1,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "formaLoaded": false,
+    "exitCode": 0
+  },
+  "files": [
+    {
+      "file": "adoption-controls.spec.ts",
+      "bytes": 15406,
+      "sha256": "b3b855e01d294b3a0b17bfbfda16190dc36edf550fe0dea3df99bbfc932e7942"
+    },
+    {
+      "file": "failed-job.log",
+      "bytes": 233036,
+      "sha256": "4254f4649431bc79e11a4a2d2026fade1c71033f52c93c95dc167b4502cbddab"
+    },
+    {
+      "file": "e2e-results-webkit.zip",
+      "bytes": 4973,
+      "sha256": "d59c38f736e45b273697134d3e789a60d6f5023333960853cf957ad40b26ed49"
+    },
+    {
+      "file": "artifact-source.json",
+      "bytes": 157,
+      "sha256": "8d6e3727609eaae30c40b1f64e995e92bad5b12d135391da3a8ac0ae31ae8ad2"
+    },
+    {
+      "file": "native-defaults.mjs",
+      "bytes": 2737,
+      "sha256": "16ed3275957fa970b50347a2a4229a3aea0d6c105ca6e0b5b93362d3664318c9"
+    },
+    {
+      "file": "native-defaults.json",
+      "bytes": 5719,
+      "sha256": "3c587d12c9954035cbf595add457e9fb7f8ecc46d7cec980178691674a38ee80"
+    },
+    {
+      "file": "native-defaults.log",
+      "bytes": 2448,
+      "sha256": "29074cf574166c66ab30bc3541daa2ed369f626f5116c3c515ecf1bec7d2f0a7"
+    }
+  ]
+}

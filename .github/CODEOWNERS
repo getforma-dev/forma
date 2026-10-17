@@ -1,0 +1,12 @@
+# FORMA-116. L-60 defers live protection enforcement beyond 3.0; this mapping
+# alone does not require owner approval. See docs/governance/ROLLOUT.md.
+# Every change to this file is owned; the future enforced owner is the founder.
+/.github/ @Victor-Villacis
+/crates/forma-ir/src/walker.rs @Victor-Villacis
+/crates/forma-ir/src/text.rs @Victor-Villacis
+/crates/forma-server/src/csp.rs @Victor-Villacis
+/crates/forma-server/src/template.rs @Victor-Villacis
+/packages/core/src/security/url-safety.ts @Victor-Villacis
+/scripts/security-mutation-probes.py @Victor-Villacis
+/scripts/release-plane-* @Victor-Villacis
+/docs/governance/ @Victor-Villacis

@@ -1,0 +1,67 @@
+✔ nested P17 bytes survive recording and an artifact-copy verification while flat DS11 still refuses (45.981209ms)
+✔ authenticated evidence refuses same-length changed bytes (14.74525ms)
+✔ authenticated evidence refuses missing file (10.431667ms)
+✔ authenticated evidence refuses unlisted file (25.546584ms)
+✔ authenticated evidence refuses added empty directory (13.525958ms)
+✔ authenticated evidence refuses removed nested directory (11.444084ms)
+✔ untrusted manifest bytes fail authentication before JSON parsing or path use (13.4405ms)
+✔ even authenticated metadata refuses traversal (11.751333ms)
+✔ even authenticated metadata refuses absolute (13.904958ms)
+✔ even authenticated metadata refuses backslash (13.773958ms)
+✔ even authenticated metadata refuses hidden name (11.179ms)
+✔ even authenticated metadata refuses duplicate (10.829792ms)
+✔ even authenticated metadata refuses unsorted (13.755083ms)
+✔ even authenticated metadata refuses missing parent (11.9415ms)
+✔ even authenticated metadata refuses unknown fields (12.63775ms)
+✔ even authenticated metadata refuses wrong schema (11.641583ms)
+✔ even authenticated metadata refuses invalid length (13.556167ms)
+✔ even authenticated metadata refuses invalid hash (10.609625ms)
+✔ even authenticated metadata refuses reserved path (32.361583ms)
+✔ even authenticated metadata refuses excess entries (30.163542ms)
+✔ actual unsafe names are rejected rather than silently omitted (42.314708ms)
+✖ recording refuses empty directories and portable case collisions before writing a manifest (2.74725ms)
+✔ links at the root, in a directory or at a file never authorize reading outside evidence (9.063875ms)
+✔ a special file is refused without opening or blocking on it (8.31725ms)
+✔ manifest size is bounded before reading its body (16.624541ms)
+✔ a real file changing during streamed hashing refuses completion (13.244083ms)
+✔ the standalone deployment lock preserves pinned dependencies without unrelated workspace features (3.201541ms)
+✔ P17 refuses unknown deployment contracts before inspecting packages (6.155334ms)
+✔ the actual final packed call sequence finishes skew before a mandatory performance refusal (6.858542ms)
+✔ actual release workflow retains failed P17 bytes without changing publish success dependencies (136.340167ms)
+✔ release evidence refuses missing failure retention (116.668084ms)
+✔ release evidence refuses failure-only upload loses successful proof (100.984667ms)
+✔ release evidence refuses different evidence path (103.432916ms)
+✔ release evidence refuses different artifact name (104.182084ms)
+✔ release evidence refuses missing-file warning (96.882209ms)
+✔ release evidence refuses unpinned evidence action (102.02ms)
+✔ release evidence refuses upload before P17 (96.9085ms)
+✔ release evidence refuses duplicate evidence upload (99.801584ms)
+✔ release evidence refuses ignored P17 failure (104.107208ms)
+✔ release evidence refuses ignored verify failure (123.561625ms)
+✔ release evidence refuses success record runs after failure (103.074666ms)
+✔ release evidence refuses P17 condition skips verification (99.38025ms)
+✔ release evidence refuses P17 shell swallows failure (97.671958ms)
+✔ release evidence refuses record replaces proof hash (96.287083ms)
+✔ release evidence refuses success recorder falls back to flat DS11 tool (91.447ms)
+✔ release evidence refuses record job loses nested evidence verification (93.59125ms)
+✔ release evidence refuses record job trusts a different digest (98.253666ms)
+✔ release evidence refuses record job verifies a different path (94.779666ms)
+✔ release evidence refuses record job verifies after writing DS12 (106.650917ms)
+✔ release evidence refuses record job downloads evidence elsewhere (99.697834ms)
+✔ release evidence refuses record job falls back to flat verification (99.261333ms)
+✔ release evidence refuses publisher ignores failed needs (95.977666ms)
+✔ release evidence refuses publisher drops verify dependency (96.240791ms)
+ℹ tests 53
+ℹ suites 0
+ℹ pass 52
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2769.826125
+
+✖ failing tests:
+
+test at scripts/release-evidence.test.mjs:89:1
+✖ recording refuses empty directories and portable case collisions before writing a manifest (2.74725ms)
+  [SystemError [ERR_FS_EISDIR]: Path is a directory: rm returned EISDIR (is a directory) /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-p17-tree-oumOYy/p17/empty] { code: 'ERR_FS_EISDIR', info: { code: 'EISDIR', message: 'is a directory', path: '/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-p17-tree-oumOYy/p17/empty', syscall: 'rm', errno: 21 }, errno: 21, syscall: 'rm', path: '/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-p17-tree-oumOYy/p17/empty' }

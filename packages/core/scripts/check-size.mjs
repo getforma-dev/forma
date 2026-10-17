@@ -24,9 +24,31 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 /**
  * Gate definitions.
  *
- * The two entries that carry no HTML runtime keep the historical policy —
- * roughly 20% above the measured size, so ordinary growth is visible in review
- * before it trips.
+ * The two entries that carry no HTML runtime kept the historical policy,
+ * roughly 20% above the measured size, until 3.0.0's two accepted contracts
+ * outgrew it: strict adoption (DR-5, FORMA-104: +19,043 B gzip on the core
+ * entry) and the declared island state block (DR-4, FORMA-103: +3,620 B)
+ * took the entry from 29,515 to 47,546 B and the browser ESM bundle from
+ * 28,369 to 47,203 B against gates of 30,000 and 29,000 B. After the safe cuts
+ * of FORMA-021 (C1 to C3: development warnings folded at every site, the
+ * createShow/createSwitch tracing out, the duplicate-instance registry
+ * development-only) they measure 46,097 and 46,115 B, and both gates are
+ * ratcheted to 46,500 B under L-51 (decision brief L-55, 2026-10-15), the
+ * growth stated in the CHANGELOG under FORMA-103 and FORMA-104. Integrating
+ * FORMA-181 checkpoint C with FORMA-182 value rules measures 46,477 and
+ * 46,504 B. L-58 permits measured +300 B for these reviewed features, so
+ * those gates became 46,777 and 46,804 B (CHANGELOG, FORMA-181/182).
+ * The reviewed FORMA-186 deployment guard then measures 46,997 and 47,095 B;
+ * L-58 re-anchors the gates to measured +300 B: 47,297 and 47,395 B. Integrating the reviewed F5 text branches, checkpoint D
+ * row focus and INV1 policies measures 47,310 and 47,398 B; L-58 re-anchors
+ * these gates to measured +300 B: 47,610 and 47,698 B.
+ * The separately measured indexed-row stack was 47,994 and 48,148 B;
+ * its approved L-58 gates were 48,294 and 48,448 B. The reviewed FORMA-193
+ * cooperative activation stack measures 48,602 and 48,836 B; L-58 re-anchors
+ * these package gates to measured +300 B: 48,902 and 49,136 B. They are
+ * ratchets like the runtime gates below, not a budget: the budget is N2,
+ * Forma's code per route, which @getforma/build measures and fails
+ * (route-size.ts).
  *
  * The two RUNTIME bundles are deliberately tighter (~7%). They just absorbed
  * the largest single size change this package has taken: replacing the regex
@@ -40,10 +62,13 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * unremarked, so these two are set close to the measurement on purpose.
  *
  * Until 3.0.0 the two runtime gates are ratchets, not the size target
- * (decision brief L-51: N2 is, gated at 3.0.0): a change that passes one
- * raises it to its new measured size rounded up to the next 500 B, and its
- * CHANGELOG entry states the growth; a change that only refactors never
- * raises one. FORMA-132 (data-fetch's timeout) raised both, 34,000 to 34,500 B
+ * (decision brief L-51: N2 is, gated per route by @getforma/build's size
+ * report at 28,100 B gzip -9 of Forma code, L-64's amendment to DR-35): a
+ * change that passes one raises it to its new measured size rounded up to the
+ * next 500 B, and its CHANGELOG entry states the growth; a change that only
+ * refactors never raises one. FORMA-021's cuts put every runtime IIFE back
+ * under its unchanged gate (41,254, 40,175 and 39,603 B measured against
+ * 41,500, 40,500 and 40,000 B). FORMA-132 (data-fetch's timeout) raised both, 34,000 to 34,500 B
  * and 33,000 to 33,500 B (34,061 and 33,072 B measured). FORMA-028 and
  * FORMA-025 (core 2.1.0) raised them again, to 36,000 and 35,000 B (35,540
  * and 34,542 B measured). FORMA-126 and FORMA-127 (core 2.1.0: trustedHtml(),
@@ -64,7 +89,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 30000,
+    limit: 48902,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
@@ -74,7 +99,7 @@ export const GATES = [
   },
   {
     entry: 'dist/forma.esm.js',
-    limit: 29000,
+    limit: 49136,
     note: 'CDN browser ESM bundle (self-contained, inlines alien-signals)',
   },
   {
@@ -115,8 +140,9 @@ export function parseImportSpecifiers(code) {
   for (const m of code.matchAll(/^[ \t]*import\s*["']([^"']+)["']/gm)) found.add(m[1]);
   // Dynamic import with a literal specifier.
   for (const m of code.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)) found.add(m[1]);
-  // CommonJS require with a literal specifier.
-  for (const m of code.matchAll(/\brequire\s*\(\s*["']([^"']+)["']\s*\)/g)) found.add(m[1]);
+  // CommonJS require with a literal specifier. A member method such as
+  // `this.require("live")` is a state guard, not a module dependency.
+  for (const m of code.matchAll(/(?<![\w$]|\.\s*)require\s*\(\s*["']([^"']+)["']\s*\)/g)) found.add(m[1]);
   return [...found];
 }
 

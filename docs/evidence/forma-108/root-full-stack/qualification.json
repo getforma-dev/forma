@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "sourceCommit": "7f2b0b26b42fe729995ee92d4e8a1ad0a9f037a3",
+  "sourceClean": true,
+  "node": "v24.22.0",
+  "workers": 2,
+  "retries": 0,
+  "engines": [
+    "chromium",
+    "firefox",
+    "webkit"
+  ],
+  "freshBundleSource": "a8972d1aeba6d75db8fe029d70806fe54ca602ec",
+  "runtime": {
+    "bytes": 162173,
+    "sha256": "828ce6ac426cb7d4f996e8175ae8003014519aa431309e22dde4899543594259"
+  },
+  "componentBundle": {
+    "bytes": 211471,
+    "sha256": "787bad4556d1e73340fe3d6c058f9ee7fdf1a6968c8961122fb9a54b0951126b"
+  },
+  "sources": {
+    "e2e/full-stack.spec.ts": {
+      "bytes": 9126,
+      "sha256": "3b05b8143ce723d97919e537a6dfdd8527ea7d12b1cce8e793662b02bee65b8f"
+    },
+    "e2e/full-stack.config.ts": {
+      "bytes": 975,
+      "sha256": "95dce9eb9bb8611909635f7e1936f5d52587f6e2b8d479f3832bb73848854150"
+    },
+    "e2e/fixtures/full-stack.html": {
+      "bytes": 3635,
+      "sha256": "b2924c36a8ba39fca6345a1f4b2ba6d88c997f044097dee2e25efa01ad52ea19"
+    },
+    "e2e/fixtures/full-stack-runtime.js": {
+      "bytes": 380,
+      "sha256": "654597f2f27da8b76367dd4fd4ad402dce9e4dc61774c8205e31900300fcc13c"
+    },
+    "e2e/sync-fixtures.sh": {
+      "bytes": 2229,
+      "sha256": "975d087ad2de36d7ea26651fcfcb74ce8ed9f356ecccee6b65fa6488b64465c8"
+    }
+  },
+  "firstRun": {
+    "sourceCommit": "a8972d1aeba6d75db8fe029d70806fe54ca602ec",
+    "stats": {
+      "startTime": "2026-10-16T06:01:33.948Z",
+      "duration": 44419.143000000004,
+      "expected": 48,
+      "skipped": 0,
+      "unexpected": 3,
+      "flaky": 0
+    },
+    "allOriginalTestsPassed": true,
+    "failedOnlyNewDisposalControl": true,
+    "reportSha256": "8683d5b02f5415e96cd57e43c1d9146343e99de67bf2ca411475e814379b3a38"
+  },
+  "focusedCorrectedRun": {
+    "sourceCommit": "7f2b0b26b42fe729995ee92d4e8a1ad0a9f037a3",
+    "stats": {
+      "startTime": "2026-10-16T06:06:10.325Z",
+      "duration": 3621.558,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "reportSha256": "3e8768983b682fa2e3b65b9efe3a1cc105d83ae75f521861084f2408ba0662ca"
+  },
+  "qualification": "all 48 unchanged original tests plus all 3 corrected ownership/disposal cases passed across three engines; first invocation was 48/51, not wholly green"
+}

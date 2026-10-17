@@ -29,6 +29,22 @@ pub const MAX_KEY_SEGMENTS: usize = 32;
 pub const MAX_CONTROL_DEPTH: usize = 64;
 /// Shared limits: MAX_LIST_DEPTH.
 pub const MAX_LIST_DEPTH: usize = 4;
+/// Shared limits: MAX_CONTRACT_BYTES.
+pub const MAX_CONTRACT_BYTES: usize = 1048576;
+/// Shared limits: MAX_BINDING_RECORDS.
+pub const MAX_BINDING_RECORDS: usize = 65535;
+/// Shared limits: MAX_VALUE_DEPTH.
+pub const MAX_VALUE_DEPTH: usize = 64;
+/// Shared limits: MAX_PROP_PATH_SEGMENTS.
+pub const MAX_PROP_PATH_SEGMENTS: usize = 1024;
+/// Shared limits: MAX_CONSTANT_NODES.
+pub const MAX_CONSTANT_NODES: usize = 65535;
+/// Shared limits: MAX_CONSTANT_DEPTH.
+pub const MAX_CONSTANT_DEPTH: usize = 1024;
+/// Shared limits: MAX_CONSTANT_ARRAY_ELEMENTS.
+pub const MAX_CONSTANT_ARRAY_ELEMENTS: usize = 65535;
+/// Shared limits: MAX_ISLAND_STATE_BYTES.
+pub const MAX_ISLAND_STATE_BYTES: usize = 1048576;
 /// Shared crc: CRC_POLYNOMIAL.
 pub const CRC_POLYNOMIAL: u32 = 3988292384;
 /// Shared crc: CRC_CHECK_VALUE.
@@ -51,6 +67,8 @@ pub const SECTION_SOURCE_POSITIONS: u16 = 7;
 pub const SECTION_BUILD_IDENTITY: u16 = 8;
 /// Shared sections: SECTION_DEPLOYMENT.
 pub const SECTION_DEPLOYMENT: u16 = 9;
+/// Shared sections: SECTION_ISLAND_CONTRACTS.
+pub const SECTION_ISLAND_CONTRACTS: u16 = 10;
 /// Shared flags: SECTION_REQUIRED.
 pub const SECTION_REQUIRED: u16 = 1;
 /// Shared slot types: SLOT_TYPE_TEXT.
@@ -131,7 +149,9 @@ pub const OP_ISLAND_START: u8 = 11;
 pub const OP_ISLAND_END: u8 = 12;
 /// src_slot_id:u16 prop_str_idx:u32 target_slot_id:u16.
 pub const OP_PROP: u8 = 18;
-/// Operand shapes for the twelve assigned opcodes.
+/// source_slot:u16 fallback_slot:u16 destination_slot:u16.
+pub const OP_COALESCE: u8 = 19;
+/// Operand shapes for the assigned opcodes.
 pub const OPCODE_OPERANDS: &[(u8, &str)] = &[
     (1, "str_idx:u32 attr_count:u16 attrs:(key:u32,val:u32)[]"),
     (2, "str_idx:u32"),
@@ -145,6 +165,7 @@ pub const OPCODE_OPERANDS: &[(u8, &str)] = &[
     (11, "island_id:u16"),
     (12, "island_id:u16"),
     (18, "src_slot_id:u16 prop_str_idx:u32 target_slot_id:u16"),
+    (19, "source_slot:u16 fallback_slot:u16 destination_slot:u16"),
 ];
 /// Reserved opcode bytes, never reassigned.
 pub const RESERVED_OPCODES: [u8; 6] = [9, 13, 14, 15, 16, 17];

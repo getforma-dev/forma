@@ -35,6 +35,18 @@ describe('isDangerousUrl', () => {
     expect(isDangerousUrl('java script:alert(1)')).toBe(true);
   });
 
+  // FORMA-182 review S1: after rule-1 normalization a NUL would be U+FFFD,
+  // which the URL parser does not ignore, so `java\0script:` would resolve
+  // as a same-origin relative reference and be fetched. Refuse the raw NUL.
+  it('refuses a NUL anywhere in the value, not only in the scheme', () => {
+    expect(isDangerousUrl('java' + NUL + 'script:alert(1)')).toBe(true);
+    expect(isDangerousUrl('/images/a' + NUL + '.png', 'img')).toBe(true);
+    expect(isDangerousUrl('https://example.com/?q=' + NUL)).toBe(true);
+    expect(isDangerousUrl('/images/a�.png', 'img')).toBe(false);
+    expect(isUnsafeAttrWrite('img', 'src', '/images/a' + NUL + '.png')).toBe(true);
+    expect(isUnsafeAttrWrite('img', 'src', '/images/a.png')).toBe(false);
+  });
+
   it('allows ordinary URLs', () => {
     expect(isDangerousUrl('https://example.com')).toBe(false);
     expect(isDangerousUrl('/relative/path')).toBe(false);

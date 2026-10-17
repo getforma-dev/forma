@@ -8,6 +8,7 @@
  * worker generation, and budget warnings.
  */
 
+import {jsxNamespaceFallback} from './jsx-namespace.js';
 import * as esbuild from 'esbuild';
 import { generateManifest } from './manifest.js';
 import { BUILD_WRITER_VERSION, checkProjectCompatibility, requireCompatibleCompiler, resolveAppName } from './compatibility.js';
@@ -17,24 +18,27 @@ import { createHash } from 'node:crypto';
 import {
   cpSync,
   mkdirSync,
-  mkdtempSync,
   rmSync,
   readdirSync,
   readFileSync,
   writeFileSync,
   renameSync,
   statSync,
+  realpathSync,
   existsSync,
 } from 'node:fs';
 import { join, extname, basename, dirname, sep } from 'node:path';
-import { tmpdir } from 'node:os';
 import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { APP_NAME, serviceWorkerSource } from './service-worker.js';
 import { splitGraph, type SplitGraph } from './split-graph.js';
-import { createStagingDirectory, replaceDirectory, writeFileAtomic } from './output.js';
+import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } from './entry-products.js';
+import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
+import { computeIdentity, DEV_IDENTITY, identityBanner, type IdentityFile } from './identity.js';
+import { readPreviousDist, retainFrom, type PreviousRelease } from './retention.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
+import { REPORT_CEILINGS, formatSizeReport, frameSize, routeSizeFailure, routeSizes, serializeSizeReport, workerSize, type BuildTimes, type SizeReport } from './route-size.js';
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
@@ -47,6 +51,7 @@ import {
 
 import type {
   BuildConfig,
+  BuildEntry,
   BuildResult,
   AssetManifest,
   RouteManifest,
@@ -55,6 +60,43 @@ import type {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Run a bundling pass whose output is only read, without the SSR plugin's two
+ * kinds of line: "IR emitted" (console.log) and "IR: <code> ..." diagnostics
+ * (console.warn). The plugin prints them each time it compiles a page, and the
+ * identity's first pass (FORMA-186) compiles every page once more than the
+ * build reports. Only those lines are dropped, and one wrapper serves any
+ * number of passes running at once in a process, so nothing else is lost.
+ */
+let quietPasses = 0;
+let consoleOriginals: { log: typeof console.log; warn: typeof console.warn } | undefined;
+async function withoutIrChatter<T>(run: () => Promise<T>): Promise<T> {
+  if (quietPasses++ === 0) {
+    const original = (consoleOriginals = { log: console.log, warn: console.warn });
+    const drop = (args: unknown[], pattern: RegExp) => typeof args[0] === 'string' && pattern.test(args[0]);
+    console.log = (...args: unknown[]) => { if (!drop(args, /^\s+IR emitted \(/)) original.log.apply(console, args); };
+    console.warn = (...args: unknown[]) => { if (!drop(args, /^\s+IR: /)) original.warn.apply(console, args); };
+  }
+  try { return await run(); }
+  finally {
+    if (--quietPasses === 0) { console.log = consoleOriginals!.log; console.warn = consoleOriginals!.warn; consoleOriginals = undefined; }
+  }
+}
+
+/**
+ * `FORMA_SECURITY_RELEASE`, read as FORMA_STRICT is, but case-insensitive and trimmed:
+ * `1` or `true` marks the release; unset, empty, `0` or `false` leaves it unmarked; any
+ * other value fails the build (BUILD-822). A mark that fails open (`yes` read as off)
+ * would retain the revoked build's assets in a release that exists to remove them.
+ * Verified by: packages/build/tests/retention.test.ts > "reads FORMA_SECURITY_RELEASE as FORMA_STRICT is read, and refuses any other value (BUILD-822)"
+ */
+function securityFromEnvironment(raw: string | undefined): boolean {
+  const value = raw?.trim().toLowerCase();
+  if (value === undefined || value === '' || value === '0' || value === 'false') return false;
+  if (value === '1' || value === 'true') return true;
+  throw new Error(`BUILD-822 FORMA_SECURITY_RELEASE is ${JSON.stringify(raw)}: set it to 1 or true to mark a release that fixes a vulnerability, or unset it (0 and false also leave it unmarked)`);
+}
 
 /** Hash a file and return an 8-char hex prefix. */
 function contentHash(filePath: string): string {
@@ -298,6 +340,18 @@ function validateConfig(config: BuildConfig): void {
     );
   }
 
+  // The previous release and the security mark (FORMA-186): a JavaScript config is not
+  // type checked, and `security: 'false'` would otherwise mark a release.
+  // Verified by: packages/build/tests/retention.test.ts > "is checked as configuration: a path, and a boolean mark"
+  const previousDist: unknown = config.previousDist;
+  if (previousDist !== undefined && (typeof previousDist !== 'string' || previousDist === '')) {
+    problems.push(`previousDist is ${shown(previousDist)}: use the path of the previous release's dist/, or leave it out for a first deploy`);
+  }
+  const security: unknown = config.security;
+  if (security !== undefined && typeof security !== 'boolean') {
+    problems.push(`security is ${shown(security)}: use true to mark a release that fixes a vulnerability, or false`);
+  }
+
   for (const entry of config.entryPoints) {
     if (entryNames.has(entry.outfile)) problems.push(`entryPoints: duplicate outfile '${entry.outfile}'`);
     entryNames.add(entry.outfile);
@@ -350,6 +404,14 @@ function validateConfig(config: BuildConfig): void {
           `routes['${route}'].css names '${name}', but no cssEntry produces '${name}.css'`,
         );
       }
+    }
+    // A JavaScript config is not type checked: a string here would read as on.
+    // Verified by: packages/build/tests/route-size.test.ts > "refuses a canvas that is not a boolean before writing anything"
+    const canvas: unknown = mapping?.canvas;
+    if (canvas !== undefined && typeof canvas !== 'boolean') {
+      problems.push(
+        `routes['${route}'].canvas is ${shown(canvas)}: use true to declare the route a canvas (365 KiB of JavaScript instead of 75 KiB, N2), or leave it out`,
+      );
     }
   }
 
@@ -413,12 +475,16 @@ function printBundleSummary(metafiles: esbuild.Metafile[], assets: Record<string
 // Service Worker Generation
 // ---------------------------------------------------------------------------
 
-function generateServiceWorker(
+/** The worker's source: production, from the finished manifest; watch mode's network-only worker. */
+function workerSourceFor(
   config: BuildConfig,
   manifest: Pick<AssetManifest, 'app' | 'build' | 'assets'>,
   excludedFiles: string[] = [],
-): void {
-  const source = serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+): string {
+  return serviceWorkerSource({ ...manifest, development: config.watch === true, excludedFiles });
+}
+
+function generateServiceWorker(config: BuildConfig, source: string): void {
   writeFileAtomic(join(config.outputDir, 'sw.js'), source);
   console.log(`   SW generated: dist/sw.js (${config.watch ? 'network-only development' : 'verified on-demand assets'})`);
 }
@@ -454,11 +520,29 @@ const WATCH_RESOLUTION: Pick<esbuild.BuildOptions, 'conditions' | 'define'> = {
 };
 
 /**
+ * What compiling the deployment identity in adds to the esbuild options
+ * (FORMA-186, DR-29; L-6 as amended by L-56): the constant core compares the
+ * page's `data-forma-build` with, and, in a production build, a banner that
+ * puts the identity in every JavaScript output so that every deploy renames
+ * every bundle. Watch mode's identity is the constant `dev` and has no banner:
+ * a development build renames nothing.
+ * Verified by: packages/build/tests/identity.test.ts > "compiles the identity into the bundle as the constant core reads"
+ * Verified by: packages/build/tests/identity.test.ts > "watch mode's identity is dev, in the manifest and in the bundle, with no banner"
+ */
+function identityOptions(config: BuildConfig, identity?: string): Pick<esbuild.BuildOptions, 'define' | 'banner'> {
+  if (identity === undefined) return {};
+  return {
+    define: { ...(config.watch ? WATCH_RESOLUTION.define : {}), __FORMA_BUILD__: JSON.stringify(identity) },
+    ...(config.watch ? {} : { banner: { js: identityBanner(identity) } }),
+  };
+}
+
+/**
  * The esbuild options every bundle of a build shares. previewFrame's reading
  * of which core the bundles import (preview-frame.ts) bundles each entry in
  * memory with these same options, so its answer is the bundles'.
  */
-function sharedOptions(config: BuildConfig, compatibility?: () => void): Partial<esbuild.BuildOptions> {
+function sharedOptions(config: BuildConfig, compatibility?: () => void, identity?: string): Partial<esbuild.BuildOptions> {
   return {
     plugins: [serverDirectiveGuard(), ...(compatibility ? [compatibilityGuard(process.cwd(), compatibility)] : [])],
     bundle: true,
@@ -480,8 +564,9 @@ function sharedOptions(config: BuildConfig, compatibility?: () => void): Partial
     jsx: 'transform',
     jsxFactory: 'h',
     jsxFragment: 'Fragment',
-    // Watch mode is a development build (FORMA-169); production adds nothing.
+    // Watch mode is a development build (FORMA-169).
     ...(config.watch ? WATCH_RESOLUTION : {}),
+    ...identityOptions(config, identity),
   };
 }
 
@@ -495,110 +580,14 @@ type SsrPluginFactory = (opts: {
   page: string;
   outDir: string;
   entryPoint?: string;
+  clientEntryPoint?: string;
+  browserEntryPoints?: readonly { path: string; entryPoint: string }[];
   strict?: boolean;
   onDiagnostics?: (diagnostics: CompilerDiagnostic[], page: string) => void;
 }) => esbuild.Plugin;
 
 /** What every SSR plugin instance of one build is given besides its page. */
 type SsrPluginShared = Pick<Parameters<SsrPluginFactory>[0], 'strict' | 'onDiagnostics'>;
-
-/**
- * Keep each server-rendered page's FMIR module current in watch mode (N7,
- * L-31). v1 found watch mode rebuilt the bundles but wrote no module, so a
- * page the server renders never changed on an incremental rebuild.
- *
- * Each page gets its own esbuild watcher over its SSR entry (`ssrEntryPoints`,
- * else the browser entry) that writes nothing: it exists to know the page's
- * module graph and to rebuild when a file in it changes, so an edit re-runs
- * the compiler for exactly the pages it touches, including an SSR entry the
- * browser bundle never imports. Packages are left external, as the compiler
- * follows relative imports only. The compiler writes the module into a
- * private directory; it is published into the output by rename, and only when
- * its bytes changed, then `onPublished` updates the manifest. The time from
- * the rebuild's start to the published module is logged per page, for the
- * per-build report (DR-34, FORMA-118).
- *
- * Resolves once every page's first module is published, or has failed:
- * - An esbuild error (a syntax error, an import that does not resolve) keeps
- *   the page's last good module and logs the first error.
- * - A compiler emission failure writes the compiler's placeholder module, as
- *   a production build does; the compiler logs why.
- * - A module that cannot be published is logged, naming the page.
- *
- * Verified by: packages/build/tests/watch-ir.test.ts > "logs a page's module it could not publish, naming the page, and recovers"
- * Verified by: packages/build/tests/watch-ir.test.ts > "rewrites a page's .ir when a component it renders changes, and no other page's"
- * Verified by: packages/build/tests/watch-ir.test.ts > "rewrites a page's .ir when only its SSR entry changes, in a code-splitting build"
- */
-async function watchServerRenderedPages(
-  config: BuildConfig,
-  shared: esbuild.BuildOptions,
-  ssrPlugin: SsrPluginFactory,
-  pluginShared: SsrPluginShared,
-  onPublished: (page: string) => void,
-): Promise<void> {
-  const scratch = mkdtempSync(join(tmpdir(), 'forma-ir-'));
-  process.once('exit', () => rmSync(scratch, { recursive: true, force: true }));
-
-  const firstBuilds: Promise<void>[] = [];
-  for (const entry of config.entryPoints) {
-    if (entry.ssr === false) continue;
-    const page = basename(entry.outfile, '.js');
-    const source = config.ssrEntryPoints?.[page] ?? entry.entry;
-    const emitted = join(scratch, `${page}.ir`);
-    const target = join(config.outputDir, `${page}.ir`);
-    let started = 0;
-    let firstBuilt!: () => void;
-    firstBuilds.push(new Promise<void>((resolve) => { firstBuilt = resolve; }));
-
-    const ctx = await esbuild.context({
-      ...shared,
-      entryPoints: [source],
-      outdir: scratch,
-      write: false,
-      packages: 'external',
-      sourcemap: false,
-      logLevel: 'silent',
-      plugins: [
-        ...(shared.plugins ?? []),
-        { name: 'forma-ir-clock', setup(builder) { builder.onStart(() => { started = performance.now(); }); } },
-        // Under --strict a page with an error is not published: the
-        // compiler's errors reach the publisher below as esbuild errors.
-        ssrPlugin({ page, outDir: scratch, entryPoint: source, ...pluginShared }),
-        {
-          name: 'forma-ir-publish',
-          setup(builder) {
-            builder.onEnd((result) => {
-              try {
-                if (result.errors.length) {
-                  console.warn(`   IR not rewritten for ${page}: ${result.errors[0]!.text} (the last good ${page}.ir stays)`);
-                  return;
-                }
-                if (!existsSync(emitted)) return;
-                const bytes = readFileSync(emitted);
-                rmSync(emitted, { force: true });
-                if (!existsSync(target) || !readFileSync(target).equals(bytes)) {
-                  writeFileAtomic(target, bytes);
-                  console.log(`   IR rewritten: ${page}.ir in ${Math.round(performance.now() - started)} ms`);
-                }
-                onPublished(page);
-              } catch (error) {
-                // This watcher's esbuild logging is off, so an exception left
-                // to esbuild would never be printed: say it here.
-                console.error(`   IR not written for ${page}: ${(error as Error).message}`);
-              } finally {
-                firstBuilt();
-              }
-            });
-          },
-        },
-      ],
-    });
-    // watch() runs the first build itself; waiting for its end (rather than
-    // calling rebuild() first) emits each page once at startup, not twice.
-    await ctx.watch();
-  }
-  await Promise.all(firstBuilds);
-}
 
 // ---------------------------------------------------------------------------
 // Main Build Function
@@ -624,9 +613,23 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   // Validate before anything is written: a config error must not touch the
   // previous build's output on its way to failing.
   validateConfig(userConfig);
-  // `strict` from the config, else FORMA_STRICT (FORMA-119).
+  // 3.0 strict-only publication; validate legacy flag spelling.
   const project = process.cwd();
-  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app) };
+  // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
+  // a `false` in the configuration does not unmark it: the mark can only be forgotten safely.
+  const environmentSecurity = securityFromEnvironment(process.env.FORMA_SECURITY_RELEASE);
+  const security = userConfig.security === true || environmentSecurity;
+  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app), security };
+  // The previous release is read and checked before anything is bundled or written, so a wrong
+  // path fails at once (BUILD-820). Watch mode and a security release never read it.
+  // Verified by: packages/build/tests/retention.test.ts > "is ignored by watch mode, which is a development build"
+  // Verified by: packages/build/tests/retention.test.ts > "with %s, a previous dist is ignored: no retained entry and a dist holding only its own files"
+  let previous: PreviousRelease | undefined;
+  if (config.previousDist !== undefined) {
+    if (config.watch) console.log('   previousDist is ignored in watch mode: a development build retains nothing');
+    else if (security) console.log('   Security release: the previous dist is ignored and nothing is retained (L-16, SR45)');
+    else previous = readPreviousDist(config.previousDist, config.outputDir, config.app!);
+  } else if (security && !config.watch) console.log('   Security release: nothing is retained (L-16, SR45)');
   let compiler: typeof import('@getforma/compiler') | undefined;
   try { compiler = await import('@getforma/compiler'); }
   catch (error) {
@@ -645,10 +648,14 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   ];
   const compatibility = () => { checkProjectCompatibility(project, writers, config.ssr === true); };
   const compatibilityWarnings = checkProjectCompatibility(project, writers, config.ssr === true);
-  await assertNoServerFunctions(config, sharedOptions(config));
+  const legacyImports = config.formaAlias ? new Set<string>() : undefined;
+  await assertNoServerFunctions(config, sharedOptions(config), legacyImports);
   // What the config itself deprecates, each said once per build() call,
   // production and watch alike, on the console and in BuildResult.warnings.
-  const deprecations = compatibilityWarnings;
+  const deprecations = [...compatibilityWarnings];
+  if (legacyImports?.size) deprecations.push(
+    `formaAlias is a 3.x migration bridge. Replace bare formajs imports with @getforma/core (preserving any subpath) in: ${[...legacyImports].sort().join(', ')}`,
+  );
   for (const line of deprecations) console.warn(`Warning: ${line}`);
   const withDeprecations = (result: BuildResult): BuildResult =>
     deprecations.length > 0 ? { ...result, warnings: [...result.warnings, ...deprecations] } : result;
@@ -665,7 +672,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   const staging = createStagingDirectory(config.outputDir);
   let result: BuildResult;
   try {
-    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame, compiler, compatibility);
+    result = await buildInto({ ...config, outputDir: staging }, config.outputDir, frame, compiler, compatibility, previous);
   } catch (err) {
     rmSync(staging, { recursive: true, force: true });
     throw err;
@@ -682,9 +689,20 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
  * the preview frame's runtime, already read and checked, when `previewFrame`
  * is on.
  */
-async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRuntime | undefined, compiler: typeof import('@getforma/compiler') | undefined, compatibility: () => void): Promise<BuildResult> {
+async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRuntime | undefined, compiler: typeof import('@getforma/compiler') | undefined, compatibility: () => void, previous?: PreviousRelease): Promise<BuildResult> {
   const distDir = config.outputDir;
   const createdDir = !existsSync(distDir);
+
+  // The production build's times, by phase (N7, FORMA-190): wall-clock
+  // milliseconds from here to each mark, for the printed report and the
+  // result; the size-report.json file holds none.
+  const phases: BuildTimes['phases'] = { bundle: 0, hash: 0, compress: 0, manifest: 0 };
+  let lap = performance.now();
+  const mark = (phase: keyof BuildTimes['phases']): void => {
+    const now = performance.now();
+    phases[phase] = Math.round(now - lap);
+    lap = now;
+  };
 
   // ── Clean output directory (watch mode; a staging directory is new) ──
   rmSync(distDir, { recursive: true, force: true });
@@ -706,19 +724,20 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const target = join(distDir, FRAME_RUNTIME_ASSET);
       if (config.watch) writeFileAtomic(target, frame.bytes);
       else writeFileSync(target, frame.bytes);
-      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}`);
+      console.log(`   Preview frame runtime: ${FRAME_RUNTIME_ASSET} from @getforma/core ${frame.version} (${frame.source}), ${frame.found}${frame.minified ? `; minified ${frame.sourceBytes.toLocaleString('en-US')} -> ${frame.bytes.length.toLocaleString('en-US')} B` : ''}`);
     }
     // The dev manifest names it as itself, as it names every watched asset.
     const frameAssets: Record<string, string> = frame ? { [FRAME_RUNTIME_ASSET]: FRAME_RUNTIME_ASSET } : {};
 
     // ── esbuild shared config ─────────────────────────────────────────
-    const shared = sharedOptions(config, compatibility);
+    // Without the deployment identity: the first pass bundles with these, and
+    // `shared` below (the same options plus the identity) is what is built.
+    const base = sharedOptions(config, compatibility);
 
     // ── Lazy-load SSR plugin only when needed ─────────────────────────
     let formaSsrPlugin: SsrPluginFactory | undefined;
-    // Every page's coded diagnostics (FORMA-119). A production build applies
-    // --strict itself, once every page is compiled, so the failure lists all
-    // of them; watch mode hands it to each page's plugin.
+    // Every page refuses unsupported native contracts. Production waits for
+    // every entry before returning the aggregate diagnostic report.
     const strict = config.strict === true;
     const collector = new DiagnosticsCollector(strict, config.entryPoints.map((entry) => basename(entry.outfile, '.js')));
     const pluginShared: SsrPluginShared = {
@@ -732,7 +751,24 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       if (typeof formaSsrPlugin !== 'function') throw new Error('BUILD-809 installed compiler has no supported formaSsrPlugin');
     }
 
+    // Only colliding explicit Browser roots need a second module identity.
+    // Imports below the entry remain in the same graph, including core.
+    const nativeClients=new Set(config.ssr?config.entryPoints.filter(entry=>entry.ssr!==false).map(entry=>realpathSync(entry.entry)):[]);
+    const browserAliases=new Map(config.codeSplitting?config.entryPoints.filter(entry=>entry.ssr===false&&nativeClients.has(realpathSync(entry.entry)))
+      .map(entry=>[entry.outfile,{path:`forma-browser-entry:${entry.outfile}`,entryPoint:entry.entry}]):[]);
+    const graphEntries=new Map([...browserAliases].map(([outfile,alias])=>[outfile,alias.path]));
+
     let graph: SplitGraph | undefined;
+    let products: EntryProducts = new Map();
+    const classify = (result: esbuild.BuildResult, entries: readonly BuildEntry[]) => {
+      if (!result.metafile) throw new Error('BUILD-611 entry result is missing its output graph');
+      const candidates = entryProducts(config, entries, result, compiler?.getSsrEntryProducts);
+      const nextGraph = splitGraph(result.metafile, [...entries], distDir, browserEntries(config, entries, candidates), graphEntries);
+      const outputs = (result.outputFiles ?? []).filter(file => file.path.endsWith('.ir') || nextGraph.files.has(basename(file.path)));
+      const metafile = { ...result.metafile, outputs: Object.fromEntries(Object.entries(result.metafile.outputs)
+        .filter(([file]) => nextGraph.files.has(basename(file)))) };
+      return { candidates, nextGraph, outputs, metafile };
+    };
     const coreGraphs = new Map<string, esbuild.Metafile>();
     let duplicateCore: ReturnType<typeof duplicateCoreDiagnostic>;
     const recordCoreGraph = (key: string, metafile: esbuild.Metafile) => {
@@ -741,36 +777,102 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       if (next && next.message !== duplicateCore?.message) console.warn(`${next.code}: ${next.message}`);
       duplicateCore = next;
     };
-    const splitOptions: esbuild.BuildOptions = {
-      ...shared,
-      entryPoints: config.entryPoints.map(entry => ({ in: entry.entry, out: basename(entry.outfile, '.js') })),
-      outdir: distDir,
-      splitting: true,
-      metafile: true,
-      entryNames: config.watch ? '[name]' : '[name].[hash]',
-      chunkNames: 'chunk.[hash]',
-      assetNames: 'asset.[hash]',
-      plugins: [...(shared.plugins ?? []), ...(config.ssr && formaSsrPlugin ? config.entryPoints.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
+    // The SSR plugin instances of a build, one per server-rendered entry.
+    const ssrPluginsFor = (entries: readonly BuildEntry[], options: SsrPluginShared) =>
+      config.ssr && formaSsrPlugin ? entries.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
         page: basename(entry.outfile, '.js'),
         outDir: distDir,
         entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
-        ...pluginShared,
-      })) : [])],
-    };
+        clientEntryPoint: entry.entry,
+        browserEntryPoints: entries.find(candidate=>candidate.ssr!==false&&realpathSync(candidate.entry)===realpathSync(entry.entry))===entry
+          ? [...browserAliases.values()].filter(alias=>realpathSync(alias.entryPoint)===realpathSync(entry.entry)) : [],
+        ...options,
+      })) : [];
+    // One shared graph (`codeSplitting`), or one bundle per entry; both passes
+    // of a production build, and watch mode's split build, take their options
+    // from these.
+    const splitOptionsFor = (options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
+      ...options,
+      entryPoints: config.entryPoints.map(entry => ({ in: browserAliases.get(entry.outfile)?.path ?? entry.entry, out: basename(entry.outfile, '.js') })),
+      outdir: distDir,
+      splitting: true,
+      metafile: true,
+      write: false,
+      entryNames: '[name].[hash]',
+      chunkNames: 'chunk.[hash]',
+      assetNames: 'asset.[hash]',
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin), jsxNamespaceFallback()],
+    });
+    const entryOptionsFor = (entry: BuildEntry, options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
+      ...options,
+      entryPoints: [entry.entry],
+      outfile: join(distDir, entry.outfile),
+      metafile: true,
+      write: false,
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), jsxNamespaceFallback()],
+    });
+
+    // ── The deployment identity (FORMA-186, DR-29; L-6 as amended by L-56) ──
+    // Computed first, from every output of a bundling pass that has no
+    // identity: the files the build would publish (browser-facing bundles and
+    // the `.ir` modules), the css entries and fonts already in staging, and the
+    // writers' versions. Nothing is written or published from this pass, and
+    // its diagnostics are dropped: the real pass reports them. The previous
+    // release's dist/ is never read here, so retention cannot move it.
+    // A failure here is not reported here: the real pass fails the same way and
+    // reports through the collector, so the JSON report and `--strict` behave as
+    // they always did; the error surfaces below if the real pass did not.
+    // Verified by: packages/build/tests/identity.test.ts > "is equal for identical inputs including the compiled .ir modules, built in two directories"
+    // Verified by: packages/build/tests/identity.test.ts > "changes with one changed source byte that changes an output, and not with an edit that changes none"
+    let identity = DEV_IDENTITY;
+    let firstPassFailure: unknown;
+    if (!config.watch) {
+      try {
+        const quietBase = { ...base, logLevel: 'silent' as const };
+        const noDiagnostics: SsrPluginShared = { onDiagnostics: () => {} };
+        const files: IdentityFile[] = [];
+        const take = (outputs: readonly esbuild.OutputFile[]) => {
+          for (const file of outputs) files.push({ name: basename(file.path), bytes: file.contents });
+        };
+        await withoutIrChatter(async () => {
+          if (config.codeSplitting && config.entryPoints.length) {
+            take(classify(await esbuild.build(splitOptionsFor(quietBase, noDiagnostics)), config.entryPoints).outputs);
+          } else {
+            const results = await Promise.all(config.entryPoints.map(async entry =>
+              classify(await esbuild.build(entryOptionsFor(entry, quietBase, noDiagnostics)), [entry]).outputs));
+            for (const outputs of results) take(outputs);
+          }
+        });
+        for (const name of readdirSync(distDir)) {
+          if (name === FRAME_RUNTIME_ASSET || !statSync(join(distDir, name)).isFile()) continue;
+          files.push({ name, bytes: readFileSync(join(distDir, name)) });
+        }
+        identity = computeIdentity({
+          writers: [
+            { name: '@getforma/build', version: BUILD_WRITER_VERSION },
+            ...(config.ssr && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION as readonly [number, number, number] }] : []),
+          ],
+          files,
+        });
+      } catch (error) {
+        firstPassFailure = error;
+        identity = '0'.repeat(16);
+      }
+    }
+    const shared = sharedOptions(config, compatibility, identity);
+    const splitOptions = splitOptionsFor(shared, pluginShared);
 
     // ── Build entries ─────────────────────────────────────────────────
     if (config.watch) {
-      // Watch mode. The dev manifest maps each name to itself: the split
-      // graph's files (with code splitting), each server-rendered page's
-      // `.ir`, and with previewFrame the frame's runtime. Whoever changes the
-      // first two rewrites it.
+      // Watch mode publishes immutable data generations before switching the
+      // manifest. A reader holding an earlier manifest keeps its exact URLs.
       const irAssets: Record<string, string> = {};
       let lastManifest = '';
       let ready!: (value: ReturnType<typeof generateManifest>) => void;
       const firstManifest = new Promise<ReturnType<typeof generateManifest>>(resolve => { ready = resolve; });
       const writeDevManifest = (): ReturnType<typeof generateManifest> | undefined => {
         let result: ReturnType<typeof generateManifest>;
-        try { result = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies); }
+        try { result = generateManifest(config, { ...graph?.assets, ...irAssets, ...frameAssets }, graph?.staticDependencies, graph?.files, products); }
         catch (error) {
           if (!(error as Error).message.startsWith('BUILD-817')) throw error;
           console.warn(`Dev manifest not published: ${(error as Error).message}; waiting for valid output`);
@@ -785,68 +887,113 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         return result;
       };
 
-      // Server-rendered pages: each page's module is watched over its SSR
-      // entry's own module graph, apart from the browser bundles (L-31).
-      if (formaSsrPlugin) {
-        await watchServerRenderedPages(config, shared, formaSsrPlugin, pluginShared, (page) => {
-          irAssets[`${page}.ir`] = `${page}.ir`;
-          writeDevManifest();
+      const acceptedGraphs = new Map<string, SplitGraph>();
+      const acceptedProducts = new Map<string, EntryProducts>();
+      // Before the first complete manifest, independent entry results remain
+      // candidates. They become accepted together with that first publication.
+      const initialGraphs = new Map<string, SplitGraph>();
+      const initialProducts = new Map<string, EntryProducts>();
+      const initialCoreGraphs = new Map<string, esbuild.Metafile>();
+      const initialIr: Record<string, string> = {};
+      const publishWatch=(result:esbuild.BuildResult,key:string,entries:readonly BuildEntry[])=>{
+        if(result.errors.length||!result.metafile)return false;
+        let classified: ReturnType<typeof classify>;
+        try { classified = classify(result, entries); }
+        catch (error) { console.error(`   IR not written for ${key}: ${(error as Error).message} (the last good browser/IR pair stays)`); return false; }
+        const { candidates, nextGraph } = classified;
+        const nextIr={...irAssets,...initialIr},nextGraphs=new Map([...acceptedGraphs,...initialGraphs]);nextGraphs.set(key,nextGraph);
+        const nextProducts = new Map([...acceptedProducts,...initialProducts]); nextProducts.set(key,candidates);
+        const combinedProducts = new Map<string, EntryProduct>();
+        for (const current of nextProducts.values()) for (const [name, product] of current) combinedProducts.set(name,product);
+        const combined:SplitGraph={assets:{},staticDependencies:{},files:new Set()};
+        for(const current of nextGraphs.values()){
+          Object.assign(combined.assets,current.assets);Object.assign(combined.staticDependencies,current.staticDependencies);
+          for(const file of current.files)combined.files.add(file);
+        }
+        const outputs=classified.outputs.map(file=>{
+          if(!file.path.endsWith('.ir'))return {path:file.path,contents:file.contents};
+          const logical=basename(file.path),name=logical.slice(0,-3)+'.'+createHash('sha256').update(file.contents).digest('hex')+'.ir';
+          nextIr[logical]=name;return {path:join(distDir,name),contents:file.contents};
         });
-      }
+        let accepted:ReturnType<typeof generateManifest>|undefined,text='';
+        try {
+          // Data filenames are generation identities. Never replace accepted
+          // bytes under a previous URL, even in the unlikely event of a hash collision.
+          for(const file of outputs)if(existsSync(file.path)&&!readFileSync(file.path).equals(file.contents))throw new Error(`generation filename collision: ${file.path}`);
+          publishOutputFiles(outputs,()=>{
+            try {accepted=generateManifest(config,{...combined.assets,...nextIr,...frameAssets},combined.staticDependencies,combined.files,combinedProducts);}
+            catch(error){
+              if(!lastManifest&&(error as Error).message.startsWith('BUILD-817'))return [];
+              throw error;
+            }
+            text=JSON.stringify(accepted.manifest,null,2)+'\n';
+            return [{path:join(distDir,'manifest.json'),contents:text}];
+          });
+        } catch(error) {
+          console.error(`   IR not written for ${key}: ${(error as Error).message} (the last good browser/IR pair stays)`);
+          return false;
+        }
+        if (accepted) {
+          Object.assign(irAssets,nextIr); graph=combined; products=combinedProducts;
+          acceptedGraphs.clear(); for (const [name,value] of nextGraphs) acceptedGraphs.set(name,value);
+          acceptedProducts.clear(); for (const [name,value] of nextProducts) acceptedProducts.set(name,value);
+          initialGraphs.clear(); initialProducts.clear(); for (const name of Object.keys(initialIr)) delete initialIr[name];
+          for (const [name,value] of initialCoreGraphs) recordCoreGraph(name,value);
+          initialCoreGraphs.clear(); recordCoreGraph(key,classified.metafile);
+        } else {
+          initialGraphs.set(key,nextGraph); initialProducts.set(key,candidates); Object.assign(initialIr,nextIr);
+          initialCoreGraphs.set(key,classified.metafile);
+        }
+        for(const file of result.outputFiles??[])if(file.path.endsWith('.ir'))console.log(`   IR rewritten: ${basename(file.path)} in ${Math.round(performance.now()-cycleStarted)} ms`);
+        if(accepted){lastManifest=text;ready(accepted);}
+        return true;
+      };
+      let cycleStarted=performance.now();
+      const clock:esbuild.Plugin={name:'forma-paired-clock',setup(builder){builder.onStart(()=>{cycleStarted=performance.now();});}};
 
       if (config.codeSplitting && config.entryPoints.length) {
-        let previousFiles = new Set<string>();
+        let firstBuilt!:()=>void;const firstBuild=new Promise<void>(resolve=>{firstBuilt=resolve;});
         const ctx = await esbuild.context({
           ...splitOptions,
           write: false,
-          // Not the SSR plugins: the pages' modules are watched above.
-          plugins: [...(shared.plugins ?? []), {
+          plugins: [clock,...(splitOptions.plugins ?? []), {
             name: 'forma-split-manifest',
             setup(builder) {
               builder.onEnd(result => {
+                firstBuilt();
                 if (result.errors.length || !result.metafile) return;
-                recordCoreGraph('split', result.metafile);
-                graph = splitGraph(result.metafile, config.entryPoints, distDir);
-                for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
-                // Only remove outputs belonging to the previous successful
-                // graph. CSS/fonts/IR and failed-build diagnostics stay intact.
-                for (const file of previousFiles) if (!graph.files.has(file)) rmSync(join(distDir, file), { force: true });
-                previousFiles = graph.files;
-                writeDevManifest();
+                publishWatch(result,'split',config.entryPoints);
               });
             },
           }],
         });
-        // Ensure the first complete graph exists before returning a dev manifest.
-        await ctx.rebuild();
         await ctx.watch();
+        await firstBuild;
       } else for (const entry of config.entryPoints) {
+        let firstBuilt!:()=>void;const firstBuild=new Promise<void>(resolve=>{firstBuilt=resolve;});
         const ctx = await esbuild.context({
           ...shared,
-          entryPoints: [entry.entry],
-          outfile: join(distDir, entry.outfile),
+          entryPoints: [{in:entry.entry,out:basename(entry.outfile,'.js')}],
+          outdir: distDir,
+          entryNames: '[name].[hash]',
+          assetNames: 'asset.[hash]',
           metafile: true,
           write: false,
-          plugins: [...(shared.plugins ?? []), {name: 'forma-core-report', setup(builder) {
-            builder.onEnd(result => {
-              if (result.errors.length || !result.metafile) return;
-              for (const file of result.outputFiles ?? []) writeFileAtomic(file.path, file.contents);
-              recordCoreGraph(entry.outfile, result.metafile);
-              writeDevManifest();
-            });
+          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
+            builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),[entry]);}finally{firstBuilt();}});
           }}],
         });
-        await ctx.rebuild();
         await ctx.watch();
+        await firstBuild;
       }
 
-      // The dev manifest, with identity mappings (unhashed filenames), so the
-      // server can boot without a production build.
+      // The dev manifest selects a complete retained generation. Old URLs stay
+      // readable for requests already holding an earlier manifest/HTML response.
       const { manifest, warnings } = writeDevManifest() ?? await firstManifest;
       console.log(`\nDev manifest written: ${shownDir}/manifest.json`);
 
       // Generate a dev service worker so /sw.js doesn't 404
-      generateServiceWorker(config, { app: config.app!, assets: {}, build: 'dev' });
+      generateServiceWorker(config, workerSourceFor(config, { app: config.app!, assets: {}, build: 'dev' }));
 
       // The pages' first compilation; each rebuild replaces its page's own.
       const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
@@ -857,6 +1004,10 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         buildHash: 'dev',
         warnings,
         diagnostics,
+        // Watch mode is a development build, unminified and inline-mapped:
+        // its bytes are not what a route ships, so there is no report.
+        sizes: [],
+        sizeReport: { version: 1, ceilings: REPORT_CEILINGS, routes: [] },
       };
     }
 
@@ -864,62 +1015,67 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // Each pass's metafile feeds the summary printed once the files have
     // their hashed names (FORMA-180 F3).
     const metafiles: esbuild.Metafile[] = [];
+    const buildFailures: unknown[] = [];
     if (config.codeSplitting && config.entryPoints.length) {
-      const result = await esbuild.build(splitOptions);
-      if (!result.metafile) throw new Error('Split build did not return its module graph.');
-      metafiles.push(result.metafile);
-      graph = splitGraph(result.metafile, config.entryPoints, distDir);
-      for (const entry of config.entryPoints) {
-        if (config.serverInlined?.includes(entry.outfile)) cpSync(join(distDir, graph.assets[entry.outfile]), join(distDir, entry.outfile));
-      }
-    } else await Promise.all(
-      config.entryPoints.map(async (entry) => {
-        const buildOptions: esbuild.BuildOptions = {
-          ...shared,
-          entryPoints: [entry.entry],
-          outfile: join(distDir, entry.outfile),
-          metafile: true,
-        };
-
-        if (config.ssr && entry.ssr !== false && formaSsrPlugin) {
-          const pageName = basename(entry.outfile, '.js');
-          const ssrEntryPoint =
-            config.ssrEntryPoints?.[pageName] ?? entry.entry;
-          buildOptions.plugins = [
-            ...(buildOptions.plugins || []),
-            formaSsrPlugin({
-              page: pageName,
-              outDir: distDir,
-              entryPoint: ssrEntryPoint,
-              ...pluginShared,
-            }),
-          ];
+      try {
+        const result = await esbuild.build(splitOptions);
+        const classified = classify(result, config.entryPoints);
+        publishOutputFiles(classified.outputs);
+        metafiles.push(classified.metafile);
+        graph = classified.nextGraph; products = classified.candidates;
+        for (const entry of config.entryPoints) {
+          if (config.serverInlined?.includes(entry.outfile)) cpSync(join(distDir, graph.assets[entry.outfile]), join(distDir, entry.outfile));
         }
-
-        const result = await esbuild.build(buildOptions);
-        if (result.metafile) metafiles.push(result.metafile);
-      }),
-    );
+      } catch (error) { buildFailures.push(error); }
+    } else {
+      const attempts = await Promise.allSettled(
+        config.entryPoints.map(async (entry) => {
+          const result = await esbuild.build(entryOptionsFor(entry, shared, pluginShared));
+          const classified = classify(result, [entry]);
+          publishOutputFiles(classified.outputs);
+          products = new Map([...products, ...classified.candidates]);
+          metafiles.push(classified.metafile);
+        }),
+      );
+      for (const attempt of attempts) if (attempt.status === 'rejected') buildFailures.push(attempt.reason);
+    }
 
     duplicateCore = duplicateCoreDiagnostic(metafiles);
     if (duplicateCore) console.warn(`${duplicateCore.code}: ${duplicateCore.message}`);
 
-    // ── SSR diagnostics: the JSON report, then strict mode ────────────
-    // Every page is compiled by now, so a strict failure names them all.
+    // ── SSR diagnostics: the JSON report, then publication refusal ─────
+    // Every page is compiled by now, so the aggregate failure names them all.
     const diagnostics = [...collector.all(), ...(duplicateCore ? [duplicateCore] : [])];
     if (config.diagnosticsJson) {
       const written = writeDiagnosticsJson(config.diagnosticsJson, strict, diagnostics);
       console.log(`   SSR diagnostics written: ${written} (${diagnostics.length})`);
     }
-    if (strict) {
-      const errors = collector.errors();
-      if (errors.length > 0) throw strictFailure(errors);
-    }
+    // Every entry has completed. Report all source diagnostics before a
+    // bundler failure so strict-only publication never hides later pages.
+    const errors = collector.errors();
+    if (errors.length > 0) throw strictFailure(errors);
+    if (buildFailures.length) throw buildFailures[0];
+    if (firstPassFailure) throw firstPassFailure;
+
+    mark('bundle');
 
     // ── Content hashing ───────────────────────────────────────────────
     const assets = hashAssets(config, graph?.assets);
     printBundleSummary(metafiles, assets, shownDir);
     console.log(`   ${Object.keys(assets).length} assets hashed`);
+    mark('hash');
+
+    // ── Retention (FORMA-186, DR-29, L-25) ────────────────────────────
+    // The previous release's own hashed assets, copied into staging after this
+    // build's are hashed and before anything is compressed, so they get the same
+    // compressed siblings and the same manifest metadata, flagged. A failure
+    // here leaves the existing output as it was, like any other.
+    let retained: ReadonlySet<string> = new Set();
+    if (previous) {
+      if (previous.note) console.log(`   ${previous.note}`);
+      retained = retainFrom(previous, distDir).retained;
+      if (!previous.note) console.log(`   ${retained.size} files retained from the previous release (build ${previous.build.slice(0, 12)}...)`);
+    }
 
     // ── Compression ───────────────────────────────────────────────────
     // The preview frame's runtime is inlined by forma-server, never fetched:
@@ -927,27 +1083,66 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     // Verified by: packages/build/tests/preview-frame.test.ts > "the runtime is inlined, never fetched: no compressed copies, and no entry in the on-demand worker's immutable list"
     const frameFile = frame ? assets[FRAME_RUNTIME_ASSET] : undefined;
     compressAssets(distDir, new Set(frameFile ? [frameFile] : []));
+    mark('compress');
 
     // ── Manifest generation ───────────────────────────────────────────
-    const { manifest, warnings } = generateManifest(config, assets, graph?.staticDependencies, graph?.files);
+    const { manifest, warnings, classes } = generateManifest(config, assets, graph?.staticDependencies, graph?.files, products, identity, retained);
     if (duplicateCore) warnings.push(`${duplicateCore.code}: ${duplicateCore.message}`);
+    mark('manifest');
+
+    // ── The size report, and the gate on it (FORMA-021, FORMA-190, L-55) ──
+    // Each route's class and Forma's code, from the bundler's metafile and the
+    // hashed files the manifest names, with the service worker a route with
+    // JavaScript registers, the preview frame's runtime when it is on, and the
+    // times above; printed for every route. A route over a ceiling fails the
+    // build here, before the manifest is written and the staging directory
+    // swapped in, so the previous output stays as it was (L-21).
+    // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's Forma code is over the ceiling, leaving no output"
+    // Verified by: packages/build/tests/route-size.test.ts > "fails the build with BUILD-819 when a route's JavaScript is over 75 KiB, unless the route is declared a canvas, and a canvas is held to 365 KiB"
+    const workerSource = workerSourceFor(config, manifest, frameFile ? [frameFile] : []);
+    const worker = workerSize(workerSource);
+    const sizes = routeSizes(manifest.routes, metafiles, assets, distDir, {
+      classes,
+      canvases: new Set(Object.entries(config.routes).filter(([, mapping]) => mapping.canvas === true).map(([route]) => route)),
+      worker,
+    });
+    const times: BuildTimes = { totalMs: Object.values(phases).reduce((total, ms) => total + ms, 0), phases };
+    const sizeReport: SizeReport = {
+      version: 1,
+      ceilings: REPORT_CEILINGS,
+      routes: sizes,
+      worker,
+      ...(frameFile && frame ? { frame: frameSize(frameFile, distDir, frame.sourceBytes) } : {}),
+      times,
+    };
+    console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);
+    const overCeiling = routeSizeFailure(sizes);
+    if (overCeiling) throw overCeiling;
 
     writeFileSync(
       join(distDir, 'manifest.json'),
       JSON.stringify(manifest, null, 2) + '\n',
     );
+    // Beside the manifest, without the times: the application embeds this
+    // directory, and the same sources are the same bytes. forma-server refuses
+    // to serve it, as it refuses the manifest.
+    // Verified by: packages/build/tests/route-size.test.ts > "writes size-report.json beside the manifest: every route with its class, ceilings and verdict, the service worker, and no clock reading"
+    writeFileSync(join(distDir, 'size-report.json'), serializeSizeReport(sizeReport));
     console.log(
       `\nManifest written: ${shownDir}/manifest.json (build: ${manifest.build.slice(0, 12)}...)`,
     );
+    console.log(`Size report written: ${shownDir}/size-report.json`);
 
     // ── Service worker generation ─────────────────────────────────────
-    generateServiceWorker(config, manifest, frameFile ? [frameFile] : []);
+    generateServiceWorker(config, workerSource);
 
     return {
       manifest,
       buildHash: manifest.build,
       warnings,
       diagnostics,
+      sizes,
+      sizeReport,
     };
   } catch (err) {
     // Watch mode: remove the output directory if this build created it. A

@@ -1,0 +1,174 @@
+diff --git a/packages/core/src/dom/__tests__/element-prototype-cache.test.ts b/packages/core/src/dom/__tests__/element-prototype-cache.test.ts
+new file mode 100644
+index 00000000..eedfb145
+--- /dev/null
++++ b/packages/core/src/dom/__tests__/element-prototype-cache.test.ts
+@@ -0,0 +1,168 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++let element: typeof import('../element');
++let adoption: typeof import('../adoption-description');
++let customId = 0;
++
++beforeEach(async () => {
++  // Every case must begin before any h() has warmed this module's singleton.
++  vi.resetModules();
++  element = await import('../element');
++  adoption = await import('../adoption-description');
++});
++
++afterEach(() => {
++  vi.restoreAllMocks();
++  document.body.replaceChildren();
++});
++
++const HTML = 'http://www.w3.org/1999/xhtml';
++const SVG = 'http://www.w3.org/2000/svg';
++const MATH = 'http://www.w3.org/1998/Math/MathML';
++// Former eager inventory: each tag is tested as the first requested tag.
++const previousTags = [
++  'div', 'span', 'p', 'a', 'li', 'ul', 'ol', 'button', 'input',
++  'label', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'section', 'header',
++  'footer', 'main', 'nav', 'table', 'tr', 'td', 'th', 'tbody',
++  'img', 'form', 'select', 'option', 'textarea', 'i', 'b', 'strong',
++  'em', 'small', 'article', 'aside', 'details', 'summary',
++];
++
++describe('cold HTML prototype cache', () => {
++  it.each(previousTags)('%s creates only its requested prototype and returns independent clones', tag => {
++    const native = vi.spyOn(document, 'createElement');
++    const first = element.h(tag) as HTMLElement;
++    const second = element.h(tag) as HTMLElement;
++    expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
++    expect(first).not.toBe(second);
++    expect(first.localName).toBe(tag);
++    expect(second.namespaceURI).toBe(HTML);
++    expect(first.parentNode).toBeNull();
++    expect(second.parentNode).toBeNull();
++    expect(first.attributes.length).toBe(0);
++    expect(second.attributes.length).toBe(0);
++    first.setAttribute('data-local', 'only first');
++    first.appendChild(document.createTextNode('only first'));
++    const third = element.h(tag) as HTMLElement;
++    expect(third.getAttributeNames()).toEqual([]);
++    expect(third.childNodes.length).toBe(0);
++    expect(third).not.toBe(first);
++    expect(native).toHaveBeenCalledTimes(1);
++  });
++
++  it.each(['output', 'video', 'template', 'forma-unknown-prototype'])('keeps uncommon %s creation lazy and independent', tag => {
++    const native = vi.spyOn(document, 'createElement');
++    const first = element.h(tag) as HTMLElement;
++    const second = element.h(tag) as HTMLElement;
++    expect(first.localName).toBe(tag);
++    expect(first.namespaceURI).toBe(HTML);
++    expect(second).not.toBe(first);
++    expect(second.attributes.length).toBe(0);
++    expect(second.childNodes.length).toBe(0);
++    expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
++  });
++
++  it('keeps template content and form-control state out of later clones', () => {
++    const first = element.h('template') as HTMLTemplateElement;
++    first.content.appendChild(document.createTextNode('private'));
++    expect((element.h('template') as HTMLTemplateElement).content.childNodes.length).toBe(0);
++    const input = element.h('input') as HTMLInputElement;
++    input.value = 'private'; input.checked = true; input.disabled = true;
++    const next = element.h('input') as HTMLInputElement;
++    expect([next.value, next.checked, next.disabled]).toEqual(['', false, false]);
++    const textarea = element.h('textarea') as HTMLTextAreaElement;
++    textarea.value = 'private';
++    expect((element.h('textarea') as HTMLTextAreaElement).value).toBe('');
++    const option = element.h('option') as HTMLOptionElement;
++    option.selected = true; option.defaultSelected = true;
++    const fresh = element.h('option') as HTMLOptionElement;
++    expect([fresh.selected, fresh.defaultSelected]).toEqual([false, false]);
++  });
++
++  it('preserves registered custom-element construction and independent returned instances', () => {
++    const tag = `forma-proto-custom-${++customId}`;
++    class Defined extends HTMLElement { readonly privateValue = {}; }
++    customElements.define(tag, Defined);
++    const native = vi.spyOn(document, 'createElement');
++    const first = element.h(tag) as Defined;
++    const second = element.h(tag) as Defined;
++    expect(first).toBeInstanceOf(Defined);
++    expect(second).toBeInstanceOf(Defined);
++    expect(first.privateValue).not.toBe(second.privateValue);
++    expect(first).not.toBe(second);
++    expect(native.mock.calls.map(([name]) => name)).toEqual([tag]);
++  });
++
++  it('initializes the shared map before a native factory reenters for another tag', () => {
++    const create = document.createElement.bind(document);
++    let nested: HTMLElement | undefined;
++    const native = vi.spyOn(document, 'createElement').mockImplementation((tag, options) => {
++      if (tag === 'button' && !nested) nested = element.h('span') as HTMLElement;
++      return create(tag, options);
++    });
++    const button = element.h('button') as HTMLElement;
++    const anotherSpan = element.h('span') as HTMLElement;
++    expect(native.mock.calls.map(([name]) => name)).toEqual(['button', 'span']);
++    expect(nested?.localName).toBe('span');
++    expect(anotherSpan).not.toBe(nested);
++    expect(button.localName).toBe('button');
++  });
++
++  it('does not cache a failed creation and preserves a successful reentrant tag', () => {
++    const create = document.createElement.bind(document);
++    const failure = new Error('native creation failed');
++    let fail = true;
++    const native = vi.spyOn(document, 'createElement').mockImplementation((tag, options) => {
++      if (tag === 'button' && fail) {
++        element.h('span');
++        fail = false;
++        throw failure;
++      }
++      return create(tag, options);
++    });
++    expect(() => element.h('button')).toThrow(failure);
++    expect((element.h('span') as HTMLElement).localName).toBe('span');
++    expect((element.h('button') as HTMLElement).localName).toBe('button');
++    element.h('button');
++    expect(native.mock.calls.map(([name]) => name)).toEqual(['button', 'span', 'button']);
++  });
++
++  it('keeps foreign namespaces out of a warmed HTML cache, including dual-use names', () => {
++    const html = element.h('a') as HTMLElement;
++    const native = vi.spyOn(document, 'createElement');
++    const svgAnchor = element.svg(() => element.h('a')) as unknown as Element;
++    const svgTitle = element.svg(() => element.h('title')) as unknown as Element;
++    expect([html.namespaceURI, svgAnchor.namespaceURI, svgTitle.namespaceURI]).toEqual([HTML, SVG, SVG]);
++    expect((element.h('circle') as unknown as Element).namespaceURI).toBe(SVG);
++    expect((element.h('mrow') as unknown as Element).namespaceURI).toBe(MATH);
++    expect(native).not.toHaveBeenCalled();
++    expect((element.h('a') as HTMLElement).namespaceURI).toBe(HTML);
++    expect((element.h('title') as HTMLElement).namespaceURI).toBe(HTML);
++    expect(native.mock.calls.map(([name]) => name)).toEqual(['title']);
++  });
++
++  it('does not warm prototypes during adoption description or execute element callbacks', () => {
++    const native = vi.spyOn(document, 'createElement');
++    const nativeNs = vi.spyOn(document, 'createElementNS');
++    const ref = vi.fn();
++    const description = adoption.withAdoptionDescription(() => element.h('div', { ref }, element.h('span', null, 'text')));
++    expect(description).toMatchObject({ type: 'element', tag: 'div' });
++    expect(native).not.toHaveBeenCalled();
++    expect(nativeNs).not.toHaveBeenCalled();
++    expect(ref).not.toHaveBeenCalled();
++    element.h('p');
++    expect(native.mock.calls.map(([name]) => name)).toEqual(['p']);
++  });
++
++  it('refuses script before native creation or cache initialization in either mode', () => {
++    const native = vi.spyOn(document, 'createElement');
++    const nativeNs = vi.spyOn(document, 'createElementNS');
++    expect(() => element.h('script')).toThrow(/FORMA_E_SCRIPT_ELEMENT/);
++    expect(() => element.svg(() => element.h('script'))).toThrow(/FORMA_E_SCRIPT_ELEMENT/);
++    expect(() => adoption.withAdoptionDescription(() => element.h('script'))).toThrow(/FORMA_E_SCRIPT_ELEMENT/);
++    expect(native).not.toHaveBeenCalled();
++    expect(nativeNs).not.toHaveBeenCalled();
++    element.h('button');
++    expect(native.mock.calls.map(([name]) => name)).toEqual(['button']);
++  });
++});

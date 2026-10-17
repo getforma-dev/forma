@@ -1,0 +1,185 @@
+/**
+ * FormaJS Full-Stack E2E Tests
+ *
+ * Verifies the complete Forma pipeline in a real browser:
+ *   1. HTML Runtime (data-* directives) — explicitly owned reviewed markup
+ *   2. Programmatic h() API — createSignal + h() + mount()
+ *   3. Reviewed template path — template(trustedHtml()) + cloneNode()
+ *
+ * Run: npx playwright test
+ * Guide: See e2e/README.md
+ */
+import { test, expect } from '@playwright/test';
+
+// The two FormaJS bundles the page loads are written by e2e/sync-fixtures.sh
+// from packages/core/dist and are not tracked: a committed copy is only ever
+// stale (the one tracked until 2026-10-15 predated trustedHtml() and failed
+// five cases here, FORMA-105). Refuse to run against a missing bundle, and
+// against one that lacks the public API full-stack.html calls, naming the fix.
+test('the bundles are the fresh sync, not a stale copy', async ({ request }) => {
+  for (const name of ['formajs-runtime.global.js', 'formajs.global.js']) {
+    const response = await request.get(`/${name}`);
+    expect(response.status(), `e2e/fixtures/${name} is missing; run bash e2e/sync-fixtures.sh`).toBe(200);
+  }
+  const bundle = await (await request.get('/formajs.global.js')).text();
+  expect(bundle, 'e2e/fixtures/formajs.global.js is stale (no trustedHtml); run bash e2e/sync-fixtures.sh').toContain('trustedHtml');
+});
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/full-stack.html');
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Test 1: HTML Runtime (data-* directives)
+// ═══════════════════════════════════════════════════════════════════════
+
+test.describe('HTML Runtime — data-* directives', () => {
+  test('renders initial state as text', async ({ page }) => {
+    await expect(page.locator('#rt-text')).toHaveText('Hello World');
+    await expect(page.locator('#rt-count')).toHaveText('0');
+  });
+
+  test('increments counter on click', async ({ page }) => {
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('2');
+  });
+
+  test('resets counter', async ({ page }) => {
+    await page.click('#rt-inc');
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('2');
+    await page.click('#rt-reset');
+    await expect(page.locator('#rt-count')).toHaveText('0');
+  });
+
+  test('two-way binding with data-model', async ({ page }) => {
+    await page.fill('#rt-input', 'Forma');
+    await expect(page.locator('#rt-text')).toHaveText('Hello Forma');
+  });
+
+  test('data-show toggles visibility', async ({ page }) => {
+    // count=0, should be hidden
+    await expect(page.locator('#rt-show')).toBeHidden();
+    await page.click('#rt-inc');
+    // count=1, should be visible
+    await expect(page.locator('#rt-show')).toBeVisible();
+    await page.click('#rt-reset');
+    // count=0 again, hidden
+    await expect(page.locator('#rt-show')).toBeHidden();
+  });
+
+  test('data-class toggles CSS class', async ({ page }) => {
+    await expect(page.locator('#rt-class')).not.toHaveClass(/active/);
+    // Click 3 times to get count > 2
+    await page.click('#rt-inc');
+    await page.click('#rt-inc');
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-class')).toHaveClass(/active/);
+  });
+
+  test('data-computed derives values', async ({ page }) => {
+    await expect(page.locator('#rt-computed')).toHaveText('0');
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-computed')).toHaveText('2');
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-computed')).toHaveText('4');
+  });
+
+  test('$refs resolves data-ref elements', async ({ page }) => {
+    await expect(page.locator('#rt-ref-check')).toHaveText('ref-found');
+  });
+
+  test('binds only the owned root and stops responding when its handle unmounts', async ({ page }) => {
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+    await page.click('#rt-outside-inc');
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+    // The same bundle is demonstrably live inside the explicitly handed root.
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    await page.evaluate(() => {
+      (window as Window & { fullStackRuntimeHandle: { unmount(): void } }).fullStackRuntimeHandle.unmount();
+    });
+    await page.click('#rt-inc');
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    await expect(page.locator('#rt-outside-count')).toHaveText('unbound');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Test 2: Programmatic h() API
+// ═══════════════════════════════════════════════════════════════════════
+
+test.describe('Programmatic h() API', () => {
+  test('mount() renders h() tree into DOM', async ({ page }) => {
+    await expect(page.locator('#h-container')).toBeVisible();
+    await expect(page.locator('#h-count')).toHaveText('0');
+  });
+
+  test('signal updates DOM reactively', async ({ page }) => {
+    await page.click('#h-btn');
+    await expect(page.locator('#h-count')).toHaveText('1');
+    await page.click('#h-btn');
+    await expect(page.locator('#h-count')).toHaveText('2');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Test 3: Reviewed template path (public API)
+// ═══════════════════════════════════════════════════════════════════════
+
+test.describe('Reviewed template path — template() + cloneNode()', () => {
+  test('template creates DOM from reviewed markup', async ({ page }) => {
+    await expect(page.locator('#tpl-container')).toBeVisible();
+  });
+
+  test('cloneNode produces working DOM with reactive text', async ({ page }) => {
+    await expect(page.locator('#tpl-count')).toHaveText('0');
+  });
+
+  test('createEffect updates cloned text node on signal change', async ({ page }) => {
+    await page.click('#tpl-btn');
+    await expect(page.locator('#tpl-count')).toHaveText('1');
+    await page.click('#tpl-btn');
+    await expect(page.locator('#tpl-count')).toHaveText('2');
+    await page.click('#tpl-btn');
+    await expect(page.locator('#tpl-count')).toHaveText('3');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Test 4: Cross-cutting concerns
+// ═══════════════════════════════════════════════════════════════════════
+
+test.describe('Cross-cutting', () => {
+  test('no browser errors on page load', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', msg => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
+    await page.goto('/full-stack.html');
+    await page.waitForTimeout(500);
+    expect(errors).toEqual([]);
+  });
+
+  test('all three approaches coexist on same page', async ({ page }) => {
+    // Runtime
+    await expect(page.locator('#rt-count')).toHaveText('0');
+    // h() API
+    await expect(page.locator('#h-count')).toHaveText('0');
+    // Compiled template
+    await expect(page.locator('#tpl-count')).toHaveText('0');
+
+    // Click all three independently
+    await page.click('#rt-inc');
+    await page.click('#h-btn');
+    await page.click('#tpl-btn');
+
+    // Each updates independently
+    await expect(page.locator('#rt-count')).toHaveText('1');
+    await expect(page.locator('#h-count')).toHaveText('1');
+    await expect(page.locator('#tpl-count')).toHaveText('1');
+  });
+});

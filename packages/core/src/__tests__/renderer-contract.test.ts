@@ -6,9 +6,9 @@
  *
  *   1. `src/dom/element.ts`  — `h()` with static props
  *   2. `src/dom/element.ts`  — `h()` with reactive (function) props
- *   3. `src/dom/hydrate.ts`  — `applyDynamicProps()` / `adoptNode()` (adoption)
- *   4. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
- *   5. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
+ *   3. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
+ *   4. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
+ *   5. `src/dom/adoption.ts` — strict preparation/commit and its later writers
  *
  * Historically each guarantee was asserted thoroughly on exactly ONE of them.
  * That single habit produced 7 of the 25 code defects in
@@ -36,8 +36,10 @@ import { createSignal, createRoot } from 'forma/reactive';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { h } from '../dom/element';
-import { applyDynamicProps, adoptNode } from '../dom/hydrate';
-import { mount, unmount } from '../runtime';
+import { prepareRaw, prepareStyle } from '../dom/adoption-content';
+import { trustedHtml } from '../dom/trusted-html';
+import { prepareAdoption } from '../dom/adoption';
+import { mountFixture, unmountFixture } from './runtime-fixture';
 import { URL_ATTRS } from '../security/url-safety';
 import { compileHandler, runHandler } from '../expr/index';
 import { hostObject } from '../expr/host';
@@ -91,11 +93,14 @@ const ATTR_TAG: Record<string, string> = {
   src: 'img',
   action: 'form',
   formaction: 'button',
+  'xlink:href': 'use',
   poster: 'video',
   background: 'table',
   data: 'object',
-  'xlink:href': 'use',
 };
+// Collect cases from the expected contract. A production-set regression must
+// not remove its own tests or change the identities of later collected cases.
+const URL_ATTRIBUTE_CASES = Object.keys(ATTR_TAG);
 
 const SVG_DATA_URL =
   'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>';
@@ -219,25 +224,40 @@ const SINKS: Sink[] = [
     writeText: (tag, text) => owned(() => h(tag, null, () => text)),
   },
   {
-    name: 'adopt',
+    name: 'prepared-adopt',
     programmaticNames: true,
     declarative: true,
-    objectValues: true,
-    write: (tag, name, value) =>
-      owned(() => {
-        // Adoption only ever binds FUNCTION props: static ones are already in
-        // the server HTML. The element it adopts is the server's own output.
-        const el = parse(`<${tag}></${tag}>`);
-        applyDynamicProps(el, { [name]: () => value, [BENIGN_ATTR]: () => BENIGN_VALUE });
-        return el;
-      }),
-    writeText: (tag, text) =>
-      owned(() => {
-        // The SSR shape a text marker adopts: <!--f:t0-->text<!--/f:t0-->.
-        const el = parse(`<${tag}><!--f:t0-->placeholder<!--/f:t0--></${tag}>`);
-        adoptNode({ type: 'element', tag, props: null, children: [(): string => text] }, el);
-        return el;
-      }),
+    objectValues: false,
+    write: (tag, name, value) => {
+      const box = host();
+      const el = tag === 'use'
+        ? document.createElementNS('http://www.w3.org/2000/svg', tag)
+        : document.createElement(tag);
+      if (tag === 'use') {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        box.appendChild(svg); svg.appendChild(el);
+      } else box.appendChild(el);
+      el.setAttribute(BENIGN_ATTR, BENIGN_VALUE);
+      const [read, set] = createSignal<unknown>(null);
+      let failed = false, failure: unknown;
+      const plan = prepareAdoption(el, () => h(tag, { [name]: read, [BENIGN_ATTR]: BENIGN_VALUE }), {
+        failure: error => { failed = true; failure = error; },
+      });
+      disposers.push(plan.dispose);
+      plan.commit();
+      set(value);
+      if (failed) throw failure;
+      return el;
+    },
+    writeText: (tag, text) => {
+      const el = parse(`<${tag}><!--f:t0-->\u200B<!--/f:t0--></${tag}>`);
+      const [read, set] = createSignal('');
+      const plan = prepareAdoption(el, () => h(tag, null, read));
+      disposers.push(() => plan.dispose());
+      plan.commit();
+      set(text);
+      return el;
+    },
   },
   {
     name: 'data-bind',
@@ -250,7 +270,7 @@ const SINKS: Sink[] = [
         `<div data-forma-state='${stateAttr({ v: value, b: BENIGN_VALUE })}'>` +
         `<${tag} id="probe" data-bind:${name}="{v}" data-bind:${BENIGN_ATTR}="{b}"></${tag}>` +
         `</div>`;
-      mount(box);
+      mountFixture(box);
       const el = box.querySelector('#probe');
       if (!el) throw new Error(`data-bind fixture produced no <${tag}>`);
       return el;
@@ -260,7 +280,7 @@ const SINKS: Sink[] = [
       box.innerHTML =
         `<div data-forma-state='${stateAttr({ t: text })}'>` +
         `<${tag} id="probe" data-text="{t}"></${tag}></div>`;
-      mount(box);
+      mountFixture(box);
       return box.querySelector('#probe')!;
     },
   },
@@ -305,7 +325,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const dispose of disposers.splice(0)) dispose();
   for (const box of containers.splice(0)) {
-    unmount(box);
+    unmountFixture(box);
     box.remove();
   }
 });
@@ -319,7 +339,7 @@ describe('renderer contract: the table covers every sink', () => {
     expect(SINKS.map((s) => s.name)).toEqual([
       'h-static',
       'h-reactive',
-      'adopt',
+      'prepared-adopt',
       'data-bind',
       '$el.setAttribute',
     ]);
@@ -334,16 +354,21 @@ describe('renderer contract: the table covers every sink', () => {
     const NON_SINKS: Record<string, string> = {
       'src/dom-utils/mutate.ts': 'setAttr() helper — covered by mutate.test.ts',
       'src/dom/activate.ts': 'writes only data-forma-* status, a fixed internal name',
-      'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/adopt sinks and form-control.test.ts',
+      'src/dom/skew.ts': 'writes only data-forma-status="skew"; fixed internal name and value, verified by skew.test.ts',
+      'src/dom/adoption-controls.ts': 'fixed control attributes only on new detached-document normalization mirrors; retained native MutationObserver plus live setter controls prove no writes to the observed document (adoption-controls.spec.ts)',
+      'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/prepared-adopt sinks and form-control.test.ts',
       'src/dom/reconcile.ts': 'copies attributes DOM→DOM between two already-guarded elements; writes no on* or script src, and mints a trusted srcdoc (trusted-html.test.ts)',
     };
     const DOM_SINK_FILES = [
       'src/dom/element.ts',
-      'src/dom/hydrate.ts',
+      'src/dom/adoption-attributes.ts',
       'src/runtime.ts',
       'src/expr/interp.ts',
       'src/expr/allowlist.ts',
     ];
+    // Fixed detached parser-context attributes are not generic caller props.
+    // This module is still a real typed raw/CSS sink, exercised separately below.
+    const SPECIAL_CONTENT_SINK_FILES = ['src/dom/adoption-content.ts'];
     /** The only module that assembles an attribute into a markup STRING. */
     const MARKUP_SINK_FILES: string[] = [];
 
@@ -365,19 +390,46 @@ describe('renderer contract: the table covers every sink', () => {
     walk(resolve(ROOT, 'src'));
 
     const unaccounted = [...domWriters, ...markupWriters].filter(
-      (f) => !DOM_SINK_FILES.includes(f) && !MARKUP_SINK_FILES.includes(f) && !Object.hasOwn(NON_SINKS, f),
+      (f) => !DOM_SINK_FILES.includes(f) && !SPECIAL_CONTENT_SINK_FILES.includes(f) && !MARKUP_SINK_FILES.includes(f) && !Object.hasOwn(NON_SINKS, f),
     );
     expect(
       unaccounted,
       'a new attribute-writing module must join SINKS above (or NON_SINKS with a reason)',
     ).toEqual([]);
     // And the list may not rot: every file named above still writes attributes.
-    for (const f of [...DOM_SINK_FILES, ...Object.keys(NON_SINKS)]) {
+    for (const f of [...DOM_SINK_FILES, ...SPECIAL_CONTENT_SINK_FILES, ...Object.keys(NON_SINKS)]) {
       expect(domWriters, `${f} no longer writes attributes — remove it from the list`).toContain(f);
     }
     for (const f of MARKUP_SINK_FILES) {
       expect(markupWriters, `${f} no longer emits attribute markup`).toContain(f);
     }
+  });
+
+  it('covers the prepared typed raw sink and shared CSS writer separately from generic attributes', () => {
+    // adoption-content does not write caller-named attributes: its real raw
+    // sink is typed, and CSS delegates to element.ts's declaration writer.
+    // It is not a NON_SINK exemption. Exercise both actual later-write paths.
+    const element = host(), raw = prepareRaw(element, null);
+    expect(() => raw.write({__html: '<b>raw</b>'})).toThrow('FORMA_E_RAW_INNER_HTML');
+    raw.write({__html: trustedHtml('<b>typed</b>')});
+    expect(element.innerHTML).toBe('<b>typed</b>');
+    const style = prepareStyle(element, '');
+    style.write('color:red;font-size:14px'); style.write('font-size:16px');
+    expect(element.style.color).toBe(''); expect(element.style.fontSize).toBe('16px');
+  });
+
+  it('the prepared attribute matrix retains typed srcdoc and refuses raw strings', () => {
+    const prepared = SINKS.find(sink => sink.name === 'prepared-adopt')!;
+    expect(() => prepared.write('iframe', 'srcdoc', '<b>raw</b>')).toThrow('FORMA_E_RAW_SRCDOC');
+    const frame = prepared.write('iframe', 'srcdoc', trustedHtml('<b>typed</b>'));
+    expect(frame.getAttribute('srcdoc')).toBe('<b>typed</b>');
+  });
+
+  it.each(URL_ATTRIBUTE_CASES)('strict preparation refuses object coercion at %s before any write', attr => {
+    const prepared = SINKS.find(sink => sink.name === 'prepared-adopt')!;
+    const convert = vi.fn(() => 'javascript:alert(1)');
+    expect(() => prepared.write(ATTR_TAG[attr]!, attr, { toString: convert })).toThrow('FORMA_E_HYDRATE_STRUCTURE');
+    expect(convert).not.toHaveBeenCalled();
   });
 
   it('covers every URL-bearing attribute the security module declares', () => {
@@ -393,7 +445,7 @@ describe('renderer contract: the table covers every sink', () => {
 // ---------------------------------------------------------------------------
 
 describe.each(SINKS)('renderer contract [$name]: dangerous URLs', (sink) => {
-  it.each([...URL_ATTRS])('drops every script scheme written to %s', (attr) => {
+  it.each(URL_ATTRIBUTE_CASES)('drops every script scheme written to %s', (attr) => {
     for (const url of DANGEROUS_URLS) {
       const el = sink.write(ATTR_TAG[attr]!, attr, url);
       expect(readAttr(el, attr), `${JSON.stringify(url)} on ${attr}`).toBeNull();
@@ -403,7 +455,7 @@ describe.each(SINKS)('renderer contract [$name]: dangerous URLs', (sink) => {
     }
   });
 
-  it.each([...URL_ATTRS])('keeps ordinary URLs on %s', (attr) => {
+  it.each(URL_ATTRIBUTE_CASES)('keeps ordinary URLs on %s', (attr) => {
     for (const url of SAFE_URLS) {
       const el = sink.write(ATTR_TAG[attr]!, attr, url);
       expect(readAttr(el, attr), `${url} on ${attr}`).toBe(url);
@@ -442,7 +494,7 @@ function changingString(first: string, later: string): { toString(): string } {
 }
 
 describe.each(OBJECT_SINKS)('renderer contract [$name]: one conversion per write', (sink) => {
-  it.each([...URL_ATTRS])('writes %s as the string the URL guard checked, not a second conversion', (attr) => {
+  it.each(URL_ATTRIBUTE_CASES)('writes %s as the string the URL guard checked, not a second conversion', (attr) => {
     // formajs#29's review (B1): the srcdoc path wrote every object as itself,
     // so setAttribute converted it a second time, after isDangerousUrl had
     // passed the first string.
@@ -650,7 +702,7 @@ type NsTree = [string, Record<string, unknown> | null, ...unknown[]];
  * parser has no MathML and keeps HTML integration points' content in SVG, so
  * the parsed side is the browsers', not happy-dom's.
  */
-const NS_VECTORS = (JSON.parse(readFileSync(resolve(__dirname, 'vectors/namespaces.json'), 'utf8')) as {
+const NS_VECTORS = (JSON.parse(readFileSync(resolve(__dirname, '../../../../crates/forma-ir/tests/fixtures/parity/namespaces.json'), 'utf8')) as {
   vectors: Array<{ name: string; server: string; tree: NsTree; namespaces: string[] }>;
 }).vectors;
 

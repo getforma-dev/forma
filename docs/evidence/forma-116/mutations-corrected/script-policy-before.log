@@ -1,0 +1,73 @@
+   Compiling libc v0.2.190
+   Compiling typenum v1.20.1
+   Compiling syn v3.0.9
+   Compiling hybrid-array v0.4.15
+   Compiling serde_core v1.0.229
+   Compiling cfg-if v1.0.5
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling bytes v1.12.1
+   Compiling const-oid v0.10.2
+   Compiling futures-core v0.3.34
+   Compiling digest v0.11.3
+   Compiling http v1.5.0
+   Compiling tokio-macros v2.7.2
+   Compiling http-body v1.1.0
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.4
+   Compiling log v0.4.34
+   Compiling mime v0.3.17
+   Compiling httparse v1.10.1
+   Compiling same-file v1.0.6
+   Compiling unicase v2.10.0
+   Compiling walkdir v2.5.0
+   Compiling tokio v1.53.3
+   Compiling mime_guess v2.0.5
+   Compiling tracing v0.1.44
+   Compiling cpufeatures v0.3.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling tower-service v0.3.3
+   Compiling serde_json v1.0.154
+   Compiling shlex v2.0.1
+   Compiling sha2 v0.11.0
+   Compiling cc v1.8.0
+   Compiling serde_derive v1.0.229
+   Compiling futures-task v0.3.34
+   Compiling slab v0.4.12
+   Compiling sync_wrapper v1.0.2
+   Compiling tower-layer v0.3.3
+   Compiling httpdate v1.0.3
+   Compiling smallvec v1.16.3
+   Compiling percent-encoding v2.3.2
+   Compiling memchr v2.8.3
+   Compiling atomic-waker v1.1.2
+   Compiling hyper v1.12.0
+   Compiling serde v1.0.229
+   Compiling form_urlencoded v1.2.2
+   Compiling futures-util v0.3.34
+   Compiling ring v0.17.14
+   Compiling rust-embed-utils v8.13.0
+   Compiling http-body-util v0.1.5
+   Compiling ryu v1.0.23
+   Compiling serde_urlencoded v0.7.1
+   Compiling axum-core v0.5.6
+   Compiling tower v0.5.3
+   Compiling rust-embed-impl v8.13.0
+   Compiling hyper-util v0.1.20
+   Compiling serde_path_to_error v0.1.20
+   Compiling getrandom v0.2.17
+   Compiling untrusted v0.9.0
+   Compiling matchit v0.8.4
+   Compiling forma-ir v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-ir)
+   Compiling axum v0.8.9
+   Compiling rust-embed v8.11.0
+   Compiling base64 v0.22.1
+   Compiling forma-server v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.65s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/target/debug/deps/forma_server-654682ffb379a24b)
+
+running 1 test
+test csp::tests::csp_is_strict ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 111 filtered out; finished in 0.00s
+

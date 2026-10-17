@@ -26,9 +26,9 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
   '.': {
     load: () => import('../index'),
     exports: [
-      '$', '$$', 'Fragment', 'activateIslands', 'addClass', 'batch', 'browserOnly', 'children',
+      '$', '$$', 'Fragment', '__adoptionChild', '__adoptionConditional', '__adoptionSignal', '__adoptionWritable', '__islandRegistration', 'activateIslands', 'addClass', 'batch', 'browserOnly', 'children',
       'cleanup', 'closest', 'createBus', 'createComputed', 'createContext',
-      'createEffect', 'createErrorBoundary', 'createHistory', 'createList',
+      'createEffect', 'createErrorBoundary', 'createHistory', 'createKeyedRows', 'createList',
       'createMemo', 'createPortal', 'createReducer', 'createRef',
       'createResource', 'createRoot', 'createShow', 'createSignal',
       'createStore', 'createSuspense', 'createSwitch', 'createText',
@@ -47,10 +47,8 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
   './runtime': {
     load: () => import('../runtime'),
     exports: [
-      'applyContainmentHints', 'clearDiagnostics', 'destroyRuntime',
-      'getDiagnostics', 'getScopes', 'initRuntime', 'mount', 'mountMarkup', 'reconcile',
-      'resetScope', 'setDebug', 'setDiagnostics', 'setDirectiveMap',
-      'setScopeValue', 'trustedHtml', 'unmount', 'yieldToMain',
+      'applyContainmentHints', 'clearDiagnostics', 'getDiagnostics', 'getScopes',
+      'mountMarkup', 'resetScope', 'setScopeValue', 'trustedHtml', 'yieldToMain',
     ],
   },
   './http': {
@@ -73,6 +71,8 @@ describe('public api surface', () => {
     const mod = await load();
     const actual = Object.keys(mod).filter((n) => n !== 'default').sort();
     expect(actual).toEqual([...exports].sort());
+    // Q11 / FORMA-184: renderBoth is a repository test helper, not a public core API.
+    expect(actual).not.toContain('renderBoth');
   });
 
   it.each(Object.keys(SURFACES))('%s exports only callable or usable values', async (subpath) => {

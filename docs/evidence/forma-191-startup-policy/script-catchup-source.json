@@ -1,0 +1,21 @@
+{
+  "scope": "Installed primary trace parser evidence: ScriptCatchup is rundown/source metadata. It is not an execution timestamp. Only exact source-rundown categories are excepted from the first-script boundary; any such record within a candidate layout task still blocks exclusion.",
+  "files": [
+    {
+      "file": "handlers/ScriptsHandler.js",
+      "bytes": 11261,
+      "sha256": "fcdf4035bfe54b183371f6408994dfc7c08f4409f369b64e828b0a339fafb109",
+      "lineStart": 33,
+      "lineEnd": 80,
+      "excerpt": "    if (Types.Events.isRundownScriptCompiled(event) && event.args.data) {\n        const { isolate, scriptId, frame } = event.args.data;\n        const script = getOrMakeScript(isolate, scriptId);\n        script.frame = frame;\n        script.ts = event.ts;\n        return;\n    }\n    if (Types.Events.isRundownScript(event)) {\n        const { isolate, scriptId, url, sourceUrl, sourceMapUrl, sourceMapUrlElided } = event.args.data;\n        const script = getOrMakeScript(isolate, scriptId);\n        if (!script.frame) {\n            script.frame = frameIdByIsolate.get(String(isolate)) ?? '';\n        }\n        script.url = url;\n        script.ts = event.ts;\n        if (sourceUrl) {\n            script.sourceUrl = sourceUrl;\n        }\n        // Older traces may have data source map urls. Those can be very large, so a change\n        // was made to elide them from the trace.\n        // If elided, a fresh trace will fetch the source map from the Script model\n        // (see TimelinePanel getExistingSourceMap). If not fresh, the source map is resolved\n        // instead in this handler via `findCachedRawSourceMap`.\n        if (sourceMapUrlElided) {\n            script.sourceMapUrlElided = true;\n        }\n        else if (sourceMapUrl) {\n            script.sourceMapUrl = sourceMapUrl;\n        }\n        return;\n    }\n    if (Types.Events.isRundownScriptSource(event)) {\n        const { isolate, scriptId, sourceText } = event.args.data;\n        const script = getOrMakeScript(isolate, scriptId);\n        script.content = sourceText;\n        return;\n    }\n    if (Types.Events.isRundownScriptSourceLarge(event)) {\n        const { isolate, scriptId, sourceText } = event.args.data;\n        const script = getOrMakeScript(isolate, scriptId);\n        script.content = (script.content ?? '') + sourceText;\n        return;\n    }\n    // Setup frameIdByIsolate, which is used only in the case that we are missing\n    // rundown events for a script. We won't get a frame association from the rundown\n    // events if the recording started only after the script was first compiled. In\n    // that scenario, derive the frame via the isolate / FunctionCall events.\n    // TODO: ideally, we put the frame on ScriptCatchup event. So much easier. This approach has some"
+    },
+    {
+      "file": "types/TraceEvents.d.ts",
+      "bytes": 87563,
+      "sha256": "42c6768cd2f1e39e478e3686723bc6cc86dc9d0e6e95983e27026ac993f996a5",
+      "lineStart": 2396,
+      "lineEnd": 2415,
+      "excerpt": "export declare function isRundownScriptCompiled(event: Event): event is RundownScriptCompiled;\n/** Same as `TraceEventScriptRundown` in `EnhancedTracesParser` */\nexport interface RundownScript extends Event {\n    cat: 'disabled-by-default-devtools.v8-source-rundown';\n    name: any;\n    args: Args & {\n        data: any;\n    };\n}\nexport declare function isRundownScript(event: Event): event is RundownScript;\n/** Same as `TraceEventScriptRundownSource` in `EnhancedTracesParser` */\nexport interface RundownScriptSource extends Event {\n    cat: 'disabled-by-default-devtools.v8-source-rundown-sources';\n    name: 'ScriptCatchup';\n    args: Args & {\n        data: any;\n    };\n}\nexport declare function isRundownScriptSource(event: Event): event is RundownScriptSource;\nexport interface RundownScriptSourceLarge extends Event {"
+    }
+  ]
+}

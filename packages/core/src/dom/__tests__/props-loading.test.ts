@@ -1,187 +1,100 @@
-/**
- * Props loading tests — inline attributes, script_tag block, no props.
- */
-import { describe, it, expect, vi, afterEach } from 'vitest';
-
-// We test loadIslandProps by testing activateIslands with different DOM setups.
+/** Declared head-state props, plus explicit refusal of the removed channels. */
+import { describe, it, expect, vi } from 'vitest';
+import { h } from '../element.js';
 import { activateIslands } from '../activate';
+import { compiled, emptyRegistry, FIXTURE_HASH, installState, useFreshDocument } from './helpers/compiled-island.js';
 
-afterEach(() => {
-  document.body.innerHTML = '';
-});
+function hosts(count = 1): void {
+  document.body.innerHTML = Array.from({ length: count }, (_, i) =>
+    `<div data-forma-island="${i}" data-forma-component="Comp${i}" data-forma-status="pending"><p>Content ${i}</p></div>`,
+  ).join('');
+}
 
 describe('props loading', () => {
-  it('loads inline props from data-forma-props attribute', () => {
-    let receivedProps: any = undefined;
-    document.body.innerHTML = `
-      <div data-forma-island="0"
-           data-forma-component="Comp"
-           data-forma-status="pending"
-           data-forma-props='{"name":"Alice","count":42}'>
-        <p>Content</p>
-      </div>
-    `;
-
-    activateIslands({
-      Comp: (el, props) => {
-        receivedProps = props;
-        return el;
-      },
-    });
-
-    expect(receivedProps).toEqual({ name: 'Alice', count: 42 });
+  it.each(['inline', 'shared'] as const)('refuses the removed %s props channel without changing server DOM', channel => {
+    hosts(2);
+    if (channel === 'inline') document.querySelector('[data-forma-island]')!.setAttribute('data-forma-props', '{"name":"Alice","count":42}');
+    else document.body.insertAdjacentHTML('beforeend', '<script id="__forma_islands" type="application/json">{"0":{"items":[1,2,3]}}</script>');
+    const before = document.documentElement.outerHTML;
+    const observer = new MutationObserver(() => {});
+    observer.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+    const first = vi.fn(), second = vi.fn();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    activateIslands(emptyRegistry({ Comp0: first, Comp1: second }));
+    expect(first).not.toHaveBeenCalled(); expect(second).not.toHaveBeenCalled();
+    expect(document.documentElement.outerHTML).toBe(before); expect(observer.takeRecords()).toEqual([]);
+    expect(error.mock.calls).toHaveLength(2);
+    expect(error.mock.calls.every(([message]) => String(message).includes('FORMA_E_ISLAND_STATE'))).toBe(true);
+    observer.disconnect(); error.mockRestore();
   });
 
-  it('loads script_tag props from __forma_islands block', () => {
-    let receivedProps: any = undefined;
-    document.body.innerHTML = `
-      <div data-forma-island="0"
-           data-forma-component="Comp"
-           data-forma-status="pending">
-        <p>Content</p>
-      </div>
-      <script id="__forma_islands" type="application/json">{"0":{"items":[1,2,3]}}</script>
-    `;
-
-    activateIslands({
-      Comp: (el, props) => {
-        receivedProps = props;
-        return el;
-      },
+  it('loads declared scalar and array props from the first head state block', async () => {
+    hosts(2);
+    installState([{ name: 'Alice', count: 42 }, { items: [1, 2, 3] }]);
+    const first = vi.fn(() => h('div', null, h('p', null, 'Content 0'))), second = vi.fn(() => h('div', null, h('p', null, 'Content 1')));
+    await activateIslands({
+      Comp0: compiled(first, [[{ name: 'name', type: { kind: 'string' } }, { name: 'count', type: { kind: 'number' } }]]),
+      Comp1: compiled(second, [[{ name: 'items', type: { kind: 'array', element: { kind: 'number' } } }]]),
     });
-
-    expect(receivedProps).toEqual({ items: [1, 2, 3] });
+    expect([...document.querySelectorAll('[data-forma-island]')].every(host => typeof (host as any).__formaDispose === 'function')).toBe(true);
+    expect(first).toHaveBeenCalledExactlyOnceWith({ name: 'Alice', count: 42 });
+    expect(second).toHaveBeenCalledExactlyOnceWith({ items: [1, 2, 3] });
+    expect([...document.querySelectorAll('[data-forma-island]')].map(host => host.getAttribute('data-forma-status'))).toEqual(['pending', 'pending']);
   });
 
-  it('returns null when no props source exists', () => {
-    let receivedProps: any = 'not-called';
-    document.body.innerHTML = `
-      <div data-forma-island="0"
-           data-forma-component="Comp"
-           data-forma-status="pending">
-        <p>Content</p>
-      </div>
-    `;
-
-    activateIslands({
-      Comp: (el, props) => {
-        receivedProps = props;
-        return el;
-      },
-    });
-
-    expect(receivedProps).toBeNull();
+  it('refuses absent state instead of manufacturing null props', () => {
+    hosts();
+    const component = vi.fn(), error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const before = document.body.innerHTML;
+    activateIslands(emptyRegistry({ Comp0: component }));
+    expect(component).not.toHaveBeenCalled(); expect(document.body.innerHTML).toBe(before);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_STATE'));
+    error.mockRestore();
   });
 
-  it('malformed JSON in props fails island gracefully, sibling unaffected', () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    let siblingActivated = false;
-
-    document.body.innerHTML = `
-      <div data-forma-island="0"
-           data-forma-component="Broken"
-           data-forma-status="pending"
-           data-forma-props='{bad json}'>
-        <p>Broken</p>
-      </div>
-      <div data-forma-island="1"
-           data-forma-component="Working"
-           data-forma-status="pending">
-        <p>Working</p>
-      </div>
-    `;
-
-    activateIslands({
-      Broken: (el) => el,
-      // Wires its server DOM itself and returns its own element (2.0.1's
-      // imperative pattern), so it activates like any working island.
-      Working: (el) => {
-        siblingActivated = true;
-        return el;
-      },
-    });
-
-    expect(document.querySelector('[data-forma-island="0"]')!
-      .getAttribute('data-forma-status')).toBe('error');
-    expect(siblingActivated).toBe(true);
-    expect(document.querySelector('[data-forma-island="1"]')!
-      .getAttribute('data-forma-status')).toBe('active');
-    errorSpy.mockRestore();
+  it('a malformed state entry stays inert while a valid sibling activates', async () => {
+    hosts(2); installState([{}, { label: 'working' }]);
+    document.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [null, { h: FIXTURE_HASH, p: { label: 'working' } }] });
+    const first = vi.fn(), second = vi.fn(() => h('div', null, h('p', null, 'Content 1'))), error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const firstHost = document.querySelector('[data-forma-island="0"]')!, before = firstHost.outerHTML;
+    await activateIslands({ Comp0: compiled(first), Comp1: compiled(second, [[{ name: 'label', type: { kind: 'string' } }]]) });
+    expect(first).not.toHaveBeenCalled(); expect(firstHost.outerHTML).toBe(before);
+    expect(typeof (document.querySelector('[data-forma-island="1"]') as any).__formaDispose).toBe('function');
+    expect(second).toHaveBeenCalledExactlyOnceWith({ label: 'working' });
+    expect(document.querySelector('[data-forma-island="1"]')!.getAttribute('data-forma-status')).toBe('pending');
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_STATE'));
+    error.mockRestore();
   });
 
-  it('HTML entity-encoded inline props decoded correctly', () => {
-    let receivedProps: any;
-    // Build DOM programmatically — innerHTML in jsdom does not decode
-    // HTML entities in attribute values the same way browsers do,
-    // so we use setAttribute which stores the raw decoded string.
-    document.body.innerHTML = `
-      <div data-forma-island="0"
-           data-forma-component="Comp"
-           data-forma-status="pending">
-        <p>Content</p>
-      </div>
-    `;
-    const island = document.querySelector('[data-forma-island]')!;
-    island.setAttribute('data-forma-props', '{"label":"Say \\"hello\\""}');
-
-    activateIslands({
-      Comp: (el, props) => {
-        receivedProps = props;
-        return el;
-      },
-    });
-
-    // getAttribute returns the raw string which JSON.parse handles
-    expect(receivedProps).toEqual({ label: 'Say "hello"' });
+  it('preserves quoted strings in head JSON without attribute decoding', async () => {
+    hosts(); installState([{ label: 'Say "hello" & <goodbye>' }]);
+    const component = vi.fn(() => h('div', null, h('p', null, 'Content 0')));
+    await activateIslands({ Comp0: compiled(component, [[{ name: 'label', type: { kind: 'string' } }]]) });
+    expect(typeof (document.querySelector('[data-forma-island]') as any).__formaDispose).toBe('function');
+    expect(component).toHaveBeenCalledExactlyOnceWith({ label: 'Say "hello" & <goodbye>' });
+    expect(document.querySelector('[data-forma-island]')!.textContent).toBe('Content 0');
   });
 
-  it('props that are JSON but neither an object nor an array mark the island error with FORMA_E_ISLAND_PROPS', () => {
-    // 2.0.1's shallow strip used `in`, which throws on these, so the island
-    // was marked error; an array passed. The deep strip throws on nothing, so
-    // activation checks the type, and says why with a code.
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const inline = ['null', '7', '0', '"text"', 'true', 'false'];
-    const shell = (i: number) =>
-      `<div data-forma-island="${i}" data-forma-component="Comp" data-forma-status="pending"><p>${i}</p></div>`;
-    document.body.innerHTML = Array.from({ length: 10 }, (_, i) => shell(i)).join('') +
-      '<script id="__forma_islands" type="application/json">' +
-      '{"6":null,"7":42,"9":{"ok":true,"nested":{"__proto__":{"x":1}}}}</script>';
-    const island = (i: number) => document.querySelector(`[data-forma-island="${i}"]`)!;
-    inline.forEach((json, i) => island(i).setAttribute('data-forma-props', json));
-    island(8).setAttribute('data-forma-props', '[1,{"__proto__":{"x":1},"a":2}]');
-
-    const received = new Map<number, unknown>();
-    activateIslands({
-      Comp: (el, props) => {
-        received.set(Number(el.getAttribute('data-forma-island')), props);
-        return el;
-      },
-    });
-
-    // Six inline payloads and two shared ones: error, and the island never ran.
-    for (let i = 0; i < 8; i++) {
-      expect(island(i).getAttribute('data-forma-status'), `island ${i}`).toBe('error');
-      expect(received.has(i), `island ${i} ran`).toBe(false);
+  it('refuses scalar and array props roots while accepting declared object and array fields', async () => {
+    const invalid = [null, 7, 0, 'text', true, false, [1, 2]];
+    hosts(invalid.length + 2); installState();
+    document.head.querySelector('script')!.textContent = JSON.stringify({ v: 1, s: [], i: [...invalid, { rows: [1, 2] }, { ok: true, nested: { undeclared: 1 } }].map(p => ({ h: FIXTURE_HASH, p })) });
+    const components = Array.from({ length: invalid.length + 2 }, (_, i) => vi.fn(() => h('div', null, h('p', null, `Content ${i}`))));
+    const registry = Object.fromEntries(components.map((component, i) => [`Comp${i}`, compiled(component)]));
+    registry.Comp7 = compiled(components[7]!, [[{ name: 'rows', type: { kind: 'array', element: { kind: 'number' } } }]]);
+    registry.Comp8 = compiled(components[8]!, [[{ name: 'ok', type: { kind: 'boolean' } }, { name: 'nested', type: { kind: 'object', object: 1 } }], []]);
+    const before = [...document.querySelectorAll('[data-forma-island]')].slice(0, invalid.length).map(host => host.outerHTML);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await activateIslands(registry);
+    for (let i = 0; i < invalid.length; i++) {
+      expect(components[i]).not.toHaveBeenCalled();
+      expect(document.querySelector(`[data-forma-island="${i}"]`)!.outerHTML).toBe(before[i]);
     }
-    // Two-sided: an array reaches its island, as in 2.0.1, stripped at every
-    // depth; an object from the shared block too.
-    expect(island(8).getAttribute('data-forma-status')).toBe('active');
-    expect(received.get(8)).toEqual([1, { a: 2 }]);
-    expect(Object.getOwnPropertyNames((received.get(8) as unknown[])[1])).toEqual(['a']);
-    expect(island(9).getAttribute('data-forma-status')).toBe('active');
-    expect(received.get(9)).toEqual({ ok: true, nested: {} });
-    // Each refusal is logged once, with its code, the JSON type and the island.
-    const logged = errorSpy.mock.calls.map((call) => String(call[0]));
-    expect(logged.filter((m) => m.includes('FORMA_E_ISLAND_PROPS'))).toHaveLength(8);
-    expect(logged).toContain(
-      '[forma] FORMA_E_ISLAND_PROPS: island props must be a JSON object or array, not null (island "Comp", id=0)',
-    );
-    expect(logged).toContain(
-      '[forma] FORMA_E_ISLAND_PROPS: island props must be a JSON object or array, not a number (island "Comp", id=7)',
-    );
-    expect(logged).toContain(
-      '[forma] FORMA_E_ISLAND_PROPS: island props must be a JSON object or array, not a string (island "Comp", id=3)',
-    );
-    errorSpy.mockRestore();
+    expect(components[7]).toHaveBeenCalledExactlyOnceWith({ rows: [1, 2] });
+    expect(components[8]).toHaveBeenCalledExactlyOnceWith({ ok: true, nested: {} });
+    expect(error.mock.calls.filter(([message]) => String(message).includes('FORMA_E_ISLAND_STATE'))).toHaveLength(invalid.length);
+    error.mockRestore();
   });
 });
+
+useFreshDocument();

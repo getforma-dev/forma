@@ -11,13 +11,11 @@
  * The rules asserted here:
  *   1. Every degradation warns, and the warning names WHERE (file), WHAT
  *      (construct) and SO WHAT (consequence for the rendered page).
- *   2. The IR really did degrade — a warning without the island shell (or an
- *      island shell without a warning) is just as wrong.
+ *   2. Unsupported native subtrees refuse with BUILD-610 and produce no IR;
+ *      admitted advisory diagnostics still verify their actual output.
  *   3. A page the compiler fully understands emits NOTHING on the console.
  *      Without this, a warn-on-everything implementation would pass rule 1.
- *   4. No `emitIsland` call site in the walker skips the diagnostic (a static
- *      completeness check over the source, so a new fallback path cannot be
- *      added silently).
+ *   4. The retired fallback writer stays absent and native refusal throws.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -27,6 +25,7 @@ import { parse } from '@babel/parser';
 import type * as T from '@babel/types';
 import * as t from '@babel/types';
 
+import { PropsSchemaError } from '../src/props-schema';
 import { IrEmitContext } from '../src/ir-emit';
 import { walkHTree, walkCallExpression, type WalkContext } from '../src/ir-walk';
 import {
@@ -53,7 +52,7 @@ function parseExpr(code: string): T.Expression {
  *
  * `signals` is source for the declarations that must be IN SCOPE — a binding
  * to a signal the compiler cannot resolve is itself a degradation (the value
- * renders empty server-side), so a fixture that is supposed to be CLEAN has to
+ * cannot form a closed native value), so a fixture that is supposed to be CLEAN has to
  * declare the signals it reads, exactly as a real page does. The scope's slots
  * are minted into the same context the walk emits into, or the ids the walk
  * writes would name slots that do not exist.
@@ -84,6 +83,7 @@ function emitWithWarnings(code: string, walkCtx: WalkContext = {}, signals?: str
         ),
       };
     }
+    try {
     if (t.isCallExpression(expr)) {
       if (t.isIdentifier(expr.callee) && expr.callee.name === 'h') {
         walkHTree(expr, 'h', ctx, walkCtx);
@@ -91,10 +91,15 @@ function emitWithWarnings(code: string, walkCtx: WalkContext = {}, signals?: str
         walkCallExpression(expr, 'h', ctx, walkCtx);
       }
     }
+    } catch(error) {
+      if(!(error instanceof PropsSchemaError))throw error;
+      return {warnings,refusal:error,ops:[],islands:[],slots:[]};
+    }
     const binary = ctx.toBinary();
     assertBinaryInvariants(binary);
     return {
       warnings,
+      refusal:undefined,
       ops: parseOpcodeList(binary),
       islands: getIslands(binary),
       slots: getSlots(binary),
@@ -118,7 +123,7 @@ const DEGRADATIONS: Array<[string, string, WalkContext, string[], string?]> = [
     'dynamic tag',
     `h(tagName, null, 'x')`,
     {},
-    ['dynamic tag h(tagName, ...)', 'renders nothing server-side'],
+    ['dynamic tag h(tagName, ...)', 'refused with BUILD-610'],
   ],
   [
     'bare identifier child',
@@ -130,7 +135,7 @@ const DEGRADATIONS: Array<[string, string, WalkContext, string[], string?]> = [
     'template literal child',
     `h('div', null, \`hi \${name}\`)`,
     {},
-    ['child a template literal', 'renders nothing server-side'],
+    ['child a template literal', 'refused with BUILD-610'],
   ],
   [
     'bare ternary child',
@@ -181,7 +186,7 @@ const DEGRADATIONS: Array<[string, string, WalkContext, string[], string?]> = [
     'unresolvable component',
     `h('div', null, Sidebar())`,
     {},
-    ['component Sidebar(...) could not be resolved to a source file', 'relative imports only'],
+    ['component Sidebar(...) could not be resolved to a source file', 'resolvable relative component import'],
   ],
   [
     'component past the inlining depth limit',
@@ -233,7 +238,7 @@ const DEGRADATIONS: Array<[string, string, WalkContext, string[], string?]> = [
     'island component that will not resolve',
     `h('div', null, LiveChart())`,
     { islandNames: new Set(['LiveChart']) },
-    ['island component \'LiveChart\'', 'renders nothing server-side'],
+    ['component LiveChart(...)', 'refused with BUILD-610'],
   ],
 ];
 
@@ -323,12 +328,14 @@ describe('build diagnostics', () => {
       }
     });
 
-    it('really did degrade to a client island', () => {
+    it('refuses with BUILD-610 instead of returning an empty island', () => {
       // The other half of the contract: a diagnostic must correspond to real
       // lost server-side content, or it is noise that trains people to ignore
       // the channel.
-      const { islands } = emitWithWarnings(code, walkCtx, signals);
-      expect(islands.length).toBeGreaterThan(0);
+      const { refusal, islands, ops } = emitWithWarnings(code, walkCtx, signals);
+      expect(refusal).toBeInstanceOf(PropsSchemaError);
+      expect(refusal!.code).toBe('BUILD-610');
+      expect(islands).toEqual([]);expect(ops).toEqual([]);
     });
   });
 
@@ -362,7 +369,7 @@ describe('build diagnostics', () => {
     // to be actionable without opening the compiler.
     expect(warnings[0]).toContain('in src/pages/StatusPage.ts');
     expect(warnings[0]).toContain('caption');
-    expect(warnings[0]).toContain('renders nothing server-side');
+    expect(warnings[0]).toContain('refused with BUILD-610');
   });
 
   it('reports the resolved component file, not the page that included it', () => {
@@ -456,7 +463,8 @@ describe('build diagnostics', () => {
   ];
 
   it.each(CLEAN_PAGES)('stays silent for %s', (_label, code, walkCtx, signals) => {
-    const { warnings, islands } = emitWithWarnings(code, walkCtx, signals);
+    const { warnings, islands, refusal } = emitWithWarnings(code, walkCtx, signals);
+    expect(refusal).toBeUndefined();
     expect(warnings).toEqual([]);
     // …and stayed silent because it compiled, not because it emitted nothing.
     if (_label !== 'a resolvable island component') {
@@ -527,26 +535,10 @@ describe('build diagnostics', () => {
     ).toEqual([]);
   });
 
-  it('warns at every emitIsland call site in the walker', () => {
-    const source = readFileSync(resolve(__dirname, '../src/ir-walk.ts'), 'utf8');
-    const lines = source.split('\n');
-
-    const unguarded: string[] = [];
-    lines.forEach((line, i) => {
-      if (!/(?<!function )emitIsland\(ctx/.test(line)) return;
-      // A diagnostic must be reachable immediately before the fallback: either
-      // a direct warnDegraded(...) or the local bailOut(...) helper, both of
-      // which name construct and consequence.
-      const window = lines.slice(Math.max(0, i - 14), i).join('\n');
-      if (!/warnDegraded\(/.test(window)) {
-        unguarded.push(`${i + 1}: ${line.trim()}`);
-      }
-    });
-
-    expect(
-      unguarded,
-      'every fallback-island emission must be preceded by a diagnostic',
-    ).toEqual([]);
+  it('has no legacy empty-island writer and explicitly throws on unsupported native content',()=>{
+    const source=readFileSync(resolve(__dirname,'../src/ir-walk.ts'),'utf8');
+    expect(source).not.toMatch(/function emit(?:BrowserOnly)?Island\(/);
+    expect(source).toMatch(/function refuseIsland[\s\S]*?throw new PropsSchemaError/);
   });
 
   // -------------------------------------------------------------------------
@@ -571,18 +563,15 @@ describe('build diagnostics', () => {
       }
     }
 
-    it('warns that a non-literal signal default gets no named slot', () => {
+    it('retains an empty aggregate signal default without a retired note', () => {
       const { warnings, defaults } = extract(
         `import { createSignal } from 'formajs';
          export const [rows, setRows] = createSignal([]);
          export function StatusPanel() { return null; }`,
       );
 
-      expect(defaults.has('rows')).toBe(false);
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]).toContain("signal 'rows'");
-      expect(warnings[0]).toContain('src/StatusIsland.ts');
-      expect(warnings[0]).toContain('no named slot');
+      expect(defaults.get('rows')).toMatchObject({type:'aggregate',default:[]});
+      expect(warnings).toEqual([]);
     });
 
     it('stays silent for every default it can evaluate', () => {

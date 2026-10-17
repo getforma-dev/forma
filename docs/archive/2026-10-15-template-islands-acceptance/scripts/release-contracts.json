@@ -1,0 +1,19 @@
+{
+  "stage": "v3-development",
+  "fmir": 3,
+  "manifest": 2,
+  "props": "declared-v1",
+  "stateBlock": null,
+  "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
+  "liveReleaseReady": false,
+  "pending": {
+    "FORMA-185": "seeded-input minimization/replay qualification and hosted nightly observation",
+    "FORMA-144": "slices 2/3: island state adoption and final template/release cleanup",
+    "FORMA-188": "fixture applications and skew drill",
+    "FORMA-191": "release measurements"
+  },
+  "trustedTypes": "enforced-v1",
+  "boundRender": "finalized-v1",
+  "assetIntegrity": "sha384-v1",
+  "sourceTemplates": "declared-v1"
+}

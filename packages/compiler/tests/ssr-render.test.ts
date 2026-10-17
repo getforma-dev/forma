@@ -28,7 +28,7 @@ import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { generateRealIr } from '../src/esbuild-ssr-plugin';
-import { renderDefaults, ZWSP } from './helpers/render';
+import { renderDefaults } from './helpers/render';
 
 let tmpDir: string;
 let warnSpy: ReturnType<typeof vi.spyOn>;
@@ -294,11 +294,10 @@ describe('SSR renders the text and attributes the client renders', () => {
 // ===========================================================================
 
 describe('what SSR still cannot render, stated exactly', () => {
-  it('emits the placeholder text node when a binding cannot be evaluated', () => {
-    // A signal whose initial value is not a literal has no default to render.
-    // The zero-width space is deliberate — it gives the client a Text node to
-    // bind to — and it is the honest output here, not a silent success.
-    const html = ssr({
+  it('refuses a binding whose initial value cannot be evaluated', () => {
+    // Unknown runtime initialization cannot be replaced by an empty native
+    // text value. The build refuses before producing a misleading document.
+    expect(() => ssr({
       'app.ts': ENTRY,
       'page.ts': pageAround('Sub()'),
       'sub.ts': `
@@ -308,20 +307,22 @@ describe('what SSR still cannot render, stated exactly', () => {
           return h('span', null, () => label());
         }
       `,
-    });
-
-    expect(html).toBe(`<div id="app"><span>${ZWSP}</span></div>`);
+    })).toThrow(/BUILD-610.*sub\.ts:5:34/s);
     // …and it says so, naming the file, the construct and the consequence.
     const warned = warnSpy.mock.calls.map((c) => c.join(' ')).join('\n');
     expect(warned).toContain("signal 'label'");
     expect(warned).toContain('sub.ts');
     expect(warned).toContain('CallExpression');
   });
+});
 
-  it('omits an attribute whose value evaluates to the empty string', () => {
-    // A documented limit of the binary format, not a walker choice: a slot
-    // entry cannot distinguish an empty default from no default, so the server
-    // omits `value` where the client writes `value=""`.
+describe('an empty string is a value (FORMA-182 finding F3)', () => {
+  it('writes an attribute whose server value is the empty string, where it used to omit it', () => {
+    // A slot entry cannot distinguish an empty default from no default (the
+    // walker reads it as null and omits the attribute), so the compiler writes
+    // an attribute whose server value is "" as a static `value=""`, which is
+    // what the client writes. This test used to pin the omission as a stated
+    // limit; docs/parity-rules.md, rule 6's attribute table.
     const html = ssr({
       'app.ts': ENTRY,
       'page.ts': pageAround('Sub()'),
@@ -334,6 +335,8 @@ describe('what SSR still cannot render, stated exactly', () => {
       `,
     });
 
-    expect(html).toBe('<div id="app"><input type="search"></div>');
+    // This renderer prints a static empty value as the bare name; the DOM
+    // value is "" either way.
+    expect(html).toBe('<div id="app"><input type="search" value></div>');
   });
 });

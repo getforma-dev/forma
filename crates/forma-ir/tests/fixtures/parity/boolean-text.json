@@ -1,0 +1,50 @@
+{
+  "rule": 6,
+  "title": "A boolean in text is a build error (FORMA-182; DR-9 rule 6, the first half of design 4 rule 5)",
+  "contract": "A text position whose value is boolean-typed is a build error, BUILD-614: a declared boolean prop (optional included), a signal whose default is a boolean, a closed boolean (an aggregate or list-row field, a module-level const initialized with true or false), or an expression that can only be a boolean (!x, a comparison, && or || of booleans), read eagerly or through a getter, as a child or as a createShow or ternary branch. h() writes nothing for a boolean child whatever its value while the walker would write 'true' or 'false', so such a page either breaks parity or shows nothing. Admitted: String(flag) on a non-optional declared boolean prop (DYN_TEXT on the boolean slot, written as the word on both sides) and on a boolean signal (folded to the word); a boolean literal (writes nothing on both sides); and a mixed expression whose boolean result stands for nothing (`ready() && 'Go'`): eagerly it folds, and through a getter the server writes an empty range when its default is the boolean, as h() does. As an attribute value a boolean follows rule 6's attribute table, attributes.json (presence for the HTML boolean set, the word \"true\" elsewhere).",
+  "consumers": [
+    "packages/compiler/tests/value-rule-6-boolean-text.test.ts (each `compiledText` shape builds without a diagnostic and writes `writes` under its defaults, or refuses with its code)",
+    "packages/compiler/tests/diagnostics-conformance.test.ts (the BUILD-614 fixture and its String(flag) near miss)",
+    "crates/forma-ir/src/walker.rs > value_rule_vectors (the near miss: DYN_TEXT on a Bool slot; the idiom's ranges)",
+    "packages/core/src/dom/__tests__/value-rule-6-boolean-text.test.ts (String(flag) through h(); the browser-only drop; the mixed idiom's nothing)",
+    "packages/core/e2e/value-rules.spec.ts (the walker's word range and the empty range of the mixed idiom parsed by the three engines and strictly adopted without a write)"
+  ],
+  "note": "Hand-enumerated. `idiom` is the mixed expression `() => ready() && 'Go'` at each default of ready: the compiler writes a Text slot whose default is empty at false (the empty range) and the string at true, which the walker writes, core's h() and adoption agree with, and the three engines adopt without a write. `props` is the declared page props type, `setup` a module-level statement, `child` the text child expression; `code` null means the page builds with no diagnostic, `slot` the declared slot DYN_TEXT binds and `writes` the visible text the walker writes under the slot defaults (an empty range shows nothing). A refused shape names the code the build fails with; a BUILD-614 shape's `fix` is the child its message advises (`String(…)` where the compiler binds or folds it, a ternary where `String(…)` is itself refused), which must build with no diagnostic in the same page.",
+  "compiledText": [
+    {"id": "declared-boolean-prop", "props": "{ flag: boolean }", "child": "props.flag", "code": "BUILD-614", "fix": "String(props.flag)"},
+    {"id": "declared-boolean-prop-reactive", "props": "{ flag: boolean }", "child": "() => props.flag", "code": "BUILD-614", "fix": "() => String(props.flag)"},
+    {"id": "declared-optional-boolean-prop", "props": "{ flag?: boolean }", "child": "props.flag", "code": "BUILD-614", "fix": "props.flag ? 'yes' : 'no'"},
+    {"id": "declared-boolean-prop-in-show-branch", "props": "{ flag: boolean; ok: boolean }", "child": "createShow(() => props.ok, () => props.flag)", "code": "BUILD-614", "fix": "createShow(() => props.ok, () => String(props.flag))"},
+    {"id": "boolean-signal-reactive", "setup": "const [done] = createSignal(false);", "child": "() => done()", "code": "BUILD-614", "fix": "() => String(done())"},
+    {"id": "boolean-signal-eager", "setup": "const [done] = createSignal(true);", "child": "done()", "code": "BUILD-614", "fix": "String(done())"},
+    {"id": "closed-boolean-constant", "setup": "const FLAG = true;", "child": "FLAG", "code": "BUILD-614", "fix": "() => (FLAG ? 'yes' : 'no')"},
+    {"id": "closed-aggregate-boolean-field", "setup": "const [state] = createSignal({ ready: true });", "child": "() => state().ready", "code": "BUILD-614", "fix": "() => (state().ready ? 'yes' : 'no')"},
+    {"id": "closed-list-row-boolean-field", "setup": "const [rows] = createSignal([{ id: 1, done: true }]);", "child": "createList(() => rows(), (r) => r.id, (r) => h('i', null, r.done))", "code": "BUILD-614", "fix": "createList(() => rows(), (r) => r.id, (r) => h('i', null, () => (r.done ? 'yes' : 'no')))"},
+    {"id": "eager-negation", "setup": "const [ready] = createSignal(false);", "child": "!ready()", "code": "BUILD-614", "fix": "String(!ready())"},
+    {"id": "reactive-negation", "setup": "const [ready] = createSignal(false);", "child": "() => !ready()", "code": "BUILD-614", "fix": "() => String(!ready())"},
+    {"id": "reactive-comparison", "setup": "const [count] = createSignal(0);", "child": "() => count() > 0", "code": "BUILD-614", "fix": "() => String(count() > 0)"},
+    {"id": "boolean-only-ternary-branch", "setup": "const [ok] = createSignal(true);", "child": "() => ok() ? !ok() : 'no'", "code": "BUILD-614", "fix": "() => ok() ? String(!ok()) : 'no'"},
+    {"id": "string-of-declared-boolean", "props": "{ flag: boolean }", "child": "String(props.flag)", "code": null, "slot": "flag", "writes": ""},
+    {"id": "string-of-declared-boolean-reactive", "props": "{ flag: boolean }", "child": "() => String(props.flag)", "code": null, "slot": "flag", "writes": ""},
+    {"id": "string-of-declared-boolean-in-show-branch", "props": "{ flag: boolean; ok: boolean }", "child": "createShow(() => props.ok, () => String(props.flag))", "code": null, "slot": "flag", "writes": ""},
+    {"id": "string-of-optional-declared-boolean", "props": "{ flag?: boolean }", "child": "String(props.flag)", "code": "BUILD-610"},
+    {"id": "string-of-declared-string-prop", "props": "{ title: string }", "child": "String(props.title)", "code": "BUILD-610"},
+    {"id": "string-of-declared-boolean-in-attribute", "props": "{ flag: boolean }", "attribute": "title", "value": "String(props.flag)", "code": "BUILD-610"},
+    {"id": "string-of-boolean-signal", "setup": "const [done] = createSignal(false);", "child": "() => String(done())", "code": null, "writes": "false"},
+    {"id": "string-of-boolean-signal-eager", "setup": "const [done] = createSignal(true);", "child": "String(done())", "code": null, "writes": "true"},
+    {"id": "string-of-boolean-in-ternary-branch", "setup": "const [ok] = createSignal(true);", "child": "() => ok() ? String(!ok()) : 'no'", "code": null, "writes": "false"},
+    {"id": "boolean-literal-child", "child": "true", "code": null, "writes": ""},
+    {"id": "conditional-idiom-folds-to-false", "setup": "const [ready] = createSignal(false);", "child": "ready() && 'Go'", "code": null, "writes": ""},
+    {"id": "reactive-conditional-idiom-at-false", "setup": "const [ready] = createSignal(false);", "child": "() => ready() && 'Go'", "code": null, "writes": ""},
+    {"id": "reactive-conditional-idiom-at-true", "setup": "const [ready] = createSignal(true);", "child": "() => ready() && 'Go'", "code": null, "writes": "Go"},
+    {"id": "boolean-literal-ternary-branch", "setup": "const [ok] = createSignal(true);", "child": "() => ok() ? true : 'no'", "code": null, "writes": ""}
+  ],
+  "nearMissText": [
+    {"id": "true", "value": true, "expected": "true"},
+    {"id": "false", "value": false, "expected": "false"}
+  ],
+  "idiom": [
+    {"id": "and-at-false", "ready": false, "expected": ""},
+    {"id": "and-at-true", "ready": true, "expected": "Go"}
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "reason": "Exact htmlFor alias now emits canonical for; source unchanged, prior archive immutable.",
+  "sourceCommit": "939961cde6b89c91489fc75a0fddabc606d1fc77",
+  "compilerArtifactSha256": "0bbd998cc69e48ee8fe318fb1ce54b98393cfb2790b51c159e909ea214ba37e7",
+  "previousManifest": "../FORMA-139-html-context/manifest.json",
+  "previousManifestSha256": "5f7f5da4bf8f1623e1d5d46672e542f7eec3862977c389110db2b6bf24884b8b",
+  "transitions": [
+    {
+      "name": "label explicit control",
+      "sourceFile": "26.tsx",
+      "sourceSha256": "ec39d32034a2ef070fc7c9ece332fed3c3d8b38718e89698cf12cd99d6bcfd44",
+      "previousIrSha256": "b4513e4fd5f3a349e330112793cb0106da70b349ef7be321b3a91c437529ea17",
+      "currentIrFile": "26.ir",
+      "currentIrSha256": "0a61e3822a8a921c7d3f2b54d17abf4491bf52b50f0c09b8fe04e3d3d4207e11",
+      "currentIrBytes": 177
+    },
+    {
+      "name": "label sibling control",
+      "sourceFile": "27.tsx",
+      "sourceSha256": "9c77893c2cd95a70705533de472f00a3c03ce5965a6a87c8cfa7884b9d9398e8",
+      "previousIrSha256": "30bbde54d96ba0452e8e7947ac8634dd9239c15f9b3c7b856006a6badfcfc50f",
+      "currentIrFile": "27.ir",
+      "currentIrSha256": "80717e9fbf078baf4343856a6e1fdbb88c53f238a9b342f0c1de2d84abfa1553",
+      "currentIrBytes": 205
+    }
+  ],
+  "files": {
+    "html-context.test.ts.original": "e2e30c031f1ead55ad78b20e54065eba2180d0a1422357bb016811b43b2fe332",
+    "26.tsx": "ec39d32034a2ef070fc7c9ece332fed3c3d8b38718e89698cf12cd99d6bcfd44",
+    "26.ir": "0a61e3822a8a921c7d3f2b54d17abf4491bf52b50f0c09b8fe04e3d3d4207e11",
+    "27.tsx": "9c77893c2cd95a70705533de472f00a3c03ce5965a6a87c8cfa7884b9d9398e8",
+    "27.ir": "80717e9fbf078baf4343856a6e1fdbb88c53f238a9b342f0c1de2d84abfa1553"
+  }
+}

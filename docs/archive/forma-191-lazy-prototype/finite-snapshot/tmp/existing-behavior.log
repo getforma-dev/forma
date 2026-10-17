@@ -1,0 +1,13 @@
+
+> @getforma/core@3.0.0-dev test
+> vitest run src/dom/__tests__/element.test.ts src/dom/__tests__/namespace-resolution.test.ts src/dom/__tests__/adoption-materialize.test.ts src/dom/__tests__/adoption-callback-mode.test.ts src/dom/__tests__/adoption-conditional-generations.test.ts src/dom/__tests__/adoption-listener-installation.test.ts src/dom/__tests__/list-disposal.test.ts --maxWorkers=2
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-191-lazy-prototype/forma/packages/core
+
+
+ Test Files  7 passed (7)
+      Tests  119 passed (119)
+   Start at  05:08:38
+   Duration  1.51s (transform 486ms, setup 0ms, import 745ms, tests 155ms, environment 1.25s)
+

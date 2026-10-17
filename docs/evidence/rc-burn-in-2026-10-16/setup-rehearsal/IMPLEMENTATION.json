@@ -1,0 +1,83 @@
+{
+  "baseCommit": "ca755186bb43eb95355bd4f3518e4115b5a94236",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 33353,
+      "sha256": "2b259ff56b4e27f0e33d70411ba3c37e9c85c074bb4d9c39ba897cd83a55bfc2"
+    },
+    {
+      "path": ".github/workflows/rc-burn-in.yml",
+      "bytes": 3125,
+      "sha256": "3afb3691f3136b5a796e9d39a9ccb7c2d0cb4ce1a9ed601210321df123e66387"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "bytes": 10483,
+      "sha256": "5893a1aea41b2fb0b5a60cc167064109343b52066b2de32c3dfca9b72ddb29e3"
+    },
+    {
+      "path": "docs/UPGRADING-3.0.md",
+      "bytes": 14097,
+      "sha256": "1e6e714c581e4e1661aa025a5de91ffbcad6333e1798789b44239a962c9668cf"
+    },
+    {
+      "path": "docs/release/RC-BURN-IN.md",
+      "bytes": 8162,
+      "sha256": "651cda9a516940709d3a76a375f428876fc71f0674bd8a86a87eac25cc04826d"
+    },
+    {
+      "path": "scripts/check-toolchain-policy.rb",
+      "bytes": 5762,
+      "sha256": "b5a29f33c3d03ec92d6903b61ab26b8694909704820e92c29fec0e3b755264a3"
+    },
+    {
+      "path": "scripts/release-burn-in-stage.mjs",
+      "bytes": 6968,
+      "sha256": "dee8c779bd71a2172e0c039ebfb1a57346cccf2309742ea21eaff052e02716f2"
+    },
+    {
+      "path": "scripts/release-burn-in-workflow.test.mjs",
+      "bytes": 5150,
+      "sha256": "c48a585e179193274e10b7cc5a3d2dfa7c11ec8b41b86f269b36807458f5dd1f"
+    },
+    {
+      "path": "scripts/release-burn-in-setup.mjs",
+      "bytes": 6361,
+      "sha256": "29b3c95cc80953a0cf458dd5776a8279aa03021d31f1d98b8627367bef0d08f8"
+    },
+    {
+      "path": "scripts/release-burn-in-setup.test.mjs",
+      "bytes": 4944,
+      "sha256": "39f9828b24822fd1395f775d175a8865db3b1b56af39f400208c9965b017166c"
+    }
+  ],
+  "validation": {
+    "node": "24.22.0",
+    "tests": 51,
+    "passed": 51,
+    "durationMs": 4846.166,
+    "command": "node --test --test-concurrency=2 scripts/release-burn-in-setup.test.mjs scripts/release-burn-in-workflow.test.mjs scripts/toolchain-policy.test.mjs scripts/release-record.test.mjs scripts/release-workflow-evidence.test.mjs"
+  },
+  "limits": {
+    "localBuildExecuted": false,
+    "browserExecuted": false,
+    "linuxOwnershipExecuted": false,
+    "setupRehearsalExecuted": false,
+    "rcAuthenticated": false,
+    "burnInPassed": false,
+    "performanceAccepted": false
+  },
+  "firstHostedFailure": {
+    "runId": 38947468985,
+    "jobId": 117130123344,
+    "head": "ca755186bb43eb95355bd4f3518e4115b5a94236",
+    "cause": "actionlint/ShellCheck SC2016 on literal Markdown backticks in the final printf format; Linux controls had not run",
+    "repair": "remove only literal formatting backticks; no suppressed shell check"
+  },
+  "notes": [
+    "Read original DS11 bytes rather than rewriting the authenticated descriptor.",
+    "Seed controls require exactly 1000 completed inputs per target and earn zero active credit.",
+    "Time allowances change orchestration only; P17/G6 elapsed acceptance remains <=1800 seconds."
+  ]
+}

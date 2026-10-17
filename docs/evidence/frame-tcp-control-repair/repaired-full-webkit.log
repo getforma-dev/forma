@@ -1,0 +1,591 @@
+
+> @getforma/core@3.0.0-dev test:e2e:engines
+> npm run build && node -e "require('fs').copyFileSync('dist/formajs-runtime.global.js','e2e/fixtures/formajs-runtime.global.js')" && npx playwright test --project=webkit --workers=2 --reporter=list
+
+
+> @getforma/core@3.0.0-dev build
+> node scripts/clean-dist.mjs && tsup && node scripts/post-build.mjs && node scripts/verify-dist.mjs
+
+clean-dist: emptied dist/
+CLI Building entry: {"index":"src/index.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"forma.esm":"src/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-frame":"src/runtime-frame.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"index":"src/index.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/packages/core/tsup.config.ts
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+IIFE dist/formajs-frame.global.js 156.07 KB
+IIFE ⚡️ Build success in 86ms
+DTS Build start
+DTS Build start
+IIFE dist/formajs-runtime.global.js     158.37 KB
+IIFE dist/formajs-runtime.global.js.map 509.91 KB
+IIFE ⚡️ Build success in 284ms
+IIFE dist/formajs-runtime-hardened.global.js     152.74 KB
+IIFE dist/formajs-runtime-hardened.global.js.map 544.45 KB
+IIFE ⚡️ Build success in 364ms
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.js".
+ESM dist/dev/runtime-hardened.js 139.02 KB
+ESM ⚡️ Build success in 525ms
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.js".
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.cjs".
+"getActiveSub", "effectScope", "isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.cjs".
+ESM dist/runtime-hardened.js     136.35 KB
+ESM dist/runtime-hardened.js.map 519.51 KB
+ESM ⚡️ Build success in 1705ms
+ESM dist/dev/tc39-compat.js    526.00 B
+ESM dist/dev/storage.js        5.18 KB
+ESM dist/dev/chunk-5N2H2LZM.js 11.01 KB
+ESM dist/dev/http.js           5.29 KB
+ESM dist/dev/chunk-RXPUW25Q.js 144.38 KB
+ESM dist/dev/chunk-MLOYJZMD.js 4.11 KB
+ESM dist/dev/index.js          33.27 KB
+ESM dist/dev/runtime.js        126.49 KB
+ESM ⚡️ Build success in 1702ms
+CJS dist/dev/tc39-compat.cjs    590.00 B
+CJS dist/dev/index.cjs          39.79 KB
+CJS dist/dev/storage.cjs        5.27 KB
+CJS dist/dev/chunk-ZHI5EEXV.cjs 4.50 KB
+CJS dist/dev/chunk-PATKUBFH.cjs 12.46 KB
+CJS dist/dev/http.cjs           5.55 KB
+CJS dist/dev/chunk-G4367YJS.cjs 146.25 KB
+CJS dist/dev/runtime.cjs        127.24 KB
+CJS ⚡️ Build success in 1702ms
+CJS dist/dev/runtime-hardened.cjs 139.28 KB
+CJS ⚡️ Build success in 1703ms
+ESM dist/chunk-QMDEYXZ4.js     3.26 KB
+ESM dist/storage.js            5.25 KB
+ESM dist/chunk-HJUFIIUR.js     11.09 KB
+ESM dist/tc39-compat.js        605.00 B
+ESM dist/index.js              33.02 KB
+ESM dist/http.js               5.36 KB
+ESM dist/runtime.js            125.30 KB
+ESM dist/chunk-K3QJW2Q6.js     142.09 KB
+ESM dist/chunk-HJUFIIUR.js.map 52.84 KB
+ESM dist/chunk-QMDEYXZ4.js.map 24.80 KB
+ESM dist/tc39-compat.js.map    2.41 KB
+ESM dist/storage.js.map        16.91 KB
+ESM dist/http.js.map           19.14 KB
+ESM dist/index.js.map          129.31 KB
+ESM dist/runtime.js.map        419.66 KB
+ESM dist/chunk-K3QJW2Q6.js.map 434.40 KB
+ESM ⚡️ Build success in 1728ms
+CJS dist/index.cjs              39.54 KB
+CJS dist/tc39-compat.cjs        671.00 B
+CJS dist/chunk-RADJICQN.cjs     12.55 KB
+CJS dist/chunk-GXLOYZZE.cjs     3.66 KB
+CJS dist/http.cjs               5.62 KB
+CJS dist/storage.cjs            5.34 KB
+CJS dist/chunk-MGIUPKFR.cjs     143.96 KB
+CJS dist/runtime.cjs            126.05 KB
+CJS dist/tc39-compat.cjs.map    2.45 KB
+CJS dist/chunk-GXLOYZZE.cjs.map 24.84 KB
+CJS dist/storage.cjs.map        16.91 KB
+CJS dist/http.cjs.map           19.19 KB
+CJS dist/chunk-RADJICQN.cjs.map 53.03 KB
+CJS dist/index.cjs.map          129.85 KB
+CJS dist/chunk-MGIUPKFR.cjs.map 434.90 KB
+CJS dist/runtime.cjs.map        419.98 KB
+CJS ⚡️ Build success in 1728ms
+ESM dist/forma.esm.js     197.31 KB
+ESM dist/forma.esm.js.map 668.88 KB
+ESM ⚡️ Build success in 1726ms
+CJS dist/runtime-hardened.cjs     136.61 KB
+CJS dist/runtime-hardened.cjs.map 519.56 KB
+CJS ⚡️ Build success in 1726ms
+DTS ⚡️ Build success in 1508ms
+DTS dist/runtime-hardened.d.ts  10.79 KB
+DTS dist/runtime-hardened.d.cts 10.79 KB
+DTS ⚡️ Build success in 3353ms
+DTS dist/index.d.ts                  56.94 KB
+DTS dist/runtime.d.ts                7.97 KB
+DTS dist/tc39-compat.d.ts            1.21 KB
+DTS dist/http.d.ts                   4.26 KB
+DTS dist/storage.d.ts                2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.ts  2.98 KB
+DTS dist/signal-B5ZKb9uL.d.ts        2.51 KB
+DTS dist/index.d.cts                 56.94 KB
+DTS dist/runtime.d.cts               7.97 KB
+DTS dist/tc39-compat.d.cts           1.21 KB
+DTS dist/http.d.cts                  4.26 KB
+DTS dist/storage.d.cts               2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.cts 2.98 KB
+DTS dist/signal-B5ZKb9uL.d.cts       2.51 KB
+post-build: collapsed duplicate sourceMappingURL footers in 20 file(s)
+post-build: copied dist/formajs-runtime.global.js → dist/forma-runtime.js
+post-build: copied dist/formajs-runtime-hardened.global.js → dist/forma-runtime-csp.js
+post-build: jsx.d.ts copied and referenced in type declarations
+verify-dist: ok (42 JS artifacts checked)
+[WebServer] (node:14257) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:14299) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 411 tests using 2 workers
+
+(node:14302) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14301) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    2 [webkit] › e2e/adoption-content.spec.ts:24:1 › normalizes served CSS without initial writes and later reconciles only declarations under CSP (475ms)
+  ✓    1 [webkit] › e2e/adoption-controls.spec.ts:35:1 › native radio defaults use form/name groups and last checked winner without writes (475ms)
+  ✓    3 [webkit] › e2e/adoption-content.spec.ts:36:1 › CSS mismatches, reserved block keys and object accessors refuse without a repair or coercion (218ms)
+  ✓    4 [webkit] › e2e/adoption-controls.spec.ts:47:1 › native sanitized defaults and an early text edit preserve focus selection and setter count (308ms)
+  ✓    5 [webkit] › e2e/adoption-content.spec.ts:46:1 › typed raw normalization uses table tbody and SVG context without rewriting served nodes (222ms)
+  ✓    6 [webkit] › e2e/adoption-controls.spec.ts:64:1 › native select normalization preserves default winners and observes ordered multiple edits (219ms)
+  ✓    7 [webkit] › e2e/adoption-content.spec.ts:55:1 › raw marker-like comments are opaque and detached normalization runs no custom constructors (186ms)
+  ✓    8 [webkit] › e2e/adoption-controls.spec.ts:76:1 › native boolean presence and coded default-before-edit refusal never repair controls (231ms)
+  ✓    9 [webkit] › e2e/adoption-content.spec.ts:64:1 › typed raw mismatches and lookalikes refuse before parsing, cache and teardown (193ms)
+  ✓   10 [webkit] › e2e/adoption-controls.spec.ts:89:1 › external select peers and ordinary implicit defaults remain eligible while ambiguous winners refuse (203ms)
+  ✓   11 [webkit] › e2e/adoption-content.spec.ts:74:1 › fallback is initially untouched and later typed transitions dispose only before real changes (195ms)
+  ✓   12 [webkit] › e2e/adoption-controls.spec.ts:110:50 › color alpha/display-p3 defaults stay untouched with readonly binding (184ms)
+  ✓   13 [webkit] › e2e/adoption-content.spec.ts:82:1 › prepared iframe srcdoc preserves typed writes and refuses a same-text string before cache (188ms)
+  ✓   14 [webkit] › e2e/adoption-controls.spec.ts:110:50 › color alpha/display-p3 defaults stay untouched with string binding (187ms)
+  ✓   15 [webkit] › e2e/adoption-content.spec.ts:90:1 › native policy control proves plain HTML is refused where Trusted Types is supported (209ms)
+  ✓   16 [webkit] › e2e/adoption-controls.spec.ts:119:1 › literal initialization preserves early control edits without granting reactive seed authority (272ms)
+  ✓   17 [webkit] › e2e/adoption-content.spec.ts:95:1 › contextual raw normalization retains ancestor form and MathML integration context (187ms)
+  ✓   18 [webkit] › e2e/adoption-content.spec.ts:105:1 › noscript context refusal preserves live and inert fallback under typed policy (192ms)
+  ✓   19 [webkit] › e2e/csp-example.spec.ts:49:1 › the shipped CSP example explicitly owns its counter, filter and DOM handler (582ms)
+  ✓   20 [webkit] › e2e/csp.spec.ts:78:3 › the flagship example under Content-Security-Policy: script-src 'self' › renders, filters and reacts with zero CSP violations (443ms)
+  ✓   21 [webkit] › e2e/data-fetch.spec.ts:26:1 › a data-fetch to a stalled endpoint aborts at 30 s into its error: target (250ms)
+  ✓   22 [webkit] › e2e/csp.spec.ts:118:3 › the flagship example under Content-Security-Policy: script-src 'self' › a blocked inline script is seen as a violation in this engine (241ms)
+  ✓   24 [webkit] › e2e/csp.spec.ts:130:3 › the flagship example under Content-Security-Policy: script-src 'self' › the runtime reports no diagnostics for the flagship markup (232ms)
+  ✓   23 [webkit] › e2e/expr-cost.spec.ts:12:1 › a hostile Array.from in a binding is refused before it allocates, with no long task (324ms)
+  ✓   25 [webkit] › e2e/csp.spec.ts:144:3 › the flagship example under Content-Security-Policy: script-src 'self' › the shipped bundle contains no dynamic-code construct (187ms)
+  ✓   26 [webkit] › e2e/expr-cost.spec.ts:91:1 › FORMA-028: each round-2 rope case is refused before the long task (227ms)
+  ✓   27 [webkit] › e2e/frame.spec.ts:73:1 › the frame renders a module in tier (c), with an opaque origin, and answers only ready, resize and error (279ms)
+  ✓   28 [webkit] › e2e/expr-cost.spec.ts:110:1 › FORMA-028: ten bindings at the cap render one task at a time, none over 50 ms (321ms)
+  ✓   29 [webkit] › e2e/frame.spec.ts:98:1 › a module's data-fetch to the application's API sends no request, and $el stops at the root (229ms)
+  ✓   30 [webkit] › e2e/expr-cost.spec.ts:130:1 › FORMA-025: data-text of a value heavier than the budget is refused before it is converted (221ms)
+  ✓   32 [webkit] › e2e/inv1.spec.ts:5:77 › a served rejected café attribute fails one island with its code and preserves its neighbor (193ms)
+  ✓   31 [webkit] › e2e/frame.spec.ts:118:1 › markup injected outside the root stays unbound: the frame never watches body (329ms)
+  ✓   33 [webkit] › e2e/inv1.spec.ts:5:77 › a served rejected xlink: attribute fails one island with its code and preserves its neighbor (209ms)
+  ✓   35 [webkit] › e2e/inv1.spec.ts:5:77 › a served rejected xlink:foo:bar attribute fails one island with its code and preserves its neighbor (206ms)
+  ✓   34 [webkit] › e2e/frame.spec.ts:139:1 › a message of any other type changes nothing, and a port posted later is ignored (440ms)
+  ✓   36 [webkit] › e2e/inv1.spec.ts:5:77 › a served rejected xlink:2name attribute fails one island with its code and preserves its neighbor (194ms)
+  ✓   38 [webkit] › e2e/inv1.spec.ts:37:1 › every shared INV1 name and URL vector holds on fresh and reactive browser writers (239ms)
+  ✓   39 [webkit] › e2e/review-content-css-native.spec.ts:10:1 › an ignored invalid CSS update cannot make a later explicit clear a cache no-op (197ms)
+  ✓   40 [webkit] › e2e/review-content-noscript-native.spec.ts:10:1 › raw HTML noscript has an explicit private preparation refusal without changing served content (181ms)
+  ✓   41 [webkit] › e2e/review-content-template-native.spec.ts:10:1 › a prepared raw template clears its actual content and tears it down once (178ms)
+  ✓   42 [webkit] › e2e/runtime.spec.ts:8:3 › data-text › renders initial state values as text (210ms)
+  ✓   43 [webkit] › e2e/runtime.spec.ts:13:3 › data-text › evaluates expressions in text bindings (202ms)
+  ✓   44 [webkit] › e2e/runtime.spec.ts:17:3 › data-text › updates text when state changes via click handler (232ms)
+  ✓   37 [webkit] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (1.8s)
+  ✓   45 [webkit] › e2e/runtime.spec.ts:23:3 › data-text › counter increments via click (272ms)
+  ✓   47 [webkit] › e2e/runtime.spec.ts:33:3 › data-show › element is visible when condition is true (222ms)
+  ✓   48 [webkit] › e2e/runtime.spec.ts:37:3 › data-show › element hides when condition becomes false (243ms)
+  ✓   49 [webkit] › e2e/runtime.spec.ts:42:3 › data-show › element reappears when toggled back (266ms)
+  ✓   50 [webkit] › e2e/runtime.spec.ts:51:3 › data-if › element is removed from DOM when condition is false (213ms)
+  ✓   51 [webkit] › e2e/runtime.spec.ts:56:3 › data-if › element is added to DOM when condition becomes true (236ms)
+  ✓   52 [webkit] › e2e/runtime.spec.ts:62:3 › data-if › element is removed again when toggled back (258ms)
+  ✓   53 [webkit] › e2e/runtime.spec.ts:71:3 › data-model › typing into input updates bound text (213ms)
+  ✓   46 [webkit] › e2e/frame.spec.ts:246:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (1.9s)
+  ✓   54 [webkit] › e2e/runtime.spec.ts:76:3 › data-model › clearing input clears bound text (232ms)
+  ✓   56 [webkit] › e2e/runtime.spec.ts:85:3 › data-class:name › class is absent when condition is false (210ms)
+  ✓   57 [webkit] › e2e/runtime.spec.ts:90:3 › data-class:name › class is added when condition becomes true (229ms)
+  ✓   58 [webkit] › e2e/runtime.spec.ts:95:3 › data-class:name › class is removed when toggled back (258ms)
+  ✓   59 [webkit] › e2e/runtime.spec.ts:104:3 › data-bind:attr › sets href attribute from state (200ms)
+  ✓   60 [webkit] › e2e/runtime.spec.ts:108:3 › data-bind:attr › sets disabled attribute from state (204ms)
+  ✓   61 [webkit] › e2e/runtime.spec.ts:112:3 › data-bind:attr › removes disabled when state changes (247ms)
+  ✓   62 [webkit] › e2e/runtime.spec.ts:119:3 › data-computed › renders computed value (205ms)
+  ✓   55 [webkit] › e2e/frame.spec.ts:293:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.8s)
+  ✓   63 [webkit] › e2e/runtime.spec.ts:123:3 › data-computed › computed updates when dependency changes (243ms)
+  ✓   64 [webkit] › e2e/skew.spec.ts:11:3 › deployment guard in a real browser: mismatch (345ms)
+  ✓   65 [webkit] › e2e/runtime.spec.ts:130:3 › data-on:click › increments counter on click (324ms)
+  ✓   66 [webkit] › e2e/skew.spec.ts:11:3 › deployment guard in a real browser: cancel (235ms)
+  ✓   67 [webkit] › e2e/runtime.spec.ts:138:3 › data-on:click › reset button sets counter to zero (301ms)
+  ✓   68 [webkit] › e2e/skew.spec.ts:11:3 › deployment guard in a real browser: storage-access (245ms)
+  ✓   69 [webkit] › e2e/runtime.spec.ts:148:3 › data-list › renders initial list items (213ms)
+  ✓   70 [webkit] › e2e/skew.spec.ts:11:3 › deployment guard in a real browser: storage-read (237ms)
+  ✓   71 [webkit] › e2e/runtime.spec.ts:156:3 › data-list › adds item to list (239ms)
+  ✓   72 [webkit] › e2e/skew.spec.ts:11:3 › deployment guard in a real browser: storage-write (229ms)
+  ✓   73 [webkit] › e2e/runtime.spec.ts:165:3 › independent scopes › each scope has its own state (219ms)
+  ✓   74 [webkit] › e2e/skew.spec.ts:11:3 › deployment guard in a real browser: equal (244ms)
+  ✓   75 [webkit] › e2e/runtime.spec.ts:170:3 › independent scopes › clicking one scope does not affect the other (263ms)
+  ✓   77 [webkit] › e2e/runtime.spec.ts:182:3 › data-persist › persist syncs value to localStorage (231ms)
+  ✓   76 [webkit] › e2e/sr33.spec.ts:112:1 › SR33: every permitted native refuses a hostile size before it allocates, with no task over 50 ms (539ms)
+  ✓   78 [webkit] › e2e/tiered-mount.spec.ts:32:1 › an event's target outside the root is refused: a light-DOM child slotted into the mount (283ms)
+  ✓   80 [webkit] › e2e/tiered-mount.spec.ts:56:1 › a selector that reads past the element needs dom: the browser matches it against the page (198ms)
+  ✓   79 [webkit] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, Report-Only › flagship.html renders, filters and reacts with no Trusted Types violation (Report-Only) (374ms)
+  ✓   81 [webkit] › e2e/tiered-mount.spec.ts:79:1 › SR16 and SR31 in a browser: $el.closest('body') reaches nothing, and an ungranted data-fetch sends nothing (219ms)
+  ✓   83 [webkit] › e2e/tiered-mount.spec.ts:116:1 › the production build has no grant report or obsolete manual warning (223ms)
+  ✓   84 [webkit] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute false (201ms)
+  ✓   82 [webkit] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, Report-Only › runtime.html's every directive runs with no Trusted Types violation (Report-Only) (757ms)
+  ✓   85 [webkit] › e2e/tiered-mount.spec.ts:135:3 › only an explicit mount binds, with obsolete attribute true (194ms)
+  ✓   87 [webkit] › e2e/tiered-mount.spec.ts:152:1 › closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time (201ms)
+  ✓   86 [webkit] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, Report-Only › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (Report-Only) (320ms)
+  ✓   89 [webkit] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, Report-Only › expr-cost.html refuses its hostile binding with no Trusted Types violation (Report-Only) (310ms)
+  ✓   90 [webkit] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, Report-Only › every raw sink given trustedHtml(), and core's own clears, raise no violation (Report-Only) (322ms)
+  ✓   88 [webkit] › e2e/tiered-mount.spec.ts:179:1 › $dispatch of an activation event needs navigate: nothing navigates, submits or resets without it (758ms)
+(node:14488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   91 [webkit] › e2e/trusted-types.spec.ts:88:5 › core under Trusted Types, enforced › flagship.html renders, filters and reacts with no Trusted Types violation (enforced) (371ms)
+  ✓   92 [webkit] › e2e/adoption.spec.ts:35:1 › a root Fragment from the server is interactive under caller-owned direct adoption (510ms)
+  ✓   93 [webkit] › e2e/trusted-types.spec.ts:105:5 › core under Trusted Types, enforced › runtime.html's every directive runs with no Trusted Types violation (enforced) (738ms)
+  ✓   94 [webkit] › e2e/adoption.spec.ts:58:1 › edited public controls and mismatched legacy defaults refuse without changing what the user entered (327ms)
+  ✓   95 [webkit] › e2e/trusted-types.spec.ts:136:5 › core under Trusted Types, enforced › runtime-bare.html mounts and unmounts a widget with no Trusted Types violation (enforced) (322ms)
+  ✓   96 [webkit] › e2e/adoption.spec.ts:116:1 › matching public readonly edits refuse, while explicit literal initialization preserves edits without seeding (269ms)
+  ✓   97 [webkit] › e2e/trusted-types.spec.ts:172:5 › core under Trusted Types, enforced › expr-cost.html refuses its hostile binding with no Trusted Types violation (enforced) (343ms)
+  ✓   98 [webkit] › e2e/adoption.spec.ts:145:1 › an untouched page whose server agrees with the client is adopted without one DOM write (203ms)
+  ✓   99 [webkit] › e2e/trusted-types.spec.ts:182:5 › core under Trusted Types, enforced › every raw sink given trustedHtml(), and core's own clears, raise no violation (enforced) (317ms)
+  ✓  100 [webkit] › e2e/adoption.spec.ts:187:1 › an older server's marker text and unselected select refuse without repair (229ms)
+  ✓  102 [webkit] › e2e/adoption.spec.ts:220:1 › after the user types, a textarea's reactive text controls its live and default values, client-rendered and adopted alike (249ms)
+  ✓  101 [webkit] › e2e/trusted-types.spec.ts:295:1 › the shared registry holds no policy object, and its forma-runtime handle mints nothing from a string (enforced) (314ms)
+  ✓  103 [webkit] › e2e/adoption.spec.ts:241:1 › components returning real DOM nodes are refused without replacing originals or aborting the module (272ms)
+  ✓  104 [webkit] › e2e/trusted-types.spec.ts:342:3 › the controls: the policy is live in this engine › under Report-Only a string written to innerHTML raises one report and still renders (325ms)
+  ✓  105 [webkit] › e2e/adoption.spec.ts:282:1 › a detached real-Node description reports STRUCTURE while a healthy sibling activates (236ms)
+  ✓  106 [webkit] › e2e/trusted-types.spec.ts:357:3 › the controls: the policy is live in this engine › enforced, a string written to innerHTML is refused and raises one violation (305ms)
+  ✓  107 [webkit] › e2e/adoption.spec.ts:321:1 › an option bound to undefined submits its text, client-rendered and adopted (220ms)
+  ✓  109 [webkit] › e2e/adoption.spec.ts:342:1 › an inline SVG icon is adopted without one DOM write; its title stays SVG and a bound path updates in place (220ms)
+  ✓  108 [webkit] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (Report-Only) (311ms)
+  ✓  110 [webkit] › e2e/adoption.spec.ts:393:1 › SVG and MathML refuse missing or differing originals, then matching native trees update in place (211ms)
+  ✓  111 [webkit] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (Report-Only) (386ms)
+  ✓  113 [webkit] › e2e/trusted-types.spec.ts:379:3 › library raw refusals precede native sinks and cache shortcuts (enforced) (308ms)
+  ✓  112 [webkit] › e2e/adoption.spec.ts:431:1 › a bound iframe src the server already rendered is not set again, so the frame is not reloaded (547ms)
+  ✓  115 [webkit] › e2e/adoption.spec.ts:462:1 › a list whose client array differs in count from the server rows leaves the island error with its code and removes no node (321ms)
+  ✓  114 [webkit] › e2e/trusted-types.spec.ts:410:3 › runtime srcdoc bindings report their code without a native TypeError (enforced) (397ms)
+  ✓  116 [webkit] › e2e/adoption.spec.ts:545:1 › the namespace vectors: the parser, h() and adoption agree on every element and on the markup (200ms)
+  ✓  117 [webkit] › e2e/trusted-types.spec.ts:444:1 › the shared forma mint is callable by page scripts while duplicate named policy creation is refused (204ms)
+  ✓  118 [webkit] › e2e/adoption.spec.ts:615:1 › content built inside an svg is SVG and rendered once: a createShow branch, list rows, switch cases, a portal; a foreignObject holds HTML (196ms)
+(node:14564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  119 [webkit] › e2e/adoption.spec.ts:682:1 › a reactive dangerouslySetInnerHTML is adopted as content, follows its signal through null and back, and matches client rendering (186ms)
+  ✓  121 [webkit] › e2e/adoption.spec.ts:716:1 › a falsy static dangerouslySetInnerHTML is no prop: the server's children are adopted and their handlers work (318ms)
+  ✓  120 [webkit] › e2e/core-regressions.spec.ts:20:1 › controlled input, textarea, checkbox and non-first selections survive real user edits (407ms)
+  ✓  122 [webkit] › e2e/adoption.spec.ts:739:1 › markup the server wrote in a form the browser serialises differently is adopted without one DOM write, and typed text survives (234ms)
+  ✓  123 [webkit] › e2e/core-regressions.spec.ts:50:1 › multiple select changes update the browser live selection collection (220ms)
+  ✓  124 [webkit] › e2e/adoption.spec.ts:784:1 › a reactive dangerouslySetInnerHTML whose first value is null keeps the server's fallback child, bound, until markup arrives (241ms)
+  ✓  125 [webkit] › e2e/core-regressions.spec.ts:64:1 › same-key rerenders dispose old reactive generations; unchanged objects retain focused DOM (195ms)
+  ✓  127 [webkit] › e2e/core-regressions.spec.ts:96:1 › SSR adoption refuses mismatched older properties and keeps matching controls live (244ms)
+  ✓  128 [webkit] › e2e/keyed-adoption.spec.ts:34:1 › every shared key vector: the served attribute decodes to its canonical text, and adoption keyed by the raw value binds it without a write (201ms)
+  ✓  129 [webkit] › e2e/keyed-adoption.spec.ts:69:1 › activation binds keyed rows by key: reversed and nested rows adopt without a write, each refusal fails only its own island (239ms)
+  ✓  130 [webkit] › e2e/keyed-adoption.spec.ts:164:1 › keyed registered children keep their own host, state and occurrence when their rows bind out of order and later move (330ms)
+  ✓  126 [webkit] › e2e/development-build.spec.ts:138:1 › a development bundle of the packed package resolves the development build and logs a known warning once (210ms)
+  ✓  132 [webkit] › e2e/development-build.spec.ts:151:1 › a development bundle of the packed package refuses every raw string with its code and accepts trustedHtml() (217ms)
+  ✓  133 [webkit] › e2e/development-build.spec.ts:157:1 › a production bundle of the same application resolves the production files and logs nothing (221ms)
+  ✓  131 [webkit] › e2e/keyed-adoption.spec.ts:226:44 › one moved row in 2000 retains its focused input, selection and listeners without rebuilding (native move when available) (570ms)
+  ✓  134 [webkit] › e2e/development-build.spec.ts:175:3 › a packed development bundle refuses SSR mount before work and retains Browser unmount (212ms)
+  ✓  136 [webkit] › e2e/development-build.spec.ts:175:3 › a packed production bundle refuses SSR mount before work and retains Browser unmount (205ms)
+  ✓  135 [webkit] › e2e/keyed-adoption.spec.ts:226:44 › one moved row in 2000 retains its focused input, selection and listeners without rebuilding (insertBefore fallback) (575ms)
+  ✓  137 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector leading-lf: the engine parses the served HTML to the value h() writes, and adoption makes no write (210ms)
+  ✓  138 [webkit] › e2e/keyed-adoption.spec.ts:300:1 › fallback restoration respects a focus callback that chooses another control (201ms)
+  ✓  139 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector leading-crlf: the engine parses the served HTML to the value h() writes, and adoption makes no write (191ms)
+  ✓  140 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch string: createShow adopts it without a write, keeps the server text node, then toggles (189ms)
+  ✓  141 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector leading-cr: the engine parses the served HTML to the value h() writes, and adoption makes no write (193ms)
+  ✓  142 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch html-chars: createShow adopts it without a write, keeps the server text node, then toggles (190ms)
+  ✓  143 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector empty-then-leading-lf: the engine parses the served HTML to the value h() writes, and adoption makes no write (188ms)
+  ✓  144 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch crlf: createShow adopts it without a write, keeps the server text node, then toggles (188ms)
+  ✓  145 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector split-cr-lf: the engine parses the served HTML to the value h() writes, and adoption makes no write (203ms)
+  ✓  146 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch empty-string: createShow adopts it without a write, keeps the server text node, then toggles (193ms)
+  ✓  147 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector nul-then-lf: the engine parses the served HTML to the value h() writes, and adoption makes no write (189ms)
+  ✓  148 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch integer: createShow adopts it without a write, keeps the server text node, then toggles (188ms)
+  ✓  149 [webkit] › e2e/normalization.spec.ts:55:3 › textarea vector no-leading-break: the engine parses the served HTML to the value h() writes, and adoption makes no write (191ms)
+  ✓  150 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch zero: createShow adopts it without a write, keeps the server text node, then toggles (192ms)
+  ✓  151 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector leading-lf: static HTML parses to the value and adopts without a write (191ms)
+  ✓  152 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch negative-fraction: createShow adopts it without a write, keeps the server text node, then toggles (190ms)
+  ✓  153 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector leading-lf: marker-separated dynamic HTML is not doubled and adopts without a write (199ms)
+  ✓  154 [webkit] › e2e/show-text-branch.spec.ts:32:3 › served text branch large: createShow adopts it without a write, keeps the server text node, then toggles (199ms)
+  ✓  155 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector leading-crlf: static HTML parses to the value and adopts without a write (200ms)
+  ✓  156 [webkit] › e2e/show-text-branch.spec.ts:58:1 › a client-rendered scalar branch is a Text node (it threw on insertBefore before F5), and null, a boolean write nothing (191ms)
+  ✓  157 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector leading-crlf: marker-separated dynamic HTML is not doubled and adopts without a write (194ms)
+  ✓  159 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector leading-cr: static HTML parses to the value and adopts without a write (190ms)
+  ✓  160 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector leading-cr: marker-separated dynamic HTML is not doubled and adopts without a write (199ms)
+  ✓  161 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector lf-only: static HTML parses to the value and adopts without a write (201ms)
+  ✓  162 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector lf-only: marker-separated dynamic HTML is not doubled and adopts without a write (214ms)
+  ✓  163 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector empty-then-leading-lf: static HTML parses to the value and adopts without a write (200ms)
+  ✓  164 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector empty-then-leading-lf: marker-separated dynamic HTML is not doubled and adopts without a write (197ms)
+  ✓  165 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector split-cr-lf: static HTML parses to the value and adopts without a write (197ms)
+  ✓  166 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector split-cr-lf: marker-separated dynamic HTML is not doubled and adopts without a write (198ms)
+  ✓  167 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector nul-then-lf: static HTML parses to the value and adopts without a write (202ms)
+  ✓  168 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector nul-then-lf: marker-separated dynamic HTML is not doubled and adopts without a write (217ms)
+  ✓  169 [webkit] › e2e/normalization.spec.ts:63:3 › pre vector no-leading-break: static HTML parses to the value and adopts without a write (207ms)
+  ✓  170 [webkit] › e2e/normalization.spec.ts:68:3 › pre vector no-leading-break: marker-separated dynamic HTML is not doubled and adopts without a write (190ms)
+  ✓  171 [webkit] › e2e/normalization.spec.ts:75:1 › control: the engine drops exactly one leading line feed in pre, so an undoubled server value disagrees (223ms)
+  ✓  172 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 zero (static): the served text parses to 0 and adopts the number without a write (199ms)
+  ✓  173 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 zero (reactive): the served text parses to 0 and adopts the number without a write (209ms)
+  ✓  174 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 zero: the served attribute adopts the number without a write (205ms)
+  ✓  175 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-zero (static): the served text parses to 0 and adopts the number without a write (201ms)
+  ✓  176 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-zero (reactive): the served text parses to 0 and adopts the number without a write (201ms)
+  ✓  177 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 negative-zero: the served attribute adopts the number without a write (201ms)
+  ✓  178 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 one (static): the served text parses to 1 and adopts the number without a write (198ms)
+  ✓  179 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 one (reactive): the served text parses to 1 and adopts the number without a write (194ms)
+  ✓  180 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 one: the served attribute adopts the number without a write (209ms)
+  ✓  181 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-one (static): the served text parses to -1 and adopts the number without a write (193ms)
+  ✓  182 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-one (reactive): the served text parses to -1 and adopts the number without a write (190ms)
+  ✓  158 [webkit] › e2e/state-roundtrip.spec.ts:22:1 › 100 fixed native values preserve all eight declared kinds through real browser activation (4.9s)
+  ✓  183 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 negative-one: the served attribute adopts the number without a write (189ms)
+  ✓  184 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 integer-valued-float (static): the served text parses to 100 and adopts the number without a write (181ms)
+  ✓  185 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 integer-valued-float (reactive): the served text parses to 100 and adopts the number without a write (191ms)
+  ✓  186 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 integer-valued-float: the served attribute adopts the number without a write (182ms)
+  ✓  187 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 million (static): the served text parses to 1000000 and adopts the number without a write (186ms)
+  ✓  188 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 million (reactive): the served text parses to 1000000 and adopts the number without a write (205ms)
+  ✓  189 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 million: the served attribute adopts the number without a write (201ms)
+  ✓  190 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 half (static): the served text parses to 0.5 and adopts the number without a write (192ms)
+  ✓  191 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 half (reactive): the served text parses to 0.5 and adopts the number without a write (187ms)
+  ✓  192 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 half: the served attribute adopts the number without a write (182ms)
+  ✓  193 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fraction (static): the served text parses to 2.5 and adopts the number without a write (193ms)
+  ✓  194 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fraction (reactive): the served text parses to 2.5 and adopts the number without a write (183ms)
+  ✓  195 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 fraction: the served attribute adopts the number without a write (195ms)
+  ✓  196 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-fraction (static): the served text parses to -4.35 and adopts the number without a write (191ms)
+  ✓  197 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-fraction (reactive): the served text parses to -4.35 and adopts the number without a write (190ms)
+  ✓  198 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 negative-fraction: the served attribute adopts the number without a write (188ms)
+  ✓  199 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 tenth (static): the served text parses to 0.1 and adopts the number without a write (183ms)
+  ✓  200 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 tenth (reactive): the served text parses to 0.1 and adopts the number without a write (189ms)
+  ✓  201 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 tenth: the served attribute adopts the number without a write (174ms)
+  ✓  202 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 float-sum (static): the served text parses to 0.30000000000000004 and adopts the number without a write (187ms)
+  ✓  203 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 float-sum (reactive): the served text parses to 0.30000000000000004 and adopts the number without a write (174ms)
+  ✓  204 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 float-sum: the served attribute adopts the number without a write (189ms)
+  ✓  205 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 third (static): the served text parses to 0.3333333333333333 and adopts the number without a write (191ms)
+  ✓  206 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 third (reactive): the served text parses to 0.3333333333333333 and adopts the number without a write (192ms)
+  ✓  207 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 third: the served attribute adopts the number without a write (185ms)
+  ✓  208 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 decimal (static): the served text parses to 123.456 and adopts the number without a write (189ms)
+  ✓  209 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 decimal (reactive): the served text parses to 123.456 and adopts the number without a write (186ms)
+  ✓  210 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 decimal: the served attribute adopts the number without a write (188ms)
+  ✓  211 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-fixed-boundary (static): the served text parses to 0.000001 and adopts the number without a write (213ms)
+  ✓  212 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-fixed-boundary (reactive): the served text parses to 0.000001 and adopts the number without a write (188ms)
+  ✓  213 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 small-fixed-boundary: the served attribute adopts the number without a write (192ms)
+  ✓  214 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-fixed-with-digits (static): the served text parses to 0.000001234 and adopts the number without a write (198ms)
+  ✓  215 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-fixed-with-digits (reactive): the served text parses to 0.000001234 and adopts the number without a write (209ms)
+  ✓  216 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 small-fixed-with-digits: the served attribute adopts the number without a write (196ms)
+  ✓  217 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-exponent (static): the served text parses to 1e-7 and adopts the number without a write (193ms)
+  ✓  218 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-exponent (reactive): the served text parses to 1e-7 and adopts the number without a write (181ms)
+  ✓  219 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 small-exponent: the served attribute adopts the number without a write (193ms)
+  ✓  220 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-exponent-mantissa (static): the served text parses to 1.5e-7 and adopts the number without a write (194ms)
+  ✓  221 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 small-exponent-mantissa (reactive): the served text parses to 1.5e-7 and adopts the number without a write (210ms)
+  ✓  222 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 small-exponent-mantissa: the served attribute adopts the number without a write (188ms)
+  ✓  223 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 exponent-in-lexeme (static): the served text parses to 1.23e-18 and adopts the number without a write (200ms)
+  ✓  224 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 exponent-in-lexeme (reactive): the served text parses to 1.23e-18 and adopts the number without a write (182ms)
+  ✓  225 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 exponent-in-lexeme: the served attribute adopts the number without a write (178ms)
+  ✓  226 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 ten-to-sixteen (static): the served text parses to 10000000000000000 and adopts the number without a write (202ms)
+  ✓  227 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 ten-to-sixteen (reactive): the served text parses to 10000000000000000 and adopts the number without a write (189ms)
+  ✓  228 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 ten-to-sixteen: the served attribute adopts the number without a write (183ms)
+  ✓  229 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 large-fixed (static): the served text parses to 100000000000000000000 and adopts the number without a write (186ms)
+  ✓  230 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 large-fixed (reactive): the served text parses to 100000000000000000000 and adopts the number without a write (179ms)
+  ✓  231 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 large-fixed: the served attribute adopts the number without a write (195ms)
+  ✓  232 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fixed-upper-with-digits (static): the served text parses to 123456789000000000000 and adopts the number without a write (212ms)
+  ✓  233 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fixed-upper-with-digits (reactive): the served text parses to 123456789000000000000 and adopts the number without a write (186ms)
+  ✓  234 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 fixed-upper-with-digits: the served attribute adopts the number without a write (198ms)
+  ✓  235 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 seventeen-significant-digits (static): the served text parses to 123456789012345680000 and adopts the number without a write (187ms)
+  ✓  236 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 seventeen-significant-digits (reactive): the served text parses to 123456789012345680000 and adopts the number without a write (184ms)
+  ✓  237 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 seventeen-significant-digits: the served attribute adopts the number without a write (194ms)
+  ✓  238 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 large-exponent-boundary (static): the served text parses to 1e+21 and adopts the number without a write (203ms)
+  ✓  239 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 large-exponent-boundary (reactive): the served text parses to 1e+21 and adopts the number without a write (185ms)
+  ✓  240 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 large-exponent-boundary: the served attribute adopts the number without a write (188ms)
+  ✓  241 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-large-exponent (static): the served text parses to -1e+21 and adopts the number without a write (202ms)
+  ✓  242 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 negative-large-exponent (reactive): the served text parses to -1e+21 and adopts the number without a write (193ms)
+  ✓  243 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 negative-large-exponent: the served attribute adopts the number without a write (187ms)
+  ✓  244 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 large-exponent-mantissa (static): the served text parses to 1.5e+21 and adopts the number without a write (190ms)
+  ✓  245 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 large-exponent-mantissa (reactive): the served text parses to 1.5e+21 and adopts the number without a write (180ms)
+  ✓  246 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 large-exponent-mantissa: the served attribute adopts the number without a write (174ms)
+  ✓  247 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 two-to-fifty-three (static): the served text parses to 9007199254740992 and adopts the number without a write (189ms)
+  ✓  248 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 two-to-fifty-three (reactive): the served text parses to 9007199254740992 and adopts the number without a write (181ms)
+  ✓  249 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 two-to-fifty-three: the served attribute adopts the number without a write (203ms)
+  ✓  250 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 float-rounds-past-safe (static): the served text parses to 9007199254740992 and adopts the number without a write (189ms)
+  ✓  251 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 float-rounds-past-safe (reactive): the served text parses to 9007199254740992 and adopts the number without a write (187ms)
+  ✓  252 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 float-rounds-past-safe: the served attribute adopts the number without a write (186ms)
+  ✓  253 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 min-subnormal (static): the served text parses to 5e-324 and adopts the number without a write (188ms)
+  ✓  254 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 min-subnormal (reactive): the served text parses to 5e-324 and adopts the number without a write (254ms)
+  ✓  255 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 min-subnormal: the served attribute adopts the number without a write (200ms)
+  ✓  256 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-even-negative-seed1820300-index460 (static): the served text parses to -270129723325078.62 and adopts the number without a write (185ms)
+  ✓  257 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-even-negative-seed1820300-index460 (reactive): the served text parses to -270129723325078.62 and adopts the number without a write (182ms)
+  ✓  258 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 fuzz-tie-even-negative-seed1820300-index460: the served attribute adopts the number without a write (186ms)
+  ✓  259 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-even-positive-near-miss (static): the served text parses to 270129723325078.62 and adopts the number without a write (180ms)
+  ✓  260 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-even-positive-near-miss (reactive): the served text parses to 270129723325078.62 and adopts the number without a write (179ms)
+  ✓  261 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 fuzz-tie-even-positive-near-miss: the served attribute adopts the number without a write (208ms)
+  ✓  262 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-lower-neighbour (static): the served text parses to -270129723325078.6 and adopts the number without a write (190ms)
+  ✓  263 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-lower-neighbour (reactive): the served text parses to -270129723325078.6 and adopts the number without a write (198ms)
+  ✓  264 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 fuzz-tie-lower-neighbour: the served attribute adopts the number without a write (204ms)
+  ✓  265 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-upper-neighbour (static): the served text parses to -270129723325078.66 and adopts the number without a write (185ms)
+  ✓  266 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 fuzz-tie-upper-neighbour (reactive): the served text parses to -270129723325078.66 and adopts the number without a write (182ms)
+  ✓  267 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 fuzz-tie-upper-neighbour: the served attribute adopts the number without a write (206ms)
+  ✓  268 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 max-finite (static): the served text parses to 1.7976931348623157e+308 and adopts the number without a write (185ms)
+  ✓  269 [webkit] › e2e/value-rules.spec.ts:83:5 › rule 2 max-finite (reactive): the served text parses to 1.7976931348623157e+308 and adopts the number without a write (229ms)
+  ✓  270 [webkit] › e2e/value-rules.spec.ts:88:3 › rule 2 max-finite: the served attribute adopts the number without a write (203ms)
+  ✓  271 [webkit] › e2e/value-rules.spec.ts:100:3 › rule 3 zero: an admitted integer's digits adopt the number the envelope carries without a write (223ms)
+  ✓  272 [webkit] › e2e/value-rules.spec.ts:100:3 › rule 3 ordinary-id: an admitted integer's digits adopt the number the envelope carries without a write (195ms)
+  ✓  273 [webkit] › e2e/value-rules.spec.ts:100:3 › rule 3 negative-ordinary: an admitted integer's digits adopt the number the envelope carries without a write (190ms)
+  ✓  274 [webkit] › e2e/value-rules.spec.ts:100:3 › rule 3 positive-limit: an admitted integer's digits adopt the number the envelope carries without a write (232ms)
+  ✓  275 [webkit] › e2e/value-rules.spec.ts:100:3 › rule 3 negative-limit: an admitted integer's digits adopt the number the envelope carries without a write (196ms)
+  ✓  276 [webkit] › e2e/value-rules.spec.ts:100:3 › rule 3 unsigned-limit: an admitted integer's digits adopt the number the envelope carries without a write (195ms)
+  ✓  277 [webkit] › e2e/value-rules.spec.ts:106:3 › rule 3 integer-valued-float-past-safe: a float origin is written by rule 2 and adopts without a write (200ms)
+  ✓  278 [webkit] › e2e/value-rules.spec.ts:106:3 › rule 3 two-to-fifty-three-as-float: a float origin is written by rule 2 and adopts without a write (185ms)
+  ✓  279 [webkit] › e2e/value-rules.spec.ts:106:3 › rule 3 float-rounded-before-admission: a float origin is written by rule 2 and adopts without a write (198ms)
+  ✓  280 [webkit] › e2e/value-rules.spec.ts:106:3 › rule 3 fraction-is-not-an-integer: a float origin is written by rule 2 and adopts without a write (188ms)
+  ✓  281 [webkit] › e2e/value-rules.spec.ts:112:1 › rule 2 control: a server spelling 1e21 as Rust's Display does (22 digits) is refused, not repaired (181ms)
+  ✓  282 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-alone (null, reactive): each child in its own range, the absent one held empty, adopts without a write (183ms)
+  ✓  283 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-alone (null, static): the composed text, with nothing for the absent child, adopts without a write (185ms)
+  ✓  284 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-alone (null): a textarea composes the same value and adopts without a write (181ms)
+  ✓  285 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-alone (undefined, reactive): each child in its own range, the absent one held empty, adopts without a write (182ms)
+  ✓  286 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-alone (undefined, static): the composed text, with nothing for the absent child, adopts without a write (179ms)
+  ✓  287 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-alone (undefined): a textarea composes the same value and adopts without a write (184ms)
+  ✓  288 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-between (null, reactive): each child in its own range, the absent one held empty, adopts without a write (182ms)
+  ✓  289 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-between (null, static): the composed text, with nothing for the absent child, adopts without a write (191ms)
+  ✓  290 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-between (null): a textarea composes the same value and adopts without a write (186ms)
+  ✓  291 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-between (undefined, reactive): each child in its own range, the absent one held empty, adopts without a write (197ms)
+  ✓  292 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-between (undefined, static): the composed text, with nothing for the absent child, adopts without a write (198ms)
+  ✓  293 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-between (undefined): a textarea composes the same value and adopts without a write (188ms)
+  ✓  294 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-first (null, reactive): each child in its own range, the absent one held empty, adopts without a write (194ms)
+  ✓  295 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-first (null, static): the composed text, with nothing for the absent child, adopts without a write (182ms)
+  ✓  296 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-first (null): a textarea composes the same value and adopts without a write (200ms)
+  ✓  297 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-first (undefined, reactive): each child in its own range, the absent one held empty, adopts without a write (181ms)
+  ✓  298 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-first (undefined, static): the composed text, with nothing for the absent child, adopts without a write (186ms)
+  ✓  299 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-first (undefined): a textarea composes the same value and adopts without a write (191ms)
+  ✓  300 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-last (null, reactive): each child in its own range, the absent one held empty, adopts without a write (182ms)
+  ✓  301 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-last (null, static): the composed text, with nothing for the absent child, adopts without a write (173ms)
+  ✓  302 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-last (null): a textarea composes the same value and adopts without a write (185ms)
+  ✓  303 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-last (undefined, reactive): each child in its own range, the absent one held empty, adopts without a write (181ms)
+  ✓  304 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-last (undefined, static): the composed text, with nothing for the absent child, adopts without a write (194ms)
+  ✓  305 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-last (undefined): a textarea composes the same value and adopts without a write (220ms)
+  ✓  306 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 nulls-only (null, reactive): each child in its own range, the absent one held empty, adopts without a write (188ms)
+  ✓  307 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 nulls-only (null, static): the composed text, with nothing for the absent child, adopts without a write (185ms)
+  ✓  308 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 nulls-only (null): a textarea composes the same value and adopts without a write (190ms)
+  ✓  309 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 nulls-only (undefined, reactive): each child in its own range, the absent one held empty, adopts without a write (192ms)
+  ✓  310 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 nulls-only (undefined, static): the composed text, with nothing for the absent child, adopts without a write (184ms)
+  ✓  311 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 nulls-only (undefined): a textarea composes the same value and adopts without a write (199ms)
+  ✓  312 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-beside-number (null, reactive): each child in its own range, the absent one held empty, adopts without a write (192ms)
+  ✓  313 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-beside-number (null, static): the composed text, with nothing for the absent child, adopts without a write (194ms)
+  ✓  314 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-beside-number (null): a textarea composes the same value and adopts without a write (192ms)
+  ✓  315 [webkit] › e2e/value-rules.spec.ts:134:5 › rule 5 null-beside-number (undefined, reactive): each child in its own range, the absent one held empty, adopts without a write (187ms)
+  ✓  316 [webkit] › e2e/value-rules.spec.ts:140:5 › rule 5 null-beside-number (undefined, static): the composed text, with nothing for the absent child, adopts without a write (175ms)
+  ✓  317 [webkit] › e2e/value-rules.spec.ts:145:5 › rule 5 null-beside-number (undefined): a textarea composes the same value and adopts without a write (183ms)
+  ✓  318 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 title-null (null, static): the omitted attribute adopts without a write (206ms)
+  ✓  319 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 title-null (null, reactive): the omitted attribute adopts without a write (205ms)
+  ✓  320 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 title-null (undefined, static): the omitted attribute adopts without a write (253ms)
+  ✓  321 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 title-null (undefined, reactive): the omitted attribute adopts without a write (235ms)
+  ✓  322 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 class-null (null, static): the omitted attribute adopts without a write (194ms)
+  ✓  323 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 class-null (null, reactive): the omitted attribute adopts without a write (190ms)
+  ✓  324 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 class-null (undefined, static): the omitted attribute adopts without a write (184ms)
+  ✓  325 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 class-null (undefined, reactive): the omitted attribute adopts without a write (188ms)
+  ✓  326 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 data-null (null, static): the omitted attribute adopts without a write (188ms)
+  ✓  327 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 data-null (null, reactive): the omitted attribute adopts without a write (185ms)
+  ✓  328 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 data-null (undefined, static): the omitted attribute adopts without a write (196ms)
+  ✓  329 [webkit] › e2e/value-rules.spec.ts:155:7 › rule 5 data-null (undefined, reactive): the omitted attribute adopts without a write (180ms)
+  ✓  330 [webkit] › e2e/value-rules.spec.ts:164:3 › rule 5 title-null: a later null or undefined removes the attribute, on an adopted element and on a fresh h() element (190ms)
+  ✓  331 [webkit] › e2e/value-rules.spec.ts:164:3 › rule 5 class-null: a later null or undefined removes the attribute, on an adopted element and on a fresh h() element (191ms)
+  ✓  332 [webkit] › e2e/value-rules.spec.ts:164:3 › rule 5 data-null: a later null or undefined removes the attribute, on an adopted element and on a fresh h() element (194ms)
+  ✓  333 [webkit] › e2e/value-rules.spec.ts:189:5 › rule 6 true (static): String(flag)'s word in the walker's range adopts without a write (186ms)
+  ✓  334 [webkit] › e2e/value-rules.spec.ts:189:5 › rule 6 true (reactive): String(flag)'s word in the walker's range adopts without a write (199ms)
+  ✓  335 [webkit] › e2e/value-rules.spec.ts:189:5 › rule 6 false (static): String(flag)'s word in the walker's range adopts without a write (188ms)
+  ✓  336 [webkit] › e2e/value-rules.spec.ts:189:5 › rule 6 false (reactive): String(flag)'s word in the walker's range adopts without a write (191ms)
+  ✓  337 [webkit] › e2e/value-rules.spec.ts:196:3 › rule 6 idiom and-at-false: `flag && 'Go'` through a getter adopts the walker's range without a write (187ms)
+  ✓  338 [webkit] › e2e/value-rules.spec.ts:196:3 › rule 6 idiom and-at-true: `flag && 'Go'` through a getter adopts the walker's range without a write (212ms)
+  ✓  339 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute boolean-attribute-true (static): the walker's disabled adopts without a write (247ms)
+  ✓  340 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute boolean-attribute-true (reactive): the walker's disabled adopts without a write (211ms)
+  ✓  341 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute boolean-attribute-false (static): the walker's omission adopts without a write (231ms)
+  ✓  342 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute boolean-attribute-false (reactive): the walker's omission adopts without a write (248ms)
+  ✓  343 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-true (static): the walker's hidden adopts without a write (225ms)
+  ✓  344 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-true (reactive): the walker's hidden adopts without a write (190ms)
+  ✓  345 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-false (static): the walker's omission adopts without a write (185ms)
+  ✓  346 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-false (reactive): the walker's omission adopts without a write (190ms)
+  ✓  347 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute data-true (static): the walker's data-live="true" adopts without a write (233ms)
+  ✓  348 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute data-true (reactive): the walker's data-live="true" adopts without a write (338ms)
+  ✓  349 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute data-false (static): the walker's omission adopts without a write (190ms)
+  ✓  350 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute data-false (reactive): the walker's omission adopts without a write (189ms)
+  ✓  351 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute aria-true (static): the walker's aria-pressed="true" adopts without a write (191ms)
+  ✓  352 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute aria-true (reactive): the walker's aria-pressed="true" adopts without a write (193ms)
+  ✓  353 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute aria-false (static): the walker's omission adopts without a write (193ms)
+  ✓  354 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute aria-false (reactive): the walker's omission adopts without a write (194ms)
+  ✓  355 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute class-true (static): the walker's class="true" adopts without a write (208ms)
+  ✓  356 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute class-true (reactive): the walker's class="true" adopts without a write (198ms)
+  ✓  357 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-true (static): the walker's title="true" adopts without a write (189ms)
+  ✓  358 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-true (reactive): the walker's title="true" adopts without a write (195ms)
+  ✓  359 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-empty-string (static): the walker's title="" adopts without a write (191ms)
+  ✓  360 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-empty-string (reactive): the walker's title="" adopts without a write (185ms)
+  ✓  361 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute data-empty-string (static): the walker's data-query="" adopts without a write (192ms)
+  ✓  362 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute data-empty-string (reactive): the walker's data-query="" adopts without a write (188ms)
+  ✓  363 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-null (static): the walker's omission adopts without a write (190ms)
+  ✓  364 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-null (reactive): the walker's omission adopts without a write (197ms)
+  ✓  365 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-text (static): the walker's title="calm" adopts without a write (186ms)
+  ✓  366 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute title-text (reactive): the walker's title="calm" adopts without a write (201ms)
+  ✓  367 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-empty (static): the walker's omission adopts without a write (195ms)
+  ✓  368 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-empty (reactive): the walker's omission adopts without a write (192ms)
+  ✓  369 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-zero (static): the walker's omission adopts without a write (196ms)
+  ✓  370 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-zero (reactive): the walker's omission adopts without a write (187ms)
+  ✓  371 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-negative-zero (static): the walker's omission adopts without a write (183ms)
+  ✓  372 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-negative-zero (reactive): the walker's omission adopts without a write (185ms)
+  ✓  373 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-text-false (static): the walker's disabled adopts without a write (181ms)
+  ✓  374 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-text-false (reactive): the walker's disabled adopts without a write (188ms)
+  ✓  375 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-text-zero (static): the walker's disabled adopts without a write (185ms)
+  ✓  376 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-text-zero (reactive): the walker's disabled adopts without a write (190ms)
+  ✓  377 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-one (static): the walker's disabled adopts without a write (188ms)
+  ✓  378 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-one (reactive): the walker's disabled adopts without a write (189ms)
+  ✓  379 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-negative (static): the walker's disabled adopts without a write (185ms)
+  ✓  380 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute disabled-negative (reactive): the walker's disabled adopts without a write (187ms)
+  ✓  381 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-empty (static): the walker's omission adopts without a write (185ms)
+  ✓  382 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-empty (reactive): the walker's omission adopts without a write (190ms)
+  ✓  383 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-zero (static): the walker's omission adopts without a write (190ms)
+  ✓  384 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-zero (reactive): the walker's omission adopts without a write (258ms)
+  ✓  385 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-negative-zero (static): the walker's omission adopts without a write (207ms)
+  ✓  386 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-negative-zero (reactive): the walker's omission adopts without a write (192ms)
+  ✓  387 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-text-false (static): the walker's hidden adopts without a write (192ms)
+  ✓  388 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-text-false (reactive): the walker's hidden adopts without a write (188ms)
+  ✓  389 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-text-zero (static): the walker's hidden adopts without a write (181ms)
+  ✓  390 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-text-zero (reactive): the walker's hidden adopts without a write (190ms)
+  ✓  391 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-one (static): the walker's hidden adopts without a write (206ms)
+  ✓  392 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-one (reactive): the walker's hidden adopts without a write (185ms)
+  ✓  393 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-negative (static): the walker's hidden adopts without a write (188ms)
+  ✓  394 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute hidden-negative (reactive): the walker's hidden adopts without a write (184ms)
+  ✓  395 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-empty (static): the walker's omission adopts without a write (187ms)
+  ✓  396 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-empty (reactive): the walker's omission adopts without a write (199ms)
+  ✓  397 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-zero (static): the walker's omission adopts without a write (201ms)
+  ✓  398 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-zero (reactive): the walker's omission adopts without a write (199ms)
+  ✓  399 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-negative-zero (static): the walker's omission adopts without a write (190ms)
+  ✓  400 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-negative-zero (reactive): the walker's omission adopts without a write (193ms)
+  ✓  401 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-text-false (static): the walker's checked adopts without a write (188ms)
+  ✓  402 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-text-false (reactive): the walker's checked adopts without a write (192ms)
+  ✓  403 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-text-zero (static): the walker's checked adopts without a write (192ms)
+  ✓  404 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-text-zero (reactive): the walker's checked adopts without a write (191ms)
+  ✓  405 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-one (static): the walker's checked adopts without a write (183ms)
+  ✓  406 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-one (reactive): the walker's checked adopts without a write (219ms)
+  ✓  407 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-negative (static): the walker's checked adopts without a write (190ms)
+  ✓  408 [webkit] › e2e/value-rules.spec.ts:207:5 › rule 6 attribute checked-negative (reactive): the walker's checked adopts without a write (187ms)
+  ✓  409 [webkit] › e2e/value-rules.spec.ts:215:1 › rule 6 control: the word the walker wrote for the idiom at false before rule 6 is refused, not adopted (185ms)
+  ✓  410 [webkit] › e2e/value-rules.spec.ts:232:3 › rule 7 true-selects-then: the walker's SHOW_IF range adopts createShow on a boolean without a write, and a toggle swaps the branch (193ms)
+  ✓  411 [webkit] › e2e/value-rules.spec.ts:232:3 › rule 7 false-selects-else: the walker's SHOW_IF range adopts createShow on a boolean without a write, and a toggle swaps the branch (200ms)
+
+  411 passed (1.3m)

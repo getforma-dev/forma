@@ -1,3 +1,4 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
  * What happens when an expression cannot run.
  *
@@ -35,7 +36,7 @@ describe('failure semantics', () => {
 
   beforeEach(() => {
     runtime.clearDiagnostics();
-    runtime.setDiagnostics(true);
+
     errors = [];
     vi.spyOn(console, 'error').mockImplementation((...args) => { errors.push(args.map(String).join(' ')); });
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -44,7 +45,7 @@ describe('failure semantics', () => {
   });
 
   afterEach(() => {
-    runtime.unmount(container);
+    unmountFixture(container);
     container.remove();
     runtime.clearDiagnostics();
     vi.restoreAllMocks();
@@ -60,7 +61,7 @@ describe('failure semantics', () => {
         <p id="ok" data-text="{items.length}">stale</p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const denied = container.querySelector('#ssr')!;
@@ -82,7 +83,7 @@ describe('failure semantics', () => {
         <button id="btn" data-on:click="{n++}">go</button>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#good')!.textContent).toBe('1');
@@ -108,7 +109,7 @@ describe('failure semantics', () => {
           </ul>
         </div>
       `;
-      runtime.mount(container);
+      mountFixture(container);
       await tick();
 
       const diagnostics = runtime.getDiagnostics();
@@ -134,7 +135,7 @@ describe('failure semantics', () => {
         </ul>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     expect([...container.querySelectorAll('li')].map((li) => li.textContent)).toEqual(['a', 'b']);
@@ -153,7 +154,7 @@ describe('failure semantics', () => {
         <p id="compile" data-text="{a + }">also kept</p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     for (const id of ['#runtime', '#compile']) {
@@ -172,7 +173,7 @@ describe('failure semantics', () => {
         <button id="btn" data-on:click="{n = i => i}" data-on:mouseover="{n++}">go</button>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     expect(container.querySelector('#btn')!.getAttribute('data-forma-handler-error'))
@@ -192,7 +193,7 @@ describe('failure semantics', () => {
         <p id="p" data-text="{a + }"></p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const line = errors.find((e) => e.includes('a + '));
@@ -214,7 +215,7 @@ describe('failure semantics', () => {
         <p id="out" data-text="{n}"></p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
     (container.querySelector('#btn') as HTMLButtonElement).click();
     await tick();
@@ -234,7 +235,7 @@ describe('failure semantics', () => {
         <button id="hostile" data-on:click="{obj[bad] = 1}">hostile</button>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const good = container.querySelector('#btn') as HTMLButtonElement;
@@ -260,7 +261,7 @@ describe('failure semantics', () => {
         <p id="p" data-text="{n + m}"></p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container);
     await tick();
 
     const root = container.firstElementChild!;
@@ -285,20 +286,19 @@ describe('failure semantics', () => {
   });
 
   it('disabling diagnostics silences the ledger but never fakes a value', async () => {
-    // `setDiagnostics(false)` is a logging switch, not a permission switch: the
+    // `config.diagnostics: false` is a logging switch, not a permission switch: the
     // denied binding still writes nothing and still marks its element.
-    runtime.setDiagnostics(false);
     container.innerHTML = `
       <div data-forma-state='{"a":1}'>
         <p id="p" data-text="{a.constructor}">kept</p>
       </div>
     `;
-    runtime.mount(container);
+    mountFixture(container, { config: { diagnostics: false } });
     await tick();
 
     expect(runtime.getDiagnostics()).toEqual([]);
     expect(container.querySelector('#p')!.textContent).toBe('kept');
     expect(container.querySelector('#p')!.getAttribute('data-forma-expr-error')).toBe('unsupported');
-    runtime.setDiagnostics(true);
+
   });
 });

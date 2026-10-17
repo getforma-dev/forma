@@ -59,7 +59,8 @@ impl RenderCtx {
         self
     }
 
-    /// Request data written as escaped JSON, never executable handler script.
+    /// Request data assigned to `window.__FORMA_CONFIG__` by a nonced script.
+    /// Static SSR routes refuse this executable configuration with `RENDER-105`.
     #[must_use]
     pub fn with_config_json(mut self, value: serde_json::Value) -> Self {
         self.config_json = Some(value);
@@ -183,20 +184,32 @@ impl RenderCtx {
 /// |---|---|---|
 /// | RENDER-101 | [`MissingModule`](RenderError::MissingModule) | The config has no module or no slots to render |
 /// | RENDER-104 | [`Manifest`](RenderError::Manifest) | Invalid manifest or referenced integrity |
+/// | RENDER-105 | [`StaticRoute`](RenderError::StaticRoute) | A static SSR route requires JavaScript for islands, configuration or preloads |
 /// | RENDER-103 | [`RouteMode`](RenderError::RouteMode) | A shell route is absent or not Browser |
 /// | RENDER-406 | [`Unfinalized`](RenderError::Unfinalized) | Required startup finalization is incomplete |
 /// | RENDER-102 | [`Walk`](RenderError::Walk) | The walk refused the module or its data |
+/// | RENDER-503 | [`Walk`](RenderError::Walk) | A keyed list row has no usable identity, repeats another row's key, or has no single root to carry it (FORMA-181) |
 /// | RENDER-201 | [`Policy`](RenderError::Policy) | A policy extension is not a source a page may add |
 /// | RENDER-202 | [`Nonce`](RenderError::Nonce) | The system random source failed to draw a nonce |
-/// | RENDER-301 | [`Budget`](RenderError::Budget) | The walk's output passed `max_output_bytes` |
+/// | RENDER-301 | [`Budget`](RenderError::Budget) | The complete escaped response passed `max_output_bytes` |
 /// | RENDER-302 | [`Budget`](RenderError::Budget) | The walk's list rows passed `max_list_iterations` |
 /// | RENDER-303 | [`Budget`](RenderError::Budget) | Lists or control flow nested past the walker's depth |
+/// | RENDER-501 | [`IslandState`](RenderError::IslandState) | Declared island input mapping or value is invalid |
+/// | RENDER-502 | [`IslandState`](RenderError::IslandState) | Escaped island state exceeds one MiB |
 /// | RENDER-399 | [`Fault`](RenderError::Fault) | The render panicked; a defect, not an input |
 ///
 /// A code, once published, keeps its meaning; new causes get new codes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
+    /// RENDER-105: a static SSR route cannot execute or preload JavaScript.
+    #[non_exhaustive]
+    StaticRoute {
+        /// The requested route.
+        route: String,
+        /// The incompatible island, configuration or preload contract.
+        message: String,
+    },
     /// RENDER-104: manifest or referenced resource integrity is invalid.
     #[non_exhaustive]
     Manifest {
@@ -251,6 +264,18 @@ pub enum RenderError {
         /// The walker's error.
         cause: IrError,
     },
+    /// RENDER-501 or RENDER-502: no partial state or page is returned.
+    #[non_exhaustive]
+    IslandState {
+        /// Route whose island state was refused.
+        route: String,
+        /// Open island registration names, outermost first.
+        component_path: Vec<String>,
+        /// Body walk work completed before refusal.
+        counts: RenderCounts,
+        /// The invalid field path or fixed state-byte ceiling.
+        cause: IrError,
+    },
     /// RENDER-201: a policy extension was refused; there is no page to send
     /// without its policy.
     #[non_exhaustive]
@@ -268,17 +293,17 @@ pub enum RenderError {
         /// The failed draw.
         cause: NonceError,
     },
-    /// RENDER-301, RENDER-302, RENDER-303: the walk reached one of its
-    /// budgets, and stopped there instead of running on.
+    /// RENDER-301, RENDER-302, RENDER-303: the complete response exceeded
+    /// its output-byte limit, or the walk reached a list/depth budget.
     #[non_exhaustive]
     Budget {
         /// The route being rendered.
         route: String,
         /// The islands open where the walk stopped, outermost first.
         component_path: Vec<String>,
-        /// How far the walk got before the budget stopped it.
+        /// Body-only walk work, including when complete response assembly refuses.
         counts: RenderCounts,
-        /// The budget the walker reports.
+        /// The output, list, or depth budget that refused the response.
         cause: IrError,
     },
     /// RENDER-399: the render panicked and the panic was caught. The
@@ -301,13 +326,24 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
+            RenderError::StaticRoute { .. } => "RENDER-105",
             RenderError::Manifest { .. } => "RENDER-104",
             RenderError::RouteMode { .. } => "RENDER-103",
             RenderError::Unfinalized { .. } => "RENDER-406",
             RenderError::Props { cause } => cause.code(),
             RenderError::Binding { .. } => "RENDER-405",
             RenderError::MissingModule { .. } => "RENDER-101",
-            RenderError::Walk { .. } => "RENDER-102",
+            RenderError::Walk { cause, .. } => match cause {
+                // A published code keeps its meaning; the keyed-row refusal
+                // is a new cause with its own code (FORMA-181, DR-8).
+                IrError::InvalidListKey(_) => "RENDER-503",
+                _ => "RENDER-102",
+            },
+            RenderError::IslandState { cause, .. } => match cause {
+                IrError::IslandStateLimitExceeded { .. } => "RENDER-502",
+                IrError::InvalidIslandState(_) => "RENDER-501",
+                _ => "RENDER-501",
+            },
             RenderError::Policy { .. } => "RENDER-201",
             RenderError::Nonce { .. } => "RENDER-202",
             RenderError::Budget { cause, .. } => match cause {
@@ -322,13 +358,15 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
-            RenderError::Manifest { route, .. }
+            RenderError::StaticRoute { route, .. }
+            | RenderError::Manifest { route, .. }
             | RenderError::RouteMode { route }
             | RenderError::Unfinalized { route } => route,
             RenderError::Props { cause } => cause.route(),
             RenderError::Binding { route, .. } => route,
             RenderError::MissingModule { route }
             | RenderError::Walk { route, .. }
+            | RenderError::IslandState { route, .. }
             | RenderError::Policy { route, .. }
             | RenderError::Nonce { route, .. }
             | RenderError::Budget { route, .. }
@@ -340,6 +378,10 @@ impl RenderError {
     pub fn property_path(&self) -> Option<&str> {
         match self {
             Self::Props { cause } => Some(cause.path()),
+            Self::IslandState {
+                cause: IrError::InvalidIslandState(problem),
+                ..
+            } => Some(&problem.path),
             _ => None,
         }
     }
@@ -351,6 +393,7 @@ impl RenderError {
     pub fn component_path(&self) -> &[String] {
         match self {
             RenderError::Walk { component_path, .. }
+            | RenderError::IslandState { component_path, .. }
             | RenderError::Budget { component_path, .. }
             | RenderError::Fault { component_path, .. } => component_path,
             _ => &[],
@@ -361,6 +404,7 @@ impl RenderError {
     pub fn counts(&self) -> Option<RenderCounts> {
         match self {
             RenderError::Walk { counts, .. }
+            | RenderError::IslandState { counts, .. }
             | RenderError::Budget { counts, .. }
             | RenderError::Fault { counts, .. } => Some(*counts),
             _ => None,
@@ -376,7 +420,9 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
-            RenderError::Manifest { message, .. } => write!(f, ": {message}"),
+            RenderError::StaticRoute { message, .. } | RenderError::Manifest { message, .. } => {
+                write!(f, ": {message}")
+            }
             RenderError::RouteMode { .. } => {
                 write!(f, ": route is not explicitly browser-rendered")
             }
@@ -394,7 +440,9 @@ impl fmt::Display for RenderError {
             RenderError::MissingModule { .. } => {
                 write!(f, ": no module or slots to render on the server")
             }
-            RenderError::Walk { cause, .. } | RenderError::Budget { cause, .. } => {
+            RenderError::Walk { cause, .. }
+            | RenderError::IslandState { cause, .. }
+            | RenderError::Budget { cause, .. } => {
                 write!(f, ": {cause}")
             }
             RenderError::Policy { cause, .. } => write!(f, ": {cause}"),
@@ -415,7 +463,9 @@ impl fmt::Display for RenderError {
 impl std::error::Error for RenderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            RenderError::Walk { cause, .. } | RenderError::Budget { cause, .. } => Some(cause),
+            RenderError::Walk { cause, .. }
+            | RenderError::IslandState { cause, .. }
+            | RenderError::Budget { cause, .. } => Some(cause),
             RenderError::Props { cause } => Some(cause),
             RenderError::Binding { errors, .. } => {
                 errors.first().map(|error| error as &dyn std::error::Error)
@@ -530,6 +580,33 @@ fn render(
     root: Root<'_>,
 ) -> Result<PageResponse, RenderError> {
     let route = || config.route_pattern.to_string();
+    if config
+        .manifest
+        .route(config.route_pattern)
+        .is_some_and(crate::RouteAssets::is_static_ssr)
+    {
+        let message = if config.config_json.is_some() {
+            Some("static SSR cannot execute config_json; publish a JavaScript entry for client configuration")
+        } else if !ctx.module_preloads(config.route_pattern).is_empty()
+            || config
+                .manifest
+                .route(config.route_pattern)
+                .is_some_and(|assets| !assets.modulepreload.is_empty())
+        {
+            Some("static SSR cannot load module preloads; rebuild the route and its request preload table together")
+        } else if matches!(root, Root::Walk { module: Some(module), .. } if !module.islands.is_empty())
+        {
+            Some("static SSR contains declared islands but has no JavaScript entry")
+        } else {
+            None
+        };
+        if let Some(message) = message {
+            return Err(RenderError::StaticRoute {
+                route: route(),
+                message: message.into(),
+            });
+        }
+    }
     let nonce = draw().map_err(|cause| RenderError::Nonce {
         route: route(),
         cause,
@@ -540,8 +617,12 @@ fn render(
         cause,
     })?;
 
-    let (ssr_body, counts) = match root {
-        Root::Shell => (None, RenderCounts::default()),
+    let output_limit = match root {
+        Root::Walk { limits, .. } => limits.max_output_bytes,
+        Root::Shell => ctx.limits(WalkLimits::default()).max_output_bytes,
+    };
+    let (ssr_body, island_state, counts) = match root {
+        Root::Shell => (None, None, RenderCounts::default()),
         Root::Walk {
             module,
             slots,
@@ -556,6 +637,7 @@ fn render(
             match walked {
                 Ok(out) => (
                     Some(out.html),
+                    Some(out.island_state),
                     RenderCounts::from_walk(out.counts, walk_time),
                 ),
                 Err(failure) => {
@@ -564,6 +646,13 @@ fn render(
                     let counts = RenderCounts::from_walk(failure.counts, walk_time);
                     let cause = failure.error;
                     return Err(match cause {
+                        IrError::InvalidIslandState(_)
+                        | IrError::IslandStateLimitExceeded { .. } => RenderError::IslandState {
+                            route,
+                            component_path,
+                            counts,
+                            cause,
+                        },
                         IrError::OutputLimitExceeded { .. }
                         | IrError::ListBudgetExceeded { .. }
                         | IrError::ListDepthExceeded { .. }
@@ -591,7 +680,15 @@ fn render(
         }
     };
 
-    let html = crate::template::write_document(config, &nonce, ssr_body.as_deref(), ctx)?;
+    let html = crate::template::write_document(
+        config,
+        &nonce,
+        ssr_body.as_deref(),
+        island_state.as_ref(),
+        ctx,
+        output_limit,
+        counts,
+    )?;
     if let Some(reason) = policy.relaxed() {
         csp::log_relaxation(config.route_pattern, reason);
     }
@@ -639,6 +736,84 @@ mod tests {
             personality_css: None,
             body_prefix: None,
         }
+    }
+
+    /// FORMA-181: a keyed-row refusal is a new cause of a refused walk with its own code;
+    /// every other walk refusal keeps RENDER-102.
+    #[test]
+    fn a_keyed_row_refusal_is_render_503_and_other_walk_refusals_stay_render_102() {
+        use forma_ir::{ListKeyReason, ListKeyViolation};
+        let walk = |cause: IrError| RenderError::Walk {
+            route: "/seam".into(),
+            component_path: vec!["Rows".into()],
+            counts: RenderCounts::default(),
+            cause,
+        };
+        let keyed = walk(IrError::InvalidListKey(Box::new(ListKeyViolation::new(
+            30,
+            2,
+            "user.id",
+            ListKeyReason::Duplicate { first_row: 0 },
+        ))));
+        assert_eq!(keyed.code(), "RENDER-503");
+        assert_eq!(keyed.component_path(), ["Rows".to_string()]);
+        let text = keyed.to_string();
+        assert!(
+            text.contains("RENDER-503: LIST at bytecode offset 30, row 2, key path `user.id`: the row repeats the key row 0 already rendered"),
+            "{text}"
+        );
+        assert_eq!(walk(IrError::InvalidOpcode(0xff)).code(), "RENDER-102");
+    }
+
+    #[test]
+    fn static_island_mismatch_refuses_before_nonce_or_walk() {
+        use forma_ir::parser::test_helpers::{
+            build_declared_fixture, encode_close_tag, encode_open_tag,
+        };
+        let mut manifest = manifest();
+        manifest.routes.insert(
+            "/seam".into(),
+            crate::RouteAssets {
+                mode: crate::RouteMode::Ssr,
+                js: vec![],
+                css: vec![],
+                fonts: vec![],
+                modulepreload: vec![],
+                ir: Some("home.ir".into()),
+                total_size_br: 0,
+                budget_warn_threshold: 0,
+            },
+        );
+        let opcodes = [
+            vec![11, 0, 0],
+            encode_open_tag(0, &[]),
+            encode_close_tag(0),
+            vec![12, 0, 0],
+        ]
+        .concat();
+        let module = forma_ir::IrModule::parse(&build_declared_fixture(
+            &["div", "Panel"],
+            &[],
+            &opcodes,
+            &[(0, 1, 0, 1, 0, &[])],
+        ))
+        .unwrap();
+        let error = render_guarded(
+            &shell_config(&manifest),
+            &RenderCtx::new(),
+            || panic!("static refusal must precede nonce generation"),
+            Root::Walk {
+                module: Some(&module),
+                slots: None,
+                limits: WalkLimits::default(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(error.code(), "RENDER-105");
+        assert_eq!(error.route(), "/seam");
+        assert!(error.to_string().contains("declared islands"));
+        assert_eq!(error.counts(), None);
+        assert!(error.component_path().is_empty());
     }
 
     #[test]

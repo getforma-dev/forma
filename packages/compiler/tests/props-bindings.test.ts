@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import { getSlots, parseOpcodeList } from './helpers/fmir';
+import {SLOT_TYPE_ARRAY} from '../src/fmir-constants';
 
 const folders: string[] = [];
 afterEach(() => { for (const dir of folders.splice(0)) rmSync(dir, { recursive: true, force: true }); vi.restoreAllMocks(); });
@@ -56,7 +57,7 @@ describe('declared root slot bindings', () => {
     expect(new Set(slots.map(slot => slot.name)).size).toBe(slots.length);
   });
 
-  it('keeps local list debug labels CLIENT-owned and avoids declared root name collisions', () => {
+  it('keeps local list constants CLIENT-owned and avoids declared root name collisions', () => {
     const binary = emit(imports + `export function Page(p: { 'list:rows:item': string; 'list:rows:label': string }) {
       const [rows] = createSignal([]);
       return h('main', null, p['list:rows:item'], createList(rows, row => row.id, row => h('p', null, row.label)));
@@ -64,7 +65,7 @@ describe('declared root slot bindings', () => {
     const slots = getSlots(binary);
     expect(slots.filter(slot => slot.source === 0).map(slot => slot.name)).toEqual(['list:rows:item', 'list:rows:label']);
     expect(new Set(slots.map(slot => slot.name)).size).toBe(slots.length);
-    expect(slots.find(slot => slot.name === 'list:rows:array')?.source).toBe(1);
+    expect(slots.filter(slot=>slot.typeHint===SLOT_TYPE_ARRAY).map(slot=>slot.source)).toEqual([1]);
   });
 
   it.each([
@@ -77,9 +78,14 @@ describe('declared root slot bindings', () => {
     `export function Page(p: { text: string }) { const [label] = createSignal(p.text.toUpperCase()); return h('p', null, label()); }`,
     `export function Page(p: { text: string }) { let text = p.text; text = 'new'; return h('p', null, text); }`,
     `export function Page(p: { text: string }) { p.text = 'new'; return h('p', null, p.text); }`,
-    `export function Page(p: { text: string }) { return createList(() => p.text, r => r, r => h('p', null, r)); }`,
+    `export function Page(p: { text: string }) { return createList(() => p.text, r => r.id, r => h('p', null, r.id)); }`,
   ])('refuses an unrepresentable binding instead of changing its value: %s', source => {
     expect(() => emit(imports + source)).toThrow(/BUILD-610/);
+  });
+  it('refuses a list keyed by the row itself with BUILD-612 before the list source is examined', () => {
+    // FORMA-181: the archived scalar-key form of the string-source case above
+    // (docs/archive/2026-10-15-pre-keyed-rows/sources/props-bindings-scalar-key.ts).
+    expect(() => emit(imports + `export function Page(p: { text: string }) { return createList(() => p.text, r => r, r => h('p', null, r)); }`)).toThrow(/^BUILD-612 .*\.ts:\d+:\d+: LIST key cannot be the row itself/);
   });
 
   it('does not resolve a shadowed row name as its outer prop alias', () => {
@@ -97,8 +103,11 @@ describe('declared root slot bindings', () => {
   });
 
   it('uses declared values in createShow branches and direct or nested ternaries', () => {
+    // FORMA-182 rule 6: the trailing bare `p.ok` child this page used to end
+    // with is a boolean in text (BUILD-614); the original is archived in
+    // docs/archive/2026-10-15-pre-value-rules and pinned by value-rules-archive.test.ts.
     const binary = emit(`import { h, createShow } from '@getforma/core'; export function Page(p: { ok: boolean; title: string }) {
-      return h('main', null, createShow(() => p.ok, () => p.title), p.ok ? p.title : 'hidden', () => p.ok ? p.title : 'hidden', p.ok);
+      return h('main', null, createShow(() => p.ok, () => p.title), p.ok ? p.title : 'hidden', () => p.ok ? p.title : 'hidden');
     }`);
     const ops = parseOpcodeList(binary);
     expect(ops.filter(op => op.startsWith('DYN_TEXT title'))).toHaveLength(3);

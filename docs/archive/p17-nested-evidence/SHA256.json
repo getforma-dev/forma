@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 552,
+      "sha256": "d29dd061d3c22e650f65b93832939c01bad56e1d11d31ca75e7c178c954cf8f6"
+    },
+    {
+      "path": "flat-recorder-before.json",
+      "bytes": 1154,
+      "sha256": "044be5c5da4345e62177d16a0864dc80f84d6e6436d3eeca8405cbbadc1c6f16"
+    },
+    {
+      "path": "flat-recorder-before.log",
+      "bytes": 135,
+      "sha256": "a64bb23ab8ea86071a61aae9680f02b334072b01f64183647771fb9416b25122"
+    },
+    {
+      "path": "release-artifacts.original.sh",
+      "bytes": 5829,
+      "sha256": "bd0d21e55ad9289ae2171957d8eaa773684e921d284637f69b04fd5e0b517611"
+    },
+    {
+      "path": "representative-input/p17.json",
+      "bytes": 168,
+      "sha256": "025f1c92aee76913786dfb306eba501df039aea56305e3a38909149a488c7ea7"
+    },
+    {
+      "path": "representative-input/performance-attempt-control/attempt.json",
+      "bytes": 103,
+      "sha256": "fa24d99f4792f810c22467d89d1ac90e966cf389ddd600ce674520b06b4506eb"
+    },
+    {
+      "path": "representative-input/performance-attempt-control/manifest.jsonl",
+      "bytes": 151,
+      "sha256": "c1926804ddaa3e2e3a0c87c3d40b7d7cf8915f5f790d0873a7dbbc24d07130c9"
+    },
+    {
+      "path": "representative-input/security/hostile-widgets.json",
+      "bytes": 364877,
+      "sha256": "c61b1d83e7b99b29c7ad76a41a0348c58235bace06d65000d88ca57ca62b1079"
+    }
+  ]
+}

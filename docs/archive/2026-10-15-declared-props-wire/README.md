@@ -1,0 +1,3 @@
+# Typed-handler fixtures before the declared-state wire
+
+These exact originals preserve the three FORMA-102 typed Pages binaries, their manifest and emitter script at3c34b9e. The active TypeScript sources are unchanged. The home module retains all five existing section payloads byte-for-byte and adds the empty required-contract section10 table entry. The two empty-local-list modules now encode the actual closed empty array in section10 and omit unreachable row-body instructions and scratch slots. Native typed Pages, empty-schema binding and integrity controls retain their original assertions. Regeneration updates SHA-384 from the newly emitted bytes; `--check` checks both bytes and recorded fixture integrity.

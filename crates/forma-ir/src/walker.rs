@@ -4,12 +4,17 @@
 //! populated `SlotData`, walks the opcode stream linearly, and produces an
 //! HTML string suitable for embedding in the page.
 
+pub use crate::contracts::state::IslandState;
+use crate::contracts::state::StateBuilder;
 #[cfg(feature = "tracing")]
 use crate::format::SlotSource;
-use crate::format::{IrError, IslandTrigger, Opcode};
+use crate::format::{IrError, IslandTrigger, ListKeyReason, ListKeyViolation, Opcode};
 use crate::parser::IrModule;
 use crate::slot::{SlotData, SlotValue};
+use crate::text::{normalize_text, normalized_chars};
+use std::collections::HashMap;
 use std::fmt;
+use std::rc::Rc;
 
 // ---------------------------------------------------------------------------
 // Walk state
@@ -19,32 +24,10 @@ use std::fmt;
 struct IslandPending {
     id: u16,
     component_name: String,
-    inline_props: Option<String>,
+    occurrence: usize,
+    hash: String,
     trigger: IslandTrigger,
 }
-
-/// Serialized-JSON size above which inline island props are spilled into
-/// the shared `__forma_islands` block instead of a `data-forma-props`
-/// attribute.
-///
-/// Matches the client's documented guidance ("inline for small props, < 1KB;
-/// the script block for larger props"). Measured on the *JSON*, before HTML
-/// attribute escaping — a string-heavy payload inflates roughly 1.8x on the
-/// wire because every `"` becomes `&quot;`, so the attribute this bounds is
-/// closer to 2 KiB in the worst case.
-///
-/// The spill needs no client change: `loadIslandProps`
-/// (`@getforma/core`, src/dom/activate.ts) reads `data-forma-props` first and
-/// falls back to the shared block, and the walker emits exactly one channel
-/// per island so that precedence never has two answers to choose between.
-///
-/// An internal fragment render (`walk_island`) never spills — it cannot legally emit
-/// a second `__forma_islands` block — so an over-size fragment keeps its props
-/// inline.
-///
-/// Verified by: crates/forma-ir/src/walker.rs > "inline_props_over_the_ceiling_spill_to_the_shared_block"
-/// Verified by: crates/forma-ir/src/walker.rs > "island_fragment_keeps_over_size_props_inline"
-pub const INLINE_PROPS_MAX_BYTES: usize = 1024;
 
 /// Default cap on the HTML a single walk may produce.
 ///
@@ -83,6 +66,46 @@ impl Default for WalkLimits {
     }
 }
 
+/// One row of a keyed LIST while its body is walked (FORMA-181, DR-8).
+///
+/// The row-owned guard for `data-forma-key`: the key is attached to the
+/// first element opened at the depth the row was entered at, which is the
+/// row's own root, never a descendant and never an element a later row or
+/// the code after the list opens. At its own level the row admits exactly
+/// that one root, optionally wholly enclosed by one registered child's
+/// `<!--f:iN-->` envelope (the child's host is the root); text, a
+/// conditional or list range, a second element, an envelope that does not
+/// enclose the root, a close of an element the row did not open, or an
+/// element left open refuse the render. The compiler proves the shape from
+/// the source (BUILD-613), so this is the defence for a hand-built module,
+/// under the same code the key itself refuses with (RENDER-503).
+struct KeyedRow {
+    /// Byte offset of the LIST, as section `0x0006` names it.
+    list_offset: u32,
+    /// Zero-based position of the row in the array this execution iterates.
+    ordinal: usize,
+    /// The key path, dotted, for the row's diagnostics.
+    path: Rc<str>,
+    /// The canonical key, until the row's root element takes it.
+    key: Option<Rc<str>>,
+    /// [`WalkState::element_depth`] when the row's body started.
+    entry_depth: usize,
+    /// Elements opened at `entry_depth` so far.
+    roots: usize,
+    /// Whether anything but the root and its envelope was written at
+    /// `entry_depth`.
+    stray_content: bool,
+    /// The registered child whose island envelope opened at `entry_depth`
+    /// before the root and has not closed yet.
+    envelope: Option<u16>,
+}
+
+impl KeyedRow {
+    fn refuse(&self, reason: ListKeyReason) -> IrError {
+        list_key_error(self.list_offset, self.ordinal, &self.path, reason)
+    }
+}
+
 /// Mutable state threaded through recursive `walk_range` calls.
 ///
 /// This avoids adding extra parameters every time we need new walker state
@@ -92,16 +115,40 @@ struct WalkState {
     list_depth: u8,
     /// Pending island info to inject on the next OPEN_TAG/VOID_TAG.
     pending_island: Option<IslandPending>,
-    /// Pending list-item key to inject on the next OPEN_TAG/VOID_TAG.
-    pending_list_key: Option<String>,
-    /// Accumulated props for ScriptTag mode, keyed by island id.
-    script_tag_props: std::collections::BTreeMap<u16, serde_json::Value>,
+    /// Elements opened (`OPEN_TAG`) and not yet closed (`CLOSE_TAG`) at this
+    /// point of the walk. A keyed row's root is the element opened at the
+    /// depth the row was entered at ([`KeyedRow::entry_depth`]).
+    element_depth: usize,
+    /// The keyed rows the walk is inside, outermost first (FORMA-181). Only
+    /// the innermost can still be waiting for its root: an inner row is
+    /// entered at a deeper element depth than the root its outer row already
+    /// opened. Pushed and popped by the LIST item loop, never cleared at a
+    /// range end.
+    keyed_rows: Vec<KeyedRow>,
+    /// Whether the start tag still open is a keyed row's root, so a DYN_ATTR
+    /// named `data-forma-key` on it is refused as an authored identity.
+    open_tag_is_row_root: bool,
+    /// Checked, owned snapshots in execution order, separate from body HTML.
+    island_state: StateBuilder,
     /// True when an OpenTag or VoidTag has been opened but the `>` has not
     /// been written yet. DYN_ATTR opcodes may still append attributes.
     pending_tag_close: bool,
     /// Tag name of the element currently being opened — needed to decide
     /// whether a `data:image/svg+xml` URL is in an image context.
     pending_tag_name: String,
+    /// The output length right after an HTML `pre` or `listing` start tag
+    /// closed, while nothing has been written since. The parser drops one
+    /// line feed that is the first content token of those elements, so the
+    /// first text written at exactly this length gets an extra LF when its
+    /// normalized text starts with one. Any serialized token (a marker
+    /// comment, a child element, a closing tag) moves the length past it and
+    /// so consumes the boundary; an empty text or a value-only opcode writes
+    /// nothing and leaves it. Selected by tag spelling, as `TextOnlyTag` is:
+    /// the walker has no namespace stack, and neither SVG nor MathML has an
+    /// element of either name.
+    ///
+    /// Verified by: crates/forma-ir/src/walker.rs > "pre_children_protect_only_an_initial_normalized_line_feed"
+    pre_boundary: Option<usize>,
     /// Output-size budget. Lives on the state (not as a `walk_range`
     /// parameter) so every recursive call sharing the same `out` enforces the
     /// same cumulative budget by construction.
@@ -125,11 +172,6 @@ struct WalkState {
     /// entries before its enclosing row unwinds. The `Vec` keeps its capacity
     /// between rows, so steady-state pushes do not allocate.
     slot_journal: Vec<(u16, SlotValue)>,
-    /// When true, fragment islands inline their props on the
-    /// root instead of accumulating into the shared `__forma_islands` block.
-    /// Set for fragment renders, where a shared block would be dropped on
-    /// return (or, if emitted, would duplicate the page's own block).
-    force_inline_props: bool,
     /// The text-only element (`textarea`, `title`, `style`, `script`) the
     /// walk is inside, if any. Inside one, no hydration marker is written; see
     /// [`TextOnlyTag`].
@@ -159,15 +201,17 @@ impl WalkState {
         WalkState {
             list_depth: 0,
             pending_island: None,
-            pending_list_key: None,
-            script_tag_props: std::collections::BTreeMap::new(),
+            element_depth: 0,
+            keyed_rows: Vec::new(),
+            open_tag_is_row_root: false,
+            island_state: StateBuilder::new(),
             pending_tag_close: false,
             pending_tag_name: String::new(),
+            pre_boundary: None,
             max_output_bytes: limits.max_output_bytes,
             list_iterations: 0,
             max_list_iterations: limits.max_list_iterations,
             slot_journal: Vec::new(),
-            force_inline_props: false,
             text_only: None,
             pending_control: PendingControl::None,
             select: None,
@@ -198,6 +242,64 @@ impl WalkState {
                 slots.set(slot_id, previous);
             }
         }
+    }
+
+    /// The innermost keyed row, when the walk is at the depth it was
+    /// entered at: the level where its root element and nothing else belongs.
+    fn keyed_row_at_entry_depth(&mut self) -> Option<&mut KeyedRow> {
+        let depth = self.element_depth;
+        self.keyed_rows
+            .last_mut()
+            .filter(|row| row.entry_depth == depth)
+    }
+
+    /// An element is being opened: if it is the innermost keyed row's root,
+    /// count it and hand back the key it carries.
+    fn open_row_root(&mut self) -> Option<Rc<str>> {
+        let row = self.keyed_row_at_entry_depth()?;
+        row.roots += 1;
+        row.key.take()
+    }
+
+    /// Text or a marker is being written: at a keyed row's own level that is
+    /// content beside its root, which the row's shape does not admit.
+    fn note_row_level_content(&mut self) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            row.stray_content = true;
+        }
+    }
+
+    /// An island starts: at a keyed row's own level it is admitted only as
+    /// the envelope of a registered child whose host is the row's root, so
+    /// only before that root and only once.
+    fn note_row_level_island_start(&mut self, island_id: u16) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            if row.roots == 0 && row.envelope.is_none() && !row.stray_content {
+                row.envelope = Some(island_id);
+            } else {
+                row.stray_content = true;
+            }
+        }
+    }
+
+    /// An island ends: at a keyed row's own level it must close the envelope
+    /// that opened before the root, right after that one root.
+    fn note_row_level_island_end(&mut self, island_id: u16) {
+        if let Some(row) = self.keyed_row_at_entry_depth() {
+            if row.envelope == Some(island_id) && row.roots == 1 {
+                row.envelope = None;
+            } else {
+                row.stray_content = true;
+            }
+        }
+    }
+
+    /// A CLOSE_TAG at a keyed row's own level closes an element the row did
+    /// not open (the list's parent): the row is not balanced.
+    fn closes_outside_keyed_row(&self) -> bool {
+        self.keyed_rows
+            .last()
+            .is_some_and(|row| row.entry_depth == self.element_depth)
     }
 }
 
@@ -256,8 +358,8 @@ pub fn walk_to_html_with_limits(
     let mut out = String::with_capacity(initial_capacity(len));
     let mut state = WalkState::new(limits);
     let mut slots_mut = slots.clone();
+    slots_mut.apply_module_constants(module);
     walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
-    finish_page(&mut out, &state)?;
     Ok(out)
 }
 
@@ -272,28 +374,12 @@ fn initial_capacity(opcodes_len: usize) -> usize {
     opcodes_len.saturating_mul(4).min(1 << 20)
 }
 
-/// After a whole-page walk: the `__forma_islands` block for ScriptTag props.
-fn finish_page(out: &mut String, state: &WalkState) -> Result<(), IrError> {
-    if !state.script_tag_props.is_empty() {
-        let json =
-            serde_json::to_string(&state.script_tag_props).unwrap_or_else(|_| "{}".to_string());
-        push_checked(
-            out,
-            "<script id=\"__forma_islands\" type=\"application/json\">",
-            state.max_output_bytes,
-        )?;
-        push_json_script_body(out, &json, state.max_output_bytes)?;
-        push_checked(out, "</script>", state.max_output_bytes)?;
-    }
-    Ok(())
-}
-
 /// What a walk wrote, or what it had reached when it stopped.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct WalkCounts {
     /// Elements and text nodes written from the module's opcodes. Hydration
-    /// markers, comments and the `__forma_islands` data block are not nodes.
+    /// markers and comments are not nodes. State is counted by the server.
     pub nodes: usize,
     /// Bytes of HTML written: what [`WalkLimits::max_output_bytes`] bounds.
     pub bytes: usize,
@@ -308,6 +394,9 @@ pub struct WalkCounts {
 pub struct WalkOutput {
     /// The page's HTML, as [`walk_to_html_with_limits`] writes it.
     pub html: String,
+    /// Declared inputs captured at each executed ISLAND_START. The server
+    /// places this envelope once in the head before sending body HTML.
+    pub island_state: IslandState,
     /// What the walk wrote.
     pub counts: WalkCounts,
 }
@@ -373,13 +462,13 @@ pub fn walk_to_html_counted(
         state.fault_armed = true;
     }
     let mut slots_mut = slots.clone();
+    slots_mut.apply_module_constants(module);
 
     // The closure only borrows: after an unwind, `state` and `out` still say
     // where the walk was and how much it had written. Nothing they hold is
     // used again except to read those counts.
     let walked = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)?;
-        finish_page(&mut out, &state)
+        walk_range(module, &mut slots_mut, ops, 0, len, &mut out, &mut state, 0)
     }));
     let counts = WalkCounts {
         nodes: state.nodes,
@@ -387,7 +476,22 @@ pub fn walk_to_html_counted(
         list_iterations: state.list_iterations,
     };
     let error = match walked {
-        Ok(Ok(())) => return Ok(WalkOutput { html: out, counts }),
+        Ok(Ok(())) => match state.island_state.finish() {
+            Ok(island_state) => {
+                return Ok(WalkOutput {
+                    html: out,
+                    island_state,
+                    counts,
+                })
+            }
+            Err(error) => {
+                return Err(WalkFailure {
+                    error,
+                    component_path: Vec::new(),
+                    counts,
+                })
+            }
+        },
         Ok(Err(error)) => error,
         Err(payload) => IrError::Panicked {
             message: panic_message(payload.as_ref()),
@@ -422,44 +526,6 @@ fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
     }
 }
 
-/// Append a JSON document as the body of a `<script type="application/json">`
-/// data block, escaped so it cannot terminate or re-open the enclosing
-/// element.
-///
-/// Escaping `<` is total: `<` cannot appear in JSON outside a string literal,
-/// and `<` is a valid JSON string escape, so `JSON.parse` yields
-/// byte-identical *values*. It simultaneously kills `</script`, `<!--` and
-/// `<script`. The previous `</` → `<\/` replace only covered the first of
-/// those: a payload containing `<!--` followed later by `<script` drives a
-/// spec-compliant tokenizer into the *script-data-double-escaped* state, in
-/// which our own trailing `</script>` no longer closes the element and the
-/// entire rest of the page is swallowed as script text.
-///
-/// `>` is escaped for symmetry and U+2028/U+2029 as defence in depth — those
-/// two are not needed for a `JSON.parse(textContent)` consumer, only if the
-/// payload is ever inlined as JS source instead of as a data block.
-///
-/// HYDRATION CONTRACT: the `__forma_islands` payload is JSON with `<`/`>`
-/// escaped as `<`/`>`. Consumers MUST decode it with `JSON.parse`
-/// (which undoes the escapes) and MUST NOT string-match the raw script text.
-fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(), IrError> {
-    for ch in json.chars() {
-        match ch {
-            '<' => push_checked(out, "\\u003c", limit)?,
-            '>' => push_checked(out, "\\u003e", limit)?,
-            '\u{2028}' => push_checked(out, "\\u2028", limit)?,
-            '\u{2029}' => push_checked(out, "\\u2029", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
-        }
-    }
-    Ok(())
-}
-
 /// Walk a single island's content and produce an HTML string.
 ///
 /// This internal fragment path has no supported caller (DR-10). It finds
@@ -469,7 +535,7 @@ fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(
 ///
 /// Returns the island ROOT element carrying the full `data-forma-*` attribute
 /// set (`data-forma-island`, `-component`, `-status`, `-hydrate`, and
-/// `-props` when the island has any). Clients MUST swap it in with
+/// the occurrence/hash markers). Internal diagnostics may inspect this root with
 /// `replaceWith`/`outerHTML` and MUST NOT use `innerHTML` — that would discard
 /// exactly the attributes the runtime selects on.
 ///
@@ -477,12 +543,9 @@ fn push_json_script_body(out: &mut String, json: &str, limit: usize) -> Result<(
 /// emitted: they live outside the root element and survive an `outerHTML`
 /// swap, so re-emitting them would duplicate them.
 ///
-/// Props are always inlined on the root as `data-forma-props`, even for an
-/// island whose props would spill to the shared block. A fragment must be self-contained:
-/// emitting a second `__forma_islands` block would duplicate a DOM id and,
-/// because the injected copy precedes the SSR one in document order, would
-/// shadow it for every other ScriptTag island on the page. The client already
-/// reads `data-forma-props` first, so this needs no JS change.
+/// This internal diagnostic fragment returns body HTML only; it is not a
+/// supported page-response path. The complete counted walk returns the state
+/// envelope required to activate its occurrence markers.
 #[allow(dead_code)] // Internal fragment path; no supported caller since the WASM walker retired.
 pub(crate) fn walk_island(
     module: &IrModule,
@@ -537,22 +600,16 @@ pub(crate) fn walk_island_with_limits(
     //    its data-forma-* attributes and would never hydrate.
     let mut out = String::with_capacity(256);
     let mut state = WalkState::new(limits);
-    // Applies to nested islands inside this one as well, so a ScriptTag island
-    // nested in the fragment keeps its props instead of losing them on return.
-    state.force_inline_props = true;
     let mut slots_mut = slots.clone();
+    slots_mut.apply_module_constants(module);
 
     let component_name = module.strings.get(entry.name_str_idx)?.to_string();
-    let inline_props = if entry.slot_ids.is_empty() {
-        None
-    } else {
-        let props = build_island_props(module, &slots_mut, &entry.slot_ids);
-        Some(serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string()))
-    };
+    let (occurrence, hash) = state.island_state.snapshot(module, entry, &slots_mut)?;
     state.pending_island = Some(IslandPending {
         id: island_id,
         component_name,
-        inline_props,
+        occurrence,
+        hash,
         trigger: entry.trigger,
     });
 
@@ -758,7 +815,20 @@ fn walk_range_impl(
                 if !is_valid_name(tag) {
                     return Err(IrError::InvalidName(tag.to_string()));
                 }
+                // A keyed row closes only elements it opened (FORMA-181): a
+                // CLOSE_TAG at its own level would end the list's parent from
+                // inside one row.
+                if state.closes_outside_keyed_row() {
+                    return Err(innermost_row_error(
+                        state,
+                        ListKeyReason::UnbalancedRow,
+                        IrError::InvalidSection,
+                    ));
+                }
                 leave_element(out, tag, state, limit)?;
+                // Saturating: a CLOSE_TAG without its OPEN_TAG outside any
+                // keyed row is tolerated as before.
+                state.element_depth = state.element_depth.saturating_sub(1);
                 push_checked(out, "</", limit)?;
                 push_checked(out, tag, limit)?;
                 push_checked(out, ">", limit)?;
@@ -768,14 +838,24 @@ fn walk_range_impl(
                 let str_idx = read_u32(ops, pos)?;
                 pos += 4;
                 let text = strings.get(str_idx)?;
+                state.note_row_level_content();
                 if let Some(parent) = state.text_only.as_mut() {
                     if !parent.value_bound {
                         write_text_only(out, parent, text, limit)?;
                     }
                 } else {
+                    if state.pre_boundary == Some(out.len())
+                        && normalized_chars(text).next() == Some('\n')
+                    {
+                        // First content token of a `pre`/`listing` starting
+                        // with a line feed: the parser drops one, so write one
+                        // more (the textarea rule, by output position).
+                        push_checked(out, "\n", limit)?;
+                    }
                     push_escaped_html(out, text, limit)?;
                     if let Some(option) = state.option_by_text.as_mut() {
-                        option.text.push_str(text);
+                        // The text as the parser reads it: normalized.
+                        option.text.extend(normalized_chars(text));
                     }
                 }
                 state.nodes += 1;
@@ -789,6 +869,7 @@ fn walk_range_impl(
                 pos += 2;
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
+                state.note_row_level_content();
                 let value = slots.get(slot_id).to_text();
 
                 // SR44's stand-in for a component that panics: this crate's
@@ -825,7 +906,7 @@ fn walk_range_impl(
                     push_u16(out, marker_id, limit)?;
                     push_checked(out, "-->", limit)?;
                     if let Some(option) = state.option_by_text.as_mut() {
-                        option.text.push_str(written);
+                        option.text.extend(normalized_chars(written));
                     }
                 }
                 state.nodes += 1;
@@ -840,6 +921,15 @@ fn walk_range_impl(
 
                 if state.pending_tag_close {
                     let attr_name = strings.get(attr_str_idx)?;
+                    if state.open_tag_is_row_root
+                        && attr_name.eq_ignore_ascii_case("data-forma-key")
+                    {
+                        return Err(innermost_row_error(
+                            state,
+                            ListKeyReason::AuthoredKey,
+                            IrError::InvalidName(attr_name.to_string()),
+                        ));
+                    }
                     // `value` on a textarea or select, and `selected` on an
                     // option of a bound select, are written another way.
                     if consume_control_attr(state, attr_name, Prop::Slot(slots.get(slot_id))) {
@@ -851,11 +941,15 @@ fn walk_range_impl(
                     let value = match slots.get(slot_id) {
                         // An HTML boolean attribute is ON whenever it is
                         // present, so the old `disabled="false"` meant
-                        // DISABLED. Absent for false/null, bare for true —
-                        // byte-for-byte what `renderAttr` in @getforma/core
-                        // produces for the same value.
+                        // DISABLED: scalar truthiness selects presence. Any
+                        // other attribute takes the word `h()` writes for
+                        // true, `data-live="true"` (FORMA-182 finding F2,
+                        // docs/parity-rules.md rule 6's attribute table).
                         SlotValue::Bool(false) | SlotValue::Null => None,
-                        SlotValue::Bool(true) => Some(AttrValue::Bare),
+                        other if is_html_boolean_attribute(attr_name) => {
+                            other.as_bool().then_some(AttrValue::Bare)
+                        }
+                        SlotValue::Bool(true) => Some(AttrValue::Valued("true")),
                         other => {
                             text = other.to_text();
                             // An empty string is a value, not an absence:
@@ -895,6 +989,9 @@ fn walk_range_impl(
                     });
                 }
                 state.islands.push(island_id);
+                // A registered child's envelope may wrap a keyed row's root
+                // (its host); anything else at the row's level is refused.
+                state.note_row_level_island_start(island_id);
 
                 // No marker inside a text-only element, where it is text.
                 if state.text_only.is_none() {
@@ -911,27 +1008,15 @@ fn walk_range_impl(
                 if let Some(entry) = module.island_entry(island_id) {
                     let component_name = strings.get(entry.name_str_idx)?.to_string();
 
-                    // Build props JSON from the island's slot_ids
-                    let inline_props = if entry.slot_ids.is_empty() {
-                        None
-                    } else {
-                        let props = build_island_props(module, slots, &entry.slot_ids);
-                        let json =
-                            serde_json::to_string(&props).unwrap_or_else(|_| "{}".to_string());
-                        if json.len() > INLINE_PROPS_MAX_BYTES && !state.force_inline_props {
-                            state
-                                .script_tag_props
-                                .insert(island_id, serde_json::Value::Object(props));
-                            None
-                        } else {
-                            Some(json)
-                        }
-                    };
+                    // Capture ordered declared inputs before the island body or
+                    // its surrounding list can mutate scratch/row slots.
+                    let (occurrence, hash) = state.island_state.snapshot(module, entry, slots)?;
 
                     state.pending_island = Some(IslandPending {
                         id: island_id,
                         component_name,
-                        inline_props,
+                        occurrence,
+                        hash,
                         trigger: entry.trigger,
                     });
                 } else {
@@ -952,6 +1037,7 @@ fn walk_range_impl(
                 if state.islands.last() == Some(&island_id) {
                     state.islands.pop();
                 }
+                state.note_row_level_island_end(island_id);
 
                 // The island is over: anything still pending belongs to no
                 // element inside it. Without this, an ISLAND_START not
@@ -994,6 +1080,9 @@ fn walk_range_impl(
                 let then_len = read_u32(ops, pos + 2)? as usize;
                 let else_len = read_u32(ops, pos + 6)? as usize;
                 pos += 10;
+                // A conditional at a keyed row's own level is a range, not
+                // the one stable root the key needs (BUILD-613 from source).
+                state.note_row_level_content();
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 let condition = slots.get(slot_id).as_bool();
@@ -1071,6 +1160,9 @@ fn walk_range_impl(
             // walker-local fix. SWITCH also has no default case in the opcode
             // layout; a non-matching value renders nothing.
             Opcode::List => {
+                // `pos` already passed the opcode byte: the LIST's own offset,
+                // the one section 0x0006 names, is one before it.
+                let list_offset = (pos - 1) as u32;
                 // slot_id(2) + item_slot_id(2) + body_len(4) = 8 bytes header
                 let slot_id = read_u16(ops, pos)?;
                 let item_slot_id = read_u16(ops, pos + 2)?;
@@ -1078,9 +1170,30 @@ fn walk_range_impl(
                 pos += 8;
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
+                // A list at a keyed row's own level is a range beside the
+                // row's root, not the root (BUILD-613 from source).
+                state.note_row_level_content();
 
                 let body_start = pos;
                 let body_end = bounded_offset(pos, body_len, region_limit)?;
+
+                // The key path section 0x0006 attaches to this LIST, if any,
+                // resolved once per LIST execution, not per row: the entries
+                // are sorted by offset (the parser refuses anything else), so
+                // this is one binary search, and every segment index was
+                // checked against the string table at load. A LIST without an
+                // entry is unkeyed and renders exactly as before.
+                let key_path = match module
+                    .key_paths
+                    .binary_search_by_key(&list_offset, |path| path.list_offset)
+                {
+                    Ok(index) => Some(ListKey::resolve(
+                        list_offset,
+                        &module.key_paths[index].segments,
+                        strings,
+                    )?),
+                    Err(_) => None,
+                };
 
                 // Emit list markers — none inside a text-only element, where
                 // they are text. Decided once, so the pair always matches.
@@ -1104,77 +1217,33 @@ fn walk_range_impl(
 
                 if let Some(items) = items.filter(|a| !a.is_empty()) {
                     state.list_depth += 1;
-                    if state.list_depth > MAX_LIST_DEPTH {
-                        return Err(IrError::ListDepthExceeded {
+                    let walked = if state.list_depth > MAX_LIST_DEPTH {
+                        Err(IrError::ListDepthExceeded {
                             max: MAX_LIST_DEPTH,
-                        });
-                    }
-                    // A list longer than what is left of the budget fails
-                    // here, before its first row, instead of walking up to
-                    // the budget and failing there (DR-13, SR38): a hostile
-                    // 60,000-row list costs a comparison, not 50,000 rows.
-                    // It fails exactly when the per-row check below would
-                    // have, sooner, and before any error the rows would have
-                    // raised first (an output budget, a malformed row). That
-                    // check stays: rows of nested lists can spend the budget
-                    // after this list was let in.
-                    //
-                    // Verified by: crates/forma-ir/src/walker.rs > "a_list_longer_than_the_remaining_budget_fails_before_its_first_row"
-                    // Verified by: crates/forma-ir/src/walker.rs > "a_list_exactly_at_the_remaining_budget_still_renders"
-                    let remaining = state
-                        .max_list_iterations
-                        .saturating_sub(state.list_iterations);
-                    if items.len() > remaining {
-                        return Err(IrError::ListBudgetExceeded {
-                            max: state.max_list_iterations,
-                        });
-                    }
-                    for item in items.iter() {
-                        // Total across all depths, never decremented: depth
-                        // alone does not bound volume, and four nested LISTs
-                        // over the same array give n^4 body walks.
-                        //
-                        // Checked before counting, so at the error the count
-                        // is the rows actually walked (`WalkCounts`).
-                        if state.list_iterations >= state.max_list_iterations {
-                            return Err(IrError::ListBudgetExceeded {
-                                max: state.max_list_iterations,
-                            });
-                        }
-                        state.list_iterations += 1;
-                        // Scoped binding instead of a per-row `SlotData`
-                        // clone: swap the item in, walk, swap back. Same
-                        // isolation between rows, without copying every other
-                        // slot on the page once per row.
-                        let mark = state.slot_journal.len();
-                        let previous = slots.replace(item_slot_id, item.clone());
-                        state.slot_journal.push((item_slot_id, previous));
-
-                        let walked = walk_range(
+                        })
+                    } else {
+                        walk_list_rows(
                             module,
                             slots,
                             ops,
-                            body_start,
-                            body_end,
+                            ListRows {
+                                items: &items,
+                                item_slot_id,
+                                body_start,
+                                body_end,
+                                key: key_path.as_ref(),
+                            },
                             out,
                             state,
-                            depth + 1,
-                        );
-                        // Unwind before propagating: an aborted walk must
-                        // still hand `slots` back exactly as it was, because
-                        // an enclosing row is about to unwind on top of it.
-                        state.unwind_slot_journal(slots, mark);
-                        walked?;
-
-                        // A LIST_ITEM_KEY that never met an element belongs to
-                        // this item only — do not let it leak onto whatever
-                        // element the next item (or the code after the list)
-                        // happens to open.
-                        state.pending_list_key = None;
-                    }
+                            depth,
+                        )
+                    };
+                    // Restored on every path, as the slot journal and the
+                    // keyed-row stack are inside `walk_list_rows`: an error
+                    // leaves the walk state as the LIST found it.
                     state.list_depth -= 1;
+                    walked?;
                 }
-                state.pending_list_key = None;
 
                 if markers {
                     push_checked(out, "<!--/f:l", limit)?;
@@ -1183,6 +1252,20 @@ fn walk_range_impl(
                 }
 
                 pos = body_end;
+            }
+
+            Opcode::Coalesce => {
+                let source = read_u16(ops, pos)?;
+                let fallback = read_u16(ops, pos + 2)?;
+                let destination = read_u16(ops, pos + 4)?;
+                pos += 6;
+                let chosen = if matches!(slots.get(source), SlotValue::Null) {
+                    slots.get(fallback)
+                } else {
+                    slots.get(source)
+                };
+                let previous = slots.replace(destination, chosen.clone());
+                state.journal_write(destination, previous);
             }
 
             Opcode::Prop => {
@@ -1209,7 +1292,7 @@ fn walk_range_impl(
         WalkMode::Range { .. } => {
             // Flush any pending tag close at the end of the opcode range.
             //
-            // NOTE: `pending_island` / `pending_list_key` are deliberately NOT
+            // NOTE: `pending_island` / `keyed_rows` are deliberately NOT
             // cleared here. This function runs for every nested control-flow
             // body with the same state, so clearing at range end would wipe
             // the island attributes of a legitimate
@@ -1230,58 +1313,223 @@ fn walk_range_impl(
 }
 
 // ---------------------------------------------------------------------------
-// Island props helpers
+// Keyed list rows (FORMA-181, DR-8)
 // ---------------------------------------------------------------------------
 
-/// Build a JSON object from the island's slot_ids, looking up names from
-/// the slot table and values from the current SlotData.
-///
-/// DUPLICATE-NAME RULE: two of the island's slots can carry the same name (the
-/// compiler derives some names per-element, not per-module). The first one in
-/// `slot_ids` order wins, matching [`IrModule::slot_id_by_name`] and
-/// [`SlotData::from_json`]; a plain `insert` made the LAST one win here, so the
-/// island's props disagreed with every other name lookup in the crate and one
-/// of the two values vanished with no diagnostic.
-///
-/// Verified by: crates/forma-ir/src/walker.rs > "island_props_keep_the_first_slot_for_a_duplicated_name"
-fn build_island_props(
-    module: &IrModule,
-    slots: &SlotData,
-    slot_ids: &[u16],
-) -> serde_json::Map<String, serde_json::Value> {
-    let mut map = serde_json::Map::new();
-    for &slot_id in slot_ids {
-        // Look up slot name from the slot table (O(1) index)
-        if let Some(entry) = module.slot_entry(slot_id) {
-            if let Ok(name) = module.strings.get(entry.name_str_idx) {
-                if map.contains_key(name) {
-                    #[cfg(feature = "tracing")]
-                    tracing::warn!(
-                        slot_id = slot_id,
-                        name = name,
-                        "Island declares two slots with the same name — keeping the first, \
-                         the later value is not reachable from the props object"
-                    );
-                    continue;
-                }
-                let value = slots.get(slot_id).to_json();
-                map.insert(name.to_string(), value);
-            }
-        } else {
-            // `IrModule::validate` rejects this at parse time; keep the branch
-            // observable in case a module reaches the walker unvalidated,
-            // since a silently dropped prop means the island's SSR props
-            // disagree with what the client expects.
-            #[cfg(feature = "tracing")]
-            tracing::warn!(
-                slot_id = slot_id,
-                "Island references a slot id that is not in the slot table — prop dropped"
-            );
-        }
-    }
-    map
+/// A keyed LIST's identity source, resolved once per execution of the LIST.
+struct ListKey<'m> {
+    /// Byte offset of the LIST, as section `0x0006` names it.
+    list_offset: u32,
+    /// The key path's segments, as field names.
+    segments: Vec<&'m str>,
+    /// The path dotted, for diagnostics: shared by every row of the
+    /// execution, so a row costs a refcount, not a copy.
+    path: Rc<str>,
 }
 
+impl<'m> ListKey<'m> {
+    fn resolve(
+        list_offset: u32,
+        segments: &[u32],
+        strings: &'m crate::parser::StringTable,
+    ) -> Result<Self, IrError> {
+        let segments = segments
+            .iter()
+            .map(|segment| strings.get(*segment))
+            .collect::<Result<Vec<&str>, IrError>>()?;
+        let path = Rc::from(dotted_path(&segments));
+        Ok(ListKey {
+            list_offset,
+            segments,
+            path,
+        })
+    }
+}
+
+/// A key path for a diagnostic: segments joined by dots, and a segment that
+/// a dot would make ambiguous (empty, or holding `.`, `[` or `]`) quoted in
+/// brackets, so `user.id` is two fields and `["user.id"]` is one.
+fn dotted_path(segments: &[&str]) -> String {
+    let mut path = String::new();
+    for segment in segments {
+        if segment.is_empty() || segment.contains(['.', '[', ']']) {
+            path.push_str(&format!("[{segment:?}]"));
+        } else {
+            if !path.is_empty() {
+                path.push('.');
+            }
+            path.push_str(segment);
+        }
+    }
+    path
+}
+
+/// What one execution of a LIST iterates (see [`walk_list_rows`]).
+struct ListRows<'a, 'm> {
+    items: &'a [SlotValue],
+    item_slot_id: u16,
+    body_start: usize,
+    body_end: usize,
+    key: Option<&'a ListKey<'m>>,
+}
+
+/// Walk every row of one LIST execution.
+///
+/// Before any error propagates, the slot journal is unwound to the row's mark
+/// and a keyed row's guard is popped, and the caller restores the list depth.
+/// The rest of the walk state (the element depth, an open start tag, the
+/// island stack) is not restored: a `WalkState` serves one walk, and an error
+/// ends that walk, which returns no partial page.
+fn walk_list_rows(
+    module: &IrModule,
+    slots: &mut SlotData,
+    ops: &[u8],
+    rows: ListRows<'_, '_>,
+    out: &mut String,
+    state: &mut WalkState,
+    depth: usize,
+) -> Result<(), IrError> {
+    let limit = state.max_output_bytes;
+    // A list longer than what is left of the budget fails here, before its
+    // first row, instead of walking up to the budget and failing there
+    // (DR-13, SR38): a hostile 60,000-row list costs a comparison, not 50,000
+    // rows. It fails exactly when the per-row check below would have, sooner,
+    // and before any error the rows would have raised first (an output
+    // budget, a malformed row, a keyed row's identity). That check stays: rows
+    // of nested lists can spend the budget after this list was let in.
+    //
+    // Verified by: crates/forma-ir/src/walker.rs > "a_list_longer_than_the_remaining_budget_fails_before_its_first_row"
+    // Verified by: crates/forma-ir/src/walker.rs > "a_list_exactly_at_the_remaining_budget_still_renders"
+    let remaining = state
+        .max_list_iterations
+        .saturating_sub(state.list_iterations);
+    if rows.items.len() > remaining {
+        return Err(IrError::ListBudgetExceeded {
+            max: state.max_list_iterations,
+        });
+    }
+    // The keys this execution of the list has rendered, each with the row
+    // that rendered it. Scoped to one execution: an inner list under two
+    // outer rows, or two lists over the same array, may reuse a key. Bounded
+    // by the output budget: a key is admitted only when its normalized text
+    // fits in what is left of the budget, and every admitted key is then
+    // written, escaped, on its row's root, so the keys held here never
+    // outgrow the output.
+    // One allocation per key: the set and the row's guard share it.
+    let mut seen_keys: HashMap<Rc<str>, usize> = HashMap::new();
+    for (ordinal, item) in rows.items.iter().enumerate() {
+        // Total across all depths, never decremented: depth alone does not
+        // bound volume, and four nested LISTs over the same array give n^4
+        // body walks.
+        //
+        // Checked before counting, so at the error the count is the rows
+        // actually walked (`WalkCounts`).
+        if state.list_iterations >= state.max_list_iterations {
+            return Err(IrError::ListBudgetExceeded {
+                max: state.max_list_iterations,
+            });
+        }
+        state.list_iterations += 1;
+
+        // A keyed row's identity is read from the row's own data before its
+        // body runs, so a row without one writes nothing, and the whole render
+        // is refused: no page carries a list the client could not adopt.
+        if let Some(key) = rows.key {
+            let refuse = |reason| list_key_error(key.list_offset, ordinal, &key.path, reason);
+            let value = crate::keys::key_value_at(item, &key.segments).map_err(refuse)?;
+            // The text is built only once it is known to fit: a key longer
+            // than what is left of the output budget could never be written,
+            // and copying it first would let one row allocate past the budget.
+            if crate::keys::normalized_len_exceeds(value, limit.saturating_sub(out.len())) {
+                return Err(IrError::OutputLimitExceeded { limit });
+            }
+            let text: Rc<str> = crate::keys::canonical_key_text(value)
+                .map_err(refuse)?
+                .into();
+            if let Some(&first_row) = seen_keys.get(&text) {
+                // The two ordinals, never the key: it is the row's data.
+                return Err(refuse(ListKeyReason::Duplicate { first_row }));
+            }
+            seen_keys.insert(Rc::clone(&text), ordinal);
+            state.keyed_rows.push(KeyedRow {
+                list_offset: key.list_offset,
+                ordinal,
+                path: Rc::clone(&key.path),
+                key: Some(text),
+                entry_depth: state.element_depth,
+                roots: 0,
+                stray_content: false,
+                envelope: None,
+            });
+        }
+
+        // Scoped binding instead of a per-row `SlotData` clone: swap the item
+        // in, walk, swap back. Same isolation between rows, without copying
+        // every other slot on the page once per row.
+        let mark = state.slot_journal.len();
+        let previous = slots.replace(rows.item_slot_id, item.clone());
+        state.slot_journal.push((rows.item_slot_id, previous));
+
+        let walked = walk_range(
+            module,
+            slots,
+            ops,
+            rows.body_start,
+            rows.body_end,
+            out,
+            state,
+            depth + 1,
+        );
+        // Unwind before propagating: an aborted walk must still hand `slots`
+        // back exactly as it was, because an enclosing row is about to unwind
+        // on top of it.
+        state.unwind_slot_journal(slots, mark);
+        // The row's guard ends with the row, whatever the walk returned; a key
+        // it still holds met no root element.
+        let keyed_row = if rows.key.is_some() {
+            state.keyed_rows.pop()
+        } else {
+            None
+        };
+        walked?;
+
+        if let Some(row) = keyed_row {
+            if state.element_depth != row.entry_depth {
+                // An element the row opened is still open: its root (or what
+                // follows it) did not close where the row ends.
+                return Err(row.refuse(ListKeyReason::UnbalancedRow));
+            }
+            if row.roots != 1 || row.stray_content || row.envelope.is_some() {
+                return Err(row.refuse(ListKeyReason::RowShape {
+                    roots: row.roots,
+                    stray_content: row.stray_content || row.envelope.is_some(),
+                }));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The whole-render refusal for one keyed row (RENDER-503).
+fn list_key_error(list_offset: u32, row: usize, path: &str, reason: ListKeyReason) -> IrError {
+    IrError::InvalidListKey(Box::new(ListKeyViolation::new(
+        list_offset,
+        row,
+        path,
+        reason,
+    )))
+}
+
+/// A refusal inside the innermost keyed row, or `fallback` when the walk is in
+/// none (unreachable through the callers, which act only inside a row).
+fn innermost_row_error(state: &WalkState, reason: ListKeyReason, fallback: IrError) -> IrError {
+    match state.keyed_rows.last() {
+        Some(row) => row.refuse(reason),
+        None => fallback,
+    }
+}
+
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Offset arithmetic
 // ---------------------------------------------------------------------------
@@ -1306,9 +1554,9 @@ fn bounded_offset(base: usize, len: usize, limit: usize) -> Result<usize, IrErro
 /// the escapers), so a string-table entry used as a tag name — `div onload=x`
 /// — or as an attribute key — `x"><script` — is direct markup injection. The
 /// accepted class is `[A-Za-z_:][-A-Za-z0-9_:.]*`, byte-identical to
-/// formajs's `isSafeAttrName`/`isSafeTagName`, and covers every valid HTML,
-/// SVG and custom-element name (`data-*`, `aria-*`, `xlink:href`, `viewBox`,
-/// dotted component names).
+/// core's `isSafeAttrName`/`isSafeTagName`. This deliberately admits an ASCII
+/// subset (`data-*`, `aria-*`, `xlink:href`, `viewBox`, dotted names); the DOM
+/// accepting a Unicode name does not expand this contract (docs/INV1.md).
 fn is_valid_name(name: &str) -> bool {
     let mut chars = name.chars();
     match chars.next() {
@@ -1316,6 +1564,15 @@ fn is_valid_name(name: &str) -> bool {
         _ => return false,
     }
     chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.'))
+}
+
+/// Attribute names also satisfy the qualified-name requirement of core's
+/// xlink setAttributeNS writer. Tag-name admission remains unchanged.
+fn is_valid_attr_name(name: &str) -> bool {
+    is_valid_name(name)
+        && name
+            .strip_prefix("xlink:")
+            .map_or(true, |local| is_valid_name(local) && !local.contains(':'))
 }
 
 /// True for any `on…` event-handler attribute name (case-insensitive).
@@ -1359,10 +1616,21 @@ fn is_url_attr(name: &str) -> bool {
 ///
 /// Browsers strip ASCII whitespace and C0/C1 control characters out of a URL
 /// before resolving its scheme, so `java\tscript:alert(1)` executes even
-/// though a naive prefix test does not match it. The value is normalized the
-/// same way before testing — byte-identical to formajs's `isDangerousUrl`, so
+/// though a naive prefix test does not match it. Forma uses a conservative
+/// classification transform, shared with core's `isDangerousUrl`, so
 /// the server emits exactly what the client would have produced.
 fn is_dangerous_url(value: &str, tag: &str) -> bool {
+    // A NUL anywhere in a URL attribute value is refused outright (FORMA-182
+    // review S1): no author writes one, and the normalized U+FFFD it would
+    // become is not ignored by the URL parser, so `java\0script:` would be
+    // written as `java\u{FFFD}script:` and resolved and fetched as a
+    // same-origin relative reference in every engine. The guard therefore
+    // classifies the raw value; for every other character the strip below
+    // makes the raw and normalized views agree.
+    // Verified by: crates/forma-ir/src/walker.rs > "url_attributes_are_checked_as_the_normalized_string_that_is_written"
+    if value.contains('\0') {
+        return true;
+    }
     let normalized: String = value
         .chars()
         .filter(|c| {
@@ -1404,6 +1672,39 @@ enum AttrValue<'a> {
     Valued(&'a str),
 }
 
+/// Core's HTML boolean attribute set (`BOOLEAN_ATTRS` in
+/// packages/core/src/dom/element.ts): the attributes a `true` writes bare.
+/// Matched as written, as core matches its prop keys.
+/// Verified by: crates/forma-ir/src/walker.rs > "rule_6_attribute_values_follow_one_table"
+const HTML_BOOLEAN_ATTRIBUTES: [&str; 22] = [
+    "async",
+    "autofocus",
+    "autoplay",
+    "checked",
+    "controls",
+    "default",
+    "defer",
+    "disabled",
+    "formnovalidate",
+    "hidden",
+    "ismap",
+    "loop",
+    "multiple",
+    "muted",
+    "nomodule",
+    "novalidate",
+    "open",
+    "playsinline",
+    "readonly",
+    "required",
+    "reversed",
+    "selected",
+];
+
+fn is_html_boolean_attribute(name: &str) -> bool {
+    HTML_BOOLEAN_ATTRIBUTES.contains(&name)
+}
+
 /// Emit one attribute, dropping it entirely if it is unsafe.
 ///
 /// Dropping (rather than emitting an empty value) is what the client does:
@@ -1417,7 +1718,7 @@ fn emit_attr(
     val: AttrValue<'_>,
     limit: usize,
 ) -> Result<(), IrError> {
-    if !is_valid_name(key) {
+    if !is_valid_attr_name(key) {
         // Skip silently (matching the walker's existing convention for
         // malformed attribute operands) rather than failing the whole page
         // for one bad key.
@@ -1464,8 +1765,27 @@ fn emit_open_tag(
     if !is_valid_name(tag) {
         return Err(IrError::InvalidName(tag.to_string()));
     }
+    // Decided before the depth moves: an element opened at the depth the
+    // innermost keyed row was entered at is that row's root (FORMA-181).
+    let row_key = state.open_row_root();
+    state.open_tag_is_row_root = row_key.is_some();
+    if row_key.is_some()
+        && attrs
+            .iter()
+            .any(|(key, _)| key.eq_ignore_ascii_case("data-forma-key"))
+    {
+        // The identity attribute is the walker's to write, once, from the
+        // key path; an authored one would be a second, silently first-wins
+        // identity on the same root.
+        return Err(innermost_row_error(
+            state,
+            ListKeyReason::AuthoredKey,
+            IrError::InvalidName("data-forma-key".to_string()),
+        ));
+    }
     if has_content {
         enter_element(out, tag, state, limit)?;
+        state.element_depth += 1;
     }
     push_checked(out, "<", limit)?;
     push_checked(out, tag, limit)?;
@@ -1503,15 +1823,18 @@ fn emit_open_tag(
         push_checked(out, " data-forma-hydrate=\"", limit)?;
         push_checked(out, trigger_str, limit)?;
         push_checked(out, "\"", limit)?;
-        if let Some(ref props_json) = island.inline_props {
-            push_checked(out, " data-forma-props=\"", limit)?;
-            push_escaped_attr(out, props_json, limit)?;
-            push_checked(out, "\"", limit)?;
-        }
+        push_checked(out, " data-forma-state=\"", limit)?;
+        push_checked(out, &island.occurrence.to_string(), limit)?;
+        push_checked(out, "\" data-forma-h=\"", limit)?;
+        push_checked(out, &island.hash, limit)?;
+        push_checked(out, "\"", limit)?;
     }
 
-    // Inject pending list-item key
-    if let Some(key) = state.pending_list_key.take() {
+    // The keyed row's identity, on its root (FORMA-181, DR-8). The canonical
+    // text is already normalized (value rule 1); `push_escaped_attr` applies
+    // the same rule again, which is idempotent, and escapes for the
+    // attribute, so the browser decodes exactly the canonical text.
+    if let Some(key) = row_key {
         push_checked(out, " data-forma-key=\"", limit)?;
         push_escaped_attr(out, &key, limit)?;
         push_checked(out, "\"", limit)?;
@@ -1597,12 +1920,15 @@ struct TextOnlyParent {
 /// Write text into a text-only parent: escaped, with no marker and no
 /// zero-width space, under the textarea's leading-LF rule.
 ///
-/// The parser drops one line feed straight after `<textarea>` (a CR or CRLF is
-/// a line feed by then). A marker used to stand between the tag and the first
-/// line; without one, content that starts with a line break gets one more, so
-/// the parsed value is the value written.
+/// The parser drops one line feed straight after `<textarea>`. A marker used
+/// to stand between the tag and the first line; without one, content that
+/// starts with a line break gets one more, so the parsed value is the value
+/// written. Under rule 1 a leading CR or CRLF is already a line feed when it
+/// is written, so only an initial LF of the normalized text is doubled. An
+/// empty chunk does not consume the boundary.
 ///
 /// Verified by: crates/forma-ir/src/walker.rs > "a_textarea_doubles_a_leading_line_feed"
+/// Verified by: crates/forma-ir/src/walker.rs > "textarea_children_protect_only_an_initial_normalized_line_feed"
 fn write_text_only(
     out: &mut String,
     parent: &mut TextOnlyParent,
@@ -1614,7 +1940,7 @@ fn write_text_only(
     }
     if parent.tag == TextOnlyTag::Textarea
         && !parent.started
-        && (text.starts_with('\n') || text.starts_with('\r'))
+        && normalized_chars(text).next() == Some('\n')
     {
         push_checked(out, "\n", limit)?;
     }
@@ -1675,12 +2001,15 @@ enum SelectWanted {
 
 impl SelectBinding {
     fn new(value: &SlotValue, multiple: bool) -> Self {
+        // Each wanted value is compared with option values that are written
+        // normalized (rule 1), so it is normalized the same way: a requested
+        // NUL matches the option whose attribute the browser reads as U+FFFD.
         let wanted = match value {
             SlotValue::Array(items) if multiple => {
                 SelectWanted::Any(items.iter().map(js_string).collect())
             }
             // `value == null ? '' : String(value)` is exactly `to_text`.
-            other => SelectWanted::One(other.to_text()),
+            other => SelectWanted::One(normalize_text(&other.to_text()).into_owned()),
         };
         SelectBinding {
             wanted,
@@ -1706,7 +2035,7 @@ impl SelectBinding {
 fn js_string(value: &SlotValue) -> String {
     match value {
         SlotValue::Null => "null".to_string(),
-        other => other.to_text(),
+        other => normalize_text(&other.to_text()).into_owned(),
     }
 }
 
@@ -1729,11 +2058,12 @@ enum Prop<'a> {
 }
 
 impl Prop<'_> {
-    /// The client's control text: `value == null ? '' : String(value)`.
+    /// The client's control text: `value == null ? '' : String(value)`, under
+    /// rule 1, since it is compared with and written as DOM text.
     fn control_text(self) -> String {
         match self {
-            Prop::Static(s) => s.to_string(),
-            Prop::Slot(v) => v.to_text(),
+            Prop::Static(s) => normalize_text(s).into_owned(),
+            Prop::Slot(v) => normalize_text(&v.to_text()).into_owned(),
         }
     }
 
@@ -1784,7 +2114,10 @@ fn consume_control_attr(state: &mut WalkState, key: &str, prop: Prop<'_>) -> boo
                 true
             }
             "multiple" => {
-                *multiple |= prop.is_written();
+                *multiple |= match prop {
+                    Prop::Static(_) => true,
+                    Prop::Slot(value) => value.as_bool(),
+                };
                 false
             }
             _ => false,
@@ -1854,6 +2187,9 @@ fn leave_element(
     if is("select") {
         state.select = None;
     }
+    // `</pre>` is a token too; the length check would already miss, but an
+    // explicit clear keeps the state's meaning local to its element.
+    state.pre_boundary = None;
     if state
         .text_only
         .as_ref()
@@ -1871,6 +2207,7 @@ fn leave_element(
 /// this instead, so a control is resolved whichever opcode ends its tag.
 fn close_start_tag(out: &mut String, state: &mut WalkState, limit: usize) -> Result<(), IrError> {
     state.pending_tag_close = false;
+    state.open_tag_is_row_root = false;
     match std::mem::take(&mut state.pending_control) {
         PendingControl::None => {}
         PendingControl::Textarea { value } => {
@@ -1898,7 +2235,12 @@ fn close_start_tag(out: &mut String, state: &mut WalkState, limit: usize) -> Res
             });
         }
     }
-    push_checked(out, ">", limit)
+    push_checked(out, ">", limit)?;
+    let tag = &state.pending_tag_name;
+    if tag.eq_ignore_ascii_case("pre") || tag.eq_ignore_ascii_case("listing") {
+        state.pre_boundary = Some(out.len());
+    }
+    Ok(())
 }
 
 /// End an option whose value is its text, selecting it now if the text
@@ -2045,7 +2387,28 @@ fn push_u16(out: &mut String, value: u16, limit: usize) -> Result<(), IrError> {
     }
 }
 
+/// Append one normalized character, refusing to exceed the output budget by
+/// its actual encoded length: U+FFFD (NUL's replacement) is three bytes, an
+/// astral character four, so a check of `out.len() >= limit` before the push
+/// could overshoot the budget by up to three bytes.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written"
+fn push_char_checked(out: &mut String, ch: char, limit: usize) -> Result<(), IrError> {
+    if out.len().saturating_add(ch.len_utf8()) > limit {
+        return Err(IrError::OutputLimitExceeded { limit });
+    }
+    out.push(ch);
+    Ok(())
+}
+
 /// Escape text for HTML content (`& < >`), within the output budget.
+///
+/// The text is written under rule 1 (`crate::text`): CRLF and CR become LF
+/// and NUL becomes U+FFFD, per value, before escaping. A NUL grows from one
+/// byte to three, which the fast path's worst-case bound (six per input
+/// byte) already covers.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "text_and_dyn_text_write_each_value_normalized"
 fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), IrError> {
     // Fast path: even worst-case expansion fits, so no per-character checks.
     if out
@@ -2053,7 +2416,7 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in text.chars() {
+        for ch in normalized_chars(text) {
             match ch {
                 '&' => out.push_str("&amp;"),
                 '<' => out.push_str("&lt;"),
@@ -2063,30 +2426,28 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         }
         return Ok(());
     }
-    for ch in text.chars() {
+    for ch in normalized_chars(text) {
         match ch {
             '&' => push_checked(out, "&amp;", limit)?,
             '<' => push_checked(out, "&lt;", limit)?,
             '>' => push_checked(out, "&gt;", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
+            _ => push_char_checked(out, ch, limit)?,
         }
     }
     Ok(())
 }
 
 /// Escape text for HTML attribute values (`& " < >`), within the output budget.
+/// Normalized under rule 1 exactly as [`push_escaped_html`] is.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "static_and_dynamic_attributes_write_each_value_normalized"
 fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), IrError> {
     if out
         .len()
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in text.chars() {
+        for ch in normalized_chars(text) {
             match ch {
                 '&' => out.push_str("&amp;"),
                 '"' => out.push_str("&quot;"),
@@ -2097,18 +2458,13 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
         }
         return Ok(());
     }
-    for ch in text.chars() {
+    for ch in normalized_chars(text) {
         match ch {
             '&' => push_checked(out, "&amp;", limit)?,
             '"' => push_checked(out, "&quot;", limit)?,
             '<' => push_checked(out, "&lt;", limit)?,
             '>' => push_checked(out, "&gt;", limit)?,
-            _ => {
-                if out.len() >= limit {
-                    return Err(IrError::OutputLimitExceeded { limit });
-                }
-                out.push(ch);
-            }
+            _ => push_char_checked(out, ch, limit)?,
         }
     }
     Ok(())
@@ -2122,7 +2478,7 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
 mod tests {
     use super::*;
     use crate::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_list, encode_open_tag, encode_show_if,
+        build_declared_fixture, encode_close_tag, encode_list, encode_open_tag, encode_show_if,
         encode_text, encode_void_tag,
     };
     use crate::slot::{SlotData, SlotValue};
@@ -2154,7 +2510,7 @@ mod tests {
 
     /// Helper: build an IrModule, walk it with empty slots, return the HTML.
     fn walk_static(strings: &[&str], opcodes: &[u8]) -> String {
-        let data = build_minimal_ir(strings, &[], opcodes, &[]);
+        let data = build_declared_fixture(strings, &[], opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         walk_to_html(&module, &slots).unwrap()
@@ -2167,7 +2523,7 @@ mod tests {
         opcodes: &[u8],
         slots: &SlotData,
     ) -> String {
-        let data = build_minimal_ir(strings, slot_decls, opcodes, &[]);
+        let data = build_declared_fixture(strings, slot_decls, opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         walk_to_html(&module, slots).unwrap()
     }
@@ -2180,9 +2536,21 @@ mod tests {
         opcodes: &[u8],
         slots: &SlotData,
     ) -> String {
-        let data = build_minimal_ir(strings, slot_decls, opcodes, island_decls);
+        let data = build_declared_fixture(strings, slot_decls, opcodes, island_decls);
         let module = IrModule::parse(&data).unwrap();
         walk_to_html(&module, slots).unwrap()
+    }
+
+    fn walk_with_islands_output(
+        strings: &[&str],
+        slot_decls: &[(u16, u32, u8, u8, &[u8])],
+        island_decls: &[(u16, u8, u8, u32, u32, &[u16])],
+        opcodes: &[u8],
+        slots: &SlotData,
+    ) -> WalkOutput {
+        let data = build_declared_fixture(strings, slot_decls, opcodes, island_decls);
+        let module = IrModule::parse(&data).unwrap();
+        walk_to_html_counted(&module, slots, WalkLimits::default()).unwrap()
     }
 
     /// Encode a DYN_ATTR opcode: opcode(1) + attr_str_idx(4) + slot_id(2)
@@ -2258,6 +2626,53 @@ mod tests {
 
         let html = walk_static(&["div", "title", "a\"b"], &opcodes);
         assert_eq!(html, r#"<div title="a&quot;b">"#);
+    }
+
+    #[test]
+    fn security_probe_bounded_text_escaping() {
+        let data = build_declared_fixture(&["xxxxxxxxxx<"], &[], &encode_text(0), &[]);
+        let module = IrModule::parse(&data).unwrap();
+        let expected = "xxxxxxxxxx&lt;";
+        let limits = WalkLimits {
+            max_output_bytes: expected.len(),
+            ..WalkLimits::default()
+        };
+        assert_eq!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), limits).as_deref(),
+            Ok(expected)
+        );
+        let short = WalkLimits {
+            max_output_bytes: expected.len() - 1,
+            ..limits
+        };
+        assert!(matches!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), short),
+            Err(IrError::OutputLimitExceeded { .. })
+        ));
+    }
+
+    #[test]
+    fn security_probe_bounded_attribute_escaping() {
+        let opcodes = encode_open_tag(0, &[(1, 2)]);
+        let data = build_declared_fixture(&["div", "title", "xxxxxxxxxx\""], &[], &opcodes, &[]);
+        let module = IrModule::parse(&data).unwrap();
+        let expected = "<div title=\"xxxxxxxxxx&quot;\">";
+        let limits = WalkLimits {
+            max_output_bytes: expected.len(),
+            ..WalkLimits::default()
+        };
+        assert_eq!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), limits).as_deref(),
+            Ok(expected)
+        );
+        let short = WalkLimits {
+            max_output_bytes: expected.len() - 1,
+            ..limits
+        };
+        assert!(matches!(
+            walk_to_html_with_limits(&module, &SlotData::new(0), short),
+            Err(IrError::OutputLimitExceeded { .. })
+        ));
     }
 
     // -- Test 6: walk_empty_element ----------------------------------------
@@ -2405,22 +2820,22 @@ mod tests {
     }
 
     #[test]
-    fn dyn_attr_empty_string_is_a_value_not_an_absence() {
-        // `renderAttr(key, "")` emits `key=""`, and the client hydrating the
-        // same slot calls setAttribute(key, "") — dropping the attribute here
-        // is a real DOM difference on the common `value=""` / `alt=""` case.
+    fn dyn_attr_empty_string_and_zero_follow_boolean_presence() {
+        // The original expected ordinary value semantics on `disabled`.
+        // Its exact source is archived with the FORMA-182 review evidence.
+        // Ordinary empty values remain covered by attributes.json.
         assert_eq!(
             walk_dyn_attr_with(SlotValue::Text(String::new())),
-            "<input disabled=\"\">"
+            "<input>"
         );
         assert_eq!(
             walk_dyn_attr_with(SlotValue::Text("yes".into())),
-            "<input disabled=\"yes\">"
+            "<input disabled>"
         );
-        // Numbers stringify, they do not vanish: 0 is a value.
+        assert_eq!(walk_dyn_attr_with(SlotValue::Number(0.0)), "<input>");
         assert_eq!(
-            walk_dyn_attr_with(SlotValue::Number(0.0)),
-            "<input disabled=\"0\">"
+            walk_dyn_attr_with(SlotValue::Number(1.0)),
+            "<input disabled>"
         );
     }
 
@@ -2867,7 +3282,7 @@ mod tests {
         );
         // Inner slots get shadowed during iteration
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["s0", "s1", "s2", "s3", "s4", "s5"],
             &[
                 (0, 0, 0x04, 0x00, &[]),
@@ -2935,7 +3350,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(9)); // </body>
         opcodes.extend_from_slice(&encode_close_tag(0)); // </html>
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &[
                 "html", "lang", "en", "head", "meta", "charset", "utf-8", "title", "Test", "body",
                 "div", "id", "app",
@@ -2967,7 +3382,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_dyn_text(0, 0)); // DYN_TEXT slot=0 marker=0
         opcodes.extend_from_slice(&encode_close_tag(0)); // </div>
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &["div", "class", "greeting", "content"],
             &[(0, 3, 0x01, 0x00, &[])], // slot 0, name="content", type=Text
             &opcodes,
@@ -3005,7 +3420,7 @@ mod tests {
 
         let opcodes = encode_show_if(0, &then_ops, &else_ops);
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &["auth", "span", "class", "badge", "Logged In", "Guest"],
             &[(0, 0, 0x02, 0x00, &[])], // slot 0, name="auth", type=Bool
             &opcodes,
@@ -3053,7 +3468,7 @@ mod tests {
 
         let opcodes = encode_list(0, 1, &body);
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &["items", "item", "li"],
             &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])], // slot 0=Array, slot 1=Text
             &opcodes,
@@ -3130,7 +3545,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(8)); // </ul>
         opcodes.extend_from_slice(&encode_close_tag(0)); // </nav>
 
-        let ir = build_minimal_ir(
+        let ir = build_declared_fixture(
             &[
                 "nav", "class", "main-nav", "auth", "span", "Welcome", "items", "item", "ul", "li",
             ],
@@ -3189,7 +3604,7 @@ mod tests {
         );
         assert_eq!(
             html,
-            r#"<!--f:i0--><div data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load">Hello</div><!--/f:i0-->"#
+            r#"<!--f:i0--><div data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load" data-forma-state="0" data-forma-h="0000000000000000">Hello</div><!--/f:i0-->"#
         );
     }
 
@@ -3215,7 +3630,7 @@ mod tests {
         );
         assert_eq!(
             html,
-            r#"<!--f:i0--><div class="form" data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load"></div><!--/f:i0-->"#
+            r#"<!--f:i0--><div class="form" data-forma-island="0" data-forma-component="AuthForm" data-forma-status="pending" data-forma-hydrate="load" data-forma-state="0" data-forma-h="0000000000000000"></div><!--/f:i0-->"#
         );
     }
 
@@ -3240,16 +3655,16 @@ mod tests {
         );
         assert_eq!(
             html,
-            r#"<!--f:i0--><input data-forma-island="0" data-forma-component="Widget" data-forma-status="pending" data-forma-hydrate="load"><!--/f:i0-->"#
+            r#"<!--f:i0--><input data-forma-island="0" data-forma-component="Widget" data-forma-status="pending" data-forma-hydrate="load" data-forma-state="0" data-forma-h="0000000000000000"><!--/f:i0-->"#
         );
     }
 
-    // -- Test 36: walk_inline_props_attribute ---------------------------------
+    // -- Declared state is separate from body markup -------------------------
 
     #[test]
-    fn walk_inline_props_attribute() {
+    fn declared_props_are_separate_from_body_html() {
         // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
-        // Island entry has slots [0, 1]; small props stay inline
+        // Island entry has ordered inputs [0, 1]; all props use typed state.
         // Slot 0 = "title" (Text), Slot 1 = "count" (Number)
         // strings: 0="div", 1="MyComponent", 2="title", 3="count"
         let mut opcodes = Vec::new();
@@ -3262,7 +3677,7 @@ mod tests {
         slots.set(0, SlotValue::Text("Hello".to_string()));
         slots.set(1, SlotValue::Number(42.0));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "MyComponent", "title", "count"],
             &[
                 (0, 2, 0x01, 0x00, &[]), // slot 0, name="title", Text, Server
@@ -3273,36 +3688,12 @@ mod tests {
             &opcodes,
             &slots,
         );
-        // Props should be JSON: {"title":"Hello","count":42}
-        assert!(
-            html.contains("data-forma-props="),
-            "should contain data-forma-props, got: {html}"
-        );
-        assert!(
-            html.contains(r#"data-forma-island="0""#),
-            "should contain island id, got: {html}"
-        );
-        assert!(
-            html.contains(r#"data-forma-component="MyComponent""#),
-            "should contain component name, got: {html}"
-        );
-        // Parse the JSON from the props attribute to verify correctness.
-        // The attribute uses double quotes with HTML entity escaping:
-        //   data-forma-props="{&quot;title&quot;:&quot;Hello&quot;,&quot;count&quot;:42}"
-        // Browsers auto-decode &quot; back to " when reading getAttribute(),
-        // so we simulate that here by reversing the entity encoding.
-        let marker = "data-forma-props=\"";
-        let props_start = html.find(marker).unwrap() + marker.len();
-        let props_end = html[props_start..].find('"').unwrap() + props_start;
-        let raw_attr = &html[props_start..props_end];
-        let decoded = raw_attr
-            .replace("&quot;", "\"")
-            .replace("&amp;", "&")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">");
-        let props_json: serde_json::Value = serde_json::from_str(&decoded).unwrap();
-        assert_eq!(props_json["title"], "Hello");
-        assert_eq!(props_json["count"], 42);
+        assert!(!output.html.contains("data-forma-props"));
+        assert!(!output.html.contains("<script"));
+        assert!(output.html.contains("data-forma-component=\"MyComponent\""));
+        let json: serde_json::Value = serde_json::from_str(output.island_state.as_json()).unwrap();
+        assert_eq!(json["i"][0]["p"]["title"], "Hello");
+        assert_eq!(json["i"][0]["p"]["count"], 42);
     }
 
     // -- Test 37: walk_list_item_key_on_first_open_tag -----------------------
@@ -3330,7 +3721,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(0));
         opcodes.extend_from_slice(&encode_island_end(5));
 
-        let data = build_minimal_ir(&["div", "Hello"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "Hello"], &[], &opcodes, &[]);
         assert_eq!(
             IrModule::parse(&data).unwrap_err(),
             IrError::UnknownIslandId(5)
@@ -3351,7 +3742,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_island_end(0));
 
         let slots = SlotData::new(0);
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Outer", "Inner"],
             &[],
             &opcodes,
@@ -3393,11 +3784,11 @@ mod tests {
         assert!(html.contains(r#"data-forma-component="Inner""#));
     }
 
-    // -- Test 43: walk_inline_props_empty_slots ------------------------------
+    // -- Empty declared props still have an occurrence ---------------------
 
     #[test]
-    fn walk_inline_props_empty_slots() {
-        // Island with Inline props mode but no slot_ids — should not emit data-forma-props
+    fn empty_declared_inputs_do_not_emit_inline_props() {
+        // An empty declaration carries identity but no inferred slot props.
         // strings: 0="div", 1="Simple"
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
@@ -3423,10 +3814,10 @@ mod tests {
         );
     }
 
-    // -- Inline props size ceiling (F8) --------------------------------------
+    // -- State always has one channel, independent of payload size -----------
 
     /// Build a one-island page whose single prop slot holds `payload`.
-    fn walk_island_with_prop_payload(payload: &str) -> String {
+    fn walk_island_with_prop_payload(payload: &str) -> WalkOutput {
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
@@ -3435,7 +3826,7 @@ mod tests {
 
         let mut slots = SlotData::new(1);
         slots.set(0, SlotValue::Text(payload.to_string()));
-        walk_with_islands(
+        walk_with_islands_output(
             &["div", "Big", "blob"],
             &[(0, 2, 0x01, 0x00, &[])],
             &[(0, 0x01, 0x01, 1, 0, &[0])],
@@ -3445,10 +3836,9 @@ mod tests {
     }
 
     #[test]
-    fn island_props_keep_the_first_slot_for_a_duplicated_name() {
-        // Slots 0 and 1 are both named "dup". The three name-resolving paths
-        // in this crate used to pick differently (first / last / last by
-        // ascending id); they all keep the first now.
+    fn duplicate_slot_names_do_not_invent_declared_island_props() {
+        // Both SERVER slots have the same lookup name. This island declares
+        // no inputs, so neither slot is implicitly serialized by name.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
@@ -3459,63 +3849,50 @@ mod tests {
         slots.set(0, SlotValue::Text("first".into()));
         slots.set(1, SlotValue::Text("second".into()));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "Comp", "dup"],
             &[(0, 2, 0x01, 0x00, &[]), (1, 2, 0x01, 0x00, &[])],
-            &[(0, 0x01, 0x01, 1, 0, &[0, 1])],
+            &[(0, 0x01, 0x01, 1, 0, &[])],
             &opcodes,
             &slots,
         );
-        assert!(
-            html.contains(r#"data-forma-props="{&quot;dup&quot;:&quot;first&quot;}""#),
-            "expected the first slot to win, got: {html}"
-        );
+        let json: serde_json::Value = serde_json::from_str(output.island_state.as_json()).unwrap();
+        assert_eq!(json["i"][0]["p"], serde_json::json!({}));
+        assert!(!output.html.contains("data-forma-props"));
     }
 
     #[test]
-    fn inline_props_under_the_ceiling_stay_inline() {
-        let html = walk_island_with_prop_payload("small");
-        assert!(html.contains(r#"data-forma-props="{&quot;blob&quot;:&quot;small&quot;}""#));
-        assert!(!html.contains("__forma_islands"));
+    fn small_props_use_the_owned_state_channel() {
+        let output = walk_island_with_prop_payload("small");
+        assert!(output.island_state.as_json().contains("\"blob\":\"small\""));
+        assert!(!output.html.contains("data-forma-props"));
+        assert!(!output.html.contains("__forma_islands"));
     }
 
     #[test]
-    fn inline_props_over_the_ceiling_spill_to_the_shared_block() {
-        // An unbounded `data-forma-props` is a multi-kilobyte attribute
-        // repeated on every island root. Above the ceiling the payload moves
-        // to the shared block — and to EXACTLY one of the two channels, since
-        // the client reads the inline attribute first and would never look at
-        // the block if both were present.
-        let payload = "x".repeat(INLINE_PROPS_MAX_BYTES + 1);
-        let html = walk_island_with_prop_payload(&payload);
-        assert!(
-            !html.contains("data-forma-props"),
-            "over-size props must not stay in the attribute"
-        );
-        assert!(
-            html.contains(r#"<script id="__forma_islands" type="application/json">"#),
-            "over-size props must land in the shared block, got: {}",
-            &html[..html.len().min(200)]
-        );
-        assert!(html.contains(&payload), "the payload itself must survive");
+    fn larger_props_use_the_same_owned_state_channel() {
+        let payload = "x".repeat(1025);
+        let output = walk_island_with_prop_payload(&payload);
+        assert!(!output.html.contains("data-forma-props"));
+        assert!(!output.html.contains("__forma_islands"));
+        assert!(output.island_state.as_json().contains(&payload));
     }
 
     #[test]
-    fn island_fragment_keeps_over_size_props_inline() {
-        // A fragment cannot emit a second `__forma_islands` block: it would
-        // duplicate a DOM id and, being earlier in document order after the
-        // swap, shadow the page's own block for every other island.
+    fn diagnostic_fragment_does_not_restore_an_inline_state_channel() {
+        // Diagnostic fragments cannot restore either retired props channel.
+        // Supported page rendering consumes the counted walk's state separately.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(0, &[]));
         opcodes.extend_from_slice(&encode_close_tag(0));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let payload = "x".repeat(INLINE_PROPS_MAX_BYTES + 1);
+        let payload = "x".repeat(1024 + 1);
         let mut slots = SlotData::new(1);
         slots.set(0, SlotValue::Text(payload));
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Big", "blob"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3523,7 +3900,7 @@ mod tests {
         );
         let module = IrModule::parse(&data).unwrap();
         let fragment = walk_island(&module, &slots, 0).unwrap();
-        assert!(fragment.contains("data-forma-props"));
+        assert!(!fragment.contains("data-forma-props"));
         assert!(!fragment.contains("__forma_islands"));
     }
 
@@ -3532,9 +3909,8 @@ mod tests {
     // -- Test 45: walk_multiple_islands_script_tag ---------------------------
 
     #[test]
-    fn walk_multiple_islands_script_tag() {
-        // Two large inline-props islands spill into a single script tag
-        // with both entries
+    fn multiple_islands_share_one_owned_envelope() {
+        // Two islands append entries to the same independently owned envelope.
         // strings: 0="div", 1="span", 2="CompA", 3="CompB", 4="msg", 5="flag"
         let mut opcodes = Vec::new();
         // Island 0
@@ -3552,9 +3928,9 @@ mod tests {
         let mut slots = SlotData::new(3);
         slots.set(0, SlotValue::Text("hello".to_string()));
         slots.set(1, SlotValue::Bool(true));
-        slots.set(2, SlotValue::Text("x".repeat(INLINE_PROPS_MAX_BYTES)));
+        slots.set(2, SlotValue::Text("x".repeat(1024)));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "span", "CompA", "CompB", "msg", "flag", "padding"],
             &[
                 (0, 4, 0x01, 0x00, &[]), // slot 0, name="msg", Text
@@ -3568,14 +3944,11 @@ mod tests {
             &opcodes,
             &slots,
         );
-        // Parse the script tag JSON
-        let script_start =
-            html.find(r#"type="application/json">"#).unwrap() + r#"type="application/json">"#.len();
-        let script_end = html[script_start..].find("</script>").unwrap() + script_start;
-        let json: serde_json::Value =
-            serde_json::from_str(&html[script_start..script_end]).unwrap();
-        assert_eq!(json["0"]["msg"], "hello");
-        assert_eq!(json["1"]["flag"], true);
+        let json: serde_json::Value = serde_json::from_str(output.island_state.as_json()).unwrap();
+        assert_eq!(json["i"][0]["p"]["msg"], "hello");
+        assert_eq!(json["i"][1]["p"]["flag"], true);
+        assert_eq!(output.island_state.len(), 2);
+        assert!(!output.html.contains("<script"));
     }
 
     // -- Test 46: walk_list_item_key_consumed_once --------------------------
@@ -3749,7 +4122,7 @@ mod tests {
         opcodes.extend_from_slice(&island_end);
         opcodes.extend_from_slice(&close_div);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["MyIsland", "div", "p", "hello"],
             &[],
             &opcodes,
@@ -3765,7 +4138,7 @@ mod tests {
         assert_eq!(
             html,
             "<p data-forma-island=\"0\" data-forma-component=\"MyIsland\" \
-             data-forma-status=\"pending\" data-forma-hydrate=\"load\">hello</p>"
+             data-forma-status=\"pending\" data-forma-hydrate=\"load\" data-forma-state=\"0\" data-forma-h=\"0000000000000000\">hello</p>"
         );
         // The f:iN markers live outside the root and survive an outerHTML
         // swap, so the fragment must not re-emit them.
@@ -3790,7 +4163,7 @@ mod tests {
         opcodes.extend_from_slice(&close_div);
         opcodes.extend_from_slice(&island_end);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["IslandComp", "div", "greeting"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3808,7 +4181,8 @@ mod tests {
             "data-forma-component=\"IslandComp\"",
             "data-forma-status=\"pending\"",
             "data-forma-hydrate=\"visible\"",
-            "data-forma-props=",
+            "data-forma-state=\"0\"",
+            "data-forma-h=\"0000000000000000\"",
         ] {
             assert!(page.contains(attr), "page missing {attr}: {page}");
             assert!(
@@ -3819,19 +4193,16 @@ mod tests {
     }
 
     #[test]
-    fn walk_island_script_tag_mode_inlines_props_in_fragment() {
-        // A ScriptTag island rendered as a fragment must inline its props
-        // rather than emit a second __forma_islands block: that would
-        // duplicate a DOM id, and because the injected copy precedes the SSR
-        // one in document order it would shadow it — every other ScriptTag
-        // island would then read a truncated shared-props map.
+    fn obsolete_mode_cannot_restore_fragment_inline_props() {
+        // The obsolete tuple mode is ignored by the declared fixture builder.
+        // It cannot reactivate either retired body/inline props channel.
         let mut opcodes = Vec::new();
         opcodes.extend_from_slice(&encode_island_start(0));
         opcodes.extend_from_slice(&encode_open_tag(1, &[]));
         opcodes.extend_from_slice(&encode_close_tag(1));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["IslandComp", "div", "greeting"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3843,8 +4214,8 @@ mod tests {
 
         let fragment = walk_island(&module, &slots, 0).unwrap();
         assert!(
-            fragment.contains("data-forma-props="),
-            "ScriptTag island fragment must inline its props: {fragment}"
+            !fragment.contains("data-forma-props="),
+            "diagnostic fragment must not inline props: {fragment}"
         );
         assert!(
             !fragment.contains("__forma_islands"),
@@ -3853,10 +4224,9 @@ mod tests {
     }
 
     #[test]
-    fn walk_island_nested_script_tag_island_keeps_its_props() {
-        // A nested ScriptTag island would otherwise push into the shared
-        // script_tag_props map, which a fragment render drops on return — so
-        // the nested island would mount with null props.
+    fn nested_diagnostic_fragment_has_occurrence_markers() {
+        // Nested diagnostic roots retain distinct occurrence identities.
+        // Actual page state is carried separately by the counted whole walk.
         let mut opcodes = encode_island_start(0);
         opcodes.extend_from_slice(&encode_open_tag(1, &[]));
         let inner_offset = opcodes.len() as u32;
@@ -3867,7 +4237,7 @@ mod tests {
         opcodes.extend_from_slice(&encode_close_tag(1));
         opcodes.extend_from_slice(&encode_island_end(0));
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["Outer", "div", "greeting", "Inner"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -3886,8 +4256,8 @@ mod tests {
             "nested island must render: {fragment}"
         );
         assert!(
-            fragment.contains("data-forma-props="),
-            "nested ScriptTag island must keep its props inline: {fragment}"
+            fragment.contains("data-forma-state=\"1\""),
+            "nested island must retain its own occurrence: {fragment}"
         );
         assert!(!fragment.contains("__forma_islands"), "{fragment}");
     }
@@ -3896,7 +4266,7 @@ mod tests {
     fn walk_island_not_found() {
         // Build IR with no islands, then request island_id=5
         let opcodes = encode_text(0);
-        let data = build_minimal_ir(&["Hello"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["Hello"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
 
@@ -3929,7 +4299,7 @@ mod tests {
         opcodes.extend_from_slice(&close_div);
         opcodes.extend_from_slice(&island_end);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["IslandComp", "div", "greeting"],
             &[(0, 2, 0x01, 0x00, &[])], // slot_id=0, name="greeting", Text, Server
             &opcodes,
@@ -3946,7 +4316,7 @@ mod tests {
             html,
             "<div data-forma-island=\"0\" data-forma-component=\"IslandComp\" \
              data-forma-status=\"pending\" data-forma-hydrate=\"load\" \
-             data-forma-props=\"{&quot;greeting&quot;:&quot;World&quot;}\">\
+             data-forma-state=\"0\" data-forma-h=\"0000000000000000\">\
              <!--f:t0-->World<!--/f:t0--></div>"
         );
     }
@@ -3960,7 +4330,7 @@ mod tests {
         // 0x0B byte would pass a bare bounds check).
         let opcodes = encode_text(0); // just a small opcode stream
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["BadIsland", "hello"],
             &[],
             &opcodes,
@@ -4198,8 +4568,7 @@ mod tests {
         );
     }
 
-    /// Build a one-island large-props page whose single prop is `payload`,
-    /// and return (full html, the raw script-block body).
+    /// Return body HTML and the separately owned, script-safe state JSON.
     fn script_tag_props_html(payload: &str) -> (String, String) {
         // ISLAND_START(0) + OPEN_TAG("div") + CLOSE_TAG + ISLAND_END(0)
         // strings: 0="div", 1="Comp", 2="payload"
@@ -4211,9 +4580,9 @@ mod tests {
 
         let mut slots = SlotData::new(2);
         slots.set(0, SlotValue::Text(payload.to_string()));
-        slots.set(1, SlotValue::Text("x".repeat(INLINE_PROPS_MAX_BYTES)));
+        slots.set(1, SlotValue::Text("x".repeat(1024)));
 
-        let html = walk_with_islands(
+        let output = walk_with_islands_output(
             &["div", "Comp", "payload", "padding"],
             &[(0, 2, 0x01, 0x00, &[]), (1, 3, 0x01, 0, &[])],
             &[(0, 0x01, 0x01, 1, 0, &[0, 1])],
@@ -4221,35 +4590,29 @@ mod tests {
             &slots,
         );
 
-        const OPEN: &str = "type=\"application/json\">";
-        let start = html.find(OPEN).expect("islands script block") + OPEN.len();
-        let end = html[start..].find("</script>").expect("script close") + start;
-        let body = html[start..end].to_string();
-        (html, body)
+        (output.html, output.island_state.as_json().to_owned())
     }
 
     #[test]
-    fn walk_script_tag_props_body_has_no_raw_angle_brackets() {
-        // The property that actually makes the escaping total: no bare '<' or
-        // '>' survives into the data block, so nothing in it can terminate or
-        // re-open the enclosing <script> element. Escaping only "</" (as this
-        // used to) is not enough — see the breakout test below.
+    fn owned_state_has_no_raw_script_openers() {
+        // No bare '<' survives, so the JSON cannot terminate or reopen a
+        // script element. Greater-than remains ordinary value-preserving text.
         let (_html, body) = script_tag_props_html("</script>alert(1)");
         assert!(
-            !body.contains('<') && !body.contains('>'),
-            "islands block must contain no raw angle brackets, got: {body}"
+            !body.contains('<'),
+            "state envelope must contain no raw script openers, got: {body}"
         );
-        assert!(body.contains("\\u003c/script\\u003e"), "got: {body}");
+        assert!(body.contains("\\u003c/script>"), "got: {body}");
 
         // ...and the escaping is value-preserving: JSON.parse (here
         // serde_json::from_str, which decodes \u003c identically) round-trips
         // back to the original prop value.
         let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
-        assert_eq!(parsed["0"]["payload"], "</script>alert(1)");
+        assert_eq!(parsed["i"][0]["p"]["payload"], "</script>alert(1)");
     }
 
     #[test]
-    fn walk_script_tag_props_escapes_comment_script_breakout() {
+    fn owned_state_escapes_existing_comment_script_regression() {
         // The payload the old "</" replace did NOT handle. `<!--` followed by
         // `<script` drives a spec-compliant HTML tokenizer into the
         // script-data-double-escaped state, where our own trailing </script>
@@ -4262,10 +4625,10 @@ mod tests {
             !html.contains("<!--<script"),
             "must not emit the script-data-double-escape trigger, got: {html}"
         );
-        assert!(!body.contains('<') && !body.contains('>'), "got: {body}");
+        assert!(!body.contains('<'), "got: {body}");
 
         let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
-        assert_eq!(parsed["0"]["payload"], payload);
+        assert_eq!(parsed["i"][0]["p"]["payload"], payload);
     }
 
     #[test]
@@ -4350,7 +4713,7 @@ mod tests {
         let attrs: Vec<(u32, u32)> = (0..200).map(|_| (1u32, 2u32)).collect();
         let opcodes = encode_open_tag(0, &attrs);
 
-        let data = build_minimal_ir(&["div", "data-x", &big], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "data-x", &big], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
 
@@ -4373,7 +4736,7 @@ mod tests {
     fn walk_output_limit_trips_on_a_single_dyn_text_value() {
         // DynText emits a whole slot value in one iteration too.
         let opcodes = encode_dyn_text(0, 0);
-        let data = build_minimal_ir(&["msg"], &[(0, 0, 0x01, 0x00, &[])], &opcodes, &[]);
+        let data = build_declared_fixture(&["msg"], &[(0, 0, 0x01, 0x00, &[])], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
 
         let mut slots = SlotData::new(1);
@@ -4399,7 +4762,7 @@ mod tests {
         let inner = encode_list(0, 1, &body);
         let opcodes = encode_list(0, 1, &inner);
 
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["items", "item", "x"],
             &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
             &opcodes,
@@ -4443,7 +4806,8 @@ mod tests {
         // SHOW_IF: opcode(1) slot_id(2) then_len(4) else_len(4)
         let mut opcodes = encode_show_if(0, &encode_text(1), &encode_text(1));
         patch_u32(&mut opcodes, 3, 0xFFFF_FF00); // then_len
-        let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
         assert!(matches!(
             IrModule::parse(&data),
             Err(IrError::MalformedControlFlow { .. })
@@ -4456,7 +4820,8 @@ mod tests {
         // rather than the SHOW_ELSE marker.
         let mut opcodes = encode_show_if(0, &encode_text(1), &encode_text(1));
         patch_u32(&mut opcodes, 3, 4); // then body is 5 bytes; claim 4
-        let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
         assert!(matches!(
             IrModule::parse(&data),
             Err(IrError::MalformedControlFlow { .. })
@@ -4468,7 +4833,7 @@ mod tests {
         // LIST: opcode(1) slot_id(2) item_slot_id(2) body_len(4)
         let mut opcodes = encode_list(0, 1, &encode_text(2));
         patch_u32(&mut opcodes, 5, 0xFFFF_FF00);
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["items", "item", "x"],
             &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x00, &[])],
             &opcodes,
@@ -4488,7 +4853,8 @@ mod tests {
         // integrity (a CRC that the producer did not restamp) would. This test exists so the
         // case is not later mistaken for a fixed hole.
         let opcodes = encode_show_if(0, &encode_text(1), &[]);
-        let data = build_minimal_ir(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["flag", "hi"], &[(0, 0, 0x02, 0x00, &[])], &opcodes, &[]);
         assert!(IrModule::parse(&data).is_ok());
     }
 
@@ -4553,7 +4919,7 @@ mod tests {
         // Tag names are written unescaped, so an IR-authored name is direct
         // markup injection.
         let opcodes = encode_open_tag(0, &[]);
-        let data = build_minimal_ir(&["div onload=\"alert(1)\""], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div onload=\"alert(1)\""], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         assert!(matches!(
@@ -4566,7 +4932,7 @@ mod tests {
     fn walk_rejects_hostile_close_tag_name() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_close_tag(1));
-        let data = build_minimal_ir(&["div", "div><script"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "div><script"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         assert!(matches!(
@@ -4580,7 +4946,8 @@ mod tests {
         // Attribute names are skippable, so one bad key costs the attribute
         // rather than the whole page.
         let opcodes = encode_open_tag(0, &[(1, 2), (3, 2)]);
-        let data = build_minimal_ir(&["div", "x\"><script", "v", "ok-attr"], &[], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["div", "x\"><script", "v", "ok-attr"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         let html = walk_to_html(&module, &slots).unwrap();
@@ -4591,7 +4958,7 @@ mod tests {
     fn walk_drops_hostile_boolean_attribute_name() {
         // Same, via the boolean (empty-value) branch.
         let opcodes = encode_open_tag(0, &[(1, 2)]);
-        let data = build_minimal_ir(&["div", "y\"><script", ""], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "y\"><script", ""], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         let slots = SlotData::new(0);
         assert_eq!(walk_to_html(&module, &slots).unwrap(), "<div>");
@@ -4601,7 +4968,7 @@ mod tests {
     fn walk_drops_hostile_dyn_attr_name() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "z\"><script", "val"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4619,7 +4986,7 @@ mod tests {
     fn walk_drops_javascript_url_in_dyn_attr() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["a", "href", "url"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4650,7 +5017,7 @@ mod tests {
     fn walk_keeps_safe_urls_and_data_images() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["img", "src", "url"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4678,7 +5045,7 @@ mod tests {
     fn walk_blocks_svg_data_url_outside_image_context() {
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["a", "href", "url"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4699,7 +5066,7 @@ mod tests {
     fn walk_drops_event_handler_attributes() {
         // Static attribute path...
         let opcodes = encode_open_tag(0, &[(1, 2)]);
-        let data = build_minimal_ir(&["div", "onmouseover", "alert(1)"], &[], &opcodes, &[]);
+        let data = build_declared_fixture(&["div", "onmouseover", "alert(1)"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         assert_eq!(
             walk_to_html(&module, &SlotData::new(0)).unwrap(),
@@ -4710,7 +5077,7 @@ mod tests {
         // ...and the dynamic one.
         let mut opcodes = encode_open_tag(0, &[]);
         opcodes.extend_from_slice(&encode_dyn_attr(1, 0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "ONCLICK", "h"],
             &[(0, 2, 0x01, 0x00, &[])],
             &opcodes,
@@ -4728,7 +5095,8 @@ mod tests {
         // but renderAttr applies identical rules to static props — leaving
         // them unchecked would preserve an SSR/CSR divergence.
         let opcodes = encode_open_tag(0, &[(1, 2)]);
-        let data = build_minimal_ir(&["a", "href", "javascript:alert(1)"], &[], &opcodes, &[]);
+        let data =
+            build_declared_fixture(&["a", "href", "javascript:alert(1)"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         assert_eq!(walk_to_html(&module, &SlotData::new(0)).unwrap(), "<a>");
     }
@@ -4882,7 +5250,7 @@ mod tests {
                 .map(|&(id, name, offset)| (id, 0x01, 0x01, name, offset, &[][..]))
                 .collect();
             let strings: Vec<&str> = strings.iter().map(String::as_str).collect();
-            let data = build_minimal_ir(&strings, &decls, &self.ops, &islands);
+            let data = build_declared_fixture(&strings, &decls, &self.ops, &islands);
             let module = IrModule::parse(&data).unwrap();
             let mut slots = SlotData::new(self.slots.len());
             for (id, (_, value)) in self.slots.iter().enumerate() {
@@ -4997,7 +5365,9 @@ mod tests {
                     let v = p.slot(text("\r\nhello"));
                     p.dyn_text(v);
                 }),
-                "<textarea>\n\r\nhello</textarea>",
+                // Rule 1 (FORMA-182): the CRLF is written as LF, and that
+                // initial LF is the one doubled.
+                "<textarea>\n\nhello</textarea>",
             ),
             (
                 "an empty value first: the first written byte decides",
@@ -5090,7 +5460,7 @@ mod tests {
             page.render(),
             "<textarea>x</textarea><!--f:i1--><div data-forma-island=\"1\" \
              data-forma-component=\"Island1\" data-forma-status=\"pending\" \
-             data-forma-hydrate=\"load\"></div><!--/f:i1-->"
+             data-forma-hydrate=\"load\" data-forma-state=\"1\" data-forma-h=\"0101010101010101\"></div><!--/f:i1-->"
         );
     }
 
@@ -5376,9 +5746,17 @@ mod tests {
         // select is single and an array value is `String(array)`, "a,c",
         // which matches none of these options. True writes it, and the
         // array then selects each member.
-        for (multiple, attr, chosen) in [(false, "", false), (true, " multiple", true)] {
+        for (multiple, attr, chosen) in [
+            (SlotValue::Bool(false), "", false),
+            (SlotValue::Bool(true), " multiple", true),
+            (SlotValue::Text(String::new()), "", false),
+            (SlotValue::Number(0.0), "", false),
+            (SlotValue::Number(-0.0), "", false),
+            (SlotValue::Text("false".into()), " multiple", true),
+            (SlotValue::Number(1.0), " multiple", true),
+        ] {
             let mut page = Page::new();
-            let flag = page.slot(SlotValue::Bool(multiple));
+            let flag = page.slot(multiple.clone());
             let v = page.slot(SlotValue::array(vec![text("a"), text("c")]));
             page.open("select", &[])
                 .dyn_attr("multiple", flag)
@@ -5397,7 +5775,7 @@ mod tests {
                     option("b", "Banana", false),
                     option("c", "Cherry", chosen)
                 ),
-                "multiple {multiple}"
+                "multiple {multiple:?}"
             );
         }
     }
@@ -5653,12 +6031,12 @@ mod tests {
         ops.extend_from_slice(&encode_list(1, 2, &row));
         ops.extend_from_slice(&encode_close_tag(0));
         ops.extend_from_slice(&encode_island_end(0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Branding", "i", "name", "colors", "color"],
             &[
                 (0, 3, 0x01, 0x00, &[]),
                 (1, 4, 0x04, 0x00, &[]),
-                (2, 5, 0x01, 0x00, &[]),
+                (2, 5, 0x01, 0x01, &[]),
             ],
             &ops,
             &[(0, 0x01, 0x01, 1, 0, &[])],
@@ -5737,7 +6115,7 @@ mod tests {
         // Invalid HTML names remain a render error; bad indices now fail at load.
         let mut ops = encode_open_tag(0, &[]);
         ops.extend_from_slice(&encode_open_tag(1, &[]));
-        let data = build_minimal_ir(&["p", "bad name"], &[], &ops, &[]);
+        let data = build_declared_fixture(&["p", "bad name"], &[], &ops, &[]);
         let module = IrModule::parse(&data).unwrap();
         let failure =
             walk_to_html_counted(&module, &SlotData::new(0), WalkLimits::default()).unwrap_err();
@@ -5766,7 +6144,7 @@ mod tests {
         ops.extend_from_slice(&encode_island_end(1));
         ops.extend_from_slice(&encode_close_tag(0));
         ops.extend_from_slice(&encode_island_end(0));
-        let data = build_minimal_ir(
+        let data = build_declared_fixture(
             &["div", "Shell", "Card", "Done", "bad name"],
             &[],
             &ops,
@@ -5847,7 +6225,7 @@ mod tests {
             slots.push((2 * lists as u16, 3, 0x01, 0x00, &[]));
         }
         ops.extend_from_slice(&encode_close_tag(0));
-        let data = build_minimal_ir(&["div", "i", "items", "item"], &slots, &ops, &[]);
+        let data = build_declared_fixture(&["div", "i", "items", "item"], &slots, &ops, &[]);
         IrModule::parse(&data).unwrap()
     }
 
@@ -5932,5 +6310,1699 @@ mod tests {
         let failure = walk_to_html_counted(&module, &slots, limits(24)).unwrap_err();
         assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 24 });
         assert_eq!(failure.counts.list_iterations, 24);
+    }
+
+    // -- FORMA-182 rule 1: the shared normalization vectors ------------------
+    //
+    // One finite JSON file, read by this crate and by @getforma/core's suite
+    // (packages/core/src/dom/__tests__/normalize-text.test.ts), so a vector
+    // changed on one side fails the other. Every case walks the real opcode
+    // stream through `walk_to_html`; nothing here calls a helper directly.
+    // Each test collects every disagreeing vector before failing, so a first
+    // run reports the whole gap, not its first line.
+    mod normalization_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const VECTORS: &str = include_str!("../tests/fixtures/parity/normalization.json");
+
+        fn cases(section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(VECTORS).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        fn children(case: &Value) -> Vec<String> {
+            case["children"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap().to_string())
+                .collect()
+        }
+
+        fn escape_html(text: &str) -> String {
+            text.replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;")
+        }
+
+        fn escape_attr(text: &str) -> String {
+            escape_html(text).replace('"', "&quot;")
+        }
+
+        /// A DYN_TEXT range as the walker writes it: an empty value is held
+        /// by a zero-width space so the browser creates a Text node.
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                escape_html(text)
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser would show for a marker-separated output: the
+        /// marker comments and the empty-range zero-width spaces removed. No
+        /// `children` vector contains a zero-width space of its own.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        #[test]
+        fn text_and_dyn_text_write_each_value_normalized() {
+            let mut failures = Vec::new();
+            for case in cases("values") {
+                let (id, input, expected) = (
+                    field(&case, "id"),
+                    field(&case, "input"),
+                    field(&case, "expected"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("p", &[])
+                    .text(input)
+                    .close("p")
+                    .open("p", &[])
+                    .dyn_text(slot)
+                    .close("p");
+                let want = format!(
+                    "<p>{}</p><p>{}</p>",
+                    escape_html(expected),
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("values/{id} text+dyn_text"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn static_and_dynamic_attributes_write_each_value_normalized() {
+            let mut failures = Vec::new();
+            for case in cases("values") {
+                let (id, input, expected) = (
+                    field(&case, "id"),
+                    field(&case, "input"),
+                    field(&case, "expected"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open("p", &[("title", input), ("id", "ok")])
+                    .close("p")
+                    .open("p", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("p");
+                let e = escape_attr(expected);
+                // A static empty value is written as the bare name (the
+                // walker's existing byte-stable shorthand; same DOM value).
+                let static_attr = if expected.is_empty() {
+                    " title".to_string()
+                } else {
+                    format!(" title=\"{e}\"")
+                };
+                let want = format!("<p{static_attr} id=\"ok\"></p><p id=\"ok\" title=\"{e}\"></p>");
+                check(
+                    &mut failures,
+                    &format!("values/{id} attr+dyn_attr"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn adjacent_values_normalize_each_before_composition() {
+            // `['\r', '\n']` is two line feeds and `['\r\n']` is one: the rule
+            // is per authored value, so a normalizer that buffered the output
+            // stream would fold the first case and fail here. Three shapes of
+            // the same children: adjacent TEXT, adjacent DYN_TEXT ranges, and
+            // a static first value before dynamic ones.
+            let mut failures = Vec::new();
+            for case in cases("children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = children(&case);
+
+                let mut page = Page::new();
+                page.open("p", &[]);
+                for value in &values {
+                    page.text(value);
+                }
+                page.close("p");
+                let want = format!("<p>{}</p>", escape_html(expected));
+                check(
+                    &mut failures,
+                    &format!("children/{id} adjacent TEXT"),
+                    &page.render(),
+                    &want,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                check(
+                    &mut failures,
+                    &format!("children/{id} adjacent DYN_TEXT (visible text)"),
+                    &visible(&page.render()),
+                    &want,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values[1..].iter().map(|v| page.slot(text(v))).collect();
+                page.open("p", &[]).text(&values[0]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                check(
+                    &mut failures,
+                    &format!("children/{id} TEXT then DYN_TEXT (visible text)"),
+                    &visible(&page.render()),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn textarea_children_protect_only_an_initial_normalized_line_feed() {
+            // The parser drops one LF straight after `<textarea>`, so the
+            // writer doubles an initial LF. After normalization that is the
+            // only initial break there is; an empty chunk does not consume
+            // the boundary, and a separate `\r` then `\n` is two values.
+            let mut failures = Vec::new();
+            for case in cases("textarea") {
+                let (id, html) = (field(&case, "id"), field(&case, "html"));
+                let values = children(&case);
+
+                let mut page = Page::new();
+                page.open("textarea", &[]);
+                for value in &values {
+                    page.text(value);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("textarea/{id} static"),
+                    &page.render(),
+                    html,
+                );
+
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("textarea/{id} dynamic"),
+                    &page.render(),
+                    html,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn url_attributes_are_checked_as_the_normalized_string_that_is_written() {
+            // The URL policy classifies the raw value: a NUL anywhere in a URL
+            // attribute refuses the write, a CR or CRLF inside a scheme is
+            // refused as before, and an admitted value is written normalized.
+            // The benign sibling attribute stays in both branches (P3).
+            let mut failures = Vec::new();
+            for case in cases("unsafeUrlNearMiss") {
+                let (id, input) = (field(&case, "id"), field(&case, "input"));
+                let attribute = case["attribute"].as_str().unwrap_or("href");
+                let tag = case["tag"].as_str().unwrap_or("a");
+                let refused = case["refused"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(text(input));
+                page.open(tag, &[(attribute, input), ("id", "ok")])
+                    .close(tag)
+                    .open(tag, &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close(tag);
+                let want = if refused {
+                    format!("<{tag} id=\"ok\"></{tag}><{tag} id=\"ok\"></{tag}>")
+                } else {
+                    let written = escape_attr(field(&case, "written"));
+                    format!(
+                        "<{tag} {attribute}=\"{written}\" id=\"ok\"></{tag}>\
+                         <{tag} id=\"ok\" {attribute}=\"{written}\"></{tag}>"
+                    )
+                };
+                check(
+                    &mut failures,
+                    &format!("unsafeUrlNearMiss/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn pre_children_protect_only_an_initial_normalized_line_feed() {
+            // `pre` and `listing` share the textarea rule, by output position:
+            // the first content token starting with a normalized LF gets one
+            // more. A DYN_TEXT writes its marker comment first, which the
+            // parser treats as the first token, so the dynamic shape is never
+            // doubled (`htmlDynamic`).
+            let mut failures = Vec::new();
+            for case in cases("pre") {
+                let (id, html, dynamic) = (
+                    field(&case, "id"),
+                    field(&case, "html"),
+                    field(&case, "htmlDynamic"),
+                );
+                let values = children(&case);
+                for tag in ["pre", "listing", "PRE"] {
+                    let mut page = Page::new();
+                    page.open(tag, &[]);
+                    for value in &values {
+                        page.text(value);
+                    }
+                    page.close(tag);
+                    let want = html
+                        .replace("<pre>", &format!("<{tag}>"))
+                        .replace("</pre>", &format!("</{tag}>"));
+                    check(
+                        &mut failures,
+                        &format!("pre/{id} static <{tag}>"),
+                        &page.render(),
+                        &want,
+                    );
+                }
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(text(v))).collect();
+                page.open("pre", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("pre");
+                check(
+                    &mut failures,
+                    &format!("pre/{id} dynamic"),
+                    &page.render(),
+                    dynamic,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn the_pre_boundary_is_consumed_by_any_token_but_not_by_a_value_only_opcode() {
+            // A child element, a conditional's marker and the closing tag of
+            // an inner element are tokens: the LF after them is not the first
+            // content token, so it is written once. PROP writes nothing, so
+            // the boundary survives it. A sibling `pre` starts its own.
+            let mut page = Page::new();
+            page.open("pre", &[])
+                .open("b", &[])
+                .close("b")
+                .text("\nx")
+                .close("pre");
+            assert_eq!(page.render(), "<pre><b></b>\nx</pre>");
+
+            let mut page = Page::new();
+            let shown = page.slot(SlotValue::Bool(true));
+            page.open("pre", &[])
+                .show_if(
+                    shown,
+                    |p| {
+                        p.text("\nx");
+                    },
+                    |_| {},
+                )
+                .close("pre");
+            let rendered = page.render();
+            assert!(rendered.starts_with("<pre><!--f:s"), "{rendered:?}");
+            assert!(rendered.contains("-->\nx<!--/f:s"), "{rendered:?}");
+            assert!(!rendered.contains("\n\n"), "{rendered:?}");
+
+            let mut page = Page::new();
+            let object = page.slot(SlotValue::object(vec![]));
+            let target = page.slot(text(""));
+            page.open("pre", &[])
+                .prop(object, "name", target)
+                .text("\nx")
+                .close("pre")
+                .open("pre", &[])
+                .text("\ny")
+                .close("pre")
+                .open("p", &[])
+                .text("\nz")
+                .close("p");
+            assert_eq!(page.render(), "<pre>\n\nx</pre><pre>\n\ny</pre><p>\nz</p>");
+        }
+
+        #[test]
+        fn the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written() {
+            // A top-level TEXT with no closing tag, so the budget ends inside
+            // the text itself: exactly-at renders, one byte under refuses. The
+            // ten-byte prefix forces the per-character slow path (worst-case
+            // expansion no longer fits). Before this check a three-byte U+FFFD
+            // or four-byte astral character was pushed when `out.len()` was
+            // merely below the limit, overshooting it by up to three bytes.
+            for (input, written) in [
+                ("xxxxxxxxxx\0", "xxxxxxxxxx\u{FFFD}"),
+                ("xxxxxxxxxx😀", "xxxxxxxxxx😀"),
+                ("xxxxxxxxxx&", "xxxxxxxxxx&amp;"),
+                ("xxxxxxxxxx\r\n", "xxxxxxxxxx\n"),
+            ] {
+                let mut page = Page::new();
+                page.text(input);
+                let (module, slots) = page.module_and_slots();
+                let limits = |max_output_bytes| WalkLimits {
+                    max_output_bytes,
+                    ..WalkLimits::default()
+                };
+                let exact = written.len();
+                assert_eq!(
+                    walk_to_html_with_limits(&module, &slots, limits(exact)).as_deref(),
+                    Ok(written),
+                    "{input:?} at its exact budget"
+                );
+                assert_eq!(
+                    walk_to_html_with_limits(&module, &slots, limits(exact - 1)),
+                    Err(IrError::OutputLimitExceeded { limit: exact - 1 }),
+                    "{input:?} one byte under its budget"
+                );
+            }
+        }
+    }
+
+    // FORMA-140: both languages read this same finite INV1 specification.
+    mod inv1_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        #[test]
+        fn names_and_urls_agree_for_static_and_dynamic_attributes() {
+            let vectors: Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/inv1.json")).unwrap();
+            let mut failures = Vec::new();
+            for (section, tag, value) in [("names", "div", "value"), ("urls", "", "")] {
+                for case in vectors[section].as_array().unwrap() {
+                    let name = case["name"].as_str().unwrap();
+                    let tag = case["tag"].as_str().unwrap_or(tag);
+                    let value = case["value"].as_str().unwrap_or(value);
+                    let written = case["written"].as_bool().unwrap();
+                    if section == "names" {
+                        assert_eq!(
+                            is_valid_attr_name(name),
+                            case["valid"].as_bool().unwrap(),
+                            "{}",
+                            case["id"]
+                        );
+                    }
+                    let mut escaped = String::new();
+                    push_escaped_attr(&mut escaped, value, usize::MAX).unwrap();
+                    let attribute = if written {
+                        format!(" {name}=\"{escaped}\"")
+                    } else {
+                        String::new()
+                    };
+                    let want = format!("<{tag} id=\"ok\"{attribute}></{tag}>");
+                    let mut static_page = Page::new();
+                    static_page
+                        .open(tag, &[("id", "ok"), (name, value)])
+                        .close(tag);
+                    let mut dynamic_page = Page::new();
+                    let slot = dynamic_page.slot(SlotValue::Text(value.to_string()));
+                    dynamic_page
+                        .open(tag, &[("id", "ok")])
+                        .dyn_attr(name, slot)
+                        .close(tag);
+                    for (writer, actual) in [
+                        ("static", static_page.render()),
+                        ("dynamic", dynamic_page.render()),
+                    ] {
+                        // Static OPEN_TAG uses the bare spelling for an empty
+                        // value; DYN_ATTR uses ="". Both parse to the same DOM.
+                        let expected = if writer == "static" && written && value.is_empty() {
+                            format!("<{tag} id=\"ok\" {name}></{tag}>")
+                        } else {
+                            want.clone()
+                        };
+                        if actual != expected {
+                            failures.push(format!(
+                                "{} {writer}: {actual:?} != {expected:?}",
+                                case["id"]
+                            ));
+                        }
+                    }
+                }
+            }
+            let names: Vec<_> = vectors["urlAttributes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect();
+            assert_eq!(names, URL_ATTRS);
+            assert!(failures.is_empty(), "{}", failures.join("\n"));
+        }
+
+        #[test]
+        fn ordinary_payloads_are_escaped_in_both_output_contexts() {
+            let vectors: Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/inv1.json")).unwrap();
+            for payload in vectors["payloads"].as_array().unwrap() {
+                let text = payload["text"].as_str().unwrap();
+                let attr = payload["attribute"].as_str().unwrap();
+                let payload = payload["value"].as_str().unwrap();
+                let mut page = Page::new();
+                page.open("p", &[("title", payload)])
+                    .text(payload)
+                    .close("p");
+                let html = page.render();
+                assert!(!html.contains("<script"));
+                assert!(!html.contains("<img"));
+                assert!(!html.contains("</textarea>"));
+                assert_eq!(html, format!("<p title=\"{attr}\">{text}</p>"));
+            }
+        }
+    }
+
+    // -- FORMA-016 F5: a conditional branch that is a scalar -----------------
+    //
+    // The shared vectors (`show-text-branch.json`) are read here and by
+    // @getforma/core's suite, so the bytes the walker writes for a branch
+    // that is a DYN_TEXT and the text core's createShow writes for a branch
+    // that returns a string or a number cannot drift apart.
+    mod show_text_branch_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const VECTORS: &str = include_str!("../tests/fixtures/parity/show-text-branch.json");
+
+        #[test]
+        fn a_dyn_text_branch_is_written_between_the_conditional_markers() {
+            let all: Value = serde_json::from_str(VECTORS).unwrap();
+            let mut failures = Vec::new();
+            let mut walked = 0;
+            for case in all["values"].as_array().unwrap() {
+                if case["clientOnly"].as_bool() == Some(true) {
+                    continue;
+                }
+                walked += 1;
+                let id = case["id"].as_str().unwrap();
+                let mut page = Page::new();
+                let shown = page.slot(SlotValue::Bool(true));
+                let value = page.slot(crate::slot::json_to_slot_value(&case["value"]));
+                page.show_if(
+                    shown,
+                    |p| {
+                        p.dyn_text(value);
+                    },
+                    |_| {},
+                );
+                let want = format!("<!--f:s0-->{}<!--/f:s0-->", case["html"].as_str().unwrap());
+                let got = page.render();
+                if got != want {
+                    failures.push(format!("{id}: expected {want:?}, walker wrote {got:?}"));
+                }
+            }
+            assert!(walked >= 9, "the vectors were not read");
+            assert!(failures.is_empty(), "{}", failures.join("\n"));
+        }
+    }
+
+    // -- FORMA-182 rules 2 to 7: the shared value-rule vectors ---------------
+    //
+    // One JSON file per rule under tests/fixtures/parity/, each read by this
+    // crate and by @getforma/core's per-rule suites (packages/core/src/dom/
+    // __tests__/value-rule-<n>-*.test.ts); the compiled shapes of rules 4, 6
+    // and 7 are read by @getforma/compiler's (packages/compiler/tests/
+    // value-rule-<n>-*.test.ts). Every case walks the real opcode stream.
+    mod value_rule_vectors {
+        use super::*;
+        use serde_json::Value;
+
+        const NUMBERS: &str = include_str!("../tests/fixtures/parity/numbers.json");
+        const INTEGERS: &str = include_str!("../tests/fixtures/parity/integers.json");
+        const NULL: &str = include_str!("../tests/fixtures/parity/null.json");
+        const BOOLEAN_TEXT: &str = include_str!("../tests/fixtures/parity/boolean-text.json");
+        const CONDITIONS: &str = include_str!("../tests/fixtures/parity/conditions.json");
+        const ATTRIBUTES: &str = include_str!("../tests/fixtures/parity/attributes.json");
+
+        fn cases(file: &str, section: &str) -> Vec<Value> {
+            let all: Value = serde_json::from_str(file).unwrap();
+            all[section].as_array().unwrap().clone()
+        }
+
+        fn field<'a>(case: &'a Value, key: &str) -> &'a str {
+            case[key].as_str().unwrap()
+        }
+
+        /// A DYN_TEXT range as the walker writes it (an empty value is held
+        /// by a zero-width space).
+        fn marker(id: u16, text: &str) -> String {
+            let inner = if text.is_empty() {
+                "\u{200B}".to_string()
+            } else {
+                text.to_string()
+            };
+            format!("<!--f:t{id}-->{inner}<!--/f:t{id}-->")
+        }
+
+        /// The text a browser shows: marker comments and the empty-range
+        /// zero-width spaces removed.
+        fn visible(rendered: &str) -> String {
+            let mut out = String::new();
+            let mut rest = rendered;
+            while let Some(start) = rest.find("<!--") {
+                out.push_str(&rest[..start]);
+                let end = rest[start..].find("-->").unwrap() + start + 3;
+                rest = &rest[end..];
+            }
+            out.push_str(rest);
+            out.replace('\u{200B}', "")
+        }
+
+        fn check(failures: &mut Vec<String>, label: &str, actual: &str, expected: &str) {
+            if actual != expected {
+                failures.push(format!(
+                    "{label}: expected {expected:?}, walker wrote {actual:?}"
+                ));
+            }
+        }
+
+        fn finish(failures: Vec<String>) {
+            assert!(
+                failures.is_empty(),
+                "{} disagreeing vector(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        /// What a vector's JSON value reads as on the page: null is empty,
+        /// a string itself, a number or boolean its JSON spelling.
+        fn vector_text(value: &Value) -> String {
+            match value {
+                Value::Null => String::new(),
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            }
+        }
+
+        /// A slot value from a vector's JSON value: a string, a number, a
+        /// boolean or null (the shapes the vectors use).
+        fn slot_value(value: &Value) -> SlotValue {
+            match value {
+                Value::Null => SlotValue::Null,
+                Value::Bool(b) => SlotValue::Bool(*b),
+                Value::Number(n) => SlotValue::Number(n.as_f64().unwrap()),
+                Value::String(s) => SlotValue::Text(s.clone()),
+                other => panic!("unsupported vector value {other}"),
+            }
+        }
+
+        #[test]
+        fn rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute() {
+            let mut failures = Vec::new();
+            for case in cases(NUMBERS, "values") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr("title", slot)
+                    .close("span");
+                let want = format!(
+                    "<p>{}</p><span id=\"ok\" title=\"{expected}\"></span>",
+                    marker(slot, expected)
+                );
+                check(
+                    &mut failures,
+                    &format!("numbers/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits() {
+            // The admission itself is tests/page_props.rs (encode_props on
+            // the integer origin). Here: an admitted value's text is exact,
+            // and a float origin formats by rule 2 whatever its magnitude.
+            let mut failures = Vec::new();
+            for case in cases(INTEGERS, "exact") {
+                if !case["admitted"].as_bool().unwrap() {
+                    continue;
+                }
+                let (id, lexeme) = (field(&case, "id"), field(&case, "lexeme"));
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, lexeme));
+                check(
+                    &mut failures,
+                    &format!("integers/exact/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            for case in cases(INTEGERS, "floatOrigin") {
+                let (id, lexeme, expected) = (
+                    field(&case, "id"),
+                    field(&case, "lexeme"),
+                    field(&case, "expected"),
+                );
+                let number: f64 = lexeme.parse().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Number(number));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                let want = format!("<p>{}</p>", marker(slot, expected));
+                check(
+                    &mut failures,
+                    &format!("integers/floatOrigin/{id}"),
+                    &page.render(),
+                    &want,
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_5_null_writes_nothing_as_text_attribute_and_textarea_child() {
+            let mut failures = Vec::new();
+            for case in cases(NULL, "children") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let values = case["children"].as_array().unwrap();
+
+                // Dynamic children: each value in its own range; a Null range
+                // is held by the zero-width space and shows nothing.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("p", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("p");
+                let rendered = page.render();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic (visible text)"),
+                    &visible(&rendered),
+                    &format!("<p>{expected}</p>"),
+                );
+                // The exact ranges, which the three-engine replay
+                // (packages/core/e2e/value-rules.spec.ts) serves: a Null range
+                // holds only the zero-width space.
+                let ranges: String = slots
+                    .iter()
+                    .zip(values)
+                    .map(|(slot, value)| marker(*slot, &vector_text(value)))
+                    .collect();
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} dynamic"),
+                    &rendered,
+                    &format!("<p>{ranges}</p>"),
+                );
+                if rendered.contains("null") {
+                    failures.push(format!(
+                        "null/children/{id}: the word null was written: {rendered:?}"
+                    ));
+                }
+
+                // Inside a textarea the same children compose to the value.
+                let mut page = Page::new();
+                let slots: Vec<u16> = values.iter().map(|v| page.slot(slot_value(v))).collect();
+                page.open("textarea", &[]);
+                for slot in &slots {
+                    page.dyn_text(*slot);
+                }
+                page.close("textarea");
+                check(
+                    &mut failures,
+                    &format!("null/children/{id} textarea"),
+                    &page.render(),
+                    &format!("<textarea>{expected}</textarea>"),
+                );
+            }
+            for case in cases(NULL, "attribute") {
+                let (id, attribute) = (field(&case, "id"), field(&case, "attribute"));
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Null);
+                page.open("span", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("span");
+                check(
+                    &mut failures,
+                    &format!("null/attribute/{id}"),
+                    &page.render(),
+                    "<span id=\"ok\"></span>",
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range() {
+            // The build error itself is the compiler's (BUILD-614). What the
+            // walker writes for the admitted `String(flag)` is DYN_TEXT on the
+            // boolean slot. An attribute bound to a boolean follows rule 6's
+            // attribute table, read by rule_6_attribute_values_follow_one_table.
+            let mut failures = Vec::new();
+            for case in cases(BOOLEAN_TEXT, "nearMissText") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/nearMissText/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            // The mixed idiom `() => ready() && 'Go'`: the compiler gives its
+            // Text slot no default at false and the string at true.
+            for case in cases(BOOLEAN_TEXT, "idiom") {
+                let (id, expected) = (field(&case, "id"), field(&case, "expected"));
+                let mut page = Page::new();
+                let slot = page.slot(if expected.is_empty() {
+                    SlotValue::Null
+                } else {
+                    SlotValue::Text(expected.to_string())
+                });
+                page.open("p", &[]).dyn_text(slot).close("p");
+                check(
+                    &mut failures,
+                    &format!("boolean-text/idiom/{id}"),
+                    &page.render(),
+                    &format!("<p>{}</p>", marker(slot, expected)),
+                );
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_6_attribute_values_follow_one_table() {
+            // Findings F2 and F3: presence only for the HTML boolean set; any
+            // other attribute is the value's string, `true` the word and `""`
+            // a value; false and Null omit it.
+            let mut failures = Vec::new();
+            for case in cases(ATTRIBUTES, "values") {
+                let (id, attribute, html) = (
+                    field(&case, "id"),
+                    field(&case, "attribute"),
+                    field(&case, "html"),
+                );
+                let mut page = Page::new();
+                let slot = page.slot(slot_value(&case["value"]));
+                page.open("input", &[("id", "ok")])
+                    .dyn_attr(attribute, slot)
+                    .close("input");
+                check(
+                    &mut failures,
+                    &format!("attributes/values/{id}"),
+                    &page.render(),
+                    &format!("<input id=\"ok\"{html}></input>"),
+                );
+            }
+            // The walker's boolean set is the vector's: each member is bare for
+            // true, and a name beside each (its `data-` twin) is the word.
+            for name in cases(ATTRIBUTES, "booleanAttributes") {
+                let name = name.as_str().unwrap();
+                for (attribute, want) in [
+                    (name.to_string(), format!(" {name}")),
+                    (format!("data-{name}"), format!(" data-{name}=\"true\"")),
+                ] {
+                    let mut page = Page::new();
+                    let slot = page.slot(SlotValue::Bool(true));
+                    page.open("input", &[("id", "ok")])
+                        .dyn_attr(&attribute, slot)
+                        .close("input");
+                    check(
+                        &mut failures,
+                        &format!("attributes/booleanAttributes/{attribute}"),
+                        &page.render(),
+                        &format!("<input id=\"ok\"{want}></input>"),
+                    );
+                }
+            }
+            finish(failures);
+        }
+
+        #[test]
+        fn rule_7_a_boolean_condition_selects_the_branch() {
+            // The type refusal itself is the compiler's (BUILD-615); a
+            // compiled SHOW_IF reads a Bool slot, and its range is what core's
+            // suite and the three-engine replay adopt.
+            let mut failures = Vec::new();
+            for case in cases(CONDITIONS, "walker") {
+                let (id, branch) = (field(&case, "id"), field(&case, "branch"));
+                let value = case["value"].as_bool().unwrap();
+                let mut page = Page::new();
+                let slot = page.slot(SlotValue::Bool(value));
+                page.open("div", &[])
+                    .show_if(
+                        slot,
+                        |p| {
+                            p.open("b", &[]).text("then").close("b");
+                        },
+                        |p| {
+                            p.open("i", &[]).text("else").close("i");
+                        },
+                    )
+                    .close("div");
+                let inner = if branch == "then" {
+                    "<b>then</b>"
+                } else {
+                    "<i>else</i>"
+                };
+                check(
+                    &mut failures,
+                    &format!("conditions/walker/{id}"),
+                    &page.render(),
+                    &format!("<div><!--f:s{slot}-->{inner}<!--/f:s{slot}--></div>"),
+                );
+            }
+            finish(failures);
+        }
+    }
+
+    /// FORMA-181 checkpoint B: keyed rows. Hand-built modules with a real FMIR section
+    /// `0x0006`, so the walker's own refusals (RENDER-503) are reached without the
+    /// compiler's source proof in front of them, and the unkeyed low-level form is pinned
+    /// beside each keyed case.
+    mod keyed_rows {
+        use super::*;
+        use crate::format::{ListKeyReason, ListKeyViolation};
+        use crate::parser::test_helpers::with_key_paths;
+
+        const STRINGS: &[&str] = &[
+            "rows",           // 0
+            "row",            // 1
+            "li",             // 2
+            "id",             // 3
+            "span",           // 4
+            "label",          // 5
+            "input",          // 6
+            "type",           // 7
+            "checkbox",       // 8
+            "data-forma-key", // 9
+            "authored",       // 10
+            "tags",           // 11
+            "b",              // 12
+            "Child",          // 13
+            "ul",             // 14
+            "DATA-FORMA-KEY", // 15
+            "text",           // 16
+            "user",           // 17
+            "tag",            // 18
+        ];
+        const LI: u32 = 2;
+        const ID: u32 = 3;
+        const SPAN: u32 = 4;
+        const INPUT: u32 = 6;
+        const TYPE: u32 = 7;
+        const CHECKBOX: u32 = 8;
+        const KEY_ATTR: u32 = 9;
+        const AUTHORED: u32 = 10;
+        const TAGS: u32 = 11;
+        const B: u32 = 12;
+        const CHILD: u32 = 13;
+        const UL: u32 = 14;
+        const KEY_ATTR_UPPER: u32 = 15;
+        const TEXT: u32 = 16;
+        const USER: u32 = 17;
+        /// rows (0), row (1), tags (2, read from the row), tag (3), label (4). The row
+        /// slots are client-sourced so the declared-fixture builder leaves them out of the
+        /// page schema it writes for the island cases (it encodes scalars only).
+        const SLOTS: &[(u16, u32, u8, u8, &[u8])] = &[
+            (0, 0, 0x04, 0x00, &[]),
+            (1, 1, 0x05, 0x01, &[]),
+            (2, 11, 0x04, 0x01, &[]),
+            (3, 18, 0x05, 0x01, &[]),
+            (4, 5, 0x01, 0x00, &[]),
+        ];
+        /// A LIST's header: opcode, array slot, item slot, body length.
+        const LIST_HEADER: usize = 9;
+
+        fn keyed(opcodes: &[u8], paths: &[(u32, &[u32])]) -> IrModule {
+            let base = build_declared_fixture(STRINGS, SLOTS, opcodes, &[]);
+            IrModule::parse(&with_key_paths(&base, paths)).unwrap()
+        }
+
+        /// With an island table the module's typed flow is checked, and the fixture
+        /// builder declares `rows` as `string[]`, so the row slot is a string slot. The
+        /// walker binds whatever rows the data holds; the object rows below carry the key.
+        fn keyed_with_islands(
+            opcodes: &[u8],
+            paths: &[(u32, &[u32])],
+            islands: &[(u16, u8, u8, u32, u32, &[u16])],
+        ) -> IrModule {
+            const ISLAND_SLOTS: &[(u16, u32, u8, u8, &[u8])] =
+                &[(0, 0, 0x04, 0x00, &[]), (1, 1, 0x01, 0x01, &[])];
+            let base = build_declared_fixture(STRINGS, ISLAND_SLOTS, opcodes, islands);
+            IrModule::parse(&with_key_paths(&base, paths)).unwrap()
+        }
+
+        fn unkeyed(opcodes: &[u8]) -> IrModule {
+            IrModule::parse(&build_declared_fixture(STRINGS, SLOTS, opcodes, &[])).unwrap()
+        }
+
+        fn rows(values: Vec<SlotValue>) -> SlotData {
+            let mut slots = SlotData::new(5);
+            slots.set(0, SlotValue::array(values));
+            slots.set(4, SlotValue::Text("x".into()));
+            slots
+        }
+
+        fn object(pairs: Vec<(&str, SlotValue)>) -> SlotValue {
+            SlotValue::object(pairs.into_iter().map(|(k, v)| (k.to_string(), v)).collect())
+        }
+
+        fn id(value: SlotValue) -> SlotValue {
+            object(vec![("id", value), ("name", text("secret"))])
+        }
+
+        fn text(value: &str) -> SlotValue {
+            SlotValue::Text(value.into())
+        }
+
+        fn num(value: f64) -> SlotValue {
+            SlotValue::Number(value)
+        }
+
+        fn refused(module: &IrModule, slots: &SlotData) -> ListKeyViolation {
+            match walk_to_html(module, slots) {
+                Err(IrError::InvalidListKey(violation)) => {
+                    let message = IrError::InvalidListKey(violation.clone()).to_string();
+                    assert!(message.starts_with("RENDER-503: LIST at bytecode offset "));
+                    // A diagnostic names positions and the path, never row data.
+                    assert!(!message.contains("secret"), "{message}");
+                    *violation
+                }
+                other => panic!("expected RENDER-503, got {other:?}"),
+            }
+        }
+
+        fn violation(
+            list_offset: u32,
+            row: usize,
+            path: &str,
+            reason: ListKeyReason,
+        ) -> ListKeyViolation {
+            ListKeyViolation {
+                list_offset,
+                row,
+                path: path.into(),
+                reason,
+            }
+        }
+
+        /// `<li><span></span></li>`: the key belongs on the `li`.
+        fn li_body() -> Vec<u8> {
+            [
+                encode_open_tag(LI, &[]),
+                encode_open_tag(SPAN, &[]),
+                encode_close_tag(SPAN),
+                encode_close_tag(LI),
+            ]
+            .concat()
+        }
+
+        #[test]
+        fn a_keyed_list_writes_each_rows_canonical_key_once_on_its_root() {
+            let ops = encode_list(0, 1, &li_body());
+            let data = rows(vec![
+                id(num(1.0)),
+                id(text("a&\"<b>'")),
+                id(num(-0.0)),
+                id(text("x\r\ny\0")),
+                id(num(-9_007_199_254_740_991.0)),
+                id(text("")),
+            ]);
+            let html = walk_to_html(&keyed(&ops, &[(0, &[ID])]), &data).unwrap();
+            assert_eq!(
+                html,
+                concat!(
+                    "<!--f:l0-->",
+                    "<li data-forma-key=\"1\"><span></span></li>",
+                    "<li data-forma-key=\"a&amp;&quot;&lt;b&gt;'\"><span></span></li>",
+                    "<li data-forma-key=\"0\"><span></span></li>",
+                    "<li data-forma-key=\"x\ny\u{FFFD}\"><span></span></li>",
+                    "<li data-forma-key=\"-9007199254740991\"><span></span></li>",
+                    "<li data-forma-key=\"\"><span></span></li>",
+                    "<!--/f:l0-->"
+                )
+            );
+        }
+
+        #[test]
+        fn an_unkeyed_list_renders_byte_identically_with_no_key_and_no_key_rules() {
+            let ops = encode_list(0, 1, &li_body());
+            let data = rows(vec![id(num(1.0)), id(text("a"))]);
+            let keyed_out =
+                walk_to_html_counted(&keyed(&ops, &[(0, &[ID])]), &data, WalkLimits::default())
+                    .unwrap();
+            let plain = walk_to_html_counted(&unkeyed(&ops), &data, WalkLimits::default()).unwrap();
+            assert_eq!(
+                plain.html,
+                "<!--f:l0--><li><span></span></li><li><span></span></li><!--/f:l0-->"
+            );
+            assert_eq!(
+                keyed_out
+                    .html
+                    .replace(" data-forma-key=\"1\"", "")
+                    .replace(" data-forma-key=\"a\"", ""),
+                plain.html
+            );
+            assert_eq!(
+                keyed_out.counts.list_iterations,
+                plain.counts.list_iterations
+            );
+            assert_eq!(keyed_out.counts.nodes, plain.counts.nodes);
+            // Without section 6 none of the key rules apply: scalar, missing and repeated
+            // values, several roots, text beside a root and an authored attribute all render
+            // as the low-level reader always did.
+            let anything = rows(vec![text("a"), text("a"), SlotValue::Null, object(vec![])]);
+            assert_eq!(
+                walk_to_html(&unkeyed(&ops), &anything).unwrap(),
+                format!(
+                    "<!--f:l0-->{}<!--/f:l0-->",
+                    "<li><span></span></li>".repeat(4)
+                )
+            );
+            let loose = [
+                encode_open_tag(LI, &[(KEY_ATTR, AUTHORED)]),
+                encode_close_tag(LI),
+                encode_text(TEXT),
+                encode_void_tag(INPUT, &[]),
+            ]
+            .concat();
+            assert_eq!(
+                walk_to_html(&unkeyed(&encode_list(0, 1, &loose)), &rows(vec![text("a")])).unwrap(),
+                "<!--f:l0--><li data-forma-key=\"authored\"></li>text<input><!--/f:l0-->"
+            );
+        }
+
+        #[test]
+        fn a_void_root_carries_the_key_and_admits_nothing_beside_it() {
+            let void = encode_void_tag(INPUT, &[(TYPE, CHECKBOX)]);
+            let html = walk_to_html(
+                &keyed(&encode_list(0, 1, &void), &[(0, &[ID])]),
+                &rows(vec![id(num(7.0)), id(num(8.0))]),
+            )
+            .unwrap();
+            assert_eq!(
+                html,
+                "<!--f:l0--><input type=\"checkbox\" data-forma-key=\"7\"><input type=\"checkbox\" data-forma-key=\"8\"><!--/f:l0-->"
+            );
+            let beside = [void.clone(), encode_text(TEXT)].concat();
+            assert_eq!(
+                refused(
+                    &keyed(&encode_list(0, 1, &beside), &[(0, &[ID])]),
+                    &rows(vec![id(num(7.0))])
+                ),
+                violation(
+                    0,
+                    0,
+                    "id",
+                    ListKeyReason::RowShape {
+                        roots: 1,
+                        stray_content: true
+                    }
+                )
+            );
+        }
+
+        /// A registered child as the row: `<!--f:iN-->` wholly encloses the host, which is
+        /// the row's root and carries both the island attributes and the key.
+        #[test]
+        fn a_registered_child_envelope_enclosing_the_root_puts_the_key_on_the_host() {
+            let body = [
+                encode_island_start(0),
+                encode_open_tag(B, &[]),
+                encode_close_tag(B),
+                encode_island_end(0),
+            ]
+            .concat();
+            let ops = encode_list(0, 1, &body);
+            let island = (0, 0x01, 0x01, CHILD, LIST_HEADER as u32, &[][..]);
+            let module = keyed_with_islands(&ops, &[(0, &[ID])], &[island]);
+            let html = walk_to_html(&module, &rows(vec![id(num(1.0)), id(num(2.0))])).unwrap();
+            let host = |occurrence: usize, key: &str| {
+                format!("<!--f:i0--><b data-forma-island=\"0\" data-forma-component=\"Child\" data-forma-status=\"pending\" data-forma-hydrate=\"load\" data-forma-state=\"{occurrence}\" data-forma-h=\"0000000000000000\" data-forma-key=\"{key}\"></b><!--/f:i0-->")
+            };
+            assert_eq!(
+                html,
+                format!("<!--f:l0-->{}{}<!--/f:l0-->", host(0, "1"), host(1, "2"))
+            );
+        }
+
+        #[test]
+        fn an_island_envelope_that_does_not_wholly_enclose_the_root_refuses() {
+            // (body, ISLAND_START's offset inside the body, roots counted)
+            let empty_island_then_root = [
+                encode_island_start(0),
+                encode_island_end(0),
+                encode_open_tag(LI, &[]),
+                encode_close_tag(LI),
+            ]
+            .concat();
+            let root_then_child = [
+                encode_open_tag(LI, &[]),
+                encode_close_tag(LI),
+                encode_island_start(0),
+                encode_open_tag(B, &[]),
+                encode_close_tag(B),
+                encode_island_end(0),
+            ]
+            .concat();
+            let cases: [(&[u8], usize, usize); 2] = [
+                (&empty_island_then_root, 0, 1),
+                (
+                    &root_then_child,
+                    encode_open_tag(LI, &[]).len() + encode_close_tag(LI).len(),
+                    2,
+                ),
+            ];
+            for (body, at, roots) in cases {
+                let island = (0, 0x01, 0x01, CHILD, (LIST_HEADER + at) as u32, &[][..]);
+                let module = keyed_with_islands(&encode_list(0, 1, body), &[(0, &[ID])], &[island]);
+                assert_eq!(
+                    refused(&module, &rows(vec![id(num(1.0))])),
+                    violation(
+                        0,
+                        0,
+                        "id",
+                        ListKeyReason::RowShape {
+                            roots,
+                            stray_content: true
+                        }
+                    )
+                );
+            }
+        }
+
+        /// `<li>` PROP(row.tags) LIST(tags){ `<b></b>` } `</li>`, both lists keyed by `id`.
+        fn nested() -> (Vec<u8>, u32) {
+            let inner = encode_list(
+                2,
+                3,
+                &[encode_open_tag(B, &[]), encode_close_tag(B)].concat(),
+            );
+            let outer_body = [
+                encode_open_tag(LI, &[]),
+                encode_prop(1, TAGS, 2),
+                inner,
+                encode_close_tag(LI),
+            ]
+            .concat();
+            let inner_offset =
+                LIST_HEADER + encode_open_tag(LI, &[]).len() + encode_prop(1, TAGS, 2).len();
+            (encode_list(0, 1, &outer_body), inner_offset as u32)
+        }
+
+        fn group(key: f64, tags: Vec<SlotValue>) -> SlotValue {
+            object(vec![("id", num(key)), ("tags", SlotValue::array(tags))])
+        }
+
+        #[test]
+        fn each_execution_of_a_list_is_its_own_duplicate_scope() {
+            let (ops, inner) = nested();
+            let module = keyed(&ops, &[(0, &[ID]), (inner, &[ID])]);
+            // The inner LIST runs once per outer row: the same keys under two outer rows,
+            // and an inner key equal to its outer row's key, are not duplicates.
+            let data = rows(vec![
+                group(1.0, vec![id(text("a")), id(num(1.0))]),
+                group(2.0, vec![id(text("a"))]),
+            ]);
+            assert_eq!(
+                walk_to_html(&module, &data).unwrap(),
+                concat!(
+                    "<!--f:l0-->",
+                    "<li data-forma-key=\"1\"><!--f:l2--><b data-forma-key=\"a\"></b><b data-forma-key=\"1\"></b><!--/f:l2--></li>",
+                    "<li data-forma-key=\"2\"><!--f:l2--><b data-forma-key=\"a\"></b><!--/f:l2--></li>",
+                    "<!--/f:l0-->"
+                )
+            );
+            // Within one execution they are: the inner LIST's offset, its row, the path.
+            let duplicate = rows(vec![
+                group(1.0, vec![id(text("a"))]),
+                group(2.0, vec![id(text("b")), id(text("a")), id(text("b"))]),
+            ]);
+            assert_eq!(
+                refused(&module, &duplicate),
+                violation(inner, 2, "id", ListKeyReason::Duplicate { first_row: 0 })
+            );
+            // Two sibling LISTs over the same rows are two executions too.
+            let twice = [encode_list(0, 1, &li_body()), encode_list(0, 1, &li_body())].concat();
+            let second = encode_list(0, 1, &li_body()).len() as u32;
+            let html = walk_to_html(
+                &keyed(&twice, &[(0, &[ID]), (second, &[ID])]),
+                &rows(vec![id(num(1.0)), id(num(2.0))]),
+            )
+            .unwrap();
+            assert_eq!(html.matches("data-forma-key=\"1\"").count(), 2, "{html}");
+            assert_eq!(html.matches("data-forma-key=\"2\"").count(), 2, "{html}");
+        }
+
+        #[test]
+        fn keys_collide_on_their_canonical_text_not_on_their_type_or_spelling() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let collide = [
+                (num(1.0), text("1")),
+                (num(0.0), num(-0.0)),
+                (text("0"), num(-0.0)),
+                (text("a\r\nb"), text("a\nb")),
+                (text("a\rb"), text("a\nb")),
+                (text("\0"), text("\u{FFFD}")),
+            ];
+            for (first, second) in collide {
+                let label = format!("{first:?} {second:?}");
+                assert_eq!(
+                    refused(&module, &rows(vec![id(first), id(second)])),
+                    violation(0, 1, "id", ListKeyReason::Duplicate { first_row: 0 }),
+                    "{label}"
+                );
+            }
+            let distinct = [
+                (num(1.0), text("01")),
+                (text("A"), text("a")),
+                (text("a"), text("a ")),
+                (text("\u{e9}"), text("e\u{301}")),
+                (text("-0"), num(0.0)),
+            ];
+            for (first, second) in distinct {
+                let label = format!("{first:?} {second:?}");
+                assert!(
+                    walk_to_html(&module, &rows(vec![id(first), id(second)])).is_ok(),
+                    "{label}"
+                );
+            }
+        }
+
+        #[test]
+        fn a_row_without_an_identity_at_the_path_refuses_with_its_reason() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let not_identity = |kind| ListKeyReason::NotAnIdentity { kind };
+            let twice = SlotValue::object(vec![("id".into(), num(1.0)), ("id".into(), num(2.0))]);
+            let cases = [
+                (
+                    object(vec![("name", text("secret"))]),
+                    ListKeyReason::MissingField {
+                        segment: "id".into(),
+                    },
+                ),
+                (id(SlotValue::Null), not_identity("null")),
+                (id(SlotValue::Bool(true)), not_identity("a boolean")),
+                (
+                    id(object(vec![("secret", num(1.0))])),
+                    not_identity("an object"),
+                ),
+                (
+                    id(SlotValue::array(vec![text("secret")])),
+                    not_identity("an array"),
+                ),
+                (id(num(1.5)), ListKeyReason::NotASafeInteger),
+                (id(num(f64::NAN)), ListKeyReason::NotASafeInteger),
+                (id(num(f64::INFINITY)), ListKeyReason::NotASafeInteger),
+                (id(num(f64::NEG_INFINITY)), ListKeyReason::NotASafeInteger),
+                (
+                    id(num(9_007_199_254_740_992.0)),
+                    ListKeyReason::NotASafeInteger,
+                ),
+                (
+                    id(num(-9_007_199_254_740_992.0)),
+                    ListKeyReason::NotASafeInteger,
+                ),
+                (
+                    text("secret"),
+                    ListKeyReason::NotAnObject {
+                        segment: "id".into(),
+                    },
+                ),
+                (
+                    twice,
+                    ListKeyReason::DuplicateField {
+                        segment: "id".into(),
+                    },
+                ),
+            ];
+            for (bad, reason) in cases {
+                // The refused row is the second: the first rendered nothing the page keeps.
+                assert_eq!(
+                    refused(&module, &rows(vec![id(num(1.0)), bad])),
+                    violation(0, 1, "id", reason)
+                );
+            }
+            // A nested path reads objects only, and names itself dotted.
+            let nested = keyed(&encode_list(0, 1, &li_body()), &[(0, &[USER, ID])]);
+            let user = |value| object(vec![("user", value)]);
+            assert_eq!(
+                walk_to_html(&nested, &rows(vec![user(id(text("u1")))])).unwrap(),
+                "<!--f:l0--><li data-forma-key=\"u1\"><span></span></li><!--/f:l0-->"
+            );
+            for value in [
+                text("u1"),
+                SlotValue::Null,
+                SlotValue::array(vec![id(num(1.0))]),
+            ] {
+                assert_eq!(
+                    refused(&nested, &rows(vec![user(value)])),
+                    violation(
+                        0,
+                        0,
+                        "user.id",
+                        ListKeyReason::NotAnObject {
+                            segment: "id".into()
+                        }
+                    )
+                );
+            }
+        }
+
+        #[test]
+        fn a_keyed_row_renders_exactly_one_balanced_root_and_nothing_beside_it() {
+            let shape = |roots, stray_content| ListKeyReason::RowShape {
+                roots,
+                stray_content,
+            };
+            let li = [encode_open_tag(LI, &[]), encode_close_tag(LI)].concat();
+            let cases: Vec<(&str, Vec<u8>, ListKeyReason)> = vec![
+                ("empty row", Vec::new(), shape(0, false)),
+                (
+                    "two roots",
+                    [li.clone(), li.clone()].concat(),
+                    shape(2, false),
+                ),
+                (
+                    "text beside",
+                    [li.clone(), encode_text(TEXT)].concat(),
+                    shape(1, true),
+                ),
+                ("text only", encode_text(TEXT), shape(0, true)),
+                ("dynamic text only", encode_dyn_text(4, 0), shape(0, true)),
+                (
+                    "conditional root",
+                    encode_show_if(4, &li, &li),
+                    shape(1, true),
+                ),
+                (
+                    // Its one row's `li` is at the outer row's level too, so it counts as
+                    // the outer row's root; the range around it is the refusal.
+                    "list at the row's level",
+                    encode_list(2, 3, &li),
+                    shape(1, true),
+                ),
+                (
+                    "closes the list's parent",
+                    encode_close_tag(UL),
+                    ListKeyReason::UnbalancedRow,
+                ),
+                (
+                    "closes the parent after its root",
+                    [li.clone(), encode_close_tag(UL), encode_open_tag(UL, &[])].concat(),
+                    ListKeyReason::UnbalancedRow,
+                ),
+                (
+                    "leaves its root open",
+                    encode_open_tag(LI, &[]),
+                    ListKeyReason::UnbalancedRow,
+                ),
+            ];
+            for (name, body, reason) in cases {
+                let ops = [
+                    encode_open_tag(UL, &[]),
+                    encode_list(0, 1, &body),
+                    encode_close_tag(UL),
+                ]
+                .concat();
+                let offset = encode_open_tag(UL, &[]).len() as u32;
+                let module = keyed(&ops, &[(offset, &[ID])]);
+                let mut data = rows(vec![id(num(1.0))]);
+                data.set(2, SlotValue::array(vec![text("t")]));
+                assert_eq!(
+                    refused(&module, &data),
+                    violation(offset, 0, "id", reason),
+                    "{name}"
+                );
+            }
+        }
+
+        #[test]
+        fn an_authored_data_forma_key_on_the_root_refuses_and_on_a_descendant_renders() {
+            let authored = |body: Vec<u8>| {
+                refused(
+                    &keyed(&encode_list(0, 1, &body), &[(0, &[ID])]),
+                    &rows(vec![id(num(1.0))]),
+                )
+            };
+            let expected = violation(0, 0, "id", ListKeyReason::AuthoredKey);
+            for attr in [KEY_ATTR, KEY_ATTR_UPPER] {
+                assert_eq!(
+                    authored(
+                        [
+                            encode_open_tag(LI, &[(attr, AUTHORED)]),
+                            encode_close_tag(LI)
+                        ]
+                        .concat()
+                    ),
+                    expected
+                );
+                assert_eq!(
+                    authored(encode_void_tag(INPUT, &[(attr, AUTHORED)])),
+                    expected
+                );
+                assert_eq!(
+                    authored(
+                        [
+                            encode_open_tag(LI, &[]),
+                            encode_dyn_attr(attr, 4),
+                            encode_close_tag(LI)
+                        ]
+                        .concat()
+                    ),
+                    expected
+                );
+            }
+            let descendant = [
+                encode_open_tag(LI, &[]),
+                encode_open_tag(SPAN, &[(KEY_ATTR, AUTHORED)]),
+                encode_close_tag(SPAN),
+                encode_close_tag(LI),
+            ]
+            .concat();
+            assert_eq!(
+                walk_to_html(
+                    &keyed(&encode_list(0, 1, &descendant), &[(0, &[ID])]),
+                    &rows(vec![id(num(1.0))])
+                )
+                .unwrap(),
+                "<!--f:l0--><li data-forma-key=\"1\"><span data-forma-key=\"authored\"></span></li><!--/f:l0-->"
+            );
+        }
+
+        #[test]
+        fn a_refused_row_leaves_the_slot_journal_keyed_rows_and_list_depth_as_found() {
+            let (ops, inner) = nested();
+            let module = keyed(&ops, &[(0, &[ID]), (inner, &[ID])]);
+            let bad_inner_key = rows(vec![
+                group(1.0, vec![id(text("a"))]),
+                group(2.0, vec![id(text("a")), id(text("a"))]),
+            ]);
+            // The inner row's key is fine, but the output budget runs out inside it (50 bytes
+            // end within its `<b data-forma-key="a">`): a non-key error unwinds the same way.
+            let over_budget_inside = rows(vec![group(1.0, vec![id(text("a"))])]);
+            let cases = [
+                (
+                    bad_inner_key,
+                    WalkLimits::default(),
+                    IrError::InvalidListKey(Box::new(violation(
+                        inner,
+                        1,
+                        "id",
+                        ListKeyReason::Duplicate { first_row: 0 },
+                    ))),
+                ),
+                (
+                    over_budget_inside,
+                    WalkLimits {
+                        max_output_bytes: 50,
+                        ..WalkLimits::default()
+                    },
+                    IrError::OutputLimitExceeded { limit: 50 },
+                ),
+            ];
+            for (data, limits, expected) in cases {
+                let mut slots = data.clone();
+                let before = format!("{slots:?}");
+                let mut state = WalkState::new(limits);
+                let mut out = String::new();
+                let error = walk_range(
+                    &module,
+                    &mut slots,
+                    &module.opcodes,
+                    0,
+                    module.opcodes.len(),
+                    &mut out,
+                    &mut state,
+                    0,
+                )
+                .unwrap_err();
+                assert_eq!(error, expected);
+                assert_eq!(state.list_depth, 0, "{error:?}");
+                assert!(state.keyed_rows.is_empty(), "{error:?}");
+                assert!(state.slot_journal.is_empty(), "{error:?}");
+                assert_eq!(format!("{slots:?}"), before, "{error:?}");
+            }
+        }
+
+        #[test]
+        fn a_key_is_charged_to_the_output_budget_before_it_is_built() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let long = "k".repeat(1000);
+            let opened = "<!--f:l0-->".len();
+            let limits = WalkLimits {
+                max_output_bytes: opened + 999,
+                ..WalkLimits::default()
+            };
+            let failure =
+                walk_to_html_counted(&module, &rows(vec![id(text(&long))]), limits).unwrap_err();
+            assert_eq!(
+                failure.error,
+                IrError::OutputLimitExceeded {
+                    limit: opened + 999
+                }
+            );
+            // Refused before the row wrote anything: only the list's opening marker.
+            assert_eq!(failure.counts.bytes, opened);
+            // A NUL is counted as the three bytes U+FFFD takes.
+            let nul = "\0".repeat(400);
+            let limits = WalkLimits {
+                max_output_bytes: opened + 1000,
+                ..WalkLimits::default()
+            };
+            let failure =
+                walk_to_html_counted(&module, &rows(vec![id(text(&nul))]), limits).unwrap_err();
+            assert_eq!(failure.counts.bytes, opened);
+            // Exactly at the budget the page renders.
+            let html = walk_to_html(&module, &rows(vec![id(text("key"))])).unwrap();
+            let exact = WalkLimits {
+                max_output_bytes: html.len(),
+                ..WalkLimits::default()
+            };
+            assert_eq!(
+                walk_to_html_with_limits(&module, &rows(vec![id(text("key"))]), exact).unwrap(),
+                html
+            );
+        }
+
+        #[test]
+        fn the_iteration_budget_refuses_a_keyed_list_before_any_key_is_read() {
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let limits = WalkLimits {
+                max_list_iterations: 1,
+                ..WalkLimits::default()
+            };
+            let failure = walk_to_html_counted(
+                &module,
+                &rows(vec![id(SlotValue::Null), id(num(1.0))]),
+                limits,
+            )
+            .unwrap_err();
+            assert_eq!(failure.error, IrError::ListBudgetExceeded { max: 1 });
+            assert_eq!(failure.counts.list_iterations, 0);
+        }
+
+        /// FORMA-181 checkpoint C: the `served` markup of every keys.json vector is exactly
+        /// what this walker writes for that key, because the browser spec parses that markup
+        /// in Chromium, Firefox and WebKit and checks it decodes to the canonical text
+        /// (packages/core/e2e/keyed-adoption.spec.ts). A change to the attribute escaping
+        /// fails here before it can drift from what the browsers were shown.
+        #[test]
+        fn every_shared_key_vector_is_written_as_its_served_markup() {
+            let vectors: serde_json::Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/keys.json")).unwrap();
+            let module = keyed(&encode_list(0, 1, &li_body()), &[(0, &[ID])]);
+            let mut checked = 0;
+            for case in vectors["values"].as_array().unwrap() {
+                let Some(served) = case.get("served").and_then(serde_json::Value::as_str) else {
+                    continue;
+                };
+                let row = object(vec![(
+                    "id",
+                    crate::slot::json_to_slot_value(&case["value"]),
+                )]);
+                assert_eq!(
+                    walk_to_html(&module, &rows(vec![row])).unwrap(),
+                    format!(
+                        "<!--f:l0--><li data-forma-key=\"{served}\"><span></span></li><!--/f:l0-->"
+                    ),
+                    "{}",
+                    case["id"]
+                );
+                checked += 1;
+            }
+            assert!(
+                checked >= 20,
+                "the vector file lost its served markup: {checked}"
+            );
+        }
+
+        #[test]
+        fn a_diagnostic_path_quotes_a_segment_a_dot_would_make_ambiguous() {
+            assert_eq!(dotted_path(&["user", "id"]), "user.id");
+            assert_eq!(dotted_path(&["user.id"]), "[\"user.id\"]");
+            assert_eq!(dotted_path(&["a", "b.c", "d"]), "a[\"b.c\"].d");
+            assert_eq!(dotted_path(&["", "x[0]"]), "[\"\"][\"x[0]\"]");
+        }
     }
 }

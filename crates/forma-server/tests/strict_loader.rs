@@ -80,14 +80,14 @@ fn integrity(bytes: &[u8]) -> String {
 /// A valid module: island "Hello" around `<p>hello</p>`.
 fn good_module() -> Vec<u8> {
     use forma_ir::parser::test_helpers::{
-        build_minimal_ir, encode_close_tag, encode_open_tag, encode_text,
+        build_declared_fixture, encode_close_tag, encode_open_tag, encode_text,
     };
     let mut ops = vec![0x0B, 0, 0]; // ISLAND_START 0
     ops.extend_from_slice(&encode_open_tag(0, &[]));
     ops.extend_from_slice(&encode_text(1));
     ops.extend_from_slice(&encode_close_tag(0));
     ops.extend_from_slice(&[0x0C, 0, 0]); // ISLAND_END 0
-    build_minimal_ir(
+    build_declared_fixture(
         &["p", "hello", "Hello"],
         &[],
         &ops,
@@ -124,7 +124,9 @@ fn manifest_json(bad: &[(&str, &str)]) -> String {
 /// Every fixture file: (set, file name, bytes).
 fn fixture_files() -> Vec<(&'static str, &'static str, Vec<u8>)> {
     let good = good_module();
-    let mut opcode = flip(good.clone(), 91, 0x80); // second opcode, OPEN_TAG
+    let table = forma_ir::SectionTable::parse(&good[forma_ir::HEADER_SIZE..]).unwrap();
+    let opcode_offset = table.get(1).unwrap().offset as usize + 3; // after ISLAND_START
+    let mut opcode = flip(good.clone(), opcode_offset, 0x80);
     forma_ir::parser::test_helpers::restamp(&mut opcode);
     let flipped = [
         ("/magic", "magic.ir", flip(good.clone(), 0, 1)),
@@ -403,7 +405,7 @@ fn the_same_server_binds_and_serves_after_all_handlers_finalize() {
 #[test]
 fn every_reviewed_v3_refusal_happens_before_bind() {
     let manifest = try_load_manifest::<ReviewedV3>().expect("reviewed manifest");
-    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/window-expectations.tsv");
+    let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/state-expectations.tsv");
     let errors = load_ir_modules::<ReviewedV3>(&manifest).expect_err("fault fixtures");
     let mut refused = 0;
     for row in index.lines().skip(1) {
@@ -418,7 +420,7 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
             refused += 1;
         }
     }
-    assert_eq!(refused, 60);
+    assert_eq!(refused, 62);
     assert_eq!(errors.len(), refused);
     let (started, bound) = spawn::<ReviewedV3>(Loader::Default);
     match started.recv_timeout(Duration::from_secs(5)) {

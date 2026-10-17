@@ -2,6 +2,100 @@
 
 ## [Unreleased]
 
+- Preserve a standalone top-level `await activateIslands(...)` checkpoint when every registration is pruned. The compiler emits `await (void 0)` for that case; effectful arguments and consumed, nested or chained empty-registry calls still refuse BUILD-611.
+
+- FORMA-196: refuse native script elements with BUILD-623 and unrepresentable srcdoc markup with BUILD-624, matching core's existing Trusted Types and bundle-only boundaries. Preserve literal style, absent null/false srcdoc and explicit Browser typed raw APIs; retain the superseded FORMA-139 source/product evidence.
+
+- Refuse native attribute spellings whose HTML-parsed name or namespace differs from current Browser creation (BUILD-610). Preserve canonical SVG/MathML adjustments and supported XLink attributes; propagate actual integration-point context, including both possible namespaces for unknown MathML annotation encoding. Browser attribute behavior is unchanged.
+
+- Emit `className`, `htmlFor` and `tabIndex` with the same exact native names as browser creation/adoption, and use those names in island binding identities. Refuse competing alias-normalized or ASCII-case-colliding attribute props on one native element with BUILD-610, including HTML-parsed SVG/MathML; unrelated spellings and distinct elements remain independent.
+
+- Extend indexed initial-value proof to declared arrays and their ancestors: eager writes, mutating methods and unknown escapes before or after the factory refuse BUILD-622. Immutable declared-data aliases, array-length reads, disjoint props and deferred intrinsic events retain admission within the existing component subset.
+
+- Indexed handle admission refuses eager mutation and unknown escapes hidden in variable initializers (BUILD-622). Original lexical handle aliases and provably deferred intrinsic event callbacks, including local handler aliases, remain supported; no mutation evaluator or runtime restriction was added.
+
+- Add compiler proof and native lowering for `createKeyedRows` with the two-argument `createList` overload. Original lexical factories, required/closed arrays, synchronous key paths and unconditional component LISTs are required (BUILD-622); item getters keep row provenance without acquiring signal capture or early-edit writeback authority. Existing corpus bytes and the LIST/PROP/key-path wire contract are unchanged. Actual typed native/browser qualification and the unchanged indexed-operation timing requirements pass across three engines on the integrated local stack; exact source, products and raw samples are retained in `docs/evidence/forma-181-indexed/integrated/`.
+
+### Lexical JSX SVG namespaces — FORMA-171
+
+- Compiled JSX creates SVG `a`, `title`, `style`, `font` and `script` in their lexical namespace. Properties and children still evaluate once, before creation; HTML integration points and the existing script construction refusal remain intact. The private build-time factory adds no core code.
+- Compiler and build loaders share the original source snapshot with adoption hooks and SSR/Browser entry ownership. Handwritten `h`, separate component bodies, custom JSX factories and the deferred dynamic SVG title adoption boundary keep their existing contracts.
+
+### Shared physical SSR and Browser entries — FORMA-186
+
+- Split builds separate graph-wide component hooks from SSR-only entry edits. A paired Browser entry reads the same captured source with component hooks and its original mount/registry, while native metadata continues to name the actual physical source. Changes during either load refuse the whole paired result.
+
+- FORMA-139: refuse the finite parser/interactive-content nesting conflicts (BUILD-618), component HTML title (619), dynamic style/script children (620), and SSR island roots lacking one stable owned Element (621). Preserve transparent one-Element Fragments and helpers; keep ranges inside their host. Exact original source/products and canonical admitted near misses are retained. SVG title, browserOnly client bodies, and the existing keyed-row613 proof keep their separate contracts.
+
+### Native LIST sources must carry real rows — FORMA-101
+
+- A callable source is insufficient for native emission: BUILD-610 requires a declared array prop or closed literal-default signal through a getter binding or callback. BUILD-616 continues to mean only a provably non-callable source. Unsupported getters/derived filters no longer publish empty native rows.
+- Migrated the list-same-source corpus and conformance near misses to real two-row signal defaults. The original source/IR/dump/HTML/state and prior tests are archived with hash ledgers. The real Rust consumer asserts four keyed rows across both projections, and typed browser parity agrees; all thirteen other corpus modules are byte-identical.
+
+- FORMA-182 review: HTML boolean attributes consistently use scalar truthiness. Empty strings and numeric zero (including -0) are omitted; nonempty strings and nonzero numbers are bare. This preserves the existing browser behavior and prevents an empty signal default from unexpectedly enabling `disabled`, `hidden` or `checked` in served HTML. Compiler defaults, the native writer, strict attribute adoption and the checked/selected control oracle share the expanded vectors. Empty strings on ordinary attributes remain present.
+
+### Rule 6's attribute table: findings F2 and F3 — FORMA-182
+
+- **Rendered output changes with no source change.** A static `true` attribute is bare only on an HTML boolean attribute (`HTML_BOOLEAN_ATTRIBUTES` in `src/value-rules.ts`, core's list); on any other it is the word, `data-live="true"`, `class="true"`, where it was bare (F2). A reactive boolean still lands in a `TYPE_BOOL` slot, which the walker now writes by the same rule.
+- An attribute whose server value is the empty string is written as a static `name=""` (F3): a signal created with `''` bound to an attribute (`value: () => query()`, `value: query`) or a value that evaluates to `''`. A client slot cannot carry an empty default (zero default bytes read as null), so the server used to drop the attribute where `h()` writes it. The js-emitter `dynamic-attrs` module regenerates; `tests/ssr-render.test.ts`'s stated limit "omits an attribute whose value evaluates to the empty string" became "writes an attribute whose server value is the empty string".
+- Tests: `tests/value-rule-6-attributes.test.ts` (the shared `compiled` shapes and the boolean set), `tests/attribute-values-archive.test.ts` (the archived corpus outputs and their ledger).
+### Strict server-renderable subset — FORMA-101
+
+- SSR builds and the direct plugin now refuse every unsupported native construct, including default builds and legacy `strict:false`/`FORMA_STRICT=0`. The build reports every entry's available diagnostics and retains prior output on failure. Removed the obsolete placeholder helper; original guides and tests remain archived.
+- Published `packages/compiler/docs/subset.md` as the admission contract and diagnostic catalogue. BUILD-617 refuses an independently registered option/optgroup island beneath another owner's value-bound select; unregistered helpers within the select owner and unbound selects remain admitted.
+- Callable LIST sources now also need declared array props or closed literal-default signals (BUILD-610). The preserved list-same-source corpus is migrated to real two-row local defaults, with native rendering assertions; BUILD-616 retains its separate non-callable meaning. Island-own-root and finite parser-repair proof remain the FORMA-139 gate.
+- The corpus emitter now rejects error diagnostics. The original unknown href getter and duplicate signal-name page remain authenticated BUILD-206/503 publication negatives; live examples use a real closed href and `panelCount`. Their regenerated products carry a before/after ledger, preserve all other corpus modules, and remove F4 only after native/browser equality proves the old exception an unexpected pass.
+
+
+### Value rule 7: conditions are boolean-typed — FORMA-182
+
+- **Breaking: a condition that is not boolean-typed no longer builds (`BUILD-615`).** A `createShow` condition or a ternary test the compiler can prove is not a boolean fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 7): a declared prop of another type (an optional boolean is admitted), a signal whose default is a number, a string or `null`, a closed value of another type (an aggregate, an aggregate or list-row field, a module-level `const`), a non-boolean literal, or a mix such as `a() && count()` or `name() || 'x'`. The common shapes are `createShow(() => count(), …)`, `createShow(count, …)` (a getter passed to `createShow` itself is now read as its call; a getter named without its call in a ternary test or an operand, `() => open ? a : b`, is refused with a message naming the missing call, since the browser always takes the first branch), a ternary on a `null`-default signal (`() => user() ? a : b`) and on a string signal (`() => name() ? …`). Fix: compare explicitly, `count() > 0`, `user() !== null`, `name() !== ''`, or `!!x`. A condition the compiler cannot type keeps `BUILD-302`. Conformance pair in `tests/fixtures/conformance/BUILD-615/`.
+- A module-level `const` initialized with `true` or `false`, `Boolean(x)` and a boolean signal passed as a bare getter are folded in a condition, so the server renders the branch the browser takes; each used to report `BUILD-302` and render `else`.
+- Migrated `tests/ir-walk.test.ts` > "writes false when the condition evaluates falsy, including a zero number read through !!" (it read `count()` as the condition); the original fragments are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-615` by `tests/value-rules-archive.test.ts`. The FMIR corpus, the declared-props fixtures, the create-app templates and the SSR e2e cases build unchanged.
+
+### Value rule 6: a boolean in text is a build error — FORMA-182
+
+- **Breaking: a boolean in text no longer builds (`BUILD-614`).** A text position whose value is provably boolean-typed fails the build, strict mode or not (`docs/DIAGNOSTICS.md`, `docs/parity-rules.md` rule 6): a declared boolean prop (optional included; it used to write nothing), a signal whose default is a boolean (it was served as `true`/`false`), a closed boolean (an aggregate or list-row field, a module-level `const` of `true`/`false`), or an expression that can only be a boolean (`!x`, a comparison), read eagerly or through a getter, as a child or a `createShow`/ternary branch. Fix: the message names the form that builds for its source, `String(flag)` on a non-optional declared boolean, a boolean signal or an expression the compiler evaluates, and a ternary, `() => (flag ? 'yes' : 'no')`, on an optional declared boolean, a closed value or a module `const`, where `String()` is itself refused. Conformance pair in `tests/fixtures/conformance/BUILD-614/`.
+- `String(flag)` on a non-optional declared boolean binds `DYN_TEXT` to the boolean slot (the walker writes the word); the evaluator folds `String()` of a boolean, so `() => String(done())` builds where it was refused, also as a ternary branch, where a `String()`/`Number()` cast the evaluator folds is now a value rather than a component. `String()` of an optional declared boolean stays `BUILD-610`.
+- **Rendered output changes with no source change:** the idiom `() => ready() && 'Go'` at a boolean default no longer serves the word `false` (its slot default is empty, an empty range), and a `true` literal in a ternary branch no longer serves `true` (nothing), matching `h()`. A page compiled by an earlier compiler and adopted by this release's core refuses at that idiom (`FORMA_E_HYDRATE_VALUE`); compiler and core move together in 3.0.0.
+- Migrated `tests/props-bindings.test.ts` (a trailing declared boolean child) and `tests/ssr-emission.test.ts` (a boolean signal read as text to name its slot); the originals are archived in `docs/archive/2026-10-15-pre-value-rules/` and pinned as `BUILD-614` by `tests/value-rules-archive.test.ts`. The FMIR corpus and the declared-props fixtures are byte-identical.
+
+### A list source must be a function: BUILD-616 — FORMA-181 (FORMA-183 finding F1)
+
+- Core's `createList(items, key, row)` calls `items()` to read the rows, and a page list's source is never evaluated by the native module (its array is a named slot), so a plain array compiled and then failed in the browser with `items is not a function`. The original list proof now refuses, on the page and island paths alike, a source it can prove is not a function: a literal, a binding to one (local, or a named export of an imported module), a provably immutable data-valued core getter result (`rows()`), or a field an inline parameter type declares as data (`p.rows` with `p: { rows: Row[] }`). New mandatory code BUILD-616 with a conformance pair; functions, getters and sources the compiler cannot see through stay admitted. A captured signal setter and mutable object fields prevent using their initial values as proof. The js-emitter corpus case `list-same-source` passes `const todos = () => [...]`; its original source is archived in `docs/archive/2026-10-15-pre-list-source/` (still asserted to refuse), and every compiled output of the case is byte-identical.
+
+### Keyed rows, checkpoint A: original key-path proof and section 6 — FORMA-181
+
+- Prove every server-rendered list's key from the original source before JSX lowering: a nonempty property path of the row parameter (`row.id`, `row.user.id`, `row['id']`, an immutable alias) with one stable owned Element as the row root, resolved through lexical helpers, imported aliases and registered children. Emit FMIR section `0x0006` with one entry per emitted LIST at its exact opcode offset, including repeated helper sites and nested lists.
+- New mandatory codes BUILD-612 (key that is not a row property path, or no original core `createList` identity) and BUILD-613 (row without one stable root, including an authored `data-forma-key`), with conformance pairs; the legacy BUILD-107 shape checks keep their precedence. Canonical schema, binding and digest bytes and row ordinals are unchanged for every previously valid list (`tests/fixtures/keyed-lists/baseline.json`); a LIST without an entry stays a valid low-level reader form.
+- Migrated the row-root conditional and scalar-key test sources; originals, the regenerated native and corpus binaries and their before/after hashes are in `docs/archive/2026-10-15-pre-keyed-rows/`. Native key rendering and key adoption (checkpoints B and C) are not part of this change; the compiler never computes key text, so the FORMA-182 normalization seam (an identity placeholder) lives in core, `packages/core/src/dom/key-text.ts`. A key or row callback with more than one return path, and an empty string-literal key segment, are refused at build time. The three frozen declared-props server fixtures (`crates/forma-server/tests/fixtures/props-contract`) gained section 6 and are regenerated with their SRI manifest, archived and ledgered like the native fixtures.
+
+### The diagnostic catalogue — FORMA-021
+
+- `BUILD-819`, the build package's size-report gate: a route whose Forma code (`@getforma/core` and `alien-signals` as bundled) is over N2's ceiling of 25,500 B gzip -9 (decision brief L-55). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/route-size.test.ts`; no page triggers it.
+- `BUILD-819` now covers every ceiling of the size report's route classes (FORMA-190): a route's JavaScript over 75 KiB, or 365 KiB for a route declared `canvas: true`, and any script on a route with no interactive region, beside Forma's code over 25,500 B. Title, why and fix are reworded; the code and its place are unchanged.
+- `BUILD-823`, the build package's refusal of a preview-frame runtime esbuild cannot minify (FORMA-190: a production build writes the frame's runtime minified into the application's output). Catalogued here, documented in `docs/DIAGNOSTICS.md`, tested in `packages/build/tests/preview-frame.test.ts`; no page triggers it.
+
+### Conditional description seam — FORMA-104
+
+- Record source ranges only for existing admitted DOM conditional bindings and compose private descriptor hooks with tuple, writable-read and child edits. Original comments, parentheses and lexical thunks remain intact; scalar/value ternaries and canonical schema, binding and FMIR bytes are unchanged. Strict activation remains dependent work.
+
+### Paired island compilation — FORMA-103
+
+- Generate browser registration metadata and FMIR from one captured source graph; compare resolved declarations and canonical contracts for distinct browser/SSR entries. Type-only dependencies join the same watcher.
+- Require esbuild `write: false` and return IR with browser `outputFiles`. The plugin never writes before the complete build succeeds. Mid-build source changes refuse publication.
+
+### Native island refusal — FORMA-103
+
+- Remove legacy unnamed/empty native island shells and the inline `data-forma-props` writer. Unsupported subtrees now fail BUILD-610 with their source location; browser-only content requires its actual declared registration and state contract.
+- Preserve the archived unresolved nested-island source as a refusal control, while the admitted imported static-table expansion still emits its registered contract.
+
+### Closed signal defaults — FORMA-103
+
+- Preserve bounded array/object initial values as lazy CLIENT constants, including nested list projections and per-row declared island inputs. Keep unused constants out of the emitted program and never infer handler fields from local data.
+- Fold known closed nullish projections before COALESCE; typed optional aggregate fallbacks keep native schema provenance. Scalar list destinations use their actual kind instead of an object hint.
+- Normalize only direct optional access on the proven non-null declared props root; nullable intermediate accesses and optional calls still refuse.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

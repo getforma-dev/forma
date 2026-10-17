@@ -1,0 +1,125 @@
+{
+  "sourceBase": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "node": "v24.22.0",
+  "vitest": "4.1.12",
+  "install": {
+    "command": "npm ci --ignore-scripts",
+    "exitCode": 0,
+    "auditVulnerabilities": 0,
+    "lockSha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90"
+  },
+  "before": {
+    "command": "../../node_modules/.bin/vitest run tests/native-raw-boundary.test.ts --maxWorkers=2",
+    "cwd": "packages/compiler",
+    "total": 34,
+    "genuineExpectedRefusalFailures": 27,
+    "passed": 6,
+    "testAssumptionFailures": 1,
+    "note": "JSX undefined already becomes unsupported void (strict207); production was not widened to admit it. First duplicate config-path invocation failed before collection and is retained separately."
+  },
+  "after": [
+    {
+      "command": "npm test --workspace @getforma/compiler -- --maxWorkers=2 tests/native-raw-boundary.test.ts tests/html-context.test.ts tests/diagnostics-conformance.test.ts",
+      "passed": 322,
+      "failed": 0
+    },
+    {
+      "command": "./node_modules/.bin/tsc --noEmit -p packages/compiler/tsconfig.json",
+      "exitCode": 0
+    },
+    {
+      "command": "npm test --workspace @getforma/build -- --maxWorkers=2 tests/native-raw-boundary.test.ts",
+      "passed": 5,
+      "failed": 0
+    }
+  ],
+  "pending": [
+    "independent source review",
+    "rebuilt compiler/build and actual native/core boundary replay",
+    "integrated release qualification"
+  ],
+  "performanceClaim": false,
+  "nativeWalkerOrWireContractChanged": false,
+  "sourceFiles": [
+    {
+      "path": ".gitattributes",
+      "bytes": 12106,
+      "sha256": "c7cb68a9effaa4094db8128f0a993762a36ec0165c061c7c30ac89fee9f82d86"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 53358,
+      "sha256": "59e6477b8c09c62349f9adf5c42a947dc2df8f0cdb80ca47e4f1dff4eef6d06e"
+    },
+    {
+      "path": "docs/TRUSTED-TYPES.md",
+      "bytes": 6291,
+      "sha256": "c08b61a303a22fb55bc13bd5eda64af10ed5ab496d789581e158780ef0c6bb1b"
+    },
+    {
+      "path": "packages/compiler/CHANGELOG.md",
+      "bytes": 86663,
+      "sha256": "ea8185c4fbbbcc7f61ed4b25455e8cf5f491783245d5d7a770dff7807f87da51"
+    },
+    {
+      "path": "packages/compiler/docs/subset.md",
+      "bytes": 51911,
+      "sha256": "13b87522d85efae9e76f1d0694a8d356b513cde87a8e4853ded8d737adb9c4ca"
+    },
+    {
+      "path": "packages/compiler/src/diagnostics.ts",
+      "bytes": 42060,
+      "sha256": "b4ce14d2bcc9104603a76436441dd3c9d08843dd4637dde05aadd42f267d902d"
+    },
+    {
+      "path": "packages/compiler/src/html-context.ts",
+      "bytes": 13002,
+      "sha256": "7f8ac33bdb6c317c2d7b0452cb64d1f7791924b6047123432548ae89c974c850"
+    },
+    {
+      "path": "packages/compiler/src/props-schema.ts",
+      "bytes": 12930,
+      "sha256": "8a40f5aca8ae7e8fca0ab1f456e213e6429119007da77f5d6e400a25dcb7cc81"
+    },
+    {
+      "path": "packages/compiler/tests/diagnostics-conformance.test.ts",
+      "bytes": 17208,
+      "sha256": "994a964baeca1e1e579bb2b636de38ff3ae056871fc4a60c95c841ba10334f31"
+    },
+    {
+      "path": "packages/compiler/tests/html-context.test.ts",
+      "bytes": 16907,
+      "sha256": "f9832649517546e606e080020379bd45dc7c24b4934d6ed0e34108caa70788b6"
+    },
+    {
+      "path": "packages/compiler/tests/native-raw-boundary.test.ts",
+      "bytes": 6181,
+      "sha256": "a1457d81b7bbfb63158038b3c11e15279da78cbb789af08d868234cec968362b"
+    },
+    {
+      "path": "packages/build/tests/native-raw-boundary.test.ts",
+      "bytes": 2843,
+      "sha256": "5c1ec28dc6e8b6b7d5493688037d3cd535a3096d23d1aa1f986de857e67c73a1"
+    },
+    {
+      "path": "packages/compiler/tests/fixtures/conformance/BUILD-623/fail/app.ts",
+      "bytes": 202,
+      "sha256": "93a5fba18ffbbe2e18638d84217738795eca55eb180f79e0c5721eb53354c822"
+    },
+    {
+      "path": "packages/compiler/tests/fixtures/conformance/BUILD-623/pass/app.ts",
+      "bytes": 186,
+      "sha256": "811c1d3d9daae1019500111c944f4f9dbbedaf4e3d886165ca63d78546384322"
+    },
+    {
+      "path": "packages/compiler/tests/fixtures/conformance/BUILD-624/fail/app.ts",
+      "bytes": 190,
+      "sha256": "873f8328d8a82e139a77075d85ca8c54c42344da25e62d8856aeb32b152b1f83"
+    },
+    {
+      "path": "packages/compiler/tests/fixtures/conformance/BUILD-624/pass/app.ts",
+      "bytes": 180,
+      "sha256": "1b608443de3ef29ea60dd506824d328c57197d332a12583e1d60581d02b06bee"
+    }
+  ]
+}

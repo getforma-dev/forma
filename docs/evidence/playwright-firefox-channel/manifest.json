@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2327,
+      "sha256": "888f41a8103786387e464f40e478296a6d423fef9bce2d39198e8e72662ade42"
+    },
+    {
+      "path": "browser-cache-before.json",
+      "bytes": 270,
+      "sha256": "0c2ed546e400a3858c7920f7e7250d5baf31bcf67dcae25481049c6d4d191c7b"
+    },
+    {
+      "path": "browser-install.log",
+      "bytes": 11393,
+      "sha256": "21f44ffef1971e6961e2f62dafe8acb4d44b76611e2c15939fd45de668861dee"
+    },
+    {
+      "path": "firefox1555-application.ini",
+      "bytes": 442,
+      "sha256": "173a831ab49f7a276946c0a304adf418730cc2f194cd8850612d93c93450448b"
+    },
+    {
+      "path": "firefox1555-main.js",
+      "bytes": 4505,
+      "sha256": "6ea83968b8a499ebd39f18c0ef8bbdcc203363fb4e75ae6432817d8530fdcc25"
+    },
+    {
+      "path": "firefox1555-platform.ini",
+      "bytes": 47,
+      "sha256": "6823ccfedab06402e5790e91da1d81a0001d3f3711763845a52ece070f4731fa"
+    },
+    {
+      "path": "installed-artifact-proof.json",
+      "bytes": 3476,
+      "sha256": "f267bc3e806558236e28272b90f05fa153b0f0cd290e8879c5b4ce8be0d8f5f9"
+    },
+    {
+      "path": "installed-browsers.json",
+      "bytes": 1135,
+      "sha256": "2cfd419f71ac6475d81e1301fa86c34cf2a2a6bae2a0da4b5a2b18310216b6bf"
+    },
+    {
+      "path": "installed-runner.json",
+      "bytes": 1387,
+      "sha256": "c9d2b327c77ce6ca5cd7cdbc705cb792b0dcdf1b2322dd6436b2a48f6aa49f22"
+    },
+    {
+      "path": "lock-delta.json",
+      "bytes": 7079,
+      "sha256": "e403ae89215739fe07f58e63e3ea0ad1070c54162d3934f0d9263529d1235058"
+    },
+    {
+      "path": "lock-update.log",
+      "bytes": 18,
+      "sha256": "b125771fda8addd462adfe7f7b03299feb35e28badbb2d16ae8589e371216f8f"
+    },
+    {
+      "path": "npm-audit.json",
+      "bytes": 364,
+      "sha256": "f2ed7b69ab42d7b1e8e30e9f74e71a78c51943e540b13567d80d267c21101eda"
+    },
+    {
+      "path": "npm-audit.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "npm-ci.log",
+      "bytes": 26,
+      "sha256": "96a8595c8236c033b80b90da9f6ec4290ebfe5c46918af2227523b196b6bb98d"
+    },
+    {
+      "path": "npm-signatures.json",
+      "bytes": 37,
+      "sha256": "539ea4684b22e24869bace50b48bda695776477f892861b08d51d219f0d08faf"
+    },
+    {
+      "path": "npm-signatures.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "unchanged-source.json",
+      "bytes": 2215,
+      "sha256": "289de8eca24e9b20659f4226f3c681af4ce7f1851a3effcdd5c1bdb33ede7024"
+    }
+  ],
+  "implementation": [
+    {
+      "path": "package.json",
+      "bytes": 1544,
+      "sha256": "653362815ffea5d9efe6e2299d0ee62806278602cbe99fcd7fbe6f2d77dec98b"
+    },
+    {
+      "path": "packages/core/package.json",
+      "bytes": 6620,
+      "sha256": "80497aab016ab3bcbefec5850cf43c16982dd521383fc4041d3a5cc2101dc6f3"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 222318,
+      "sha256": "06c9440fc0700441b3560566d3abb850a78a98bd3f420b7c8d8b53523743ea90"
+    }
+  ]
+}

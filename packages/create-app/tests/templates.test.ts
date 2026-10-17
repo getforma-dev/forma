@@ -220,12 +220,13 @@ describe.each(TEMPLATES)('%s template', (template) => {
   });
 
   it('packs the install policy under _npmrc so npm does not silently drop it', () => {
-    const packed = run('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], REPO_ROOT);
+    // Windows npm pack took 5.540s; bound both the child and its test at 60s.
+    const packed = run('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], REPO_ROOT, 60_000);
     expect(packed.status, packed.stderr).toBe(0);
     const paths = JSON.parse(packed.stdout)[0].files.map((f: { path: string }) => f.path);
     expect(paths).toContain(`templates/${template}/admin/_npmrc`);
     expect(fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', '_npmrc'), 'utf8')).toContain('ignore-scripts=true');
-  });
+  }, 60_000);
 
   it('ships an npm lockfile that agrees with package.json and resolves only from the npm registry', () => {
     // The templates ship their lockfiles (DR-32): a new project installs the
@@ -461,7 +462,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
     for (const name of INTERNAL_NPM) if (all[name]) expect(all[name]).toBe(`=${SOURCE_VERSION}`);
     expect(all['@getforma/core']).toBe(`=${SOURCE_VERSION}`);
     expect(all['@getforma/build']).toBe(`=${SOURCE_VERSION}`);
-    expect(pkg.engines?.node).toBe('>=20.19.0');
+    expect(pkg.engines?.node).toBe('>=22');
   });
 
   it('has a JSX-to-h() tsconfig', () => {
@@ -506,7 +507,7 @@ describe('the published package', () => {
 });
 
 describe('minimal template', () => {
-  it('compiles the actual scaffolded local page with one declared SERVER count and no islands', () => {
+  it('compiles the actual scaffolded local page with one declared SERVER count and a Counter island', () => {
     const dir = mkTmpDir('forma-template-props-');
     try {
       const created = runCli(['declared-page', '--template', 'minimal'], dir);
@@ -514,11 +515,12 @@ describe('minimal template', () => {
       const { result, diagnostics } = collectDiagnostics(() => generateRealIr(path.join(dir, 'declared-page/admin/src/home/app.tsx')));
       expect(diagnostics).toEqual([]);
       expect(result).not.toBeNull();
-      expect(result!.islands).toEqual([]);
+      expect(result!.islands.map(island => island.name)).toEqual(['Counter']);
       expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint])).toEqual([['count', 3]]);
     } finally { rmrf(dir); }
-  });
-  it('declares the same count prop in its page and Rust handler, with matching initial browser state', () => {
+    // Actual packed Windows CLI/staging reached 10.571s, before compilation.
+  }, 60_000);
+  it('declares the same count prop in its page and Rust handler with a distinct server seed', () => {
     const app = fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/admin/src/home/app.tsx'), 'utf8');
     const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/src/main.rs'), 'utf8'));
     expect(app).toMatch(/type HomeProps = \{ count: number \}/);
@@ -526,7 +528,7 @@ describe('minimal template', () => {
     expect(app).toContain('createSignal(props.count)');
     expect(app).toContain("mount(() => Home({ count: 0 }), '#app')");
     expect(main).toMatch(/#\[derive\(PageProps\)\]\s*struct HomeProps \{\s*count: u32,/);
-    expect(main).toContain('home.render(&HomeProps { count: 0 }, &ctx)');
+    expect(main).toContain('home.render(&HomeProps { count: 7 }, &ctx)');
   });
 
   it('keys its SSR entry points by page name, as @getforma/build reads them', () => {
@@ -541,7 +543,7 @@ describe('minimal template', () => {
     );
     const entries = /entryPoints:\s*\[([\s\S]*?)\]/.exec(build)?.[1] ?? '';
     const pages = [...entries.matchAll(/outfile:\s*'([^']+)\.js'/g)].map((m) => m[1]);
-    expect(pages).toEqual(['home']);
+    expect(pages).toEqual(['home', 'about']);
 
     const ssr = /ssrEntryPoints:\s*\{([^}]*)\}/.exec(build)?.[1] ?? '';
     const keyed = [...ssr.matchAll(/(?:'([^']+)'|"([^"]+)"|([\w$]+))\s*:\s*'([^']+)'/g)].map((m) => ({
@@ -563,9 +565,12 @@ describe('minimal template', () => {
     const main = stripComments(fs.readFileSync(path.join(TEMPLATES_DIR, 'minimal/src/main.rs'), 'utf8'));
     expect(main).toContain('load_ir_modules::<Assets>');
     expect(main).toContain('pages.bind::<HomeProps>("home")');
+    expect(main).toContain('pages.bind::<AboutProps>("about")');
+    expect(main).toContain('about.render(&AboutProps {}, &ctx)');
+    expect(main.indexOf('pages.bind::<AboutProps>')).toBeLessThan(main.indexOf('pages.finalize()'));
     expect(main).toMatch(/Some\(RouteMode::Ssr\) => Some\(pages\.bind/);
     expect(main).toContain('Some(RouteMode::Browser) => None');
-    expect(main).toContain('Some(home) => home.render(&HomeProps { count: 0 }, &ctx)');
+    expect(main).toContain('Some(home) => home.render(&HomeProps { count: 7 }, &ctx)');
     expect(main).toContain('None => render_browser_shell(');
     expect(main.indexOf('pages.finalize()')).toBeLessThan(main.indexOf('tokio::net::TcpListener::bind'));
   });

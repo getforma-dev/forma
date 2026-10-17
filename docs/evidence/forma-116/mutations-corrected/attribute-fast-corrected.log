@@ -1,0 +1,9 @@
+   Compiling forma-ir v3.0.0-dev (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/crates/forma-ir)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.01s
+     Running unittests src/lib.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-security-probes-1do2q6g8/target/debug/deps/forma_ir-6752e66e3505d20f)
+
+running 1 test
+test walker::tests::walk_attr_escaping ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 253 filtered out; finished in 0.00s
+

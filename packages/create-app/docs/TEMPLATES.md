@@ -1,7 +1,9 @@
 # Maintaining source templates
 
 Both templates use the current typed Pages API. Minimal declares a numeric
-count in TypeScript and Rust, binds its handle and finalizes before listening.
+count in TypeScript and Rust, binds its home and empty-props About handles,
+and finalizes before listening. Only Counter is registered for activation;
+About has no islands and its native build publishes no JavaScript.
 Dashboard explicitly remains browser-rendered. Preserve the PageResponse
 boundary, strict compiler diagnostics, worker-off default, consumer MSRV and
 scripts-off npm policy when changing either template.
@@ -26,7 +28,10 @@ It never substitutes Rust source. All ten source files restore on success or
 failure. Packed/installed lock validation remains strict: missing hashes,
 mixed versions and mismatched internal metadata refuse before installation.
 External runtime additions, when needed, come from the reviewed workspace
-lock rather than a fresh registry resolution.
+lock rather than a fresh registry resolution. Stable shipped npm and Cargo
+requirements use `^X.Y.Z`; prereleases keep `=X.Y.Z-beta.N` (or alpha/rc).
+Source seeds remain exact in every version. These manifest ranges do not
+relax the shipped locks' exact candidate versions and archive hashes.
 
 The candidate scaffold gate consumes the actual seven-archive set. A direct
 copy of a source seed is not an installable unpublished candidate. Published
@@ -49,9 +54,43 @@ the top-level peer already satisfies the compiler. This changes the earlier
 single-copy guarantee. The scaffold gate requires every installed copy to
 match a recorded location/version and every required recorded copy to exist;
 its report records the actual inventory and optional omissions. No external
-pin is upgraded to force deduplication. Final stable deduplication remains a
-slice 3 decision, alongside the remaining template/release cleanup.
+pin is upgraded to force deduplication.
 
-The distinct server count 7 check reads raw HTTP before JavaScript. The current
-whole-page mount retains its browser default 0; adopting differing handler
-state during activation remains slice 2, after the state-block work.
+## Slice 3 dependency decision
+
+Keep the two reviewed template esbuild resolutions for 3.0: the direct
+0.28.2 and the candidate build closure's 0.28.1. Both satisfy the declared
+`^0.28.1` requirement. Rewriting the template's existing external lock or
+changing the production bundler solely to remove a duplicate would change
+the artifacts being qualified. The installed-copy inventory remains a gate,
+including any optional compiler peer omission; a third unrecorded copy fails.
+This is an explicit retention decision, not a claim of template deduplication.
+The workspace's development graph separately resolves one esbuild 0.28.1
+under its existing override, including tsup; the vulnerable stale 0.27.7 copy
+is removed without upgrading to tsup 9.
+
+All template frontend manifests require Node 22, matching the public packages;
+Rust stays 1.85. The dashboard uses its installed Tailwind CLI. Source locks
+retain the documented Tailwind watcher advisory; the workspace audit result
+does not describe that separate graph. Scripts remain off and every scaffold
+install still checks registry signatures. See
+[the migration guide](UPGRADING-3.0.md) for the consumer changes.
+
+## Slice 2 source and qualification
+
+Home passes its declared count to a unary Counter with component-local state.
+The native handler starts at7; an explicit Browser build starts at0. The
+compiler removes the authenticated native page mount and injects Counter's
+exact schema/binding metadata. About's empty-props page has no registered
+islands; its native manifest retains its IR and stylesheet with empty JS.
+Dashboard remains explicitly Browser.
+
+The combined source mount is a compile-time native selector, not a permitted
+whole-page SSR hydration call. Do not wrap it in an SSR runtime conditional,
+use its return, or add a second root: unsupported entry shapes refuse.
+
+The actual emitted source tests are in `tests/template-islands.test.ts`.
+Final slice2 acceptance additionally requires the integrated strict adopter,
+actual packed handler7 → activation → increment8/reset0, zero adoption writes
+and a real static navigation with no script/worker requests. Preserve slice1's
+raw-HTTP-only reports as historical evidence; they do not prove these claims.

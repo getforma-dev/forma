@@ -47,12 +47,15 @@
  * Frames are memoized on `<parent key>><file>#<scope>` for exactly that reason.
  */
 
+import {closedExpression} from './closed-expression';
 import type * as T from '@babel/types';
 import * as t from '@babel/types';
 
 import {
   IrEmitContext,
   SLOT_SOURCE_CLIENT,
+  SLOT_TYPE_ARRAY,
+  SLOT_TYPE_OBJECT,
   SLOT_TYPE_BOOL,
   SLOT_TYPE_NUMBER,
   SLOT_TYPE_TEXT,
@@ -75,10 +78,8 @@ import { uniqueName } from './utils.js';
 // ---------------------------------------------------------------------------
 
 /** The statically evaluated initial value of a `createSignal(...)`. */
-export interface SignalDefault {
-  type: 'text' | 'bool' | 'number' | 'null';
-  default: string | boolean | number | null;
-}
+export type SignalDefault = { type: 'text' | 'bool' | 'number' | 'null'; default: string | boolean | number | null }
+  | { type:'aggregate'; default:readonly unknown[]|Record<string,unknown> };
 
 /** A signal the walk found in scope, and the slot minted for it. */
 export interface SignalBinding {
@@ -88,6 +89,7 @@ export interface SignalBinding {
    *  declares a `count` (see the occurrence scheme in utils.uniqueName). */
   slotName: string;
   slotId: number;
+  declaration?: T.Node;
   default: SignalDefault;
 }
 
@@ -106,24 +108,6 @@ export interface SignalScope {
   /** @internal Captured at lazy entry so pending declarations can mint
    *  later. Page-scoped, same lifetime as the frame itself. */
   mint?: { ctx: IrEmitContext; registry: SignalRegistry };
-  /** @internal Signals this frame declares with a literal array of rows,
-   *  which get no slot: diagnostics only (BUILD-303, `lookupLiteralRows`). */
-  literalRows?: Map<string, LiteralRows>;
-}
-
-/**
- * A signal initialized with a non-empty literal array (`createSignal([{…}])`).
- * It gets no named slot (BUILD-504), so a `createList` over it renders the
- * list's server slot, which a handler may or may not fill, where the browser
- * renders these rows (BUILD-303).
- */
-export interface LiteralRows {
-  /** How many rows the literal default has. */
-  rows: number;
-  /** The file that declares the signal. */
-  file: string;
-  /** The literal, in that file's compiled text. */
-  node: T.Node;
 }
 
 /**
@@ -165,13 +149,6 @@ function warnSignal(code: string, filePath: string, node: T.Node | null | undefi
  */
 const declarationSites = new WeakMap<SignalDefault, T.Node>();
 
-/**
- * The literal-rows signals each collected declaration map holds, keyed by the
- * map `collectSignalDeclarations` returns, so every caller (a walk frame, the
- * import resolver's quiet scan) carries them without a signature change.
- */
-const literalRowsOf = new WeakMap<Map<string, SignalDefault>, Map<string, LiteralRows>>();
-
 /** Peel TypeScript's erased wrappers and parentheses. */
 function unwrapExpression(node: T.Node): T.Node {
   let current = node;
@@ -185,10 +162,9 @@ function unwrapExpression(node: T.Node): T.Node {
 }
 
 /**
- * A literal array or object of literals, as DR-1's published subset admits
- * them: such a signal still gets no named slot, and the line is still printed,
- * but as a note --strict does not fail on (BUILD-504).
- * Verified by: packages/compiler/tests/diagnostics-conformance.test.ts > "BUILD-504"
+ * Bounded closed array/object seeds are admitted values. Aggregate constants
+ * are materialized only when a native binding actually reads them.
+ * Verified by: packages/compiler/tests/signal-scope.test.ts
  */
 function isLiteralStructure(node: T.Node | null | undefined): boolean {
   if (!node) return false;
@@ -203,6 +179,7 @@ function isLiteralStructure(node: T.Node | null | undefined): boolean {
   if (t.isUnaryExpression(node)) {
     return (node.operator === '-' || node.operator === '+') && t.isNumericLiteral(node.argument);
   }
+  if (t.isLogicalExpression(node) && node.operator === '??') return isLiteralStructure(node.left) && isLiteralStructure(node.right);
   if (t.isArrayExpression(node)) {
     return node.elements.every((element) => element !== null && !t.isSpreadElement(element)
       && isLiteralStructure(element));
@@ -262,7 +239,14 @@ function asVariableDeclaration(node: T.Node): T.VariableDeclaration | null {
 function evaluateSignalDefault(
   node: T.Expression,
   constants?: Map<string, string>,
+  file = '',
 ): SignalDefault | null {
+  const raw=unwrapExpression(node);
+  if (isLiteralStructure(raw) && (t.isArrayExpression(raw) || t.isObjectExpression(raw) || t.isLogicalExpression(raw))) {
+    const value=closedExpression(node,file,constants);
+    if(value!==null&&typeof value==='object')return {type:'aggregate',default:value as readonly unknown[]|Record<string,unknown>};
+    return {type:value===null?'null':typeof value==='boolean'?'bool':typeof value==='number'?'number':'text',default:value as string|boolean|number|null};
+  }
   if (t.isStringLiteral(node)) return { type: 'text', default: node.value };
   if (t.isNumericLiteral(node)) return { type: 'number', default: node.value };
   if (t.isBooleanLiteral(node)) return { type: 'bool', default: node.value };
@@ -295,7 +279,7 @@ function evaluateSignalDefault(
   }
 
   if (t.isParenthesizedExpression(node)) {
-    return evaluateSignalDefault(node.expression, constants);
+    return evaluateSignalDefault(node.expression, constants, file);
   }
 
   // `createSignal(null as string | null)` — the way a store widens a signal's
@@ -311,7 +295,7 @@ function evaluateSignalDefault(
     || t.isTSSatisfiesExpression(node)
     || t.isTSNonNullExpression(node)
   ) {
-    return evaluateSignalDefault(node.expression, constants);
+    return evaluateSignalDefault(node.expression, constants, file);
   }
 
   return null;
@@ -337,8 +321,6 @@ export function collectSignalDeclarations(
   options: SignalCollectOptions,
 ): Map<string, SignalDefault> {
   const signals = new Map<string, SignalDefault>();
-  const literalRows = new Map<string, LiteralRows>();
-  literalRowsOf.set(signals, literalRows);
 
   const record = (name: string, value: SignalDefault, node: T.Node): void => {
     const existing = signals.get(name);
@@ -385,26 +367,18 @@ export function collectSignalDeclarations(
         continue;
       }
 
-      const evaluated = evaluateSignalDefault(initArg as T.Expression, options.constants);
-      if (!evaluated && !signals.has(signalName) && !literalRows.has(signalName)) {
-        // Recorded quietly too: an import of this signal from another module
-        // reaches it through the resolver's quiet scan.
-        const literal = unwrapExpression(initArg);
-        if (t.isArrayExpression(literal) && literal.elements.length > 0 && isLiteralStructure(literal)) {
-          literalRows.set(signalName, { rows: literal.elements.length, file: options.filePath, node: literal });
-        }
-      }
+      const evaluated = evaluateSignalDefault(initArg as T.Expression, options.constants, options.filePath);
       if (evaluated) {
         record(signalName, evaluated, varDecl);
       } else if (!options.quiet) {
         warnSignal(
-          isLiteralStructure(initArg) ? 'BUILD-504' : 'BUILD-501',
+          'BUILD-501',
           options.filePath,
           initArg,
           `signal '${signalName}' is initialized with a ${(initArg as T.Expression).type} the compiler `
           + `cannot evaluate — it gets no named slot, so bindings to it land in anonymous `
           + `'text:'/'attr:' slots that cannot be injected by name and render EMPTY server-side; `
-          + `initialize it with a string, number, boolean or null literal, or with a module-level string const`,
+          + `initialize it with bounded closed data or a declared props field`,
         );
       }
     }
@@ -512,8 +486,6 @@ export function enterSignalScope(
   }
 
   const scope: SignalScope = { key, scopeId, bindings: new Map(), parent };
-  const rows = literalRowsOf.get(declarations);
-  if (rows?.size) scope.literalRows = new Map(rows);
   registry.frames.set(key, scope);
   scope.pending = new Map(declarations);
   scope.mint = { ctx, registry };
@@ -570,13 +542,21 @@ function materializeBinding(scope: SignalScope, name: string): SignalBinding | u
       (scope.scopeId ?? scope.key).split('#')[0]!,
       declarationSites.get(sigDefault),
       `signal '${name}' is also declared in another scope on this page, so this one gets `
-      + `the slot name '${slotName}' — inject it under that exact name. If the two are meant `
+      + `the private CLIENT debug label '${slotName}'. If the two are meant `
       + `to be ONE signal, declare it once and import it rather than re-declaring it`,
     );
   }
-  const { typeHint, defaultBytes } = encodeSignalDefault(sigDefault);
-  const slotId = ctx.addSlot(slotName, typeHint, SLOT_SOURCE_CLIENT, defaultBytes, false);
-  const binding: SignalBinding = { name, slotName, slotId, default: sigDefault };
+  let slotId:number|undefined;
+  if(sigDefault.type!=='aggregate') {
+    const {typeHint,defaultBytes}=encodeSignalDefault(sigDefault);
+    slotId=ctx.addSlot(slotName,typeHint,SLOT_SOURCE_CLIENT,defaultBytes,false);
+  }
+  // A closed constant may be declared but unread. Materialize only an actual
+  // use, so the native unused-constant refusal remains meaningful.
+  const binding:SignalBinding={name,slotName,default:sigDefault,declaration:declarationSites.get(sigDefault),get slotId(){
+    if(slotId===undefined)slotId=ctx.addConstantSlot(sigDefault.default,Array.isArray(sigDefault.default)?SLOT_TYPE_ARRAY:SLOT_TYPE_OBJECT);
+    return slotId;
+  }};
   scope.bindings.set(name, binding);
   return binding;
 }
@@ -585,24 +565,6 @@ function materializeBinding(scope: SignalScope, name: string): SignalBinding | u
 function materializeAll(scope: SignalScope): void {
   if (!scope.pending?.size) return;
   for (const name of [...scope.pending.keys()]) materializeBinding(scope, name);
-}
-
-/**
- * The literal rows `name` resolves to, searching outward through the chain:
- * a frame that binds or declares `name` as a slot-carrying signal shadows
- * any literal-rows declaration further out. Diagnostics only (BUILD-303).
- * Verified by: packages/compiler/tests/diagnostics-conformance.test.ts > "BUILD-303"
- */
-export function lookupLiteralRows(
-  scope: SignalScope | null | undefined,
-  name: string,
-): LiteralRows | undefined {
-  for (let s = scope ?? null; s !== null; s = s.parent) {
-    if (s.bindings.has(name) || s.pending?.has(name)) return undefined;
-    const rows = s.literalRows?.get(name);
-    if (rows) return rows;
-  }
-  return undefined;
 }
 
 /** The binding `name` resolves to, searching outward through the chain. */
@@ -755,9 +717,7 @@ export interface ResolvedSignalImport {
    *  order (imported names first, the rest at walk entry) — names and
    *  defaults are unaffected, and injection is by name. */
   declarations: Map<string, SignalDefault>;
-  /** Set instead of a slot-carrying declaration when the imported signal is
-   *  initialized with literal rows: diagnostics only (BUILD-303). */
-  literalRows?: LiteralRows;
+
 }
 
 export function createSignalImportResolver(
@@ -839,30 +799,6 @@ export function createSignalImportResolver(
               name: lookup.name,
               declarations: lookup.declarations,
             };
-          } else {
-            // A signal initialized with literal rows has no slot to bind, so
-            // the lookup above does not find it. The same export walk over the
-            // module's literal-rows declarations does; it is carried for the
-            // diagnostic at a createList over it (BUILD-303), and mints nothing.
-            const rowsLookup: SignalExportLookup<LiteralRows> = resolveExportedSignal(
-              mod.source,
-              mod.path,
-              binding.imported,
-              {
-                loadModule: loadEdgeCached,
-                readSignals: (source, path) => literalRowsOf.get(readSignalsCached(source, path)) ?? new Map(),
-                parsed: parsedByPath,
-              },
-            );
-            const rows = rowsLookup.kind === 'found' ? rowsLookup.declarations.get(rowsLookup.name) : undefined;
-            if (rowsLookup.kind === 'found' && rows) {
-              hit = {
-                definingPath: rowsLookup.filePath,
-                name: rowsLookup.name,
-                declarations: new Map(),
-                literalRows: rows,
-              };
-            }
           }
           lookups.set(key, hit);
         }
@@ -897,12 +833,6 @@ export function resolveModuleSignalImports(
 ): void {
   for (const [localName, resolved] of imports.resolve(ast, filePath)) {
     if (moduleScope.bindings.has(localName)) continue;
-    if (resolved.literalRows) {
-      if (!moduleScope.pending?.has(localName)) {
-        (moduleScope.literalRows ??= new Map()).set(localName, resolved.literalRows);
-      }
-      continue;
-    }
     // Lazy entry + single-name materialization: the defining module's frame
     // carries its COMPLETE declaration map (the memo contract), but only the
     // signal actually imported mints a slot here. Unread store signals cost

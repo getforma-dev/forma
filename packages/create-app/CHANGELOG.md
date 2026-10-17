@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed — FORMA-144 slice 3
+
+- Ship caret requirements for stable sets and exact prerelease requirements, while keeping the tested archive versions and hashes in both lockfiles. Source seeds remain exact; staging preserves typed Rust sources and restores files even on failure.
+- Match the public Node 22 floor, retain the local Tailwind CLI and scripts-off/signature checks, and document the explicit two-copy esbuild decision. Add the 0.6.x template migration guide with preserved-source links. Current packed adoption, static-page and size evidence remains a release gate.
+
+### Changed — FORMA-144 slice 2
+
+- Extract the minimal template's unary Counter island with a declared count. The native handler supplies7 independently of Browser mode's0; native compilation removes the whole-page mount and retains only the registered interactive region.
+- Add a typed empty-props About route sharing the stylesheet. Its native product has no islands or JavaScript; Dashboard remains explicitly Browser. Dependency manifests and lock seeds are unchanged.
+- Source controls pair the actual emitted metadata and browser entry. Final zero-write adoption and zero-network qualification still require the integrated104/105 packed consumers; slice3 release/size work remains open.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

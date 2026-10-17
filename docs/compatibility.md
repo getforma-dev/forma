@@ -6,9 +6,11 @@ FORMA-185 FMIR v3 format. The seven packages share a release version:
 `@getforma/compiler`, `@getforma/build`, and `@getforma/create-app`.
 It is not a declaration that the remaining 3.0.0 milestone work has shipped.
 `scripts/release-contracts.json` states which tickets gate which milestone: the
-alpha's gates are done, the beta's, rc's and final's are pending, and a tag
-publishes only for a milestone whose gates are all done (`docs/RELEASING.md`,
-"Milestone gate"). Historical A2 and partial FMIR-v3 release evidence is retained.
+alpha and beta gates have accepted evidence, while RC/final obligations remain
+open. See the [beta qualification record](release/BETA-QUALIFICATION.md).
+A tag publishes only after its milestone gates, exact-main CI and tagged
+verification pass (`docs/RELEASING.md`, "Milestone gate"). Gate completion is
+not a claim of publication. Historical A2 and earlier evidence is retained.
 
 ## Window and upgrade order
 
@@ -63,15 +65,28 @@ Evidence:
 ## Manifest 2
 
 `version` is 2. `writer` is the build package's base triple. `app` is a required
-application name. `build` currently carries the existing filename-derived build
-identifier (`dev` in watch); FORMA-186 owns the final deployment identity.
+application name. `build` is the deployment identity (FORMA-186, DR-29; L-6 as
+amended by L-56): 16 lowercase hex characters computed from every output of a first
+bundling pass (bundles, `.ir` modules, css, fonts) and the writers' versions,
+compiled into every JavaScript bundle (`__FORMA_BUILD__` and a banner), and `dev` in
+watch. forma-server stamps it on the page's root (`data-forma-build`, both the
+server-rendered form and the browser shell). Before `activateIslands` or `mount`,
+core compares the bundle identity with that root's attribute, freezes the verdict
+per Document, and leaves a mismatched page inert. The cancelable Document event
+`forma:skew` reports `{ page, bundle, reload }`; automatic reload is at most once
+per full page identity in session storage, and unavailable storage prevents it.
+Absent identities remain unchecked. Public `hydrateIsland` and application-owned
+imports are outside this guard. See core's [deployment contract](../packages/core/docs/ISLANDS.md#deployment-mismatch).
 
 `aliases` maps logical filenames to output filenames. `assets` maps each output
-filename to `{ immutable, integrity?, retained? }`. The build emits SHA-384/base64
+filename to `{ immutable, integrity, retained? }`. The build emits SHA-384/base64
 integrity from final uncompressed bytes; compressed sidecars, the manifest and
-worker are excluded. The server validates the digest syntax when present;
-FORMA-111 still owns byte-integrity enforcement. A `retained` marker can be read,
-but FORMA-186 owns producing and retaining prior builds.
+worker are excluded. The server requires canonical full digests, including for retained entries,
+and rendered external script/stylesheet/modulepreload resources carry that
+integrity with anonymous crossorigin. See [full asset digests](UPGRADING-3.0.md#full-asset-digests). `retained: true` marks a file of the
+previous release that the build copied in for tabs still open on it (FORMA-186,
+`previousDist`; one generation, checked against the previous manifest's SHA-384);
+a retained entry is always `immutable`.
 
 Routes declare `mode: "ssr" | "browser"`, JS/CSS/fonts, optional static
 `modulepreload`, and an IR filename only for SSR. A declared SSR route without IR
@@ -111,7 +126,10 @@ An enabled worker now requires this checked startup call before binding:
 
 ```rust
 let manifest = forma_server::assets::try_load_manifest::<Assets>()?;
-let (_, modules) = forma_server::load_ir_modules_strict::<Assets>(&manifest)?;
+let pages = forma_server::load_ir_modules::<Assets>(&manifest)?;
+let home = pages.bind::<HomeProps>("home")?;
+// Bind every other SSR route here as well.
+pages.finalize()?;
 forma_server::sw::configure_for_manifest(
     forma_server::sw::ServiceWorker::for_app("ledger")?.enabled(),
     &manifest,
@@ -127,9 +145,9 @@ startup call; upgrading ranges and rebuilding alone is not a complete migration.
 Direct manifest consumers also migrate `build_hash` to `build` and logical asset
 lookups to `aliases`; construct mode/metadata fields when constructing manifests.
 
-This task does not edit user applications. The source templates retain A2
-consumer pins until FORMA-144's final API migration. Packing temporarily stages
-exact candidate npm/Cargo requirements and locked checksums. Candidate external
+The source templates use the typed Pages API and exact coordinated version
+seeds. Packing stages stable caret or exact prerelease requirements plus the
+tested candidate versions and hashes in the locks. Candidate external
 runtime additions come only from the committed workspace lock, nested beneath
 the candidate; existing template third-party resolutions stay unchanged. Every
 source manifest and lock is restored after packing, including failed staging.
@@ -138,7 +156,7 @@ exact DS11 artifacts; it does not repair a stale shipped lock during installatio
 
 ## Public compiler API and duplicate core
 
-The public runtime exports are `formaSsrPlugin`, `generateRealIr`, `IrEmitContext`,
+The public runtime exports are `formaSsrPlugin`, `generateRealIr`, `getSsrEntryProducts`, `IrEmitContext`,
 `COMPILER_WRITER_VERSION`, `baseWriterVersion`, `FmirContainerError`,
 `readFmirContainer`, `encodeFmirSections`, `dumpFmir`, `crc32`,
 `DIAGNOSTIC_CATALOGUE`, `collectDiagnostics`, `diagnosticEntry`,
@@ -158,20 +176,21 @@ Preview-frame byte compatibility remains its separate stricter check.
 
 ## Cross-contract ownership and tests (design §6.8)
 
-A listed future owner is not a claim that its contract is complete.
+These are implementation and qualification entry points. Current release
+readiness still requires the milestone gates and authenticated candidate evidence.
 
 | Contract | Owner | Cross-boundary gate / remaining work |
 |---|---|---|
 | Seven-package version and window | forma-server | Shared version pairs; actual npm peers/packed build; actual renderer 3.1; DS11 exact-version assertions (112/187). |
 | FMIR layout/opcodes | forma-ir | Frozen v3 faults, TS emission/Rust parse, private 14-case HTML/dump corpus (185). Window overlay changes only the patch fixture expectation; binary bytes and historical index remain untouched. |
 | Published compiler subset | compiler | Per-code failing/near-miss conformance corpus and compiler/build tests. Later subset changes retain their own tickets. |
-| Props schema | forma-ir | V3 schema/default load validation (185); typed derive/bind mutation suite remains 102/103. |
-| Markers, escaping/value and URL rules | core | `js_emitter_contract` HTML goldens, core malicious-value/URL and hydration tests. Later declared-props qualification remains separate. |
-| State block/island set/digests | core | Current activation/serialization tests and packed template interactions; declared-props/state contract is still pending, not supplied by manifest 2. |
-| Deployment identity | core | `build` carrier here; final identity, retention/tabs/skew recovery remain 186/188. |
+| Props schema | forma-ir | V3 schema/default load validation (185); typed derive/bind comparer/value and compile-refusal suites (102/103). |
+| Markers, escaping/value and URL rules | core | `js_emitter_contract` HTML goldens, core malicious-value/URL and hydration tests. Shared value/name/URL vectors and generated three-engine parity retain the declared-data boundaries. |
+| State block/island set/digests | core | Declared-schema state preflight, original host/occurrence claims, zero-write adoption and actual packed template interactions; see core ISLANDS/ISLAND-STATE. |
+| Deployment identity | core | Two-pass identity emission and root stamping, Document-scoped skew guard, one-generation retention/security-mark refusal, and the actual fixture skew drill (186/188). |
 | Manifest schema 2 | forma-server | Real build metadata, Rust schema/mode/ref/cache checks, packed minimal/dashboard load and before-bind negative controls (112/P17). |
-| Trusted Types policy names | forma-server | Existing CSP/Trusted Types browser/server tests; 109's full enforcement remains its own work. |
-| Compiler import names | compiler | `supported-surface.test.ts` keeps root core/runtime h imports and excludes removed imports; packed runtime/declaration surface test; 110 removes legacy plugins. |
+| Trusted Types policy names | forma-server | Native response and Browser-shell CSP/Trusted Types enforcement, named raw-entry boundaries and three-engine browser controls (109). |
+| Compiler import names | compiler | `supported-surface.test.ts` keeps component-entry `@getforma/core` h imports and excludes removed imports; packed compiler runtime/declaration surface test. `runtime-explicit-mount.test.ts` separately checks the HTML runtime's nine exports, which do not include h; legacy plugins and package deep imports are removed (110/108). |
 
 ## Reproduction and rollback
 

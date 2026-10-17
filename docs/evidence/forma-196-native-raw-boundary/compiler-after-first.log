@@ -1,0 +1,39 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/forma/packages/compiler
+
+ ❯ tests/native-raw-boundary.test.ts (34 tests | 1 failed) 189ms
+     × omits transformed global undefined 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/native-raw-boundary.test.ts > safe nearby native forms stay admitted > omits transformed global undefined
+AssertionError: expected [ { code: 'BUILD-207', …(7) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "code": "BUILD-207",
++     "column": 61,
++     "file": "/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-native-raw-H1QD4A/app.tsx",
++     "fix": "Pass the computed value as its own declared prop, inline a literal or module-level const, or declare the component with browserOnly() (`const X = browserOnly(Impl)` from @getforma/core) and register it in activateIslands, so it renders in the browser alone.",
++     "line": 3,
++     "message": "attribute 'srcdoc' on <iframe> is a bare 'void' expression (not wrapped in a function), which the compiler cannot evaluate in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-native-raw-H1QD4A/app.tsx:3:61 — the attribute is OMITTED from the server-rendered HTML and hydration does not re-apply a non-function prop, so it never appears — inline the literal, use a module-level const, or wrap it in a function (`() => …`) for a reactive binding",
++     "strict": true,
++     "why": "The attribute has no supported native value, so the build refuses the page instead of publishing HTML with an omitted attribute.",
++   },
++ ]
+
+ ❯ tests/native-raw-boundary.test.ts:50:170
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 33 passed (34)
+   Start at  15:07:37
+   Duration  661ms (transform 267ms, setup 0ms, import 382ms, tests 189ms, environment 0ms)
+

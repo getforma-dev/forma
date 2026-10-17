@@ -1,6 +1,8 @@
+import { mountFixture, unmountFixture } from './runtime-fixture';
+import { emptyRegistry, installState, useFreshDocument } from '../dom/__tests__/helpers/compiled-island.js';
 // Defects found by adversarial verification of the 1.3.0 DOM work.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, unmount, clearDiagnostics } from '../runtime';
+import { clearDiagnostics } from '../runtime';
 import { activateIslands, deactivateIsland, deactivateAllIslands } from '../dom/activate';
 import { h } from '../dom/element';
 
@@ -15,11 +17,11 @@ describe('CSP parser left-associativity (HIGH)', () => {
     c = document.createElement('div');
     document.body.appendChild(c);
   });
-  afterEach(() => { unmount(c); c.remove(); });
+  afterEach(() => { unmountFixture(c); c.remove(); });
 
   async function evalText(expr: string): Promise<string | null> {
     c.innerHTML = `<div data-forma-state='{}'><p id="o" data-text="{${expr}}"></p></div>`;
-    mount(c);
+    mountFixture(c);
     await tick();
     return c.querySelector('#o')!.textContent;
   }
@@ -48,8 +50,9 @@ describe('island teardown removes deferred work (HIGH)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Inter" data-forma-hydrate="interaction"' +
       ' data-forma-status="pending"><span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Inter: hydrateFn });
+    activateIslands(emptyRegistry({ Inter: hydrateFn }));
     const el = document.querySelector('[data-forma-island]') as HTMLElement;
     deactivateIsland(el);
     el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
@@ -65,8 +68,9 @@ describe('island teardown removes deferred work (HIGH)', () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Vis" data-forma-hydrate="visible"' +
       ' data-forma-status="pending"><span>x</span></div>';
+    installState();
     const hydrateFn = vi.fn(() => null);
-    activateIslands({ Vis: hydrateFn });
+    activateIslands(emptyRegistry({ Vis: hydrateFn }));
     expect(observe).toHaveBeenCalledTimes(1);
     deactivateAllIslands(document);
     expect(disconnect).toHaveBeenCalledTimes(1);
@@ -80,14 +84,14 @@ describe('data-model member-path binding (MEDIUM)', () => {
     c = document.createElement('div');
     document.body.appendChild(c);
   });
-  afterEach(() => { unmount(c); c.remove(); });
+  afterEach(() => { unmountFixture(c); c.remove(); });
 
   it('reflects a nested {item.name} into an input inside a data-list row', async () => {
     c.innerHTML =
       `<div data-forma-state='{"rows": [{"name": "alice"}]}'>` +
       `<ul data-list="{rows}"><li data-key="{index}">` +
       `<input class="inp" data-model="{item.name}"></li></ul></div>`;
-    mount(c);
+    mountFixture(c);
     await tick();
     const input = c.querySelector('.inp') as HTMLInputElement;
     expect(input.value).toBe('alice');
@@ -100,3 +104,5 @@ describe('h() dual-use tag defaults to HTML without svg context (MEDIUM)', () =>
     expect(el.namespaceURI).toBe('http://www.w3.org/1999/xhtml');
   });
 });
+
+useFreshDocument();

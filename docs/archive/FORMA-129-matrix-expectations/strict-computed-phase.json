@@ -1,0 +1,3952 @@
+{
+  "schema": 1,
+  "passed": false,
+  "completeMatrix": true,
+  "selection": null,
+  "node": "v24.22.0",
+  "sourceCommit": "220a1587cb5b63033005d7be3e3de657e41efcd4",
+  "sourceClean": true,
+  "catalogueSha256": "8ad17caf088ed5d85314173ecc0665c93bc61646a6a1c0d4effebdf7e2377c0b",
+  "requested": 1686,
+  "requestedCapabilityControls": 30,
+  "cases": [
+    {
+      "id": "value/script/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/script-close/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/image-handler/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-handler/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/math-parser/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/quote-breakout/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/single-quote/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/template-expression/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/braces-expression/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/javascript/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/mixed-scheme/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/tab-scheme/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/newline-scheme/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/control-prefix/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/entity-scheme/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/data-document/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/svg-data/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/vbscript/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/prototype-json/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/selector-secret/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/constructor-text/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/state/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/computed/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/show/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/if/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 2,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/model/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/class/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/event/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/list-text/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/list-attribute/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/list-property/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 5,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/persist/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/ref/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/srcdoc/none",
+      "codes": [
+        "FORMA_E_RUNTIME_SRCDOC"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/url/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/form-action/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/image-src/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 3,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "value/nul-markup/svg-xlink/none",
+      "codes": [],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/javascript/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/mixed-scheme/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/tab-scheme/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/control-prefix/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/data-document/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/svg-data/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    },
+    {
+      "id": "fetch/vbscript/none",
+      "codes": [
+        "FORMA_E_GRANT_FETCH"
+      ],
+      "executed": 0,
+      "outsideReads": 0,
+      "live": true,
+      "nodes": 4,
+      "unauthorizedRequests": 0
+    }
+  ],
+  "capabilities": [],
+  "observers": [
+    {
+      "profile": "none",
+      "executions": 1,
+      "secret": "secret-1290300",
+      "outsideReads": 1,
+      "response": 200,
+      "unexpectedResponse": 404,
+      "trustedTypesRefused": true
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/observer-control",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:62494"
+    },
+    {
+      "method": "GET",
+      "path": "/observer-unexpected",
+      "cookie": "hostile_fixture=secret",
+      "origin": "http://127.0.0.1:62494"
+    }
+  ],
+  "harnessSources": {
+    "catalogue.mjs": "173cbdb1a45cec38dcda186eb531f5c27788244e0101a26b274354fac6774460",
+    "browser-case.mjs": "0d6f755f06919d720976e0ac6a31a06518b99cf515e3be3250af600584555323",
+    "capabilities.mjs": "efc0456760d65452bb4d3a2d4bc3aae18dad95727593c2e5d3c88dbf99eadded",
+    "observers.mjs": "56bf79c8f930b7a697a25abf6064d3311e65e80b8b6c8b768cd7d542c6c186d4",
+    "server.mjs": "81835d321462e4097df5e45331d3638f9e996a9bec1ac67e559fd818932dd506",
+    "run.mjs": "2c8ebca705e1ed8c0e9f190b455cb9fcc810895ea7c72398540b6e757f7b586a",
+    "probe-provenance.json": "8f5160f7b386bee90a599221204e967ac9c2435f3a9b09de094bbe9e36fb8921"
+  },
+  "provenance": {
+    "historical": 93,
+    "current": 260,
+    "currentSecurity": 151
+  },
+  "runtimePath": "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma129-packed-security-six7Gr/packages/core/dist/formajs-runtime.global.js",
+  "runtimeSha256": "b9a14f2596b4ec1924297b51146c28efba4926b13b3a83b02c1b773b3495e23c",
+  "policy": "default-src 'none'; script-src 'nonce-BZenp5NcI+I6ZOwtl7f5cV0tkClcgk+B' 'strict-dynamic'; connect-src 'self' http://127.0.0.1:62493; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+  "browser": "151.0.7922.34",
+  "current": {
+    "id": "expression/constructor/computed/none",
+    "kind": "expression",
+    "payload": "items.constructor",
+    "code": "FORMA_E_KEY_DENIED",
+    "context": "computed",
+    "profile": "none"
+  },
+  "error": "page.evaluate: Error: expression/constructor/computed/none: expected only FORMA_E_KEY_DENIED, actual [\"FORMA_E_KEY_DENIED\",\"FORMA_E_UNRESOLVED\"]\n    at runBrowserCase (eval at evaluate (:311:30), <anonymous>:75:13)\n    at async <anonymous>:337:30\n    at /Users/victorvillacis/dev/Forma/work/FORMA-129/forma/packages/core/e2e/hostile-widgets/run.mjs:72:33",
+  "elapsedMs": 7493.893166
+}

@@ -1,0 +1,4 @@
+{
+  "note": "Known divergences (FORMA-183; e2e/parity/README.md, 'Expected divergence'). Each entry is run, must still occur (an entry that matches nothing fails the run as an unexpected pass, so it is removed the day its fix lands) and names the ticket that clears it; Every entry found at step 0 (2026-10-15) was reported to the lead, who named its ticket. FORMA-181 checkpoint B and FORMA-182 rules 2 to 7 add their own entries here as they land.",
+  "entries": []
+}

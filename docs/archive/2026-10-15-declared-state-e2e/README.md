@@ -1,0 +1,3 @@
+# SSR E2E fixtures before the declared-state channel
+
+These exact original files retain the generic count's expected failure, Ledger's handwritten two-argument prop-seeding wrapper and browser-only inline props assertion. The active fixtures now consume compiler-branded unary registrations and the single native head state block. Generic count uses a declared Counter island; Ledger defers its network startup through the existing ref/event lifecycle, with no immediate pre-return mutation or handwritten seeding. Other whole-page adoption and edited-control fixtures are unchanged and remain 104/105 work.

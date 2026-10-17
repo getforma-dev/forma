@@ -34,9 +34,14 @@
     deny(clippy::unwrap_used, clippy::expect_used, clippy::panic)
 )]
 
+mod contracts;
 /// On-disk FMIR layout: header, section table, opcodes, and the table entry
 /// types. See `docs/FMIR-FORMAT.md` for the stability contract.
 pub mod format;
+/// Canonical row identity for keyed lists (FORMA-181): the key domain, the
+/// path read and the text written as `data-forma-key`. Crate-private; the
+/// shared vectors are `tests/fixtures/parity/keys.json`.
+mod keys;
 /// Bounds-checked parsing and one-shot structural validation of an FMIR file.
 pub mod parser;
 /// Derived page contracts, schema comparison and checked value encoding.
@@ -45,6 +50,9 @@ pub mod props;
 pub mod schema;
 /// Runtime slot values and the dense `SlotData` a page handler populates.
 pub mod slot;
+/// Rule-1 text normalization shared by the walker's ordinary text and
+/// attribute writes (FORMA-182). Crate-private: not part of the API.
+mod text;
 /// The SSR walker: opcode stream plus slot values in, HTML out.
 pub mod walker;
 
@@ -78,15 +86,15 @@ pub use props::PageProps;
 
 // Re-exports for convenience
 pub use format::{
-    IrError, IrHeader, IslandEntry, IslandTrigger, Opcode, SectionDescriptor, SectionTable,
-    SlotEntry, SlotSource, SlotType, HEADER_SIZE, IR_VERSION, SECTION_ENTRY_SIZE, SIGNATURE,
-    TABLE_PREFIX_SIZE,
+    IrError, IrHeader, IslandEntry, IslandTrigger, ListKeyReason, ListKeyViolation, Opcode,
+    SectionDescriptor, SectionTable, SlotEntry, SlotSource, SlotType, HEADER_SIZE, IR_VERSION,
+    SECTION_ENTRY_SIZE, SIGNATURE, TABLE_PREFIX_SIZE,
 };
 pub use parser::{IrModule, IslandTableParsed, SlotTable, StringTable};
 pub use slot::{json_to_slot_value, SlotData, SlotValue};
 pub use walker::{
-    walk_to_html, walk_to_html_counted, walk_to_html_with_limits, WalkCounts, WalkFailure,
-    WalkLimits, WalkOutput, DEFAULT_MAX_LIST_ITERATIONS, DEFAULT_MAX_OUTPUT_BYTES,
+    walk_to_html, walk_to_html_counted, walk_to_html_with_limits, IslandState, WalkCounts,
+    WalkFailure, WalkLimits, WalkOutput, DEFAULT_MAX_LIST_ITERATIONS, DEFAULT_MAX_OUTPUT_BYTES,
 };
 
 // The combined page/fragment corpus has private access to the internal walker.

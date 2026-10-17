@@ -1,0 +1,182 @@
+
+Running 9 tests using 2 workers
+
+(node:46236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:46237) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/9] [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation
+[2/9] [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation
+  1) [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation 
+
+    Error: expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"adoption": {"count": "7", "mutations": [], "sameHost": true, "sameNodes": true}, "before": {"count": 7, "hash": "0123456789abcdef", "nodes": 11}, "errors": [], "servedPolicy": "default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime", "transitions": [7, 8, 0, 1], "violations": [], "workers": []}
+
+      29 |    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
+      30 |     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
+    > 31 |    await expect(observed).rejects.toThrow(/adoption wrote to the DOM/);
+         |                                   ^
+      32 |   });
+      33 |  });
+      34 | }
+        at run (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:31:35)
+        at fixture (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:23:12)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:28:3
+
+    Error Context: test-results/module-readiness-minimal-a-67c0c-inside-adoption-observation-chromium/error-context.md
+
+
+(node:46266) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[3/9] [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation
+  2) [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation 
+
+    Error: expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"hosts": {"Counter": 1}, "interacted": true, "mutations": 0, "nodes": 11, "route": "/", "served": {"counts": null, "csp": "default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"}}
+
+      29 |    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
+      30 |     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
+    > 31 |    await expect(observed).rejects.toThrow(/adoption wrote to the DOM/);
+         |                                   ^
+      32 |   });
+      33 |  });
+      34 | }
+        at run (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:31:35)
+        at fixture (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:23:12)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:28:3
+
+    Error Context: test-results/module-readiness-fixture-a-d2210-inside-adoption-observation-chromium/error-context.md
+
+
+(node:46282) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[4/9] [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:35:5 › DOMContentLoaded can precede TLA completion; importing the existing module awaits it without reexecution
+  3) [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation 
+
+    Error: expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"adoption": {"count": "7", "mutations": [], "sameHost": true, "sameNodes": true}, "before": {"count": 7, "hash": "0123456789abcdef", "nodes": 11}, "errors": [], "servedPolicy": "default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime", "transitions": [7, 8, 0, 1], "violations": [], "workers": []}
+
+      29 |    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
+      30 |     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
+    > 31 |    await expect(observed).rejects.toThrow(/adoption wrote to the DOM/);
+         |                                   ^
+      32 |   });
+      33 |  });
+      34 | }
+        at run (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:31:35)
+        at fixture (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:23:12)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:28:3
+
+    Error Context: test-results/module-readiness-minimal-a-67c0c-inside-adoption-observation-firefox/error-context.md
+
+
+(node:46287) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[5/9] [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation
+(node:46297) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/9] [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation
+  4) [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation 
+
+    Error: expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"hosts": {"Counter": 1}, "interacted": true, "mutations": 0, "nodes": 11, "route": "/", "served": {"counts": null, "csp": "default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"}}
+
+      29 |    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
+      30 |     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
+    > 31 |    await expect(observed).rejects.toThrow(/adoption wrote to the DOM/);
+         |                                   ^
+      32 |   });
+      33 |  });
+      34 | }
+        at run (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:31:35)
+        at fixture (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:23:12)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:28:3
+
+    Error Context: test-results/module-readiness-fixture-a-d2210-inside-adoption-observation-firefox/error-context.md
+
+
+(node:46310) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/9] [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:35:5 › DOMContentLoaded can precede TLA completion; importing the existing module awaits it without reexecution
+  5) [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation 
+
+    Error: expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"adoption": {"count": "7", "mutations": [], "sameHost": true, "sameNodes": true}, "before": {"count": 7, "hash": "0123456789abcdef", "nodes": 11}, "errors": [], "servedPolicy": "default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime", "transitions": [7, 8, 0, 1], "violations": [], "workers": []}
+
+      29 |    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
+      30 |     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
+    > 31 |    await expect(observed).rejects.toThrow(/adoption wrote to the DOM/);
+         |                                   ^
+      32 |   });
+      33 |  });
+      34 | }
+        at run (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:31:35)
+        at fixture (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:23:12)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:28:3
+
+    Error Context: test-results/module-readiness-minimal-a-67c0c-inside-adoption-observation-webkit/error-context.md
+
+
+(node:46330) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[8/9] [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation
+  6) [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation 
+
+    Error: expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"hosts": {"Counter": 1}, "interacted": true, "mutations": 0, "nodes": 11, "route": "/", "served": {"counts": null, "csp": "default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"}}
+
+      29 |    const observed=kind==='minimal'?verifyMinimalIsland(browser,origin,manifest,7,{timeout:5000})
+      30 |     :verifyIslandPage(browser,origin,'/',manifest,{timeout:5000,expected:{serverValues:[{selector:'.count span',text:'7'}],hosts:{Counter:1},state:{Counter:[{count:7}]}},interact:async page=>{await page.getByRole('button',{name:'Increment',exact:true}).click();await expect(page.locator('.count span')).toHaveText('8');return true;}});
+    > 31 |    await expect(observed).rejects.toThrow(/adoption wrote to the DOM/);
+         |                                   ^
+      32 |   });
+      33 |  });
+      34 | }
+        at run (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:31:35)
+        at fixture (/Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:23:12)
+        at /Users/victorvillacis/dev/Forma/work/FORMA-dashboard-tooltip/after/e2e/fixtures/apps/module-readiness.spec.ts:28:3
+
+    Error Context: test-results/module-readiness-fixture-a-d2210-inside-adoption-observation-webkit/error-context.md
+
+
+(node:46347) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[9/9] [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:35:5 › DOMContentLoaded can precede TLA completion; importing the existing module awaits it without reexecution
+  6 failed
+    [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation 
+    [chromium] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation 
+    [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation 
+    [firefox] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation 
+    [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › minimal: a write after yielded module evaluation starts remains inside adoption observation 
+    [webkit] › e2e/fixtures/apps/module-readiness.spec.ts:27:6 › fixture: a write after yielded module evaluation starts remains inside adoption observation 
+  3 passed (11.3s)

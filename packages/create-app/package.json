@@ -1,6 +1,6 @@
 {
   "name": "@getforma/create-app",
-  "version": "3.0.0-dev",
+  "version": "3.0.0-beta.1",
   "type": "module",
   "author": "Forma <victor@getforma.dev>",
   "homepage": "https://getforma.dev",
@@ -30,10 +30,10 @@
     "tsup": "^8.5.1",
     "typescript": "^5.7.3",
     "validate-npm-package-name": "^7.0.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.11"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22"
   },
   "license": "MIT"
 }

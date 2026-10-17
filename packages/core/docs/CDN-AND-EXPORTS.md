@@ -2,13 +2,47 @@
 
 Which file to load, and what each entry point contains.
 
-> Every `@getforma/core@2.1.0` below is a real pin against the current release.
-> Pin a version in production rather than `@latest`; a CDN URL is a
-> dependency, and `@latest` is an unpinned one.
+> Every `@getforma/core@2.1.0` below is a retained pin to that historical
+> published release. It does not describe the 3.x runtime mount contract.
+> Pin a published version in production rather than `@latest`; a CDN URL is a
+> dependency, and `@latest` is an unpinned one. The 3.x example below serves
+> the installed artifact locally rather than assuming a published v3 URL.
 
 ---
 
-## Script tag — IIFE, auto-initializes
+<a id="script-tag--iife-auto-initializes"></a>
+
+## Script tag — IIFE, explicit mount
+
+In 3.x, loading the runtime does not bind the document or observe later
+insertions. An application script mounts reviewed markup under an owned root
+and retains the lifecycle handle:
+
+```html
+<script src="/vendor/formajs-runtime.global.js"></script>
+<main id="counter">
+  <div data-forma-state='{ "count": 0 }'>
+    <p data-text="{count}"></p>
+    <button data-on:click="{count++}">+1</button>
+  </div>
+</main>
+<script src="/counter.js"></script>
+```
+
+The application's external `counter.js` contains:
+
+```js
+const root = document.getElementById('counter');
+const counter = FormaRuntime.mountMarkup(root, FormaRuntime.trustedHtml(root.innerHTML), { tier: 'reviewed' });
+// Keep counter for counter.update(trustedMarkup) and counter.unmount().
+```
+
+This counter needs no fetch, outside-DOM or navigation grants; omitted grants
+give none. `trustedHtml()` marks application-reviewed content, not sanitized
+content. See [HTML-RUNTIME.md](HTML-RUNTIME.md) for explicit grants and
+per-handle configuration.
+
+The earlier 2.1.0 CDN URLs remain available as historical examples:
 
 ```html
 <!-- jsDelivr (recommended) -->
@@ -18,8 +52,7 @@ Which file to load, and what each entry point contains.
 <script src="https://unpkg.com/@getforma/core@2.1.0/dist/formajs-runtime.global.js"></script>
 ```
 
-This is the HTML runtime: it scans the document for `data-*` directives and
-wires them up. See [HTML-RUNTIME.md](HTML-RUNTIME.md).
+Do not use the older release's automatic binding behavior as a 3.x recipe.
 
 ## ESM import — modern browsers, no bundler
 
@@ -42,8 +75,12 @@ unpkg equivalent: `https://unpkg.com/@getforma/core@2.1.0/dist/forma.esm.js`
 
 > **Do not mix `forma.esm.js` with the npm entry in one app.** It carries its
 > own private copy of the reactive core, so signals, the owner tree and the
-> island registry would be duplicated. The library detects this and warns:
-> *"Duplicate @getforma/core instance detected"*.
+> island registry would be duplicated. Nothing at runtime says so: the
+> production builds, the CDN bundles among them, keep no instance registry
+> (FORMA-021 C3). The development build (`dist/dev/`, the `development` export
+> condition) counts its copies and warns *"Duplicate @getforma/core instance
+> detected"*, and `@getforma/build` reports two physical copies of core in one
+> build as `BUILD-816`.
 
 ## Every CDN artifact
 
@@ -69,8 +106,9 @@ One more file sits beside them and is not a CDN script:
 writes it inline into the opaque-origin preview document, where it renders
 the module its host sends in tier `'unreviewed'`; it never mounts the page on
 load. An application's build that copies it as `forma-runtime.js` (FORMA-175)
-copies this file, not the CDN alias above that shares that name and
-auto-mounts. See [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants).
+copies this file, not the normal HTML-runtime CDN alias above that shares
+that name. The frame runtime owns the message-port protocol and mounts its
+root in the unreviewed tier. See [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants).
 
 Verified by `src/__tests__/docs-truth.test.ts` > "the All builds table lists exactly the CDN artifacts the build emits"
 Verified by `src/__tests__/build-config.test.ts` > "builds a self-contained browser ESM bundle for the CDN recipe"
@@ -88,7 +126,7 @@ so a bundler never pulls them into an app that does not ask for them.
 | `@getforma/core` | Signals, `h()`, mount, lists, stores, components, islands, events, DOM utils |
 | `@getforma/core/http` | `createFetch`, `fetchJSON`, `createSSE`, `createWebSocket` |
 | `@getforma/core/storage` | `createLocalStorage`, `createSessionStorage`, `createIndexedDB` |
-| `@getforma/core/runtime` | HTML runtime — `initRuntime()`, `mount()`, `unmount()`, `reconcile()`, `trustedHtml()`, `getDiagnostics()` |
+| `@getforma/core/runtime` | HTML runtime — `mountMarkup()`, handle `update()`/`unmount()`, `trustedHtml()`, `getDiagnostics()`; explicit tier and grants |
 | `@getforma/core/runtime-hardened` | The same runtime, bundled without code splitting (alias: `@getforma/core/runtime-csp`) |
 | `@getforma/core/tc39` | TC39-shaped `State` and `Computed` classes |
 
@@ -134,10 +172,11 @@ branch reads:
 
 The file under `dist/dev/` is built from the same sources with the same
 options as its production twin, except that `__DEV__` is `true`, so it keeps
-the warnings a production build drops: hydration mismatches, props the
-renderer drops, the `FORMA_W_DEPRECATED_` codes
+the warnings a production build drops: props the renderer drops, raw-content
+ambiguity and the `FORMA_W_DEPRECATED_` codes
 ([STABILITY.md](STABILITY.md#development-builds)). The type declarations are
-shared, so TypeScript sees one package either way.
+shared, so TypeScript sees one package either way. Strict hydration refusals
+and typed raw-sink violations remain enforced and reported in both builds.
 
 Whether a resolver asks for the condition is its own convention, and two ask
 by default where you might not expect it: **Vitest** and **Bun's bundler**.
@@ -201,8 +240,11 @@ one of its two settings. Give both the same conditions. That removes mixed
 builds, not every second copy: a bundler that inlines core while Node loads it
 for an external dependency (Vite's `ssr.noExternal`, Vitest's
 `server.deps.inline`) has loaded two copies since before this build existed,
-and still does. Either way core logs *"Duplicate @getforma/core instance
-detected"*.
+and still does. The development build counts its copies and logs *"Duplicate
+@getforma/core instance detected"* for the second; the production build keeps
+no registry and says nothing (FORMA-021 C3), so a production copy beside a
+development one goes unannounced, and two production copies in one bundle are
+`@getforma/build`'s `BUILD-816` diagnostic, found on the bundler's metafile.
 
 The development build is slower where `__DEV__` checks something on every
 call, such as `createList`'s duplicate-key check
@@ -212,7 +254,7 @@ identifiers and one statement a line, so they read as they are.
 
 Verified by `src/__tests__/development-build.test.ts` > "every subpath resolves to production files without the condition and to their development twins with it"
 Verified by `src/__tests__/development-build.test.ts` > "a process resolving with the development condition loads one copy of core, and it is the development build"
-Verified by `src/__tests__/development-build.test.ts` > "a process that loads both builds is told so by the duplicate-instance warning"
+Verified by `src/__tests__/development-build.test.ts` > "a process that loads the development build twice is told so by the duplicate-instance warning; the production build keeps no registry"
 
 ---
 

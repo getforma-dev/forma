@@ -9,17 +9,34 @@
  */
 
 import { internalEffect, __DEV__ } from 'forma/reactive';
-import { hydrating } from './hydrate.js';
+import { adoptionListener } from '../reactive/adoption-events.js';
+import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
-import { isFormControlProperty, writeFormControlProperty } from './form-control.js';
+import { isFormControlProperty, writeFormControlProperty, isReactiveTextOnly, childText } from './form-control.js';
 import {
   isDangerousUrl,
   isEventHandlerAttr,
   isRawHtmlAttr,
+  isSafeAttrName,
   isUnsafeAttrWrite,
   isUrlAttr,
 } from '../security/url-safety.js';
 import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
+// Rule 1 (FORMA-182, docs/parity-rules.md): every ordinary text child and
+// scalar attribute value is written normalized, per value, so the DOM h()
+// builds is the DOM the browser parses from the walker's HTML. Raw HTML,
+// style and event sinks keep their own typed paths and are not routed here.
+import { normalizeDomText } from './normalize-text.js';
+import { attributeName } from './attribute-name.js';
+
+declare const __FORMA_DEV_BUILD__: boolean | undefined;
+// Every development warning below is guarded by the build flag at its site, in
+// the shape esbuild folds while parsing (dev.ts: `&&`/`||` over `typeof`),
+// so the dropped-prop warnings leave the production bytes in every artifact, code-split
+// chunks and the Rollup-free runtime IIFEs alike. An imported or module-level
+// `__DEV__` constant does neither: esbuild never inlines it, and Rollup folds
+// it only within a chunk (FORMA-021 C1). `__DEV__` is the raw-source fallback.
+// Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
 
 /**
  * Symbol used as JSX Fragment factory. h(Fragment, null, ...children) returns DocumentFragment.
@@ -142,11 +159,15 @@ const MATHML_TAGS = new Set([
   'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'semantics', 'mglyph', 'malignmark',
 ]);
 
-// ---------------------------------------------------------------------------
-// Boolean HTML attributes (set/remove via setAttribute/removeAttribute)
-// ---------------------------------------------------------------------------
-
-const BOOLEAN_ATTRS = new Set([
+/**
+ * The HTML boolean attributes: the ones a `true` writes bare and a `false`
+ * removes (FORMA-182 rule 6's attribute table, docs/parity-rules.md). Every
+ * other attribute is written as the value's string, `true` as "true". The
+ * walker's HTML_BOOLEAN_ATTRIBUTES is the same list, and both suites read it
+ * from crates/forma-ir/tests/fixtures/parity/attributes.json.
+ * Verified by: src/dom/__tests__/value-rule-6-attributes.test.ts > "%s is presence on every writer; its data- twin is the word"
+ */
+export const BOOLEAN_ATTRS: ReadonlySet<string> = new Set([
   'disabled',
   'checked',
   'readonly',
@@ -173,8 +194,8 @@ const BOOLEAN_ATTRS = new Set([
 
 // ---------------------------------------------------------------------------
 // Element prototype cache. Rationale, not a measurement: one detached element
-// per common tag is created on first use, and every later h('div') shallow-
-// clones it instead of going back through createElement's tag-name validation.
+// is created when its HTML tag is first requested, and every h() for that tag
+// shallow-clones it instead of calling createElement again.
 // (An earlier version of this comment asserted "cloneNode is a C++ memcpy" and
 // that it is "faster than createElement" — engine internals nobody here has
 // benchmarked. The behaviour that IS load-bearing is that a clone is a fresh,
@@ -186,16 +207,6 @@ let ELEMENT_PROTOS: Record<string, HTMLElement> | null = null;
 function getProto(tag: string): HTMLElement {
   if (!ELEMENT_PROTOS) {
     ELEMENT_PROTOS = Object.create(null);
-    // Pre-create prototypes for the 30 most common HTML tags
-    for (const t of [
-      'div', 'span', 'p', 'a', 'li', 'ul', 'ol', 'button', 'input',
-      'label', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'section', 'header',
-      'footer', 'main', 'nav', 'table', 'tr', 'td', 'th', 'tbody',
-      'img', 'form', 'select', 'option', 'textarea', 'i', 'b', 'strong',
-      'em', 'small', 'article', 'aside', 'details', 'summary',
-    ]) {
-      ELEMENT_PROTOS![t] = document.createElement(t);
-    }
   }
   return ELEMENT_PROTOS![tag] ?? (ELEMENT_PROTOS![tag] = document.createElement(tag));
 }
@@ -218,32 +229,14 @@ function eventName(key: string): string {
 const ABORT_SYM = Symbol.for('forma-abort');
 
 /**
- * While an adoption walks the server's DOM: the elements that got a listener
- * controller, whether adoption bound the server's element or built one through
- * h(), so an adoption that fails part-way can detach them all (hydrate.ts).
- */
-let listened: Element[] | null = null;
-
-/**
- * @internal Start recording, into `into`, the elements that get a listener
- * controller (null stops). Returns the previous recorder, to restore.
- */
-export function recordListeners(into: Element[] | null): Element[] | null {
-  const prev = listened;
-  listened = into;
-  return prev;
-}
-
-/**
  * @internal Get or lazily create the AbortController an element's listeners
- * are attached with, the one {@link cleanup} aborts. h() and adoption share it.
+ * are attached with, the one {@link cleanup} aborts for ordinary h() elements.
  */
 export function getAbortController(el: Element): AbortController {
   let controller = (el as any)[ABORT_SYM] as AbortController | undefined;
   if (!controller) {
     controller = new AbortController();
     (el as any)[ABORT_SYM] = controller;
-    listened?.push(el);
   }
   return controller;
 }
@@ -312,30 +305,25 @@ function innerHtmlOf(value: unknown): unknown {
   return html;
 }
 
-/** Handle class / className prop. */
+/**
+ * Handle class / className prop. The value follows the attribute table of the
+ * value rules (docs/parity-rules.md, rules 5 and 6): null, undefined and false
+ * remove the attribute (the walker omits a DYN_ATTR whose slot is Null or
+ * false); anything else, `true` included, is its string under rule 1.
+ * Verified by: src/dom/__tests__/value-rule-5-null.test.ts > "$id: a null or undefined attribute is absent, static, reactive and on adoption, and a later null removes it"
+ */
 function handleClass(el: Element, _key: string, value: unknown): void {
-  if (typeof value === 'function') {
-    internalEffect(() => {
-      const v = (value as () => string)();
-      const cache = getCache(el);
-      if (cache['class'] === v) return;
-      cache['class'] = v;
-      if (el instanceof HTMLElement) {
-        el.className = v;
-      } else {
-        el.setAttribute('class', v);
-      }
-    });
-  } else {
+  const write = (raw: unknown): void => {
+    const v = raw == null || raw === false ? null : normalizeDomText(String(raw));
     const cache = getCache(el);
-    if (cache['class'] === value) return;
-    cache['class'] = value;
-    if (el instanceof HTMLElement) {
-      el.className = value as string;
-    } else {
-      el.setAttribute('class', value as string);
-    }
-  }
+    if (cache['class'] === v) return;
+    cache['class'] = v;
+    if (v === null) el.removeAttribute('class');
+    else if (el instanceof HTMLElement) el.className = v;
+    else el.setAttribute('class', v);
+  };
+  if (typeof value === 'function') internalEffect(() => write((value as () => unknown)()));
+  else write(value);
 }
 
 /**
@@ -343,7 +331,8 @@ function handleClass(el: Element, _key: string, value: unknown): void {
  * Uses camelCase keys for CSSOM assignment via Object.assign(el.style, ...).
  * This avoids el.style.cssText which is blocked by strict CSP style-src policies.
  */
-function parseCssString(css: string): Record<string, string> {
+/** @internal Source-private shared CSS grammar; not a package export. */
+export function parseCssString(css: string): Record<string, string> {
   const obj: Record<string, string> = {};
   for (const decl of css.split(';')) {
     const colon = decl.indexOf(':');
@@ -360,7 +349,8 @@ function parseCssString(css: string): Record<string, string> {
 }
 
 /** Apply a style object to an element via CSSOM (CSP-safe). */
-function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
+/** @internal Source-private shared CSSOM writer; not a package export. */
+export function applyStyleObj(el: Element, obj: Record<string, string>, prevKeys: string[]): string[] {
   const style = (el as HTMLElement | SVGElement).style;
   const nextKeys = Object.keys(obj);
   for (const k of prevKeys) {
@@ -437,13 +427,13 @@ function handleEvent(el: Element, key: string, value: unknown): void {
       typeof (value as { handleEvent?: unknown }).handleEvent === 'function');
   if (!listenable) {
     if (value == null) return;
-    if (__DEV__) warnDropped(el, key, 'inline-event-handler');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
   const controller = getAbortController(el);
   el.addEventListener(
     eventName(key),
-    value as EventListener,
+    adoptionListener(value as EventListenerOrEventListenerObject),
     { signal: controller.signal },
   );
 }
@@ -477,15 +467,15 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
 
 /**
  * Bind `value`, a `dangerouslySetInnerHTML` prop (static or a function), to
- * `el`'s content: h()'s reactive path and adoption's (FORMA-176), one writer so
- * the two cannot drift.
+ * `el`'s content on the ordinary h() path. Strict adoption instead validates
+ * through prepareRaw before publishing its later typed writer.
  *
  * - Only a `trustedHtml()` value reaches the raw sink. It is recorded as
  *   current only once written, so a failed write cannot suppress a later
  *   accepted write of the same markup.
  * - `null` and `false` empty the element and forget the markup, so the same
  *   markup after either sentinel is written again.
- * - `adopt` makes the first run an adoption (DR-5): markup the server's
+ * - The retained internal `adopt` flag skips the first matching write: markup the server's
  *   element already holds is not written again ({@link holdsMarkup}), and a
  *   first `null` keeps the server's content, the children adoption bound, as
  *   h() shows its children until markup arrives.
@@ -494,7 +484,7 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "A → null → A shows A again, client-rendered and adopted"
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "adoption writes nothing where the server already holds the markup"
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives"
- * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused string does not block the same markup sent later as trustedHtml(), client-rendered and adopted"
+ * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused string aborts adoption while ordinary CSR accepts later trusted markup"
  */
 export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void {
   let first = adopt;
@@ -561,9 +551,11 @@ function handleXLink(el: Element, key: string, value: unknown): void {
       el.removeAttributeNS(XLINK_NS, localName);
       return;
     }
-    const strVal = String(v);
-    if (isUnsafeAttrWrite(el.localName, key, strVal)) {
-      if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+    // The guard classifies the raw string (a NUL anywhere refuses); the
+    // normalized string is what is written.
+    const raw = String(v), strVal = normalizeDomText(raw);
+    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       el.removeAttributeNS(XLINK_NS, localName);
       return;
     }
@@ -638,7 +630,7 @@ function handleBooleanAttr(el: Element, key: string, value: unknown): void {
  */
 function handleGenericAttr(el: Element, key: string, value: unknown): void {
   if (isEventHandlerAttr(key)) {
-    if (__DEV__) warnDropped(el, key, 'inline-event-handler');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
   // `key` is fixed for this binding, so the (allocating) URL-attribute lookup
@@ -649,10 +641,14 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
     const cache = getCache(el);
     if (v != null && v !== false) {
       checkRawAttr(key, v);
-      const strVal = String(v);
+      // Normalized before the cache, so an equivalent value is not rewritten;
+      // the URL guard classifies the raw string (a NUL anywhere refuses) and
+      // the normalized string is what is written and remembered.
+      // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() attributes write $id normalized: static, dynamic, class and xlink"
+      const raw = String(v), strVal = normalizeDomText(raw);
       // Already written, already guarded — see the note above the function.
       if (cache[key] === strVal) return;
-      if (!urlAttr || !isDangerousUrl(strVal, el.localName)) {
+      if (!urlAttr || !isDangerousUrl(raw, el.localName)) {
         // The string the URL guard checked is the string written: an object
         // is converted once, above. Only trusted HTML for `srcdoc` is written
         // as itself, so a TrustedHTML reaches that sink typed (DR-19).
@@ -661,7 +657,7 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
         cache[key] = strVal;
         return;
       }
-      if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
     }
     if (cache[key] === null) return;
     cache[key] = null;
@@ -699,6 +695,7 @@ for (const attr of BOOLEAN_ATTRS) {
 
 /** Apply a single prop to an element (supports both HTML and SVG). */
 function applyProp(el: Element, key: string, value: unknown): void {
+  key = attributeName(key);
   if (isFormControlProperty(el, key)) {
     if (typeof value === 'function') {
       internalEffect(() => writeFormControlProperty(el, key, (value as () => unknown)()));
@@ -741,13 +738,15 @@ function applyProp(el: Element, key: string, value: unknown): void {
 // ---------------------------------------------------------------------------
 
 function applyStaticProp(el: Element, key: string, value: unknown): void {
+  key = attributeName(key);
   if (value == null || value === false) return;
 
   if (key === 'class' || key === 'className') {
+    const v = normalizeDomText(String(value));
     if (el instanceof HTMLElement) {
-      el.className = value as string;
+      el.className = v;
     } else {
-      el.setAttribute('class', value as string);
+      el.setAttribute('class', v);
     }
     return;
   }
@@ -768,9 +767,9 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
 
   // xlink: namespace
   if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
-    const strVal = String(value);
-    if (isUnsafeAttrWrite(el.localName, key, strVal)) {
-      if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+    const raw = String(value), strVal = normalizeDomText(raw);
+    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       return;
     }
     el.setAttributeNS(XLINK_NS, key, strVal);
@@ -790,19 +789,16 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   // against the element's tag.
   // Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops on* props in the value===true branch"
   if (isEventHandlerAttr(key)) {
-    if (__DEV__) warnDropped(el, key, 'inline-event-handler');
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
   checkRawAttr(key, value);
 
-  // true → empty string attribute, else stringified value
-  if (value === true) {
-    el.setAttribute(key, '');
-    return;
-  }
-  const strVal = String(value);
-  if (isUrlAttr(key) && isDangerousUrl(strVal, el.localName)) {
-    if (__DEV__) warnDropped(el, key, 'unsafe-URL');
+  // `true` is the word "true" off the boolean set (rule 6's attribute table,
+  // docs/parity-rules.md: the walker writes the same), else the value's string.
+  const raw = String(value), strVal = normalizeDomText(raw);
+  if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {
+    if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
     return;
   }
   // The string the URL guard checked is the string written: an object is
@@ -826,8 +822,9 @@ function appendChild(parent: Node, child: unknown): void {
   }
 
   // "Track Limits": new Text() bypasses Document.createTextNode's validation.
+  // Verified by: src/dom/__tests__/normalize-text.test.ts > "h() children write $id normalized on the single, multiple, reactive and array paths"
   if (typeof child === 'string') {
-    parent.appendChild(new Text(child));
+    parent.appendChild(new Text(normalizeDomText(child)));
     return;
   }
 
@@ -854,8 +851,6 @@ function appendChild(parent: Node, child: unknown): void {
     // Fragment children are tracked separately because DocumentFragment
     // empties itself on appendChild — we need to remove children manually.
     let currentFragChildren: Node[] | null = null;
-    let warnedArray = false;
-    const DEBUG = typeof (globalThis as any).__FORMA_DEBUG__ !== 'undefined';
     // The parent is known here, so what the child builds takes its content's
     // namespace from the start.
     // Verified by: src/dom/__tests__/namespace-resolution.test.ts > "a function child inside an svg builds in the SVG namespace on every run"
@@ -883,20 +878,16 @@ function appendChild(parent: Node, child: unknown): void {
       if (Array.isArray(v)) {
         const frag = document.createDocumentFragment();
         for (const item of v) {
+          // A nested array is skipped, as it always was; the tracing that
+          // named it hung on an undocumented `__FORMA_DEBUG__` global and went
+          // with createShow's and createSwitch's (FORMA-021 C2).
           if (item instanceof Node) frag.appendChild(item);
-          else if (Array.isArray(item)) {
-            if (DEBUG) console.warn('[forma] Nested arrays in function children are not supported. Flatten the array or use createList().');
-          } else if (item != null && item !== false && item !== true) {
-            frag.appendChild(new Text(String(item)));
+          else if (!Array.isArray(item) && item != null && item !== false && item !== true) {
+            frag.appendChild(new Text(normalizeDomText(String(item))));
           }
         }
         // Empty array → treat as null (no DOM output)
         resolved = frag.childNodes.length > 0 ? frag : null;
-
-        if (DEBUG && !warnedArray) {
-          warnedArray = true;
-          console.warn('[forma] Function child returned an array — auto-wrapped in DocumentFragment. Consider using createList() or wrapping in a container element for better performance.');
-        }
       }
 
       if (resolved instanceof Node) {
@@ -924,7 +915,7 @@ function appendChild(parent: Node, child: unknown): void {
           }
           currentFragChildren = null;
         }
-        const text = typeof resolved === 'symbol' ? String(resolved) : String(resolved ?? '');
+        const text = normalizeDomText(typeof resolved === 'symbol' ? String(resolved) : String(resolved ?? ''));
         if (!currentNode) {
           currentNode = new Text(text);
           parent.appendChild(currentNode);
@@ -992,16 +983,17 @@ export function h(
   // Function component: call with merged props + children
   if (typeof tag === 'function' && tag !== Fragment) {
     const mergedProps = { ...(props ?? {}), children };
+    if (describingAdoption) return __adoptionChild(undefined, tag, [mergedProps]) as HTMLElement;
     return tag(mergedProps) as unknown as HTMLElement;
   }
 
-  // Fragment: return DocumentFragment with children. While hydrating it is a
+  // Fragment: return DocumentFragment with children. During adoption description it is a
   // descriptor like any element, so adoption can walk its children as a range
   // of the server's nodes instead of receiving a detached fragment it cannot
   // match to anything.
-  // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text after mount() adoption"
+  // Verified by: src/dom/__tests__/hydrate-fragment.test.ts > "a root Fragment binds its click handler and reactive text under a caller-owned adoption root"
   if (tag === Fragment) {
-    if (hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
+    if (describingAdoption) return { type: 'fragment', children } as unknown as DocumentFragment;
     const frag = document.createDocumentFragment();
     for (const child of children) {
       appendChild(frag, child);
@@ -1013,13 +1005,12 @@ export function h(
   const tagName = tag as string;
   refuseScriptElement(tagName);
 
-  if (hydrating) {
+  if (describingAdoption) {
     return { type: 'element', tag: tagName, props: props ?? null, children } as unknown as HTMLElement;
   }
 
-  // "Flexible Wings" exploit: for HTML elements, clone a pre-created prototype
-  // instead of calling createElement. cloneNode(false) is a single C++ memcpy
-  // that copies the element's internal state without parsing the tag string.
+  // HTML elements shallow-clone a cached, detached prototype. The cache is
+  // populated only for requested tags; no engine-specific speed is assumed.
   // Skip the SVG Set lookup entirely when the tag is in the proto cache (hot path).
   let el: Element;
   // A dual-use tag (a, title, script, style, font) is checked before the proto
@@ -1045,14 +1036,17 @@ export function h(
 
 /**
  * The half of h() that runs once the element exists: props, children, live
- * form values, then the ref. Exported for adoption's fallback, which creates
- * an element in the SVG or MathML namespace itself (`descriptorToElement` in
- * hydrate.ts) and then builds it as h() would.
+ * form values, then the ref. The private live materializer resolves children
+ * after props establish the actual content namespace. Ordinary h() omits it.
  */
 export function fillElement<E extends Element>(
   el: E,
   props: Record<string, unknown> | null | undefined,
   children: unknown[],
+  resolveChildren?: () => {
+    children: unknown[]; target: Element | DocumentFragment;
+    textReader?: (read: () => string) => () => string;
+  },
 ): E {
   // Children beside dangerouslySetInnerHTML: h() renders the markup, then
   // them, until the markup next changes; ./ssr and adoption keep the markup.
@@ -1068,7 +1062,7 @@ export function fillElement<E extends Element>(
   if (props) {
     let hasDynamic = false;
     for (const key in props) {
-      if (key === 'ref') continue;
+      if (key === 'ref' || !isSafeAttrName(key)) continue;
       const value = props[key];
 
       // A select cannot select an option until its children exist, and input
@@ -1102,22 +1096,29 @@ export function fillElement<E extends Element>(
     }
   }
 
+  const resolved = resolveChildren?.();
+  if (resolved) children = resolved.children;
+  const target = resolved?.target ?? el;
+
   // Append children — fast path for single string/number child avoids
   // Text node allocation + separate appendChild. el.textContent is a single
   // native C++ call that combines both operations.
   const childLen = children.length;
-  if (childLen === 1) {
+  if (el instanceof HTMLTextAreaElement && isReactiveTextOnly(children)) {
+    const read = resolved?.textReader?.(() => childText(children)) ?? (() => childText(children));
+    internalEffect(() => writeFormControlProperty(el, 'text', read()));
+  } else if (childLen === 1) {
     const only = children[0];
     if (typeof only === 'string') {
-      el.textContent = only;
+      target.textContent = normalizeDomText(only);
     } else if (typeof only === 'number') {
-      el.textContent = String(only);
+      target.textContent = String(only);
     } else {
-      appendChild(el, only);
+      appendChild(target, only);
     }
   } else if (childLen > 1) {
     for (const child of children) {
-      appendChild(el, child);
+      appendChild(target, child);
     }
   }
 
@@ -1144,7 +1145,7 @@ export function fillElement<E extends Element>(
  * ```
  */
 export function fragment(...children: unknown[]): DocumentFragment {
-  if (hydrating) return { type: 'fragment', children } as unknown as DocumentFragment;
+  if (describingAdoption) return { type: 'fragment', children } as unknown as DocumentFragment;
   const frag = document.createDocumentFragment();
   for (const child of children) {
     appendChild(frag, child);

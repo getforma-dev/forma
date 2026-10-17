@@ -9,14 +9,17 @@ Production build pipeline for [FormaJS](https://github.com/getforma-dev/forma) a
 
 ## Install
 
+These examples target the `3.0.0-beta.1` prerelease and require its coordinated
+publication. Select that prerelease explicitly:
+
 ```bash
-npm install -D @getforma/build
+npm install -D @getforma/build@3.0.0-beta.1
 ```
 
 This installs `esbuild` automatically. For SSR features (FMIR emission), also install the compiler:
 
 ```bash
-npm install -D @getforma/compiler
+npm install -D @getforma/compiler@3.0.0-beta.1
 ```
 
 ## Quick Start
@@ -161,8 +164,8 @@ turns the setting on:
 await build({ ...config, previewFrame: true });
 ```
 
-The build then copies `dist/formajs-frame.global.js` from the
-`@getforma/core` the bundles import (core 2.1.0 and later), byte for byte, as
+The build then writes `dist/formajs-frame.global.js` from the
+`@getforma/core` the bundles import (core 2.1.0 and later), minified, as
 `forma-runtime.<hash>.js`, and names it in the manifest:
 
 ```json
@@ -188,18 +191,30 @@ The build then copies `dist/formajs-frame.global.js` from the
 - **Never core's `dist/forma-runtime.js`.** That file shares the target's
   name, but it is the CDN alias of the auto-mounting runtime, which would bind
   the whole frame document instead of rendering the host's module in tier (c).
-- **The bytes are core's, unchanged**: no minify, no transform, no line
-  endings rewritten, so the hash forma-server computes is the hash of core's
-  file, and the script the browser runs is the one hashed. It is inlined,
-  never fetched: no route loads it, it gets no `.br` or `.gz` copy, and the
-  worker's lists leave it out.
+- **Minified in the output, as published in core** (FORMA-190, from the A2
+  audit's F1). forma-server writes this runtime into every preview document
+  under `no-store`, so each load pays its bytes: core's file is 164 KB
+  readable. Core's published file stays readable (anything published to npm
+  does); a production build writes an esbuild transform of it (whitespace and
+  names, ES2022, deterministic) into `dist`, before the hashing pass, so the
+  file's name, its SRI in the manifest and the SHA-256 forma-server computes
+  for the frame's policy are those of the bytes served, and the script the
+  browser runs is the one hashed. The size report's frame row reports those
+  served bytes beside core's file. No source map is written: the script is
+  inlined in an opaque-origin frame with `connect-src 'none'`, so a map could
+  not be fetched, and its comment would be part of the hashed bytes. Watch mode
+  copies core's bytes unchanged (a development build, readable in the browser's
+  tools): that is the copy to debug. It is inlined, never
+  fetched: no route loads it, it gets no `.br` or `.gz` copy, and the worker's
+  lists leave it out.
 - **It refuses what forma-server would refuse** (FRAME-103), before anything is
   written, so the previous output stays as it was: `BUILD-805` when the core
   the bundles import has no frame runtime (older than 2.1.0) or no core is
   found, `BUILD-806` when the runtime is empty, not UTF-8, or contains
   `</script` or `<!--` (in any case), a carriage return or a NUL, and
-  `BUILD-807` as above. Each fails the build with or without strict mode
-  (`docs/DIAGNOSTICS.md`).
+  `BUILD-807` as above, and `BUILD-823` when esbuild cannot minify it. The
+  `BUILD-806` check runs on core's file and again on the minified bytes. Each
+  fails the build with or without strict mode (`docs/DIAGNOSTICS.md`).
 - **Watch mode** writes it unhashed as `forma-runtime.js`, and the dev manifest
   names it as itself, as it does every watched asset.
 - **Off** (the default, or `false`), nothing is read and the output is
@@ -208,12 +223,61 @@ The build then copies `dist/formajs-frame.global.js` from the
   file on macOS and Windows); any value but `true` or `false` is a config
   error.
 
+### The size report: route classes and ceilings
+
+A production build classifies every route and holds it to its class's
+ceilings (N2; decision brief L-64, DR-35). Sizes are gzip at level 9, a KB
+being 1,000 bytes and a KiB 1,024; Brotli is reported beside them. A route over
+a ceiling fails the build with `BUILD-819`, naming the route, its class and
+the bytes, before anything is written.
+
+| Class | Which routes | Forma's code | All of the route's JavaScript |
+|---|---|---|---|
+| `no-interactive-region` | A server-rendered page with no island, or a route that lists no script | none | none (a service worker counted) |
+| `islands` | A server-rendered page with islands | 28,100 B | 75 KiB (76,800 B), 365 KiB for a canvas |
+| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 28,100 B | as `islands` |
+
+L-64 authorizes this ceiling for cooperative activation only after the full 20-run performance campaign passes the original 50 ms N3 task ceiling. Source constants alone do not establish release qualification.
+
+Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
+from the bundler's metafile, plus the identity banner Forma's build writes at
+the top of every JavaScript file (about 30 B gzip for each file the route
+loads cold); the application's own code is outside that ceiling. A route's JavaScript is the files the manifest lists for it and the
+generated `sw.js` when the route lists any script (forma-server registers the
+worker only on such pages).
+
+**`canvas`.** A page that hosts many modules and is JavaScript-heavy by design
+declares it on its route:
+
+```ts
+routes: {
+  "/studio": { js: ["studio"], css: ["studio"], canvas: true },
+},
+```
+
+A canvas may ship 365 KiB of JavaScript instead of 75 KiB; Forma's code stays
+under 28,100 B either way, and the declaration gives nothing to a route
+without JavaScript. Only `true` or `false` is accepted (anything else is a
+config error, reported before anything is written). It is provisional public
+configuration at 3.0.0: declare it for a page that really is a canvas, and trim
+or split any other page over 75 KiB.
+
+The report is printed after the bundle summary, returned as
+`BuildResult.sizeReport` (`BuildResult.sizes` is its routes) and written,
+without the build's times, as `size-report.json` beside `manifest.json`: for the
+same sources the same bytes, since the application embeds the directory, and
+forma-server refuses to serve it. The times by phase (`bundle`, `hash`,
+`compress`, `manifest`) are printed and in `BuildResult.sizeReport.times`. With
+`previewFrame`, a frame-document row reports the runtime forma-server inlines
+into every preview document. Watch mode reports nothing: its bytes are not what
+a route ships.
+
 ## What It Does
 
 | Step | What happens |
 |------|-------------|
-| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`) |
-| **Frame runtime** | (Optional, `previewFrame: true`) Copies the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, unchanged, as `forma-runtime.js`, hashed with the other assets and left uncompressed |
+| **Validate** | Rejects an unknown `serviceWorker` value, an `app` name forma-server cannot take, a `previewFrame` that is not a boolean, two entries sharing an `outfile`, an `outfile` that is a path (or `forma-runtime.js`, in any case, with `previewFrame`), a route naming an asset no entry produces, or a route missing its `js` or `css` list, before touching `outputDir`; with `previewFrame`, finds the core the bundles import and reads and checks its frame runtime (`BUILD-805` to `BUILD-807`, and `BUILD-823` when it cannot be minified) |
+| **Frame runtime** | (Optional, `previewFrame: true`) Writes the `dist/formajs-frame.global.js` of the `@getforma/core` the bundles import, minified (core's file stays readable; watch mode copies it unchanged), as `forma-runtime.js`, hashed with the other assets and left uncompressed |
 | **Bundle** | esbuild bundles each entry point with JSX transform (`jsxFactory: "h"`) |
 | **CSS** | Runs Tailwind CLI or concatenates CSS files |
 | **Hash** | SHA-256 content hash appended to filenames (`app.a1b2c3d4.js`) |
@@ -221,6 +285,7 @@ The build then copies `dist/formajs-frame.global.js` from the
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-64, DR-35; the ceilings are not configurable): Forma's code at most 28,100 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 ## Configuration
@@ -237,7 +302,9 @@ const config: BuildConfig = {
   ],
   routes: {                          // each route needs both js and css; [] for none
     "/": { js: ["home"], css: ["home"] },
-    "/dashboard": { js: ["dashboard"], css: ["dashboard"] },
+    // canvas: true declares a page that hosts many modules: its JavaScript may
+    // be 365 KiB gzip -9 instead of 75 KiB (the size report's ceilings)
+    "/dashboard": { js: ["dashboard"], css: ["dashboard"], canvas: true },
   },
   outputDir: "dist",
 
@@ -254,9 +321,11 @@ const config: BuildConfig = {
     home: "src/home/app.tsx",         // the file with mount()/activateIslands()
     dashboard: "src/dashboard/app.tsx",
   },
-  // strict: true,                   // Fail on every coded SSR diagnostic (or FORMA_STRICT=1); see below
+  // strict: true,                   // Legacy no-op: 3.0 always refuses unsupported SSR
   // diagnosticsJson: "ssr-diagnostics.json", // Also write them as JSON, outside outputDir
-  previewFrame: false,                // true: copy core's frame runtime as forma-runtime.js (forma-server's PageResponse::frame)
+  // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
+  // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
+  previewFrame: false,                // true: write core's frame runtime, minified, as forma-runtime.js (forma-server's PageResponse::frame)
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
   formaAlias: "@getforma/core",       // What bare 'formajs' imports resolve to
@@ -265,6 +334,57 @@ const config: BuildConfig = {
 
 await build(config);
 ```
+
+`formaAlias` remains a migration bridge throughout 3.x. If the build's source
+graph imports `formajs` or one of its subpaths, one warning lists the importing
+files and the `@getforma/core` replacement. The same warning appears in
+`BuildResult.warnings`; duplicate imports and the two production identity passes
+do not repeat it. Erased TypeScript imports and re-exports are included. A
+`build()` call with no legacy imports is quiet, including its initial watch
+build. The alias still resolves as configured; omitting it does not make the
+unavailable bare package resolve.
+
+### Retention: a tab opened before a deploy
+
+While a deploy rolls out, and for as long as a tab stays open, a page of the
+previous release asks for hashed files (a lazily imported chunk) that the new
+binary does not embed. Your pipeline keeps the previous release's `dist/` as a
+release artifact (the one that is live) and passes its path as `previousDist`.
+The build copies that release's own hashed assets into the new `dist/`, listed in
+`manifest.json` as `{ "immutable": true, "retained": true, "integrity": ... }`, and
+forma-server serves them as it serves any immutable asset, so you embed one
+`dist/` and a one-deploy-old tab still loads its chunks.
+
+- **One generation.** What the previous release itself retained is not copied
+  again, so the assets at most double and a tab two deploys old gets a 404 for a
+  chunk it asks for, which your code handles as it handles any failed `import()`.
+- **Never copied:** `manifest.json`, `sw.js`, the `.ir` modules, and files that
+  are not immutable (unhashed fonts). A file the new build also emitted under the
+  same name is its own and is not flagged.
+- **Checked.** Each copied file's bytes must match the SHA-384 the previous
+  manifest recorded; a missing, linked or altered file fails the build with
+  `BUILD-821`. A path that is not a usable previous release fails it with
+  `BUILD-820`: it must be another directory than `outputDir` (which the build
+  replaces whole), of the same `app`, not a watch build. A previous dist whose
+  manifest is not schema 2 (your first 3.0.0 deploy over a 2.x release) retains
+  nothing, and the build says so.
+- **First deploy:** leave `previousDist` out; nothing is copied.
+- **Security releases (L-16, SR45):** mark every release that fixes a
+  vulnerability, a Forma security upgrade included, with `security: true` or
+  `FORMA_SECURITY_RELEASE=1` (a `false` in the config does not unmark it). The
+  build then retains nothing and the revoked build's files are not served; a
+  revoked build's open tabs meet 404s for their lazy chunks.
+- **Trust.** The SHA-384 check catches a damaged or altered file, not someone who can
+  also rewrite the previous `manifest.json`: the previous `dist/` is trusted like your
+  source. Keep it as a protected release artifact.
+- `FORMA_SECURITY_RELEASE` is read like `FORMA_STRICT`: `1` or `true` (any case,
+  trimmed) marks; unset, empty, `0` or `false` does not; anything else fails the build
+  (`BUILD-822`).
+- Watch mode ignores both options.
+
+The identity does not depend on the retained set: the same inputs give the same
+`build`, the same non-retained entries and, with the same previous release, a
+byte-identical `dist/`.
 
 ## Output Structure
 
@@ -277,7 +397,7 @@ dist/
 ├── home.e5f6g7h8.css.br
 ├── dashboard.i9j0k1l2.js
 ├── home.m3n4o5p6.ir          # FMIR binary (if ssr: true)
-├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, unchanged and uncompressed (if previewFrame: true)
+├── forma-runtime.y5z6a7b8.js # Core's preview-frame runtime, minified and uncompressed (if previewFrame: true)
 ├── inter.woff2                # Copied fonts (never hashed)
 ├── sw.js                      # Service worker (generated last, never hashed)
 └── manifest.json              # Asset manifest (generated last, never compressed)
@@ -287,6 +407,25 @@ Nothing else is written. In particular an SSR build emits **only** `<page>.ir`
 per entry: no island registry, no island metadata sidecar. (Through 0.1.9 it
 also wrote `<page>.islands.js` and `<page>.islands.json`, which every consumer
 had to delete by hand — see the CHANGELOG.)
+
+The compiler's successful entry product determines whether an SSR page needs
+browser code. A page with no reachable island definitions keeps its native IR,
+CSS and fonts, but its manifest has `mode: "ssr"`, `js: []` and no module
+preloads. Conditional islands still require JavaScript even when one request
+renders no island. Explicit `ssr: false` entries retain normal browser output.
+
+The first configured route entry remains its native owner before filtering.
+Keep that name in `routes[route].js`; do not replace the configuration with the
+filtered manifest array. Additional route entries must declare `ssr: false`.
+A static owner cannot request extra scripts or executable `serverInlined`
+output: those contradictions fail with `BUILD-611`. Other explicitly inlined
+resources remain available to their configured consumers.
+
+Split output keeps every static and dynamic JavaScript dependency of active
+entries, plus CSS/font resources; chunks used only by a removed static entry
+are omitted. Watch retains old generation files for existing documents. A
+candidate classification becomes accepted only when its complete graph, IR and
+manifest publication succeeds; a failed rebuild keeps the prior route policy.
 
 ## Asset Manifest
 
@@ -299,7 +438,7 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
   "version": 2,
   "writer": "3.0.0",
   "app": "ledger",
-  "build": "example-build-identifier",
+  "build": "5f0c9a1e7d2b4c86",
   "aliases": {"home.js": "home.a1b2c3d4.js", "home.ir": "home.a1b2c3d4.ir"},
   "assets": {
     "home.a1b2c3d4.js": {"immutable": true},
@@ -316,8 +455,27 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
 The actual build includes `integrity: "sha384-<base64>"` for each asset, computed
 from its final uncompressed bytes. Compression sidecars, the manifest and the
 worker are excluded. Integrity enforcement is FORMA-111; emission alone does not
-provide that enforcement. `build` retains the previous filename-derived algorithm
-(and `dev` during watch); FORMA-186 owns the final deployment identity.
+provide that enforcement.
+
+### The deployment identity (`build`)
+
+`build` is the build's deployment identity: 16 lowercase hexadecimal characters
+(`dev` in watch mode). A production build computes it first, from every output of
+a first bundling pass (the JavaScript and CSS bundles, the other emitted files and
+the `.ir` modules, plus the css entries and fonts) and the writers' versions, and
+only then compiles it in:
+
+- as the constant `__FORMA_BUILD__` (esbuild `define`), which `@getforma/core`
+  compares with the `data-forma-build` attribute forma-server writes on the page's
+  root before it activates anything;
+- as a `/*forma-build:<id>*/` banner in every JavaScript output, so the names,
+  which hash content, change with the identity: every deploy renames every bundle.
+
+The same inputs give the same identity wherever they are built from (esbuild
+hashes paths relative to the working directory, so build from the project root).
+An edit that changes no output byte, a comment, changes nothing and disturbs no
+open tab. The identity does not depend on a previous `dist/`. The first pass
+costs one more bundling run; the compiler's lines for it are not printed twice.
 
 forma-server validates the schema, writer window, app, references and route modes
 before loading modules. It resolves logical names through `aliases` and reads
@@ -341,23 +499,24 @@ resolves the files it always did and logs none of them.
 
 ### Watch mode and server-rendered pages
 
-With `ssr: true`, watch mode keeps each page's FMIR module current, so a page
-the server renders changes on an incremental rebuild (N7). Each page is watched
-over its own SSR entry's module graph (`ssrEntryPoints`, else its browser
-entry), apart from the browser bundles: an edit re-runs the compiler for the
-pages it touches and no others, including an SSR entry the browser bundle never
-imports. A module is written as `<page>.ir`, replaced by rename and only when
-its bytes change, and the dev manifest names it in the route's `ir`. A page
-with an esbuild error (a syntax error, an import that does not resolve) keeps
-its last good module and logs the error; when the compiler cannot emit a page's
-module, it writes its placeholder, as a production build does. A module that
-cannot be written is logged with its page. Each rewrite logs its time, for
-example `IR rewritten: home.ir in 36 ms`.
+Watched JS/chunks use esbuild's linked generation filenames, and IR filenames
+include their SHA-256. New bytes are staged before an atomic manifest rename
+selects the complete generation. Earlier files stay available for readers holding
+an earlier manifest or HTML response, until a fresh production build replaces the
+output directory. Failed compilation, validation or final publication keeps the
+accepted manifest and its referenced bytes. Always resolve output through manifest
+aliases; watched entry and IR filenames are no longer stable logical names.
 
-The server must read the new module. `forma-server` loads the `.ir` modules
-when the application starts (`load_ir_modules`), so restart it on a change
-under `outputDir`, for example with `cargo watch`, until it rereads them in
-development builds.
+With `ssr: true`, each browser context also watches the source and type inputs
+of its SSR entry (`ssrEntryPoints`, else its browser entry). A successful cycle
+returns JS and IR together; an SSR-only edit triggers the same paired cycle.
+Compiler and publication errors keep the last accepted generation. Each native
+rewrite logs its logical name and time, for example
+`IR rewritten: home.ir in 36 ms`; the manifest holds its actual hashed filename.
+
+In debug builds, `forma-server` validates the new manifest and module together.
+A refused update retains the previous module and asset snapshot. Route names
+and modes are frozen after startup finalization; those changes need a restart.
 
 ### Removed server functions
 
@@ -370,54 +529,28 @@ Islands re-render with core's `h()`; server rendering uses the native Rust walke
 
 Verified by `tests/server-functions-removed.test.ts` (directive and near-miss fixtures).
 
-### SSR diagnostics and strict mode
+### SSR diagnostics and the server-renderable subset
 
-Every construct the compiler cannot represent in a page's module is reported
-with a stable code, file, line and column, one line of why and one of fix
-([the catalogue](https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md),
-one entry per code). By default they are warnings, printed as before, and the
-build succeeds as before. `build()` returns them as `result.diagnostics`, each
-with its `code`, `severity`, `page`, `file`, `line`, `column`, `message`, `why`
-and `fix`.
+SSR builds always enforce the [published subset](../compiler/docs/subset.md).
+Every unsupported construct is reported with its stable code, original source
+file, line, column, reason and fix. `build()` collects every page's diagnostics
+before refusing publication; a failure leaves the previous output unchanged.
+The direct compiler plugin applies the same gate.
 
-- **Strict mode** (`strict: true`, or `FORMA_STRICT=1` in the environment
-  when the config leaves `strict` unset) fails the build on every diagnostic
-  but a note, after every page is compiled, with all of them at once:
+`strict: true`, `strict: false` and the legacy `FORMA_STRICT` values `1`, `true`,
+`0`, `false` or empty are compatibility inputs. They all select the same strict
+behavior. The build reads no command-line flags. A watch rebuild that fails keeps
+the page's last good product, then publishes normally after the source is fixed.
 
-  ```
-  Error: @getforma/build strict mode (strict: true or FORMA_STRICT=1): 2 SSR diagnostics are errors; without it they are warnings:
-  /app/src/home/app.tsx:12:11  BUILD-101  call expression helpers.extra(...) in /app/src/home/app.tsx:12:11 — emitted as an empty island shell, …
-      why: The call becomes an anonymous island (`island_<n>`) that no registry names: …
-      fix: Write the subtree as h() calls, a component in a relative file, …
-  ```
+`diagnosticsJson: "<path>"` writes `{ version, strict: true, diagnostics }`, including
+on failure. Each diagnostic carries `code`, `severity`, `page`, `file`, `line`,
+`column`, `message`, `why` and `fix`. Its path must be outside `outputDir`, including
+through symlinks. Additive report fields do not change the schema version;
+renaming, removing or changing a field's meaning does.
 
-  `build()` reads no command-line flag, as for `ssr` and `watch`: a build
-  script that takes `--strict` maps it to the config.
-
-  ```ts
-  // `|| undefined` leaves `strict` unset without the flag, so FORMA_STRICT=1
-  // still applies; `false` would turn strict mode off whatever the variable says.
-  await build({ /* … */ ssr: isSsr, strict: process.argv.includes("--strict") || undefined });
-  ```
-
-  `strict: false` ignores `FORMA_STRICT`; a value of it other than `1`,
-  `true`, `0`, `false` or empty is refused. A failed build leaves the previous
-  output as it was. It needs `@getforma/compiler` 0.3.7 or later; with an older
-  one the build refuses strict mode rather than pass pages it never checked. In
-  watch mode a page with an error keeps its last good module and logs its
-  first error. 3.0.0 makes strict the only mode.
-- **JSON** (`diagnosticsJson: "<path>"`): the build writes
-  `{ version, strict, diagnostics }` to that path, also when strict mode fails
-  it. The path must be outside `outputDir`, which the build replaces whole and
-  serves; one inside is refused before anything is written, inside as the
-  filesystem sees it (through real paths, so a symlink into `outputDir`
-  counts; case-insensitively where the filesystem ignores case). A field may be
-  added to the report without a change of `version`; renaming or removing one,
-  or changing what one means, increments it.
-
-A browser-only subtree is declared with `browserOnly()` from `@getforma/core`
-(see the compiler's README); a route the server never renders, with
-`ssr: false` on its entry.
+Use a registered `browserOnly()` component for an explicitly browser-rendered
+subtree, or `ssr: false` on an entry for a whole browser-only route. An unsupported
+SSR expression cannot opt out of the gate merely by setting `strict: false`.
 
 ### Development service worker
 
@@ -473,7 +606,7 @@ nowhere or loops is a `BUILD-814` (exclude it if it is not source), and a
 file reached by two paths is read once. It needs nothing beyond this package:
 an application that does not build with `@getforma/build` (a Rust-only one,
 or one that uses `@getforma/core` alone) runs it with
-`npx -p @getforma/build forma-raw-lint …`.
+`npx -p @getforma/build@3.0.0-beta.1 forma-raw-lint …` after beta publication.
 
 **Point it at source, not build output.** A bundle that includes core carries
 core's own raw entries: the registry key survives minification, and a
@@ -496,7 +629,7 @@ directories, or leave committed bundles out with `--exclude` (for example
 cannot parse (`BUILD-814`); 2, a usage error or an allowlist it cannot use
 (`BUILD-812`). An entry that lists fewer uses than its count, or none
 (`BUILD-813`), is a note. The codes
-are in the build diagnostics catalogue, [`docs/DIAGNOSTICS.md`](https://github.com/getforma-dev/forma-tools/blob/main/docs/DIAGNOSTICS.md).
+are in the build diagnostics catalogue, [`docs/DIAGNOSTICS.md`](https://github.com/getforma-dev/forma/blob/main/packages/compiler/docs/subset.md).
 
 ```text
 BUILD-810 error body_prefix in src/server/mod.rs:772:9 (in index_handler): body_prefix: body_prefix set to a value not traced to RawHtml::trusted (a string still works in 0.2.x); not on the allowlist
@@ -729,3 +862,37 @@ deployments, upgrade, rollback and retirement using `forma-server`'s actual
 off-worker response. The release rehearsal injects its unpacked build package into
 the same harness and requires every named observation. Its HTTP-cache clearing is
 limited to the fresh browser context so HTTP caching cannot mask CacheStorage.
+
+When `codeSplitting` is enabled, one physical entry may be configured both as an
+SSR entry and with `ssr: false`. The Browser root keeps its whole-page mount;
+the SSR root keeps only its activation policy. Both use the same captured
+compiler sources and share ordinary dependencies, including core, in one graph.
+Each logical Browser root executes its own entry body. Ordinary imports of that
+physical entry retain its SSR identity; a re-exporting facade does not opt into
+a second whole-page mount. Keep reusable components and module singletons in
+ordinary shared modules and declare the mount source itself as the Browser
+entry.
+
+### JSX SVG namespaces
+
+With the default `h` JSX factory imported from `@getforma/core` (or the legacy
+`formajs` alias), lexical SVG children such as `<svg><a><title>Icon</title></a></svg>`
+are created in the SVG namespace. HTML inside `foreignObject`, `desc` and `title`
+and the existing MathML integration points keep their original namespace.
+The build emits a private per-file factory; it adds no code to core. Props,
+spreads and children evaluate once in their original order, before element
+creation. The compiler composes these edits with adoption hooks on the same
+captured source for SSR and Browser entries, leaving native IR unchanged.
+
+Inline function children and control-flow callbacks within the JSX subtree inherit
+that lexical namespace; JSX in an attribute expression does not.
+This applies to lexical JSX. A separately declared component returning `<a>`
+has no known lexical SVG parent; use the existing `svg()` scope or a known-parent
+reactive child for that case. Handwritten `h` calls are unchanged. An authored
+custom JSX factory, automatic JSX runtime, or a file with an inner custom `h`
+binding retains its own factory behavior. The existing script construction
+refusal and the deferred dynamic SVG title adoption limitation still apply.
+
+The actual native/CSR/adoption namespace vectors are exercised by
+`e2e/ssr/namespaces.spec.ts`; unit controls cover evaluation order, source drift,
+SSR/Browser ownership, custom factories and generated-name collisions.

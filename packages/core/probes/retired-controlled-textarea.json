@@ -1,0 +1,16 @@
+{
+ "reason": "FORMA-104 makes reactive textarea children controlled in3.x, including ordinary client rendering and later adopted writes. The original record forbids the newly required behavior and is preserved unchanged. Fixed independent tests cover initial zero writes, early-edit seeding and later explicit updates; no new mutation run is claimed.",
+ "source": "132fadeed5894ea85eb05f35e47167831e9aa563",
+ "probes": [
+  {
+   "id": "hydrate/textarea-updates-overwrite-typing",
+   "file": "src/dom/hydrate.ts",
+   "tags": [
+    "correctness"
+   ],
+   "find": "    else if (el.textContent !== text) el.textContent = text;",
+   "replace": "    else if (el.textContent !== text) { el.textContent = text; if (el instanceof HTMLTextAreaElement) el.value = text; }",
+   "note": "an adopted textarea's reactive text overwrites what the user typed on every update (FORMA-003 B3; controlled children are 3.0)"
+  }
+ ]
+}

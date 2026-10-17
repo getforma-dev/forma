@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "node": "v24.22.0",
+  "npm": "11.19.1",
+  "runnerResolutions": {
+    ".": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/core": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/compiler": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/build": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    },
+    "packages/create-app": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/node_modules/@playwright/test/package.json",
+      "version": "1.64.1"
+    }
+  },
+  "playwrightVersion": "1.64.1",
+  "browserManifestSha256": "2cfd419f71ac6475d81e1301fa86c34cf2a2a6bae2a0da4b5a2b18310216b6bf",
+  "browserManifestEqualsOfficialTag": true,
+  "officialTagCommit": "cfe490d941f992655948eee8fd4fd94e1c4234bf",
+  "firefoxRevision": "1555",
+  "firefoxOmniJa": {
+    "path": "/Users/victorvillacis/Library/Caches/ms-playwright/firefox-1555/firefox/Nightly.app/Contents/Resources/omni.ja",
+    "bytes": 46292844,
+    "sha256": "167f74eaecd516b31dcb22f6a27eb7fb9306e785f42f02385a1c2331a9af2559"
+  },
+  "member": {
+    "path": "chrome/juggler/content/content/main.js",
+    "bytes": 4505,
+    "sha256": "6ea83968b8a499ebd39f18c0ef8bbdcc203363fb4e75ae6432817d8530fdcc25",
+    "byteExactOfficialSource": true,
+    "uniquePerInstanceUid": true
+  },
+  "executables": {
+    "chromium": {
+      "path": "/Users/victorvillacis/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+      "bytes": 52112,
+      "sha256": "c8509aee32abd6977968e9999769980b7a420dea05402d90042d9e5b41db15ef"
+    },
+    "firefox": {
+      "path": "/Users/victorvillacis/Library/Caches/ms-playwright/firefox-1555/firefox/Nightly.app/Contents/MacOS/firefox",
+      "bytes": 72304,
+      "sha256": "65f70a725a576763c36634d63407fad91d898d522f25a5ca9caf748b3e3be005"
+    },
+    "webkit": {
+      "path": "/Users/victorvillacis/Library/Caches/ms-playwright/webkit-2370/pw_run.sh",
+      "bytes": 3049,
+      "sha256": "a85baad3d8c07173ac387a59b41500c382b21ed692afe0964d29aac247ccc63b"
+    }
+  },
+  "oldBrowserCachePreserved": {
+    "before": [
+      ".links",
+      ".settings",
+      "b",
+      "chromium-1234",
+      "chromium-1243",
+      "chromium_headless_shell-1234",
+      "chromium_headless_shell-1243",
+      "ffmpeg-1011",
+      "firefox-1538",
+      "firefox-1543",
+      "mcp-chrome",
+      "mcp-chrome-8a5edab",
+      "webkit-2336",
+      "webkit-2359"
+    ],
+    "after": [
+      ".links",
+      ".settings",
+      "b",
+      "chromium-1234",
+      "chromium-1243",
+      "chromium-1248",
+      "chromium_headless_shell-1234",
+      "chromium_headless_shell-1243",
+      "chromium_headless_shell-1248",
+      "ffmpeg-1011",
+      "ffmpeg-1013",
+      "firefox-1538",
+      "firefox-1543",
+      "firefox-1555",
+      "mcp-chrome",
+      "mcp-chrome-8a5edab",
+      "webkit-2336",
+      "webkit-2359",
+      "webkit-2370"
+    ],
+    "missing": []
+  },
+  "browserLaunched": false
+}

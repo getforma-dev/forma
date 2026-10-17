@@ -1,0 +1,52 @@
+{
+  "source": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "files": [
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/packages/create-app/templates/dashboard/admin/src/pages/OverviewPage.tsx",
+      "sourcePath": "packages/create-app/templates/dashboard/admin/src/pages/OverviewPage.tsx",
+      "bytes": 16172,
+      "sha256": "55cafbce04f6cd25f45325ed3d2123bb9ab6f76fa12c23bc53f649856cd89ec5"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/packages/create-app/tests/scaffold.test.ts",
+      "sourcePath": "packages/create-app/tests/scaffold.test.ts",
+      "bytes": 41940,
+      "sha256": "6717b9d97422fcb0f37a045b7b764b3d29760db99d910de968cb2701f45859d0"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/scripts/candidate-scaffold.mjs",
+      "sourcePath": "scripts/candidate-scaffold.mjs",
+      "bytes": 12550,
+      "sha256": "00c8678402fec88c526be9f01fd7032e1231620d380eb11392e74fda60863d3b"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/scripts/release-template-islands.mjs",
+      "sourcePath": "scripts/release-template-islands.mjs",
+      "bytes": 11485,
+      "sha256": "453ddecdfc14d7ee35468726ee4899cfb59fc7bcea84f3296d73d75ab3206f42"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/scripts/verify-release-set.mjs",
+      "sourcePath": "scripts/verify-release-set.mjs",
+      "bytes": 45681,
+      "sha256": "1bee3a9e0468589959526d18c027d1138af22bf349e8464568a2cf8ae0f8549f"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/scripts/release-burn-in-final.mjs",
+      "sourcePath": "scripts/release-burn-in-final.mjs",
+      "bytes": 10199,
+      "sha256": "eaaae17f96b6213ed73b24d3485129ec35e8fcd4e08e8aee9269a4a0d8fc497b"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/original/scripts/release-burn-in-final.test.mjs",
+      "sourcePath": "scripts/release-burn-in-final.test.mjs",
+      "bytes": 6418,
+      "sha256": "728864afd97dd1ad4f7f7f5c3f600b143788eb164d4c4629a71cbaac236f4008"
+    },
+    {
+      "path": "docs/archive/dashboard-tooltip-2026-10-16/source-preaudit.md",
+      "bytes": 9382,
+      "sha256": "1153756675e651016778cda0dad9ba3de9765e25d682dc1db60b3d48389bbcea"
+    }
+  ]
+}

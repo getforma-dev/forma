@@ -1,0 +1,30 @@
+{
+  "sourceCommit": "eef43c7de521f8d1b4ea1726c724a973a20ef256",
+  "purpose": "Pre-BUILD617 accepted-source canonical bytes; native LIST slice already present, no select ownership guard. Generated from exact source by canonical-near-misses probe; do not regenerate to accept drift.",
+  "cases": [
+    {
+      "name": "unbound-child",
+      "source": "import {h,mount,activateIslands} from '@getforma/core';export function Choice(p:{value:string;selected:boolean}){return h('option',{value:p.value,selected:p.selected},'B');}export function Picker(){return h('select',{},h('option',{value:'a'},'A'),Choice({value:'b',selected:false}));}export function Page(){return h('main',null,Picker());}activateIslands({Picker,Choice});mount(()=>Page(),'#app');",
+      "bytes": 583,
+      "sha256": "aced2b6d8db91068e13d4c2119e2164c1402abd1ea9f7e7121a8a5c2a0559165"
+    },
+    {
+      "name": "same-owner-helper",
+      "source": "import {h,mount,activateIslands} from '@getforma/core';export function Choice(p:{value:string;selected:boolean}){return h('option',{value:p.value,selected:p.selected},'B');}export function Picker(){return h('select',{value:'b'},h('option',{value:'a'},'A'),Choice({value:'b',selected:false}));}export function Page(){return h('main',null,Picker());}activateIslands({Picker});mount(()=>Page(),'#app');",
+      "bytes": 339,
+      "sha256": "f92b6e2a47e7bfe0616bbace93f5376a1eecc7c8a3958c7fc7f5927f3b553c43"
+    },
+    {
+      "name": "unbound-uppercase",
+      "source": "import {h,mount,activateIslands} from '@getforma/core';export function Choice(p:{value:string;selected:boolean}){return h('OPTION',{value:p.value,selected:p.selected},'B');}export function Picker(){return h('SELECT',{},h('option',{value:'a'},'A'),Choice({value:'b',selected:false}));}export function Page(){return h('main',null,Picker());}activateIslands({Picker,Choice});mount(()=>Page(),'#app');",
+      "bytes": 591,
+      "sha256": "588fe2884558b7ba7e5fb53b4cf46738eaec3bae90a11f5bd9696c4883393201"
+    },
+    {
+      "name": "bound-uppercase-helper",
+      "source": "import {h,mount,activateIslands} from '@getforma/core';export function Choice(p:{value:string;selected:boolean}){return h('OPTION',{value:p.value,selected:p.selected},'B');}export function Picker(){return h('SELECT',{value:'b'},h('option',{value:'a'},'A'),Choice({value:'b',selected:false}));}export function Page(){return h('main',null,Picker());}activateIslands({Picker});mount(()=>Page(),'#app');",
+      "bytes": 347,
+      "sha256": "c7054c0a071e778055c70a5ea16437a674c2e8d3176f0d123beb6c75549e453a"
+    }
+  ]
+}

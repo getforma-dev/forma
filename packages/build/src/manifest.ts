@@ -3,19 +3,27 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { BUILD_WRITER_VERSION } from './compatibility.js';
 import type { AssetManifest, AssetMetadata, BuildConfig, RouteManifest } from './types.js';
+import type { EntryProducts } from './entry-products.js';
+import type { RouteClass } from './route-size.js';
 
 export function generateManifest(
   config: BuildConfig,
   assets: Record<string, string>,
   staticDependencies: Record<string, string[]> = {},
   graphFiles: ReadonlySet<string> = new Set(),
-): { manifest: AssetManifest; warnings: string[] } {
+  products: EntryProducts = new Map(),
+  identity?: string,
+  retained: ReadonlySet<string> = new Set(),
+): { manifest: AssetManifest; warnings: string[]; classes: Record<string, RouteClass> } {
   const distDir = config.outputDir;
   const BUDGET_THRESHOLD = config.budgetThreshold ?? 200_000;
   const warnings: string[] = [];
 
-  // Build hash: SHA-256 of all hashed filenames sorted and joined
-  const buildHash = createHash('sha256')
+  // The manifest's `build` is the deployment identity (FORMA-186, DR-29): the
+  // build computes it before it names anything and compiles it into the
+  // bundles (identity.ts). A caller that has none, the manifest's own unit
+  // tests, gets the hash of the hashed filenames this field held before.
+  const buildHash = identity ?? createHash('sha256')
     .update(Object.values(assets).sort().join(','))
     .digest('hex');
 
@@ -26,9 +34,33 @@ export function generateManifest(
 
   // Build route manifest
   const routes: Record<string, RouteManifest> = {};
+  // The size report's classes (DR-35, FORMA-190), decided where the owner is:
+  // a server-rendered route whose native product needs no browser has no
+  // interactive region, one that does activates islands; any other route that
+  // lists a script mounts its whole page (a declared ssr:false entry, or every
+  // route of an application built without ssr), and one that lists none ships
+  // nothing.
+  // Verified by: packages/build/tests/route-size.test.ts > "classifies each route from its entry's native product: a static page has no interactive region, a page with islands is islands, a declared ssr:false entry is a whole-page mount"
+  const classes: Record<string, RouteClass> = {};
 
   for (const [route, mapping] of Object.entries(config.routes)) {
-    const jsFiles = mapping.js.map(
+    // Route ownership is selected from configuration before browser filtering.
+    // Removing a static entry's JS must never remove its native module or mode.
+    const entry = config.entryPoints.find(entry => basename(entry.outfile, '.js') === mapping.js[0]);
+    const serverRendered = config.ssr === true && entry !== undefined && entry.ssr !== false;
+    const product = entry && products.get(entry.outfile);
+    if (serverRendered && (!product || product.mode !== 'ssr')) {
+      throw new Error(`BUILD-817 route ${route} has no accepted native product for its configured SSR owner`);
+    }
+    const staticRoute = serverRendered && product?.browserRequired === false;
+    if (staticRoute && (mapping.js.length !== 1 || config.serverInlined?.includes(entry!.outfile))) {
+      throw new Error(`BUILD-611 static route ${route} cannot request extra scripts or an executable server-inlined owner`);
+    }
+    if (config.ssr && mapping.js.slice(1).some(name => config.entryPoints.some(candidate =>
+      basename(candidate.outfile, '.js') === name && candidate.ssr !== false))) {
+      throw new Error(`BUILD-611 route ${route} selects a native entry outside its primary owner; keep one SSR owner and mark extra browser entries ssr:false`);
+    }
+    const jsFiles = (staticRoute ? [] : mapping.js).map(
       (name) => assets[`${name}.js`] ?? `${name}.js`,
     );
     const cssFiles = mapping.css.map(
@@ -58,8 +90,6 @@ export function generateManifest(
       }
     }
 
-    const entry = config.entryPoints.find(entry => basename(entry.outfile, '.js') === mapping.js[0]);
-    const serverRendered = config.ssr === true && entry !== undefined && entry.ssr !== false;
     const routeEntry: RouteManifest = {
       mode: serverRendered ? 'ssr' : 'browser',
       js: jsFiles,
@@ -83,6 +113,9 @@ export function generateManifest(
 
     if (serverRendered && !routeEntry.ir) throw new Error(`BUILD-817 route ${route} declares SSR but its compiled module is missing; fix compilation before serving this build`);
     routes[route] = routeEntry;
+    classes[route] = serverRendered
+      ? (staticRoute ? 'no-interactive-region' : 'islands')
+      : (jsFiles.length > 0 ? 'whole-page-mount' : 'no-interactive-region');
 
     // Budget warning
     if (totalSize > BUDGET_THRESHOLD) {
@@ -98,11 +131,15 @@ export function generateManifest(
   if (!config.watch) for (const file of graphFiles) immutable.add(file);
   const metadata: Record<string, AssetMetadata> = {};
   for (const file of readdirSync(distDir).sort()) {
-    if (file === 'manifest.json' || file === 'sw.js' || /\.(?:br|gz)$/.test(file)) continue;
+    if (file === 'manifest.json' || file === 'size-report.json' || file === 'sw.js' || /\.(?:br|gz)$/.test(file)) continue;
     if (!statSync(join(distDir, file)).isFile()) continue;
+    // A retained file (retention.ts) is the previous release's, kept for tabs still open
+    // on it: immutable by the build's guarantee that its name is its content, and flagged.
+    const kept = !config.watch && retained.has(file);
     metadata[file] = {
-      immutable: !config.watch && immutable.has(file),
+      immutable: !config.watch && (immutable.has(file) || kept),
       integrity: `sha384-${createHash('sha384').update(readFileSync(join(distDir, file))).digest('base64')}`,
+      ...(kept ? { retained: true } : {}),
     };
   }
   const aliases = { ...assets };
@@ -122,6 +159,5 @@ export function generateManifest(
     assets: metadata,
     routes,
   };
-  return { manifest, warnings };
+  return { manifest, warnings, classes };
 }
-

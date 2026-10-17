@@ -1,0 +1,12 @@
+{
+  "version": "4.3.3",
+  "dependencies": {
+    "mri": "^1.2.0",
+    "picocolors": "^1.1.1",
+    "tailwindcss": "4.3.3",
+    "@parcel/watcher": "2.5.1",
+    "enhanced-resolve": "^5.24.1",
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3"
+  }
+}

@@ -24,6 +24,16 @@ pub(crate) fn escape_html(s: &str) -> String {
         .replace('"', "&quot;")
 }
 
+/// Rule 1 applies to ordinary DOM values before HTML escaping. Transport
+/// data, nonces, digests, and build identity keep their existing exact encoding.
+pub(crate) fn escape_dom_html(s: &str) -> String {
+    escape_html(
+        &s.replace("\r\n", "\n")
+            .replace('\r', "\n")
+            .replace('\0', "\u{fffd}"),
+    )
+}
+
 /// Build the common `<head>` content shared by both render paths.
 ///
 /// `preloads` and `links` are the typed homes a [`RenderCtx`] carries;
@@ -39,13 +49,13 @@ fn build_head(
     let mut head = String::with_capacity(2048);
     head.push_str("<meta charset=\"utf-8\">\n");
     head.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-    head.push_str(&format!("<title>{}</title>\n", escape_html(title)));
+    head.push_str(&format!("<title>{}</title>\n", escape_dom_html(title)));
 
     // Font preloads
     for font in &assets.fonts {
         head.push_str(&format!(
             "<link rel=\"preload\" href=\"{}\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
-            escape_html(font)
+            escape_dom_html(font)
         ));
     }
 
@@ -53,7 +63,7 @@ fn build_head(
     for css in &assets.css_urls {
         head.push_str(&format!(
             "<link rel=\"stylesheet\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
-            escape_html(&css.url),
+            escape_dom_html(&css.url),
             escape_html(&css.integrity)
         ));
     }
@@ -67,7 +77,7 @@ fn build_head(
         head.push_str(&format!(
             "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
             escape_html(nonce),
-            escape_html(&js.url),
+            escape_dom_html(&js.url),
             escape_html(&js.integrity)
         ));
     }
@@ -80,7 +90,7 @@ fn build_head(
         head.push_str(&format!(
             "<link rel=\"modulepreload\" nonce=\"{}\" href=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\">\n",
             escape_html(nonce),
-            escape_html(&file.url),
+            escape_dom_html(&file.url),
             escape_html(&file.integrity)
         ));
     }
@@ -166,7 +176,7 @@ struct BodyParts {
 fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> BodyParts {
     let body_class_attr = config
         .body_class
-        .map(|c| format!(" class=\"{}\"", escape_html(c)))
+        .map(|c| format!(" class=\"{}\"", escape_dom_html(c)))
         .unwrap_or_default();
     let body_prefix = config
         .body_prefix
@@ -188,21 +198,28 @@ fn build_body_parts(nonce: &str, config: &PageConfig, js_urls: &[Resource]) -> B
         })
         .unwrap_or_default();
 
+    // Route `js` contains declared entry modules in order. Dependency chunks
+    // live in the separate modulepreload table and must not execute eagerly.
     let page_js_tag = js_urls
-        .last()
+        .iter()
         .map(|url| {
             format!(
                 "<script type=\"module\" nonce=\"{nonce}\" src=\"{}\" integrity=\"{}\" crossorigin=\"anonymous\"></script>",
-                escape_html(&url.url),
+                escape_dom_html(&url.url),
                 escape_html(&url.integrity)
             )
         })
-        .unwrap_or_default();
+        .collect::<Vec<_>>()
+        .join("\n");
 
-    // Only for an application that enabled its worker (DR-25, Q15): the
-    // default registers nothing, and `/sw.js` retires any worker installed
-    // by an earlier release.
-    let sw_script = crate::sw::registration_script(nonce);
+    // Registration belongs only to pages that publish a JavaScript entry.
+    // Static pages never bootstrap a worker, even in an enabled application.
+    // The worker endpoint and off-mode retirement remain independently available.
+    let sw_script = if js_urls.is_empty() {
+        String::new()
+    } else {
+        crate::sw::registration_script(nonce)
+    };
 
     BodyParts {
         body_class_attr,
@@ -219,7 +236,10 @@ pub(crate) fn write_document(
     config: &PageConfig,
     nonce: &CspNonce,
     ssr_body: Option<&str>,
+    island_state: Option<&forma_ir::IslandState>,
     ctx: &RenderCtx,
+    max_output_bytes: usize,
+    counts: crate::RenderCounts,
 ) -> Result<String, RenderError> {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
@@ -243,31 +263,70 @@ pub(crate) fn write_document(
         ctx.head_links(),
     );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
+    // The root names the build the manifest names (FORMA-186, DR-29): core compares it
+    // with the identity compiled into the bundle before it activates anything. The
+    // manifest is data, so it is escaped as any attribute value is, and no render input
+    // can set or override it.
+    let build_attr = format!(
+        " data-forma-build=\"{}\"",
+        escape_html(&config.manifest.build)
+    );
 
-    // Pushed rather than `format!`ed, so the walk's HTML (up to the 8 MiB
-    // budget) is copied once, into the document, and not first into a root.
-    let ssr_len = ssr_body.map_or(0, str::len);
-    let mut html = String::with_capacity(head.len() + ssr_len + 1024);
-    html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
-    html.push_str(&head);
-    html.push_str("</head>\n<body");
-    html.push_str(&parts.body_class_attr);
-    html.push_str(">\n");
-    html.push_str(&parts.body_prefix);
-    match ssr_body {
-        Some(ssr) => {
-            html.push_str("<div id=\"app\" data-forma-ssr>");
-            html.push_str(ssr);
-            html.push_str("</div>");
-        }
-        None => html.push_str("<div id=\"app\"></div>"),
+    // Every byte of the completed document, including state tags/envelope,
+    // counts against the same response limit. Charge before allocating/copying
+    // the final document; body walk counts remain a separate diagnostic.
+    let fragments = [
+        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n",
+        head.as_str(),
+        if island_state.is_some() {
+            "<script type=\"application/json\" data-island-state>"
+        } else {
+            ""
+        },
+        island_state.map_or("", forma_ir::IslandState::as_json),
+        if island_state.is_some() {
+            "</script>\n"
+        } else {
+            ""
+        },
+        "</head>\n<body",
+        parts.body_class_attr.as_str(),
+        ">\n",
+        parts.body_prefix.as_str(),
+        "<div id=\"app\"",
+        build_attr.as_str(),
+        if ssr_body.is_some() {
+            " data-forma-ssr>"
+        } else {
+            "></div>"
+        },
+        ssr_body.unwrap_or(""),
+        if ssr_body.is_some() { "</div>" } else { "" },
+        "\n",
+        parts.config_json_tag.as_str(),
+        parts.page_js_tag.as_str(),
+        "\n",
+        parts.sw_script.as_str(),
+        "</body>\n</html>",
+    ];
+    let total = fragments
+        .iter()
+        .try_fold(0usize, |total, part| total.checked_add(part.len()));
+    let Some(total) = total.filter(|total| *total <= max_output_bytes) else {
+        return Err(RenderError::Budget {
+            route: config.route_pattern.into(),
+            component_path: Vec::new(),
+            counts,
+            cause: forma_ir::IrError::OutputLimitExceeded {
+                limit: max_output_bytes,
+            },
+        });
+    };
+    let mut html = String::with_capacity(total);
+    for fragment in fragments {
+        html.push_str(fragment);
     }
-    html.push('\n');
-    html.push_str(&parts.config_json_tag);
-    html.push_str(&parts.page_js_tag);
-    html.push('\n');
-    html.push_str(&parts.sw_script);
-    html.push_str("</body>\n</html>");
+
     Ok(html)
 }
 
@@ -353,9 +412,12 @@ mod tests {
             slots: None,
         });
 
-        assert!(page.html.contains("<div id=\"app\"></div>"));
+        // The root carries the build's identity (FORMA-186); the manifest's build here is "test".
+        assert!(page
+            .html
+            .contains("<div id=\"app\" data-forma-build=\"test\"></div>"));
         // Check that the #app div does NOT have the SSR attribute
-        assert!(!page.html.contains("<div id=\"app\" data-forma-ssr>"));
+        assert!(!page.html.contains("data-forma-ssr"));
     }
 
     #[test]
@@ -379,7 +441,65 @@ mod tests {
 
         assert!(page.html.contains("data-forma-ssr"));
         assert!(page.html.contains("<p>hello</p>"));
-        assert!(page.html.contains("<div id=\"app\" data-forma-ssr>"));
+        assert!(page.html.contains(
+            "<div id=\"app\" data-forma-build=\"test\" data-forma-ssr><p>hello</p></div>"
+        ));
+    }
+
+    /// The deployment identity (FORMA-186, DR-29) is the manifest's `build`, written
+    /// on the root of a server-rendered page and of a browser shell, once, escaped
+    /// as any attribute value is: a manifest is data, never markup.
+    ///
+    /// Verified by: crates/forma-server/src/template.rs > "the_root_carries_the_manifests_build_escaped_on_both_forms"
+    #[test]
+    fn the_root_carries_the_manifests_build_escaped_on_both_forms() {
+        let mut manifest = empty_manifest();
+        manifest.build = "5f0c9a1e7d2b4c86".into();
+        let ir = hello_ir_module();
+        let slots = SlotData::new(0);
+        for (mode, ir_module, slots) in [
+            (RenderMode::Phase1ClientMount, None, None),
+            (RenderMode::Phase2SsrReconcile, Some(&ir), Some(&slots)),
+        ] {
+            let page = render_parts(&PageConfig {
+                title: "Identity",
+                route_pattern: "/test",
+                manifest: &manifest,
+                config_json: None,
+                body_class: None,
+                personality_css: None,
+                body_prefix: None,
+                render_mode: mode,
+                ir_module,
+                slots,
+            });
+            assert_eq!(
+                page.html.matches("data-forma-build=").count(),
+                1,
+                "exactly one stamp: {}",
+                page.html
+            );
+            assert!(page
+                .html
+                .contains("<div id=\"app\" data-forma-build=\"5f0c9a1e7d2b4c86\""));
+        }
+        manifest.build = "a\"b<c>&d".into();
+        let page = render_parts(&PageConfig {
+            title: "Identity",
+            route_pattern: "/test",
+            manifest: &manifest,
+            config_json: None,
+            body_class: None,
+            personality_css: None,
+            body_prefix: None,
+            render_mode: RenderMode::Phase1ClientMount,
+            ir_module: None,
+            slots: None,
+        });
+        assert!(page
+            .html
+            .contains("data-forma-build=\"a&quot;b&lt;c&gt;&amp;d\""));
+        assert!(!page.html.contains("a\"b<c>"));
     }
 
     #[test]

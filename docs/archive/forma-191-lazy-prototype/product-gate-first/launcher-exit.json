@@ -1,0 +1,47 @@
+{
+  "code": 2,
+  "signal": null,
+  "reason": "scoped worker result 2",
+  "normalHandshake": true,
+  "workerEnded": true,
+  "identity": {
+    "pid": 92658,
+    "ppid": 92647,
+    "pgid": 92658,
+    "status": 2,
+    "startSec": 1792142397,
+    "startUsec": 78592
+  },
+  "descendantProof": {
+    "complete": true,
+    "root": {
+      "pid": 92658,
+      "ppid": 92647,
+      "pgid": 92658,
+      "status": 2,
+      "startSec": 1792142397,
+      "startUsec": 78592
+    },
+    "captured": [
+      {
+        "pid": 92658,
+        "ppid": 92647,
+        "pgid": 92658,
+        "status": 2,
+        "startSec": 1792142397,
+        "startUsec": 78592
+      }
+    ],
+    "stopRoot": false,
+    "remainingOwnedPids": [],
+    "liveAncestryCleanup": true,
+    "historicalOwnershipUnproved": false
+  },
+  "logBytes": 46137,
+  "ownedWorkRemoved": true,
+  "preservedWork": null,
+  "cleanupError": null,
+  "finishedAt": "2026-10-16T09:20:58.158Z",
+  "p17Passed": false,
+  "performanceAccepted": false
+}

@@ -1,0 +1,12 @@
+✔ the standalone deployment lock preserves pinned dependencies without unrelated workspace features (3.955333ms)
+✔ P17 refuses unknown deployment contracts before inspecting packages (10.119375ms)
+✔ the actual final packed call sequence finishes skew before a mandatory performance refusal (6.035833ms)
+✔ only the observed same-target intentional reload interruption reaches the unchanged drill oracle (0.724042ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 151.018125

@@ -1,0 +1,41 @@
+{
+  "base": "9c98162c52156b52b8239879ecc8614e653ffffb",
+  "decision": "L-60 (2026-10-16)",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 611,
+      "sha256": "7ec7139acacf69e5218a09b7ef5bdc4550f50c2278f8ccc2bc4cf40bb4885626"
+    },
+    {
+      "path": "contract-before.log",
+      "bytes": 1052,
+      "sha256": "80a85cd959b2527b7ec27e4f477e3aaa9339b437bee85291c492a466919c9d33"
+    },
+    {
+      "path": "originals/.github/CODEOWNERS",
+      "bytes": 624,
+      "sha256": "d09838608b9319a7eada94fb0c213125f9856c1ddc2935e27c791585c1698c92"
+    },
+    {
+      "path": "originals/docs/governance/ROLLOUT.md",
+      "bytes": 7731,
+      "sha256": "6fea465d515cd8dc379b83d65cab44404779306f2d54706310bd11595e1e3a08"
+    },
+    {
+      "path": "originals/docs/release/3.0-GATE-DISPOSITIONS.md",
+      "bytes": 2686,
+      "sha256": "8d4eeebf9b685bb665e538a9d983fa0337a52a03bb0cabcf74a4c7ae50944204"
+    },
+    {
+      "path": "originals/scripts/release-contracts.json",
+      "bytes": 5357,
+      "sha256": "33abba9e1744127aca62407bba23a58dca9fda667eeae109cf77791c210b13ac"
+    },
+    {
+      "path": "originals/scripts/release.test.mjs",
+      "bytes": 24619,
+      "sha256": "21672a6b4956d529943ac588034ddf881764d5f6157bad3d5ff8c3f6f8d5f014"
+    }
+  ]
+}

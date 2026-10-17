@@ -4,20 +4,20 @@
  * Every construct the compiler cannot represent in a server-rendered module is
  * reported here, with a stable code, the file, the line and the column, one
  * line of why and one of fix. The catalogue below is the single list of codes;
- * `docs/DIAGNOSTICS.md` documents each one, and a test keeps the two equal.
+ * `packages/compiler/docs/subset.md` documents each one, and a test keeps the two equal.
  *
- * Codes are numbered by family (L-3). The notes, which strict mode never
- * fails on, are a construct DR-1 admits (504) and the deprecations (802 to
- * 804, 901): the old paths keep working in A2.
+ * Codes are numbered by family (L-3). BUILD-303, BUILD-408, BUILD-504, BUILD-706 and BUILD-708
+ * are retired and reserved after the declared-state migration. Current
+ * nonfatal build notes are explicitly marked with strict=false.
  *
  * Codes are numbered by family (L-3):
  *
- *   BUILD-1xx  a subtree the compiler leaves to the browser (rule 11's islands)
+ *   BUILD-1xx  an unsupported native subtree
  *   BUILD-2xx  an attribute or prop dropped or left empty
- *   BUILD-3xx  text, a conditional or a list the server renders empty or wrong
+ *   BUILD-3xx  an unresolved text, conditional or list expression
  *   BUILD-4xx  a component the compiler does not inline
  *   BUILD-5xx  a signal the compiler cannot name
- *   BUILD-6xx  the page module itself: a placeholder, or a literal too long
+ *   BUILD-6xx  the page module and its closed native contract
  *   BUILD-7xx  a construct adoption does not handle; `browserOnly()` is the way out
  *   BUILD-8xx  the build package (reported by @getforma/build, catalogued here)
  *   BUILD-9xx  the compiler's own deprecated entry points (logged when called)
@@ -27,15 +27,13 @@
  *
  * What a report does, in order:
  *
- * 1. It prints the line it printed at compiler 0.3.6, one `console.warn` per
- *    report, with the code inserted after `IR:` and `:line:column` after the
- *    file. Nothing else in the line changes, and no line is added or removed:
- *    consumers gate on these lines (GateWASM counts them per file, ksx Studio
- *    matches their text), so a default build behaves as it did.
+ * 1. It prints a source-located reason diagnostic with its stable code. Native
+ *    expressions that cannot form a declared contract also throw BUILD-610,
+ *    independent of strict mode; historical warning-only behavior is archived.
  * 2. It hands the diagnostic, with its location, to the collector the caller
  *    opened with {@link collectDiagnostics}, if any. The SSR plugin opens one
  *    per page; `@getforma/build` gathers them all, writes them as JSON on
- *    request, and under `--strict` fails the build with every one of them.
+ *    request, and always fails publication when any error remains.
  *
  * Verified by: packages/compiler/tests/diagnostics-conformance.test.ts
  */
@@ -54,9 +52,7 @@ export interface DiagnosticEntry {
   /** One line: what to write instead. */
   fix: string;
   /**
-   * Whether `--strict` fails the build on it. True for every code but the
-   * notes: a construct DR-1's published subset admits, which the compiler
-   * reports because the line was printed before (BUILD-504).
+   * Whether this is a publication error. False only for explicitly nonfatal build notes.
    */
   strict: boolean;
 }
@@ -75,150 +71,182 @@ function entry(code: string, title: string, why: string, fix: string, strict = t
 export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   // ── 1xx: subtrees left to the browser (rule 11) ──────────────────────────
   entry('BUILD-101', 'Unrecognised call in the tree',
-    'The call becomes an anonymous island (`island_<n>`) that no registry names: the server renders an empty shell and nothing fills it.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Write the subtree as h() calls, a component in a relative file, createShow or createList, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-102', 'Unrecognised child expression',
-    'A child the compiler cannot represent (a bare ternary, a bare `&&`, an identifier, a template literal, an object) becomes an anonymous island the server renders empty.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Wrap a reactive child in a function (`() => …`), use createShow for a conditional and createList for rows, or fold the value into a module-level const.'),
   entry('BUILD-103', 'Dynamic tag',
-    '`h(expr, …)` with a tag the compiler cannot read becomes an anonymous island the server renders empty.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Use a literal tag name, or a component the compiler can follow.'),
   entry('BUILD-104', 'Spread child that does not unroll',
-    'A spread child is unrolled only as `...CONST.map(item => h(…))` over a module-level array of object literals; anything else becomes an anonymous island the server renders empty.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Unroll a module-level const array of object literals, or render runtime rows with createList(source, keyFn, (row) => h(…)).'),
   entry('BUILD-105', 'Spread over a table that is not static',
-    'The spread names a table the compiler cannot read (imported from a package, built at run time, or shadowed by a nested declaration), so it becomes an anonymous island the server renders empty.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Declare the table as a literal `const` of object literals in the module it is imported from, with no nested declaration of the same name, or use createList.'),
   entry('BUILD-106', 'createShow branch the compiler cannot follow',
-    'A createShow branch that is not `() => h(…)` (or a direct h() call) becomes an anonymous island the server renders empty.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Write the branch inline as `() => h(…)`.'),
   entry('BUILD-107', 'createList the compiler cannot walk',
-    'A createList without all three arguments, with a map function that is not inline, takes no named row parameter or returns nothing visible becomes a `createList` island the server renders empty.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Write `createList(source, keyFn, (row) => h(…))` with the map function inline and the row parameter named, reading `row.field`.'),
 
   // ── 2xx: attributes and props ────────────────────────────────────────────
   entry('BUILD-201', 'Props passed as something other than an object literal',
-    'None of the attributes the element carries are rendered on the server.',
+    'The attributes have no explicit native representation, so the build refuses publication.',
     "Pass the attributes as an object literal on the h('tag', { … }) call."),
   entry('BUILD-202', 'Spread props',
-    'The attributes inside `{...rest}` are not rendered on the server.',
+    'Spread attributes have no proved native representation, so the build refuses publication.',
     'List the attributes explicitly on the h() call.'),
   entry('BUILD-203', 'Prop key the compiler cannot name',
-    'A computed key, or a key that is neither an identifier nor a string, drops its attribute from the server-rendered HTML.',
+    'The native attribute key is not proved, so publication is refused instead of dropping it.',
     'Use a plain identifier or string key.'),
   entry('BUILD-204', 'Method-valued prop',
-    'An object method (`{ title() { … } }`) has no binding form, so the attribute is not rendered on the server.',
+    'An object method (`{ title() { … } }`) has no native binding form, so publication is refused.',
     'Write it as an arrow property (`title: () => …`) for a reactive binding.'),
   entry('BUILD-205', 'dangerouslySetInnerHTML',
-    'Raw markup is not rendered from the module: the element ships empty until the browser runs.',
+    'Raw markup has no admitted native tree contract, so publication is refused.',
     `Render the content as h() children, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-206', 'Reactive attribute the compiler cannot evaluate',
-    'The attribute is omitted from the server-rendered HTML and appears only once the browser activates the page.',
-    'Initialize the signals it reads with literal defaults, or fold the value into a module-level const.'),
+    'The reactive attribute has no supported native value, so the build refuses the page instead of publishing HTML with an omitted attribute.',
+    `Pass the computed value as its own declared prop, initialize the signals it reads with literal defaults, or fold the value into a module-level const, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-207', 'Attribute value the compiler cannot evaluate',
-    'The attribute is omitted from the server-rendered HTML, and adoption does not re-apply a value that is not a function, so it never appears.',
-    'Inline the literal, use a module-level const, or wrap the value in a function (`() => …`) for a reactive binding.'),
+    'The attribute has no supported native value, so the build refuses the page instead of publishing HTML with an omitted attribute.',
+    `Pass the computed value as its own declared prop, inline a literal or module-level const, ${BROWSER_ONLY_WAY_OUT}.`),
 
   // ── 3xx: text and conditionals ───────────────────────────────────────────
   entry('BUILD-301', 'Text the compiler cannot evaluate',
-    'The text renders empty on the server and fills in only once the browser activates the page.',
+    'This unresolved dynamic text expression has no closed native value and ends the build with BUILD-610.',
     'Initialize the signals it reads with literal defaults so the server can render them.'),
   entry('BUILD-302', 'Conditional the compiler cannot evaluate',
-    'The server renders the ELSE branch; if the browser would render the THEN branch, adoption keeps the wrong one until the condition changes value.',
+    'The conditional has no proved native value. Publishing its default ELSE branch could differ from the browser, so publication is refused.',
     'Initialize the signals the condition reads with literal defaults.'),
-  entry('BUILD-303', 'List over a signal initialized with literal rows',
-    "The list's source is a plain read (`rows`, `rows()`, `() => rows()`) of a signal initialized with literal rows, which have no slot, so the server renders the list empty unless a handler fills `list:<name>:array`, while the browser renders the rows. A derived source over literal rows (`() => rows().filter(…)`) is not detected in A2.",
-    'Start the signal empty (`createSignal([])`) and fill it from the server (the handler sets `list:<name>:array`; an island seeds the signal from its props), or unroll a module-level const with `...CONST.map(…)`.'),
 
   // ── 4xx: components ──────────────────────────────────────────────────────
   entry('BUILD-401', 'Component imported from a package',
-    'The compiler follows relative imports only, so the component becomes an empty island shell under its own name that nothing fills on the server.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Compile the component's source in the application (a relative import), ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-402', 'Component the compiler cannot find',
-    'No relative import or declaration in the calling file resolves the name, so it becomes an empty island shell that nothing fills on the server.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Import the component from a relative path, or declare it in the calling file.'),
   entry('BUILD-403', 'Composition past the inlining limit of 3',
-    'Components are inlined three levels deep; the fourth level becomes an empty island shell. The diagnostic names the chain from the page down.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Flatten the chain so the component sits at depth 3 or less, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-404', 'Recursive component',
-    'A component inside its own subtree is not inlined: it becomes an empty island shell.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Render the recursion with createList over data, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-405', 'Component passed a prop the compiler cannot evaluate',
-    'A component is inlined only with literal props, so it becomes an empty island shell.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Pass literal values (strings, numbers, booleans, null) as props.'),
   entry('BUILD-406', 'Component the compiler cannot follow',
-    'The component has no return the compiler can follow to an h() call, or its file failed to parse, so it becomes an empty island shell.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Return the h() tree directly from the component (an expression body or a top-level `return h(…)`).'),
   entry('BUILD-407', 'Children passed to a component',
-    "The compiler cannot place a component's children: they are not in the server-rendered HTML and appear only after the browser renders the component.",
+    "The compiler cannot place a component's children in the native tree, so publication is refused.",
     'Pass the content as props, or render it inside the component.'),
-  entry('BUILD-408', 'Registered island whose content the compiler cannot compile',
-    'The island is registered, so its empty shell activates in the browser, but the server renders a hole where it will appear (or truncates its content at the failure).',
-    'Make the island resolvable (a relative import, returning its h() tree), or declare it with browserOnly() so the empty host is intended.'),
 
   // ── 5xx: signals ─────────────────────────────────────────────────────────
   entry('BUILD-501', 'Signal default the compiler cannot evaluate',
-    "The signal gets no named slot, so bindings to it land in anonymous slots that render empty on the server and cannot be set by name.",
+    "The signal has no closed native default, so publication is refused instead of inventing an empty binding.",
     'Initialize it with a string, number, boolean or null literal, or a module-level string const.'),
   entry('BUILD-502', 'Signal declared twice in one scope',
-    'Two declarations with different defaults share one slot; the first owns it, so the server renders its default.',
+    'Duplicate declarations cannot establish one unambiguous native default, so publication is refused.',
     'Declare the signal once.'),
   entry('BUILD-503', 'Signal name taken by another scope',
-    "Two scopes declare the same signal name, so this one's slot is renamed (`name#2`); a server setting the plain name fills the other one.",
-    'Declare the signal once and import it, or set the renamed slot by its exact name.'),
-  entry('BUILD-504', 'Signal initialized with an array or object literal (note)',
-    'The signal gets no named slot, so its literal value does not reach the server. DR-1 admits literal arrays and objects, so this is a note, never an error. A read in text, an attribute or a conditional is reported where it is (BUILD-301, 206, 302), and a createList whose source is a plain read of literal rows (`rows`, `rows()`, `() => rows()`) as BUILD-303; a derived source such as `createList(() => rows().filter(…))` is not detected in A2.',
-    'Act on the diagnostic at each read. A createList over `createSignal([])` needs nothing: both sides start empty.',
-    false),
+    "The signal name conflicts across scopes and cannot establish one native binding, so publication is refused.",
+    'Give the scopes distinct signal names, or declare the signal once and import it.'),
 
   // ── 6xx: the page module ─────────────────────────────────────────────────
   entry('BUILD-601', 'No mount() call in the entry',
-    'The compiler cannot find the page, so it writes a placeholder module: the server renders an empty `<div id="app">` and nothing shows until the browser runs.',
+    'The compiler cannot find the page, so no native product is emitted and the build refuses publication.',
     "Call mount(() => …, '#app') or activateIslands({ … }) at the top level of the SSR entry, or declare the route `ssr: false`."),
   entry('BUILD-602', 'Page component the compiler cannot resolve',
-    'The page component named in mount() cannot be found or read, so the compiler writes a placeholder module and the server renders an empty `<div id="app">`.',
+    'The page component named in mount() cannot be found or read, so no native product is emitted and the build refuses publication.',
     'Import the page component from a relative path that exports it as a function.'),
   entry('BUILD-603', 'Page root that is not an h() call',
-    'The page returns something other than an h() call, so the compiler writes a placeholder module and the server renders an empty `<div id="app">`.',
+    'The page returns no native tree the compiler can follow, so no native product is emitted and the build refuses publication.',
     'Return the page tree as h() calls (or JSX).'),
   entry('BUILD-604', 'Literal past 65,535 bytes',
-    "FMIR's string table and slot defaults hold at most 65,535 bytes per entry, so the page cannot be encoded and the compiler writes a placeholder module.",
+    "FMIR's string table and slot defaults hold at most 65,535 bytes per entry, so this page cannot be encoded and the build refuses publication.",
     'Load content that long at run time (a handler-filled slot or a fetch), or split it into smaller literals.'),
   entry('BUILD-605', 'Module const past 65,535 bytes',
     'A module-level const that folds to more than 65,535 bytes is not folded, so every use of it is reported where it is read.',
     'Keep folded constants under 65,535 bytes, or load the content at run time.'),
   entry('BUILD-606', 'Module emission failed',
-    'The compiler failed while emitting the page (or writing its module) and fell back to a placeholder module. This is a defect in the compiler or an input it does not expect.',
+    'The compiler failed while emitting the page and cannot produce a native module. Publication is refused; no placeholder module is substituted.',
     'Report it with the message; until it is fixed, declare the route `ssr: false`.'),
   entry('BUILD-610', 'Invalid declared page props',
-    'The declared page data cannot be represented by the closed props schema; the build fails even without strict mode.',
-    'Declare one object parameter using strings, booleans, numbers, Date, string-literal unions, arrays, optional fields and nested object types.'),
+    'The declared data or expression cannot be represented by the closed native contract; publication is refused.',
+    'Declare supported typed props and pass computed values as their own props from the handler, use a closed literal-default signal, or move the component behind a registered browserOnly() boundary.'),
+
+  entry('BUILD-611', 'Unsupported islands-only entry or static route',
+    'The selected native entry cannot be rewritten without discarding used results or effects, or its static route mapping requests executable assets; the build fails even without strict mode.',
+    'Use one standalone imported core mount selecting the native page, keep activation outside it, and use an activation-only browser entry when the browser root differs. Static routes must have no extra script entry or module preload.'),
+  entry('BUILD-612', 'List key that is not a property path of its row',
+    'The list has no provable key path (a computed value, an index, a call, the row itself, a foreign or reassigned binding, or no original core createList site), so the module cannot carry its rows\' identity in the key-path section; the build fails even without strict mode.',
+    'Key the list with a property path of its own row parameter, `(row) => row.id` or `(row) => row.user.id` (the string-literal member `row[\'id\']` is admitted), with the key callback inline.'),
+  entry('BUILD-613', 'List row without one stable owned root',
+    'The row callback does not return exactly one stable Element (text, nothing, several roots, a conditional or control-flow root, or an authored `data-forma-key`), so the row identity has no root to live on; the build fails even without strict mode.',
+    'Return one Element per row, `(row) => h(\'li\', …)` or `<li>…</li>` (a Fragment around exactly one Element, or a registered child rendering one, is admitted); put conditionals inside that root and leave `data-forma-key` to the compiler.'),
+  entry('BUILD-614', 'Boolean in text',
+    'A boolean-typed value is read into a text position (a declared boolean prop, a signal whose default is a boolean, a closed boolean, or an expression that can only be a boolean): the browser writes nothing for a boolean child whatever its value while the server would write "true" or "false" (value rule 6, docs/parity-rules.md); the build fails even without strict mode.',
+    'Write `String(flag)` for the word (a non-optional declared boolean or a boolean signal), or render content with createShow or a ternary; `cond && \'text\'`, whose boolean result stands for nothing, stays valid.'),
+  entry('BUILD-615', 'Condition that is not boolean-typed',
+    'A createShow condition or a ternary test reads a value the compiler can prove is not a boolean (a number, a string, null, an object, or a declared, closed or signal value of such a type): the server would pick the branch by ECMAScript truthiness, which a page reading `count` or `name` only imitates (value rule 7, docs/parity-rules.md); the build fails even without strict mode.',
+    'Compare explicitly so the condition is a boolean: `() => count() > 0`, `() => name() !== \'\'`, `() => item() !== null`, or `!!x` when truthiness is what is meant.'),
+
+  entry('BUILD-616', 'List source that is not a function',
+    'Core calls a list\'s source to read its rows, and this one is provably not a function (a literal, a binding to one, a provably immutable data-valued getter result, or a field its parameter type declares as data), so the page would fail in the browser with `items is not a function`; the build fails even without strict mode.',
+    'Pass the getter itself or a function returning the rows: `createList(rows, …)` with `const [rows] = createSignal([...])`, `createList(() => p.rows, …)`; callable sources also need a declared array prop or a closed literal-default signal for native rows (BUILD-610).'),
+
+  entry('BUILD-617', 'Registered option island outside its select value owner',
+    'The native select value overrides option defaults across an independently registered SSR island, but that child receives no authenticated parent selection value; its own declared inputs cannot prove the selected state.',
+    'Keep the option or optgroup helper unregistered inside the owning select island, or move the island boundary to the owning select or an outer element. A whole route may explicitly use ssr:false.'),
+
+  entry('BUILD-618', 'HTML nesting outside the finite native subset',
+    'The authored tree contains a listed parser-repaired nesting or interactive-content conflict, so parsed native HTML cannot preserve the authored ownership.',
+    'Use explicit sibling elements, keep phrasing content inside p, place options inside select, and give interactive content and each labelled control their own valid host.'),
+  entry('BUILD-619', 'Document title inside a component',
+    'An HTML title emitted inside the component does not own the page document title.',
+    'Pass the page title to the server render call; an SVG title remains component content.'),
+  entry('BUILD-620', 'Dynamic child in executable text content',
+    'A dynamic or reactive style child enters a CSS context that ordinary HTML escaping cannot make safe.',
+    'Keep authored literal style text static; pass changing data through ordinary text, declared attributes, or the dedicated style APIs.'),
+  entry('BUILD-621', 'SSR island without one stable owned Element',
+    'The registered SSR component has text, empty, multiple, conditional/control-flow, async/generator, unresolved, or separately registered roots, so it cannot claim one stable Element containing its own ranges.',
+    'Return one authored Element, directly or through an ordinary synchronous resolved helper or a transparent one-Element Fragment; put conditionals, lists and child islands inside that host.'),
+
+  entry('BUILD-622', 'Indexed rows without matching eager native validation',
+    'An indexed factory validates its initial keys eagerly, but a deferred, conditional, unused or unproved LIST cannot perform the same native validation. Optional or derived initial arrays, effectful key callbacks, eager handle or initial-data mutations and unknown escapes also lack a matching native contract.',
+    'Use an original core createKeyedRows(requiredArray, row => row.id) with a required declared array or closed literal array, and an unconditional createList(rows, item => h(…)) in the same component return. Read item fields through item(); keep key callbacks as pure own-row property paths. Keep declared initial arrays and their ancestors unmodified and unescaped during construction. Mutate or expose them or the handle only in proved deferred intrinsic event callbacks, including immutable local handler aliases.'),
+
+  entry('BUILD-623', 'Script element outside the bundle contract',
+    'Core h() refuses script elements in every namespace and spelling; emitting one natively would bypass that bundle-only contract.',
+    'Load executable code through the page bundle. Native component script elements, including literal, external and inert-type forms, are not supported.'),
+  entry('BUILD-624', 'Raw srcdoc outside the native data contract',
+    'Native props and FMIR string attributes cannot prove the reviewed trustedHtml brand required by core srcdoc; escaping a string does not establish that trust.',
+    'Use a safe iframe src or an explicit Browser-mode trustedHtml sink. Literal null and false remain omitted attributes; other supported absence forms retain their existing behavior.'),
 
   // ── 7xx: constructs adoption does not handle (FORMA-016) ─────────────────
   entry('BUILD-701', 'Plain array child (`.map()` without createList)',
-    'A `.map()` returning elements is not adopted. As a child, the server renders an empty island shell and the rows never appear after activation; in a reactive child (`() => rows.map(…)`), the server renders empty text and after activation the page shows the elements as text (`[object HTMLLIElement]`).',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Render rows with createList(source, keyFn, (row) => h(…)), unroll a module-level const with ...CONST.map(…), ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-702', 'createErrorBoundary in a server-rendered component',
-    "Adoption has no handling for createErrorBoundary: the server renders an empty shell where it stands, and on a mount() root activation throws (`insertBefore`: parameter 1 is not of type 'Node'), so nothing after it activates.",
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Move the boundary out of the server-rendered tree, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-703', 'createSwitch in a server-rendered component',
-    "Adoption has no handling for createSwitch: the server renders an empty shell where it stands, and on a mount() root activation throws (`insertBefore`: parameter 1 is not of type 'Node'), so nothing after it activates.",
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Use createShow for each case, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-704', 'createPortal in a server-rendered component',
-    "Adoption has no handling for createPortal: the server renders an empty shell where it stands; activation goes on past it, but the portal's content never appears.",
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Create the portal from an effect after activation, ${BROWSER_ONLY_WAY_OUT}.`),
   entry('BUILD-705', 'createSuspense in a server-rendered component',
-    "Adoption has no handling for createSuspense: the server renders an empty shell where it stands, and on a mount() root activation throws (`insertBefore`: parameter 1 is not of type 'Node'), so nothing after it activates.",
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     `Render the loaded state from server data, ${BROWSER_ONLY_WAY_OUT}.`),
-  entry('BUILD-706', 'browserOnly() prop the compiler cannot evaluate',
-    "A browser-only island's server output is its empty host with its declared props; a prop the compiler cannot evaluate to a string, number, boolean or null (a function, a spread, an array, a run-time value) is not among them, so the component never receives it.",
-    'Pass a literal or a module-level const, or read the value in the browser.'),
   entry('BUILD-707', 'browserOnly() called inside the tree',
-    'browserOnly() wraps a component declaration; called in the tree, the compiler cannot name the island, so it becomes an empty shell nothing registers.',
+    "This unsupported native construct is reported at its source and ends the build with BUILD-610; no fallback island body is emitted.",
     'Declare `const X = browserOnly(Impl)` at the top level of a module, render `<X …/>`, and register X in activateIslands.'),
-  entry('BUILD-708', 'browserOnly() component not registered',
-    "The page activates islands from a registry that does not name this component, so its empty host never renders in the browser.",
-    'Add the component to the activateIslands({ … }) registry under the name it is rendered with.'),
 
   // ── 8xx: the build package ───────────────────────────────────────────────
   entry('BUILD-801', 'SSR build without @getforma/compiler',
@@ -277,6 +305,23 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-818', 'Worker metadata cannot authenticate an asset',
     'A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is invalid.',
     'Generate the worker from the completed manifest after final asset bytes are written; do not substitute a filename hash or abbreviated digest.'),
+  entry('BUILD-819', "A route is over its size ceiling",
+    "What the route loads cold is over the ceiling of its class (decision brief L-64, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 28,100 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.",
+    "Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings."),
+  entry('BUILD-820', 'The previous release for retention is not usable',
+    "previousDist names something that is not the previous release's dist/: a path that does not exist or is not a directory, one with no readable manifest.json, another application's dist, a watch build's, one whose asset names are not flat file names, or a directory that is, holds or sits inside outputDir (which the build replaces whole).",
+    "Pass the directory of the release that is live, kept apart from outputDir, or leave previousDist out for a first deploy. A dist built by an earlier schema retains nothing and says so; that is not this error."),
+  entry('BUILD-821', 'A retained asset cannot be vouched for',
+    "A file the previous manifest lists is missing from the previous dist, is not a regular file, or its bytes no longer match the SHA-384 the manifest recorded; or this build emitted a file of the same name with other bytes. The build will not copy bytes it cannot vouch for into a release browsers execute, and it fails before writing any output.",
+    "Keep the whole release artifact unaltered, as the build wrote it, and pass that directory. If the previous dist was damaged, restore it from the artifact store, or build this release as a security release (security: true) to retain nothing."),
+  entry('BUILD-822', 'FORMA_SECURITY_RELEASE is not a value the build understands',
+    "The environment variable that marks a release as a security release (nothing is retained from the previous release) holds a value other than 1, true, 0, false or empty. Reading an unknown value as unmarked would retain a revoked build's assets in the release that exists to remove them, so the build refuses it.",
+    "Set FORMA_SECURITY_RELEASE=1 (or true) for a release that fixes a vulnerability, or unset it."),
+
+
+  entry('BUILD-823', 'Preview frame runtime that cannot be minified',
+    "`previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified (its bytes are on every preview document), so the file must be JavaScript esbuild can parse for ES2022.",
+    'Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.'),
 
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);

@@ -1,3 +1,4 @@
+import {readSourceFile, resolveSourceFile} from './source-snapshot';
 /**
  * Forma Compiler - Module Loader
  *
@@ -11,7 +12,7 @@
  * across files is a filesystem operation, not an AST one.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { registerSourceMap } from './diagnostics.js';
@@ -38,20 +39,9 @@ export type ModuleLoader = (
 export function resolveFilePath(fromDir: string, importPath: string): string | null {
   const base = resolve(fromDir, importPath);
 
-  // Try exact path
-  if (existsSync(base) && !isDirectory(base)) return base;
-
-  for (const ext of ['.ts', '.tsx', '.jsx', '.js']) {
-    const withExt = base + ext;
-    if (existsSync(withExt)) return withExt;
-  }
-
-  for (const index of ['index.ts', 'index.tsx', 'index.jsx', 'index.js']) {
-    const indexPath = join(base, index);
-    if (existsSync(indexPath)) return indexPath;
-  }
-
-  return null;
+  const candidates=[base,...['.ts','.tsx','.jsx','.js'].map(ext=>base+ext),
+    ...['index.ts','index.tsx','index.jsx','index.js'].map(index=>join(base,index))];
+  return resolveSourceFile(base, () => candidates.find(candidate=>existsSync(candidate)&&!isDirectory(candidate))??null,candidates);
 }
 
 /**
@@ -78,7 +68,7 @@ function isDirectory(filePath: string): boolean {
  */
 export function loadComponentSource(filePath: string): string | null {
   try {
-    return transformJsxSource(readFileSync(filePath, 'utf8'), filePath);
+    return transformJsxSource(readSourceFile(filePath), filePath);
   } catch {
     return null;
   }

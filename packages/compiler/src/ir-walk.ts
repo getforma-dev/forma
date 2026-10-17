@@ -1,3 +1,7 @@
+import {keyedFactory,type ListProof,type ListSite} from './list-proof';
+import {closedExpression} from './closed-expression';
+import {enterHtmlElement,checkRawTextChildren,htmlBranch,htmlList,type HtmlContext} from './html-context';
+import {closedBinding,closedSlot,closedHint,closedListRows,emitClosedText,type ClosedEnvironment,type ClosedRows} from './closed-bindings';
 /**
  * Forma Compiler - IR Walk Engine
  *
@@ -22,6 +26,7 @@
 import { parse } from '@babel/parser';
 import type * as T from '@babel/types';
 import * as t from '@babel/types';
+import {attributeName,attributeCollisionKey} from './attribute-name';
 import {
   IrEmitContext,
   SLOT_SOURCE_CLIENT,
@@ -48,11 +53,13 @@ import {
   type Locatable,
 } from './diagnostics.js';
 import { isBrowserOnlyCall, type BrowserOnlyDeclaration } from './browser-only.js';
-import { childPropsScope, emitPropText, listPropsScope, propPath, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { childPropsScope, declaredKind, islandPropsScope, emitPropText, listPropsScope, listItemHint, propPath, propType, propSlot, refuseDeclaredFallback, type PropsScope } from './props-bindings';
+import { islandInputs } from './island-inputs';
+import type { IslandRegistry } from './island-registry';
 import { PropsSchemaError } from './props-schema';
+import { closedKind, HTML_BOOLEAN_ATTRIBUTES, moduleLiteral, refuseBooleanText, refuseConditionType, refuseUncalledGetter, valueKind, type KindEnvironment } from './value-rules';
 import {
   enterComponentScope,
-  lookupLiteralRows,
   lookupSignal,
   newSignalRegistry,
   type SignalDefault,
@@ -89,10 +96,15 @@ const SOURCE_SERVER = SLOT_SOURCE_SERVER;
 const SOURCE_CLIENT = SLOT_SOURCE_CLIENT;
 
 /** Convert a static literal to its string representation for an attribute value. */
-function staticLiteralToAttrString(expr: t.Expression): string | null {
+function staticLiteralToAttrString(expr: t.Expression, key: string): string | null {
+  if (HTML_BOOLEAN_ATTRIBUTES.has(key)) {
+    if (t.isStringLiteral(expr) || t.isNumericLiteral(expr) || t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+    return null;
+  }
   if (t.isStringLiteral(expr)) return expr.value;
   if (t.isNumericLiteral(expr)) return String(expr.value);
-  if (t.isBooleanLiteral(expr)) return expr.value ? '' : null;
+  // Non-boolean attributes write the word, as h() does (finding F2).
+  if (t.isBooleanLiteral(expr)) return expr.value ? 'true' : null;
   if (t.isNullLiteral(expr)) return null;
   return null;
 }
@@ -129,8 +141,8 @@ function exprToText(node: t.Node): string {
 /**
  * Report a construct the walker could not translate into IR.
  *
- * Every path that emits a fallback island shell, drops a child, or mints an
- * anonymous slot instead of the thing the author wrote goes through here. The
+ * Legacy construct diagnostics go through here before unsupported native
+ * island paths raise BUILD-610. The
  * failure mode these replace is the one that cost the most in the field: the
  * compiler quietly emitted a placeholder and the wrong page shipped (see the
  * ksx dogfood ledger, findings #9 and #10). A diagnostic therefore always
@@ -259,9 +271,9 @@ function describeNode(node: t.Node): string {
   return `a ${node.type}`;
 }
 
-/** The consequence shared by every construct that becomes a client-side island. */
+/** The consequence shared by unsupported native island constructs. */
 const ISLAND_CONSEQUENCE =
-  'emitted as an empty island shell, so it renders nothing server-side and only appears once the client bundle hydrates';
+  'refused with BUILD-610 because it cannot produce a declared native island contract';
 
 /**
  * Extract signal name from a simple signal-call arrow: () => signalName()
@@ -308,11 +320,41 @@ interface EvalEnv {
 }
 
 /** The env for the scope the walk is in right now. */
+function closedEnv(walkCtx:WalkContext):ClosedEnvironment {
+  return {file:walkCtx.sourceFile??'',rows:walkCtx.closedRows,signal:identifier=>{
+    const signal=lookupSignal(walkCtx.signalScope,identifier.name),lexical=walkCtx.propsScope?.references.get(identifier);
+    // A nearer non-signal declaration never acquires an outer same-spelled
+    // aggregate merely because the legacy scalar scope can look up that name.
+    if(lexical&&signal?.declaration&&lexical.path.node!==signal.declaration)return undefined;
+    return signal;
+  }};
+}
+
 function evalEnv(walkCtx: WalkContext): EvalEnv {
   return {
     signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
     ident: (name) => walkCtx.stringConstants?.get(name),
   };
+}
+
+/** What value rules 6 and 7 can read to type an expression (value-rules.ts). */
+function kindEnv(walkCtx: WalkContext): KindEnvironment {
+  return {
+    signal: (name) => lookupSignal(walkCtx.signalScope, name)?.default,
+    constant: (name) => walkCtx.stringConstants?.get(name) ?? moduleLiteral(walkCtx.sourceFile, name),
+  };
+}
+
+/**
+ * Value rule 6 (docs/parity-rules.md): refuse a text value whose every result
+ * is a boolean (BUILD-614). A boolean literal is not refused: it writes nothing
+ * on both sides.
+ */
+function refuseBooleanTextKind(node: t.Node, walkCtx: WalkContext, evaluable: boolean): void {
+  const value = t.isArrowFunctionExpression(node) || t.isFunctionExpression(node) ? getEffectiveBody(node) : node;
+  if (value && t.isBooleanLiteral(value)) return;
+  // String() of it builds only when the compiler can evaluate it.
+  if (valueKind(node, kindEnv(walkCtx)) === 'boolean') refuseBooleanText(walkCtx.sourceFile ?? '', node, `text ${describeNode(node)}`, evaluable ? 'string' : 'ternary');
 }
 
 /** JS truthiness of an evaluated value. */
@@ -339,13 +381,29 @@ function evalToText(val: EvalValue): string {
  * leaves such a slot Null, which renders as an omitted attribute and empty text.
  * That is the right answer for null and for a value that could not be evaluated;
  * it is also, unavoidably, what an EMPTY STRING default has to encode, because
- * the slot entry has no way to distinguish "" from absent. An attribute whose
- * value evaluates to "" is therefore omitted server-side where the client writes
- * `attr=""` — a documented boundary of the binary format, not a walker choice.
+ * the slot entry has no way to distinguish "" from absent. In text the two
+ * render alike (the empty holder); an attribute whose server value is "" is
+ * therefore not bound to a slot: a non-boolean attribute is static `attr=""`,
+ * while an HTML boolean attribute is omitted
+ * (emptyServerValue below; FORMA-182 finding F3).
  */
 function defaultBytesFor(val: EvalValue | undefined): Uint8Array {
   if (val === undefined || val === null) return new Uint8Array(0);
   return new TextEncoder().encode(String(val));
+}
+
+/**
+ * Whether a client signal's server value is the empty string. Its slot cannot
+ * say so (zero default bytes are "no default", which the walker reads as
+ * null and omits), so a non-boolean attribute bound to it is written as a static
+ * `name=""` (an HTML boolean attribute is omitted). The same applies to values
+ * that evaluate to "" (FORMA-182 finding F3, rule 6's attribute table):
+ * a client slot is never filled on the server,
+ * so its default is the value the server writes.
+ * Verified by: packages/compiler/tests/value-rule-6-attributes.test.ts
+ */
+function emptyServerValue(value: SignalDefault): boolean {
+  return value.type === 'text' && value.default === '';
 }
 
 /**
@@ -426,15 +484,17 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
     && t.isIdentifier(node.callee)
     && node.arguments.length === 0
   ) {
-    return env.signal(node.callee.name)?.default;
+    const value=env.signal(node.callee.name);return value?.type==='aggregate'?undefined:value?.default;
   }
 
   // Explicit cast: String(expr) / Number(expr). Pages write these around a
   // signal read to pin the type; without folding them the cast alone was
   // enough to turn an otherwise evaluable value into an empty attribute.
-  // Only a string or number operand folds: `String(null)` is "null" in JS but
-  // `null` is also how this evaluator spells "absent", and guessing between
-  // the two would put the wrong text on the page.
+  // Only a string or number operand folds, and a boolean one for String():
+  // `String(null)` is "null" in JS but `null` is also how this evaluator spells
+  // "absent", and guessing between the two would put the wrong text on the
+  // page. `String(flag)` is value rule 6's admitted way to write a boolean's
+  // word (docs/parity-rules.md), the same on both sides.
   if (
     t.isCallExpression(node)
     && t.isIdentifier(node.callee)
@@ -443,8 +503,21 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
     && t.isExpression(node.arguments[0]!)
   ) {
     const inner = evalNode(node.arguments[0] as t.Expression, env);
+    if (typeof inner === 'boolean' && node.callee.name === 'String') return String(inner);
     if (typeof inner !== 'string' && typeof inner !== 'number') return undefined;
     return node.callee.name === 'String' ? String(inner) : Number(inner);
+  }
+
+  // Boolean(expr): JS truthiness, as `!!expr` (value rule 7 types it boolean).
+  if (
+    t.isCallExpression(node)
+    && t.isIdentifier(node.callee)
+    && node.callee.name === 'Boolean'
+    && node.arguments.length === 1
+    && t.isExpression(node.arguments[0]!)
+  ) {
+    const inner = evalNode(node.arguments[0] as t.Expression, env);
+    return inner === undefined ? undefined : isTruthy(inner);
   }
 
   // Unary negation: !expr or !!expr
@@ -539,6 +612,11 @@ function evalNode(node: t.Expression, env: EvalEnv): EvalValue | undefined {
 export interface WalkContext {
   /** Declared page/child prop paths; independent from source variable names. */
   propsScope?: PropsScope;
+  islandRegistry?: IslandRegistry;
+  /** Finite parser and interactive-content ancestry, shared through helpers. */
+  htmlContext?: HtmlContext;
+  closedRows?: ClosedRows;
+  islandSchemas?: Map<string, number>;
   /** File-level constant arrays (for Rule 9 static unroll). */
   fileConstants?: Map<string, any[]>;
   /** Resolve a constant array the CURRENT module imports, for the same unroll.
@@ -578,6 +656,11 @@ export interface WalkContext {
    *  carry the resolved component's own path so a warning points at the file
    *  the author has to edit, not the page that included it. */
   sourceFile?: string;
+  /** Original lexical LIST site retained through JSX lowering; `prove()` runs after the
+   *  legacy BUILD-107 shape checks. Absent (undefined) only in low-level callers that walk
+   *  without original source; the SSR plugin always supplies it. */
+  listProof?: (file:string,node:t.CallExpression)=>ListSite|undefined;
+  indexedFactories?: (file:string,fn:ComponentFunction)=>void;
   /** Resolve a sub-component call to its source file and function name.
    *
    *  `fromFile` is the file the CALL appears in, and the resolver must read
@@ -597,6 +680,12 @@ export interface WalkContext {
   loadModule?: ModuleLoader;
   /** Set of visited component names for cycle detection. */
   visited?: Set<string>;
+  /** Active registered declarations, independent of local/import spellings. */
+  islandStack?: ReadonlySet<string>;
+  /** Registered activation owner, preserved through ordinary helpers. */
+  islandOwner?: { identity: string; name: string };
+  /** Nearest select's native value belongs to this activation owner. */
+  boundSelect?: { owner: string | undefined; chain: string };
   /** Current depth for sub-component resolution (max 3). */
   depth?: number;
   /** List item bindings: "paramName.propName" → target slot id.
@@ -767,9 +856,11 @@ function inlinedWalkContext(
   functionName: string,
   visited: Set<string>,
   link: DiagnosticChainLink,
+  declaredScope?: PropsScope,
 ): WalkContext {
   const constants = moduleConstantScope(sub.source, sub.filePath, walkCtx.loadModule);
-  const propsScope = childPropsScope(walkCtx.propsScope, sub.fn, sub.propsArg, sub.filePath);
+  walkCtx.indexedFactories?.(sub.filePath,sub.fn);
+  const propsScope = declaredScope ?? childPropsScope(walkCtx.propsScope, sub.fn, sub.propsArg, sub.filePath, ctx);
   return {
     ...walkCtx,
     ...constants,
@@ -921,7 +1012,7 @@ export function walkHTree(
         `browserOnly(...) used as a tag`,
         ISLAND_CONSEQUENCE + ' — declare `const X = browserOnly(Impl)` at the top level of a module, render <X/>, and register X in activateIslands',
       );
-      emitIsland(ctx);
+      refuseIsland(walkCtx,node);
       return;
     }
     warnDegraded(
@@ -931,11 +1022,22 @@ export function walkHTree(
       `dynamic tag h(${describeNode(tagArg)}, ...)`,
       ISLAND_CONSEQUENCE + ' — use a literal tag name to render it server-side',
     );
-    emitIsland(ctx);
+    refuseIsland(walkCtx,node);
     return;
   }
 
   const tag = tagArg.value;
+  const controlTag = tag.toLowerCase();
+  if ((controlTag === 'option' || controlTag === 'optgroup') && walkCtx.boundSelect && walkCtx.islandOwner
+      && walkCtx.boundSelect.owner !== walkCtx.islandOwner.identity) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      `registered SSR island ${walkCtx.islandOwner.name} places <${tag}> across a value-bound <select> owned by ${walkCtx.boundSelect.chain}; keep the option/optgroup helper unregistered within that owner, or move the island boundary to the owning select or an outer element`,
+      'BUILD-617');
+  }
+  const htmlContext=enterHtmlElement(walkCtx.htmlContext,tag,args[1],node,walkCtx.sourceFile??'');
+  checkRawTextChildren(tag,args.slice(2),walkCtx.sourceFile??'');
   const tagStrIdx = ctx.addString(tag);
   const isVoid = VOID_TAGS.has(tag);
 
@@ -963,6 +1065,7 @@ export function walkHTree(
   }
 
   if (hasProps && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
+    const attributeNames=new Set<string>();
     for (const prop of propsArg.properties) {
       // `{...rest}`: the walker cannot know what is in it, so none of it is
       // rendered server-side. Silently dropping it is how an element ships
@@ -989,12 +1092,12 @@ export function walkHTree(
         continue;
       }
 
-      const key = t.isIdentifier(prop.key)
+      const rawKey = t.isIdentifier(prop.key)
         ? prop.key.name
         : t.isStringLiteral(prop.key)
           ? prop.key.value
           : null;
-      if (key === null) {
+      if (rawKey === null) {
         warnDegraded(
           walkCtx,
           'BUILD-203',
@@ -1004,6 +1107,7 @@ export function walkHTree(
         );
         continue;
       }
+      const key=attributeName(rawKey);
 
       // Rule 7: Skip event handlers. Not a degradation: an event listener has
       // no server-side representation by design, and the client attaches it.
@@ -1011,6 +1115,12 @@ export function walkHTree(
 
       // `ref` is a callback, not an attribute — nothing to render.
       if (key === 'ref') continue;
+      const collisionKey=attributeCollisionKey(rawKey);
+      if(attributeNames.has(collisionKey)) {
+        const file=walkCtx.sourceFile??'',at=originalPosition(file,prop.loc?.start??{line:1,column:0});
+        throw new PropsSchemaError(file,at.line,at.column,`multiple props map to native attribute ${key}; keep one canonical attribute`);
+      }
+      attributeNames.add(collisionKey);
 
       // A method-valued prop (`{ title() { … } }`) is a function the walker
       // has no binding form for once it is not an event handler.
@@ -1040,15 +1150,31 @@ export function walkHTree(
 
       const val = prop.value as t.Expression;
 
-      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx, 'attribute');
+      const declaredSlot = propSlot(val, walkCtx.propsScope, ctx, 'attribute') ?? closedSlot(val,ctx,closedEnv(walkCtx),'attribute');
       if (declaredSlot !== undefined) {
         dynAttrs.push({ keyIdx: ctx.addString(key), slotId: declaredSlot });
         continue;
       }
 
+      // h() calls function-valued props. A direct built-in getter therefore
+      // reads the same value as () => getter(), including its native default.
+      // Reuse lexical provenance so a same-spelled local is never an outer
+      // signal merely because the legacy signal scope can find that name.
+      const directSignal = t.isIdentifier(val) ? closedEnv(walkCtx).signal(val) : undefined;
+      if (directSignal && emptyServerValue(directSignal.default)) {
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        continue;
+      }
+      if (directSignal) {
+        const slotId = directSignal.slotId;
+        ctx.recordSlotRef(slotId);
+        dynAttrs.push({ keyIdx: ctx.addString(key), slotId });
+        continue;
+      }
+
       // Static literal value -> static attribute pair
       if (isStaticLiteral(val)) {
-        const strVal = staticLiteralToAttrString(val);
+        const strVal = staticLiteralToAttrString(val, key);
         if (strVal !== null) {
           checkLiteralSize(walkCtx, val, strVal, `value of attribute '${key}' on <${tag}>`);
           const keyIdx = ctx.addString(key);
@@ -1097,11 +1223,20 @@ export function walkHTree(
         const sigName = extractSignalName(fn);
         const binding = sigName ? lookupSignal(walkCtx.signalScope, sigName) : undefined;
         let slotId: number;
+        if (binding && emptyServerValue(binding.default)) {
+          if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+          continue;
+        }
         if (binding) {
           slotId = binding.slotId;
           ctx.recordSlotRef(slotId);
         } else {
-          const evaluated = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          const rawDefault = tryEvalExprDefault(fn, evalEnv(walkCtx));
+          const evaluated = HTML_BOOLEAN_ATTRIBUTES.has(key) && rawDefault !== undefined ? isTruthy(rawDefault) : rawDefault;
+          if (evaluated === '') {
+            if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx, valIdx: ctx.addString('') });
+            continue;
+          }
           if (evaluated !== undefined && evaluated !== null) {
             checkLiteralSize(walkCtx, fn, String(evaluated), `value of attribute '${key}' on <${tag}>`);
           }
@@ -1133,8 +1268,11 @@ export function walkHTree(
       // Module-level string const as attr value: d: SIL_BODY → static attribute
       if (t.isIdentifier(val) && walkCtx.stringConstants?.has(val.name)) {
         const keyIdx = ctx.addString(key);
-        const valIdx = ctx.addString(walkCtx.stringConstants.get(val.name)!);
-        staticAttrs.push({ keyIdx, valIdx });
+        const value = walkCtx.stringConstants.get(val.name)!;
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key) || value !== '') {
+          const valIdx = ctx.addString(HTML_BOOLEAN_ATTRIBUTES.has(key) ? '' : value);
+          staticAttrs.push({ keyIdx, valIdx });
+        }
         continue;
       }
 
@@ -1148,7 +1286,12 @@ export function walkHTree(
       // diagnostic, so the attribute shipped with no value and nothing said
       // so. That is what stripped the tooltips off ksx's controls.
       // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a concatenated attribute value into an SSR default"
-      const evaluated = evalNode(val, evalEnv(walkCtx));
+      const rawDefault = evalNode(val, evalEnv(walkCtx));
+      const evaluated = HTML_BOOLEAN_ATTRIBUTES.has(key) && rawDefault !== undefined ? isTruthy(rawDefault) : rawDefault;
+      if (evaluated === '') {
+        if (!HTML_BOOLEAN_ATTRIBUTES.has(key)) staticAttrs.push({ keyIdx: ctx.addString(key), valIdx: ctx.addString('') });
+        continue;
+      }
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, val, String(evaluated), `value of attribute '${key}' on <${tag}>`);
       }
@@ -1216,6 +1359,17 @@ export function walkHTree(
     ctx.emitU16(dyn.slotId);
   }
 
+  // A select controls the option defaults in its entire native subtree. An
+  // independent child island has no authenticated parent value, so it cannot
+  // own those option bindings. Read the actual emitted value attribute: absent
+  // or omitted values must not become a new restriction or change FMIR bytes.
+  const valueKey = controlTag === 'select' ? ctx.stringIndex('value') : undefined;
+  const ownsValue = valueKey !== undefined && [...staticAttrs, ...dynAttrs].some(attr => attr.keyIdx === valueKey);
+  const contextualWalk={...walkCtx,htmlContext};
+  const childContext: WalkContext = controlTag === 'select'
+    ? { ...contextualWalk, boundSelect: ownsValue ? { owner: walkCtx.islandOwner?.identity, chain: `${chainSoFar(walkCtx).map(link => link.component).join(' > ')} > select` } : undefined }
+    : contextualWalk;
+
   // Process children (3rd+ args)
   for (let i = 2; i < args.length; i++) {
     const childArg = args[i];
@@ -1223,12 +1377,12 @@ export function walkHTree(
 
     // Handle spread elements (Rule 9)
     if (t.isSpreadElement(childArg)) {
-      emitSpreadChild(childArg, hName, ctx, walkCtx);
+      emitSpreadChild(childArg, hName, ctx, childContext);
       continue;
     }
 
     const child = childArg as t.Expression;
-    emitChild(child, hName, ctx, walkCtx, i);
+    emitChild(child, hName, ctx, childContext, i);
   }
 
   // CLOSE_TAG
@@ -1256,12 +1410,17 @@ export function walkCallExpression(
     return;
   }
 
+  // Original identity also handles imported core aliases after JSX lowering.
+  // Resolving the site does not prove it: the proof runs inside emitCreateList
+  // after the legacy BUILD-107 shape checks.
+  const listSite=walkCtx.listProof?.(walkCtx.sourceFile!,node);
   // Check if this is a createList call
   if (
+    listSite ||
     t.isIdentifier(node.callee)
     && node.callee.name === 'createList'
   ) {
-    emitCreateList(node, hName, ctx, walkCtx);
+    emitCreateList(node, hName, ctx, walkCtx, listSite);
     return;
   }
 
@@ -1286,6 +1445,49 @@ export function walkCallExpression(
   // Rule 10: Sub-component calls
   if (t.isIdentifier(node.callee)) {
     const componentName = node.callee.name;
+    const lexical = walkCtx.propsScope?.references.get(node.callee);
+    const registered = (!lexical || lexical.scope.path.isProgram())
+      ? walkCtx.islandRegistry?.resolve(componentName, walkCtx.sourceFile!) : undefined;
+    if (registered) {
+      if (walkCtx.islandStack?.has(registered.identity)) {
+        const at = originalPosition(walkCtx.sourceFile!, node.loc?.start ?? {line:1,column:0});
+        throw new PropsSchemaError(walkCtx.sourceFile!, at.line, at.column, `recursive registered island ${registered.name} is outside the native SSR subset`);
+      }
+      registered.proveRoot();
+      const analysis = registered.analyze();
+      const schemas = walkCtx.islandSchemas ??= new Map();
+      let schemaObject = schemas.get(registered.identity);
+      if (schemaObject === undefined) { schemaObject = ctx.appendPropsSchema(registered.declared.schema); schemas.set(registered.identity, schemaObject); }
+      const inputs = islandInputs(ctx, schemaObject, node.arguments[0], walkCtx.propsScope, walkCtx.sourceFile!, walkCtx.stringConstants,
+        name => lookupSignal(walkCtx.signalScope, name)?.default.default,node=>closedBinding(node,ctx,closedEnv(walkCtx),false));
+      let sub: ResolvedSubComponent | null = null;
+      let scope: PropsScope | undefined;
+      if (registered.mode === 'ssr') {
+        const resolved = walkCtx.resolveComponent?.(componentName, walkCtx.sourceFile);
+        if (resolved) sub = resolveSubComponent(resolved.source, resolved.path ?? registered.file, resolved.functionName, node, walkCtx.loadModule, true);
+        if (!sub || !t.isCallExpression(sub.returnNode)) {
+          const at = originalPosition(walkCtx.sourceFile!, node.loc?.start ?? {line:1,column:0});
+          throw new PropsSchemaError(walkCtx.sourceFile!, at.line, at.column, `registered island ${registered.name} needs a native element/control-flow root; use browserOnly for a client-only body`);
+        }
+        scope = islandPropsScope(sub.fn, sub.filePath, ctx, schemaObject, inputs);
+      }
+      const id = ctx.addIsland(registered.name, 0x01, inputs, ctx.opcodeLen(), schemaObject);
+      ctx.setIslandContract(id, registered.mode, analysis.bindings);
+      ctx.emit(OP_ISLAND_START); ctx.emitU16(id);
+      if (sub) {
+        const visited = new Set(walkCtx.visited); visited.add(componentName);
+        const childContext = inlinedWalkContext(walkCtx, ctx, sub, componentName, visited, chainLink(walkCtx,componentName,node), scope);
+        childContext.islandStack = new Set([...(walkCtx.islandStack ?? []), registered.identity]);
+        childContext.islandOwner = { identity: registered.identity, name: registered.name };
+        walkCallExpression(sub.returnNode as t.CallExpression, hName, ctx,
+          childContext);
+      } else {
+        enterHtmlElement(walkCtx.htmlContext,'div',undefined,node,walkCtx.sourceFile??'');
+        const div=ctx.addString('div');ctx.emit(OP_OPEN_TAG);ctx.emitU32(div);ctx.emitU16(0);ctx.emit(OP_CLOSE_TAG);ctx.emitU32(div);
+      }
+      ctx.emit(OP_ISLAND_END); ctx.emitU16(id);
+      return;
+    }
 
     /**
      * A component declared `const X = browserOnly(Impl)` (L-1): emitted as a
@@ -1296,116 +1498,15 @@ export function walkCallExpression(
     const emittedBrowserOnly = (): boolean => {
       const declaration = walkCtx.findBrowserOnly?.(componentName, walkCtx.sourceFile);
       if (!declaration) return false;
-      emitBrowserOnlyIsland(node, componentName, ctx, walkCtx);
-      return true;
+      refuseIsland(walkCtx,node,`${componentName}: browserOnly components must be declared in activateIslands`);
     };
 
-    // Island components are NEVER inlined — they always emit ISLAND_START/ISLAND_END.
-    // This check must come before resolveComponent to prevent depth-0 inlining.
-    // When resolvable, we walk the full component h() tree between ISLAND_START
-    // and ISLAND_END so the Rust walker renders real SSR content inside islands.
-    if (walkCtx.islandNames?.has(componentName)) {
-      let reason = 'could not be resolved to a source file (the compiler follows relative imports only)';
-      if (walkCtx.resolveComponent) {
-        try {
-          const resolved = walkCtx.resolveComponent(componentName, walkCtx.sourceFile);
-          if (!resolved) {
-            reason = 'could not be resolved to a source file (the compiler follows relative imports only)';
-          } else {
-            const sub = resolveSubComponent(
-              resolved.source,
-              resolved.path ?? walkCtx.sourceFile ?? '<unknown>',
-              resolved.functionName,
-              node,
-              walkCtx.loadModule,
-            );
-            const componentReturn = sub?.returnNode;
-            if (!componentReturn || !t.isCallExpression(componentReturn)) {
-              reason = 'has no return statement the compiler can follow to an h() call';
-            } else {
-              // Register island and emit ISLAND_START
-              const byteOffset = ctx.opcodeLen();
-              const id = ctx.addIsland(componentName, 0x01, [], byteOffset);
-              ctx.emit(OP_ISLAND_START);
-              ctx.emitU16(id);
-
-              // Walk the full component subtree for SSR content, capturing
-              // every slot id referenced in the island span so the island
-              // table entry carries real slot_ids (the Rust walker skips
-              // data-forma-props emission for islands with empty slot_ids).
-              ctx.beginSlotCapture();
-              let capturedSlotIds: number[] = [];
-              try {
-                const newVisited = new Set<string>(walkCtx.visited || new Set<string>());
-                newVisited.add(componentName);
-                walkCallExpression(
-                  componentReturn,
-                  hName,
-                  ctx,
-                  inlinedWalkContext(
-                    walkCtx, ctx, sub, resolved.functionName, newVisited,
-                    chainLink(walkCtx, componentName, node),
-                  ),
-                );
-              } catch (err) {
-                if (err instanceof PropsSchemaError) throw err;
-                // ISLAND_START is already in the stream: unwinding past the
-                // matching ISLAND_END would leave the bytecode unbalanced (and
-                // the outer fallback would register a SECOND island for the
-                // same component). Absorb the failure, say so, and close the
-                // span with whatever content was emitted.
-                warnDegraded(
-                  walkCtx,
-                  'BUILD-408',
-                  node,
-                  `island component '${componentName}' failed part-way through compiling (${(err as Error).message})`,
-                  'its server-rendered content is truncated at that point; the shell still hydrates client-side',
-                );
-              } finally {
-                // Always pop the capture set, even when the subtree walk
-                // throws — an unbalanced stack would make an enclosing
-                // island's endSlotCapture pop THIS island's set instead of
-                // its own.
-                capturedSlotIds = ctx.endSlotCapture();
-              }
-
-              // Emit ISLAND_END
-              ctx.emit(OP_ISLAND_END);
-              ctx.emitU16(id);
-              ctx.setIslandSlotIds(id, capturedSlotIds);
-              return;
-            }
-          }
-        } catch (err) {
-          // Resolution threw mid-walk — fall back to the empty shell, but say so.
-          reason = `failed to compile (${(err as Error).message})`;
-        }
-      }
-
-      // A registered browser-only component: the empty host is what it means.
-      if (emittedBrowserOnly()) return;
-
-      // Fallback: the island's content could not be compiled — emit the empty
-      // div shell the client hydrates into, and name the reason. The island
-      // itself still works (it is registered under its own name); what is lost
-      // is its server-rendered content.
-      warnDegraded(
-        walkCtx,
-        'BUILD-408',
-        node,
-        `island component '${componentName}' ${reason}`,
-        'its shell still hydrates client-side, but the island renders nothing server-side — the page ships with a hole where it will appear',
-      );
-      emitIsland(ctx, componentName);
-      return;
-    }
-
     /**
-     * Every bail-out below defers the component to client-side rendering,
-     * unless it is declared browser-only, which is the island it asked for.
+     * Every bail-out below refuses native emission. Registered browser-only
+     * components have already taken the declared contract path above.
      * Core's control-flow components (FORMA-016) and a bare browserOnly()
      * call are reported under their own codes, whichever bail-out they reach;
-     * what is emitted does not change.
+     * the build still ends with the source-located BUILD-610 refusal.
      */
     const bailOut = (code: string, why: string, fix?: string, chain?: DiagnosticChainLink[]): void => {
       const gap = componentName === 'browserOnly' ? 'BUILD-707' : ADOPTION_GAPS.get(componentName);
@@ -1423,7 +1524,7 @@ export function walkCallExpression(
             : ISLAND_CONSEQUENCE + ` — adoption has no handling for ${componentName}: `
               + `${ADOPTION_OUTCOME.get(componentName)}; ${BROWSER_ONLY_FIX}`,
         );
-        emitIsland(ctx, componentName);
+        refuseIsland(walkCtx,node, componentName);
         return;
       }
       warnDegraded(
@@ -1434,7 +1535,7 @@ export function walkCallExpression(
         ISLAND_CONSEQUENCE + (fix ? ` — ${fix}` : ''),
         chain,
       );
-      emitIsland(ctx, componentName);
+      refuseIsland(walkCtx,node, componentName);
     };
 
     if (walkCtx.resolveComponent) {
@@ -1461,7 +1562,7 @@ export function walkCallExpression(
           return;
         }
 
-        // Check if call-site props contain non-static values → bail to island
+        // Refuse unsupported non-static props before legacy static substitution
         if (node.arguments.length > 0) {
           const propsArg = node.arguments[0];
           if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
@@ -1519,7 +1620,7 @@ export function walkCallExpression(
       }
     }
 
-    // Resolution failed or not available → island. A package import is told
+    // Resolution failed or is unavailable. A package import is told
     // apart from a name the compiler cannot find; the line is the same.
     const binding = walkCtx.importOf?.(componentName, walkCtx.sourceFile);
     const fromPackage = binding !== undefined && binding !== null
@@ -1527,12 +1628,12 @@ export function walkCallExpression(
     bailOut(
       fromPackage ? 'BUILD-401' : 'BUILD-402',
       'could not be resolved to a source file',
-      'the compiler follows relative imports only; package imports and dynamic references always stay client-side',
+      'use a resolvable relative component import or register a declared browserOnly component',
     );
     return;
   }
 
-  // Rule 11: Unknown call expression → island
+  // Rule 11: Unknown native call expressions refuse emission
   const gap = isBrowserOnlyCall(node.callee) ? 'BUILD-707' : adoptionGapCode(node);
   if (gap === 'BUILD-707') {
     warnDegraded(
@@ -1542,7 +1643,7 @@ export function walkCallExpression(
       'browserOnly(...)(...) called inside the tree',
       ISLAND_CONSEQUENCE + ' — browserOnly() wraps a component declaration: declare `const X = browserOnly(Impl)` at the top level of a module, render <X/>, and register X in activateIslands',
     );
-    emitIsland(ctx);
+    refuseIsland(walkCtx,node);
     return;
   }
   if (gap === 'BUILD-701') {
@@ -1555,7 +1656,7 @@ export function walkCallExpression(
       + ' createList(source, keyFn, (row) => h(...)), unroll a module-level const with ...CONST.map(...),'
       + ` or ${BROWSER_ONLY_FIX}`,
     );
-    emitIsland(ctx);
+    refuseIsland(walkCtx,node);
     return;
   }
   warnDegraded(
@@ -1565,7 +1666,7 @@ export function walkCallExpression(
     `call expression ${describeNode(node)}`,
     ISLAND_CONSEQUENCE,
   );
-  emitIsland(ctx);
+  refuseIsland(walkCtx,node);
 }
 
 // ---------------------------------------------------------------------------
@@ -1628,7 +1729,7 @@ function emitChild(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
-  if (emitPropText(child, walkCtx.propsScope, ctx)) return;
+  if (emitPropText(child, walkCtx.propsScope, ctx)||emitClosedText(child,ctx,closedEnv(walkCtx))) return;
   if (walkCtx.propsScope && t.isConditionalExpression(child)) { emitTernaryShowIf(child, hName, ctx, walkCtx, childIndex); return; }
   // Rule 12: null, undefined, false → skip
   if (isNullish(child)) return;
@@ -1694,6 +1795,7 @@ function emitChild(
   ) {
     const binding = lookupSignal(walkCtx.signalScope, child.callee.name);
     if (binding) {
+      if (binding.default.type === 'bool') refuseBooleanText(walkCtx.sourceFile ?? '', child, `signal ${child.callee.name}()`);
       ctx.recordSlotRef(binding.slotId);
       const markerId = ctx.nextMarker();
       ctx.emit(OP_DYN_TEXT);
@@ -1720,6 +1822,10 @@ function emitChild(
   // Verified by: packages/compiler/tests/ir-walk.test.ts > "folds a String() cast child instead of islanding it as a component"
   const folded = evalNode(child, evalEnv(walkCtx));
   if (folded !== undefined) {
+    // Rule 6: a value that can only be a boolean shows nothing in the browser
+    // whatever it is (`!ready()`, `count() > 0`): BUILD-614. A mixed idiom
+    // (`ready() && 'Go'`) folds to nothing below when its value is a boolean.
+    if (typeof folded === 'boolean') refuseBooleanTextKind(child, walkCtx, true);
     // A folded null or boolean emits NOTHING, because that is what the client
     // does with one: `h()` drops `null`, `true` and `false` children outright
     // (packages/core/src/dom/element.ts). Rendering "true" server-side would put text on the page
@@ -1767,20 +1873,19 @@ function emitChild(
     const binding = signalName ? lookupSignal(walkCtx.signalScope, signalName) : undefined;
     let slotId: number;
     if (binding) {
+      if (binding.default.type === 'bool') refuseBooleanText(walkCtx.sourceFile ?? '', arrowOrFunc, `signal ${binding.name}()`);
       slotId = binding.slotId;
       ctx.recordSlotRef(slotId);
     } else {
-      // An anonymous text slot still gets an SSR default when the expression
-      // evaluates. Without one the server emits the zero-width-space
-      // placeholder and the text only appears after hydration — a flash on
-      // every page that computes its text (`() => count() + ' items'`).
+      // Computed scalar text must have a closed native value. Refuse unknown
+      // runtime expressions instead of manufacturing an empty default.
       const evaluated = tryEvalExprDefault(arrowOrFunc, evalEnv(walkCtx));
+      refuseBooleanTextKind(arrowOrFunc, walkCtx, evaluated !== undefined);
       if (evaluated !== undefined && evaluated !== null) {
         checkLiteralSize(walkCtx, arrowOrFunc, String(evaluated), 'text value');
       }
-      // A reactive child returning rows or a control-flow component is one
-      // of FORMA-016's constructs: it renders empty here, and adoption binds
-      // it as text. Same emission; its own code, naming the way out.
+      // A reactive child returning unsupported structure is not scalar text.
+      // Refuse it with the same source-located contract as the eager form.
       const gap = evaluated === undefined ? adoptionGapCode(bodyExpr) : null;
       if (gap) {
         const isArray = gap === 'BUILD-701';
@@ -1791,28 +1896,32 @@ function emitChild(
           isArray
             ? `plain array child ${describeNode(arrowOrFunc)} (a .map() without createList)`
             : `reactive child ${describeNode(arrowOrFunc)}`,
-          'it renders EMPTY server-side and adoption binds it as text'
+          ISLAND_CONSEQUENCE
           + (isArray
-            ? ', so after activation the page shows the elements as text ([object HTMLLIElement]) —'
-              + ' render rows with createList(source, keyFn, (row) => h(...)), or '
+            ? ' — render rows with createList(source, keyFn, (row) => h(...)), or '
             : ` — adoption has no handling for ${describeNode(bodyExpr!)}; `)
           + BROWSER_ONLY_FIX,
         );
+        refuseIsland(walkCtx, arrowOrFunc);
       } else if (evaluated === undefined) {
         warnDegraded(
           walkCtx,
           'BUILD-301',
           arrowOrFunc,
           `dynamic text child ${describeNode(arrowOrFunc)}, which the compiler cannot evaluate`,
-          'it renders EMPTY server-side and only fills in once the client hydrates —'
+          ISLAND_CONSEQUENCE + ' —'
           + ' initialize the signals it reads with literal defaults so the server can render them',
         );
+        refuseIsland(walkCtx, arrowOrFunc);
       }
+      // A mixed idiom at a boolean default (`() => ready() && 'Go'` with
+      // ready false) is the "nothing" case: h() writes nothing for it, so the
+      // server writes an empty range, not the word (rule 6).
       slotId = ctx.addSlot(
         textSlotName(childIndex, walkCtx),
         TYPE_TEXT,
         SOURCE_CLIENT,
-        defaultBytesFor(evaluated),
+        defaultBytesFor(typeof evaluated === 'boolean' ? null : evaluated),
       );
     }
     const markerId = ctx.nextMarker();
@@ -1836,6 +1945,11 @@ function emitChild(
     }
   }
 
+  // A module-level boolean const read as text (rule 6).
+  if (t.isIdentifier(child) && typeof moduleLiteral(walkCtx.sourceFile, child.name) === 'boolean') {
+    refuseBooleanText(walkCtx.sourceFile ?? '', child, `module constant ${child.name}`, 'ternary');
+  }
+
   // Rule 11: Anything else → ISLAND_START / ISLAND_END
   warnDegraded(
     walkCtx,
@@ -1845,7 +1959,7 @@ function emitChild(
     ISLAND_CONSEQUENCE
       + " — wrap it in a function (`() => …`) for a reactive binding, or use createShow/createList for conditionals and lists",
   );
-  emitIsland(ctx);
+  refuseIsland(walkCtx,child);
 }
 
 // ---------------------------------------------------------------------------
@@ -1873,6 +1987,29 @@ function deriveShowSlotName(cond: t.Node | null | undefined, walkCtx: WalkContex
 }
 
 /**
+ * A signal getter named in a condition without its call, where the condition's
+ * value is the function itself: the condition, an operand of `!`, `&&`, `||`,
+ * `??` or a comparison, a ternary's test, or the body of a parameterless
+ * getter. Branch values and call arguments are not conditions and are not read.
+ * Verified by: packages/compiler/tests/value-rule-7-conditions.test.ts
+ */
+function uncalledGetter(node: t.Node | null | undefined, walkCtx: WalkContext): t.Identifier | undefined {
+  if (!node) return undefined;
+  if (t.isIdentifier(node)) return closedEnv(walkCtx).signal(node) ? node : undefined;
+  if (t.isTSAsExpression(node) || t.isTSSatisfiesExpression(node) || t.isTSNonNullExpression(node)
+    || t.isTSTypeAssertion(node) || t.isParenthesizedExpression(node)) return uncalledGetter(node.expression, walkCtx);
+  if ((t.isArrowFunctionExpression(node) || t.isFunctionExpression(node)) && node.params.length === 0) {
+    return uncalledGetter(getEffectiveBody(node), walkCtx);
+  }
+  if (t.isUnaryExpression(node)) return uncalledGetter(node.argument, walkCtx);
+  if (t.isLogicalExpression(node) || t.isBinaryExpression(node)) {
+    return uncalledGetter(node.left, walkCtx) ?? uncalledGetter(node.right, walkCtx);
+  }
+  if (t.isConditionalExpression(node)) return uncalledGetter(node.test, walkCtx);
+  return undefined;
+}
+
+/**
  * Mint the TYPE_BOOL slot a SHOW_IF selects its branch with, carrying the
  * branch the CLIENT would take on first paint as its SSR default.
  *
@@ -1894,17 +2031,59 @@ function addShowSlot(
   cond: t.Node | null | undefined,
   ctx: IrEmitContext,
   walkCtx: WalkContext,
+  createShowArgument = false,
 ): number {
+  // Value rule 7 (docs/parity-rules.md): a condition must be boolean-typed.
+  // What the compiler can prove is not boolean (a declared, closed or signal
+  // type, a literal, an operator's result) is BUILD-615; what it cannot type
+  // keeps the BUILD-302 path below.
+  const file = walkCtx.sourceFile ?? '', refuse = (): never => refuseConditionType(file, cond!, `condition ${describeNode(cond!)}`);
+  // createShow calls its first argument, so a getter passed itself
+  // (`createShow(open, …)`) is read as `open()` below. Anywhere else a signal
+  // getter named without its call (a ternary's `open ? a : b`, `() => open`,
+  // `ready() && open`) is a function, always truthy in the browser: BUILD-615
+  // naming the missing call.
+  // Type assertions, non-null assertions and parentheses preserve the getter
+  // passed at runtime. Do not unwrap a function body: () => open returns the
+  // getter instead of calling it and must still take the refusal below.
+  let argument = cond;
+  while (argument && (t.isTSAsExpression(argument) || t.isTSSatisfiesExpression(argument)
+    || t.isTSNonNullExpression(argument) || t.isTSTypeAssertion(argument)
+    || t.isParenthesizedExpression(argument))) argument = argument.expression;
+  const passedGetter = createShowArgument && argument && t.isIdentifier(argument)
+    && closedEnv(walkCtx).signal(argument) ? argument : undefined;
+  const uncalled = passedGetter ? undefined : uncalledGetter(cond, walkCtx);
+  if (uncalled) refuseUncalledGetter(file, uncalled, uncalled.name);
   const declaredSlot = propSlot(cond, walkCtx.propsScope, ctx);
-  if (declaredSlot !== undefined) return declaredSlot;
+  if (declaredSlot !== undefined) {
+    if (declaredKind(cond, walkCtx.propsScope) !== 'boolean') refuse();
+    return declaredSlot;
+  }
+  const closed = closedBinding(cond, ctx, closedEnv(walkCtx));
+  if (closed && closedKind(closed.values) !== 'boolean') refuse();
+  const closedSlotId = closed ? closedSlot(cond, ctx, closedEnv(walkCtx)) : undefined;
+  if (closedSlotId !== undefined) return closedSlotId;
+  // A scalar signal getter passed to createShow itself is read as its call.
+  const read = passedGetter ? t.callExpression(t.identifier(passedGetter.name), []) : cond;
+  if (read && valueKind(read, kindEnv(walkCtx)) === 'other') refuse();
   const slotName = deriveShowSlotName(cond, walkCtx);
 
+  // A condition also folds a module-level boolean const (`const SHOWN = true`),
+  // so the server renders the branch the browser takes instead of ELSE.
+  const base = evalEnv(walkCtx);
+  const env: EvalEnv = { signal: base.signal, ident: (name) => {
+    const known = base.ident(name);
+    if (known !== undefined) return known;
+    const literal = moduleLiteral(walkCtx.sourceFile, name);
+    return typeof literal === 'boolean' ? literal : undefined;
+  } };
   let value: EvalValue | undefined;
-  if (cond && isFunctionExpr(cond)) {
-    value = tryEvalExprDefault(cond as t.ArrowFunctionExpression | t.FunctionExpression, evalEnv(walkCtx));
-  } else if (cond && t.isExpression(cond)) {
-    value = evalNode(cond, evalEnv(walkCtx));
+  if (read && isFunctionExpr(read)) {
+    value = tryEvalExprDefault(read as t.ArrowFunctionExpression | t.FunctionExpression, env);
+  } else if (read && t.isExpression(read)) {
+    value = evalNode(read, env);
   }
+  if (value !== undefined && typeof value !== 'boolean') refuse();
 
   if (value === undefined) {
     warnDegraded(
@@ -1958,7 +2137,8 @@ function emitTernaryShowIf(
 
   // Emit then-branch
   const thenStart = ctx.opcodeLen();
-  emitBranchContent(cond.consequent, hName, ctx, walkCtx, childIndex);
+  const htmlChoice=Symbol('conditional');
+  emitBranchContent(cond.consequent, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)}, childIndex);
   const thenLen = ctx.opcodeLen() - thenStart;
 
   // SHOW_ELSE marker
@@ -1966,7 +2146,7 @@ function emitTernaryShowIf(
 
   // Emit else-branch
   const elseStart = ctx.opcodeLen();
-  emitBranchContent(cond.alternate, hName, ctx, walkCtx, childIndex);
+  emitBranchContent(cond.alternate, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)}, childIndex);
   const elseLen = ctx.opcodeLen() - elseStart;
 
   // Back-patch lengths
@@ -1989,7 +2169,7 @@ function emitCreateShow(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
-  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx);
+  const slotId = addShowSlot(node.arguments[0], ctx, walkCtx, true);
 
   ctx.emit(OP_SHOW_IF);
   ctx.emitU16(slotId);
@@ -2000,12 +2180,13 @@ function emitCreateShow(
   const elseLenPos = ctx.opcodeLen();
   ctx.emitU32(0);
 
+  const htmlChoice=Symbol('show');
   // Then-branch: second argument (index 1)
   const thenStart = ctx.opcodeLen();
   if (node.arguments.length > 1) {
     const thenArg = node.arguments[1];
     if (thenArg && !t.isSpreadElement(thenArg)) {
-      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, walkCtx);
+      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)});
     }
   }
   const thenLen = ctx.opcodeLen() - thenStart;
@@ -2018,7 +2199,7 @@ function emitCreateShow(
   if (node.arguments.length > 2) {
     const elseArg = node.arguments[2];
     if (elseArg && !t.isSpreadElement(elseArg)) {
-      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, walkCtx);
+      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)});
     }
   }
   const elseLen = ctx.opcodeLen() - elseStart;
@@ -2038,7 +2219,7 @@ function emitCreateShowBranch(
   ctx: IrEmitContext,
   walkCtx: WalkContext,
 ): void {
-  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
+  if (emitPropText(expr, walkCtx.propsScope, ctx)||emitClosedText(expr,ctx,closedEnv(walkCtx))) return;
   // Unwrap arrow function: () => h('div', ...)
   if (isFunctionExpr(expr)) {
     const fn = expr as t.ArrowFunctionExpression | t.FunctionExpression;
@@ -2069,7 +2250,7 @@ function emitCreateShowBranch(
     `createShow branch ${describeNode(expr)}`,
     ISLAND_CONSEQUENCE + ' — a branch must be `() => h(...)` (or a direct h(...) call) to render server-side',
   );
-  emitIsland(ctx);
+  refuseIsland(walkCtx, expr);
 }
 
 // ---------------------------------------------------------------------------
@@ -2108,7 +2289,7 @@ function deriveBindingName(node: t.Node | null | undefined): string | null {
  *
  * Pattern: createList(dataSignal, keyFn, mapFn)
  *   dataSignal: identifier or arrow returning an array
- *   keyFn: (item) => string key — ignored for SSR
+ *   keyFn: (item) => item.path — proved in original source and carried in section6
  *   mapFn: (item) => h(...) — the template to render for each item
  *
  * Slot naming: each list derives a base name from its data source
@@ -2142,15 +2323,16 @@ function emitCreateList(
   hName: string,
   ctx: IrEmitContext,
   walkCtx: WalkContext,
+  site?: ListSite,
 ): void {
-  /** Every bail-out below renders the whole list as an empty client island. */
+  /** Unsupported native list forms refuse the whole build. */
   const bailOut = (why: string, fix: string): void => {
     warnDegraded(walkCtx, 'BUILD-107', node, `createList(...) ${why}`, `the whole list is ${ISLAND_CONSEQUENCE} — ${fix}`);
-    emitIsland(ctx, 'createList');
+    refuseIsland(walkCtx,node, 'createList');
   };
 
   // Need at least 3 arguments: dataSignal, keyFn, mapFn
-  if (node.arguments.length < 3) {
+  if (!site?.indexed && node.arguments.length < 3) {
     bailOut(
       `was called with ${node.arguments.length} argument(s)`,
       'SSR needs all three of createList(source, keyFn, mapFn)',
@@ -2158,7 +2340,7 @@ function emitCreateList(
     return;
   }
 
-  const mapArg = node.arguments[2];
+  const mapArg = node.arguments[site?.indexed?1:2];
   if (!mapArg || t.isSpreadElement(mapArg) || !isFunctionExpr(mapArg)) {
     bailOut(
       `has a third argument that is ${mapArg ? describeNode(mapArg) : 'missing'} rather than a function`,
@@ -2191,6 +2373,19 @@ function emitCreateList(
     return;
   }
 
+  // The legacy shape checks above keep their BUILD-107 precedence. A call of
+  // the old shape must then be an exact original core createList site whose
+  // key is a row property path (BUILD-612) and whose row returns one stable
+  // owned Element (BUILD-613); the proved path goes into section 6 below.
+  let proof: ListProof | undefined;
+  if (walkCtx.listProof) {
+    if (!site) {
+      const at=originalPosition(walkCtx.sourceFile!,node.loc?.start??{line:1,column:0});
+      throw new PropsSchemaError(walkCtx.sourceFile!,at.line,at.column,'LIST call has no exact original core identity','BUILD-612');
+    }
+    proof = site.prove();
+  }
+
   // Unique per-page base name for this list's slots (see doc comment above):
   // source-derived, else map-param-derived, else positional. Deduped on the
   // BASE, not on each slot name, so one list's three slots stay a matched set.
@@ -2204,36 +2399,54 @@ function emitCreateList(
     ? `#${registry.total}`
     : uniqueName(registry.counts, derivedName);
 
-  // A source signal initialized with literal rows has no slot, so its rows
-  // never reach the list's array slot: the server renders the list empty
-  // unless a handler fills it, where the browser renders the rows (BUILD-303).
-  // Reported only; what is emitted does not change.
-  const sourceName = signalReadName(node.arguments[0]);
-  const literal = sourceName ? lookupLiteralRows(walkCtx.signalScope, sourceName) : undefined;
-  if (literal) {
-    warnDegraded(
-      walkCtx,
-      'BUILD-303',
-      node,
-      `createList(...) over signal '${sourceName}', whose literal default has ${literal.rows} row(s)`,
-      `the server renders the list EMPTY unless the handler fills 'list:${base}:array', while the browser`
-      + ` renders the default's rows — start the signal empty (\`createSignal([])\`) and fill it from the server`
-      + ` (the handler sets 'list:${base}:array'; an island seeds the signal from its props), or unroll a`
-      + ' module-level const with ...CONST.map(...)',
-    );
-  }
-
   // Declared arrays read the root server value; local arrays and their named
   // debugging/projection slots stay CLIENT-owned. Retain local labels used by
   // the frozen corpus harness; their names never grant handler binding access.
-  const declaredArray = propSlot(node.arguments[0], walkCtx.propsScope, ctx);
-  const arraySlotId = declaredArray ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
-  const itemSlotId = declaredArray !== undefined ? ctx.addTemporarySlot(TYPE_OBJECT) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
+  const factory=proof?.indexed;
+  const loweredFactory=factory?keyedFactory(node.arguments[0],node=>walkCtx.propsScope?.references.get(node),callee=>{
+    if(!callee.loc||!factory.callee.loc)return false;
+    const at=originalPosition(walkCtx.sourceFile!,callee.loc.start);
+    return at.line===factory.callee.loc.start.line&&at.column===factory.callee.loc.start.column+1;
+  }):undefined;
+  const arraySource=factory?(loweredFactory?.arguments[0]??factory.arguments[0]):node.arguments[0];
+  const declaredArray = propSlot(arraySource, walkCtx.propsScope, ctx);
+  let closedArray=declaredArray===undefined&&!factory?closedBinding(arraySource,ctx,closedEnv(walkCtx)):undefined;
+  if(factory) {
+    const fail=(message:string):never=>{const at=originalPosition(walkCtx.sourceFile!,node.loc?.start??{line:1,column:0});throw new PropsSchemaError(walkCtx.sourceFile!,at.line,at.column,message,'BUILD-622');};
+    if(declaredArray!==undefined) {
+      const path=propPath(arraySource,walkCtx.propsScope)!;
+      // Optional arrays or ancestors can throw eagerly in the browser, whereas
+      // ordinary LIST treats absent values as empty. Require total array data.
+      for(let i=1;i<=path.length;i++)if(propType(path.slice(0,i),walkCtx.propsScope!,arraySource!).kind==='optional')fail('indexed initial rows must be a required declared array with required ancestors');
+      if(propType(path,walkCtx.propsScope!,arraySource!).kind!=='array')fail('indexed initial rows must be a declared array');
+    } else {
+      let value:unknown;try{value=closedExpression(arraySource!,walkCtx.sourceFile!);}catch{fail('indexed initial rows must be a required declared array or closed literal array');}
+      if(!Array.isArray(value))fail('indexed initial rows must be a closed dense array');
+      const initial=value;closedArray={values:[initial],slot:()=>ctx.addConstantSlot(initial,TYPE_ARRAY)};
+    }
+  }
+  let sourceShape = node.arguments[0];
+  while (sourceShape && (t.isTSAsExpression(sourceShape) || t.isTSNonNullExpression(sourceShape)
+    || t.isTSSatisfiesExpression(sourceShape) || t.isParenthesizedExpression(sourceShape))) sourceShape = sourceShape.expression;
+  // A getter result or object field is data provenance, not a proof that core
+  // can call that source. F1 deliberately leaves mutable values undecided;
+  // native admission still requires a getter binding or explicit callback.
+  const sourceCallable = t.isIdentifier(sourceShape) || t.isArrowFunctionExpression(sourceShape) || t.isFunctionExpression(sourceShape);
+  if (walkCtx.listProof && !factory && (!sourceCallable || (declaredArray === undefined && !closedArray))) {
+    const file = walkCtx.sourceFile ?? '';
+    const at = originalPosition(file, node.arguments[0]?.loc?.start ?? node.loc?.start ?? { line: 1, column: 0 });
+    throw new PropsSchemaError(file, at.line, at.column,
+      'createList source must read a declared array prop or a closed literal-default signal; pass derived rows as their own declared prop, or move the component behind a registered browserOnly boundary');
+  }
+  if(closedArray&&closedArray.values.some(value=>!Array.isArray(value)&&value!==null))throw new PropsSchemaError(walkCtx.sourceFile??'',node.loc?.start.line??1,(node.loc?.start.column??0)+1,'createList closed source must be an array');
+  const closedItems=closedArray?.values.flatMap(value=>Array.isArray(value)?value:[]);
+  const arraySlotId = declaredArray ?? closedArray?.slot() ?? ctx.addSlot(`list:${base}:array`, TYPE_ARRAY, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
+  const itemSlotId = closedItems ? ctx.addTemporarySlot(closedHint(closedItems,closedEnv(walkCtx),node)) : declaredArray !== undefined ? ctx.addTemporarySlot(listItemHint(walkCtx.propsScope!,arraySource!)) : ctx.addSlot(`list:${base}:item`, TYPE_OBJECT, walkCtx.propsScope ? SOURCE_CLIENT : SOURCE_SERVER);
 
   // Scan the body for param.prop member accesses to determine which
   // properties need PROP extraction opcodes.
   const propNames = new Set<string>();
-  if (declaredArray === undefined) collectMemberProps(bodyExpr, paramName, propNames);
+  if (declaredArray === undefined && !closedArray) collectMemberProps(bodyExpr, paramName, propNames);
 
   // Create target slots for each property and build the bindings map
   const bindings = new Map<string, number>();
@@ -2248,6 +2461,8 @@ function emitCreateList(
     });
   }
 
+  // One metadata entry per emitted occurrence, including repeated helper sites.
+  if(proof)ctx.addKeyPath(ctx.opcodeLen(),proof.key);
   // Emit LIST header: opcode + array_slot + item_slot + body_len(placeholder)
   ctx.emit(OP_LIST);
   ctx.emitU16(arraySlotId);
@@ -2269,7 +2484,9 @@ function emitCreateList(
   const listWalkCtx: WalkContext = {
     ...walkCtx,
     listItemBindings: bindings,
-    propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, node.arguments[0]!, itemSlotId) : walkCtx.propsScope,
+    htmlContext:htmlList(walkCtx.htmlContext),
+    closedRows:closedItems?closedListRows(mapFn,closedItems,itemSlotId,walkCtx.closedRows,!!factory):walkCtx.closedRows,
+    propsScope: declaredArray !== undefined && walkCtx.propsScope ? listPropsScope(walkCtx.propsScope, mapFn, arraySource!, itemSlotId,!!factory) : walkCtx.propsScope,
   };
 
   if (t.isCallExpression(bodyExpr) && t.isIdentifier(bodyExpr.callee) && bodyExpr.callee.name === hName) {
@@ -2399,7 +2616,7 @@ function emitSpreadChild(
                 `row ${JSON.stringify(item)} of the unrolled '${arrayName}' spread could not be substituted`,
                 `that one row is ${ISLAND_CONSEQUENCE}`,
               );
-              emitIsland(ctx);
+              refuseIsland(walkCtx,spread);
             }
           }
           return;
@@ -2420,7 +2637,7 @@ function emitSpreadChild(
         `spread child ...${arrayName}.map(...)`,
         `${ISLAND_CONSEQUENCE} — ${table.detail}`,
       );
-      emitIsland(ctx);
+      refuseIsland(walkCtx,spread);
       return;
     }
   }
@@ -2434,7 +2651,7 @@ function emitSpreadChild(
     ISLAND_CONSEQUENCE
       + ' — only `...CONST.map(item => h(...))` over a module-level array of object literals unrolls statically; use createList for runtime data',
   );
-  emitIsland(ctx);
+  refuseIsland(walkCtx,spread);
 }
 
 /**
@@ -2575,6 +2792,7 @@ function resolveSubComponent(
   functionName: string,
   callNode: t.CallExpression,
   loadModule?: ModuleLoader,
+  preserveDeclared = false,
 ): ResolvedSubComponent | null {
   const lookup = resolveExportedFunction(source, filePath, functionName, {
     loadModule,
@@ -2592,7 +2810,7 @@ function resolveSubComponent(
 
   // Apply prop substitutions from the call arguments
   // Pattern: Alert({ message: 'Saved', variant: 'success' })
-  if (callNode.arguments.length > 0) {
+  if (!preserveDeclared && callNode.arguments.length > 0) {
     const propsArg = callNode.arguments[0];
     if (propsArg && !t.isSpreadElement(propsArg) && t.isObjectExpression(propsArg)) {
       substituteProps(returnNode, paramNode, propsArg);
@@ -2623,7 +2841,7 @@ function resolveSubComponent(
  *   function Badge({ label })  → the destructured local, including `{ label = 'x' }`
  *
  * Only static literals are substituted, which is all that can reach here:
- * walkCallExpression bails to an island before inlining when any call-site prop
+ * walkCallExpression refuses this path before inlining when any call-site prop
  * is non-static. The tree is mutated in place — resolveSubComponent parses the
  * component source per call, so it is private to this walk.
  *
@@ -2750,7 +2968,7 @@ function emitBranchContent(
   walkCtx: WalkContext,
   childIndex: number,
 ): void {
-  if (emitPropText(expr, walkCtx.propsScope, ctx)) return;
+  if (emitPropText(expr, walkCtx.propsScope, ctx)||emitClosedText(expr,ctx,closedEnv(walkCtx))) return;
   if (t.isConditionalExpression(expr)) { emitTernaryShowIf(expr, hName, ctx, walkCtx, childIndex); return; }
   // String literal → TEXT
   if (t.isStringLiteral(expr)) {
@@ -2767,8 +2985,8 @@ function emitBranchContent(
     return;
   }
 
-  // null/undefined/false → skip
-  if (isNullish(expr)) return;
+  // null/undefined/false → skip; a true literal writes nothing either (rule 6)
+  if (isNullish(expr) || t.isBooleanLiteral(expr)) return;
 
   // h() call → walk
   if (
@@ -2780,8 +2998,12 @@ function emitBranchContent(
     return;
   }
 
-  // Other call expression
-  if (t.isCallExpression(expr)) {
+  // Other call expression. A String()/Number() cast the evaluator folds is a
+  // value, not a component: it falls through to DYN_TEXT below, as emitChild
+  // folds it before its own call dispatch (value rule 6's `String(flag)`).
+  const cast = t.isCallExpression(expr) && t.isIdentifier(expr.callee)
+    && (expr.callee.name === 'String' || expr.callee.name === 'Number') && evalNode(expr, evalEnv(walkCtx)) !== undefined;
+  if (t.isCallExpression(expr) && !cast) {
     walkCallExpression(expr, hName, ctx, walkCtx);
     return;
   }
@@ -2800,14 +3022,18 @@ function emitBranchContent(
       'BUILD-301',
       expr,
       `dynamic value ${describeNode(expr)}, which the compiler cannot evaluate`,
-      'it renders EMPTY server-side and only fills in once the client hydrates',
+      ISLAND_CONSEQUENCE,
     );
+    refuseIsland(walkCtx, expr);
   }
+  // Rule 6: a boolean-only value is BUILD-614; a mixed one at a boolean
+  // default writes an empty range, as h() writes nothing for it.
+  if (typeof evaluated === 'boolean') refuseBooleanTextKind(expr, walkCtx, true);
   const slotId = ctx.addSlot(
     textSlotName(childIndex, walkCtx),
     TYPE_TEXT,
     SOURCE_CLIENT,
-    defaultBytesFor(evaluated),
+    defaultBytesFor(typeof evaluated === 'boolean' ? null : evaluated),
   );
   const markerId = ctx.nextMarker();
   ctx.emit(OP_DYN_TEXT);
@@ -2819,163 +3045,10 @@ function emitBranchContent(
 // Island Emission
 // ---------------------------------------------------------------------------
 
-/**
- * Emit ISLAND_START / ISLAND_END markers and register the island in the table.
- *
- * This is the FALLBACK shell for every subtree the walker does NOT translate
- * into IR — a registered island whose component would not resolve, a
- * sub-component stopped by the depth/cycle/non-static-props guards, an
- * un-unrollable spread, or an unrecognized expression. It emits a bare <div>
- * for the Rust walker to hang data-forma-island / data-forma-component
- * attributes on, so CSR hydration can replace it in place.
- *
- * A registered island that DOES resolve never reaches here: it emits its own
- * root element from the walked component subtree, between ISLAND_START and
- * ISLAND_END (see walkCallExpression's islandNames branch).
- * Verified by: packages/compiler/tests/island-registry.test.ts > "unresolved island falls back to empty div shell"
- * Verified by: packages/compiler/tests/island-registry.test.ts > "island root element matches component root tag"
- */
-function emitIsland(ctx: IrEmitContext, name?: string): void {
-  // Capture byte offset BEFORE emitting ISLAND_START so walk_island() can seek directly here.
-  const byteOffset = ctx.opcodeLen();
-  // addIsland increments nextIslandCounter and registers the island in the table.
-  // Use the returned id for the fallback name to avoid double-increment.
-  // trigger: 0x01 = Load; v3 removes PropsMode from the wire
-  const id = ctx.addIsland(name || `island_${ctx.peekNextIslandId()}`, 0x01, [], byteOffset);
-  ctx.emit(OP_ISLAND_START);
-  ctx.emitU16(id);
-
-  // Emit an empty <div> shell so the Rust walker has an element to inject
-  // data-forma-island / data-forma-component attributes onto.
-  const tagIdx = ctx.addString('div');
-  ctx.emit(OP_OPEN_TAG);
-  ctx.emitU32(tagIdx);
-  ctx.emitU16(0); // no attributes
-
-  ctx.emit(OP_CLOSE_TAG);
-  ctx.emitU32(tagIdx);
-
-  ctx.emit(OP_ISLAND_END);
-  ctx.emitU16(id);
-}
-
-/**
- * Emit a component declared `const X = browserOnly(Impl)` (DR-1, L-1): a
- * registered island named as the call names it, whose server output is its
- * empty host element with its declared props. The browser activates it like
- * any island; core finds the host empty and renders the component there.
- *
- * The declared props are the call site's props the compiler can evaluate to a
- * string, number, boolean or null. They are written into the host as a static
- * `data-forma-props` attribute, the inline props channel core reads, so they
- * take no slot: a prop named like a signal, or two browser-only islands with
- * the same prop, cannot collide in the page's slot namespace, and the
- * component receives each prop under its own name. A handler cannot change
- * them (3.0.0's declared island props do, DR-4). Anything else (a function, a
- * spread, an array or object, a value only the browser knows) cannot reach
- * the island's props, and is reported (BUILD-706).
- *
- * On a page that activates islands from a literal registry, a browser-only
- * component the registry does not name would never render (BUILD-708).
- * Verified by: packages/compiler/tests/browser-only.test.ts
- */
-function emitBrowserOnlyIsland(
-  node: t.CallExpression,
-  componentName: string,
-  ctx: IrEmitContext,
-  walkCtx: WalkContext,
-): void {
-  if (walkCtx.islandNames && walkCtx.islandNames.size > 0 && !walkCtx.islandNames.has(componentName)) {
-    warnDegraded(
-      walkCtx,
-      'BUILD-708',
-      node,
-      `browserOnly() component ${componentName}`,
-      `the page activates islands from a registry that does not name it, so its empty host never renders in the browser — add ${componentName} to the activateIslands({ … }) registry`,
-    );
-  }
-
-  const notAProp = (at: Locatable, what: string): void => warnDegraded(
-    walkCtx,
-    'BUILD-706',
-    at,
-    `${what} on browserOnly() component ${componentName}`,
-    'it is not among the island\'s server props, so the component never receives it — pass a literal or a'
-    + ' module-level const, or read the value in the browser',
-  );
-
-  const props: Record<string, EvalValue> = {};
-  let declared = 0;
-  const propsArg = node.arguments[0];
-  if (propsArg && (t.isSpreadElement(propsArg) || !t.isObjectExpression(propsArg))) {
-    notAProp(propsArg, 'props passed as something other than an object literal');
-  } else if (propsArg) {
-    for (const prop of propsArg.properties) {
-      if (t.isSpreadElement(prop)) {
-        notAProp(prop, `spread props {...${exprToText(prop.argument)}}`);
-        continue;
-      }
-      const key = prop.computed
-        ? null
-        : t.isIdentifier(prop.key)
-          ? prop.key.name
-          : t.isStringLiteral(prop.key) ? prop.key.value : null;
-      if (key === null) {
-        notAProp(prop, 'a prop whose key the compiler cannot name');
-        continue;
-      }
-      if (t.isObjectMethod(prop)) {
-        notAProp(prop, `method-valued prop '${key}'`);
-        continue;
-      }
-      // Core strips these from every island's props (DR-21), and `__proto__`
-      // would set this object's prototype rather than a key: never written.
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
-        notAProp(prop, `prop '${key}' (a name core strips from island props, DR-21)`);
-        continue;
-      }
-      const value = prop.value as t.Expression;
-      // `undefined`, which esbuild writes as `void 0`: an absent prop.
-      if (isUndefinedIdentifier(value) || (t.isUnaryExpression(value) && value.operator === 'void')) continue;
-      if (isFunctionExpr(value)) {
-        notAProp(value, `function-valued prop '${key}'`);
-        continue;
-      }
-      const evaluated = t.isUnaryExpression(value) && value.operator === '-' && t.isNumericLiteral(value.argument)
-        ? -value.argument.value
-        : evalNode(value, evalEnv(walkCtx));
-      if (evaluated === undefined) {
-        notAProp(value, `prop '${key}' (${describeNode(value)}), which the compiler cannot evaluate,`);
-        continue;
-      }
-      props[key] = evaluated;
-      declared++;
-    }
-  }
-
-  // The host: the empty shell every island root has. trigger 0x01 = Load,
-  // No slot ids, so the walker writes no props of
-  // its own beside the static ones.
-  const byteOffset = ctx.opcodeLen();
-  const id = ctx.addIsland(componentName, 0x01, [], byteOffset);
-  ctx.emit(OP_ISLAND_START);
-  ctx.emitU16(id);
-  const tagIdx = ctx.addString('div');
-  ctx.emit(OP_OPEN_TAG);
-  ctx.emitU32(tagIdx);
-  if (declared > 0) {
-    const json = JSON.stringify(props);
-    checkLiteralSize(walkCtx, propsArg as Locatable, json, `props of browserOnly() component ${componentName}`);
-    ctx.emitU16(1);
-    ctx.emitU32(ctx.addString('data-forma-props'));
-    ctx.emitU32(ctx.addString(json));
-  } else {
-    ctx.emitU16(0);
-  }
-  ctx.emit(OP_CLOSE_TAG);
-  ctx.emitU32(tagIdx);
-  ctx.emit(OP_ISLAND_END);
-  ctx.emitU16(id);
+/** Unsupported native subtrees cannot invent unnamed hosts or empty contracts. */
+function refuseIsland(walkCtx:WalkContext,node:t.Node,name?:string):never {
+  const file=walkCtx.sourceFile??'',at=originalPosition(file,node.loc?.start??{line:1,column:0});
+  throw new PropsSchemaError(file,at.line,at.column,`${name??describeNode(node)} cannot be represented by a declared native island; use a registered browserOnly component for a client-only body`);
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "originalSourceCommit": "56393bc02c67ae8d1628e5e81ff9b0728253b1e0",
+  "failedCandidateCommit": "ae7d38f4df06e67245ace38c245fd958a687fc58",
+  "originalPath": "packages/core/e2e/data-fetch.spec.ts",
+  "files": [
+    {
+      "path": "original-data-fetch.spec.ts",
+      "bytes": 2492,
+      "sha256": "672b7d3e1fa55e9b1a812c1f79bb9e62004264134565562d217c132562795f0a"
+    },
+    {
+      "path": "R17-second.log",
+      "bytes": 267660,
+      "sha256": "65a7a8fad19b3170ecc060ee27ac9547eb1248172b22c3684b6ecd72fca0d47c"
+    },
+    {
+      "path": "error-context.md",
+      "bytes": 3697,
+      "sha256": "90c671cd33c1c0e548ed8729070be8672cf50764d887597c9b09d9f30f483dc9"
+    }
+  ]
+}

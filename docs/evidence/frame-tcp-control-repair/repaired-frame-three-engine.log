@@ -1,0 +1,24 @@
+[WebServer] (node:13778) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:13809) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 9 tests using 2 workers
+
+(node:13813) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13812) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [chromium] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (1.9s)
+  ✓  1 [firefox] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (2.6s)
+  ✓  3 [chromium] › e2e/frame.spec.ts:246:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (1.8s)
+  ✓  4 [firefox] › e2e/frame.spec.ts:246:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (2.0s)
+  ✓  5 [chromium] › e2e/frame.spec.ts:293:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.7s)
+(node:13838) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  6 [firefox] › e2e/frame.spec.ts:293:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.8s)
+  ✓  7 [webkit] › e2e/frame.spec.ts:198:1 › a module's <link> opens no connection: preconnect, dns-prefetch, prefetch, preload, a bound href (2.3s)
+  ✓  8 [webkit] › e2e/frame.spec.ts:246:1 › a module's <link> survives no second parse: foreign content and foster parenting open no connection, after render and after update() (1.9s)
+  ✓  9 [webkit] › e2e/frame.spec.ts:293:1 › a module's iframe srcdoc renders no document: the attribute is removed, written or bound, and nothing connects (1.8s)
+
+  9 passed (13.8s)

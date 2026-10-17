@@ -1,0 +1,9 @@
+{
+  "commit": "689bc9acce57c8a97d774af614e99db7be555453",
+  "original": "packages/core/e2e/state-roundtrip.spec.ts",
+  "archive": "state-roundtrip.spec.ts.txt",
+  "bytes": 4962,
+  "sha256": "89ee7235f9d46dbe70980a87de244c3bb665e0084fc1dd400269516bae3aa3c3",
+  "originalCase": "100 fixed native values preserve all eight declared kinds through real browser activation",
+  "originalResult": "351 full browser cases pass; this case refuses at case0 in all three engines because its registered component returns undefined; observed effects[] differs from expected first committed effect."
+}

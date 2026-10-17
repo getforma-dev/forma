@@ -97,6 +97,7 @@ export function validateBytecode(code: Uint8Array, strings: number, slots: Reado
         case C.OP_DYN_TEXT: slot(u16()); u16(); break;
         case C.OP_DYN_ATTR: str(u32()); slot(u16()); break;
         case C.OP_PROP: slot(u16()); str(u32()); slot(u16()); break;
+        case C.OP_COALESCE: slot(u16()); slot(u16()); slot(u16()); break;
         case C.OP_ISLAND_START: { const id = u16(); assertEmit(islands.has(id), `undeclared island ${id}`); break; }
         case C.OP_ISLAND_END: u16(); break;
         case C.OP_SHOW_ELSE: break; // Retained v2 no-op; the AST writer emits only separators.

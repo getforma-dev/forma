@@ -48,7 +48,7 @@ function cacheSet<T>(cache: Map<string, CacheEntry<T>>, key: string, entry: Cach
 const exprCache = new Map<string, CacheEntry<Expr>>();
 const programCache = new Map<string, CacheEntry<Stmt[]>>();
 
-/** Drop every cached program. Used by `destroyRuntime()` and by tests. */
+/** Drop every cached program for internal cache qualification. */
 export function clearExpressionCache(): void {
   exprCache.clear();
   programCache.clear();

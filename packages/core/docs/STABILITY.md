@@ -22,20 +22,21 @@ package shows it as `@deprecated` in its types. See
 | `createStore` (deep reactivity) | **Stable** | Membership changes (`Object.keys`, spread, `for…in`) are not reactive by design |
 | Components (`defineComponent`, lifecycle) | **Stable** | |
 | Context (`createContext`, `provide`, `inject`) | **Stable** | |
-| Islands (`activateIslands`, disposal, triggers) | **Stable** | 199 tests across 12 dedicated files † |
+| Islands (`activateIslands`, disposal, triggers) | **3.0 beta candidate** | 156 tests across 12 dedicated files †; strict activation, later materialization, size and packed acceptance are qualified by the [beta record](../../../docs/release/BETA-QUALIFICATION.md). |
 | `createHistory` (undo/redo) | **Stable** | Takes a `[get, set]` tuple; returns a controls object, not a tuple |
 | `createReducer` | **Stable** | |
 | `createResource` / `createSuspense` | **Stable** | Abortable; the Suspense boundary is captured at resource creation |
 | `createPortal`, `svg()`, `template()` | **Stable** | |
 | `trustedHtml()`, the raw-HTML entry every raw sink takes | **Stable** | A plain string at a raw sink, and `h('script')`, are refused: see [Deprecated forms](#deprecated-forms). |
 | `data-fetch`, `data-transition:*`, `data-ref` | **Stable** | |
-| Tiered mount (`mountMarkup(root, markup, { tier, grants, config })`) | **Beta** | New in 2.1.0: binds only under the root it is handed, with `fetch`, `dom` and `navigate` grants and a coded diagnostic per denial; see [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants). Leaving out `grants` gives every grant until 3.0.0, which gives none and pins the signature (FORMA-108). |
+| Tiered mount (`mountMarkup(root, markup, { tier, grants, config })`) | **3.0 development** | Every call names a tier. Omitted grants give none; explicit fetch, DOM and navigate grants bound the handed root. The handle owns update/disposal. See [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants). |
 | Preview frame runtime (`dist/formajs-frame.global.js`) | **Beta** | New in 2.1.0: the runtime a server writes inline into the opaque-origin preview frame; renders the module its host sends in tier `'unreviewed'`. Its message protocol (`module` in; `ready`, `resize`, `error` out) may still move before 3.0.0. |
-| `reconcile()` from `@getforma/core/runtime`, and the runtime's auto-mount of `data-forma-state` on load and through a `body` observer | **Deprecated** | Removed in 3.0.0: they bind with every power, wherever markup lands. Mount with `mountMarkup()` and a tier. `reconcile()` logs `FORMA_W_DEPRECATED_RECONCILE`; the auto-mount logs nothing in 2.x. A page turns all of them off now with `data-forma-mount="manual"` on a `<script>` element. |
+| Tierless HTML runtime lifecycle and automatic mounting | **Removed in 3.0.0** | Use `mountMarkup(root, trustedHtml(markup), { tier, grants, config })` and its update/unmount handle. Importing the runtime and DOM changes never bind markup. The obsolete manual attribute grants no authority; development only warns `FORMA_W_MANUAL_MOUNT_REMOVED`. |
 | TC39 Signals compat (`State`, `Computed`) | **Beta** | Tracks an evolving TC39 proposal |
 | Development build (the `development` export condition) | **Beta** | Each subpath's `development` condition selects a twin under `dist/dev/` that keeps the `__DEV__` warnings; the CDN bundles have none. What the warnings say may change in any release. See [Development builds](#development-builds). |
 
-† The island figure counts the test cases in `activate`, `activate-isolation`,
+† The island figure counts literal test declarations (parameterized rows expand
+to additional runtime cases) in `activate`, `activate-isolation`,
 `activate-reactivate`, `activate-triggers`, `activate-visible`,
 `activate-visible-leak`, `deactivate`, `hydrate`, `hydrate-cleanup`,
 `list-hydration`, `multi-island-integration` and
@@ -54,20 +55,25 @@ is retained for 2.x users.
 
 Verified by `src/__tests__/package-exports.test.ts` > "publishes the exact v3 surface without server functions, WASM or Node SSR"
 
-## Deprecated entry points
+## Explicit HTML runtime migration
 
-The runtime's `reconcile()` still warns once in development with
-`FORMA_W_DEPRECATED_RECONCILE`. Its removal and the tiered mount defaults belong
-to FORMA-108; use `mountMarkup(root, markup, { tier, grants })`.
+The runtime's `initRuntime`, `destroyRuntime`, `mount`, `unmount`, `reconcile`,
+`setDebug`, `setDiagnostics` and `setDirectiveMap` exports are removed in3.0.0.
+Use `mountMarkup(root, trustedHtml(markup), { tier, grants, config })`,
+`handle.update()` and `handle.unmount()`. The component entry's `mount()` is
+unchanged. No automatic scan, body observer or tierless warning path remains.
+The obsolete `data-forma-mount="manual"` attribute only produces the development
+migration hint `FORMA_W_MANUAL_MOUNT_REMOVED`; production omits that warning.
 
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "reconcile behaves as at 2.0.x and warns once in development"
-Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build carries neither the grant report nor reconcile's warning"
+Verified by `src/__tests__/runtime-explicit-mount.test.ts` > "exports only explicit mount lifecycle and host inspection helpers"
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a production build carries neither the grant report nor the obsolete manual-switch warning"
 
 ## Development builds
 
-Every dev-only diagnostic in core sits behind `__DEV__`: the deprecations
-above, hydration mismatches, props the renderer drops, raw-HTML sinks, a
-signal's debug name. `__DEV__` is true in a development build, which is one of:
+Development-only warnings sit behind `__DEV__`: remaining deprecations,
+props the renderer drops, raw-HTML/children ambiguity and a signal's debug name.
+Strict hydration refusals and raw-type violations also report in production;
+they do not disappear when this flag is false. `__DEV__` is true in a development build, which is one of:
 
 - **The installed package, resolved with the `development` export
   condition.** Each subpath's `import` and `require` branch has a
@@ -85,7 +91,7 @@ signal's debug name. `__DEV__` is true in a development build, which is one of:
   `production`; in a browser bundle of the source, which has no `process`, only
   with the global `__FORMA_DEV__` set.
 
-Everything else is a production build and logs none of it: the installed
+Everything else is a production build and logs none of these development-only warnings: the installed
 package resolved without the condition (the files under `dist/` but
 `dist/dev/`), and every CDN bundle. **The CDN bundles have no development
 build**: `formajs-runtime.global.js`, its hardened and short-named copies, and
@@ -121,9 +127,11 @@ development build logs `FORMA_W_TT_POLICY_REFUSED` once for each name.
 
 Children given beside `dangerouslySetInnerHTML` (a function, or a value that is
 not `null`, `undefined` or `false`) log `FORMA_W_INNER_HTML_CHILDREN` once in a
-development build, from h() or from adoption: h() renders the markup and then
-the children until the markup next changes, the compiler's walker only the children, and adoption keeps the markup and
-binds none of the children. Give the element one or the other.
+development build, from h() or from adoption. Ordinary h() retains its existing behavior; strict
+adoption validates matching raw content as opaque and binds none of the
+children beside non-null markup. An initial null/false value permits fallback
+children. Compiler raw-content parity is separate qualification; give the
+element one content source.
 
 Verified by `src/dom/__tests__/trusted-html.test.ts` > "every raw sink refuses strings before parsing, including an already cached trusted value"
 Verified by `src/dom/__tests__/trusted-html.test.ts` > "h refuses script elements in every HTML spelling before construction"
@@ -140,6 +148,6 @@ agrees. That is the only kind of number worth putting in a document — every
 other row here is a statement about *behaviour*, which is what a stability
 table is for.
 
-If you need current measurements rather than status, they are in
-[`PERFORMANCE.md`](PERFORMANCE.md), each with the run-to-run noise floor next
-to it.
+[`PERFORMANCE.md`](PERFORMANCE.md) preserves measured historical baselines
+with their noise floors. The strict-adoption benchmark fixtures have changed;
+those old timings are not current 3.0 measurements or a cross-version comparison.
