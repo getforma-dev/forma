@@ -7,7 +7,7 @@ set -euo pipefail
 # Since the repository merge (FORMA-113) FormaJS is packages/core of this
 # repository; FORMAJS_DIR may still name another checkout.
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 FORMAJS_DIR="${FORMAJS_DIR:-$(cd "$SCRIPT_DIR/../packages/core" && pwd)}"
 
@@ -22,7 +22,13 @@ echo "Building FormaJS..."
 # left the lane running against the stale bundles git used to track
 # (2026-10-15, FORMA-105).
 BUILD_LOG="$(mktemp -t forma-core-build.XXXXXX)"
-if ! (cd "$FORMAJS_DIR" && npm run build) > "$BUILD_LOG" 2>&1; then
+if ! (
+  if declare -F forma_check_build_package > /dev/null; then
+    forma_check_build_package "$FORMAJS_DIR" dist/formajs-runtime.global.js dist/forma.esm.js
+  else
+    cd "$FORMAJS_DIR" && npm run build
+  fi
+) > "$BUILD_LOG" 2>&1; then
   echo "Error: FormaJS build failed in $FORMAJS_DIR; its output:" >&2
   cat "$BUILD_LOG" >&2
   rm -f "$BUILD_LOG"
