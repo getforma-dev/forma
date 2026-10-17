@@ -25,16 +25,16 @@
       "plan": "M3",
       "tags": "v3.0.0-beta.N: npm next, Cargo -beta.N",
       "gates": {
-        "FORMA-103": { "status": "pending", "scope": "island props in one JSON block, compiler-bound seeding" },
-        "FORMA-104": { "status": "pending", "scope": "adoption writes nothing on its first run, coded mismatch errors" },
-        "FORMA-105": { "status": "pending", "scope": "islands only, literal registry, identity digest" },
-        "FORMA-181": { "status": "pending", "scope": "keyed rows" },
-        "FORMA-182": { "status": "pending", "scope": "the marker vocabulary and the seven value rules with shared vectors" },
-        "FORMA-183": { "status": "pending", "scope": "the parity harness and its corpus, blocking in CI" },
-        "FORMA-184": { "status": "pending", "scope": "renderBoth(component, state) in Forma's own suite" },
-        "FORMA-144 slice 2": { "status": "pending", "scope": "island state adoption in the templates: the integrated packed adoption and static-route acceptance" },
-        "FORMA-188 fixture applications": { "status": "pending", "scope": "the three fixture applications in P17" },
-        "FORMA-021 ratchet": { "status": "pending", "scope": "the safe cuts landed and the size gate green at the restated ceiling" }
+        "FORMA-103": { "status": "done", "scope": "island props in one JSON block, compiler-bound seeding" },
+        "FORMA-104": { "status": "done", "scope": "adoption writes nothing on its first run, coded mismatch errors" },
+        "FORMA-105": { "status": "done", "scope": "islands only, literal registry, identity digest" },
+        "FORMA-181": { "status": "done", "scope": "keyed rows" },
+        "FORMA-182": { "status": "done", "scope": "the marker vocabulary and the seven value rules with shared vectors" },
+        "FORMA-183": { "status": "done", "scope": "the parity harness and its corpus, blocking in CI" },
+        "FORMA-184": { "status": "done", "scope": "renderBoth(component, state) in Forma's own suite" },
+        "FORMA-144 slice 2": { "status": "done", "scope": "island state adoption in the templates: the integrated packed adoption and static-route acceptance" },
+        "FORMA-188 fixture applications": { "status": "done", "scope": "the three fixture applications in P17" },
+        "FORMA-021 ratchet": { "status": "done", "scope": "the safe cuts landed and the size gate green at the restated ceiling" }
       }
     },
     "rc": {

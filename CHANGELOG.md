@@ -152,7 +152,7 @@
 
 ## [3.0.0-beta.1]
 
-Candidate changes since `3.0.0-alpha.2`. Full release qualification and final CI remain pending.
+Changes since `3.0.0-alpha.2`. The [beta qualification record](docs/release/BETA-QUALIFICATION.md) documents the packed acceptance; publication separately requires green exact-main CI and the trusted tag workflow.
 
 - **Checked island adoption.** Native islands use declared props and one bounded, inert state envelope. Activation validates the served nodes before attaching behavior, preserves those nodes without initial repair, and refuses mismatched islands while valid siblings remain eligible. Calling `mount()` on marked SSR content now throws `FORMA_E_MOUNT_SSR`; register islands with `activateIslands({ Counter })` instead.
 - **Activation readiness.** `activateIslands()` returns `Promise<void>` and can schedule load activation across browser tasks. Await it before work that depends on load islands being ready. Deferred triggers settle readiness when armed; the promise does not mean every deferred island has activated.

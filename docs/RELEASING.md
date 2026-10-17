@@ -256,18 +256,23 @@ A passing result requires zero events and errors; separate native browser contro
 prove enforcement actually refuses a raw sink write. Empty `pageerror` alone is
 not evidence of zero CSP reports.
 
-Until FORMA-144 migrates the source templates, packing candidate 3.x removes
-exactly the known `config_script: None,` field from each template's `src/main.rs`.
-Unexpected source or a future major fails before writes. A2 packing leaves source
-untouched; candidate packing restores both source files plus all eight manifests
-and locks on success or failure. This adapter does not migrate applications or
-claim FORMA-144 complete. The recurring restoration test and a new actual packed
-rehearsal document this stage; historical A2 and earlier P17 reports stay unchanged.
-FORMA-144's later slices remain `pending` gates of the beta and the final.
+The current `sourceTemplates: "islands-v1"` contract packs the checked-in
+Rust and TypeScript template sources unchanged. `stageTemplates()` seals the
+eight dependency manifests/locks against the six runtime candidates and retains
+the two Rust main files in its ten-file restoration record. It validates both
+templates before writing and restores the originals after packaging. The older
+candidate source adapters belong to historical evidence; they are not the
+current source-template path. FORMA-144 slice 2 is accepted by the
+[beta qualification](release/BETA-QUALIFICATION.md); final slice 3 remains open.
 
 ## Finalized rendering in candidate templates
 
-The `finalized-v1` bound-render contract additionally requires the packed server's external finalization, budget, typed document-home, browser-mode, panic and topology snapshot checks. The candidate-only 3.0.x source adapter authenticates whole A2 source hashes and stages the reviewable files in `scripts/fixtures/candidate-templates`; any source drift or unsupported version fails. All ten original source/manifests/locks are restored after packing, including failure. Both candidates finalize before opening a listener. The source templates' later slices (FORMA-144 slices 2 and 3) remain pending gates of the beta and the final.
+The `finalized-v1` bound-render contract requires the packed server's external
+finalization, budget, typed document-home, browser-mode, panic and topology
+snapshot checks. Both current source templates finalize before opening a
+listener. P17 authenticates the packed source inventory against the exact
+source commit and verifies the generated templates. Beta acceptance does not
+close FORMA-144's final-version cleanup gate.
 
 ### Per-release performance contract (FORMA-191)
 
