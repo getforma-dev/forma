@@ -155,6 +155,77 @@ describe('SR16: binding only under the root handed in', () => {
   });
 });
 
+describe('SR16: a nested explicit mount connected before the parent scans', () => {
+  let customId = 0;
+
+  function connectedMounts(): { root: HTMLElement; connections: number } {
+    const root = page();
+    const tag = `forma-nested-owner-${++customId}`;
+    let connections = 0;
+    class NestedOwner extends HTMLElement {
+      private initialized = false;
+      connectedCallback(): void {
+        if (this.initialized) return;
+        this.initialized = true;
+        connections++;
+        mountOn(this, `<section data-forma-state='{"n":0}'>
+          <button id="nested-inc" data-on:click="{n++}">+</button>
+          <p id="nested-value" data-text="{n}">raw</p>
+          <p id="nested-bound" data-text="{$el.closest('body') ? 'outside' : 'confined'}">raw</p>
+          <span data-ref="innerOnly">inner-only</span>
+        </section>`, { tier: 'reviewed' });
+        // Host DOM insertion has no binding authority. The parent's later
+        // scope scan must not adopt this scope through its own mount context.
+        this.insertAdjacentHTML('beforeend', `<section data-forma-state='{"n":0}'>
+          <button id="foreign-inc" data-on:click="{n++}">+</button>
+          <p id="foreign-value" data-text="{n}">unbound</p>
+        </section>`);
+      }
+    }
+    customElements.define(tag, NestedOwner);
+    mountOn(root, `<section data-forma-state='{"outer":0}'>
+      <button id="outer-inc" data-on:click="{outer++}">+</button>
+      <p id="outer-value" data-text="{outer}">raw</p>
+      <p id="outer-ref" data-text="{$refs.innerOnly ? 'captured' : 'absent'}">raw</p>
+      <${tag}></${tag}>
+    </section>`, { tier: 'compiled', grants: { dom: true } });
+    return { root, connections };
+  }
+
+  it('leaves host-inserted scopes below the connected nested mount unbound', () => {
+    const { connections } = connectedMounts();
+    expect(connections).toBe(1);
+    click('foreign-inc');
+    expect(text('foreign-value')).toBe('unbound');
+    click('nested-inc');
+    expect(text('nested-value')).toBe('1');
+    click('outer-inc');
+    expect(text('outer-value')).toBe('1');
+  });
+
+  it('does not bind the connected nested mount with its parent scope or grants', () => {
+    const { connections } = connectedMounts();
+    expect(connections).toBe(1);
+    expect(text('nested-bound')).toBe('confined');
+    click('nested-inc');
+    expect(text('nested-value')).toBe('1');
+    expect(text('outer-value')).toBe('0');
+    click('outer-inc');
+    expect(text('outer-value')).toBe('1');
+    expect(text('nested-value')).toBe('1');
+  });
+
+  it('does not collect the connected nested mount refs into the parent scope', () => {
+    const { root, connections } = connectedMounts();
+    expect(connections).toBe(1);
+    expect(root.querySelector('[data-ref="innerOnly"]')?.textContent).toBe('inner-only');
+    expect(text('outer-ref')).toBe('absent');
+    click('outer-inc');
+    expect(text('outer-value')).toBe('1');
+    expect(text('outer-ref')).toBe('absent');
+  });
+});
+
 describe('L-36: $el, $event and $refs stop at the mount root', () => {
   it("$el.closest('body') reaches nothing without dom", () => {
     const expr = `$el.closest('body') ? 'reached' : 'confined'`;

@@ -289,7 +289,7 @@ transport limit accommodates forty complete traces and reports; other release
 metadata bounds and product budgets are unchanged. The previous90ms negative
 control and all historical failures remain archived. A real110ms injected task
 must be observed and refused independently of response latency. Acceptance
-requires a new complete campaign under `N3-startup-strict50-v3`. The earlier
+requires a new complete campaign under `N3-startup-strict50-v4`. The earlier
 `N3-startup-strict50-v1` layout-only classifier remains historical evidence.
 The current classifier may also separate a main-document commit task only when
 the same trace proves the exact navigation request, committed frame, response,
@@ -308,6 +308,15 @@ single-shot timer stack. Only that five-child trace shape is admitted; foreign,
 ambiguous or unbound identities and application callbacks count in full. This is
 measurement attribution, not a runtime improvement or a new founder latency
 waiver. Raw whole-page tasks and `wholePageTargetMiss` remain visible.
+Version 4 also permits positively proved parser-requested stylesheet work and
+script-disabled SVG-image document work entirely before the observed first
+application script. Stylesheet admission requires the complete matching
+request/response/data/parse/finish chain. SVG admission additionally requires
+the unique blank internal frame's native creation/parser flow and a later
+main-document `PaintImage` for the same resource containing that exact frame's
+layout. A missing or ambiguous resource/frame/nesting link, any script execution
+or any unknown child keeps the whole task counted. This is not a general
+pre-script time exemption. See [the native resource proof](release/N3-NATIVE-RESOURCE-ATTRIBUTION.md).
 Historical L63
 75ms p95 /100ms individual acceptance and its original evidence remain history;
 they cannot qualify the strict gate. The L63 exception is retired only after

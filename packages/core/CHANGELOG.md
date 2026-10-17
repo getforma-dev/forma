@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-204: a component whose setup throws now runs its registered teardown, including listeners, tracked effects and context providers, before propagating the original error. Mount callbacks remain uncalled and cleanup errors do not prevent later teardown.
+
+- Dispose completed and partial explicit-runtime bindings when initial mounting throws, including list-row work, event listeners and authorized polling/fetch requests. Mount-owned reactive scopes also stop a reader that throws before returning its disposer, without disposing an unrelated caller root (FORMA-203).
+
 - FORMA-200: make the standalone `sanitizePropsDeep` helper refuse forbidden own keys that cannot be deleted, including frozen/sealed nested objects. Successful calls still sanitize in place and return the same value; a refusal throws `TypeError` and may leave earlier deletions applied. Compiled SSR state continues to use its separate declared-schema projection.
 
 - FORMA-197: keep completed non-assertion mutation failures unqualified, but collect later probes after exact source restoration and a clean recovery baseline. Such a campaign always fails; infrastructure, incomplete execution and timeout failures still stop. Allow 150 minutes for the hosted 252-probe job using observed serial-run durations, without changing child deadlines, detection floors or kill criteria.

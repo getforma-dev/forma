@@ -1,0 +1,2155 @@
+{
+  "note": "Reduced native event test fixture from retained beta2 login19; not release evidence. Original report remains failed.",
+  "lhr": {
+    "requestedUrl": "http://127.0.0.1:51405/t/acme/login",
+    "audits": {
+      "metrics": {
+        "details": {
+          "items": [
+            {
+              "observedTimeOriginTs": 98703940708
+            }
+          ]
+        }
+      },
+      "long-tasks": {
+        "details": {
+          "items": [
+            {
+              "startTime": 1209.298,
+              "duration": 81.598
+            },
+            {
+              "startTime": 1290.912,
+              "duration": 124.643
+            },
+            {
+              "startTime": 1416.289,
+              "duration": 171.892
+            }
+          ]
+        }
+      }
+    }
+  },
+  "trace": {
+    "traceEvents": [
+      {
+        "args": {
+          "data": {
+            "documentLoaderURL": "http://127.0.0.1:51405/t/acme/login",
+            "isLoadingMainFrame": true,
+            "isOutermostMainFrame": true,
+            "navigationId": "1D49D6D4B6A0F3BD3681F30E54C110C0"
+          },
+          "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F"
+        },
+        "cat": "blink.user_timing",
+        "name": "navigationStart",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98703940708
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "isInPrimaryMainFrame": true,
+            "isOutermostMainFrame": true,
+            "name": "",
+            "processId": 99868,
+            "url": "http://127.0.0.1:51405/t/acme/login"
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "FrameCommittedInBrowser",
+        "ph": "I",
+        "pid": 99840,
+        "s": "t",
+        "tid": 5094379,
+        "ts": 98704514526,
+        "tts": 433398
+      },
+      {
+        "args": {
+          "data": {
+            "fetchPriorityHint": "auto",
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "initiator": {
+              "columnNumber": 164,
+              "fetchType": "link",
+              "lineNumber": 6,
+              "type": "parser",
+              "url": "http://127.0.0.1:51405/t/acme/login"
+            },
+            "isLinkPreload": false,
+            "priority": "VeryHigh",
+            "renderBlocking": "blocking",
+            "requestId": "99868.2",
+            "requestMethod": "GET",
+            "resourceType": "Stylesheet",
+            "sampleTraceId": 1929364747971176,
+            "url": "http://127.0.0.1:51405/_assets/app.c3a4a8c4.css"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceSendRequest",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98704535905,
+        "tts": 56860
+      },
+      {
+        "args": {
+          "data": {
+            "fetchPriorityHint": "auto",
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "initiator": {
+              "columnNumber": 224,
+              "fetchType": "img",
+              "lineNumber": 11,
+              "type": "parser",
+              "url": "http://127.0.0.1:51405/t/acme/login"
+            },
+            "isLinkPreload": false,
+            "priority": "Medium",
+            "requestId": "99868.4",
+            "requestMethod": "GET",
+            "resourceType": "Image",
+            "sampleTraceId": 1929364747971225,
+            "url": "http://127.0.0.1:51405/fixture/logo.svg"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceSendRequest",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98704537477,
+        "tts": 57910
+      },
+      {
+        "args": {},
+        "cat": "disabled-by-default-devtools.timeline",
+        "dur": 81598,
+        "name": "RunTask",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 68450,
+        "tid": 5094611,
+        "ts": 98705150006,
+        "tts": 524119
+      },
+      {
+        "args": {
+          "data": {
+            "encodedDataLength": 371,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "fromCache": false,
+            "fromServiceWorker": false,
+            "mimeType": "text/css",
+            "requestId": "99868.2",
+            "statusCode": 200
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceReceiveResponse",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705189269,
+        "tts": 557253
+      },
+      {
+        "args": {
+          "data": {
+            "encodedDataLength": 668,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "requestId": "99868.2"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceReceivedData",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705196258,
+        "tts": 563206
+      },
+      {
+        "args": {
+          "data": {
+            "styleSheetUrl": "http://127.0.0.1:51405/_assets/app.c3a4a8c4.css"
+          }
+        },
+        "cat": "blink,devtools.timeline",
+        "dur": 13532,
+        "name": "ParseAuthorStyleSheet",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 11193,
+        "tid": 5094611,
+        "ts": 98705209768,
+        "tts": 574363
+      },
+      {
+        "args": {
+          "data": {
+            "decodedBodyLength": 668,
+            "didFail": false,
+            "encodedDataLength": 652,
+            "finishTime": 98705.173663,
+            "requestId": "99868.2"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceFinish",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705227230,
+        "tts": 588791
+      },
+      {
+        "args": {},
+        "cat": "disabled-by-default-devtools.timeline",
+        "dur": 124643,
+        "name": "RunTask",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 104568,
+        "tid": 5094611,
+        "ts": 98705231620,
+        "tts": 592583
+      },
+      {
+        "args": {
+          "data": {
+            "encodedDataLength": 131,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "fromCache": false,
+            "fromServiceWorker": false,
+            "mimeType": "image/svg+xml",
+            "requestId": "99868.4",
+            "statusCode": 200
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceReceiveResponse",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705231685,
+        "tts": 592647
+      },
+      {
+        "args": {
+          "data": {
+            "encodedDataLength": 114,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "requestId": "99868.4"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceReceivedData",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705233121,
+        "tts": 593924
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "name": "FrameLoader:created",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705249245,
+        "tts": 607532
+      },
+      {
+        "args": {
+          "snapshot": {
+            "documentLoaderURL": "",
+            "frame": {
+              "id_ref": "A44DADF3EFB85B622849885A1BD8E247"
+            },
+            "isLoadingMainFrame": true,
+            "isOutermostMainFrame": true
+          }
+        },
+        "cat": "loading",
+        "name": "FrameLoader:state_snapshot",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705249948,
+        "tts": 608083
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 14,
+        "name": "DocumentLoader::DocumentLoader",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 12,
+        "tid": 5094611,
+        "ts": 98705265504,
+        "tts": 621086
+      },
+      {
+        "args": {
+          "data": {
+            "documentLoaderURL": "",
+            "isLoadingMainFrame": true,
+            "isOutermostMainFrame": true,
+            "navigationId": "7FE5EAEE12141378BBCC17FFD21816BF"
+          },
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing",
+        "name": "navigationStart",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705265508
+      },
+      {
+        "args": {
+          "snapshot": {
+            "documentLoaderURL": "",
+            "frame": {
+              "id_ref": "A44DADF3EFB85B622849885A1BD8E247"
+            },
+            "isLoadingMainFrame": true,
+            "isOutermostMainFrame": true
+          }
+        },
+        "cat": "loading",
+        "name": "FrameLoader:state_snapshot",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705265629,
+        "tts": 621130
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 30713,
+        "name": "DocumentLoader::CommitNavigation",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 25660,
+        "tid": 5094611,
+        "ts": 98705266335,
+        "tts": 621804
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 5944,
+        "name": "DocumentLoader::InitializeWindow",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 5070,
+        "tid": 5094611,
+        "ts": 98705266366,
+        "tts": 621834
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domLoading",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705276078
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 128,
+        "name": "DocumentLoader::RecordUseCountersForCommit",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 35,
+        "tid": 5094611,
+        "ts": 98705290888,
+        "tts": 642359
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 1539,
+        "name": "DocumentLoader::DidInstallNewDocument",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 1272,
+        "tid": 5094611,
+        "ts": 98705291020,
+        "tts": 642398
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 3,
+        "name": "DocumentLoader::DidCommitNavigation",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 3,
+        "tid": 5094611,
+        "ts": 98705292560,
+        "tts": 643670
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 3086,
+        "name": "DocumentLoader::StartLoadingResponse",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 2524,
+        "tid": 5094611,
+        "ts": 98705293957,
+        "tts": 644935
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "sampleTraceId": 1929364747971299
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "ScheduleStyleRecalculation",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705294850,
+        "tts": 645580
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing",
+        "name": "responseEnd",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705296405
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 15,
+        "name": "DocumentLoader::FinishedLoading",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 13,
+        "tid": 5094611,
+        "ts": 98705297027,
+        "tts": 647446
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domComplete",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705298617
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971304,
+            "type": "readystatechange"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 1163,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 840,
+        "tid": 5094611,
+        "ts": 98705299559,
+        "tts": 649585
+      },
+      {
+        "args": {
+          "snapshot": {
+            "documentLoaderURL": "",
+            "frame": {
+              "id_ref": "A44DADF3EFB85B622849885A1BD8E247"
+            },
+            "isLoadingMainFrame": true,
+            "isOutermostMainFrame": true
+          }
+        },
+        "cat": "loading",
+        "name": "FrameLoader:state_snapshot",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705300724,
+        "tts": 650426
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domLoading",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705306990
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "dur": 8807,
+        "name": "DecodedDataDocumentParser::AppendBytes",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 7379,
+        "tid": 5094611,
+        "ts": 98705309483,
+        "tts": 657858
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "sampleTraceId": 1929364747971307
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "ScheduleStyleRecalculation",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705316064,
+        "tts": 663258
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "name": "MetaCharsetCheck",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705318286,
+        "tts": 665234
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "name": "MetaCharsetCheck",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705318697,
+        "tts": 665564
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domInteractive",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705318698
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971309,
+            "type": "readystatechange"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 3,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 2,
+        "tid": 5094611,
+        "ts": 98705318707,
+        "tts": 665573
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domContentLoadedEventStart",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705318711
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971310,
+            "type": "DOMContentLoaded"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 110,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 29,
+        "tid": 5094611,
+        "ts": 98705318712,
+        "tts": 665577
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "isMainFrame": true,
+            "isOutermostMainFrame": true,
+            "page": "A44DADF3EFB85B622849885A1BD8E247"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "MarkDOMContent",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705318825,
+        "tts": 665608
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domContentLoadedEventEnd",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705320001
+      },
+      {
+        "args": {
+          "beginData": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "sampleTraceId": 1929364747971344
+          },
+          "elementCount": 2
+        },
+        "cat": "blink,devtools.timeline",
+        "dur": 24497,
+        "name": "UpdateLayoutTree",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 20637,
+        "tid": 5094611,
+        "ts": 98705321558,
+        "tts": 667973
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "nodeId": 3,
+            "sampleTraceId": 1929364747971346
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "InvalidateLayout",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705343179,
+        "tts": 686161
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing,rail",
+        "name": "domComplete",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705346279
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971348,
+            "type": "readystatechange"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 7,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 7,
+        "tid": 5094611,
+        "ts": 98705346284,
+        "tts": 688828
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing",
+        "name": "loadEventStart",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705346294
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971349,
+            "type": "load"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 1,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705346303
+      },
+      {
+        "args": {
+          "frame": "A44DADF3EFB85B622849885A1BD8E247"
+        },
+        "cat": "blink.user_timing",
+        "name": "loadEventEnd",
+        "ph": "R",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705346304
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "isMainFrame": true,
+            "isOutermostMainFrame": true,
+            "page": "A44DADF3EFB85B622849885A1BD8E247"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "MarkLoad",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705346629,
+        "tts": 689141
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971350,
+            "type": "pageshow"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 1,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705346632
+      },
+      {
+        "args": {
+          "beginData": {
+            "dirtyObjects": 3,
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "partialLayout": false,
+            "sampleTraceId": 1929364747971352,
+            "totalObjects": 3
+          },
+          "endData": {
+            "layoutRoots": [
+              {
+                "depth": 1,
+                "nodeId": 3,
+                "nodeName": "#document",
+                "quads": [
+                  [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 6657,
+        "name": "Layout",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 5582,
+        "tid": 5094611,
+        "ts": 98705346753,
+        "tts": 689172
+      },
+      {
+        "args": {
+          "data": {
+            "decodedBodyLength": 114,
+            "didFail": false,
+            "encodedDataLength": 245,
+            "finishTime": 98705.178874,
+            "requestId": "99868.4"
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "ResourceFinish",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705354973,
+        "tts": 696018
+      },
+      {
+        "args": {},
+        "cat": "disabled-by-default-devtools.timeline",
+        "dur": 171892,
+        "name": "RunTask",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 140778,
+        "tid": 5094611,
+        "ts": 98705356997,
+        "tts": 697877
+      },
+      {
+        "args": {
+          "data": {
+            "frameId": 0
+          },
+          "layerTreeId": 1
+        },
+        "cat": "disabled-by-default-devtools.timeline.frame",
+        "name": "BeginMainThreadFrame",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705358050,
+        "tts": 698763
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971332,
+            "type": "pagereveal"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 4,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 3,
+        "tid": 5094611,
+        "ts": 98705358572,
+        "tts": 699162
+      },
+      {
+        "args": {
+          "data": {
+            "sampleTraceId": 1929364747971334,
+            "type": "resize"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 2,
+        "name": "EventDispatch",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 1,
+        "tid": 5094611,
+        "ts": 98705359261,
+        "tts": 699830
+      },
+      {
+        "args": {
+          "beginData": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "sampleTraceId": 1929364747971335
+          },
+          "elementCount": 34
+        },
+        "cat": "blink,devtools.timeline",
+        "dur": 49383,
+        "name": "UpdateLayoutTree",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 44415,
+        "tid": 5094611,
+        "ts": 98705362336,
+        "tts": 702406
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "nodeId": 1,
+            "sampleTraceId": 1929364747971339
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "InvalidateLayout",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705408670,
+        "tts": 744216
+      },
+      {
+        "args": {
+          "data": {
+            "frameId": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "nodeId": 4
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "LayoutImageUnsized",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705408817,
+        "tts": 744264
+      },
+      {
+        "args": {
+          "beginData": {
+            "dirtyObjects": 49,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "partialLayout": false,
+            "sampleTraceId": 1929364747971340,
+            "totalObjects": 49
+          },
+          "endData": {
+            "layoutRoots": [
+              {
+                "depth": 1,
+                "nodeId": 1,
+                "nodeName": "#document",
+                "quads": [
+                  [
+                    0,
+                    0,
+                    412,
+                    0,
+                    412,
+                    823,
+                    0,
+                    823
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 42480,
+        "name": "Layout",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 37201,
+        "tid": 5094611,
+        "ts": 98705411728,
+        "tts": 746829
+      },
+      {
+        "args": {
+          "data": {
+            "frameID": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "height": 823,
+            "isActive": true,
+            "width": 412,
+            "x": 0,
+            "y": 0
+          }
+        },
+        "cat": "loading",
+        "name": "viewport",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705451817,
+        "tts": 782057
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "layerTreeId": 1
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "SetLayerTreeId",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705455246,
+        "tts": 784903
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "isMainFrame": true,
+            "isOutermostMainFrame": true,
+            "page": "32D6CEAE534D8D0D19B3F6A2CEA69B0F"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 15540,
+        "name": "PrePaint",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 13446,
+        "tid": 5094611,
+        "ts": 98705455278,
+        "tts": 784934
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "maxChildren": {
+              "nodeId": 5,
+              "nodeName": "FORM id='auth-form'",
+              "numChildren": 5
+            },
+            "maxDepth": {
+              "depth": 8,
+              "nodeId": 6,
+              "nodeName": "LABEL"
+            },
+            "totalElements": 30
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "DOMStats",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705471903,
+        "tts": 799337
+      },
+      {
+        "args": {
+          "data": {
+            "clip": [
+              0,
+              0,
+              412,
+              0,
+              412,
+              823,
+              0,
+              823
+            ],
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "layerId": 0,
+            "nodeId": 1,
+            "nodeName": "#document",
+            "sampleTraceId": 1929364747971380
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 15766,
+        "name": "Paint",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 13446,
+        "tid": 5094611,
+        "ts": 98705494509,
+        "tts": 809411
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "height": 24,
+            "isCSS": false,
+            "isPicture": false,
+            "loadingAttribute": "",
+            "nodeId": 4,
+            "nodeName": "IMG id='tenant-logo' class='lc-logo'",
+            "srcHeight": 24,
+            "srcWidth": 24,
+            "srcsetAttribute": "",
+            "url": "http://127.0.0.1:51405/fixture/logo.svg",
+            "width": 24,
+            "x": 40,
+            "y": 72
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "dur": 4479,
+        "name": "PaintImage",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 3892,
+        "tid": 5094611,
+        "ts": 98705501401,
+        "tts": 814842
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 4,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "image_url": "http://127.0.0.1:51405/fixture/logo.svg",
+            "is_image": true,
+            "is_image_loaded": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutImage",
+            "rect": [
+              40,
+              72,
+              64,
+              72,
+              64,
+              96,
+              40,
+              96
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705502335,
+        "tts": 815621
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "nodeId": 3,
+            "sampleTraceId": 1929364747971382
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "InvalidateLayout",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705503600,
+        "tts": 817318
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "nodeId": 3,
+            "sampleTraceId": 1929364747971383
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "InvalidateLayout",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705504321,
+        "tts": 817330
+      },
+      {
+        "args": {
+          "data": {
+            "frameID": "A44DADF3EFB85B622849885A1BD8E247",
+            "height": 24,
+            "isActive": true,
+            "width": 24,
+            "x": 0,
+            "y": 0
+          }
+        },
+        "cat": "loading",
+        "name": "viewport",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705504348,
+        "tts": 817357
+      },
+      {
+        "args": {
+          "beginData": {
+            "dirtyObjects": 2,
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "partialLayout": false,
+            "sampleTraceId": 1929364747971385,
+            "totalObjects": 3
+          },
+          "endData": {
+            "layoutRoots": [
+              {
+                "depth": 1,
+                "nodeId": 3,
+                "nodeName": "#document",
+                "quads": [
+                  [
+                    0,
+                    0,
+                    24,
+                    0,
+                    24,
+                    24,
+                    0,
+                    24
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 30,
+        "name": "Layout",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 30,
+        "tid": 5094611,
+        "ts": 98705504359,
+        "tts": 817367
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "layerTreeId": 0
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "SetLayerTreeId",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705504401,
+        "tts": 817409
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "isMainFrame": true,
+            "isOutermostMainFrame": true,
+            "page": "A44DADF3EFB85B622849885A1BD8E247"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 435,
+        "name": "PrePaint",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 391,
+        "tid": 5094611,
+        "ts": 98705504403,
+        "tts": 817411
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "A44DADF3EFB85B622849885A1BD8E247",
+            "maxChildren": {
+              "nodeId": 7,
+              "nodeName": "svg",
+              "numChildren": 0
+            },
+            "maxDepth": {
+              "depth": 0,
+              "nodeId": 7,
+              "nodeName": "svg"
+            },
+            "totalElements": 1
+          }
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "DOMStats",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705504841,
+        "tts": 817804
+      },
+      {
+        "args": {
+          "data": {
+            "dpr": 1,
+            "viewport_rect": [
+              0,
+              0,
+              24,
+              0,
+              24,
+              24,
+              0,
+              24
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::Viewport",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705505792,
+        "tts": 818686
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 8,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              40,
+              99,
+              128,
+              99,
+              128,
+              117,
+              40,
+              117
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705507066,
+        "tts": 819855
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 9,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              142,
+              137,
+              270,
+              137,
+              270,
+              152,
+              142,
+              152
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705507116,
+        "tts": 819904
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 10,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              143,
+              183,
+              269,
+              183,
+              269,
+              198,
+              143,
+              198
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705507121,
+        "tts": 819908
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 11,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              40,
+              217,
+              207,
+              217,
+              207,
+              235,
+              40,
+              235
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705507872,
+        "tts": 820638
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 12,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              82,
+              250,
+              198,
+              250,
+              198,
+              265,
+              82,
+              265
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705508305,
+        "tts": 821062
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 13,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              40,
+              247,
+              79,
+              247,
+              79,
+              265,
+              40,
+              265
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705508312,
+        "tts": 821068
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 14,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              270,
+              283,
+              305,
+              283,
+              305,
+              298,
+              270,
+              298
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705508339,
+        "tts": 821095
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 15,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              40,
+              280,
+              110,
+              280,
+              110,
+              298,
+              40,
+              298
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705508344,
+        "tts": 821099
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 16,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              185,
+              352,
+              227,
+              352,
+              227,
+              367,
+              185,
+              367
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705510204,
+        "tts": 822789
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 5,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              40,
+              314,
+              311,
+              314,
+              311,
+              332,
+              40,
+              332
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705510211,
+        "tts": 822795
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 17,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              48,
+              390,
+              237,
+              390,
+              237,
+              405,
+              48,
+              405
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705510218,
+        "tts": 822801
+      },
+      {
+        "args": {
+          "data": {
+            "dom_node_id": 18,
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "is_aggregation_text": true,
+            "is_in_main_frame": true,
+            "is_in_outermost_main_frame": true,
+            "is_svg": false,
+            "object_name": "LayoutBlockFlow",
+            "rect": [
+              40,
+              408,
+              229,
+              408,
+              229,
+              426,
+              40,
+              426
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::LayoutObjectPainted",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705510269,
+        "tts": 822852
+      },
+      {
+        "args": {
+          "data": {
+            "dpr": 1.75,
+            "viewport_rect": [
+              0,
+              0,
+              412,
+              0,
+              412,
+              823,
+              0,
+              823
+            ]
+          }
+        },
+        "cat": "loading",
+        "name": "PaintTimingVisualizer::Viewport",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705510367,
+        "tts": 822949
+      },
+      {
+        "args": {
+          "data": {
+            "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+            "isMainFrame": true,
+            "isOutermostMainFrame": true,
+            "page": "32D6CEAE534D8D0D19B3F6A2CEA69B0F"
+          }
+        },
+        "cat": "devtools.timeline",
+        "dur": 5298,
+        "name": "Layerize",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 4385,
+        "tid": 5094611,
+        "ts": 98705514944,
+        "tts": 826974
+      },
+      {
+        "args": {},
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "Layer:created",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705519327,
+        "tts": 830578
+      },
+      {
+        "args": {
+          "frameSeqId": 166,
+          "layerTreeId": 1
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "dur": 8426,
+        "name": "Commit",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 7094,
+        "tid": 5094611,
+        "ts": 98705520356,
+        "tts": 831455
+      },
+      {
+        "args": {
+          "layerId": 6,
+          "layerTreeId": 1
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "dur": 6,
+        "name": "UpdateLayer",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 5,
+        "tid": 5094611,
+        "ts": 98705520375,
+        "tts": 831473
+      },
+      {
+        "args": {
+          "frame": "32D6CEAE534D8D0D19B3F6A2CEA69B0F",
+          "is_mobile_optimized": true
+        },
+        "cat": "disabled-by-default-devtools.timeline",
+        "name": "BeginCommitCompositorFrame",
+        "ph": "I",
+        "pid": 99868,
+        "s": "t",
+        "tid": 5094611,
+        "ts": 98705521176,
+        "tts": 832252
+      },
+      {
+        "args": {
+          "data": {
+            "columnNumber": 1,
+            "lineNumber": 1,
+            "scriptId": 5,
+            "streamed": true,
+            "url": "http://127.0.0.1:51405/_assets/tenant-login.1f3cb14e.js"
+          },
+          "fileName": "http://127.0.0.1:51405/_assets/tenant-login.1f3cb14e.js"
+        },
+        "cat": "v8,devtools.timeline",
+        "dur": 16041,
+        "name": "v8.compileModule",
+        "ph": "X",
+        "pid": 99868,
+        "tdur": 7091,
+        "tid": 5094611,
+        "ts": 98705543056,
+        "tts": 848158
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 51,
+        "name": "FrameLoader:created",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705249245
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 51,
+        "name": "FrameLoader:created",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705249948
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 52,
+        "name": "FrameLoader:state_snapshot",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705249948
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 52,
+        "name": "FrameLoader:state_snapshot",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705265629
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 53,
+        "name": "DocumentLoader::DocumentLoader",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705265504
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 53,
+        "name": "DocumentLoader::DocumentLoader",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705266335
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 54,
+        "name": "DocumentLoader::CommitNavigation",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705266335
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 54,
+        "name": "DocumentLoader::CommitNavigation",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705266366
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 55,
+        "name": "DocumentLoader::InitializeWindow",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705266366
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 55,
+        "name": "DocumentLoader::InitializeWindow",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705290888
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 56,
+        "name": "DocumentLoader::RecordUseCountersForCommit",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705290888
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 56,
+        "name": "DocumentLoader::RecordUseCountersForCommit",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705291020
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 57,
+        "name": "DocumentLoader::DidInstallNewDocument",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705291020
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 57,
+        "name": "DocumentLoader::DidInstallNewDocument",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705293957
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 58,
+        "name": "DocumentLoader::StartLoadingResponse",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705293957
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 58,
+        "name": "DocumentLoader::StartLoadingResponse",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705297027
+      },
+      {
+        "args": {},
+        "cat": "loading",
+        "id": 59,
+        "name": "FrameLoader:state_snapshot",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705265629
+      },
+      {
+        "args": {},
+        "bp": "e",
+        "cat": "loading",
+        "id": 59,
+        "name": "FrameLoader:state_snapshot",
+        "ph": "f",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705300724
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "id": 61,
+        "name": "AnimationFrame",
+        "ph": "s",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705528872
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "id2": {
+          "local": "0x56"
+        },
+        "name": "AnimationFrame::Render",
+        "ph": "b",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705358413
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "id2": {
+          "local": "0x56"
+        },
+        "name": "AnimationFrame::StyleAndLayout",
+        "ph": "b",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705359840
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "id2": {
+          "local": "0x56"
+        },
+        "name": "AnimationFrame::StyleAndLayout",
+        "ph": "e",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705470825
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "id2": {
+          "local": "0x56"
+        },
+        "name": "AnimationFrame::Render",
+        "ph": "e",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705470825
+      },
+      {
+        "args": {},
+        "cat": "devtools.timeline",
+        "id2": {
+          "local": "0x56"
+        },
+        "name": "AnimationFrame",
+        "ph": "e",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705470825
+      },
+      {
+        "args": {
+          "animation_frame_timing_info": {
+            "begin_frame_id": {
+              "sequence_number": 184,
+              "source_id": 4294967296
+            },
+            "blocking_duration_ms": 0,
+            "duration_ms": 33,
+            "num_scripts": 0
+          },
+          "id": "14e6dabf3c71eb7f"
+        },
+        "cat": "devtools.timeline",
+        "id2": {
+          "local": "0x56"
+        },
+        "name": "AnimationFrame",
+        "ph": "b",
+        "pid": 99868,
+        "tid": 5094611,
+        "ts": 98705528872
+      }
+    ]
+  }
+}

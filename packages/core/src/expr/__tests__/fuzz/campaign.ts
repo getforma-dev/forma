@@ -1,4 +1,4 @@
-import { deepStrictEqual, strictEqual } from 'node:assert';
+import { AssertionError, deepStrictEqual, strictEqual, ok } from 'node:assert';
 import { compileExpression, compileHandler, evaluateExpression, runHandler, isExprError, LIMITS, type Meter } from '../../index';
 import { COSTS } from '../../cost';
 import { COST_OPERATIONS } from './cost-cases';
@@ -54,18 +54,16 @@ export function executeCase(input: GeneratedCase, astKinds: Record<string, numbe
   }
   const expectedRefusal = 'refused' in input ? input.refused : undefined;
   strictEqual(refusal, expectedRefusal, `refusal: expected ${expectedRefusal ?? 'admitted'}, received ${refusal ?? 'admitted'}`);
-  if (input.expectedMeterCost !== undefined && meter.cost !== input.expectedMeterCost) {
-    throw new Error(`meter cost: expected ${input.expectedMeterCost}, received ${meter.cost}`);
+  if (input.expectedMeterCost !== undefined) {
+    ok(meter.cost === input.expectedMeterCost, `meter cost: expected ${input.expectedMeterCost}, received ${meter.cost}`);
   }
   if (refusal) return { refused: true, meter };
   deepStrictEqual(value, input.expected, 'generated expression value');
   if ('expectedState' in input && input.expectedState) deepStrictEqual(state, input.expectedState, 'generated handler state');
-  if (!Number.isFinite(meter.cost) || meter.cost < input.minimumCost) {
-    throw new Error(`cost undercharge for ${input.operation}: actual ${meter.cost}, independent floor ${input.minimumCost}`);
-  }
-  if (meter.cost > LIMITS.ALLOC_BUDGET || meter.steps < 1 || meter.steps > LIMITS.STEP_BUDGET) {
-    throw new Error(`admitted case exceeds its meter: ${JSON.stringify(meter)}`);
-  }
+  ok(!(!Number.isFinite(meter.cost) || meter.cost < input.minimumCost),
+    `cost undercharge for ${input.operation}: actual ${meter.cost}, independent floor ${input.minimumCost}`);
+  ok(!(meter.cost > LIMITS.ALLOC_BUDGET || meter.steps < 1 || meter.steps > LIMITS.STEP_BUDGET),
+    `admitted case exceeds its meter: ${JSON.stringify(meter)}`);
   return { refused: false, meter };
 }
 
@@ -77,7 +75,13 @@ export class CampaignFailure extends Error {
 
 export function replayRegressions(): string[] {
   for (const { id, input } of regressions) {
-    try { executeCase(input); } catch (cause) { throw new Error(`expression regression ${id}`, { cause }); }
+    try { executeCase(input); } catch (cause) {
+      if (cause instanceof AssertionError) {
+        cause.message = `expression regression ${id}: ${cause.message}`;
+        throw cause;
+      }
+      throw new Error(`expression regression ${id}`, { cause });
+    }
   }
   return regressions.map(item => item.id);
 }
