@@ -33,7 +33,8 @@ test('killing an interrupted producer retains its flushed observation outside di
 });
 test('complete failing evidence is flushed before the timing validator refuses',async()=>{
  const directory=mkdtempSync(join(tmpdir(),'forma-decoder-complete-')),attempt={},report=decoder();
- report.cases[1].samples[0].elapsedMs=31;
+ for(const sample of report.cases[1].samples.slice(0,3))sample.elapsedMs=31;
+ report.cases[1].summary={minMs:12,medianMs:12,p95Ms:31,maxMs:31};
  try{
   await assert.rejects(recordPackedDecoder({evidenceDirectory:directory,attempt,provenance,measure:async({onSample})=>{
    await onSample({id:report.cases[1].id,phase:'sample',observation:report.cases[1].samples[0]});return report;

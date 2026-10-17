@@ -5,6 +5,7 @@
 - Coordinate all seven packages and both template source seeds for the next beta verification. Beta.1 and beta.2 tags remain immutable and unpublished.
 - Retain failed Lighthouse reports and traces before refusing P17. Failed captures never become timing samples and are not automatically retried.
 - Determine native navigation lifecycle origin from the existing complete trace proof, without the internal 1 ms event-duration heuristic. Preserve the 50 ms application/unknown and independent-observer limits, every raw task and the requirement for a fresh twenty-run campaign per route.
+- FORMA-210 corrects the lead-added every-sample decoder rule to the founder’s p95 criterion: each exact one-MiB shape requires nearest-rank p95 at or below 30 ms from all forty original public-activation durations. Retain maximum/raw observations and every correctness/refusal check; a new policy identity rejects older reports. Earlier failed campaigns remain failed.
 - Browser/P17 qualification and trusted publication remain pending.
 
 ## [3.0.0-beta.2] — verification failed; unpublished

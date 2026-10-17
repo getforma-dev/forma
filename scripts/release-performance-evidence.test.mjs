@@ -39,9 +39,9 @@ test('release metadata checks import without any optional browser tooling instal
  execFileSync(process.execPath,['--no-warnings','--experimental-loader',`data:text/javascript,${encodeURIComponent(loader)}`,'--input-type=module','-e',imports],{stdio:'pipe'});
 });
 
-test('new and previous DS12 require the public decoder raw observations and enforce every sample',()=>{
+test('new and previous DS12 require all public decoder observations and enforce the raw p95',()=>{
  validatePerformanceRecord(performanceRecord());
- for(const edit of [p=>delete p.decoder,p=>p.decoder.cases[1].samples[39].elapsedMs=30.0001,p=>p.decoder.cases[0].samples.pop(),p=>delete p.decoder.compiler]){
+ for(const edit of [p=>delete p.decoder,p=>{const row=p.decoder.cases[1];for(const sample of row.samples.slice(37))sample.elapsedMs=30.0001;row.summary={minMs:12,medianMs:12,p95Ms:30.0001,maxMs:30.0001};},p=>p.decoder.cases[0].samples.pop(),p=>delete p.decoder.compiler]){
   const current=performanceRecord();edit(current);assert.throws(()=>validatePerformanceRecord(current));
   const prior=baseline();edit(prior.measurements.measurements.performance);assert.throws(()=>validateBaselineRecord(prior,context));
  }
