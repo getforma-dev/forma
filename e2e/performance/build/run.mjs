@@ -19,6 +19,31 @@ const execute = promisify(execFile);
 const now = () => Number(process.hrtime.bigint()) / 1e6;
 const save = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
 
+// Readiness markers are ASCII. Raw bytes remain unchanged on disk; latin1
+// bounds the in-memory readiness character count by the retained byte count.
+export function retainOutput(owned, path, part, limit = 8 * 1024 * 1024) {
+  if (owned.fault) return;
+  const remaining = Math.max(0, limit - owned.logBytes);
+  const retained = part.subarray(0, remaining);
+  try {
+    appendFileSync(path, retained);
+    owned.logBytes += retained.length;
+    owned.text += retained.toString('latin1');
+  } catch (error) { owned.fault = error; }
+  if (part.length > remaining) {
+    owned.truncated = true;
+    owned.fault ??= new Error(`${owned.label} output truncated at ${limit} bytes`);
+  }
+}
+
+export function finalizeResult(result, processes) {
+  for (const owned of processes) {
+    if (owned.fault) result.failures.push(`${owned.label}: ${owned.fault.stack ?? owned.fault}`);
+  }
+  result.closedProcesses = processes.map(p => ({ pid: p.child.pid, closed: p.closed, exit: p.exit, retainedLogBytes: p.logBytes, truncated: p.truncated }));
+  result.complete = result.semanticChecksPassed === true && result.failures.length === 0 && processes.every(p => p.closed);
+}
+
 async function sample(directory, sampleNumber, source, pilot) {
   assert(/^[a-f0-9]{40}$/.test(source), 'source must be an exact lowercase commit');
   assert(Number.isInteger(sampleNumber) && sampleNumber >= 1 && sampleNumber <= 20);
@@ -46,16 +71,12 @@ async function sample(directory, sampleNumber, source, pilot) {
   }
   function start(label, executable, args, cwd) {
     const child = spawn(executable, args, { cwd, env, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
-    const owned = { child, text: '', fault: null, closed: false };
+    const owned = { child, label, text: '', logBytes: 0, truncated: false, fault: null, closed: false };
     owned.done = new Promise(resolve => child.once('close', (code, signal) => {
       owned.closed = true; owned.exit = { code, signal }; resolve();
     }));
-    child.once('error', error => { owned.fault = error; });
-    const receive = part => {
-      appendFileSync(join(directory, `${label}.log`), part);
-      owned.text += part.toString();
-      if (owned.text.length > 8 * 1024 * 1024) owned.fault = new Error(`${label} log bound exceeded`);
-    };
+    child.once('error', error => { owned.fault ??= error; });
+    const receive = part => retainOutput(owned, join(directory, `${label}.log`), part);
     child.stdout.on('data', receive); child.stderr.on('data', receive);
     processes.push(owned);
     return owned;
@@ -86,11 +107,25 @@ async function sample(directory, sampleNumber, source, pilot) {
     return { status: reply.status, html: await reply.text() };
   }
   async function verifyRoutes(origin, changed) {
+    const stylesheets = new Set();
     for (let i = 0; i < ROUTES.length; i++) {
       const reply = await response(origin, ROUTES[i]);
       assert.equal(reply.status, 200);
       assertPage(reply.html, i, changed && AFFECTED_ROUTES.includes(ROUTES[i]) ? NEXT_REVISION : REVISION);
       writeFileSync(join(directory, `${changed ? 'updated' : 'original'}-page${i}.html`), reply.html);
+      const links = [...reply.html.matchAll(/<link\b[^>]*>/g)].map(match => match[0]).filter(tag => /\brel="stylesheet"/.test(tag));
+      assert(links.length > 0, 'native page must include its stylesheet');
+      for (const tag of links) {
+        const path = /\bhref="([^"<>]+)"/.exec(tag)?.[1];
+        assert(path?.startsWith('/_assets/'), 'stylesheet must use the declared native asset route');
+        stylesheets.add(path);
+      }
+    }
+    for (const path of stylesheets) {
+      const reply = await fetch(origin + path, { signal: AbortSignal.timeout(5_000) });
+      assert.equal(reply.status, 200); assert.match(reply.headers.get('content-type') ?? '', /^text\/css\b/);
+      const css = await reply.text();
+      assert.match(css, /\.panels\b/); assert.match(css, /display\s*:\s*grid\b/);
     }
   }
   try {
@@ -176,8 +211,7 @@ async function sample(directory, sampleNumber, source, pilot) {
   } finally {
     if (browser) try { await browser.close(); } catch (error) { result.failures.push(String(error)); }
     for (const owned of processes.reverse()) try { await stop(owned); } catch (error) { result.failures.push(String(error)); }
-    result.closedProcesses = processes.map(p => ({ pid: p.child.pid, closed: p.closed, exit: p.exit }));
-    result.complete = result.semanticChecksPassed === true && result.failures.length === 0 && processes.every(p => p.closed);
+    finalizeResult(result, processes);
     checkpoint();
   }
   assert(result.complete, `N7 sample failed; retain ${join(directory, 'result.json')}`);

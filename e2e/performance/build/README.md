@@ -21,6 +21,7 @@ manifest and integrity checks. The native application uses typed `PageHandle`
 and the public asset server. Release mode embeds its output; the runner verifies
 all routes with the disk output temporarily absent, then restores it. Ordinary
 debug rust-embed reads the watch generation from disk; `debug-embed` is not enabled.
+Typed title/list/notice output and served nonempty CSS are checked explicitly.
 An interactive counter must respond correctly before the edit observation.
 The watch-ready marker is printed only after the public `build()` call returns
 with its complete initial manifest; all route responses are then verified.
@@ -44,7 +45,10 @@ entire frontend pipeline. Output correctness is verified afterward. Dependency
 setup and later debug/watch/browser setup are recorded separately and are not
 claimed to meet the 30-second application budget. This is not a cold-toolchain
 or cold-dependency-install benchmark. No application objects or executable are
-reused at the full-build start.
+reused at the full-build start. Workspace-wide Cargo metadata can include features
+from unrelated fixture roots; it is not proof of the selected build's features.
+The identical direct specifications, explicit `-p` selections and actual live
+watch update establish this fixture's dependency/debug separation.
 
 The update clock starts **before** the one real source save. Polling observes an
 updated HTTP 200 response from the same debug server, then performs a real browser
@@ -75,6 +79,9 @@ commands also have individual durations and retained stdout/stderr in the sample
 
 The existing Linux ownership supervisor bounds each worker at 900 seconds,
 retains failure logs, and requires no live descendant after producer cleanup.
+Each watcher/server retains at most 8 MiB of raw log bytes (the ASCII readiness
+buffer has at most that many characters). Overflow is explicitly marked as
+truncation, and any child fault invalidates completion even after readiness.
 The job has a 25-minute bound including setup. Each sample artifact contains the
 raw result, commands/logs, original generated source, original/updated output,
 served HTML and ownership report; the large Cargo target is excluded from upload.

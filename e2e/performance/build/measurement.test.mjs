@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, delimiter } from 'node:path';
 import { sources, assertGraph, expectedFor, REVISION, NEXT_REVISION } from './workload.mjs';
-import { POLICY, aggregate, assertDependencyGraph, assertFreshApplication, observeUpdate } from './measurement.mjs';
+import { POLICY, aggregate, assertDependencyGraph, assertFreshApplication, assertPage, observeUpdate } from './measurement.mjs';
 
 const source = 'a'.repeat(40);
 const inventory = assertGraph(sources());
@@ -60,7 +60,7 @@ test('fresh application proof refuses prepared app messages, nested fingerprints
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-const html = revision => expectedFor(0).map(name => `<aside data-n7-component="${name}">${name === 'Shared00' ? revision : 'content'}</aside>`).join('');
+const html = revision => '<h1>Workspace 0</h1><li>Open</li><li>Closed</li><p class="notice">Pending review</p>' + expectedFor(0).map(name => `<aside data-n7-component="${name}">${name === 'Shared00' ? revision : 'content'}</aside>`).join('');
 test('real observation loop includes save, polling, HTTP and reload/frame time; IR-only, wrong-route and reload failures cannot pass', async () => {
   let clock = 7, calls = 0;
   const rows = [];
@@ -139,5 +139,31 @@ test('actual workflow aggregation shell keeps a p95 failure nonzero and retains 
     assert.equal(report.passed, false); assert.equal(report.fullBuild.p95, 30_000); assert.equal(report.fullBuild.values.length, 20);
     assert.match(readFileSync(join(output, 'aggregation.log'), 'utf8'), /N7 p95 threshold missed/);
     for (const row of rows) assert.deepEqual(JSON.parse(readFileSync(join(output, `n7-sample-${row.result.sample}/measurement/result.json`), 'utf8')), row.result);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+
+test('real log retention stays bounded after readiness and finalization refuses late faults', async () => {
+  const { retainOutput, finalizeResult } = await import('./run.mjs');
+  const directory = mkdtempSync(join(tmpdir(), 'forma-n7-output-'));
+  try {
+    const path = join(directory, 'watch.log');
+    const owned = { child: { pid: 123 }, label: 'watch', text: '', logBytes: 0, truncated: false, fault: null, closed: true, exit: { code: 0, signal: null } };
+    retainOutput(owned, path, Buffer.from('READY\n'), 16);
+    assert.match(owned.text, /READY/);
+    const good = { failures: [], semanticChecksPassed: true };
+    finalizeResult(good, [owned]); assert.equal(good.complete, true);
+    retainOutput(owned, path, Buffer.from('abcdefghijklmnop'), 16);
+    retainOutput(owned, path, Buffer.from('more output after the fault'), 16);
+    assert.equal(readFileSync(path).length, 16); assert.equal(owned.text.length, 16);
+    assert.equal(owned.truncated, true); assert.match(owned.fault.message, /truncated at 16 bytes/);
+    const late = { failures: [], semanticChecksPassed: true };
+    finalizeResult(late, [owned]); assert.equal(late.complete, false); assert.match(late.failures[0], /truncated/);
+    owned.fault = new Error('late child failure');
+    const childError = { failures: [], semanticChecksPassed: true };
+    finalizeResult(childError, [owned]); assert.equal(childError.complete, false); assert.match(childError.failures[0], /late child failure/);
+    for (const missing of ['<h1>Workspace 0</h1>', '<li>Closed</li>', '<p class="notice">Pending review</p>']) {
+      assert.throws(() => assertPage(html(REVISION).replace(missing, ''), 0, REVISION), /native typed/);
+    }
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
