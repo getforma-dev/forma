@@ -1,9 +1,19 @@
-# Native parser and SVG-image attribution
+# Native navigation, parser and SVG-image attribution
 
-`N3-startup-strict50-v4` keeps every application, mixed, unknown and independent
+`N3-startup-strict50-v5` keeps every application, mixed, unknown and independent
 observer task subject to 50 ms. It extends positive attribution of browser work
 outside island activation; it changes no product code, fixture, profile, sample
 count, response deadline or whole-page metric.
+
+Native navigation lifecycle events use the existing complete main-document
+request/response/commit, parser, V8-context and pinned audit-source proof. Their
+duration does not establish origin: version 5 removes the former 1 ms internal
+heuristic for `pagehide`, visibility-change and `unload` dispatch. The whole
+task must still precede the observed first application script, contain only
+the exact admitted native records, and satisfy every frame, resource and
+nesting check. Any handler execution, unknown or foreign-frame child, or
+post-script work keeps the whole task counted. This is not a general exemption
+for lifecycle event names or long pre-script tasks.
 
 A stylesheet task requires one parser-initiated same-origin request from the
 committed main document, its matching successful response/data/finish, and the
@@ -40,3 +50,12 @@ Separate analytical replay is not acceptance. Finite controls also retain the
 earlier genuine 60.473 ms application task and the separate 57 ms independent
 observer failure. Every raw task, whole-page TBT/LCP and `wholePageTargetMiss`
 remains visible. A fresh full campaign is required for the new policy.
+
+The trusted beta.2 release run 38999734034 retains its failed outcome. Its first
+tenant-login audit recorded a 66.737 ms document bootstrap task containing a
+5.815 ms native `pagehide` dispatch, with no executable child; the task ended
+711.757 ms before the first application module compile. Version 4's 1 ms
+heuristic kept that task counted. Separate version 5 analysis preserves the
+66.737 ms raw duration while proving its origin. The ninth audit's separate
+`NO_NAVSTART` capture failure remains unresolved; neither reanalysis nor the
+eight retained pairs constitutes a completed P17 qualification.

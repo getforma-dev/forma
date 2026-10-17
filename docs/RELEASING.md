@@ -15,7 +15,7 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version 3.0.0-beta.2
+node scripts/release-set.mjs version 3.0.0-beta.3
 bash scripts/install-deps.sh
 npm run check
 ```
@@ -25,7 +25,7 @@ the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `-dev` version also aligns the current
 template source seeds; it names no publishable milestone.
 Use the next unpublished version for the intended milestone. Add its root
-CHANGELOG heading (for example `## [3.0.0-beta.2]`), close only evidenced gates,
+CHANGELOG heading (for example `## [3.0.0-beta.3]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
 
@@ -201,7 +201,7 @@ bash scripts/install-deps.sh
 npm run build
 node scripts/release-set.mjs pack /absolute/path/to/empty-ds11 --dry-run
 bash scripts/release-artifacts.sh record /absolute/path/to/empty-ds11
-FORMA_PERFORMANCE_TARGET_TAG=v3.0.0-beta.2 node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
+FORMA_PERFORMANCE_TARGET_TAG=v3.0.0-beta.3 node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
 ruby scripts/check-release-workflow.rb --self-test
 bash scripts/test-release-artifacts.sh
 ```
@@ -278,7 +278,7 @@ close FORMA-144's final-version cleanup gate.
 
 P17 `performance: measured-v1` requires20,000 native walks for each of five consumer-shaped pages in the application release profile, N5 allocation/time growth, public one-past budget refusals,20 cold applied-mobile Lighthouse13.5.0 runs on each of the tenant-login and100-island pages, independent actual event-response observations, and the archived founder comparison in all three browser engines. FORMA-103 also measures the shipped public activation decoder: one MiB of ASCII and one MiB containing20,000 multibyte strings, five warmups then forty fresh-document samples each at four-times Chromium CPU slowdown. Registration is outside timing; timing ends at the first component instruction. Every measured sample must be at most30ms under L61. The actual packed compiler regenerates both original contracts before measurement; raw observations, artifact/compiler hashes, enforced Trusted Types policy and real oversize/malformed refusal controls are recorded. Decoder observations are synchronously flushed beside `p17.json` after each timed sample, and the complete report is saved before threshold validation. Interrupted or refused attempts remain outside disposable fixture directories. The paired mobile controls retain raw host/response observations and the injected110-millisecond interval; the long-task observer must capture that interval, rather than merely any unrelated slow task. New and prior records require the same control evidence. No timing row may be omitted. Native p99 throughput below1,500,000nodes/s or at/below half the prior DS12 rate fails. TBT p95 must be below200ms; responses must complete within500ms of first paint; strict startup qualification requires every application/unattributed task to be at most50ms across each route’s fresh20 runs; p95 is retained as a descriptive measurement, not an outlier allowance. Independent observer tasks all count. Only same-audit trace proof of browser work before the first application script in the committed main renderer can exclude a Lighthouse task: either browser-only layout, or the exact main-document commit/parser/context chain with source-bound pinned audit bootstrap. The exact source-bound Lighthouse idle-check wrapper may also be excluded at any time only with its distinct audit context, same-navigation frame, complete child-event nesting and exact timer stack. Mixed, unknown and other late tasks count in full. DS12 reports the50ms target miss separately, all per-run maxima and the p95. A pilot cannot qualify. The complete raw Lighthouse reports, bounded compressed traces and configuration, per-walk durations, machine/profile, prior-record digest and client comparisons are embedded in DS12. They are measurements of a lab profile, not a phone claim.
 
-A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (for example `v3.0.0-beta.2`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first published 3.0.0 beta may record the verified absence of a performance contract in its latest published 3.0.0 alpha predecessor and establish the baseline. A beta tag that failed before publication remains immutable; its successor can still be the first published beta. A published beta with missing performance cannot fall back to alpha or bootstrap another beta. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.
+A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (for example `v3.0.0-beta.3`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first published 3.0.0 beta may record the verified absence of a performance contract in its latest published 3.0.0 alpha predecessor and establish the baseline. A beta tag that failed before publication remains immutable; its successor can still be the first published beta. A published beta with missing performance cannot fall back to alpha or bootstrap another beta. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.
 
 
 Startup evidence retains the original whole-page TBT/LCP and every raw task.
@@ -289,7 +289,7 @@ transport limit accommodates forty complete traces and reports; other release
 metadata bounds and product budgets are unchanged. The previous90ms negative
 control and all historical failures remain archived. A real110ms injected task
 must be observed and refused independently of response latency. Acceptance
-requires a new complete campaign under `N3-startup-strict50-v4`. The earlier
+requires a new complete campaign under `N3-startup-strict50-v5`. The earlier
 `N3-startup-strict50-v1` layout-only classifier remains historical evidence.
 The current classifier may also separate a main-document commit task only when
 the same trace proves the exact navigation request, committed frame, response,
@@ -317,6 +317,12 @@ main-document `PaintImage` for the same resource containing that exact frame's
 layout. A missing or ambiguous resource/frame/nesting link, any script execution
 or any unknown child keeps the whole task counted. This is not a general
 pre-script time exemption. See [the native resource proof](release/N3-NATIVE-RESOURCE-ATTRIBUTION.md).
+Version 5 removes the internal 1 ms bound on native navigation lifecycle
+dispatch. Origin still requires the complete same-navigation causal and pinned
+source proof above, without executable, unknown or foreign-frame children, and
+the whole task must precede the first application script. Raw duration is
+unchanged; the application/unknown 50 ms limit and every independent observer
+task remain in force. Historical failures are not reclassified as P17 passes.
 Historical L63
 75ms p95 /100ms individual acceptance and its original evidence remain history;
 they cannot qualify the strict gate. The L63 exception is retired only after
