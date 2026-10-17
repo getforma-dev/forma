@@ -971,7 +971,7 @@ describe('tiers and configuration', () => {
       `<template><iframe srcdoc="${doc}"></iframe></template>` +
       `<div data-forma-state='{"rows":["${doc}"]}'><ul data-list="{rows}"><li><iframe class="row" srcdoc="{item}" title="{item}"></iframe></li></ul></div>` +
       `<p id="kept">kept</p>`;
-    const handle = mountOn(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
+    const handle = mountSuccessfully(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
     await settle();
     expect(text('kept')).toBe('kept');
     expect(root.querySelectorAll('[srcdoc]')).toHaveLength(0);
