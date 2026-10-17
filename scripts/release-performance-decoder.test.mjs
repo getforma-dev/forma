@@ -16,15 +16,56 @@ test('both finite payload shapes pin the complete UTF-8 envelope to exactly one 
     else {assert.equal(decoded.length,20_000);assert(decoded.every(value=>/^(?:é😀)+x*$/.test(value)));assert(Buffer.byteLength(payload.text)>payload.text.length);}
   }
 });
-test('the L-61 thirty-millisecond boundary is inclusive for every sample of both shapes',()=>{
-  const boundary=valid();
-  for(const row of boundary.cases){for(const sample of row.samples)sample.elapsedMs=30;row.summary={minMs:30,medianMs:30,p95Ms:30,maxMs:30};}
-  assert.doesNotThrow(()=>validateDecoder(boundary));
-  const historical=valid();historical.profile.maxSampleMs=12;
-  assert.throws(()=>validateDecoder(historical),/actual measurement profile differs/);
+function boundaryWithOutliers() {
+  const report=valid();
+  for(const row of report.cases) {
+    for(const [i,sample] of row.samples.entries())sample.elapsedMs=i===0?90:i===39?45:30;
+    row.summary={minMs:30,medianMs:30,p95Ms:30,maxMs:90};
+  }
+  return report;
+}
+test('nearest-rank p95 accepts the exact 30 ms boundary, retaining all forty durations and the maximum',()=>{
+  const boundary=boundaryWithOutliers();
+  assert.equal(validateDecoder(boundary),boundary);
+  for(const row of boundary.cases) {
+    assert.equal(row.samples.length,40);assert.equal(row.samples[0].elapsedMs,90);
+    assert.equal(row.samples[39].elapsedMs,45);assert.equal(row.summary.maxMs,90);
+  }
   for(const index of [0,1]) {
-    const report=valid();report.cases[index].samples[39].elapsedMs=30.0001;
-    assert.throws(()=>validateDecoder(report),/sample 40: exceeds 30ms/);
+    const report=boundaryWithOutliers();report.cases[index].samples[20].elapsedMs=30.0001;
+    report.cases[index].summary.p95Ms=30.0001;
+    assert.throws(()=>validateDecoder(report),/p95: exceeds 30ms/);
+  }
+});
+test('old every-sample policies and changed p95 identities cannot qualify',()=>{
+  for(const limit of [12,30]) {
+    const historical=valid();delete historical.profile.policy;delete historical.profile.statistic;
+    delete historical.profile.maxP95Ms;historical.profile.maxSampleMs=limit;
+    assert.throws(()=>validateDecoder(historical),/actual measurement profile differs/);
+  }
+  for(const mutate of [p=>{delete p.policy;},p=>{p.policy='public-decoder-p95-v0';},
+    p=>{p.statistic='median';},p=>{p.maxP95Ms=30.0001;}]) {
+    const report=valid();mutate(report.profile);
+    assert.throws(()=>validateDecoder(report),/actual measurement profile differs/);
+  }
+});
+test('a passing p95 cannot hide later incorrect values, invalid durations or broken refusal controls',()=>{
+  for(const mutate of [
+    r=>{r.cases[1].samples[39].valueSha256='b'.repeat(64);},
+    r=>{r.cases[1].samples[39].valueLength=19_999;},
+    r=>{r.cases[1].samples[39].elapsedMs=NaN;},
+    r=>{r.cases[1].samples[39].calls=0;},
+    r=>{r.controls[1].observation.calls=1;},
+  ]) {const report=boundaryWithOutliers();mutate(report);assert.throws(()=>validateDecoder(report));}
+});
+test('both shapes and refusal controls are validated before rejecting an excessive p95',()=>{
+  for(const [mutate,message] of [
+    [r=>{r.cases[1].samples[39].valueSha256='b'.repeat(64);},/projected value differs/],
+    [r=>{r.controls[1].observation.calls=1;},/incorrect component entry count/],
+  ]) {
+    const report=boundaryWithOutliers();report.cases[0].samples[20].elapsedMs=30.0001;
+    report.cases[0].summary.p95Ms=30.0001;mutate(report);
+    assert.throws(()=>validateDecoder(report),message);
   }
 });
 test('raw sample provenance cannot be replaced by claimed passing summaries',()=>{
@@ -32,6 +73,7 @@ test('raw sample provenance cannot be replaced by claimed passing summaries',()=
     r=>{delete r.cases[0].samples;},r=>r.cases[1].samples.pop(),r=>r.cases[0].warmups.pop(),
     r=>{r.cases[1].samples[39].run=39;},r=>{r.cases[0].samples[1].elapsedMs=NaN;},
     r=>{r.cases[0].samples[1].elapsedMs=0;},r=>{r.cases[0].summary.p95Ms=1;},
+    r=>{r.cases[0].summary.minMs=1;},r=>{r.cases[0].summary.medianMs=1;},r=>{r.cases[0].summary.maxMs=1;},
     r=>{r.cases[0].payloadBytes--;},r=>{r.cases[1].payloadSha256='b'.repeat(64);},
     r=>{r.cases[1].samples[1].valueSha256='b'.repeat(64);},r=>{r.cases[1].samples[1].valueLength=19_999;},
   ]) {const report=valid();mutate(report);assert.throws(()=>validateDecoder(report));}
