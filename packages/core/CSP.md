@@ -224,6 +224,9 @@ If you see this with FormaJS v1.0.9+, the issue is outside FormaJS — check for
 
 ## Version History
 
+The 3.0.0 row describes the prepared final source; publication remains pending.
+It is not evidence that the package is available from a registry.
+
 The last row carries the same label as `CHANGELOG.md`'s `## [Unreleased]`
 heading, and moves to a version number when that entry does. A test pins both
 ends of that rule: the newest row says `Unreleased`, and the row below it ends
@@ -240,4 +243,5 @@ Verified by `src/__tests__/docs-truth.test.ts` > "CSP.md's version history ends 
 | 2.0.2 | No CSP-affecting changes since 2.0.1. |
 | 2.0.3 | No CSP-affecting changes since 2.0.2. |
 | 2.1.0 | Trusted Types: what core writes of its own passes `require-trusted-types-for 'script'; trusted-types forma forma-runtime` (its clears use `replaceChildren()`; the runtime's parser re-mints trusted markup through `forma-runtime`, and its diff of that markup writes no `on*` or script `src`), and every raw sink takes `trustedHtml()`, made by core's policy `forma`. Such a page reports only what the application writes as a string, the runtime's `srcdoc` bindings included. See [Trusted Types](#trusted-types). |
-| Unreleased | Staged 3.x refuses plain strings at raw APIs and refuses `h('script')`; runtime srcdoc bindings report coded refusals. Forma-server enforces both Trusted Types directives without requiring a reporting endpoint. |
+| 3.0.0 | Prepared final: refuses plain strings at raw APIs and refuses `h('script')`; runtime srcdoc bindings report coded refusals. Forma-server enforces both Trusted Types directives without requiring a reporting endpoint. |
+| Unreleased | No additional CSP changes beyond the prepared 3.0.0 set. |

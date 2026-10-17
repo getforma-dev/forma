@@ -1,5 +1,10 @@
 # Thursday backlog — founder quota directive
 
+## Resumed bounded work — 2026-10-17
+
+Founder explicitly resumed quick wins with 8% quota; this supersedes the earlier blanket pause for this bounded session only. Monitor and sub-agents remain stopped. No expensive campaign or release dispatch is authorized by this update. PR112's b58 CI39052507411 failed four documentation consistency assertions in three jobs; FORMA-216 records the fix. Existing docs-truth20/20 passed locally with locked Vitest4.1.12. Five prose files changed; no product/test/threshold changes. The next pushed head needs ordinary CI and independent review; no merge/tag yet. Main remains be8beb7d; stableLatest is server-v0.2.2, while beta.4 is a published prerelease. Thursday deferrals and validator blocker remain unchanged. See3-in-review/FORMA-216.md.
+
+
 Recorded 2026-10-17; resume Thursday 2026-10-22. Release work is PAUSED by explicit founder instruction. No agents, monitors, campaigns or application migrations may restart automatically.
 
 ## Decision identity and exact stopping point

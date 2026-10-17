@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+The entries below describe the prepared final source, not a published release.
+The release workflow and registry verification establish publication.
+
 - FORMA-204: a component whose setup throws now runs its registered teardown, including listeners, tracked effects and context providers, before propagating the original error. Mount callbacks remain uncalled and cleanup errors do not prevent later teardown.
 
 - Dispose completed and partial explicit-runtime bindings when initial mounting throws, including list-row work, event listeners and authorized polling/fetch requests. Mount-owned reactive scopes also stop a reader that throws before returning its disposer, without disposing an unrelated caller root (FORMA-203).
