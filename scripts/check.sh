@@ -130,7 +130,7 @@ npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
 # N3 timing runs as its own required serial phase after all other tests.
 npx playwright test --grep-invert 'indexed products: complete public set'
-(source packages/core/scripts/test-e2e.sh --project=chromium)
+(source scripts/check-core-browser.sh --project=chromium)
 step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
 node packages/core/e2e/hostile-widgets/run.mjs
 node packages/core/e2e/hostile-widgets/qualify-guard.mjs

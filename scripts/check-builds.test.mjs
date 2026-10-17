@@ -15,7 +15,7 @@ function fixture(run) {
   try {
     const core = join(root, 'packages/core'), bin = join(root, 'bin');
     for (const path of [bin, join(root, 'scripts'), join(root, 'e2e/fixtures'), join(core, 'scripts'), join(core, 'e2e/fixtures'), join(core, 'dist')]) mkdirSync(path, {recursive: true});
-    for (const path of ['scripts/check-builds.sh', 'e2e/sync-fixtures.sh', 'packages/core/scripts/test-e2e.sh']) copyFileSync(join(repo, path), join(root, path));
+    for (const path of ['scripts/check-builds.sh', 'e2e/sync-fixtures.sh', 'scripts/check-core-browser.sh']) copyFileSync(join(repo, path), join(root, path));
     writeFileSync(join(core, 'dist/formajs-runtime.global.js'), 'stale');
     const log = join(root, 'commands.jsonl');
     const common = `const fs=require('node:fs');const path=require('node:path');const args=process.argv.slice(2);fs.appendFileSync(process.env.COMMAND_LOG,JSON.stringify({command:path.basename(process.argv[1]),args,cwd:process.cwd()})+'\\n');`;
@@ -94,12 +94,12 @@ test('standalone core npm scripts still build, copy the fresh runtime and preser
 
 test('sourced core runner reuses only the parent build and isolates cwd while preserving test failure', () => fixture(({root, core, shell, commands}) => {
   const result = shell(`${setup}${build}
-    (source packages/core/scripts/test-e2e.sh --project=chromium --workers=2)
+    (source scripts/check-core-browser.sh --project=chromium --workers=2)
     test "$PWD" = ${quote(root)}`);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.equal(commands().filter(row => row.command === 'npm').length, 1);
   assert.deepEqual(commands().at(-1), {command: 'npx', args: ['playwright', 'test', '--project=chromium', '--workers=2'], cwd: core});
-  const failed = shell(`${setup}${build}\n(source packages/core/scripts/test-e2e.sh --project=chromium)\necho UNREACHED`, {PLAYWRIGHT_EXIT: '23'});
+  const failed = shell(`${setup}${build}\n(source scripts/check-core-browser.sh --project=chromium)\necho UNREACHED`, {PLAYWRIGHT_EXIT: '23'});
   assert.equal(failed.status, 23, failed.stdout + failed.stderr);
   assert.doesNotMatch(failed.stdout, /UNREACHED/);
 }));
