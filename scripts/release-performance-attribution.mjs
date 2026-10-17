@@ -1,6 +1,6 @@
-// Attribute only positively proved browser work outside N3's island-activation
-// boundary. Full raw traces and Lighthouse tasks remain in DS12. Unknown/mixed
-// tasks count.
+// Preserve raw Lighthouse tasks while applying positive native-work proofs and
+// L-66's campaign-wide corroboration rule. Application or unresolved script
+// attribution remains blocking; the correlated category does not prove origin.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
@@ -367,9 +367,90 @@ const exactIsolatedIdleCheck=({children,thread,task,end,frame,url,origin})=>{
   const bootstrap=thread.filter(e=>e.ts>=origin && e.ts<task.ts && e.args?.data?.isolate===data.isolate && mainContexts.has(e.args.data.executionContextId) && boundSource(e,thread,auditBootstrapSources.get('_lighthouse-eval.js'),frame,true));
   return bootstrap.length===1;
 };
-const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap','isolated-lighthouse-idle-check','pre-application-parser-stylesheet','pre-application-svg-image']);
+// L-66 uses observed script identities, not a list of native task names. Require
+// an application module inventory even when the candidate task has no script.
+function applicationInventory(thread,origin,frame,url){
+  const requests=thread.filter(e=>e.ts>=origin && e.name==='ResourceSendRequest' && e.args?.data?.resourceType==='Script' && e.args.data.frame===frame);
+  if(!requests.length || requests.some(e=>!instant(e,'devtools.timeline') || typeof e.args.data.url!=='string' || !sameOrigin(e.args.data.url,url)))return null;
+  const metadata=thread.filter(e=>e.ts>=origin && e.name==='ScriptCatchup' && e.cat==='disabled-by-default-devtools.v8-source-rundown');
+  const scripts=new Map(),contexts=new Set(),urls=new Set([url,...requests.map(e=>e.args.data.url)]);
+  for(const event of metadata){
+    const data=event.args?.data;
+    if(!data || !positiveInteger(data.scriptId) || !positiveInteger(data.executionContextId) || typeof data.isolate!=='string' || !data.isolate || typeof data.url!=='string' || typeof data.isModule!=='boolean' || data.sourceUrl!==undefined && typeof data.sourceUrl!=='string')return null;
+    const key=`${data.isolate}:${data.scriptId}`;
+    if(scripts.has(key))return null;
+    scripts.set(key,{data,event,application:false,isolated:false});
+  }
+  for(const request of requests){
+    const matches=[...scripts.values()].filter(({data})=>data.isModule && data.url===request.args.data.url);
+    if(matches.length!==1)return null;
+    const {data}=matches[0];
+    if(!thread.some(e=>e.ts>=origin && e.name==='v8.compileModule' && complete(e,'v8,devtools.timeline') && frameRefs(e).every(ref=>ref===frame) && e.args?.data?.scriptId===data.scriptId && e.args.data.url===data.url))return null;
+    contexts.add(`${data.isolate}:${data.executionContextId}`);
+  }
+  for(const script of scripts.values()){
+    const {data}=script;
+    // Anonymous/sourceURL inline scripts in the application's context count,
+    // as do external application URLs regardless of the recorded context.
+    script.application=contexts.has(`${data.isolate}:${data.executionContextId}`) || urls.has(data.url) || urls.has(data.sourceUrl);
+    if(script.application){if(data.url)urls.add(data.url);if(data.sourceUrl)urls.add(data.sourceUrl);}
+    const bindings=thread.filter(e=>e.name==='ScriptCompiled' && e.cat==='disabled-by-default-devtools.target-rundown' && e.args?.data?.isolate===data.isolate && e.args.data.scriptId===data.scriptId);
+    const sources=thread.filter(e=>e.name==='ScriptCatchup' && e.cat==='disabled-by-default-devtools.v8-source-rundown-sources' && e.args?.data?.isolate===data.isolate && e.args.data.scriptId===data.scriptId);
+    if(!script.application && bindings.length===1 && sources.length===1){
+      const binding=bindings[0],b=binding.args.data,source=sources[0].args.data;
+      script.isolated=binding.ph==='X' && nonnegative(binding.dur) && b.contextType==='isolated' && b.isDefault===false && b.frameType==='page' && b.frame===frame && b.url===url && b.origin===new URL(url).origin && typeof b.v8context==='string' && b.v8context.length>0 && positiveInteger(source.length) && typeof source.sourceText==='string' && Buffer.byteLength(source.sourceText)===source.length;
+      if(script.isolated)script.binding=binding;
+    }
+  }
+  return {scripts,urls};
+}
+function noApplicationEvidence(children,task,end,frame,inventory){
+  const records=[task,...children];
+  if(!inventory || records.some(e=>!eventInside(e,task,end) || frameRefs(e).some(ref=>ref!==frame)))return false;
+  const resolve=(id,isolate)=>{
+    if(!/^[1-9]\d*$/.test(String(id)))return null;
+    const found=[...inventory.scripts.values()].filter(s=>String(s.data.scriptId)===String(id) && (isolate===undefined || s.data.isolate===isolate));
+    return found.length===1?found[0]:null;
+  };
+  const isolated=[...inventory.scripts.values()].filter(s=>s.isolated && eventInside(s.binding,task,end));
+  for(const event of records){
+    let application=false,unresolved=false,bound=false;
+    const inspect=(value,key='')=>{
+      if(!value || typeof value!=='object')return;
+      if(Array.isArray(value)){for(const child of value)inspect(child,key);return;}
+      // ScriptCompiled.url is the context's document URL, not a script URL.
+      const context=event.name==='ScriptCompiled' && value===event.args?.data;
+      const sourceKeys=context?['sourceUrl','fileName']:['url','sourceUrl','fileName','scriptURL'];
+      const scriptObject=key==='stackTrace' || key==='callFrames' || 'scriptId' in value || 'functionName' in value;
+      for(const field of sourceKeys)if(typeof value[field]==='string' && value[field]){
+        if(inventory.urls.has(value[field]))application=true;
+        else if((field!=='url' || scriptObject || scriptEvent(event)) && ![...inventory.scripts.values()].some(s=>s.isolated && [s.data.url,s.data.sourceUrl].includes(value[field])))unresolved=true;
+      }
+      // EvaluateScript's own zero ID is a wrapper marker. Only that field may
+      // use the isolated binding below; nested unknown references still fail.
+      const anonymousWrapper=event.name==='EvaluateScript' && value===event.args?.data && value.scriptId===0;
+      if('scriptId' in value && (value.scriptId!==-1 || scriptEvent(event)) && !anonymousWrapper){
+        const script=resolve(value.scriptId,value.isolate);
+        if(script?.application)application=true;
+        else if(script?.isolated)bound=true;
+        else unresolved=true;
+      }
+      for(const [childKey,child] of Object.entries(value))if(childKey!=='sourceText')inspect(child,childKey);
+    };
+    inspect(event.args);
+    if(application || unresolved)return false;
+    if(scriptEvent(event) || event.name==='v8.run'){
+      // Anonymous evaluation wrappers must be bound to exactly one captured
+      // isolated script in this task, not treated as absent source evidence.
+      const wrappers=isolated.filter(s=>insideSpan(s.binding,event) || insideSpan(event,s.binding));
+      if(!bound && wrappers.length!==1)return false;
+    }
+  }
+  return true;
+}
+const excludedKinds = new Set(['pre-application-browser-layout','pre-application-navigation-audit-bootstrap','isolated-lighthouse-idle-check','pre-application-parser-stylesheet','pre-application-svg-image','browser-internal-unattributed']);
 
-export function attributeMobileTasks(lhr,trace) {
+export function attributeMobileTasks(lhr,trace,{correlated=false}={}) {
   const events = trace?.traceEvents;
   assert(Array.isArray(events) && events.length>0,'N3: complete raw trace absent');
   for(const e of events)assert(e && typeof e.name==='string' && typeof e.ph==='string' && nonnegative(e.ts) && Number.isInteger(e.pid) && Number.isInteger(e.tid) && (e.dur===undefined || nonnegative(e.dur)),'N3: malformed raw trace event');
@@ -385,6 +466,7 @@ export function attributeMobileTasks(lhr,trace) {
   const tasks=thread.filter(e=>e.name==='RunTask' && e.ph==='X' && e.dur>0);
   const scripts=thread.filter(e=>e.ts>=origin && scriptEvent(e));
   const firstScriptUs=scripts.length?Math.min(...scripts.map(e=>e.ts)):null;
+  const inventory=correlated?applicationInventory(thread,origin,frame,lhr.requestedUrl):null;
   const beforeScript=task=>firstScriptUs!==null && task.ts>=origin && task.ts+task.dur<=firstScriptUs && commits.some(e=>e.ts<=task.ts) && !thread.some(e=>e.name==='navigationStart' && e.ts>origin && e.ts<task.ts+task.dur && e.args?.data?.documentLoaderURL!=='');
   const svgProofs=[];
   // Only image-response tasks are candidates; no recursive task classification.
@@ -423,16 +505,17 @@ export function attributeMobileTasks(lhr,trace) {
       else if(svgProofs.some(proof=>proof.task.index===task.index)){kind='pre-application-svg-image';reason='same-navigation-parser-image-and-bound-isolated-document-before-first-script';}
       else if(task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && exactNavigationBootstrap({children,thread,task,end,frame,navigationId,url:lhr.requestedUrl,firstScriptUs})){kind='pre-application-navigation-audit-bootstrap';reason='same-navigation-document-commit-before-application-script';}
       else if(task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && exactIsolatedIdleCheck({children,thread,task,end,frame,url:lhr.requestedUrl,origin})){kind='isolated-lighthouse-idle-check';reason='same-navigation-pinned-source-isolated-audit-idle-check';}
+      else if(correlated && row.duration>MOBILE_STARTUP_POLICY.maxTaskMs && task.ts>=origin && commits.some(e=>e.ts<=task.ts) && !anotherNavigation && noApplicationEvidence(children,task,end,frame,inventory)){kind='browser-internal-unattributed';reason='no-application-script-evidence-and-forty-clean-independent-probes';}
     }
     return {index,startTime:row.startTime,duration:row.duration,kind,reason,traceIndex};
   });
   return {policy:MOBILE_STARTUP_POLICY.id,pid:nav.pid,tid:nav.tid,frame,navigationId,originUs:origin,firstScriptUs,tasks:classified};
 }
 
-export function summarizeMobileStartup(runs) {
+export function summarizeMobileStartup(runs,{correlated=false}={}) {
   const runMaximaMs=runs.map(run=>{
     const lhr=JSON.parse(run.lighthouse.rawLhr);
-    const attribution=attributeMobileTasks(lhr,decodeMobileTrace(run.lighthouse.trace));
+    const attribution=attributeMobileTasks(lhr,decodeMobileTrace(run.lighthouse.trace),{correlated});
     assert.deepEqual(run.lighthouse.attribution,attribution,'N3: task attribution differs from raw trace');
     const tasks=[...attribution.tasks.filter(t=>!excludedKinds.has(t.kind)),...run.activation.longTasks];
     tasks.forEach(t=>assert(nonnegative(t.duration) && nonnegative(t.startTime),'N3: invalid startup task'));

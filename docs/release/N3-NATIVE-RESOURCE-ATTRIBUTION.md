@@ -1,9 +1,48 @@
-# Native navigation, parser and SVG-image attribution
+# Mobile task attribution
 
-`N3-startup-strict50-v6` keeps every application, mixed, unknown and independent
-observer task subject to 50 ms. It extends positive attribution of browser work
-outside island activation; it changes no product code, fixture, profile, sample
-count, response deadline or whole-page metric.
+## General correlated rule (L-66)
+
+The founder's `N3-startup-correlated-v1` rule classifies a task over 50 ms as
+`browser-internal-unattributed` and nonblocking only when its readable trace has
+no stack frames or script URLs attributable to Forma bundles or inline
+application scripts, and all forty independent PerformanceObserver/input-response
+runs record zero long tasks. Both original routes must have twenty complete,
+correct activation and response observations under the unchanged profile.
+Any independent long-task observation prevents this correlated classification
+across the entire campaign. The deliberately slow negative control remains
+separate and must still demonstrate observation and refusal of the injected task.
+
+The classifier derives the application inventory from the actual main-frame
+script requests, module compilations and script/context metadata in the same
+navigation. Inline scripts in the application's context count as application
+code, including anonymous scripts. Referenced nonapplication scripts require
+complete captured source and an isolated-context binding to that same document;
+anonymous evaluation wrappers must bind to that recorded execution. Missing or
+ambiguous inventory, unreadable traces, unknown script references, application
+stacks and foreign-frame execution cannot establish absence. This general rule
+adds no Chromium-feature name or source-hash allowlist.
+
+The category records the accepted correlation, not proof that every instruction
+was implemented by the browser. Raw tasks, durations, traces, whole-page TBT/LCP
+and `wholePageTargetMiss` remain unchanged. Application-attributed tasks retain
+the 50 ms ceiling; response correctness and the 500 ms deadline, whole-page TBT
+limit, sample count, profile and all negative controls remain enforced. Producer
+finalization occurs only after both routes; validation independently recomputes
+the all-forty condition and source attribution rather than trusting labels.
+
+L-66 does not require repeating a full campaign solely to change attribution.
+A retained complete campaign may be analyzed under the identified rule without
+rewriting its original result. This does not complete missing stages, supply
+missing observations or qualify changed products. Earlier failed P17 reports
+remain failed; an analytical mobile result is not a whole-P17 pass.
+
+## Earlier positive native-work proofs
+
+`N3-startup-strict50-v6` and its predecessors separated positively proved browser
+work outside island activation. Those proofs remain available independently of
+L-66. Their historical requirement that all other unknown work count is now
+qualified only by the general correlated rule above. No product code, fixture,
+profile, sample count, response deadline or whole-page metric changes.
 
 Native navigation lifecycle events use the existing complete main-document
 request/response/commit, parser, V8-context and pinned audit-source proof. Their
@@ -56,7 +95,8 @@ comparison was not reached, and the report and raw traces are unchanged.
 Separate analytical replay is not acceptance. Finite controls also retain the
 earlier genuine 60.473 ms application task and the separate 57 ms independent
 observer failure. Every raw task, whole-page TBT/LCP and `wholePageTargetMiss`
-remains visible. A fresh full campaign is required for the new policy.
+remains visible. At that policy revision, a fresh full campaign was required;
+L-66 now permits separate retained-evidence analysis as described above.
 
 The trusted beta.2 release run 38999734034 retains its failed outcome. Its first
 tenant-login audit recorded a 66.737 ms document bootstrap task containing a
@@ -72,7 +112,7 @@ run 1 retained a 52.182 ms navigation task with an instant native `unload`
 record; the task ended 714.431 ms before the first application compile. Separate
 version 6 replay changes only that task's attribution across the 40 saved
 observations, retaining its raw duration and every other task and metric. This
-replay does not qualify the original P17 or replace a fresh complete campaign.
+replay does not qualify the original P17 or complete its unfinished stages.
 
 A subsequent beta.3 rehearsal on source `34aa2978` failed after 58 recorded
 checks: its second tenant-login capture lacked the audited main frame's

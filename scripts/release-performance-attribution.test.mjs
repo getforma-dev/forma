@@ -380,7 +380,7 @@ function withDurations(values,{observer=false,layout=false}={}){
 }
 test('strict startup requires twenty runs with every counted task at most50ms',()=>{
  const rows=withDurations(Array(20).fill(50));validateMobile(rows);
- assert.equal(rows[0].startup.policy.id,'N3-startup-strict50-v6');
+ assert.equal(rows[0].startup.policy.id,'N3-startup-correlated-v1');
  assert.equal(rows[0].startup.targetMiss,false);assert.equal(rows[0].startup.p95MaxTaskMs,50);assert.equal(rows[0].startup.maxTaskMs,50);
  for(const edit of [r=>r[0].runs.pop(),r=>r[0].pilot=true,r=>r[0].startup.targetMiss=true,r=>r[0].startup.policy.maxTaskMs=100,r=>r[0].startup.runMaximaMs[0]=0,r=>delete r[0].runs[0].lighthouse.trace,r=>r[0].runs[0].lighthouse.attribution.tasks[0].kind='pre-application-browser-layout']){
   const copy=structuredClone(rows);edit(copy);assert.throws(()=>validateMobile(copy));
@@ -403,7 +403,7 @@ test('historical L63 policy evidence cannot stand in for a fresh strict campaign
   for(const run of row.runs)run.lighthouse.attribution.policy='L63-startup-v1';
  }
  assert.throws(()=>validateMobile(rows),/attribution differs/);
- for(const id of ['N3-startup-strict50-v2','N3-startup-strict50-v4','N3-startup-strict50-v5']){
+ for(const id of ['N3-startup-strict50-v2','N3-startup-strict50-v4','N3-startup-strict50-v5','N3-startup-strict50-v6']){
   const historical=withDurations(Array(20).fill(50));
   for(const row of historical){row.startup.policy.id=id;for(const run of row.runs)run.lighthouse.attribution.policy=id;}
   assert.throws(()=>validateMobile(historical),/attribution differs/);
