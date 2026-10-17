@@ -94,7 +94,10 @@ fn html(body: String, policy: Option<String>) -> Response {
 }
 
 async fn host(State(lane): State<Arc<Lane>>) -> Response {
-    let nonce = CspNonce::generate();
+    let nonce = match CspNonce::generate() {
+        Ok(nonce) => nonce,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
     let policy = format!(
         "{}; frame-src {}/preview-frame",
         build_csp_header(&nonce),
