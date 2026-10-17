@@ -44,7 +44,7 @@ impl<const CASE: u8> Embed for Manifest<CASE> {
 fn text_asset_results_preserve_bytes_and_read_errors() {
     assert_eq!(
         assets::asset::<Files>("style.css").unwrap(),
-        "body{color:red}\n"
+        include_str!("../test_fixtures/style.css")
     );
     assert_eq!(
         assets::asset::<Files>("style.css"),
