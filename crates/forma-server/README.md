@@ -20,7 +20,7 @@ use forma_server::{assets, load_ir_modules, Limits, PageHandle, RenderCtx};
 #[derive(PageProps)]
 struct HomeProps { title: String }
 fn start<A: rust_embed::Embed + 'static>() -> Result<PageHandle<HomeProps>, String> {
-    let manifest = assets::try_load_manifest::<A>()?;
+    let manifest = assets::load_manifest::<A>()?;
     let pages = load_ir_modules::<A>(&manifest).map_err(|e| format!("{e:?}"))?;
     let home = pages.bind_with("home", Limits::default()).map_err(|e| format!("{e:?}"))?;
     pages.finalize().map_err(|e| format!("{e:?}"))?;

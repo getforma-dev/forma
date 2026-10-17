@@ -32,7 +32,7 @@ impl fmt::Display for InvalidNonce {
 
 impl std::error::Error for InvalidNonce {}
 
-/// Returned by [`CspNonce::try_generate`] when the operating system's random
+/// Returned by [`CspNonce::generate`] when the operating system's random
 /// source fails: there is no nonce, so there is no page.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -52,27 +52,25 @@ const MIN_NONCE_LEN: usize = 22;
 
 impl CspNonce {
     /// Draw a cryptographically random nonce (32 bytes → 44 base64 chars), or
-    /// say that the system random source failed. The render path uses this
-    /// one, so a failed draw is a [`crate::RenderError`], not a panic.
-    pub fn try_generate() -> Result<Self, NonceError> {
-        let rng = SystemRandom::new();
+    /// return [`NonceError`] if the system random source fails. The render path
+    /// carries a failed draw as a [`crate::RenderError`].
+    pub fn generate() -> Result<Self, NonceError> {
+        Self::generate_with(|bytes| SystemRandom::new().fill(bytes).map_err(|_| NonceError))
+    }
+
+    // ring's SecureRandom is sealed. Keep the draw injectable privately so
+    // refusal can be tested without changing the operating system's RNG.
+    fn generate_with(
+        draw: impl FnOnce(&mut [u8; 32]) -> Result<(), NonceError>,
+    ) -> Result<Self, NonceError> {
         let mut bytes = [0u8; 32];
-        rng.fill(&mut bytes).map_err(|_| NonceError)?;
+        draw(&mut bytes)?;
         Ok(CspNonce(STANDARD.encode(bytes)))
     }
 
-    /// Generate a cryptographically random nonce (32 bytes → 44 base64 chars).
-    ///
-    /// # Panics
-    ///
-    /// If the system random source fails, as at 0.2.1; its signature has no
-    /// room for the error. [`CspNonce::try_generate`] returns it instead.
-    #[allow(clippy::panic)] // the 0.2.1 signature; `try_generate` is the fallible one
-    pub fn generate() -> Self {
-        match Self::try_generate() {
-            Ok(nonce) => nonce,
-            Err(error) => panic!("{error}"),
-        }
+    /// Compatibility alias for [`CspNonce::generate`], with the same fallible result.
+    pub fn try_generate() -> Result<Self, NonceError> {
+        Self::generate()
     }
 
     /// Validate a caller-supplied nonce.
@@ -107,7 +105,7 @@ impl fmt::Display for CspNonce {
 /// Generate a cryptographically random CSP nonce (base64, 44 chars).
 ///
 /// Alias for [`CspNonce::generate`].
-pub fn generate_csp_nonce() -> CspNonce {
+pub fn generate_csp_nonce() -> Result<CspNonce, NonceError> {
     CspNonce::generate()
 }
 
@@ -1173,8 +1171,8 @@ mod tests {
 
     #[test]
     fn nonce_is_unique() {
-        let a = generate_csp_nonce();
-        let b = generate_csp_nonce();
+        let a = generate_csp_nonce().unwrap();
+        let b = generate_csp_nonce().unwrap();
         assert_ne!(a, b);
     }
 
@@ -1189,14 +1187,14 @@ mod tests {
 
     #[test]
     fn nonce_is_base64() {
-        let nonce = generate_csp_nonce();
+        let nonce = generate_csp_nonce().unwrap();
         assert_eq!(nonce.as_str().len(), 44); // 32 bytes -> 44 base64 chars
         assert!(STANDARD.decode(nonce.as_str()).is_ok());
     }
 
     #[test]
     fn csp_contains_nonce() {
-        let nonce = generate_csp_nonce();
+        let nonce = generate_csp_nonce().unwrap();
         let csp = build_csp_header(&nonce);
         assert!(csp.contains(&format!("'nonce-{nonce}'")));
     }
@@ -1219,8 +1217,31 @@ mod tests {
 
     #[test]
     fn parse_accepts_a_generated_nonce() {
-        let generated = CspNonce::generate();
+        let generated = CspNonce::generate().unwrap();
         assert_eq!(CspNonce::parse(generated.as_str()), Ok(generated));
+    }
+
+    #[test]
+    fn failed_draw_returns_no_nonce_even_after_a_partial_fill() {
+        let result = CspNonce::generate_with(|bytes| {
+            bytes[..8].fill(0x61);
+            Err(NonceError)
+        });
+        assert_eq!(result, Err(NonceError));
+    }
+
+    #[test]
+    fn successful_draw_encodes_all_32_bytes_once() {
+        let mut calls = 0;
+        let nonce = CspNonce::generate_with(|bytes| {
+            calls += 1;
+            bytes.fill(0x61);
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(calls, 1);
+        assert_eq!(STANDARD.decode(nonce.as_str()).unwrap(), vec![0x61; 32]);
+        assert_eq!(CspNonce::parse(nonce.as_str()), Ok(nonce));
     }
 
     #[test]

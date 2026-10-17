@@ -335,6 +335,13 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
 
   it("core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()", () => {
     sim = enforceTrustedTypes();
+    // These typed operations must succeed under enforcement. Assert that
+    // contract before inspecting their DOM results or recorded violations.
+    const succeeds = <T>(write: () => T): T => {
+      let result!: T;
+      expect(() => { result = write(); }).not.toThrow();
+      return result;
+    };
     const container = document.createElement('div');
     container.append(document.createElement('p'), 'old text');
     document.body.append(container);
@@ -343,13 +350,13 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     const [count, setCount] = createSignal(1);
     const [html, setHtml] = createSignal<{ __html: TrustedHtml } | null>({ __html: trustedHtml('<b>one</b>') });
     const [doc, setDoc] = createSignal<TrustedHtml>(trustedHtml('<p>a</p>'));
-    const unmount = mount(() => h('main', null,
+    const unmount = succeeds(() => mount(() => h('main', null,
       h('span', { id: 'count' }, () => String(count())),
       h('div', { id: 'box', dangerouslySetInnerHTML: () => html() }),
       h('section', { dangerouslySetInnerHTML: { __html: trustedHtml('<em>static</em>') } }),
       h('iframe', { id: 'frame', srcdoc: () => doc() }),
       h('iframe', { srcdoc: trustedHtml('<p>static doc</p>') }),
-    ), container);
+    ), container));
     expect(container.children).toHaveLength(1);
     expect(container.textContent).not.toContain('old text');
     const box = container.querySelector('#box')!;
@@ -359,36 +366,36 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     expect(container.querySelectorAll('iframe')[1]!.getAttribute('srcdoc')).toBe('<p>static doc</p>');
 
     // Three transitions of each reactive raw binding, the null clear among them.
-    setHtml(null);
-    setDoc(trustedHtml('<p>b</p>'));
-    setCount(2);
+    succeeds(() => setHtml(null));
+    succeeds(() => setDoc(trustedHtml('<p>b</p>')));
+    succeeds(() => setCount(2));
     expect(box.childNodes.length).toBe(0);
     expect(frame.getAttribute('srcdoc')).toBe('<p>b</p>');
-    setHtml({ __html: trustedHtml('<i>two</i>') });
-    setDoc(trustedHtml('<p>c</p>'));
+    succeeds(() => setHtml({ __html: trustedHtml('<i>two</i>') }));
+    succeeds(() => setDoc(trustedHtml('<p>c</p>')));
     expect(box.innerHTML).toBe('<i>two</i>');
     expect(frame.getAttribute('srcdoc')).toBe('<p>c</p>');
-    setHtml(null);
+    succeeds(() => setHtml(null));
     expect(box.childNodes.length).toBe(0);
     expect(container.querySelector('#count')!.textContent).toBe('2');
 
     // The other sinks, typed.
     const target = document.createElement('div');
-    setHTMLUnsafe(target, trustedHtml('<u>u</u>'));
+    succeeds(() => setHTMLUnsafe(target, trustedHtml('<u>u</u>')));
     expect(target.innerHTML).toBe('<u>u</u>');
-    expect((template(trustedHtml('<p class="t">t</p>')).cloneNode(true) as Element).className).toBe('t');
-    expect(templateMany(trustedHtml('<a></a><b></b>')).childNodes).toHaveLength(2);
+    expect((succeeds(() => template(trustedHtml('<p class="t">t</p>'))).cloneNode(true) as Element).className).toBe('t');
+    expect(succeeds(() => templateMany(trustedHtml('<a></a><b></b>'))).childNodes).toHaveLength(2);
 
     // The runtime's parser, on all three of its paths: an empty container, a
     // diff of keyed children, and a full replacement.
     const live = document.createElement('div');
-    reconcile(live, trustedHtml('<p data-forma-id="a">1</p><p data-forma-id="b">2</p>'));
-    reconcile(live, trustedHtml('<p data-forma-id="b">2!</p><p data-forma-id="a">1!</p>'));
+    succeeds(() => reconcile(live, trustedHtml('<p data-forma-id="a">1</p><p data-forma-id="b">2</p>')));
+    succeeds(() => reconcile(live, trustedHtml('<p data-forma-id="b">2!</p><p data-forma-id="a">1!</p>')));
     expect(live.textContent).toBe('2!1!');
-    reconcile(live, trustedHtml('<p data-forma-id="c">3</p>'));
+    succeeds(() => reconcile(live, trustedHtml('<p data-forma-id="c">3</p>')));
     expect(live.innerHTML).toBe('<p data-forma-id="c">3</p>');
 
-    unmount();
+    succeeds(unmount);
     expect(container.childNodes.length).toBe(0);
     expect(sim.violations).toEqual([]);
     expect(sim.policies).toEqual(['forma', 'forma-runtime']);

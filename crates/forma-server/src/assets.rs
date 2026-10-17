@@ -6,26 +6,21 @@ use axum::{
 };
 use rust_embed::Embed;
 
-/// Load a text asset from the embedded dist directory. Panics if missing.
+/// Load a text asset from the embedded dist directory.
 ///
-/// STARTUP ONLY. This panics on a missing or non-UTF8 file, so it must never
-/// be reached from a request path — use [`try_asset`] there.
+/// # Errors
 ///
-/// # Panics
-///
-/// On a missing or non-UTF-8 file; the 0.2.1 signature has no room for the
-/// error, which [`try_asset`] returns.
-#[allow(clippy::panic)] // the 0.2.1 signature; `try_asset` is the fallible one
-pub fn asset<A: Embed>(name: &str) -> String {
-    try_asset::<A>(name).unwrap_or_else(|e| panic!("{e}"))
-}
-
-/// Fallible [`asset`] — use this anywhere a request can influence `name`.
-pub fn try_asset<A: Embed>(name: &str) -> Result<String, String> {
+/// A missing or non-UTF-8 file returns an error naming the asset.
+pub fn asset<A: Embed>(name: &str) -> Result<String, String> {
     let file = A::get(name).ok_or_else(|| format!("Missing asset: {name}"))?;
     std::str::from_utf8(&file.data)
         .map(|s| s.to_owned())
         .map_err(|_| format!("Non-UTF8 asset: {name}"))
+}
+
+/// Compatibility alias for [`asset`], with the same fallible result.
+pub fn try_asset<A: Embed>(name: &str) -> Result<String, String> {
+    asset::<A>(name)
 }
 
 /// Borrow an embedded file's bytes without copying them.
@@ -55,29 +50,18 @@ pub fn asset_bytes<A: Embed>(name: &str) -> Option<Bytes> {
 
 /// Load and parse the asset manifest from embedded assets.
 ///
-/// STARTUP ONLY — panics if the manifest is missing or malformed.
+/// # Errors
 ///
-/// Deprecated: a server should refuse to start with a message, not a
-/// panic. [`try_load_manifest`] returns the error; in 3.0.0 `load_manifest`
-/// itself returns it.
-///
-/// # Panics
-///
-/// If `manifest.json` is missing or does not parse.
-#[deprecated(
-    since = "0.2.2",
-    note = "panics on a missing or malformed manifest; use `try_load_manifest`, which \
-            returns the error. In 3.0.0 `load_manifest` returns a `Result`"
-)]
-#[allow(clippy::panic)] // the 0.2.1 signature; `try_load_manifest` is the fallible one
-pub fn load_manifest<A: Embed>() -> crate::AssetManifest {
-    try_load_manifest::<A>().unwrap_or_else(|e| panic!("{e}"))
+/// A missing, non-UTF-8, malformed or incompatible `manifest.json` returns its
+/// asset or manifest-validation error. Handle it before opening the listener.
+pub fn load_manifest<A: Embed>() -> Result<crate::AssetManifest, String> {
+    let data = asset::<A>("manifest.json")?;
+    crate::AssetManifest::from_json(&data)
 }
 
-/// Fallible [`load_manifest`].
+/// Compatibility alias for [`load_manifest`], with the same fallible result.
 pub fn try_load_manifest<A: Embed>() -> Result<crate::AssetManifest, String> {
-    let data = try_asset::<A>("manifest.json")?;
-    crate::AssetManifest::from_json(&data)
+    load_manifest::<A>()
 }
 
 /// Each route's `modulepreload` list from the embedded `manifest.json`, for

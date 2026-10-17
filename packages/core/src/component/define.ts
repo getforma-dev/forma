@@ -142,24 +142,6 @@ export function defineComponent(
       contextDisposers: [],
     };
 
-    // Push lifecycle context so onMount/onUnmount calls register here
-    pushLifecycleContext(ctx);
-
-    let dom: HTMLElement | DocumentFragment;
-    try {
-      dom = setup();
-    } catch (e) {
-      // setup threw after possibly provide()-ing a context — unwind the frames
-      // it pushed (LIFO) so they do not leak globally with no dispose handle.
-      for (let i = ctx.contextDisposers.length - 1; i >= 0; i--) {
-        try { ctx.contextDisposers[i]!(); } catch { /* ignore */ }
-      }
-      ctx.contextDisposers.length = 0;
-      throw e;
-    } finally {
-      popLifecycleContext();
-    }
-
     // Build the dispose function that tears down the entire component.
     // Idempotent: a fragment stamps DISPOSE_KEY on multiple children, all sharing
     // this one function, so it must run at most once.
@@ -202,6 +184,21 @@ export function defineComponent(
       ctx.unmountCallbacks.length = 0;
       ctx.contextDisposers.length = 0;
     };
+
+    let dom: HTMLElement | DocumentFragment;
+    try {
+      pushLifecycleContext(ctx);
+      try {
+        dom = setup();
+      } finally {
+        popLifecycleContext();
+      }
+    } catch (e) {
+      // A failed factory returns no disposal handle. Release all work already
+      // registered during setup after restoring the caller's lifecycle context.
+      dispose();
+      throw e;
+    }
 
     // Attach dispose to the DOM node so callers can tear it down. A returned
     // DocumentFragment is emptied when appended, so stamp its children too — a
