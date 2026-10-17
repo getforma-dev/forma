@@ -151,3 +151,45 @@ it('the explicit mount owns successful bindings independently of an enclosing re
   disposeParent(); button.click(); expect(output.textContent).toBe('1');
   handle!.unmount(); button.click(); expect(output.textContent).toBe('1');
 });
+
+const animatedRows = `<section data-forma-state='{"items":[1,2]}'>
+  <div data-list="{items}" data-transition:enter="row-enter 100ms"
+    data-transition:enter-from="row-from" data-transition:enter-to="row-to">
+    <p class="row">{item}</p>
+  </div></section>`;
+
+it('cancels queued row transition work when a later initial scope refuses', () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+  const root = document.getElementById('root')!;
+  let rows: Element[] = [];
+  let queued = 0;
+  const error = refuseEmptyClass(() => {
+    rows = Array.from(root.querySelectorAll('.row'));
+    queued = vi.getTimerCount();
+  });
+  expect(() => runtime.mountMarkup(root, runtime.trustedHtml(animatedRows + counter('bad', '<p data-class:="{n}"></p>')), { tier: 'reviewed' })).toThrow(error);
+  expect(rows).toHaveLength(2);
+  expect(queued, 'the earlier rows actually scheduled enter work').toBeGreaterThan(0);
+  // The shared expression task meter owns a zero-delay reset, not row work.
+  // Let it complete without advancing either queued animation frame.
+  vi.advanceTimersByTime(0);
+  expect(vi.getTimerCount(), 'refused initial markup must leave no visual callbacks').toBe(0);
+  for (const row of rows) expect(row.className).toBe('row');
+  vi.advanceTimersByTime(1_000);
+  for (const row of rows) expect(row.className).toBe('row');
+});
+
+it('keeps ordinary successful row enter transitions until their normal completion', () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+  const root = document.getElementById('root')!;
+  const handle = runtime.mountMarkup(root, runtime.trustedHtml(animatedRows), { tier: 'reviewed' }); handles.push(handle);
+  const rows = Array.from(root.querySelectorAll('.row'));
+  expect(rows).toHaveLength(2);
+  for (const row of rows) expect(row.classList.contains('row-enter')).toBe(true);
+  expect(vi.getTimerCount()).toBeGreaterThan(0);
+  vi.advanceTimersByTime(50);
+  for (const row of rows) { expect(row.classList.contains('row-enter')).toBe(true); expect(row.classList.contains('row-to')).toBe(true); }
+  vi.advanceTimersByTime(200);
+  for (const row of rows) expect(row.className).toBe('row');
+  expect(vi.getTimerCount()).toBe(0);
+});

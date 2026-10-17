@@ -2165,7 +2165,12 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       // has not returned its new node array yet. Removed rows leave this set.
       const boundRows = new Set<Node>();
       disposers.push(() => {
-        for (const node of boundRows) disposeCloneBindings(node);
+        for (const node of boundRows) {
+          // Row enter work is scheduled by the reconciler after bindings return.
+          // Final scope disposal must cancel that visual work as well.
+          try { clearTransitionState(node as HTMLElement); } catch { /* continue row cleanup */ }
+          disposeCloneBindings(node);
+        }
       });
 
       /** Dispose all bindings stored on a clone element */
