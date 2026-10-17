@@ -67,7 +67,13 @@ step "cargo doc --locked --workspace --no-deps"
 cargo doc --locked --workspace --no-deps
 
 step "npm run build (compiler, build, core, create-app)"
-npm run build
+# Keep npm run build's dependency order. Only this shell and its explicitly
+# sourced subshells know which fresh builds succeeded; no exported skip flag.
+source scripts/check-builds.sh
+forma_check_build_package packages/compiler dist/index.js dist/index.d.ts
+forma_check_build_package packages/build dist/index.js dist/index.d.ts dist/raw-lint-cli.js
+forma_check_build_package packages/core dist/index.js dist/formajs-runtime.global.js dist/forma.esm.js dist/formajs-frame.global.js
+forma_check_build_package packages/create-app dist/index.js
 step "npm test --workspaces"
 npm test --workspaces
 step "declared props: compiler bytes match the native typed-handler fixtures"
@@ -106,10 +112,12 @@ if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)"
 fi
 
 step "e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications"
+node --test scripts/check-builds.test.mjs
 node --test scripts/sync-fixtures.test.mjs
-bash e2e/sync-fixtures.sh
-bash e2e/ssr/build.sh
-bash e2e/frame/build.sh
+# Subshells inherit the private build state and isolate fixture cwd/variables.
+(source e2e/sync-fixtures.sh)
+(source e2e/ssr/build.sh)
+(source e2e/frame/build.sh)
 bash e2e/fixtures/apps/build.sh
 bash e2e/skew/build.sh
 # After the build: the servers embed what it wrote, and the embed needs the folders to exist.
@@ -122,7 +130,7 @@ npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
 # N3 timing runs as its own required serial phase after all other tests.
 npx playwright test --grep-invert 'indexed products: complete public set'
-npm run test:e2e -w packages/core
+(source scripts/check-core-browser.sh --project=chromium)
 step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
 node packages/core/e2e/hostile-widgets/run.mjs
 node packages/core/e2e/hostile-widgets/qualify-guard.mjs

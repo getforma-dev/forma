@@ -53,6 +53,11 @@ size and packaging gates, the compiler-to-walker FMIR contract, and the
 browser lanes that take a page from TypeScript source through the compiler and
 the Rust walker to a hydrated DOM in Chromium. CI runs the same command on
 every push and pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+Within that invocation, the fixture and core browser lanes reuse package builds
+that already succeeded in the same shell; missing required outputs still fail.
+Standalone build and browser commands continue to build normally. This removes
+duplicate work without removing tests or changing the final serial N3 lane;
+the current suite's N7 target still needs its own 20-run hosted measurement.
 It needs Node 24 (`.node-version`; the parity harness's step runs TypeScript by
 Node's type stripping, and the script stops at once on a Node without it), a
 stable Rust toolchain with `rustfmt`, `clippy` and
