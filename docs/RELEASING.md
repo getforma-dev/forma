@@ -351,6 +351,14 @@ validator recomputes correlation across both routes and attribution from raw
 traces; it does not trust a producer's classification. This records corroboration,
 not proof of browser-only implementation. Raw durations, whole-page metrics,
 50 ms application and 500 ms response limits remain unchanged.
+Document and resource-request URLs are not execution evidence; nested initiator
+stacks and executable script URLs still count. Only the already pinned, uniquely
+source-bound Lighthouse/Puppeteer bootstrap rundown records are treated as
+metadata in the main context. Unknown inline scripts and actual execution of
+those bootstrap IDs remain blocking. After structural mobile checks, P17 collects
+the unchanged client comparison before final mobile acceptance so a timing
+refusal retains the last stage's evidence. Final validation still fails the run
+and writes no completion marker.
 
 Do not repeat a full campaign solely for this attribution decision. Retained
 complete raw observations may be analyzed under the named rule in separate

@@ -82,6 +82,7 @@ step "P17's fixture applications and measurement step: staging, pruned lock, res
 node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs scripts/release-performance-baseline.test.mjs scripts/release-performance-contract.test.mjs scripts/release-performance-evidence.test.mjs scripts/release-performance-attribution.test.mjs scripts/release-record-limits.test.mjs scripts/release-record-download.test.mjs scripts/release-performance-decoder.test.mjs scripts/release-performance-durability.test.mjs
 step "packed decoder: actual built compiler regenerates the timed contracts"
 node --test scripts/release-performance-journal.test.mjs scripts/release-performance-mobile-phases.test.mjs scripts/release-performance-child-evidence.test.mjs scripts/release-performance-finalization.test.mjs
+node --test --test-concurrency=2 scripts/release-performance-correlation.test.mjs scripts/release-performance-metadata.test.mjs scripts/release-performance-parser-attribution.test.mjs
 node --test scripts/decoder-compiler-package.test.mjs
 step "core: typecheck, size gate, packaging lint, probe anchors"
 npm run typecheck -w packages/core
