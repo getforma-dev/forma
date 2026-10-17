@@ -289,7 +289,7 @@ transport limit accommodates forty complete traces and reports; other release
 metadata bounds and product budgets are unchanged. The previous90ms negative
 control and all historical failures remain archived. A real110ms injected task
 must be observed and refused independently of response latency. Acceptance
-requires a new complete campaign under `N3-startup-strict50-v4`. The earlier
+requires a new complete campaign under `N3-startup-strict50-v5`. The earlier
 `N3-startup-strict50-v1` layout-only classifier remains historical evidence.
 The current classifier may also separate a main-document commit task only when
 the same trace proves the exact navigation request, committed frame, response,
@@ -317,6 +317,12 @@ main-document `PaintImage` for the same resource containing that exact frame's
 layout. A missing or ambiguous resource/frame/nesting link, any script execution
 or any unknown child keeps the whole task counted. This is not a general
 pre-script time exemption. See [the native resource proof](release/N3-NATIVE-RESOURCE-ATTRIBUTION.md).
+Version 5 removes the internal 1 ms bound on native navigation lifecycle
+dispatch. Origin still requires the complete same-navigation causal and pinned
+source proof above, without executable, unknown or foreign-frame children, and
+the whole task must precede the first application script. Raw duration is
+unchanged; the application/unknown 50 ms limit and every independent observer
+task remain in force. Historical failures are not reclassified as P17 passes.
 Historical L63
 75ms p95 /100ms individual acceptance and its original evidence remain history;
 they cannot qualify the strict gate. The L63 exception is retired only after
