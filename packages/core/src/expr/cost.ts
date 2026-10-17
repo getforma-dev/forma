@@ -306,7 +306,13 @@ rows((_, a, room) => 16 * size(a[0], room / 16), 'Object.entries Object.keys Obj
 rows((r, a, room) => weigh(r, room, (a[0] === undefined ? 1 : count(a[0])) + 1), 'array.flat');
 rows((r, a, room) => weigh(r, room) + len(r) * (a[0] === undefined ? 1 : toText(a[0]).length), 'array.join');
 rows((r, a, room) => {
-  let per = 3 * len(r);
+  const n = len(r);
+  const levels = log2(n + 1);
+  let per = 3 * n;
+  // Element conversion can only add cost. Refuse an already-overbudget
+  // length before walking the default sort's elements.
+  const minimum = per * levels;
+  if (minimum > room) return minimum;
   if (a[0] === undefined && isArray(r)) {
     for (const e of r) {
       if (per > room) break;
@@ -314,7 +320,7 @@ rows((r, a, room) => {
       else if (typeof e === 'string') per += e.length * READ;
     }
   }
-  return per * log2(len(r) + 1);
+  return per * levels;
 }, 'array.sort');
 rows((r, a) => len(r) * count(a[0]), 'string.repeat');
 rows((r, a) => len(r) + grow(r, a), 'string.replace');

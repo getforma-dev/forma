@@ -193,6 +193,39 @@ describe('the cost preflight, native by native (DR-16)', () => {
     expect(problems).toEqual([]);
   });
 
+  it('sort refuses from its length lower bound without visiting already-overbudget elements', () => {
+    const values = Array.from({ length: 30_000 }, (_, i) => (i * 7919) % 30_000);
+    let reads = 0;
+    const observed = new Proxy(values, {
+      get(target, key, receiver) {
+        if (typeof key === 'string' && /^\d+$/.test(key)) reads++;
+        return Reflect.get(target, key, receiver);
+      },
+    });
+    const cost = COSTS['array.sort']!(observed, [], BUDGET);
+    expect(cost).toBeGreaterThan(BUDGET);
+    expect(reads).toBe(0);
+    expect(outcome('items.sort()', { items: values })).toBe('FORMA_E_BUDGET');
+  });
+
+  it('sort retains default element charges and comparator cost at the admission boundary', () => {
+    const sort = COSTS['array.sort']!;
+    const items = [3, 'long', [1, 'abc']];
+    // Three elements cost 9 comparisons per level, then default sorting adds
+    // the four-character string and the nested array's eight text units.
+    const base = 3 * items.length * Math.log2(items.length + 1);
+    const full = (9 + 4 / 128 + 8) * Math.log2(items.length + 1);
+    expect(sort(items, [], BUDGET)).toBe(full);
+    expect(sort(items, [], base)).toBe(full);
+    expect(sort(items, [() => 0], BUDGET)).toBe(base);
+    expect(sort([], [], BUDGET)).toBe(0);
+
+    const numbers = [10, 2, 1];
+    expect(outcome('items.sort()', { items: numbers })).toEqual({ value: [1, 10, 2] });
+    expect(outcome('items.sort((a, b) => a - b)', { items: numbers })).toEqual({ value: [1, 2, 10] });
+    expect(numbers).toEqual([10, 2, 1]);
+  });
+
   it('every cost row and data-argument exemption names an allowlisted native', () => {
     const names = new Set(CALLABLES.map((c) => c.name));
     expect(Object.keys(COSTS).filter((k) => !names.has(k))).toEqual([]);
