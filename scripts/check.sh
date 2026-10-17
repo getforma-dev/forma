@@ -141,6 +141,7 @@ node e2e/value-rules/metadata.mjs --engine chromium
 node e2e/value-rules/run.mjs --count 1000
 
 step "N3: actual indexed public-set timing, serial Chromium"
+node --test e2e/ssr/indexed-timing.test.mjs
 npx playwright test --config e2e/ssr/indexed-products.config.ts --project=chromium --workers=1 --grep 'indexed products: complete public set' --output test-results/indexed-chromium
 
 echo
