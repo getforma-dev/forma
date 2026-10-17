@@ -2146,14 +2146,14 @@
   "note": "an element clobbered onto window.trustedTypes is taken for Trusted Types (formajs#29 review N5). Verified by: src/dom/__tests__/trusted-html.test.ts > \"an element named trustedTypes is not Trusted Types\""
  },
  {
-  "id": "trusted/reconcile-string-script-attrs-removed",
+  "id": "trusted/reconcile-admission-before-cache",
   "file": "src/dom/reconcile.ts",
   "tags": [
    "correctness"
   ],
-  "find": "      if (trusted && isScriptAttr(liveEl, attr.name)) {",
-  "replace": "      if (isScriptAttr(liveEl, attr.name)) {",
-  "note": "a string reconcile()'s diff removes a changed on* handler or script src, where 2.0.3 wrote it (formajs#29 second review R1, L-18). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a string reconcile()'s diff writes a changed on*, script src and srcdoc as 2.0 did\""
+  "find": "    rawHtml(html, 'reconcile');\n",
+  "replace": "",
+  "note": "Removing current typed admission lets a string reach reconciliation's empty or unchanged-markup fast path. Verified by: src/dom/__tests__/trusted-html.test.ts > \"a string cannot enter reconcile after trusted markup populated its cache\". Replaces historical trusted/reconcile-string-script-attrs-removed, whose false-trusted string path was removed."
  },
  {
   "id": "tiered/closest-unconfined",
@@ -2216,34 +2216,34 @@
   "note": "a reactive dangerouslySetInnerHTML going A \u2192 null \u2192 A stays empty: the null branch keeps A's markup cached (FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"A \u2192 null \u2192 A shows A again, client-rendered and adopted\""
  },
  {
-  "id": "adopt/inner-html-rewritten",
-  "file": "src/dom/element.ts",
+  "id": "adopt/raw-initial-live-write",
+  "file": "src/dom/adoption-content.ts",
   "tags": [
    "correctness"
   ],
-  "find": "    if (!adopting || !holdsMarkup(el, markup, sink)) el.innerHTML = sink;",
-  "replace": "    el.innerHTML = sink;",
-  "note": "adoption rewrites markup the server's element already holds, replacing its nodes (DR-5, FORMA-176). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"adoption writes nothing where the server already holds the markup\""
+  "find": "    expected.innerHTML = sink;\n",
+  "replace": "    expected.innerHTML = sink;\n    element.innerHTML = sink;\n",
+  "note": "Initial typed raw preparation writes the live element while validating it, replacing server nodes. Verified by: src/dom/__tests__/adoption-content.test.ts > \"owns normalized trusted markup without writes: %s\". Replaces historical adopt/inner-html-rewritten, which targeted the old ordinary-element adoption helper."
  },
  {
-  "id": "adopt/inner-html-byte-equality",
-  "file": "src/dom/element.ts",
+  "id": "adopt/raw-mismatch-admitted",
+  "file": "src/dom/adoption-content.ts",
   "tags": [
    "correctness"
   ],
-  "find": "  const tpl = document.createElement('template');\n  tpl.innerHTML = sink;\n  return tpl.innerHTML === current;",
-  "replace": "  return false;",
-  "note": "adoption judges the server's markup by byte equality with the browser's serialisation, so ./ssr markup such as <br/> or &#39; is rewritten: iframes reload, typed text is lost (formajs#32 review S1, DR-5). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"markup the server wrote in a form the browser serialises differently is not rewritten: %j\""
+  "find": "    if (expected.innerHTML !== element.innerHTML) mismatch();\n",
+  "replace": "",
+  "note": "Typed raw preparation admits absent or different served content instead of refusing a hydration value mismatch. Verified by: src/dom/__tests__/adoption-content.test.ts > \"refuses empty-server/nonempty-raw and different trusted content without repairs\". Replaces historical adopt/inner-html-byte-equality with the current normalized-content validation boundary."
  },
  {
-  "id": "adopt/inner-html-null-first-empties",
-  "file": "src/dom/element.ts",
+  "id": "adopt/raw-initial-null-clears-fallback",
+  "file": "src/dom/adoption-content.ts",
   "tags": [
    "correctness"
   ],
-  "find": "      if (!adopting && el.firstChild) el.replaceChildren();",
-  "replace": "      if (el.firstChild) el.replaceChildren();",
-  "note": "a reactive dangerouslySetInnerHTML whose first value is null empties the server's fallback child at activation (formajs#32 review S2). Verified by: src/dom/__tests__/adopt-inner-html.test.ts > \"a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives\""
+  "find": "  let previous: string | null = null;\n",
+  "replace": "  let previous: string | null = null;\n  if (!ownsContent) content.replaceChildren();\n",
+  "note": "Initial null, false or undefined raw content clears the server fallback before its ordinary children can be adopted. Verified by: src/dom/__tests__/adoption-content.test.ts > \"leaves initial fallback for %s but later clear owns real replacement\". Replaces historical adopt/inner-html-null-first-empties at the current prepared-content implementation."
  },
  {
   "id": "el/inner-html-children-silent",
@@ -2266,14 +2266,14 @@
   "note": "markup is recorded as current before the write, so a string the page refused blocks the same markup as trustedHtml() (formajs#32 review N1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a refused string does not block the same markup sent later as trustedHtml(), client-rendered and adopted\""
  },
  {
-  "id": "adopt/inner-html-empty-parsed",
-  "file": "src/dom/element.ts",
+  "id": "adopt/raw-equal-update-rewrites",
+  "file": "src/dom/adoption-content.ts",
   "tags": [
    "correctness"
   ],
-  "find": "  if (current === '') return false;\n",
+  "find": "      if (markup === previous) return;\n",
   "replace": "",
-  "note": "adoption parses a string through a template before writing it onto the walker's empty element: two Trusted Types reports for one write, where client rendering raises one (formajs#32 second review). Verified by: src/dom/__tests__/trusted-html.test.ts > \"adopting a string onto the walker's empty element raises one Trusted Types report, as client rendering does\""
+  "note": "An equal typed raw update unnecessarily disposes ownership and replaces live nodes. Verified by: src/dom/__tests__/adoption-content.test.ts > \"owns normalized trusted markup without writes: %s\" and \"updates typed raw through null and back, disposing only before an actual replacement\". Replaces historical adopt/inner-html-empty-parsed; its raw-string parser/report behavior is no longer a supported adoption path."
  },
  {
   "id": "frame/spoofed-diagnostic-forwarded",
