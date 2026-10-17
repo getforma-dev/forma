@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir"
-version = "3.0.0-beta.1"
+version = "3.0.0-rc.1"
 dependencies = [
  "forma-ir-derive",
  "ryu-js",
@@ -207,7 +207,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir-derive"
-version = "3.0.0-beta.1"
+version = "3.0.0-rc.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -216,7 +216,7 @@ dependencies = [
 
 [[package]]
 name = "forma-server"
-version = "3.0.0-beta.1"
+version = "3.0.0-rc.1"
 dependencies = [
  "axum",
  "base64",

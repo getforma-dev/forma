@@ -9,7 +9,7 @@ IR (FMIR), and Rust crates that render that IR to HTML on the server, so the
 server never needs a JavaScript runtime. One product, one repository, seven
 packages.
 
-These examples target the coordinated `3.0.0-beta.1` prerelease and require
+These examples target the coordinated `3.0.0-rc.1` prerelease and require
 its publication. Select that explicit version in package install commands;
 unversioned npm commands select the stable `latest` channel. Release records
 report the qualification of each published set.
