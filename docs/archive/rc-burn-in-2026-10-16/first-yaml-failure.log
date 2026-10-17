@@ -1,0 +1,77 @@
+✔ release asset identity and actual bytes both authenticate (6.09125ms)
+✔ registry and DS12 checksums must independently agree with original archive (0.343792ms)
+✔ hosted attestation refuses other source/tag/event/workflow/unsuccessful run (0.600167ms)
+✔ streamed download refuses oversized declared or actual response and HTTP failure (12.641625ms)
+✔ exact hour of complete ordered workloads validates content only, never hosted attestation (9.929417ms)
+✔ 3599 completed fuzz seconds refuse even with hours of other workloads (1.21375ms)
+✔ wall-clock padding and forged active total cannot replace actual work (1.080084ms)
+✔ RC source and all seven original archives must match independently supplied inputs (1.996125ms)
+✔ all prerequisite hashes and versioned contract are mandatory (0.442125ms)
+✔ rounds and workload schedules cannot be missing, duplicated or reordered (0.82325ms)
+✔ overlap, noninteger timestamps and falsely classified orchestration refuse (1.485958ms)
+✔ empty fuzz, reused seed, finding or child fault refuses (0.834417ms)
+✔ hostile matrix, all three engines and all eleven skew checks stay complete (1.253042ms)
+✔ required fixture checks cannot disappear or duplicate (0.435542ms)
+✔ incomplete campaign, pending cleanup, surviving PID or error never passes (0.718042ms)
+✔ only one completed positive-input bounded libFuzzer summary earns time (2.466625ms)
+✔ non-fuzz work and unproved subprocess time cannot earn active credit (0.58725ms)
+/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse': (<unknown>): mapping values are not allowed in this context at line 76 column 49 (Psych::SyntaxError)
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse_stream'
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:390:in `parse'
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:277:in `load'
+	from -e:1:in `<main>'
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: ruby -rjson -ryaml -e v=YAML.load(STDIN.read); v["on"]=v.delete(true) if v.key?(true); puts JSON.generate(v)
+/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse': (<unknown>): mapping values are not allowed in this context at line 76 column 49 (Psych::SyntaxError)
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse_stream'
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:390:in `parse'
+	from /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:277:in `load'
+	from -e:1:in `<main>'
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-playwright-transport/forma/scripts/release-burn-in-workflow.test.mjs:7:27
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    "/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse': (<unknown>): mapping values are not allowed in this context at line 76 column 49 (Psych::SyntaxError)\n" +
+      "\tfrom /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse_stream'\n" +
+      "\tfrom /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:390:in `parse'\n" +
+      "\tfrom /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:277:in `load'\n" +
+      "\tfrom -e:1:in `<main>'\n"
+  ],
+  pid: 65990,
+  stdout: '',
+  stderr: "/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse': (<unknown>): mapping values are not allowed in this context at line 76 column 49 (Psych::SyntaxError)\n" +
+    "\tfrom /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:456:in `parse_stream'\n" +
+    "\tfrom /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:390:in `parse'\n" +
+    "\tfrom /System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/2.6.0/psych.rb:277:in `load'\n" +
+    "\tfrom -e:1:in `<main>'\n"
+}
+
+Node.js v24.22.0
+✖ scripts/release-burn-in-workflow.test.mjs (165.388708ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 245.370042
+
+✖ failing tests:
+
+test at scripts/release-burn-in-workflow.test.mjs:1:1
+✖ scripts/release-burn-in-workflow.test.mjs (165.388708ms)
+  'test failed'

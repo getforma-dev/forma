@@ -235,6 +235,25 @@ docs/evidence/forma-116-live-deferral/** -text
 # Original hosted failure and primary parser specification evidence.
 docs/archive/html-document-parser-control/** -text
 
+# RC burn-in original sources and immutable qualification evidence.
+docs/archive/rc-burn-in-2026-10-16/** -text
+docs/evidence/rc-burn-in-2026-10-16/** -text
+
+# Preserve the historical Rust workspace overview byte-for-byte.
+docs/archive/2026-10-16-current-overviews/** -text
+
+# L63 preserves the original startup policy and all historical controls.
+docs/archive/forma-191-startup-policy/** -text
+docs/evidence/forma-191-startup-policy/** -text
+
 # Preserve the original watch-recovery failure and actual regression output.
 docs/archive/watch-recovery-2026-10-16/** -text
 docs/evidence/watch-recovery-2026-10-16/** -text
+
+# Preserve dashboard tooltip originals and actual regression evidence.
+docs/archive/dashboard-tooltip-2026-10-16/** -text
+docs/evidence/dashboard-tooltip-2026-10-16/** -text
+# Preserve FORMA-196 original raw-boundary sources/products and actual qualification.
+docs/archive/forma-196-native-raw-boundary/** -text
+docs/evidence/forma-196-native-raw-boundary/** -text
+docs/release-evidence/forma-199/** -text

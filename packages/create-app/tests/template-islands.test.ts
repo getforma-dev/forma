@@ -7,6 +7,11 @@ import { getSlots } from '../../compiler/tests/helpers/fmir';
 import { mkTmpDir, rmrf, runCli } from './helpers';
 
 const roots: string[] = [];
+// These bundled entry bodies have no exports. Run their awaited observation
+// runtime to completion; actual native ESM loading is covered by packed P17.
+async function observeEntry(code: string, state: object): Promise<void> {
+  await runInNewContext(`(async () => {\n${code}\n})()`, { globalThis: state });
+}
 afterEach(() => roots.splice(0).forEach(rmrf));
 function scaffold() {
   const root = mkTmpDir('forma-template-islands-'); roots.push(root);
@@ -19,10 +24,10 @@ const runtime: Plugin = { name: 'template-runtime-observation', setup(b) {
   b.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ loader: 'js', contents: `
     export function h(tag, props, ...children) { return typeof tag === 'function' ? tag(props) : {tag, props, children}; }
     export const Fragment = 'fragment';
-    export function mount(component) { globalThis.mounts++; globalThis.page = component(); }
+    export function mount(component) { globalThis.mounts++; if (!globalThis.registry) globalThis.mountedBeforeReady = true; globalThis.page = component(); }
     export function createSignal(value) { globalThis.seeds.push(value); return [() => value, next => value = next]; }
     export function __adoptionSignal(_site, tuple) { return tuple; }
-    export function activateIslands(registry) { globalThis.registry = registry; }
+    export function activateIslands(registry) { return Promise.resolve().then(() => { globalThis.registry = registry; }); }
     export function __islandRegistration(component, metadata) { const call = props => component(props); call.metadata = metadata; return call; }
   ` }));
 } };
@@ -47,10 +52,10 @@ describe('minimal declared island source', () => {
   it('pairs actual Counter metadata with its native module and never mounts the native page in JavaScript', async () => {
     const admin = scaffold(), entry = join(admin, 'src/home/app.tsx'), outDir = join(admin, 'dist');
     const native = generateRealIr(entry)!;
-    const result = await build({ entryPoints: [entry], outdir: outDir, write: false, bundle: true, format: 'iife',
+    const result = await build({ entryPoints: [entry], outdir: outDir, write: false, bundle: true, format: 'esm',
       jsxFactory: 'h', jsxFragment: 'Fragment', plugins: [runtime, formaSsrPlugin({ page: 'home', outDir, entryPoint: entry })] });
     expect(result.outputFiles!.find(file => file.path.endsWith('.ir'))!.contents).toEqual(native.binary);
-    const state: any = { mounts: 0, seeds: [] }; runInNewContext(result.outputFiles!.find(file => file.path.endsWith('.js'))!.text, { globalThis: state });
+    const state: any = { mounts: 0, seeds: [] }; await observeEntry(result.outputFiles!.find(file => file.path.endsWith('.js'))!.text, state);
     expect(state.mounts).toBe(0); expect(state.seeds).toEqual([]); expect(Object.keys(state.registry)).toEqual(['Counter']);
     const contract = native.islands[0]!.contract!;
     expect(state.registry.Counter.metadata).toEqual({ h: contract.digest, schema: contract.schema, mode: 0 });
@@ -60,18 +65,19 @@ describe('minimal declared island source', () => {
 
   it('classifies the actual About source as static and removes its native selector', async () => {
     const admin = scaffold(), entry = join(admin, 'src/about/app.tsx'), outDir = join(admin, 'dist');
-    const result = await build({ entryPoints: [entry], outdir: outDir, write: false, bundle: true, format: 'iife',
+    const result = await build({ entryPoints: [entry], outdir: outDir, write: false, bundle: true, format: 'esm',
       jsxFactory: 'h', plugins: [runtime, formaSsrPlugin({ page: 'about', outDir, entryPoint: entry })] });
     expect(getSsrEntryProducts(result)[0]).toMatchObject({ page: 'about', browserRequired: false, islands: [] });
     expect(result.outputFiles!.find(file => file.path.endsWith('.ir'))!.contents).toEqual(generateRealIr(entry)!.binary);
-    const state: any = { mounts: 0, seeds: [] }; runInNewContext(result.outputFiles!.find(file => file.path.endsWith('.js'))!.text, { globalThis: state });
+    const state: any = { mounts: 0, seeds: [] }; await observeEntry(result.outputFiles!.find(file => file.path.endsWith('.js'))!.text, state);
     expect(state.mounts).toBe(0); expect(state.seeds).toEqual([]); expect(state.registry).toBeUndefined();
   }, 60_000);
 
   it('retains ordinary explicit Browser mounting with its separate zero default', async () => {
     const admin = scaffold(), entry = join(admin, 'src/home/app.tsx');
-    const result = await build({ entryPoints: [entry], write: false, bundle: true, format: 'iife', jsxFactory: 'h', jsxFragment: 'Fragment', plugins: [runtime] });
-    const state: any = { mounts: 0, seeds: [] }; runInNewContext(result.outputFiles![0]!.text, { globalThis: state });
+    const result = await build({ entryPoints: [entry], write: false, bundle: true, format: 'esm', jsxFactory: 'h', jsxFragment: 'Fragment', plugins: [runtime] });
+    const state: any = { mounts: 0, seeds: [] }; await observeEntry(result.outputFiles![0]!.text, state);
     expect(state.mounts).toBe(1); expect(state.seeds).toEqual([0]); expect(state.page.tag).toBe('main');
+    expect(state.mountedBeforeReady).toBeUndefined(); expect(Object.keys(state.registry)).toEqual(['Counter']);
   }, 60_000);
 });

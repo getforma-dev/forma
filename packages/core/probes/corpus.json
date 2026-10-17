@@ -845,15 +845,15 @@
   ],
   "find": "  runWithoutRoot(endBatch);",
   "replace": "  endBatch();",
-  "note": "adoption's batch flushes with the failing island's root current, so another island's row created by the flush is owned by it and loses its bindings when it is disposed. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"another island's row created while a failing island adopts keeps its reactive binding\""
+  "note": "a held adoption batch flushes with an unrelated caller root current, so another list's row created by the flush is owned by that caller and loses its bindings when the caller is disposed. Verified by: src/dom/__tests__/list-adoption-count.test.ts > \"another root's batch flush cannot own a list row created by the flush\""
  },
  {
   "id": "reactive/untrack-noop",
   "file": "src/reactive/untrack.ts",
   "tags": [],
-  "find": "export function untrack",
-  "replace": "export function untrackDISABLED_UNUSED_SHIM_NOT_EXPORTED_PLACEHOLDER",
-  "note": "compile-break sentinel (expect CAUGHT \u2014 harness sanity check)"
+  "find": "  const prev = setActiveSub(undefined);\n  try {\n    return fn();\n  } finally {\n    setActiveSub(prev);\n  }",
+  "replace": "  return fn();",
+  "note": "untrack preserves its public export and callback result but no longer suppresses dependency tracking. Verified by: src/reactive/__tests__/untrack.test.ts > \"reading signal inside untrack does not create dependency\". Replaces the old compile-break sentinel, which is unqualified under the completed-assertion rule."
  },
  {
   "id": "reconcile/remove-all-skips-hook",

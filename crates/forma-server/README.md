@@ -1,11 +1,11 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. This is the 3.0.0-alpha.2 pre-release (milestone M2): a Cargo pre-release version that plain requirements exclude; the first stable 3.0.0 follows the beta and rc.
+Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0-beta.1` prerelease and require its coordinated publication. Cargo prerelease versions need explicit requirements:
 
 ```toml
 [dependencies]
-forma-server = "=3.0.0-alpha.2"
-forma-ir = "=3.0.0-alpha.2"
+forma-server = "=3.0.0-beta.1"
+forma-ir = "=3.0.0-beta.1"
 ```
 
 The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.
@@ -35,7 +35,7 @@ fn home(page: &PageHandle<HomeProps>) -> Result<forma_server::PageResponse, form
 
 `PageHandle::render` checks and projects declared props by name and returns `Result<PageResponse, RenderError>`. The handler chooses/logs its error response. No failed render becomes an empty shell. See [declared props](../../docs/DECLARED-PROPS.md) for field/type/source diagnostics. Extra Rust fields warn and never enter the rendered data.
 
-## Staged static SSR policy — FORMA-105
+## Static SSR policy — FORMA-105
 
 Each manifest route's `js` array is its declared entry list. Both typed SSR and Browser documents execute every entry in that order with the response nonce and its SRI/crossorigin attributes. `modulepreload` contains dependency hints, not extra executable entries; the complete document budget includes every entry tag.
 
@@ -45,7 +45,7 @@ Static SSR still emits its native body, CSS/fonts, strict response headers and o
 
 Worker registration is emitted only on pages with a published JS entry. A static-only app may enable worker serving, but its pages do not newly install a worker. The endpoint and off-mode retirement remain available; already controlled clients can perform browser-managed worker update checks independently. Fresh-context zero-JS navigation and retirement of a previously installed worker are separate qualifications.
 
-`RawHtml` remains explicitly reviewed markup. The framework does not parse or sanitize it here: an application that adds executable raw markup cannot claim zero-JS qualification. This native/server slice is staged; compiler entry filtering, whole-page mount retirement, actual browser network checks and template integration are still required before overall105 acceptance. No size limit or release gate is relaxed.
+`RawHtml` remains explicitly reviewed markup. The framework does not parse or sanitize it here: an application that adds executable raw markup cannot claim zero-JS qualification. The compiler removes unused activation entries from static SSR routes; the minimal template demonstrates a static page alongside a page with a counter island. Packed-template tests check the actual served routes and browser network activity. Release qualification still requires those tests to pass on the exact candidate.
 
 ## Limits and request metadata
 
@@ -69,7 +69,7 @@ Debug reload keeps immutable module/asset snapshots paired. A corrupt write reta
 
 The complete handle boundary catches unwinding request faults, including custom props conversion, and returns RENDER-399; a later request can still render. Under `panic = "abort"`, a fault ends the process and every in-flight request. The previously recorded fAuth abort profile therefore requires application migration review; this package does not change application profiles.
 
-The old `try_render`, tuple loader, public IrModules/RenderMode, PageOutput, render_page, caller-nonce renderer and raw config_script are removed. [The previous staged README](../../docs/archive/2026-10-15-bound-render/forma-server-README.md) is preserved for migration context. Source A2 templates remain historical until their milestone migration; release verification stages an explicit candidate-only adapter, and live publication stays disabled.
+The old `try_render`, tuple loader, public IrModules/RenderMode, PageOutput, render_page, caller-nonce renderer and raw config_script are removed. [The previous staged README](../../docs/archive/2026-10-15-bound-render/forma-server-README.md) is preserved for migration context. The maintained minimal and dashboard templates use the current typed-page and explicit Browser APIs. Publication is controlled by the release milestone gates and trusted-publishing workflow.
 
 The [3.0 migration guide](../../docs/UPGRADING-3.0.md) covers startup, request metadata, limits and deployment profiles.
 

@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-200: make the standalone `sanitizePropsDeep` helper refuse forbidden own keys that cannot be deleted, including frozen/sealed nested objects. Successful calls still sanitize in place and return the same value; a refusal throws `TypeError` and may leave earlier deletions applied. Compiled SSR state continues to use its separate declared-schema projection.
+
+- FORMA-197: keep completed non-assertion mutation failures unqualified, but collect later probes after exact source restoration and a clean recovery baseline. Such a campaign always fails; infrastructure, incomplete execution and timeout failures still stop. Allow 150 minutes for the hosted 252-probe job using observed serial-run durations, without changing child deadlines, detection floors or kill criteria.
+
+- FORMA-197: replace the `untrack-noop` compile-break sentinel with a runnable mutation that retains the public API while allowing unintended signal subscriptions. Compilation failures remain unqualified; the 252-probe corpus count, strict assertion requirement and detection floors are unchanged.
+
+- FORMA-198: repair stale island microbenchmarks with fresh-document declared head state and registered callbacks. Retain 10/100-island payload and reactive work, await activation, and compare complete bulk/individual disposal cycles against markup parsing. These Happy DOM measurements do not replace packed N3 qualification.
+
+- Serialize mutation-probe files and explicitly concurrent tests under fail-fast execution, so one assertion cannot interrupt another worker's completion evidence. Incomplete test results remain unqualified; the corpus, clean/restored baselines and detection floors are unchanged.
+
+- `activateIslands()` now returns load-readiness as `Promise<void>`. After synchronous preflight and enrollment, load work starts in a timer and yields between whole island transactions after a cooperative 12 ms slice. Overlapping calls share queued ownership, input promotes pending SSR activation without event replay, and trigger setup failures remain isolated. This changes completion semantics; callers requiring all load islands must await the result. Deferred triggers settle once armed, and a single island or preflight remains atomic rather than subject to a hard duration bound.
+
+- FORMA-193's reviewed activation stack measures 48,602 B gzip for the core entry and 48,836 B for browser ESM. Under L-58, their package gates become measured +300 B: 48,902 and 49,136 B. The three runtime bundle gates remain unchanged. At that checkpoint, L-59 kept N2 at 28,000 B per route: the Counter SSR route measured 26,213 B while indexed SSR measured 28,071 B and failed. L-64 subsequently permits 28,100 B only if the full 20-run campaign passes the original 50 ms N3 ceiling; this policy change does not itself claim that performance result, and the historical refusal remains evidence.
+
 - Allocate detached HTML prototypes when their tags are first requested, instead of creating 40 common-tag prototypes on the first `h()` call. Later calls still return independent shallow clones; this change makes no timing-gate claim.
 
 - Share exact `className`/`htmlFor`/`tabIndex` normalization between static/reactive `h()` writes and adoption. HTML and SVG attributes now use the same declared alias policy; ordinary browser object property order remains intact.

@@ -1,0 +1,48 @@
+{
+  "modules": [
+    {
+      "name": "script-svg",
+      "route": "/",
+      "manifest": {
+        "version": 2,
+        "writer": "3.0.0",
+        "app": "raw-boundary-probe",
+        "build": "probe",
+        "aliases": {
+          "direct.ir": "direct.ir"
+        },
+        "assets": {
+          "direct.ir": {
+            "immutable": false,
+            "integrity": "sha384-PRE4mGlGEwRRrr+1hta1sMhSfV0yDcw3Ggt3O8TSDzBAQfzieKDpXxpR6DSa8Z8J"
+          },
+          "probe.js": {
+            "immutable": false,
+            "integrity": "sha384-5Dr4OeI4JgOoNt6faNdqIoZDxM+cll5Bm0o+rChRCukd3IHr76/9S7k2l3ryKscB"
+          }
+        },
+        "routes": {
+          "/": {
+            "mode": "ssr",
+            "ir": "direct.ir",
+            "js": [
+              "probe.js"
+            ],
+            "css": [],
+            "fonts": [],
+            "modulepreload": [],
+            "total_size_br": 0,
+            "budget_warn_threshold": 0
+          }
+        }
+      },
+      "files": {
+        "direct.ir": "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/script-svg/direct.ir",
+        "probe.js": "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/script-svg/probe.js"
+      },
+      "states": [
+        {}
+      ]
+    }
+  ]
+}

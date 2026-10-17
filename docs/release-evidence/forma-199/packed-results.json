@@ -1,0 +1,250 @@
+{
+  "source": "f21e821369361053e0e59195577bf015ca0abaf9",
+  "releaseAccepted": false,
+  "stages": [
+    "fixture applications: the sources are the committed ones and the packed libraries install locked, signed and isolated",
+    "fixture applications: every application builds with the packed build in strict mode, nothing above a note",
+    "fixture applications: the Rust servers build from the packed crates on the committed lock, pruned to the crate"
+  ],
+  "pages": [
+    {
+      "app": "bench",
+      "engine": "chromium",
+      "route": "/pages/islands-100",
+      "served": {
+        "csp": "default-src 'none'; script-src 'nonce-1tRh9dWdPbm5nkY77J0KtO2CxhJAqEsoRLG/LOZSrTo=' 'strict-dynamic' 'self'; style-src 'nonce-1tRh9dWdPbm5nkY77J0KtO2CxhJAqEsoRLG/LOZSrTo=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "counts": "nodes=904; bytes=48686; list=100"
+      },
+      "hosts": {
+        "Tile": 100
+      },
+      "nodes": 514,
+      "mutations": 0,
+      "interacted": "100 tiles counted"
+    },
+    {
+      "app": "bench",
+      "engine": "firefox",
+      "route": "/pages/islands-100",
+      "served": {
+        "csp": "default-src 'none'; script-src 'nonce-C3pCGymZs+nuqq+GDTTxGXxNcWPmpAXB2z1seYt3dwk=' 'strict-dynamic' 'self'; style-src 'nonce-C3pCGymZs+nuqq+GDTTxGXxNcWPmpAXB2z1seYt3dwk=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "counts": "nodes=904; bytes=48686; list=100"
+      },
+      "hosts": {
+        "Tile": 100
+      },
+      "nodes": 514,
+      "mutations": 0,
+      "interacted": "100 tiles counted"
+    },
+    {
+      "app": "bench",
+      "engine": "webkit",
+      "route": "/pages/islands-100",
+      "served": {
+        "csp": "default-src 'none'; script-src 'nonce-ZkRIGaOQmjutfpcRkzmH2ysr65xUZAhnt0XAQKIf6cc=' 'strict-dynamic' 'self'; style-src 'nonce-ZkRIGaOQmjutfpcRkzmH2ysr65xUZAhnt0XAQKIf6cc=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "counts": "nodes=904; bytes=48686; list=100"
+      },
+      "hosts": {
+        "Tile": 100
+      },
+      "nodes": 514,
+      "mutations": 0,
+      "interacted": "100 tiles counted"
+    },
+    {
+      "app": "ledger",
+      "engine": "chromium",
+      "route": "/household",
+      "served": {
+        "csp": "default-src 'none'; script-src 'nonce-R/r1zt2l9JG68lBOZoe+e4A/l6USZP5v6eHS+pAYf4Q=' 'strict-dynamic' 'self'; style-src 'nonce-R/r1zt2l9JG68lBOZoe+e4A/l6USZP5v6eHS+pAYf4Q=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "counts": "nodes=24; bytes=862; list=0"
+      },
+      "hosts": {
+        "HouseholdArrival": 1
+      },
+      "nodes": 25,
+      "mutations": 0,
+      "interacted": "status moved to ready"
+    },
+    {
+      "app": "ledger",
+      "engine": "firefox",
+      "route": "/household",
+      "served": {
+        "csp": "default-src 'none'; script-src 'nonce-0DRqeraV3695keTTVD1CV/xKjonrSa+bfpVV4sGhtyI=' 'strict-dynamic' 'self'; style-src 'nonce-0DRqeraV3695keTTVD1CV/xKjonrSa+bfpVV4sGhtyI=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "counts": "nodes=24; bytes=862; list=0"
+      },
+      "hosts": {
+        "HouseholdArrival": 1
+      },
+      "nodes": 25,
+      "mutations": 0,
+      "interacted": "status moved to ready"
+    },
+    {
+      "app": "ledger",
+      "engine": "webkit",
+      "route": "/household",
+      "served": {
+        "csp": "default-src 'none'; script-src 'nonce-DIH0C0cZgecwWoUF7oXysGyNhSsNk36awzFICC8Stpk=' 'strict-dynamic' 'self'; style-src 'nonce-DIH0C0cZgecwWoUF7oXysGyNhSsNk36awzFICC8Stpk=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "counts": "nodes=24; bytes=862; list=0"
+      },
+      "hosts": {
+        "HouseholdArrival": 1
+      },
+      "nodes": 25,
+      "mutations": 0,
+      "interacted": "status moved to ready"
+    }
+  ],
+  "minimal": [
+    {
+      "name": "minimal: chromium actual native island and static route",
+      "engine": "chromium",
+      "profile": "release",
+      "island": {
+        "before": {
+          "count": 7,
+          "hash": "7da448f287da96ce",
+          "nodes": 22
+        },
+        "adoption": {
+          "mutations": [],
+          "sameNodes": true,
+          "sameHost": true,
+          "count": "7"
+        },
+        "transitions": [
+          7,
+          8,
+          0,
+          1
+        ],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-Ppb87JV0IIaS1StgexD16QtPzor2sOyCMVuY0wv3TJc=' 'strict-dynamic' 'self'; style-src 'nonce-Ppb87JV0IIaS1StgexD16QtPzor2sOyCMVuY0wv3TJc=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "errors": [],
+        "violations": [],
+        "workers": []
+      },
+      "staticRoute": {
+        "route": "/about",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:63404/about",
+            "type": "document"
+          },
+          {
+            "url": "http://127.0.0.1:63404/_assets/app.8098e2c0.css",
+            "type": "stylesheet"
+          }
+        ],
+        "workers": [],
+        "executableScripts": 0,
+        "modulepreloads": 0,
+        "errors": [],
+        "violations": [],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-VS1ZwM/VOJlGxpG6U27kvJKMFUazdHpHESo71JdXNg0=' 'strict-dynamic' 'self'; style-src 'nonce-VS1ZwM/VOJlGxpG6U27kvJKMFUazdHpHESo71JdXNg0=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+      }
+    },
+    {
+      "name": "minimal: firefox actual native island and static route",
+      "engine": "firefox",
+      "profile": "release",
+      "island": {
+        "before": {
+          "count": 7,
+          "hash": "7da448f287da96ce",
+          "nodes": 22
+        },
+        "adoption": {
+          "mutations": [],
+          "sameNodes": true,
+          "sameHost": true,
+          "count": "7"
+        },
+        "transitions": [
+          7,
+          8,
+          0,
+          1
+        ],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-ICxLUhM2eSLQ/lGyWlwt0LEkT8or8sOmuMXQKHZ91Yc=' 'strict-dynamic' 'self'; style-src 'nonce-ICxLUhM2eSLQ/lGyWlwt0LEkT8or8sOmuMXQKHZ91Yc=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "errors": [],
+        "violations": [],
+        "workers": []
+      },
+      "staticRoute": {
+        "route": "/about",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:63404/about",
+            "type": "document"
+          },
+          {
+            "url": "http://127.0.0.1:63404/_assets/app.8098e2c0.css",
+            "type": "stylesheet"
+          }
+        ],
+        "workers": [],
+        "executableScripts": 0,
+        "modulepreloads": 0,
+        "errors": [],
+        "violations": [],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-uAdWE+SMg0bEr4UVWnAKctZS/fnC1JFCJowFkBWoPFQ=' 'strict-dynamic' 'self'; style-src 'nonce-uAdWE+SMg0bEr4UVWnAKctZS/fnC1JFCJowFkBWoPFQ=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+      }
+    },
+    {
+      "name": "minimal: webkit actual native island and static route",
+      "engine": "webkit",
+      "profile": "release",
+      "island": {
+        "before": {
+          "count": 7,
+          "hash": "7da448f287da96ce",
+          "nodes": 22
+        },
+        "adoption": {
+          "mutations": [],
+          "sameNodes": true,
+          "sameHost": true,
+          "count": "7"
+        },
+        "transitions": [
+          7,
+          8,
+          0,
+          1
+        ],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-qpN5Ky/QMgw2sPBbgiFceHzdYXvjxriQ28CbRFSv6oo=' 'strict-dynamic' 'self'; style-src 'nonce-qpN5Ky/QMgw2sPBbgiFceHzdYXvjxriQ28CbRFSv6oo=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "errors": [],
+        "violations": [],
+        "workers": []
+      },
+      "staticRoute": {
+        "route": "/about",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:63404/about",
+            "type": "document"
+          },
+          {
+            "url": "http://127.0.0.1:63404/_assets/app.8098e2c0.css",
+            "type": "stylesheet"
+          }
+        ],
+        "workers": [],
+        "executableScripts": 0,
+        "modulepreloads": 0,
+        "errors": [],
+        "violations": [],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-FB5EdZffRy+Ol5jfBn141LH2CtgkSQXvuVfLmOr/1/Q=' 'strict-dynamic' 'self'; style-src 'nonce-FB5EdZffRy+Ol5jfBn141LH2CtgkSQXvuVfLmOr/1/Q=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+      }
+    }
+  ],
+  "fixtureSourceEquality": {
+    "commit": "f21e821369361053e0e59195577bf015ca0abaf9",
+    "files": 52
+  },
+  "project": "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-Rk6aa6",
+  "passed": true
+}

@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {MOBILE_PROFILE} from './release-performance-spec.mjs';
+import {encodeMobileTrace,attributeMobileTasks,summarizeMobileStartup} from './release-performance-attribution.mjs';
 export {MOBILE_PROFILE} from './release-performance-spec.mjs';
 import {percentile,validateMobileControls} from './release-performance-contract.mjs';
 
@@ -16,7 +17,10 @@ export function activationInstrumentation({kind,longTask}) {
  addEventListener('unhandledrejection',event=>result.errors.push(String(event.reason)));
  addEventListener('forma:error',event=>result.errors.push(String(event.detail?.code??event.detail)));
  const completed=new Set();
+ const loginInputs=[['oauth','#oauth-google','#oauth-chosen','Continuing with Google'],['auth','#lc-toggle','#auth-subtitle','Create your account']];
+ let loginInput=0;
  function tick(){
+  if(result.done)return;
   const hosts=[...document.querySelectorAll('[data-forma-island]')];result.hostStatuses=hosts.map(h=>h.getAttribute('data-forma-status'));
   result.hosts=hosts.length;
   result.firstPaintMs=performance.getEntriesByName('first-paint')[0]?.startTime??null;
@@ -30,16 +34,25 @@ export function activationInstrumentation({kind,longTask}) {
      if(Number(output.textContent)===before+1){completed.add(host);result.lastResponseMs=performance.now();}
     }
    }else{
-    if(!completed.has('oauth')){document.querySelector('#oauth-google')?.click();if(document.querySelector('#oauth-chosen')?.textContent==='Continuing with Google'){completed.add('oauth');result.lastResponseMs=performance.now();}}
-    if(!completed.has('auth')){document.querySelector('#lc-toggle')?.click();if(document.querySelector('#auth-subtitle')?.textContent==='Create your account'){completed.add('auth');result.lastResponseMs=performance.now();}}
+    // These two distinct user clicks arrive as separate input tasks. Do not combine their handlers
+    // (including any priority adoption) into one artificial collector callback.
+    // Rotate unfinished inputs so an inert or missing target cannot starve its sibling.
+    for(let checked=0;checked<loginInputs.length;checked++){
+     const [id,selector,output,text]=loginInputs[loginInput++%loginInputs.length];
+     if(completed.has(id))continue;const button=document.querySelector(selector);if(!button)continue;
+     button.click();if(document.querySelector(output)?.textContent===text){completed.add(id);result.lastResponseMs=performance.now();}
+     break;
+    }
    }
    result.responded=completed.size;result.active=completed.size;
    if(result.responded===expected&&result.firstPaintMs!==null){result.done=true;return;}
   }
   if(!result.done)requestAnimationFrame(tick);
  }
- if(longTask)addEventListener('DOMContentLoaded',()=>{const startTime=performance.now(),until=startTime+90;while(performance.now()<until){}result.injectedTask={startTime,endTime:performance.now()};},{once:true});
- setTimeout(()=>{result.done=true;},8000);requestAnimationFrame(tick);
+ if(longTask)addEventListener('DOMContentLoaded',()=>{const startTime=performance.now(),until=startTime+110;while(performance.now()<until){}result.injectedTask={startTime,endTime:performance.now()};},{once:true});
+ setTimeout(()=>{result.done=true;},8000);
+ const start=()=>{if(!result.done)requestAnimationFrame(tick);};
+ if(document.readyState==='loading')addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
 export async function measureActivation(url,kind,{disabled=false,longTask=false}={}){
  const {chromium}=await import('@playwright/test');
@@ -60,7 +73,7 @@ export async function measureActivation(url,kind,{disabled=false,longTask=false}
   return await page.evaluate(()=>window.__formaPerformance);
  }finally{await browser.close();}
 }
-export async function audit(url,{saveArtifacts}={}){
+export async function audit(url,{saveArtifacts,includeTrace=false}={}){
  const [{default:lighthouse},chromeLauncher,{chromium},{defaultSettings}]=await Promise.all([import('lighthouse'),import('chrome-launcher'),import('@playwright/test'),import('lighthouse/core/config/constants.js')]);
  assert.deepEqual({...MOBILE_PROFILE,throttling:{...defaultSettings.throttling},screenEmulation:{...defaultSettings.screenEmulation},emulatedUserAgent:defaultSettings.emulatedUserAgent},MOBILE_PROFILE,'installed Lighthouse preset differs from the pinned measurement contract');
  const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox'],logLevel:'error'});
@@ -72,20 +85,25 @@ export async function audit(url,{saveArtifacts}={}){
   assert.deepEqual(lhr.configSettings.throttling,MOBILE_PROFILE.throttling,'Lighthouse applied another mobile profile');
   const rawLhr=JSON.stringify(lhr);
   const tasks=lhr.audits['long-tasks'];assert(tasks?.details?.type==='table','Lighthouse long-task audit absent');
-  return {version:lhr.lighthouseVersion,throttlingMethod:lhr.configSettings.throttlingMethod,benchmarkIndex:lhr.environment.benchmarkIndex,tbtMs:lhr.audits['total-blocking-time'].numericValue,lcpMs:lhr.audits['largest-contentful-paint'].numericValue,longTasks:tasks.details.items.map(row=>({duration:row.duration,startTime:row.startTime})),sha256:createHash('sha256').update(rawLhr).digest('hex'),rawLhr};
+  return {version:lhr.lighthouseVersion,throttlingMethod:lhr.configSettings.throttlingMethod,benchmarkIndex:lhr.environment.benchmarkIndex,tbtMs:lhr.audits['total-blocking-time'].numericValue,lcpMs:lhr.audits['largest-contentful-paint'].numericValue,longTasks:tasks.details.items.map(row=>({duration:row.duration,startTime:row.startTime})),sha256:createHash('sha256').update(rawLhr).digest('hex'),rawLhr,...(includeTrace?{rawTrace:result.artifacts?.Trace}:{})};
  }finally{await chrome.kill();}
 }
 export async function measureMobileRoute({url,id,runs=20,onProgress=()=>{},onSample=()=>{},onPhase=()=>{}}){
  assert(runs===20||runs===1,'only full measurement or explicit one-run pilot');
  const results=[];
  for(let run=0;run<runs;run++){
-  const lighthouse=await audit(url);
+  const {rawTrace,...lighthouse}=await audit(url,{includeTrace:true});
+  // Persist the completed original observations before attribution/validation
+  // can fail. This trace phase shares the journal's bounded Lighthouse lane.
   await onPhase({id,run:run+1,phase:'lighthouse',observation:lighthouse});
+  await onPhase({id,run:run+1,phase:'lighthouse-trace',observation:rawTrace});
+  lighthouse.trace=encodeMobileTrace(rawTrace);
+  lighthouse.attribution=attributeMobileTasks(JSON.parse(lighthouse.rawLhr),rawTrace);
   const activation=await measureActivation(url,id);
   await onPhase({id,run:run+1,phase:'activation',observation:activation});
   results.push({run:run+1,lighthouse,activation});onSample(results.at(-1));onProgress(`${id}: ${run+1}/${runs} cold Lighthouse and activation runs`);
  }
- return {id,pilot:runs!==20,profile:MOBILE_PROFILE,runs:results,p95TbtMs:percentile(results.map(r=>r.lighthouse.tbtMs),.95)};
+ return {id,pilot:runs!==20,profile:MOBILE_PROFILE,runs:results,p95TbtMs:percentile(results.map(r=>r.lighthouse.tbtMs),.95),startup:summarizeMobileStartup(results)};
 }
 export async function mobileControls(url,onPhase=()=>{}){
  const dead=await measureActivation(url,'islands-100',{disabled:true});

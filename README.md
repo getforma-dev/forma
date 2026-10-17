@@ -9,6 +9,11 @@ IR (FMIR), and Rust crates that render that IR to HTML on the server, so the
 server never needs a JavaScript runtime. One product, one repository, seven
 packages.
 
+These examples target the coordinated `3.0.0-beta.1` prerelease and require
+its publication. Select that explicit version in package install commands;
+unversioned npm commands select the stable `latest` channel. Release records
+report the qualification of each published set.
+
 ```
 TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
          packages/compiler                    crates/forma-ir            packages/core
@@ -19,17 +24,17 @@ TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML →
 | Package | Where | Published as |
 |---|---|---|
 | The client runtime: signals, `h()`, islands, hydration, the zero-build HTML runtime | [`packages/core`](packages/core) | [`@getforma/core`](https://www.npmjs.com/package/@getforma/core) |
-| The compiler: TypeScript components to FMIR, `"use server"` transforms, the diagnostics catalogue | [`packages/compiler`](packages/compiler) | [`@getforma/compiler`](https://www.npmjs.com/package/@getforma/compiler) |
+| The compiler: TypeScript components to FMIR, declared props and islands, the diagnostics catalogue | [`packages/compiler`](packages/compiler) | [`@getforma/compiler`](https://www.npmjs.com/package/@getforma/compiler) |
 | The build pipeline: bundling, hashing, compression, the asset manifest, the raw-markup lint | [`packages/build`](packages/build) | [`@getforma/build`](https://www.npmjs.com/package/@getforma/build) |
 | The scaffolder: `npx @getforma/create-app` | [`packages/create-app`](packages/create-app) | [`@getforma/create-app`](https://www.npmjs.com/package/@getforma/create-app) |
 | The FMIR format: parser and native HTML walker | [`crates/forma-ir`](crates/forma-ir) | [`forma-ir`](https://crates.io/crates/forma-ir) |
-| Derive macros for forma-ir (`#[derive(PageProps)]`, from 3.0.0; 0.0.0 is a placeholder) | [`crates/forma-ir-derive`](crates/forma-ir-derive) | [`forma-ir-derive`](https://crates.io/crates/forma-ir-derive) |
-| The Axum middleware: page rendering, asset serving, CSP, the service worker | [`crates/forma-server`](crates/forma-server) | [`forma-server`](https://crates.io/crates/forma-server) |
+| Derive macros for forma-ir (`#[derive(PageProps)]`) | [`crates/forma-ir-derive`](crates/forma-ir-derive) | [`forma-ir-derive`](https://crates.io/crates/forma-ir-derive) |
+| Typed page rendering and Axum responses, asset serving, CSP, the service worker | [`crates/forma-server`](crates/forma-server) | [`forma-server`](https://crates.io/crates/forma-server) |
 
 Each package keeps its own README, CHANGELOG and tests. The Rust half as a
 whole is described in [`crates/README.md`](crates/README.md); the stack's
 architecture, what crosses each boundary and why, in
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the binary format in
+[`docs/ARCHITECTURE-3.0.md`](docs/ARCHITECTURE-3.0.md); the binary format in
 [`docs/FMIR-FORMAT.md`](docs/FMIR-FORMAT.md); the build diagnostics in
 [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md).
 

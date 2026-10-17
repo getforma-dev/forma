@@ -3,22 +3,11 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readRecordedSet, publishedRelease, supportRecord, assertPublishedHistory, validatedReleaseInventory } from './release-support.mjs';
+import {RELEASE_RECORD_MAX_BYTES,readBoundedBody} from './release-record-limits.mjs';
 const API = 'https://api.github.com/repos/getforma-dev/forma';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const unified = /^v(?:[3-9]|[1-9]\d+)\./;
 
-async function body(response, maxBytes) {
-  assert(response.ok, `GitHub release history unreadable (${response.status})`);
-  const length = response.headers.get('content-length');
-  if (length !== null) assert(Number(length) <= maxBytes, 'GitHub response exceeds byte limit');
-  let size = 0; const chunks = [];
-  for await (const part of response.body) {
-    size += part.length;
-    assert(size <= maxBytes, 'GitHub response exceeds byte limit');
-    chunks.push(Buffer.from(part));
-  }
-  return Buffer.concat(chunks);
-}
 function reader(fetchImpl, token) {
   return async (url, binary = false) => {
     assert(url.startsWith(`${API}/`), 'untrusted release-history URL');
@@ -26,7 +15,7 @@ function reader(fetchImpl, token) {
       headers: { Accept: binary ? 'application/octet-stream' : 'application/vnd.github+json', 'User-Agent': 'getforma-release-support', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       signal: AbortSignal.timeout(20_000),
     });
-    const bytes = await body(response, binary ? 8 * 1024 * 1024 : 4 * 1024 * 1024);
+    const bytes = await readBoundedBody(response, binary ? RELEASE_RECORD_MAX_BYTES : 4 * 1024 * 1024);
     return binary ? bytes : JSON.parse(bytes);
   };
 }
@@ -63,7 +52,7 @@ export async function readSupportHistory({ targetTag, currentRecord, currentMeta
     const asset = assets[0];
     assert(new RegExp(`^${API.replaceAll('.', '\\.')}\\/releases\\/assets\\/[1-9][0-9]*$`).test(asset.url), 'untrusted DS12 asset URL');
     assert(/^sha256:[a-f0-9]{64}$/.test(asset.digest), 'DS12 requires GitHub SHA-256 digest');
-    assert(Number.isSafeInteger(asset.size) && asset.size > 0 && asset.size <= 8 * 1024 * 1024, 'DS12 invalid asset size');
+    assert(Number.isSafeInteger(asset.size) && asset.size > 0 && asset.size <= RELEASE_RECORD_MAX_BYTES, 'DS12 invalid asset size');
     const bytes = await get(asset.url, true);
     assert.equal(bytes.length, asset.size, 'DS12 asset length differs');
     const digest = asset.digest.slice(7), record = readRecordedSet(bytes, digest);

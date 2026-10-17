@@ -10,3 +10,5 @@ api-docs/
 # Copied fresh from dist/ by `npm run test:e2e`; a committed copy is only ever stale.
 e2e/fixtures/formajs-runtime.global.js
 probes/results.json
+# Actual mutation baseline/assertion reports and logs, retained by nightly artifacts.
+probes/runs/

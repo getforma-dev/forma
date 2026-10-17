@@ -10,6 +10,32 @@
 
 ## [Unreleased]
 
+- N3 startup attribution v3 keeps the unchanged 50 ms application/activation limit
+  and v2's exact pre-application layout/navigation proofs. It additionally
+  separates the pinned Lighthouse idle check only with complete source, isolated
+  context, same-frame, nesting and timer-stack evidence. This is measurement-only;
+  unknown, mixed, application and independent observer tasks still count, all raw
+  costs remain visible, and earlier failed reports remain failed.
+
+- Restore strict mobile startup qualification: every application/unattributed task and every independent observer task must be at most50ms across all twenty cold runs per route. Keep conservative pre-application layout attribution, descriptive p95, raw whole-page measurements and the existing response/TBT requirements. Historical L63 results remain historical; exception retirement requires a fresh complete pass.
+
+- Await real module evaluation before closing packed template and fixture adoption observations; native bootstraps await cooperative load completion without reactivating islands (FORMA-199).
+
+- FORMA-197: mutation kills require structured Vitest assertion evidence from a previously passing test. Clean before/restored baselines, explicit test-failure bail tracking and retained raw reports prevent compiler, collection, timeout and generic process failures from inflating the unchanged detection floors; workspace-hoisted Vitest is resolved normally.
+
+- Keep dashboard chart tooltip API values in persistent text nodes under enforced Trusted Types; packed template checks cover ordinary hover and hostile API text in all three engines.
+- FORMA-196: refuse native script elements with BUILD-623 and unrepresentable srcdoc markup with BUILD-624, matching core's existing Trusted Types and bundle-only boundaries. Preserve literal style, absent null/false srcdoc and explicit Browser typed raw APIs; retain the superseded FORMA-139 source/product evidence.
+
+- Add a read-only hosted RC burn-in against all seven original published archives, with at least 3,600 completed positive-input native fuzz seconds plus every hostile, three-engine deployment and fixture check per round. Authenticate actual D14/P17 provenance before the RC/final release, retain bounded raw evidence and verify owned cleanup; implementation is not a completed campaign.
+- Repair the separate fuzz workspace lock to include the existing exact `ryu-js` 1.0.3 dependency; current locked ASan qualification is tracked by FORMA-194.
+
+- Historical L63 introduced a conditional startup exception of75ms p95 and
+  100ms individual tasks. The strict50ms gate above supersedes that acceptance;
+  historical results remain evidence, not qualification for the new gate.
+  Only same-trace proved pre-application browser layout is attributed separately;
+  all raw tasks and compressed traces remain authenticated in bounded DS12 evidence.
+
+
 - Update the workspace browser runner to Playwright 1.64.1, whose official Firefox transport assigns a unique channel identity after COOP browsing-context replacement. Preserve the deployment drill's response headers, navigation assertions and timeouts; the dashboard template keeps its existing separate 1.64.1 lock.
 
 - Maintenance CI, release browser checks and nightly qualification now use the declared Node build pin. Parsed policy controls reject maintenance selector and private engine drift while retaining the published packages’ dated compatibility matrix.
@@ -25,7 +51,7 @@
 ### Packed release measurements — FORMA-191
 
 - P17 records the five consumer-shaped native N1 pages, N5 time/allocation growth, public output/iteration boundary refusals, actual Lighthouse mobile and island response measurements, and the restored three-engine founder client comparison. An authenticated prior DS12 supplies the N1 regression baseline. Missing or invalid declared figures refuse the release.
-- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. Missing evidence or any sample above12ms refuses.
+- FORMA-103 public decoder timing is mandatory in DS12, including both exact one-MiB payload shapes, candidate compiler regeneration, forty raw samples per shape at four-times CPU slowdown, and oversize/malformed refusal controls. L61 treats the original12ms raw-parse estimate as descriptive; missing evidence or any public-decoder sample above30ms refuses.
 - Lighthouse13.5.0 and the historical comparison libraries are exact-pinned development tools; no runtime dependency changes. The fixture HTTP server and measurement binary now share their unchanged typed input constructors.
 
 
@@ -123,6 +149,21 @@
 ### Fixed — FORMA-105 (full-stack e2e lane)
 
 - `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` are no longer tracked; `e2e/sync-fixtures.sh` writes them from `packages/core/dist` and `scripts/check.sh` runs it first. The committed copies predated `trustedHtml()` and failed five cases of `e2e/full-stack.spec.ts` whenever the lane ran without a fresh sync. The spec now refuses to run without the bundles, naming the sync script, and the sync script prints core's build output when that build fails instead of exiting silently. Verified by `e2e/full-stack.spec.ts` > `the bundles are the fresh sync, not a stale copy`.
+
+## [3.0.0-beta.1]
+
+Changes since `3.0.0-alpha.2`. The [beta qualification record](docs/release/BETA-QUALIFICATION.md) documents the packed acceptance; publication separately requires green exact-main CI and the trusted tag workflow.
+
+- **Checked island adoption.** Native islands use declared props and one bounded, inert state envelope. Activation validates the served nodes before attaching behavior, preserves those nodes without initial repair, and refuses mismatched islands while valid siblings remain eligible. Calling `mount()` on marked SSR content now throws `FORMA_E_MOUNT_SSR`; register islands with `activateIslands({ Counter })` instead.
+- **Activation readiness.** `activateIslands()` returns `Promise<void>` and can schedule load activation across browser tasks. Await it before work that depends on load islands being ready. Deferred triggers settle readiness when armed; the promise does not mean every deferred island has activated.
+- **Keyed rows.** Native rows carry stable keys, and adoption matches rows by canonical key. `createKeyedRows(initial, keyFn)` with `createList(rows, renderRow)` supports replacing retained item values without rerunning row factories. Invalid or duplicate canonical keys are refused; retained rows keep their owned effects and listeners.
+- **Strict native compilation.** Unsupported SSR source now fails even without `--strict`. Native islands and list rows need one stable Element root, and list sources need declared rows or admitted literal defaults. Boolean text needs an explicit textual representation; conditions must be boolean. Use declared presentation props, `browserOnly` islands or explicit Browser routes for unsupported shapes. See the [native subset](packages/compiler/docs/subset.md).
+- **Consistent rendered values.** Ordinary text and attributes normalize line endings and NUL consistently. Nullish values and `false` remove class attributes; `true` on a non-boolean attribute becomes the string `"true"`. Use strings for ARIA's `"false"` token. These rules can change output without a source edit; rebuild compiler and runtime products together. See [parity rules](docs/parity-rules.md).
+- **Explicit HTML-runtime ownership.** Replace automatic scanning and tierless lifecycle/configuration calls with `mountMarkup(root, trustedHtml(markup), { tier, grants, config })`, then use its update/unmount handle. Omitted grants allow no fetch or outside-root traversal. Removing a root alone does not dispose its handle.
+- **Deployment continuity.** Build identity checks before `mount()` and `activateIslands()` detect mismatched HTML and bundles, emit `forma:skew`, and use a bounded reload policy. `previousDist` can retain one prior deployment's hashed assets; `security: true` disables retention. Deploy native modules, manifest and assets together.
+- **Static routes and templates.** Static SSR routes omit browser entries and reject contradictory island, preload or executable-config declarations. Browser routes remain explicit with `ssr: false`. Both templates require Node 22+ and Rust 1.85+; prerelease dependencies remain exact.
+
+Upgrade the coordinated seven-package set and its matching dependency closure together, keep both npm and Cargo lockfiles, and rebuild assets and server. Follow the [3.0 upgrade guide](docs/UPGRADING-3.0.md) and [template migration guide](packages/create-app/docs/UPGRADING-3.0.md).
 
 ## [3.0.0-alpha.2] - 2026-10-15
 

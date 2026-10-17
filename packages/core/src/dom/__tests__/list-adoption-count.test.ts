@@ -17,6 +17,7 @@ import { createSignal, createRoot, onError } from 'forma/reactive';
 import { h } from '../element';
 import { mount } from '../mount';
 import { adoptInRoot } from './helpers/owned-adoption.js';
+import { openBatch, closeBatchWithoutRoot } from '../../reactive/batch';
 import { activateIslands } from '../activate';
 import { createShow } from '../show';
 import { createList } from '../list';
@@ -37,22 +38,22 @@ const listIsland = (items: () => string[]) =>
   h('div', null, h('ul', null, createList(items, (x) => x, (x) => h('li', null, x))));
 
 /** Every coded error onError receives, with its source, while `fn` runs. */
-function captureErrors(fn: () => void): { received: Array<[string, string | undefined]>; logged: string[] } {
+async function captureErrors(fn: () => void | Promise<void>): Promise<{ received: Array<[string, string | undefined]>; logged: string[] }> {
   const received: Array<[string, string | undefined]> = [];
   const off = onError((err, info) => {
     received.push([String((err as { code?: unknown }).code), info?.source]);
   });
   const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-  const observer = new MutationObserver(() => {});
+  const writes: MutationRecord[] = [];
+  const observer = new MutationObserver(batch => writes.push(...batch));
   observer.observe(document.body, { subtree: true, attributes: true, characterData: true, childList: true });
   const hosts = new Set(document.querySelectorAll('[data-forma-island]'));
-  let writes: MutationRecord[] = [];
   let logged: string[] = [];
   try {
-    fn();
+    await fn();
   } finally {
     off();
-    writes = observer.takeRecords(); observer.disconnect();
+    writes.push(...observer.takeRecords()); observer.disconnect();
     logged = error.mock.calls.map(call => String(call[0]));
     error.mockRestore();
   }
@@ -76,7 +77,7 @@ describe('list adoption row-count check', () => {
     ["a client array longer than the server's rows", ['a', 'b', 'c', 'd']],
     ['an empty client array, as before its signal is seeded (ksx #5)', [] as string[]],
   ])('%s', (_label, clientItems) => {
-    it('marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row', () => {
+    it('marks the island error with FORMA_E_HYDRATE_LIST_COUNT and removes or adds no row', async () => {
       document.body.innerHTML =
         `<div data-forma-island="0" data-forma-component="Mismatch">${serverList(['a', 'b', 'c'])}</div>` +
         `<div data-forma-island="1" data-forma-component="Agrees">${serverList(['x', 'y'])}</div>`;
@@ -86,8 +87,8 @@ describe('list adoption row-count check', () => {
       const serverNodes = nodesUnder(mismatch);
       const [items, setItems] = createSignal(clientItems);
 
-      const { received, logged } = captureErrors(() => {
-        activateIslands(emptyRegistry({
+      const { received, logged } = await captureErrors(async () => {
+        await activateIslands(emptyRegistry({
           Mismatch: () => listIsland(items),
           Agrees: () => listIsland(() => ['x', 'y']),
         }));
@@ -112,14 +113,14 @@ describe('list adoption row-count check', () => {
     });
   });
 
-  it('a server region with no rows and a client array with items fails the island and inserts nothing', () => {
+  it('a server region with no rows and a client array with items fails the island and inserts nothing', async () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Empty">${serverList([])}</div>`;
     installState();
     const island = document.querySelector('[data-forma-island="0"]')!;
     const before = island.innerHTML;
 
-    const { received } = captureErrors(() => {
-      activateIslands(emptyRegistry({ Empty: () => listIsland(() => ['a', 'b']) }));
+    const { received } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ Empty: () => listIsland(() => ['a', 'b']) }));
     });
 
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -128,7 +129,7 @@ describe('list adoption row-count check', () => {
     expect(received).toEqual([[CODE, 'hydration']]);
   });
 
-  it('equal counts adopt 40 unkeyed rows in place by index, as before, and keep reconciling', () => {
+  it('equal counts adopt 40 unkeyed rows in place by index, as before, and keep reconciling', async () => {
     const rows = Array.from({ length: 40 }, (_, i) => `r${i}`);
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Rows">${serverList(rows)}</div>` +
@@ -138,8 +139,8 @@ describe('list adoption row-count check', () => {
     const [items, setItems] = createSignal(rows);
     const clicked: string[] = [];
 
-    const { received, logged } = captureErrors(() => {
-      activateIslands(emptyRegistry({
+    const { received, logged } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         Rows: () => h('div', null, h('ul', null,
           createList(items, (x) => x, (x) => h('li', { onClick: () => clicked.push(x) }, x)))),
         Rows2: () => listIsland(() => ['p', 'q']),
@@ -167,7 +168,7 @@ describe('list adoption row-count check', () => {
     expect(Array.from(document.querySelectorAll('[data-forma-island="0"] li'), (li) => li.textContent)).toEqual(['r0', 'r1']);
   });
 
-  it('keyed initial count mismatch refuses without removing or replacing any server row', () => {
+  it('keyed initial count mismatch refuses without removing or replacing any server row', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Keyed"><ul><!--f:l0-->' +
       '<li data-forma-key="a">a</li><li data-forma-key="b">b</li><li data-forma-key="c">c</li>' +
@@ -176,8 +177,8 @@ describe('list adoption row-count check', () => {
     const [a, b, c] = Array.from(document.querySelectorAll('li'));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const { received } = captureErrors(() => {
-      activateIslands(emptyRegistry({ Keyed: () => listIsland(() => ['a', 'c']) }));
+    const { received } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ Keyed: () => listIsland(() => ['a', 'c']) }));
     });
     warn.mockRestore();
 
@@ -191,7 +192,7 @@ describe('list adoption row-count check', () => {
     expect(document.body.contains(b!)).toBe(true);
   });
 
-  it('a mismatched list inside a show branch fails its island', () => {
+  it('a mismatched list inside a show branch fails its island', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Nested"><section><!--f:s0-->' +
       serverList(['a', 'b']) +
@@ -200,8 +201,8 @@ describe('list adoption row-count check', () => {
     const island = document.querySelector('[data-forma-island="0"]')!;
     const before = island.innerHTML;
 
-    const { received } = captureErrors(() => {
-      activateIslands(emptyRegistry({
+    const { received } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         Nested: () => h('div', null, h('section', null,
           createShow(() => true, () => h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))))),
       }));
@@ -212,13 +213,13 @@ describe('list adoption row-count check', () => {
     expect(received).toEqual([[CODE, 'hydration']]);
   });
 
-  it('the migration: an empty server region adopts an empty array, and rows filled after activation render', () => {
+  it('the migration: an empty server region adopts an empty array, and rows filled after activation render', async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Later"><h2>Recent</h2>${serverList([])}</div>`;
     installState();
     const [items, setItems] = createSignal<string[]>([]);
-    const { received } = captureErrors(() => {
-      activateIslands(emptyRegistry({ Later: () => h('div', null, h('h2', null, 'Recent'), h('ul', null, createList(items, (x) => x, (x) => h('li', null, x)))) }));
+    const { received } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ Later: () => h('div', null, h('h2', null, 'Recent'), h('ul', null, createList(items, (x) => x, (x) => h('li', null, x)))) }));
     });
     const island = document.querySelector('[data-forma-island="0"]')!;
     expect(island.getAttribute('data-forma-status')).toBeNull();
@@ -229,12 +230,12 @@ describe('list adoption row-count check', () => {
     }
   });
 
-  it('a bare empty server list refuses nonempty initial items without a CSR fallback', () => {
+  it('a bare empty server list refuses nonempty initial items without a CSR fallback', async () => {
     // Empty server markers still form an authenticated SSR range, never a CSR fallback.
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="Bare"><!--f:l0--><!--/f:l0--></div>';
     installState();
-    const { received } = captureErrors(() => {
-      activateIslands(emptyRegistry({ Bare: () => h('div', null, createList(() => ['a', 'b'], (x) => x, (x) => h('p', null, x))) }));
+    const { received } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ Bare: () => h('div', null, createList(() => ['a', 'b'], (x) => x, (x) => h('p', null, x))) }));
     });
     const island = document.querySelector('[data-forma-island="0"]')!;
     expect(island.getAttribute('data-forma-status')).toBe('error');
@@ -243,13 +244,13 @@ describe('list adoption row-count check', () => {
     expect(island.innerHTML).toBe('<!--f:l0--><!--/f:l0-->');
   });
 
-  it('the coded message reports known client items and unconsumed DOM without inventing server row counts', () => {
+  it('the coded message reports known client items and unconsumed DOM without inventing server row counts', async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="One">${serverList(['a'])}</div>` +
       `<div data-forma-island="1" data-forma-component="Two">${serverList(['a', 'b'])}</div>`;
     installState();
-    const { logged } = captureErrors(() => {
-      activateIslands(emptyRegistry({ One: () => listIsland(() => []), Two: () => listIsland(() => ['a']) }));
+    const { logged } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ One: () => listIsland(() => []), Two: () => listIsland(() => ['a']) }));
     });
     const coded = logged.filter((line) => line.includes(CODE));
     expect(coded).toHaveLength(2);
@@ -259,7 +260,7 @@ describe('list adoption row-count check', () => {
     expect(coded[1]).toContain('has 1 item,');
   });
 
-  it('initial tag drift refuses before creating missing rows or Show content, and leaves all handlers inert', () => {
+  it('initial tag drift refuses before creating missing rows or Show content, and leaves all handlers inert', async () => {
     // A strict transaction refuses its first mismatch before allocating any repair.
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Fresh"><span>go</span>' +
@@ -272,8 +273,8 @@ describe('list adoption row-count check', () => {
     const originalNodes = nodesUnder(original);
     const clicks: string[] = [];
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { received } = captureErrors(() => {
-      activateIslands(emptyRegistry({
+    const { received } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         Fresh: () => h('div', null,
           h('button', { id: 'drift', onClick: () => clicks.push('drift') }, 'go'),
           h('ol', null, createList(() => ['a', 'b'], (k) => k, (k) => h('li', { id: `row-${k}`, onClick: () => clicks.push(k) }, k))),
@@ -296,15 +297,15 @@ describe('list adoption row-count check', () => {
 
   // Ref callbacks are deferred until commit. A failed preparation must not
   // write another root's signal, and must not own that root's later updates.
-  it("a refused island never runs its ref and leaves another island's later list row owned", () => {
+  it("a refused island never runs its ref and leaves another island's later list row owned", async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><ul><!--f:l0--><li>r0</li><!--/f:l0--></ul></div>` +
       `<div data-forma-island="1" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
     installState();
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
-    captureErrors(() => {
-      activateIslands(emptyRegistry({
+    await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))),
         B: () => h('div', null,
           h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
@@ -324,15 +325,15 @@ describe('list adoption row-count check', () => {
     expect(clicks).toEqual(['r0', 'r1']);
   });
 
-  it("a refused island never runs its ref and leaves another island's later Show branch owned", () => {
+  it("a refused island never runs its ref and leaves another island's later Show branch owned", async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><section><!--f:s0--><!--/f:s0--></section></div>` +
       `<div data-forma-island="1" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
     installState();
     const [open, setOpen] = createSignal(false);
     const clicks: string[] = [];
-    captureErrors(() => {
-      activateIslands(emptyRegistry({
+    await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         A: () => h('div', null, h('section', null, createShow(open, () => h('button', { id: 'a-btn', onClick: () => clicks.push('a') }, 'a')))),
         B: () => h('div', null,
           h('div', { ref: () => setOpen(true) }, 'x'),
@@ -349,13 +350,13 @@ describe('list adoption row-count check', () => {
   });
 
   // The same isolation applies to independently owned Browser mount roots.
-  it("a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row", () => {
+  it("a failing caller-owned adoption whose ref writes a shared signal does not detach a Browser mount root's new row", async () => {
     document.body.innerHTML =
       `<div id="app2"></div><div id="app1" data-forma-ssr><div><div>x</div>${serverList(['a', 'b'])}</div></div>`;
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
     mount(() => h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r))) as unknown as HTMLElement, '#app2');
-    captureErrors(() => {
+    await captureErrors(async () => {
       adoptInRoot((() => h('div', null,
         h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
         h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x))))) as unknown as () => HTMLElement, '#app1');
@@ -372,15 +373,15 @@ describe('list adoption row-count check', () => {
     expect(clicks).toEqual(['r0', 'r1']);
   });
 
-  it("a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row", () => {
+  it("a failing island's ref that writes a shared signal does not detach a client-rendered mount() root's new row", async () => {
     document.body.innerHTML =
       `<div id="app2"></div><div data-forma-island="0" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
     installState();
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
     mount(() => h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r))) as unknown as HTMLElement, '#app2');
-    captureErrors(() => {
-      activateIslands(emptyRegistry({
+    await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         B: () => h('div', null,
           h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
@@ -398,15 +399,15 @@ describe('list adoption row-count check', () => {
     expect(clicks).toEqual(['r0', 'r1']);
   });
 
-  it("a failing caller-owned adoption whose ref writes a shared signal leaves another island's new row its handler", () => {
+  it("a failing caller-owned adoption whose ref writes a shared signal leaves another island's new row its handler", async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="A"><ul><!--f:l0--><li>r0</li><!--/f:l0--></ul></div>` +
       `<div id="app1" data-forma-ssr><div><div>x</div>${serverList(['a', 'b'])}</div></div>`;
     installState();
     const [rows, setRows] = createSignal(['r0']);
     const clicks: string[] = [];
-    activateIslands(emptyRegistry({ A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))) }));
-    captureErrors(() => {
+    await activateIslands(emptyRegistry({ A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', { onClick: () => clicks.push(r) }, r)))) }));
+    await captureErrors(async () => {
       adoptInRoot((() => h('div', null,
         h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
         h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x))))) as unknown as () => HTMLElement, '#app1');
@@ -422,7 +423,39 @@ describe('list adoption row-count check', () => {
     expect(clicks).toEqual(['r0', 'r1']);
   });
 
-  it("another island's later row keeps its reactive binding after a refused adoption", () => {
+  it("another root's batch flush cannot own a list row created by the flush", () => {
+    document.body.innerHTML = '<div id="list"></div>';
+    const [rows, setRows] = createSignal(['r0']);
+    const [tag, setTag] = createSignal('');
+    const unmount = mount(
+      () => h('ul', null, createList(rows, (row) => row, (row) => h('li', null, () => `${row}:${tag()}`))),
+      document.getElementById('list')!,
+    );
+    let disposeCaller = () => {};
+    try {
+      createRoot((dispose) => {
+        disposeCaller = dispose;
+        openBatch();
+        setRows(['r0', 'r1']);
+        closeBatchWithoutRoot();
+      });
+      expect(Array.from(document.querySelectorAll('li'), (li) => li.textContent)).toEqual(['r0:', 'r1:']);
+
+      // The row created by the flush belongs to the list, not to the unrelated
+      // root that happened to close the batch. Disposing that root cannot sever
+      // the new row's reactive binding.
+      disposeCaller();
+      for (const next of ['t', 'u', 'v']) {
+        setTag(next);
+        expect(Array.from(document.querySelectorAll('li'), (li) => li.textContent)).toEqual([`r0:${next}`, `r1:${next}`]);
+      }
+    } finally {
+      disposeCaller();
+      unmount();
+    }
+  });
+
+  it("another island's later row keeps its reactive binding after a refused adoption", async () => {
     // A failed ref must not create the row. An explicit later update belongs
     // to the successful island and retains its independent reactive binding.
     document.body.innerHTML =
@@ -431,8 +464,8 @@ describe('list adoption row-count check', () => {
     installState();
     const [rows, setRows] = createSignal(['r0']);
     const [tag, setTag] = createSignal('');
-    captureErrors(() => {
-      activateIslands(emptyRegistry({
+    await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         A: () => h('div', null, h('ul', null, createList(rows, (r) => r, (r) => h('li', null, () => `${r}:${tag()}`)))),
         B: () => h('div', null,
           h('div', { ref: () => setRows(['r0', 'r1']) }, 'x'),
@@ -450,13 +483,13 @@ describe('list adoption row-count check', () => {
     }
   });
 
-  it('a refused island never runs the ref that would create a portal outside every island', () => {
+  it('a refused island never runs the ref that would create a portal outside every island', async () => {
     document.body.innerHTML =
       `<div id="outside"></div><div data-forma-island="0" data-forma-component="B"><div>x</div>${serverList(['a', 'b'])}</div>`;
     installState();
     const clicks: string[] = [];
-    captureErrors(() => {
-      activateIslands(emptyRegistry({
+    await captureErrors(async () => {
+      await activateIslands(emptyRegistry({
         B: () => h('div', null,
           h('div', { ref: () => document.getElementById('outside')!.appendChild(h('button', { id: 'out', onClick: () => clicks.push('out') }, 'o')) }, 'x'),
           h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)))),
@@ -468,13 +501,13 @@ describe('list adoption row-count check', () => {
     expect(clicks).toEqual([]);
   });
 
-  it('hydrateIsland() called directly keeps no binding it adopted before the list failed', () => {
+  it('hydrateIsland() called directly keeps no binding it adopted before the list failed', async () => {
     document.body.innerHTML = `<div id="direct" data-forma-ssr><div><span><!--f:t0-->idle<!--/f:t0--></span>${serverList(['a', 'b'])}</div></div>`;
     const target = document.getElementById('direct')!;
     const [label, setLabel] = createSignal('idle');
     let dispose!: () => void;
 
-    const { received } = captureErrors(() => {
+    const { received } = await captureErrors(async () => {
       createRoot((d) => {
         dispose = d;
         hydrateIsland(() => h('div', null,
@@ -494,7 +527,7 @@ describe('list adoption row-count check', () => {
     dispose();
   });
 
-  it('an island failed by the row count keeps no handler or binding that adoption attached before the list', () => {
+  it('an island failed by the row count keeps no handler or binding that adoption attached before the list', async () => {
     document.body.innerHTML =
       '<div data-forma-island="0" data-forma-component="Bad"><button>go</button><span><!--f:t0-->idle<!--/f:t0--></span>' + serverList(['a', 'b']) + '</div>' +
       '<div data-forma-island="1" data-forma-component="Good"><button>go</button><span><!--f:t0-->idle<!--/f:t0--></span>' + serverList(['a', 'b']) + '</div>';
@@ -506,8 +539,8 @@ describe('list adoption row-count check', () => {
       h('span', null, () => label()),
       h('ul', null, createList(() => items, (x) => x, (x) => h('li', null, x))));
 
-    captureErrors(() => {
-      activateIslands(emptyRegistry({ Bad: island('Bad', ['a']), Good: island('Good', ['a', 'b']) }));
+    await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ Bad: island('Bad', ['a']), Good: island('Good', ['a', 'b']) }));
     });
 
     const [bad, good] = Array.from(document.querySelectorAll<HTMLElement>('[data-forma-island]'));
@@ -522,7 +555,7 @@ describe('list adoption row-count check', () => {
     }
   });
 
-  it('onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows', () => {
+  it('onError receives FORMA_E_HYDRATE_LIST_COUNT from activateIslands, caller-owned adoption and hydrateIsland(), and each keeps the server rows', async () => {
     document.body.innerHTML =
       `<div data-forma-island="0" data-forma-component="Short">${serverList(['a', 'b'])}</div>` +
       `<div id="app" data-forma-ssr>${serverList(['a', 'b'])}</div>` +
@@ -532,8 +565,8 @@ describe('list adoption row-count check', () => {
     const short = () => h('ul', null, createList(() => ['a'], (x) => x, (x) => h('li', null, x)));
     let dispose: (() => void) | undefined;
 
-    const { received, logged } = captureErrors(() => {
-      activateIslands(emptyRegistry({ Short: () => h('div', null, short()) }));
+    const { received, logged } = await captureErrors(async () => {
+      await activateIslands(emptyRegistry({ Short: () => h('div', null, short()) }));
       expect(() => { dispose = adoptInRoot(short as unknown as () => HTMLElement, '#app'); }).not.toThrow();
       expect(() => hydrateIsland(short, document.getElementById('direct')!)).not.toThrow();
     });

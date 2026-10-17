@@ -1,0 +1,6 @@
+{
+  "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "originalSha256": "231803cef00d2aa61708959fdf98decc20aaca515ca1efa09a02996d293e0420",
+  "rootBlock": "name = \"ryu-js\"\nversion = \"1.0.3\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"04d056b875a9d2e6cb9a61d127afee9ac5999b9f87bcb32079d1318e505be714\"\n\n",
+  "scope": "only existing ryu-js1.0.3 dependency and exact root-lock record; locked validation pending"
+}

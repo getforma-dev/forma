@@ -79,7 +79,7 @@ node --test scripts/release-integrity.test.mjs
 node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs
 ruby scripts/check-toolchain-policy.rb
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
-node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs scripts/release-performance-baseline.test.mjs scripts/release-performance-contract.test.mjs scripts/release-performance-evidence.test.mjs scripts/release-performance-decoder.test.mjs scripts/release-performance-durability.test.mjs
+node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs scripts/release-performance-baseline.test.mjs scripts/release-performance-contract.test.mjs scripts/release-performance-evidence.test.mjs scripts/release-performance-attribution.test.mjs scripts/release-record-limits.test.mjs scripts/release-record-download.test.mjs scripts/release-performance-decoder.test.mjs scripts/release-performance-durability.test.mjs
 step "packed decoder: actual built compiler regenerates the timed contracts"
 node --test scripts/release-performance-journal.test.mjs scripts/release-performance-mobile-phases.test.mjs scripts/release-performance-child-evidence.test.mjs scripts/release-performance-finalization.test.mjs
 node --test scripts/decoder-compiler-package.test.mjs
@@ -89,7 +89,7 @@ npm run check:size -w packages/core
 npm run check:pack -w packages/core
 (cd packages/core && node scripts/run-probes.mjs --check)
 step "expression qualification:100000 generated cases, removed-charge control and independent nightly floor"
-node --test packages/core/scripts/expression-probe-floor.test.mjs scripts/release-security.test.mjs
+node --test --test-concurrency=2 packages/core/scripts/expression-probe-floor.test.mjs packages/core/scripts/probe-results.test.mjs packages/core/scripts/probe-reporter.test.mjs scripts/release-security.test.mjs
 node packages/core/scripts/qualify-expression-mutation.mjs
 step "build: the packed forma-raw-lint bin"
 node packages/build/scripts/test-raw-lint-bin.mjs

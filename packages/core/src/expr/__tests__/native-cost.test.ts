@@ -204,7 +204,9 @@ describe('the cost preflight, native by native (DR-16)', () => {
     // row as text would refuse it. Two thousand rows of 300 characters weigh
     // 600,000 units as text.
     const rows = Array.from({ length: 2000 }, (_, i) => ({ id: i, body: 'b'.repeat(300) }));
-    expect(evaluateExpression(compileExpression('rows.filter(Boolean).length'), scopeOf({ rows }))).toBe(2000);
+    let result: unknown;
+    expect(() => { result = evaluateExpression(compileExpression('rows.filter(Boolean).length'), scopeOf({ rows })); }).not.toThrow();
+    expect(result).toBe(2000);
     // Two-sided: a native that converts its argument is charged per row. A row
     // holding one 300,000-character string passes the budget.
     let code: unknown;

@@ -106,7 +106,7 @@ test('activation binds keyed rows by key: reversed and nested rows adopt without
     const groups = [{ id: 'g2', items: () => [{ id: '1', text: 'c' }] }, { id: 'g1', items: inner }];
     const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
     const register = (component: () => unknown) => __islandRegistration(() => h('div', null, component()), metadata);
-    activateIslands({
+    await activateIslands({
       Reversed: register(island(reversed)),
       ServerOnly: register(island(() => [row('a'), row('c')])),
       ClientOnly: register(island(() => [row('a'), row('x')])),
@@ -190,7 +190,7 @@ test('keyed registered children keep their own host, state and occurrence when t
     const Board = __islandRegistration(() => h('div', null, h('ul', null,
       createList(cards, (item: { id: number }) => item.id, (item: { count: number }) => h(CardComponent, { count: item.count })))),
     { h: '0123456789abcdef', schema: [[]], mode: 0 });
-    activateIslands({ Board, Card });
+    await activateIslands({ Board, Card });
     await Promise.resolve();
     await new Promise(resolve => setTimeout(resolve, 0));
     records.push(...observer.takeRecords());

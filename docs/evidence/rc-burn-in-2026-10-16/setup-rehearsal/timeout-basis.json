@@ -1,0 +1,44 @@
+{
+  "scope": "Orchestration estimate, not a performance measurement or full-run prediction. Prior native/client used older Playwright and includes its own staging.",
+  "audits": [
+    {
+      "route": "tenant-login",
+      "milliseconds": 15894.55,
+      "rawLhrSha256": "9a879779caf0c962429224af2ee5bb6d2e9e4d08bb632535d1b973b57a4e7ebc"
+    },
+    {
+      "route": "islands-100",
+      "milliseconds": 15915.04,
+      "rawLhrSha256": "8dfa348d5cac3c376fef83070182d0b08ebe2e4766e265a515ea2d53d51b8640"
+    }
+  ],
+  "fortyAuditsSeconds": 636.1918000000001,
+  "observedIndependentActivationSeconds": [
+    1.915413,
+    2.009051
+  ],
+  "priorPackedThroughDecoderSeconds": 274.532,
+  "olderNativeClientIncludingOwnStagingSeconds": 272.793,
+  "proposedJobMinutes": 60,
+  "proposedP17StepMinutes": 45,
+  "browserInstallMinutesUnchanged": 5,
+  "performanceBudgetsChanged": false,
+  "sources": [
+    {
+      "file": "FORMA-191-lazy-remeasure/mobile-attempt-8fd13bde/result.json",
+      "bytes": 612241,
+      "sha256": "791427741a0aff52e4fb4b98ac5a39924516d8ea536ef69dcb58826019d0eabe"
+    },
+    {
+      "file": "FORMA-3-qualification/tmp/P17-pw164-first/SUMMARY.json",
+      "bytes": 4550,
+      "sha256": "005cfb8783f798bdd4d7a499a65d0fd51198432f09d027332c6f3e6eed583bae"
+    },
+    {
+      "file": "FORMA-3-qualification/tmp/PERFORMANCE-dca-native-client-first/SUMMARY.json",
+      "bytes": 8130,
+      "sha256": "ddf2e866717b8709af00c8d140633ed895219f27a963553d2cb8f1a17dcdac03"
+    }
+  ],
+  "p17MeasuredElapsedGateSecondsUnchanged": 1800
+}

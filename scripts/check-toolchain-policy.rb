@@ -21,11 +21,12 @@ failures << 'maintenance Node major is outside the supported matrix' unless line
 private_pkg = JSON.parse(File.read(File.join(root, 'package.json')))
 failures << 'private workspace Node range must agree with the maintenance pin' unless private_pkg.dig('engines', 'node') == ">=#{pin} <#{major + 1}"
 maintenance = {
-  'ci.yml' => %w[check toolchains],
+  'ci.yml' => %w[check toolchains burn-in-setup],
   'e2e-engines.yml' => %w[e2e parity],
   'nightly-probes.yml' => %w[expressions probes],
   'value-rules.yml' => %w[qualify],
-  'release-plane-observe.yml' => %w[observe]
+  'release-plane-observe.yml' => %w[observe],
+  'rc-burn-in.yml' => %w[burn-in]
 }
 maintenance.each do |file, names|
   workflow = YAML.load_file(File.join(root, '.github/workflows', file))

@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "complete": false,
+  "command": [
+    "node",
+    "scripts/release-burn-in-setup.mjs",
+    "worker",
+    "/home/runner/work/_temp/candidate artifacts",
+    "5338f99cd4e8cc6c1d9726bfa9d32d31a825c611194a667df83fb3e9b7fd7525",
+    "fe549a5c8a7dd7a748fec5902e516685affeda50",
+    "/home/runner/work/_temp/burn-in-setup-work",
+    "/home/runner/work/_temp/burn-in-setup-evidence"
+  ],
+  "faults": [
+    "owned worker failed"
+  ],
+  "exitCode": 1,
+  "cleanup": {
+    "complete": true,
+    "remainingOwnedPids": [],
+    "failures": [],
+    "captured": [
+      {
+        "pid": 4058,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 53078
+      },
+      {
+        "pid": 4068,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 53133
+      },
+      {
+        "pid": 6053,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 58209
+      },
+      {
+        "pid": 6063,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 58224
+      },
+      {
+        "pid": 6271,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 59071
+      },
+      {
+        "pid": 6279,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 59083
+      },
+      {
+        "pid": 6921,
+        "ppid": 3823,
+        "state": "Z",
+        "start": 62483
+      }
+    ],
+    "signalled": [
+      {
+        "pid": 6921,
+        "start": 62483
+      },
+      {
+        "pid": 6279,
+        "start": 59083
+      },
+      {
+        "pid": 6271,
+        "start": 59071
+      },
+      {
+        "pid": 6063,
+        "start": 58224
+      },
+      {
+        "pid": 6053,
+        "start": 58209
+      },
+      {
+        "pid": 4068,
+        "start": 53133
+      },
+      {
+        "pid": 4058,
+        "start": 53078
+      }
+    ]
+  }
+}

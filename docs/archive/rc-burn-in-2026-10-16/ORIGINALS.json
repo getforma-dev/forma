@@ -1,0 +1,89 @@
+{
+  "base": "51486f74dfbe3667cc45df03d9cda4069bdb61ed",
+  "files": [
+    {
+      "path": "original/.github/workflows/ci.yml",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:.github/workflows/ci.yml",
+      "sha256": "e76348bae9542bb7c135908dd1fbc65560ed6b932c898160dff6964dee093757",
+      "bytes": 30559
+    },
+    {
+      "path": "original/.github/workflows/release.yml",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:.github/workflows/release.yml",
+      "sha256": "e4c2a74eebf6527977518e9e1d966d1b7938f2dd46319030e6c5cf09e78dec81",
+      "bytes": 9930
+    },
+    {
+      "path": "original/e2e/fixtures/apps/lib/behaviours.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:e2e/fixtures/apps/lib/behaviours.mjs",
+      "sha256": "c8a7eeb22cc6d047b4d1c420104f33ded10b0cb78a6af090d5dcb25f24092f6e",
+      "bytes": 13296
+    },
+    {
+      "path": "original/fuzz/Cargo.lock",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:fuzz/Cargo.lock",
+      "sha256": "231803cef00d2aa61708959fdf98decc20aaca515ca1efa09a02996d293e0420",
+      "bytes": 5270
+    },
+    {
+      "path": "original/scripts/check-release-workflow.rb",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/check-release-workflow.rb",
+      "sha256": "bd3731ba951b389547517f9493cec781eef17f2df5a84c2da0f5299405be810f",
+      "bytes": 18697
+    },
+    {
+      "path": "original/scripts/check-toolchain-policy.rb",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/check-toolchain-policy.rb",
+      "sha256": "6adc0dc16da180e8c05bba56ef39f6ad7364cbf6599663b61963ab4954e31378",
+      "bytes": 5713
+    },
+    {
+      "path": "original/scripts/release-fixture-apps.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/release-fixture-apps.mjs",
+      "sha256": "3afd574e39989cb60cff58959dee1971d3319dae9d51e8f31c30122c57ead6cf",
+      "bytes": 19369
+    },
+    {
+      "path": "original/scripts/release-record.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/release-record.mjs",
+      "sha256": "e0893b9c2d30142aaf2844cb78f2e864de5e88b2d14f6299c7180ad0c7d11c7b",
+      "bytes": 7006
+    },
+    {
+      "path": "original/scripts/release-record.test.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/release-record.test.mjs",
+      "sha256": "e0b8db9006bb4fc621691e4640786c3d687e7fde10b73b3dccecbcfe2b5ad9ff",
+      "bytes": 4467
+    },
+    {
+      "path": "original/scripts/release-skew-drill.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/release-skew-drill.mjs",
+      "sha256": "cb357396fc3ad0f0ac5b7bb645f3a2a0868d58511a7ebc9eeea4506b21e19da6",
+      "bytes": 5534
+    },
+    {
+      "path": "original/scripts/release-template-islands.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/release-template-islands.mjs",
+      "sha256": "6b9cb548cddaf8163fbb9a7b7efe90bcb97f46670a5ccd831d623c20a042b537",
+      "bytes": 10529
+    },
+    {
+      "path": "original/scripts/release-workflow-evidence.test.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/release-workflow-evidence.test.mjs",
+      "sha256": "9ffcd4a104204aac37f697a20313f75a1acb2ffee08e1a37c8fcb729ef6df8a9",
+      "bytes": 5944
+    },
+    {
+      "path": "original/scripts/toolchain-policy.test.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/toolchain-policy.test.mjs",
+      "sha256": "f670b375277df3bf8cdeadf2ebb64052e812cef1596954536bde1a6e1522f31d",
+      "bytes": 7193
+    },
+    {
+      "path": "original/scripts/verify-release-set.mjs",
+      "source": "51486f74dfbe3667cc45df03d9cda4069bdb61ed:scripts/verify-release-set.mjs",
+      "sha256": "6f78f368644a385d02729ecd7f777ce9893450aa9cc0820ae1f07e36ddab300a",
+      "bytes": 45792
+    }
+  ]
+}

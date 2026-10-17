@@ -9,6 +9,21 @@ test('complete restored comparison samples pass; missing, nonfinite and forged v
  validateComparison(comparison());
  for(const edit of [r=>r.browsers.chromium.runtime.forma.mount_1={},r=>r.browsers.chromium.runtime.forma.mount_1.samples.pop(),r=>r.browsers.chromium.runtime.forma.mount_1.samples[0].script_ms=NaN,r=>r.browsers.chromium.runtime.forma.mount_1.script_ms.median=5,r=>r.browsers.chromium.server_state.forma_shared.samples[0].browser_requests=undefined,r=>r.browsers.chromium.runtime.forma.memory_500={},r=>r.browsers.firefox.runtime.forma.update_one_of_500.samples[0].repetitions=1]){const r=comparison();edit(r);assert.throws(()=>validateComparison(r));}
 });
+test('comparison records detached HEAD truthfully while retaining required Git metadata',()=>{
+ const detached=comparison();detached.environment.git_branch='';validateComparison(detached);
+ for(const branch of [undefined,null,42,[],{}]){
+  const invalid=comparison();invalid.environment.git_branch=branch;
+  assert.throws(()=>validateComparison(invalid),/missing git_branch/);
+ }
+ const missing=comparison();delete missing.environment.git_branch;
+ assert.throws(()=>validateComparison(missing),/missing git_branch/);
+ for(const commit of [undefined,'','HEAD','g'.repeat(40),'b'.repeat(39),'b'.repeat(41)]){
+  const invalid=structuredClone(detached);invalid.environment.git_commit=commit;
+  assert.throws(()=>validateComparison(invalid));
+ }
+ const invalidSample=structuredClone(detached);invalidSample.browsers.webkit.runtime.forma.mount_1.samples.pop();
+ assert.throws(()=>validateComparison(invalidSample));
+});
 test('raw Lighthouse bytes and actual profile agree with every extracted figure',()=>{
  validateMobile(mobile());
  for(const edit of [r=>r[0].runs[0].lighthouse.rawLhr='{}',r=>r[0].runs[0].lighthouse.sha256='a'.repeat(64),r=>r[0].runs[0].lighthouse.lcpMs=0,r=>r[0].profile={throttlingMethod:'simulate'},r=>r[0].runs[0].lighthouse.longTasks=[{duration:0,startTime:0}],r=>r[0].runs[0].run=2,r=>r[0].pilot=true]){const r=mobile();edit(r);assert.throws(()=>validateMobile(r));}

@@ -10,7 +10,7 @@ import { emptyRegistry, installState, useFreshDocument } from './helpers/compile
  * sortCol, rows, etc.) will not work.
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { createSignal } from 'forma/reactive';
 import { activateIslands } from '../activate';
 import { h } from '../element';
@@ -19,17 +19,21 @@ import { createList } from '../list';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.restoreAllMocks();
 });
 
 describe('shared signals across islands', () => {
-  it('signal change in island A causes reactive update in island B', () => {
+  it('signal change in island A causes reactive update in island B', async () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Counter" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span><button>+</button></div><div data-forma-island="1" data-forma-component="Display" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span></div>`;
     installState();
 
     // Shared signal — the store pattern
     const [count, setCount] = createSignal(0);
 
-    activateIslands(emptyRegistry({
+    // Keep the cross-island assertion honest when the second load is yielded.
+    vi.spyOn(performance, 'now').mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(13);
+
+    await activateIslands(emptyRegistry({
       Counter: () => {
         return h('div', null,
           h('span', null, () => String(count())),
@@ -67,7 +71,7 @@ describe('shared signals across islands', () => {
     expect(document.querySelector('[data-forma-island="1"] span')!.textContent).toBe('42');
   });
 
-  it('shared store with multiple signals across three islands', () => {
+  it('shared store with multiple signals across three islands', async () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="FilterBar" data-forma-status="pending"><select><option>id</option></select><span><!--f:t0-->1000<!--/f:t0--></span></div><div data-forma-island="1" data-forma-component="DataTable" data-forma-status="pending"><table><thead><tr><th><!--f:t0-->id<!--/f:t0--></th></tr></thead></table></div><div data-forma-island="2" data-forma-component="PerfPanel" data-forma-status="pending"><span><!--f:t0-->1000<!--/f:t0--></span></div>`;
     installState();
 
@@ -75,7 +79,7 @@ describe('shared signals across islands', () => {
     const [sortCol, setSortCol] = createSignal('id');
     const [rowCount, setRowCount] = createSignal(1000);
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       FilterBar: () => {
         return h('div', null,
           h('select', { onChange: (e: Event) => setSortCol((e.target as HTMLSelectElement).value) },
@@ -115,13 +119,13 @@ describe('shared signals across islands', () => {
     expect(document.querySelector('[data-forma-island="2"] span')!.textContent).toBe('5000');
   });
 
-  it('shared signal with createShow across islands', () => {
+  it('shared signal with createShow across islands', async () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Toggle" data-forma-status="pending"><button>toggle</button></div><div data-forma-island="1" data-forma-component="Panel" data-forma-status="pending"><!--f:s0--><p>visible</p><!--/f:s0--></div>`;
     installState();
 
     const [visible, setVisible] = createSignal(true);
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       Toggle: () => {
         return h('div', null,
           h('button', { onClick: () => setVisible(!visible()) }, 'toggle'),
@@ -150,7 +154,7 @@ describe('shared signals across islands', () => {
     expect(document.querySelector('[data-forma-island="1"] p')).toBeTruthy();
   });
 
-  it('shared signal with createList across islands', () => {
+  it('shared signal with createList across islands', async () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="AddItem" data-forma-status="pending"><button>add</button></div><div data-forma-island="1" data-forma-component="ItemList" data-forma-status="pending"><!--f:l0--><div data-forma-key="1">Item 1</div><div data-forma-key="2">Item 2</div><!--/f:l0--></div>`;
     installState();
 
@@ -159,7 +163,7 @@ describe('shared signals across islands', () => {
       { id: '2', text: 'Item 2' },
     ]);
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       AddItem: () => {
         return h('div', null,
           h('button', {
@@ -195,13 +199,13 @@ describe('shared signals across islands', () => {
     expect(document.querySelectorAll('[data-forma-island="1"] div[data-forma-key]').length).toBe(4);
   });
 
-  it('dispose of one island does not break shared signal in sibling', () => {
+  it('dispose of one island does not break shared signal in sibling', async () => {
     document.body.innerHTML = `<div data-forma-island="0" data-forma-component="Writer" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span></div><div data-forma-island="1" data-forma-component="Reader" data-forma-status="pending"><span><!--f:t0-->0<!--/f:t0--></span></div>`;
     installState();
 
     const [count, setCount] = createSignal(0);
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       Writer: () => {
         return h('div', null,
           h('span', null, () => String(count())),

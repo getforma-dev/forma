@@ -32,6 +32,76 @@ export type IslandHydrateFn = (el: HTMLElement, props: Record<string, unknown> |
 type ActivationPhase = 'scheduled'|'preparing'|'live'|'error'|'disposed';
 const activationPhase = new WeakMap<Element,ActivationPhase>();
 
+type LoadWork = ((event?: Event | false) => void) & { ready: Promise<void> };
+const pendingLoad = new Map<HTMLElement, LoadWork>();
+const loadEvents = ['pointerdown', 'focusin', 'click'] as const;
+let loadBusy = 0;
+let loadTimer: ReturnType<typeof setTimeout> | undefined;
+
+function reportActivationError(error: unknown): void {
+  // User-replaced diagnostics cannot strand independent scheduled hosts.
+  try { console.error(error instanceof Error ? error.message : error); } catch { /* retain sibling progress */ }
+}
+
+function setupFailed(island: HTMLElement, error: unknown): void {
+  try { deactivateIsland(island); } catch (cleanupError) { reportActivationError(cleanupError); }
+  reportActivationError(error);
+}
+
+function removeInteraction(island: HTMLElement, listener: EventListener): void {
+  island.removeEventListener('pointerdown', listener, true);
+  island.removeEventListener('focusin', listener, true);
+  delete (island as any).__formaInteractionHandler;
+}
+
+function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, ValidatedIsland>): LoadWork {
+  let complete!: () => void;
+  let consumed = false;
+  const work = ((event?: Event | false) => {
+    // FIFO, input promotion and cancel share one take. Retain the map entry
+    // through hydration so overlapping callers still join its real readiness.
+    if (consumed) return;
+    consumed = true;
+    loadBusy++;
+    try {
+      let failed = false;
+      for (const type of loadEvents) {
+        try { value.host.removeEventListener(type, work, true); }
+        catch (error) { failed = true; reportActivationError(error); }
+      }
+      if (failed || event === false) deactivateIsland(value.host);
+      else hydrateIslandRoot(value, children);
+    } catch (error) { setupFailed(value.host, error); }
+    finally {
+      pendingLoad.delete(value.host); complete();
+      if (!pendingLoad.size) {
+        const timer = loadTimer; loadTimer = undefined;
+        try { clearTimeout(timer); } catch (error) { reportActivationError(error); }
+      }
+      loadBusy--; scheduleLoads();
+    }
+  }) as LoadWork;
+  work.ready = new Promise<void>(resolve => { complete = resolve; });
+  pendingLoad.set(value.host, work);
+  return work;
+}
+
+function drainLoads(deadline = performance.now() + 12): void {
+  loadTimer = undefined; loadBusy++;
+  try {
+    for (const work of pendingLoad.values()) {
+      if (performance.now() >= deadline) break;
+      work();
+    }
+  } finally {
+    loadBusy--; scheduleLoads();
+  }
+}
+
+function scheduleLoads(): void {
+  if (!loadBusy && pendingLoad.size && loadTimer === undefined) loadTimer = setTimeout(drainLoads, 0);
+}
+
 const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 // ---------------------------------------------------------------------------
@@ -98,6 +168,10 @@ export function hasScheduledOrActiveIslands(): boolean {
  * stack and a WeakSet, so neither deeply nested nor cyclic props can overflow
  * the stack or loop forever.
  *
+ * Throws TypeError if an own forbidden key cannot be deleted, including on a
+ * frozen or sealed object. Earlier deletions remain in place when it throws;
+ * callers must not use the partially sanitized input after a refusal.
+ *
  * Verified by: src/dom/__tests__/activate-isolation.test.ts > "sanitizePropsDeep strips forbidden keys at every depth"
  * Verified by: src/dom/__tests__/activate-isolation.test.ts > "sanitizePropsDeep terminates on cyclic props"
  */
@@ -113,9 +187,9 @@ export function sanitizePropsDeep<T>(props: T): T {
 
     for (const key of FORBIDDEN_PROP_KEYS) {
       if (Object.prototype.hasOwnProperty.call(current, key)) {
-        const desc = Object.getOwnPropertyDescriptor(current, key);
-        // A non-configurable key cannot be deleted; skipping it beats throwing.
-        if (desc?.configurable) delete (current as Record<string, unknown>)[key];
+        if (!Reflect.deleteProperty(current, key)) {
+          throw new TypeError(`sanitizePropsDeep: cannot delete ${key}`);
+        }
       }
     }
 
@@ -137,6 +211,11 @@ export function sanitizePropsDeep<T>(props: T): T {
  * @param root      Requested subtree (defaults to document). Identity and state
  *                  authority are always frozen across the original Document.
  *                  A shadow-only or later-injected host has no original claim.
+ * @returns Resolves when requested load work has activated, failed in isolation,
+ *          or been disposed. Existing pending loads are included; visible,
+ *          idle and interaction work completes its part once its trigger is armed.
+ *          Preflight remains synchronous; the function itself is not async.
+ *          Load work starts in a timer unless first input promotes it sooner.
  *
  * Verified by: src/dom/__tests__/activate.test.ts > "error in island 0 does not prevent island 1 from activating"
  */
@@ -147,85 +226,74 @@ export function activateIslands(
   // Only preflight may recover a registered callback and invoke its signature.
   registry: Record<string, (...args: never[]) => unknown>,
   root: ParentNode = document,
-): void {
-  if (skewed(root)) return;
-  // Materialize every requested result before running any component or arming
-  // any trigger. An earlier component cannot alter a later host's input state.
+): Promise<void> {
+  if (skewed(root)) return Promise.resolve();
   const checked = preflightIslands(registry, root);
-  const children = new Map<Element,ValidatedIsland>();
-  for(const result of checked)if('value'in result)children.set(result.host,result.value);
-  for (const result of checked) {
-    if ('error' in result) { console.error(result.error.message); continue; }
-    const value = result.value;
-    const island = value.host;
-    // The successful SSR path never writes a status attribute. Repeated and
-    // reentrant calls consult only the runtime's retained state.
-    if(activationPhase.has(island)||(island as any).__formaScheduled)continue;
-
-    // The previous component (or a diagnostic callback) may have changed a
-    // later host since the all-host preflight. Refuse before retaining work.
-    try { checkIslandClaim(value); } catch (error) {
-      console.error(error instanceof Error ? error.message : error); continue;
-    }
-    delete (island as any).__formaDisposed;
-
-    // From here every branch either schedules deferred work or hydrates, so the
-    // island now has something to tear down and must be counted. Every exit —
-    // deactivateIsland, deactivateAllIslands, disposal of a row containing it,
-    // and the failed-hydration path below — untracks it again.
-    trackIsland(island);
-    activationPhase.set(island,'scheduled');
-
-    const trigger = island.getAttribute('data-forma-hydrate') || 'load';
-
-    if (trigger === 'visible') {
-      // Defer hydration until island enters the viewport
-      (island as any).__formaScheduled = true;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-            observer.disconnect();
-            delete (island as any).__formaObserver;
-            hydrateIslandRoot(value,children);
-          }
-        },
-        { rootMargin: '200px' },
-      );
-      // Track the observer so deactivateIsland can disconnect it if the island
-      // is torn down before it ever intersects (otherwise it leaks).
-      (island as any).__formaObserver = observer;
-      observer.observe(island);
-    } else if (trigger === 'idle') {
-      (island as any).__formaScheduled = true;
-      const hydrate = () => hydrateIslandRoot(value,children);
-      // Track the timer so deactivateIsland can cancel it before it fires.
-      if (typeof requestIdleCallback === 'function') {
-        const handle = requestIdleCallback(hydrate);
-        (island as any).__formaIdleCancel = () => cancelIdleCallback(handle);
-      } else {
-        const handle = setTimeout(hydrate, 200);
-        (island as any).__formaIdleCancel = () => clearTimeout(handle);
+  const children = new Map<Element, ValidatedIsland>();
+  for (const result of checked) if ('value' in result) children.set(result.host, result.value);
+  const ready: Promise<void>[] = [];
+  loadBusy++;
+  try {
+    // Native observer/idle/input callbacks run after enrollment. Reserve and
+    // arm every host before starting loads; depth also guards diagnostic reentry.
+    for (const result of checked) {
+      if ('error' in result) { reportActivationError(result.error); continue; }
+      const value = result.value, island = value.host;
+      const pending = pendingLoad.get(island);
+      if (pending) {
+        ready.push(pending.ready);
+        continue;
       }
-    } else if (trigger === 'interaction') {
-      (island as any).__formaScheduled = true;
-      const hydrate = () => {
-        island.removeEventListener('pointerdown', hydrate, true);
-        island.removeEventListener('focusin', hydrate, true);
-        delete (island as any).__formaInteractionHandler;
-        hydrateIslandRoot(value,children);
-      };
-      // Track the handler so deactivateIsland can remove it if the island is
-      // torn down before the user ever interacts (otherwise it leaks and a
-      // stray event would re-hydrate a disposed island).
-      (island as any).__formaInteractionHandler = hydrate;
-      island.addEventListener('pointerdown', hydrate, { capture: true, once: true });
-      island.addEventListener('focusin', hydrate, { capture: true, once: true });
-    } else {
-      // load (default) — hydrate immediately
-      hydrateIslandRoot(value,children);
+      if (activationPhase.has(island)) continue;
+      try { checkIslandClaim(value); } catch (error) {
+        reportActivationError(error); continue;
+      }
+      delete (island as any).__formaDisposed;
+      trackIsland(island); activationPhase.set(island, 'scheduled');
+      const trigger = island.getAttribute('data-forma-hydrate');
+      try {
+        if (trigger === 'visible') {
+          const observer = new IntersectionObserver(entries => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              observer.disconnect(); delete (island as any).__formaObserver;
+              hydrateIslandRoot(value, children);
+            }
+          }, { rootMargin: '200px' });
+          (island as any).__formaObserver = observer;
+          observer.observe(island);
+        } else if (trigger === 'idle') {
+          const hydrate = () => hydrateIslandRoot(value, children);
+          if (typeof requestIdleCallback === 'function') {
+            const handle = requestIdleCallback(hydrate);
+            (island as any).__formaIdleCancel = () => cancelIdleCallback(handle);
+          } else {
+            const handle = setTimeout(hydrate, 200);
+            (island as any).__formaIdleCancel = () => clearTimeout(handle);
+          }
+        } else if (trigger === 'interaction') {
+          const hydrate = () => {
+            removeInteraction(island, hydrate);
+            hydrateIslandRoot(value, children);
+          };
+          (island as any).__formaInteractionHandler = hydrate;
+          island.addEventListener('pointerdown', hydrate, { capture: true, once: true });
+          island.addEventListener('focusin', hydrate, { capture: true, once: true });
+        } else {
+          const work = queueLoad(value, children);
+          ready.push(work.ready);
+          // Retained SSR targets can receive the same event after priority activation.
+          for (const type of loadEvents) island.addEventListener(type, work, true);
+        }
+      } catch (error) {
+        setupFailed(island, error);
+      }
     }
+  } finally {
+    loadBusy--;
+    scheduleLoads();
   }
+  return Promise.all(ready).then(() => {});
 }
 
 /**
@@ -251,17 +319,13 @@ export function deactivateIsland(el: HTMLElement): void {
     delete (el as any).__formaObserver;
   }
   const interactionHandler = (el as any).__formaInteractionHandler as EventListener | undefined;
-  if (interactionHandler) {
-    el.removeEventListener('pointerdown', interactionHandler, true);
-    el.removeEventListener('focusin', interactionHandler, true);
-    delete (el as any).__formaInteractionHandler;
-  }
+  if (interactionHandler) removeInteraction(el, interactionHandler);
+  pendingLoad.get(el)?.(false);
   const idleCancel = (el as any).__formaIdleCancel as (() => void) | undefined;
   if (idleCancel) {
     idleCancel();
     delete (el as any).__formaIdleCancel;
   }
-  delete (el as any).__formaScheduled;
   // Nothing above is left to tear down, so this island no longer forces list
   // rows to be scanned. Marker-guarded, so the documented idempotence of this
   // function cannot double-decrement and hide an island that is still live.
@@ -307,9 +371,8 @@ function hydrateIslandRoot(value:ValidatedIsland,children:ReadonlyMap<Element,Va
   const root=value.host;
   if((root as any).__formaDisposed||activationPhase.get(root)!=='scheduled')return;
   try{checkIslandClaim(value);}catch(error){
-    deactivateIsland(root);console.error(error instanceof Error?error.message:error);return;
+    setupFailed(root,error);return;
   }
-  delete (root as any).__formaScheduled;
   activationPhase.set(root,'preparing');
   const componentName=root.getAttribute('data-forma-component')!,occurrence=value.occurrence;
   let plan:PreparedAdoption|undefined,scope:AdoptionScope|undefined,disposeRoot:(()=>void)|undefined,activeRoot:Element=root,reported=false,initialDiagnostic:AdoptionDiagnostic|undefined;
@@ -318,7 +381,7 @@ function hydrateIslandRoot(value:ValidatedIsland,children:ReadonlyMap<Element,Va
   const failed=(error:unknown,fallback='FORMA_E_HYDRATE_COMPONENT')=>{
     if(reported)return;reported=true;
     dispose();delete (activeRoot as any).__formaDispose;untrackIsland(activeRoot);activationPhase.set(activeRoot,'error');
-    if(error instanceof IslandStateError){console.error(error.message);return;}
+    if(error instanceof IslandStateError){reportActivationError(error);return;}
     activeRoot.setAttribute('data-forma-status','error');
     const code=isHydrateError(error)?error.code:fallback;
     const context=currentAdoptionDiagnostic()??initialDiagnostic;

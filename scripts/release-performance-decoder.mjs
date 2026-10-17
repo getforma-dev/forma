@@ -12,7 +12,7 @@ import {arch,cpus,platform,release,tmpdir,totalmem} from 'node:os';
 const sha = value => createHash('sha256').update(value).digest('hex');
 const LIMIT = 1_048_576;
 // L-61: 12ms describes raw JSON.parse; complete public decoding must stay
-// within 30ms for every measured sample. N3's separate whole-task 50ms gate stays.
+// within 30ms for every measured sample. N3's separate startup policy and 50ms target stay independently recorded.
 export const DECODER_PROFILE = Object.freeze({
   browser: 'chromium', cpuSlowdown: 4, warmupsPerShape: 5, samplesPerShape: 40,
   stateBytes: LIMIT, maxSampleMs: 30, freshDocumentPerSample: true,
@@ -169,11 +169,11 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
         elapsedMs=entered-begin;calls++;observed=props.value;
         return h('div',null);
       },metadata);
-      const observer=new MutationObserver(()=>{});
+      const records=[],observer=new MutationObserver(batch=>records.push(...batch));
       observer.observe(document,{subtree:true,childList:true,attributes:true,characterData:true});
       const registry={Decoder};
-      begin=performance.now();activateIslands(registry);
-      const mutations=observer.takeRecords().length;observer.disconnect();
+      begin=performance.now();await activateIslands(registry);
+      const mutations=records.length+observer.takeRecords().length;observer.disconnect();
       let valueSha256=null;
       if(calls) {
         const bytes=new TextEncoder().encode(JSON.stringify(observed));

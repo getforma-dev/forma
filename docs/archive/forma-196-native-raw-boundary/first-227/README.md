@@ -1,0 +1,11 @@
+# Original native raw-boundary evidence
+
+Frozen source: `227115703ba4fc6919ee89acfbeeb124a5de44bc`, unchanged R17 products. `provenance.json` authenticates compiler, build, core, actual native example binary and source. No application repository was read or edited.
+
+The direct compiler accepts all eleven sources (typed srcdoc has a BUILD-207 diagnostic); actual typed native `PageHandle::render` emits plain static/declared/mixed-case srcdoc strings and literal HTML/case-variant/SVG script elements. Ordinary `@getforma/build` also publishes all six problematic cases, with no diagnostics. Its actual manifests/IR render through the native public page path as shown in `build-corrected-results.json`. The separate raw-lint CLI refuses their unlisted raw entries with BUILD-810. Normal build does not call that CLI.
+
+The actual built core under Happy DOM refuses plain srcdoc with FORMA_E_RAW_SRCDOC and all tested script variants with FORMA_E_SCRIPT_ELEMENT. This is a library guard proof, not a real-browser/CSP execution proof. Safe iframe and authored style, and literal null/false srcdoc absence, work across compiler/build/native/core. Explicit trustedHtml srcdoc works in core; native build already refuses its unsupported call form through strict BUILD-207. Attribute escaping in the emitted native srcdoc is not a trusted-markup proof. Native response policies/nonce-bearing boot are retained verbatim.
+
+Probe setup failures remain intact: first build calls lacked the required app name (BUILD-815); safe core controls lacked DOM constructors; the first corrected setup source had an unmatched config brace and failed before execution. These are harness defects, not product refusals. `complete-build-core.syntax-error.mjs` and its log preserve the failed source. Corrected setup adds explicit app and full DOM globals only, retains the original source cases, and writes separate results/output directories.
+
+No production source changed; artifact hashes are unchanged and the qualification checkout remains clean. No browser, package rebuild, broad suite, or performance run occurred. Scratch symlinks point to authenticated exact227 package trees and are recorded separately in MANIFEST.json rather than traversed.

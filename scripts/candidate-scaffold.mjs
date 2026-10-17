@@ -106,6 +106,7 @@ export const REQUIRED_HEAVY = [
   'cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses',
   'minimal: declared count reaches SSR and invalid bindings refuse before listening',
   'minimal: packed native island adopts without writes and static route requests no code in all engines',
+  'dashboard: chart tooltip keeps API values as text under enforced policy in all engines',
 ];
 export function requireHeavyResults(report) {
   assert.equal(report.success, true, 'scaffold suite failed');

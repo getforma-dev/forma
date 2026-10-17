@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1557,
+      "sha256": "65caef12d8869c83e0ddfdfd3331bfb7149d904332ed47def1ec778bc568279f"
+    },
+    {
+      "path": "build-focused-after.log",
+      "bytes": 370,
+      "sha256": "0cc11e331ce5c61024398dfed9668adcedfd65cb8816bb95d1c7f55b0ac6576f"
+    },
+    {
+      "path": "compiler-after-first.log",
+      "bytes": 1938,
+      "sha256": "857f699a325a2304186f5dd20a6d68ae5a3f56ff0be28273e13a7f96639ed878"
+    },
+    {
+      "path": "compiler-before-cwd.log",
+      "bytes": 65173,
+      "sha256": "f1b51619489ff52cfe6b4d0c8bc4b84eaac56de78bb18eebf11e7ecb00ccee6e"
+    },
+    {
+      "path": "compiler-before.log",
+      "bytes": 1836,
+      "sha256": "25c94fa2bd023bfc8aa53268a66da643a71e43640e7ce4a51bed5bb3b92957ac"
+    },
+    {
+      "path": "compiler-focused-after.log",
+      "bytes": 445,
+      "sha256": "d6c0c7e5911081fb55bfc34a6726df799b72fd51343cb99c1902d63c123e3b5b"
+    },
+    {
+      "path": "compiler-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "npm-ci.log",
+      "bytes": 143,
+      "sha256": "baded00129e8ce4d32798d4ebba0b5bb4c0cbb33bd6104935cb2b2526f4eed3a"
+    },
+    {
+      "path": "qualification.json",
+      "bytes": 4403,
+      "sha256": "11fdd321ebc77c597698d8525b9593fe40cc25daf7bc19d06bdf33efdb8241f3"
+    }
+  ],
+  "fileCount": 9,
+  "bytes": 75865
+}

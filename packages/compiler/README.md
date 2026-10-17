@@ -11,8 +11,11 @@ The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transf
 
 ## Install
 
+These examples target the `3.0.0-beta.1` prerelease and require its coordinated
+publication. Select that prerelease explicitly:
+
 ```bash
-npm install -D @getforma/compiler
+npm install -D @getforma/compiler@3.0.0-beta.1
 ```
 
 ## esbuild SSR Plugin — `formaSsrPlugin`
@@ -160,7 +163,7 @@ imports are not package exports. The runtime surface is pinned by
 ## Peer Dependencies
 
 - `esbuild >=0.17.0` (optional — for esbuild SSR plugin)
-- `@getforma/core ^3.0.0` for the current minor; the coordinated `3.0.0-dev` package is an explicit prerelease alternative. Patch differences are compatible.
+- `@getforma/core ^3.0.0` for the current minor; the coordinated `=3.0.0-beta.1` package is the explicit prerelease alternative. Patch differences are compatible.
 
 ## Part of the Forma Stack
 
@@ -169,7 +172,7 @@ imports are not package exports. The runtime surface is pinned by
 | Package | Description |
 |---|---|
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
-| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | **This package** — h() optimization, server transforms, IR emission |
+| [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | **This package** — h() optimization, declared props and islands, IR emission |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
 
 ### Backend (Rust)
@@ -177,7 +180,7 @@ imports are not package exports. The runtime surface is pinned by
 | Package | Description |
 |---|---|
 | [forma-ir](https://crates.io/crates/forma-ir) | FMIR binary format — parser and native HTML walker |
-| [forma-server](https://crates.io/crates/forma-server) | Axum middleware — SSR page rendering, asset serving, CSP headers |
+| [forma-server](https://crates.io/crates/forma-server) | Typed SSR and Axum responses — page rendering, asset serving, CSP headers |
 
 ### Full Framework
 

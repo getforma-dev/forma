@@ -1,0 +1,6 @@
+{
+  "status": 0,
+  "signal": null,
+  "stdout": "{\"islands\":[],\"keys\":[],\"schema\":[[]],\"slots\":[{\"default\":\"\",\"id\":0,\"name\":\"attr:srcdoc\",\"source\":\"client\",\"type\":\"text\"}]}\n",
+  "stderr": ""
+}

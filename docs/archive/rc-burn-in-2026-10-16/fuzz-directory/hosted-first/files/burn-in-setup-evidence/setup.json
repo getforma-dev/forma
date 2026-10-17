@@ -1,0 +1,92 @@
+{
+  "contract": "rc-burn-in-setup-v1",
+  "rehearsal": true,
+  "rcAuthenticated": false,
+  "activeNanoseconds": "0",
+  "burnInPassed": false,
+  "releaseAccepted": false,
+  "complete": false,
+  "sourceCommit": "fe549a5c8a7dd7a748fec5902e516685affeda50",
+  "recordSha256": "5338f99cd4e8cc6c1d9726bfa9d32d31a825c611194a667df83fb3e9b7fd7525",
+  "work": "/home/runner/work/_temp/burn-in-setup-work",
+  "steps": [
+    "fixture applications: the sources are the committed ones and the packed libraries install locked, signed and isolated",
+    "fixture applications: every application builds with the packed build in strict mode, nothing above a note",
+    "fixture applications: the Rust servers build from the packed crates on the committed lock, pruned to the crate",
+    "deployment drill: packed libraries and dependencies install locked, signed and isolated",
+    "deployment drill: five distributions built by the packed build, with identical B2 and no security retention",
+    "deployment drill: actual embedded native servers built locked from the packed crates"
+  ],
+  "seeds": [],
+  "faults": [
+    {
+      "message": "Command failed: cargo fuzz build parse_raw --sanitizer address",
+      "stack": "Error: Command failed: cargo fuzz build parse_raw --sanitizer address\n    at genericNodeError (node:internal/errors:986:15)\n    at wrappedFn (node:internal/errors:540:14)\n    at checkExecSyncError (node:child_process:943:11)\n    at execFileSync (node:child_process:979:15)\n    at run (file:///home/runner/work/forma/forma/scripts/release-set.mjs:24:10)\n    at prepareBurnIn (file:///home/runner/work/forma/forma/scripts/release-burn-in-stage.mjs:87:38)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async rehearseSetup (file:///home/runner/work/forma/forma/scripts/release-burn-in-setup.mjs:37:20)\n    at async main (file:///home/runner/work/forma/forma/scripts/release-burn-in-setup.mjs:82:5)"
+    }
+  ],
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.0.0-dev",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.0.0-dev.crate",
+      "sha256": "0bbed02793284aa1862f64908794215d781b89c1f2fe21f075e666233a8e061f",
+      "bytes": 260228
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.0.0-dev",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.0.0-dev.crate",
+      "sha256": "5e29c2e2067237ec5799415afe65b3d0f734e8c293d7f01f09528ba6076822ce",
+      "bytes": 5949
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.0.0-dev",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.0.0-dev.crate",
+      "sha256": "7df5fcf6df4ff40f6111197fbcf056dc3f71b7fb473ff597819184ca2cdc53c1",
+      "bytes": 196075
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.0.0-dev",
+      "path": "packages/core",
+      "file": "getforma-core-3.0.0-dev.tgz",
+      "sha256": "1bcb8885cdbd53ac9daa20e05853db157cada4b33c30bf0cc7836e306783611d",
+      "bytes": 2065840
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.0.0-dev",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.0.0-dev.tgz",
+      "sha256": "6d0cd05828857ea8b299a58dc48fdf66460e5af943b16e5411ee6a3ef48e32dd",
+      "bytes": 125957
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.0.0-dev",
+      "path": "packages/build",
+      "file": "getforma-build-3.0.0-dev.tgz",
+      "sha256": "e488337421b05879175dc2b6f7b8e7e93ab35d1638dc2b7821d6ac3af0f15cc0",
+      "bytes": 85340
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.0.0-dev",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.0.0-dev.tgz",
+      "sha256": "32e33a22011a6d85f8b7786034ad8bbd45ab72a9345fbce3d42c295c658ad5b1",
+      "bytes": 73417
+    }
+  ]
+}

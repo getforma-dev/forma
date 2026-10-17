@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "ceilings": {
+    "forma": 28000,
+    "page": 76800,
+    "canvas": 373760
+  },
+  "routes": [
+    {
+      "route": "/",
+      "class": "no-interactive-region",
+      "canvas": false,
+      "files": [],
+      "raw": 0,
+      "gzip": 0,
+      "brotli": 0,
+      "forma": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "application": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "worker": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "javascript": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "ceilings": {
+        "forma": 0,
+        "javascript": 0
+      },
+      "exceeded": [],
+      "over": false
+    }
+  ],
+  "worker": {
+    "file": "sw.js",
+    "raw": 3014,
+    "gzip": 1364,
+    "brotli": 1143
+  }
+}

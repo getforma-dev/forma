@@ -1,0 +1,20 @@
+{
+  "app": "raw-boundary-probe",
+  "outputDir": "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/srcdoc-declared/build-with-app",
+  "ssr": true,
+  "codeSplitting": false,
+  "entryPoints": [
+    {
+      "entry": "/Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/cases/srcdoc-declared/src/app.ts",
+      "outfile": "home.js"
+    }
+  ],
+  "routes": {
+    "/": {
+      "js": [
+        "home"
+      ],
+      "css": []
+    }
+  }
+}

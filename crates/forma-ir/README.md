@@ -8,9 +8,12 @@ FMIR binary format parser, walker, and HTML generator for the [Forma Stack](http
 
 ## Install
 
+These examples target the `3.0.0-beta.1` prerelease and require its coordinated
+publication. Request the prerelease explicitly:
+
 ```toml
 [dependencies]
-forma-ir = "0.2.2"
+forma-ir = "=3.0.0-beta.1"
 ```
 
 ## What It Does
@@ -18,7 +21,7 @@ forma-ir = "0.2.2"
 - Parses `.ir` binary files (FMIR format) into a validated `IrModule`
 - Walks the opcode stream and generates HTML with proper escaping
 - Fills dynamic values (text, attributes, conditionals, lists) from typed `SlotData`
-- Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [FormaJS](https://github.com/getforma-dev/formajs) client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
+- Emits hydration markers (`<!--f:t0-->`, `<!--f:s0-->`, etc.) for [@getforma/core](https://github.com/getforma-dev/forma/tree/main/packages/core) client-side hydration, except inside `textarea`, `title`, `style` and `script`, whose content HTML reads as text
 - Writes form-control values as HTML reads them: a `textarea`'s `value` as its text, a `select`'s as `selected` on the matching option
 - Renders a list in O(rows), with a committed regression gate that fails the build if that changes (`tests/list_scaling.rs`)
 
@@ -56,7 +59,7 @@ islands open where the walk stopped. It catches a panic inside the walk as
 
 ## FMIR v3 development
 
-The current set is `3.0.0-alpha.2`, a pre-release on crates.io (the development version between releases is `3.0.0-dev`). Modules carry a 24-byte signature/version/length/CRC
+The `3.0.0-beta.1` package set implements FMIR v3. Modules carry a 24-byte signature/version/length/CRC
 header and a variable section table; the reader accepts writers of its own major up to its own minor; patch is ignored.
 Package prerelease suffixes are absent from the numeric wire triple.
 V2 modules require rebuilding. `IrModule::parse` validates every bytecode string reference,

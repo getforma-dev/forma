@@ -23,18 +23,18 @@ describe('removed shared props block', () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_STATE'));
   });
 
-  it('ignores a body block when the first head block supplies valid declared props', () => {
+  it('ignores a body block when the first head block supplies valid declared props', async () => {
     document.body.innerHTML = '<div data-forma-island="0" data-forma-component="A" data-forma-status="pending"><p>0</p></div><script id="__forma_islands" type="application/json">{"0":{"title":"attacker"}}</script>';
     installState([{ title: 'hello' }]);
     const component = vi.fn((_props: Record<string, unknown>) => h('div', null, h('p', null, '0')));
-    activateIslands({ A: compiled(component, [[{ name: 'title', type: { kind: 'string' } }]]) });
+    await activateIslands({ A: compiled(component, [[{ name: 'title', type: { kind: 'string' } }]]) });
     expect(component).toHaveBeenCalledExactlyOnceWith({ title: 'hello' });
     expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('pending');
   });
 });
 
 describe('failed island teardown', () => {
-  it('disposes effects created before a failing island threw', () => {
+  it('disposes effects created before a failing island threw', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Boom" data-forma-status="pending"><p>x</p></div>
@@ -44,7 +44,7 @@ describe('failed island teardown', () => {
     const [count, setCount] = createSignal(0);
     let runs = 0;
 
-    activateIslands(emptyRegistry({
+    await activateIslands(emptyRegistry({
       Boom: () => {
         createEffect(() => { count(); runs++; });
         throw new Error('kaboom');
@@ -63,7 +63,7 @@ describe('failed island teardown', () => {
     expect(() => deactivateIsland(island as HTMLElement)).not.toThrow();
   });
 
-  it('keeps a successful island reactive and disposable', () => {
+  it('keeps a successful island reactive and disposable', async () => {
     document.body.innerHTML = `
       <div data-forma-island="0" data-forma-component="Ok" data-forma-status="pending"><p>x</p></div>
     `;
@@ -72,7 +72,7 @@ describe('failed island teardown', () => {
     const [count, setCount] = createSignal(0);
     let runs = 0;
 
-    activateIslands(emptyRegistry({ Ok: () => { createEffect(() => { count(); runs++; }); return h('div', null, h('p', null, 'x')); } }));
+    await activateIslands(emptyRegistry({ Ok: () => { createEffect(() => { count(); runs++; }); return h('div', null, h('p', null, 'x')); } }));
 
     const island = document.querySelector('[data-forma-island]') as HTMLElement;
     expect(island.getAttribute('data-forma-status')).toBe('pending');
@@ -100,11 +100,11 @@ describe('activateIslands root parameter', () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining('FORMA_E_ISLAND_IDENTITY'));
   });
 
-  it('an explicit light-DOM subtree shares original document authority', () => {
+  it('an explicit light-DOM subtree shares original document authority', async () => {
     document.body.innerHTML = '<main><div data-forma-island="7" data-forma-component="A" data-forma-status="pending"><p>original</p></div></main>';
     installState([{ from: 'page' }]);
     const component = vi.fn((_props: Record<string, unknown>) => h('div', null, h('p', null, 'original')));
-    activateIslands({ A: compiled(component, [[{ name: 'from', type: { kind: 'string' } }]]) }, document.querySelector('main')!);
+    await activateIslands({ A: compiled(component, [[{ name: 'from', type: { kind: 'string' } }]]) }, document.querySelector('main')!);
     expect(component).toHaveBeenCalledExactlyOnceWith({ from: 'page' });
     expect(document.querySelector('[data-forma-island]')!.getAttribute('data-forma-status')).toBe('pending');
   });
@@ -113,18 +113,59 @@ describe('activateIslands root parameter', () => {
 describe('sanitizePropsDeep', () => {
   it('sanitizePropsDeep strips forbidden keys at every depth', () => {
     const props = JSON.parse(
-      '{"a":{"b":{"__proto__":{"isAdmin":true},"keep":1}},"list":[{"constructor":{"x":1},"ok":2}]}',
+      '{"a":{"b":{"__proto__":{"isAdmin":true},"keep":1}},"list":[{"constructor":{"x":1},"prototype":{"x":2},"ok":2}]}',
     );
 
     const out = sanitizePropsDeep(props);
 
+    expect(out).toBe(props);
     const nested = out.a.b as Record<string, unknown>;
     expect(Object.prototype.hasOwnProperty.call(nested, '__proto__')).toBe(false);
     expect(nested['keep']).toBe(1);
     const row = out.list[0] as Record<string, unknown>;
     expect(Object.prototype.hasOwnProperty.call(row, 'constructor')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(row, 'prototype')).toBe(false);
     expect(row['ok']).toBe(2);
     expect(({} as Record<string, unknown>)['isAdmin']).toBeUndefined();
+  });
+
+  for (const lock of ['freeze', 'seal'] as const) {
+    it.each(['__proto__', 'constructor', 'prototype'])(
+      `refuses nested %s when Object.${lock} prevents deletion`,
+      key => {
+        const value = JSON.parse(`{"${key}":{"polluted":true},"keep":1}`);
+        const child = lock === 'freeze' ? Object.freeze(value) : Object.seal(value);
+        const props = { nested: [child] };
+        const target = {};
+
+        expect(() => Object.assign(target, sanitizePropsDeep(props).nested[0])).toThrow(TypeError);
+        expect(Object.prototype.hasOwnProperty.call(child, key)).toBe(true);
+        expect(Object.getPrototypeOf(target)).toBe(Object.prototype);
+        expect(Object.keys(target)).toEqual([]);
+      },
+    );
+  }
+
+  it('accepts harmless frozen data and cycles without replacing the input', () => {
+    const nested = Object.freeze({ values: Object.freeze([Object.freeze({ keep: 1 })]) });
+    const props: { nested: typeof nested; self?: unknown } = { nested };
+    props.self = props;
+    Object.freeze(props);
+
+    expect(sanitizePropsDeep(props)).toBe(props);
+    expect(props.nested).toBe(nested);
+    expect(props.nested.values[0].keep).toBe(1);
+    expect(props.self).toBe(props);
+  });
+
+  it('retains earlier in-place deletions when a later nested key is refused', () => {
+    const props = JSON.parse('{"__proto__":{"polluted":true},"nested":{"prototype":{},"keep":1}}');
+    Object.freeze(props.nested);
+
+    expect(() => sanitizePropsDeep(props)).toThrow(TypeError);
+    expect(Object.prototype.hasOwnProperty.call(props, '__proto__')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(props.nested, 'prototype')).toBe(true);
+    expect(props.nested.keep).toBe(1);
   });
 
   it('sanitizePropsDeep terminates on cyclic props', () => {
@@ -151,7 +192,7 @@ describe('sanitizePropsDeep', () => {
     return keys;
   }
 
-  it('island activation projects only declared safe fields at every depth for both instances', () => {
+  it('island activation projects only declared safe fields at every depth for both instances', async () => {
     // The same hostile payload in two head-state entries. Every
     // pollution key sits below the top level, inside an object and inside an
     // array element, next to a benign sibling that must survive.
@@ -191,7 +232,7 @@ describe('sanitizePropsDeep', () => {
       return h('div', null, h('p', null, String(received.length - 1)));
     };
     try {
-      activateIslands({ First: compiled(island, schema), Second: compiled(island, schema) });
+      await activateIslands({ First: compiled(island, schema), Second: compiled(island, schema) });
       expect(({} as Record<string, unknown>)['isAdmin']).toBeUndefined();
       expect(({} as Record<string, unknown>)['row']).toBeUndefined();
     } finally {

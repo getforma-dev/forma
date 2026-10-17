@@ -1,6 +1,7 @@
 // Packed-template observations. The browser runs the actual served candidate;
 // these helpers neither replace source nor synthesize an activation registry.
 import assert from 'node:assert/strict';
+import {awaitPageModules} from './release-module-completion.mjs';
 
 function policy(response) {
   assert(response, 'template navigation has no response');
@@ -108,7 +109,7 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
       return { count: entry.p.count, hash: entry.h, nodes: nodes.length };
     }, expectedCount);
     release();
-    await settle(page);
+    await awaitPageModules(page, [entry], timeout);
     const adoption = await page.evaluate(() => {
       const check = globalThis.__formaTemplateAdoption;
       check.records.push(...check.observer.takeRecords()); check.observer.disconnect();
@@ -160,5 +161,67 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
     const violations = await noErrors(observed);
     return { route, requests: observed.requests, workers: observed.workers, executableScripts: 0, modulepreloads: 0,
       errors: observed.errors, violations, servedPolicy: csp };
+  } finally { await context.close(); }
+}
+
+/** The same Browser-template positive interaction used by P17 and RC stress. */
+export async function interactDashboard(page, { violationKey = '__formaTemplateViolations' } = {}) {
+  const collectViolations = async () => {
+    // Native CSP events are queued. Read the caller's navigation-time collector
+    // before reload replaces the document and its init-script-owned array.
+    const violations = await page.evaluate(key => new Promise(resolve => setTimeout(() => resolve(globalThis[key]), 100)), violationKey);
+    assert(Array.isArray(violations), 'dashboard CSP collector was not installed before navigation');
+    assert.deepEqual(violations, [], 'dashboard interaction produced a CSP violation');
+    return violations;
+  };
+  const endpoint = '**/api/request-volume';
+  const original = await page.request.get(new URL('/api/request-volume', page.url()).href);
+  assert.equal(original.status(), 200);
+  const points = await original.json();
+  assert(points.length >= 2, 'dashboard chart needs its actual request-volume points');
+  const hover = async (point, last = false) => {
+    const chart = page.locator('svg[viewBox="0 0 600 200"]');
+    await chart.waitFor({ state: 'visible' });
+    const box = await chart.boundingBox(); assert(box);
+    await chart.hover({ position: { x: box.width * (last ? 560 : 40) / 600, y: box.height / 2 } });
+    const tooltip = chart.locator('..').locator('div.pointer-events-none');
+    await tooltip.waitFor({ state: 'visible' });
+    await tooltip.getByText(point.hour, { exact: true }).waitFor();
+    const values = await tooltip.locator('span.font-mono').allTextContents();
+    // Match the browser's locale rather than the Node host's locale.
+    const expected = await page.evaluate(p => [p.success.toLocaleString(), p.error.toLocaleString()], point);
+    assert.deepEqual(values, expected, 'dashboard hover values differ');
+    assert.equal(await tooltip.locator('img, script, [data-forma-tooltip-probe]').count(), 0, 'tooltip parsed API text as markup');
+    await page.mouse.move(0, 0);
+    await tooltip.waitFor({ state: 'hidden' });
+    return { hour: point.hour, values, hiddenOnLeave: true };
+  };
+  const normal = [await hover(points[0]), await hover(points.at(-1), true)];
+  const normalViolations = await collectViolations();
+  const hostile = { hour: '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">', success: 1234, error: 7 };
+  let intercepted = 0;
+  const handler = async route => { intercepted++; await route.fulfill({ json: [hostile, { hour: 'safe second point', success: 42, error: 2 }] }); };
+  await page.route(endpoint, handler);
+  let hostileObservation;
+  try {
+    await policy(await page.reload({ waitUntil: 'networkidle' }));
+    hostileObservation = await hover(hostile);
+    assert.equal(intercepted, 1, 'hostile chart payload did not reach the real API consumer exactly once');
+    assert.equal(await page.evaluate(() => globalThis.__formaTooltipExecuted), undefined, 'tooltip executed API text');
+  } finally { await page.unroute(endpoint, handler); }
+  await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
+  await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
+  const hostileViolations = await collectViolations();
+  return { normal, hostile: hostileObservation, apiTextStayedText: true,
+    violations: { normal: normalViolations, hostile: hostileViolations } };
+}
+export async function verifyDashboardTemplate(browser, origin) {
+  const context = await browser.newContext(), observed = await observe(context);
+  try {
+    const csp = await policy(await observed.page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 }));
+    const tooltip = await interactDashboard(observed.page);
+    assert.equal(await observed.page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'dashboard did not activate');
+    await settle(observed.page); await noErrors(observed);
+    return { interacted: true, tooltip, csp, pageErrors: observed.errors, violations: [] };
   } finally { await context.close(); }
 }

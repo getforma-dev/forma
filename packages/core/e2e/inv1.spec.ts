@@ -16,7 +16,7 @@ for (const attribute of ['café', 'xlink:', 'xlink:foo:bar', 'xlink:2name']) tes
     const observer = new MutationObserver(batch => records.push(...batch));
     for (const host of [bad, good]) observer.observe(host, { attributes: true, childList: true, characterData: true, subtree: true });
     const metadata = { h: '0123456789abcdef', schema: [[]], mode: 0 as const };
-    activateIslands({
+    await activateIslands({
       Bad: __islandRegistration(() => h('div', { [attribute]: () => 'server' }, h('span', null, 'kept')), metadata),
       Good: __islandRegistration(() => { const [value, set] = createSignal('ready'); return h('div', null, h('button', { title: value, onClick: () => set('changed') }, 'go')); }, metadata),
     });

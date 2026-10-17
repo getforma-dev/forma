@@ -19,7 +19,8 @@ export function requireSkewChecks(report) {
 }
 
 /** Package code comes only from the unpacked set; source probes come from its tagged commit. */
-export async function verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test }) {
+export async function preparePackedSkew({ set, dir, scratch, test, profile = 'debug' }) {
+  assert(['debug', 'release'].includes(profile));
   const root = join(scratch, 'skew-drill'), server = join(root, 'server');
   mkdirSync(join(server, 'src'), { recursive: true });
   const sources = ['build-app.mjs', 'balancer.mjs', 'run-drill.mjs', 'server/Cargo.toml', 'server/src/main.rs', 'Cargo.release.lock'];
@@ -61,10 +62,19 @@ export async function verifyPackedSkew({ set, dir, scratch, browser, firefox, we
     writeFileSync(join(server, 'Cargo.lock'), pruneCargoLock(readFileSync(join(ROOT, 'e2e/skew/Cargo.release.lock'), 'utf8'), 'forma-e2e-skew', version));
     const target = join(scratch, 'target');
     await test('deployment drill: actual embedded native servers built locked from the packed crates', async () => {
-      run('cargo', ['build', '--locked'], server, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: target, CARGO_INCREMENTAL: '0' } });
+      run('cargo', ['build', '--locked', ...(profile === 'release' ? ['--release'] : [])], server, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: target, CARGO_INCREMENTAL: '0' } });
     });
-    const binary = join(target, 'debug', process.platform === 'win32' ? 'forma-e2e-skew.exe' : 'forma-e2e-skew');
-    const result = { sourceHashes, resolution, signatures, npmLockSha256, cargoLockSha256: digest(join(server, 'Cargo.lock')), engines: {} };
+    const binary = join(target, profile, process.platform === 'win32' ? 'forma-e2e-skew.exe' : 'forma-e2e-skew');
+    return { sourceHashes, resolution, signatures, npmLockSha256, cargoLockSha256: digest(join(server, 'Cargo.lock')), binary, server, deployments, project };
+  } catch (error) { rmSync(project, { recursive: true, force: true }); throw error; }
+}
+
+/** Package code comes only from the unpacked set; original three-engine P17 oracles. */
+export async function verifyPackedSkew({ set, dir, scratch, browser, firefox, webkit, test }) {
+  const staged = await preparePackedSkew({ set, dir, scratch, test });
+  const { binary, server, deployments, project, ...proof } = staged;
+  const result = { ...proof, engines: {} };
+  try {
     for (const [engine, launcher] of [['chromium', null], ['firefox', firefox], ['webkit', webkit]]) {
       const actual = launcher ? await launcher.launch() : browser;
       try {

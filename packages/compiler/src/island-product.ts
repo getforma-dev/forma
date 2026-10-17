@@ -79,12 +79,16 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
     });
     if(kept.length)edits.push({start:arg.start!,end:arg.end!,text:`{${kept.join(',')}}`});
     else {
-      if(!path.parentPath.isExpressionStatement()||!path.parentPath.parentPath?.isProgram())refuseEntry(file,path.node,
-        'an empty activation registry must be a standalone top-level expression so it can be omitted safely');
+      const awaited=path.parentPath.isAwaitExpression()&&path.parentPath.node.argument===path.node;
+      const statement=awaited?path.parentPath.parentPath:path.parentPath;
+      if(!statement?.isExpressionStatement()||!statement.parentPath?.isProgram())refuseEntry(file,path.node,
+        'an empty activation registry must be a standalone top-level call or await so it can be omitted safely');
       const args=path.get('arguments');
       if(args.slice(1).some(argument=>!argument.isPure()))refuseEntry(file,path.node,
         'an empty activation registry has an effectful root or extra argument; move required effects outside the activation call');
-      edits.push({start:path.parentPath.node.start!,end:path.parentPath.node.end!,text:''});
+      // Keep the authored async module checkpoint even when no island survives.
+      edits.push(awaited?{start:path.node.start!,end:path.node.end!,text:'(void 0)'}
+        :{start:statement.node.start!,end:statement.node.end!,text:''});
     }
   }});
   if(replacements.size) {

@@ -16,6 +16,7 @@ import { CRATES, ROOT, digest, json, run, save, stageNpmLock } from './release-s
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { withOwnedServer } from './owned-server.mjs';
 import { assertN2, n2Rows, readPackedSizes, shapeRow } from './release-measurements.mjs';
+import { EXTRA_NAMES } from '../e2e/fixtures/apps/lib/check-identities.mjs';
 import { verifyPackedPerformance } from './release-performance.mjs';
 
 export const FIXTURES = join(ROOT, 'e2e/fixtures/apps');
@@ -193,10 +194,11 @@ function sourceEquality(project, commit) {
  * stages and FORMA-186's skew drill need: `{project, build, targetDir, cratesDir}` (the drill is a call
  * over these, not a rewrite).
  */
-export async function stageFixtureProject({ set, dir, cratesDir, targetDir, test, report }) {
+export async function stageFixtureProject({ set, dir, cratesDir, targetDir, test, report, profile = 'debug' }) {
+  assert(['debug', 'release'].includes(profile));
   const version = set.packages[0].version;
   const project = mkdtempSync(join(tmpdir(), 'forma-packed-fixtures-'));
-  const staged = { project, cratesDir, targetDir };
+  const staged = { project, cratesDir, targetDir, profile };
   await test('fixture applications: the sources are the committed ones and the packed libraries install locked, signed and isolated', async () => {
     copyFixtureSources(project);
     report.fixtureSourceEquality = sourceEquality(project, set.commit);
@@ -223,7 +225,7 @@ export async function stageFixtureProject({ set, dir, cratesDir, targetDir, test
     const lock = pruneCargoLock(readFileSync(join(ROOT, 'e2e/Cargo.lock'), 'utf8'), 'forma-fixture-apps', version);
     writeFileSync(join(project, 'Cargo.lock'), lock);
     writeFileSync(join(project, 'Cargo.toml'), fixtureCargoToml(readFileSync(join(project, 'Cargo.toml'), 'utf8'), version, cratesDir));
-    run('cargo', ['build', '--locked'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: targetDir, CARGO_INCREMENTAL: '0' } });
+    run('cargo', ['build', '--locked', ...(profile === 'release' ? ['--release'] : [])], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: targetDir, CARGO_INCREMENTAL: '0' } });
     staged.cargoLockSha256 = digest(join(project, 'Cargo.lock'));
   });
   return staged;
@@ -231,8 +233,6 @@ export async function stageFixtureProject({ set, dir, cratesDir, targetDir, test
 
 /** Everything P17 runs over the fixtures; returns the record P17 saves under `report.fixtures`. */
 export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, browser, test, report, performanceTarget, before, evidenceDirectory }) {
-  const { verifyIslandPage } = await import(pathToFileURL(join(FIXTURES, 'lib/verify-page.mjs')).href);
-  const { BEHAVIOURS, EXTRAS } = await import(pathToFileURL(join(FIXTURES, 'lib/behaviours.mjs')).href);
   const { buildNegative, buildPositive, readApps } = await import(pathToFileURL(join(FIXTURES, 'lib/build-apps.mjs')).href);
   const staged = await stageFixtureProject({ set, dir, cratesDir, targetDir, test, report });
   const { project } = staged;
@@ -252,12 +252,36 @@ export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, bro
         positives.push({ name: entry.name, sizeReport: result.sizeReport });
       }
     });
-    const shapes = [], pages = [];
     await test('fixture applications: Forma\'s code on every fixture route is inside N2\'s ceiling in the packed build', async () => { assertN2(n2, expectedRoutes); });
+    const { shapes, pages } = await verifyStagedFixturePages({ staged, browser, test });
+    await test('fixture applications: the packed compiler refuses the shapes the contract refuses (BUILD-610, with a file, a line and a column)', async () => {
+      for (const entry of index.negative.filter(each => each.fails === 'diagnostic')) {
+        const result = await buildNegative({ build: staged.build, root: project, outRoot: join(project, 'out'), name: entry.name });
+        assert.equal(result.built, false, `${entry.name}: the packed build accepted a refused shape`);
+        const found = result.diagnostics.filter(each => each.code === entry.code && each.message.includes(entry.message));
+        assert(found.length > 0 && found.every(each => each.file.endsWith(entry.file) && each.line > 0 && each.column > 0), `${entry.name}: expected ${entry.code} "${entry.message}" with a position, got ${JSON.stringify(result.diagnostics)}`);
+      }
+    });
+    const performance = performanceTarget ? await verifyPackedPerformance({staged,set,test,target:performanceTarget,before,report,evidenceDirectory}) : undefined;
+    return {
+      performance, npmLockSha256: staged.npmLockSha256, cargoLockSha256: staged.cargoLockSha256, signatures: staged.signatures,
+      resolution: staged.resolution, apps: Object.fromEntries(Object.entries(staged.reports).map(([app, each]) => [app, { buildHash: each.buildHash, routes: each.routes, seconds: each.seconds }])),
+      pages, positives, n2, shapes, expectedRoutes,
+    };
+  } finally { rmSync(project, { recursive: true, force: true }); }
+}
+
+/** Reuse the exact packed P17 page, positive-interaction and indexed-row oracles. */
+export async function verifyStagedFixturePages({ staged, browser, test }) {
+  const { verifyIslandPage } = await import(pathToFileURL(join(FIXTURES, 'lib/verify-page.mjs')).href);
+  const { BEHAVIOURS, EXTRAS } = await import(pathToFileURL(join(FIXTURES, 'lib/behaviours.mjs')).href);
+  const { readApps } = await import(pathToFileURL(join(FIXTURES, 'lib/build-apps.mjs')).href);
+  const { project } = staged, index = readApps(project);
+    const shapes = [], pages = [], extras = [];
     for (const [name, app] of Object.entries(index.apps)) {
       await test(`fixture ${name}: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work`, async () => {
         const manifest = json(join(project, 'out', name, 'dist/manifest.json'));
-        const binary = join(targetDir, 'debug', `fixture-${name}${process.platform === 'win32' ? '.exe' : ''}`);
+        const binary = join(staged.targetDir, staged.profile ?? 'debug', `fixture-${name}${process.platform === 'win32' ? '.exe' : ''}`);
         await withOwnedServer(binary, [], project, async (_response, origin) => {
           for (const [route, page] of Object.entries(app.routes)) {
             const cases = [{ label: route, path: page.path ?? route, expectation: page, main: true },
@@ -278,23 +302,10 @@ export async function verifyPackedFixtures({ set, dir, cratesDir, targetDir, bro
               shapes.push(shapeRow(name, route, response.headers.get('x-fixture-counts'), page.shape.islands));
             }
           }
-          for (const extra of EXTRAS[name] ?? []) await extra.run({ browser, origin });
+          assert.deepEqual((EXTRAS[name] ?? []).map(extra => extra.name), EXTRA_NAMES[name] ?? []);
+          for (const extra of EXTRAS[name] ?? []) { await extra.run({ browser, origin }); extras.push(`${name}: ${extra.name}`); }
         }, { timeout: 60_000 });
       });
     }
-    await test('fixture applications: the packed compiler refuses the shapes the contract refuses (BUILD-610, with a file, a line and a column)', async () => {
-      for (const entry of index.negative.filter(each => each.fails === 'diagnostic')) {
-        const result = await buildNegative({ build: staged.build, root: project, outRoot: join(project, 'out'), name: entry.name });
-        assert.equal(result.built, false, `${entry.name}: the packed build accepted a refused shape`);
-        const found = result.diagnostics.filter(each => each.code === entry.code && each.message.includes(entry.message));
-        assert(found.length > 0 && found.every(each => each.file.endsWith(entry.file) && each.line > 0 && each.column > 0), `${entry.name}: expected ${entry.code} "${entry.message}" with a position, got ${JSON.stringify(result.diagnostics)}`);
-      }
-    });
-    const performance = performanceTarget ? await verifyPackedPerformance({staged,set,test,target:performanceTarget,before,report,evidenceDirectory}) : undefined;
-    return {
-      performance, npmLockSha256: staged.npmLockSha256, cargoLockSha256: staged.cargoLockSha256, signatures: staged.signatures,
-      resolution: staged.resolution, apps: Object.fromEntries(Object.entries(staged.reports).map(([app, each]) => [app, { buildHash: each.buildHash, routes: each.routes, seconds: each.seconds }])),
-      pages, positives, n2, shapes, expectedRoutes,
-    };
-  } finally { rmSync(project, { recursive: true, force: true }); }
+  return { shapes, pages, extras };
 }

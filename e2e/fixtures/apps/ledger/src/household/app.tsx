@@ -3,5 +3,5 @@ import { mount, activateIslands } from '@getforma/core';
 import { HouseholdArrival, defaultArrival } from './arrival';
 import { HouseholdPage } from './page';
 
-activateIslands({ HouseholdArrival });
+await activateIslands({ HouseholdArrival });
 mount(() => HouseholdPage(defaultArrival), '#app');

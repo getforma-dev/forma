@@ -10,6 +10,32 @@
 // never activated cannot pass the second half; an adoption that rewrote the server's
 // values cannot pass the first.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {awaitPageModules} from '../../../../scripts/release-module-completion.mjs';
+
+/** Only the explicit inert-module negative control changes its declared entry's SRI. */
+export function inertEntryDocument(html, files, assets, scriptBody) {
+  const replacement = `sha384-${createHash('sha384').update(scriptBody).digest('base64')}`;
+  const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.equal(new Set(files).size, files.length, 'inert control repeats an entry');
+  for (const file of files) {
+    assert.match(file, /^[A-Za-z0-9._/-]+$/, 'inert control needs a plain asset path');
+    const url = `/_assets/${file}`, integrity = assets?.[file]?.integrity;
+    assert.match(integrity ?? '', /^sha384-[A-Za-z0-9+/]{64}$/, 'inert control needs the original entry integrity');
+    // Match the native template's exact two tags, not arbitrary attributes or
+    // other assets with the same digest. Unexpected/missing/duplicate tags refuse.
+    const tags = (html.match(/<(?:script|link)\b[^>]*>/gi) ?? []).filter(tag => tag.includes(url));
+    assert.equal(tags.length, 2, 'inert control needs exactly one entry script and preload');
+    for (const [prefix, attribute] of [['script type="module"', 'src'], ['link rel="modulepreload"', 'href']]) {
+      const pattern = new RegExp(`^<${prefix} nonce="[^"]+" ${attribute}="${escape(url)}" integrity="${escape(integrity)}" crossorigin="anonymous">$`);
+      const matches = tags.filter(tag => pattern.test(tag));
+      assert.equal(matches.length, 1, 'inert control entry tag differs from the native template or manifest');
+      if (attribute === 'src') assert(html.includes(`${matches[0]}</script>`), 'inert control entry script must have no inline body');
+      html = html.replace(matches[0], matches[0].replace(`integrity="${integrity}"`, `integrity="${replacement}"`));
+    }
+  }
+  return html;
+}
 
 /** The response policy every fixture page carries (DR-5/M20 enforced Trusted Types). */
 export async function requirePolicy(response) {
@@ -51,7 +77,7 @@ const textOf = (page, selector) => page.locator(selector).first().textContent();
  *   path                   the URL path to open when it is not the manifest route (a route pattern with a parameter)
  *   hold                   [urlSubstring]           requests the island makes at activation: they stay pending
  *                                                   until adoption is judged, and their arrival proves activation
- *   scriptBody             test only: answer the held scripts with this body, so no island can activate
+ *   scriptBody             test only: answer the held scripts with this inert body and matching entry SRI
  *   release                async (route) => void    how a held request is answered once released (default: continue)
  *   interact               async (page) => any      REQUIRED: behaviour that must change the DOM (activation proof)
  */
@@ -75,6 +101,14 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     return { match, seen, arrived };
   });
   try {
+    if (scriptBody !== undefined) {
+      await page.route(new URL(path, origin).href, async routed => {
+        const response = await routed.fetch();
+        assert.equal(response.status(), 200, 'inert control document did not render');
+        const body = inertEntryDocument(await response.text(), declared.js, manifest.assets, scriptBody);
+        await routed.fulfill({response, body});
+      });
+    }
     for (const url of scripts) await page.route(url, async routed => { requestedScripts.add(url); await gate; if (scriptBody === undefined) await routed.continue(); else await routed.fulfill({ status: 200, contentType: 'text/javascript', body: scriptBody }); });
     for (const each of holds) {
       await page.route(url => url.pathname.includes(each.match), async routed => {
@@ -123,11 +157,11 @@ export async function verifyIslandPage(browser, origin, route, manifest, options
     }
 
     open();
-    // Activation is proven by the island's own first request when it makes one; otherwise by
-    // the network going quiet. Then a frame and a microtask, so every synchronous write has landed.
+    // The authored await keeps module evaluation pending through every requested
+    // load island. Network idle and DOMContentLoaded are not completion signals.
+    // Resource requests stay held until adoption has been observed.
+    await awaitPageModules(page, scripts, timeout);
     if (holds.length) await Promise.all(holds.map(each => each.seen));
-    else await page.waitForLoadState('networkidle');
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => queueMicrotask(resolve))));
 
     const adoption = await page.evaluate(() => {
       const check = globalThis.__fixtureAdoption;

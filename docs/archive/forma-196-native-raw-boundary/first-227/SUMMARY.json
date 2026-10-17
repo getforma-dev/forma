@@ -1,0 +1,176 @@
+{
+  "source": "227115703ba4fc6919ee89acfbeeb124a5de44bc",
+  "scope": "Finite compiler/native/build/lint/model-DOM core comparison. No browser execution/security exploitation claim.",
+  "cases": [
+    {
+      "case": "srcdoc-static",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"6a1f82e338682730\" data-forma-ssr><main><iframe srcdoc=\"&lt;p data-probe=&quot;raw&quot;&gt;nested markup&lt;/p&gt;\"></iframe></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "srcdoc-static",
+        "accepted": false,
+        "error": "TypeError: [forma] FORMA_E_RAW_SRCDOC: srcdoc requires trustedHtml()\n    at rawHtml (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:120:9)\n    at checkRawAttr (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:130:26)\n    at applyStaticProp (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:590:3)\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:699:7)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at core.h.SrCdOc (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:36:40)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:37:68\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      }
+    },
+    {
+      "case": "srcdoc-declared",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"cbbe67caadaf127e\" data-forma-ssr><main><iframe srcdoc=\"&lt;p data-probe=&quot;raw&quot;&gt;nested markup&lt;/p&gt;\"></iframe></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "note": "declared runtime string uses same raw srcdoc guard"
+      }
+    },
+    {
+      "case": "srcdoc-mixed-case",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"d121ea4152f7c931\" data-forma-ssr><main><iframe SrCdOc=\"&lt;p data-probe=&quot;raw&quot;&gt;nested markup&lt;/p&gt;\"></iframe></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "srcdoc-mixed-case",
+        "accepted": false,
+        "error": "TypeError: [forma] FORMA_E_RAW_SRCDOC: srcdoc requires trustedHtml()\n    at rawHtml (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:120:9)\n    at checkRawAttr (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:130:26)\n    at applyStaticProp (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:590:3)\n    at fillElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:699:7)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:678:10)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:36:100\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:37:68\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      }
+    },
+    {
+      "case": "script-html",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"79ac8f8cf8f0bd3b\" data-forma-ssr><main><script>globalThis.__FORMA_RAW_PROBE__ = 1</script></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "script-html",
+        "accepted": false,
+        "error": "TypeError: [forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle\n    at refuseScriptElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:134:11)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:671:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:36:154\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:37:68\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      }
+    },
+    {
+      "case": "script-html-case",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"70c867a2b1548264\" data-forma-ssr><main><SCRIPT>globalThis.__FORMA_RAW_PROBE__ = 1</SCRIPT></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "script-html-case",
+        "accepted": false,
+        "error": "TypeError: [forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle\n    at refuseScriptElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:134:11)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:671:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:36:205\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:37:68\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      }
+    },
+    {
+      "case": "script-svg",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"d151c7325892605d\" data-forma-ssr><main><svg><script>globalThis.__FORMA_RAW_PROBE__ = 1</script></svg></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "script-svg",
+        "accepted": false,
+        "error": "TypeError: [forma] FORMA_E_SCRIPT_ELEMENT: h('script') is refused; load code through the page's bundle\n    at refuseScriptElement (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:134:11)\n    at Module.h (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:671:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:36:263\n    at withNamespace (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:147:12)\n    at Module.svg (file:///Users/victorvillacis/dev/Forma/work/FORMA-3-qualification/forma/packages/core/dist/chunk-YZ37XKAB.js:239:10)\n    at core.h.title (file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:36:250)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-preaudit-native-boundary/first-227/complete-build-core.mjs:37:68\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      }
+    },
+    {
+      "case": "safe-iframe",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"7a4a02ef7171fbdd\" data-forma-ssr><main><iframe title=\"safe\" src=\"/frame\"></iframe></main></div>",
+      "lintExit": 0,
+      "lintCodes": [],
+      "core": {
+        "id": "safe-iframe",
+        "accepted": true,
+        "html": "<iframe title=\"safe\" src=\"/frame\"></iframe>"
+      }
+    },
+    {
+      "case": "literal-style",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"79c846cc2a179ea4\" data-forma-ssr><main><style>p{color:navy}</style></main></div>",
+      "lintExit": 0,
+      "lintCodes": [],
+      "core": {
+        "id": "literal-style",
+        "accepted": true,
+        "html": "<style>p{color:navy}</style>"
+      }
+    },
+    {
+      "case": "srcdoc-null",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"af00f27fe248776c\" data-forma-ssr><main><iframe></iframe></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "srcdoc-null",
+        "accepted": true,
+        "html": "<iframe></iframe>"
+      }
+    },
+    {
+      "case": "srcdoc-false",
+      "compilerAccepted": true,
+      "buildAccepted": true,
+      "nativeBind": [],
+      "actualNativeAppHtml": "<div id=\"app\" data-forma-build=\"af00f27fe248776c\" data-forma-ssr><main><iframe></iframe></main></div>",
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "srcdoc-false",
+        "accepted": true,
+        "html": "<iframe></iframe>"
+      }
+    },
+    {
+      "case": "typed-srcdoc",
+      "compilerAccepted": true,
+      "buildAccepted": false,
+      "nativeBind": null,
+      "actualNativeAppHtml": null,
+      "lintExit": 1,
+      "lintCodes": [
+        "BUILD-810"
+      ],
+      "core": {
+        "id": "typed-srcdoc",
+        "accepted": true,
+        "html": "<iframe srcdoc=\"<p data-probe=&quot;raw&quot;>nested markup</p>\"></iframe>"
+      }
+    }
+  ]
+}
