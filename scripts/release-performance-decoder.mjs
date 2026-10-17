@@ -2,6 +2,7 @@
 // timing. This replaces the old private-preflight microbenchmark for DS12;
 // it does not rewrite its archived results or interpret them as public timing.
 import assert from 'node:assert/strict';
+import {createTimingCapture,decoderTimingControl} from './decoder-timing-diagnostic.mjs';
 import {createHash} from 'node:crypto';
 import {mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {createServer} from 'node:http';
@@ -146,10 +147,47 @@ export function validateDecoder(report) {
   return report;
 }
 
+export function decoderBootSource(diagnosticTiming=false) {
+  return `import {__islandRegistration,activateIslands,h} from '/core.mjs';
+    ${diagnosticTiming ? `const createTimingCapture = (${createTimingCapture.toString()}); window.decoderTimingControl = (${decoderTimingControl.toString()});` : ''}
+    window.runDecoder = async (metadata) => {
+      const errors=[],violations=[];
+      const originalError=console.error;
+      console.error=(...args)=>{errors.push(args.map(String).join(' '));originalError(...args)};
+      document.addEventListener('securitypolicyviolation',e=>violations.push(e.violatedDirective));
+      let calls=0,elapsedMs=null,observed=null,begin;
+      ${diagnosticTiming ? 'const timingCapture=createTimingCapture(); let entryTime=null;' : ''}
+      const Decoder=__islandRegistration(props=>{
+        const entered=performance.now();
+        ${diagnosticTiming ? 'entryTime=entered;' : ''}
+        elapsedMs=entered-begin;calls++;observed=props.value;
+        return h('div',null);
+      },metadata);
+      const records=[],observer=new MutationObserver(batch=>records.push(...batch));
+      observer.observe(document,{subtree:true,childList:true,attributes:true,characterData:true});
+      const registry={Decoder};
+      begin=performance.now();
+      ${diagnosticTiming ? 'const ready=activateIslands(registry); const returnTime=performance.now(); await ready; const activationCompleteTime=performance.now();' : 'await activateIslands(registry);'}
+      const mutations=records.length+observer.takeRecords().length;observer.disconnect();
+      ${diagnosticTiming ? 'const validationStartTime=performance.now();' : ''}
+      let valueSha256=null;
+      if(calls) {
+        const bytes=new TextEncoder().encode(JSON.stringify(observed));
+        valueSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+      }
+      ${diagnosticTiming ? 'const validationEndTime=performance.now();' : ''}
+      await new Promise(resolve=>setTimeout(resolve,0));
+      return {elapsedMs,calls,valueSha256,valueLength:observed?.length??null,mutations,
+        hostStatus:document.querySelector('[data-forma-island]').getAttribute('data-forma-status'),
+        stateBlocks:document.querySelectorAll('head script[data-island-state]').length,
+        consoleErrors:errors,policyViolations:violations${diagnosticTiming ? ',timing:timingCapture.finish({startTime:begin,returnTime,entryTime,activationCompleteTime,validationStartTime,validationEndTime,endTime:performance.now()})' : ''}};
+    };`;
+}
+
 // Return every observation even when its duration exceeds the budget. The
 // caller must persist the result before validateDecoder enforces acceptance.
 // onSample additionally lets the release owner preserve an interrupted attempt.
-export async function measurePackedDecoder({corePath,compilerPath=resolve(corePath,'../compiler'),onSample=()=>{}}) {
+export async function measurePackedDecoder({corePath,compilerPath=resolve(corePath,'../compiler'),onSample=()=>{},diagnosticTiming=false}) {
   // P17 supplies sibling installed packed packages. No source imports or
   // bundling participate in the timed path; compiler proof finishes first.
   const compiler=await verifyDecoderCompiler(compilerPath);
@@ -157,34 +195,7 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
   const specs=DECODER_FIXTURES.map(fixture=>({...fixture,...decoderPayload(fixture)}));
   const documents=specs.map(spec=>({spec,text:spec.text}));
   documents.push({spec:specs[0],text:specs[0].text+' '},{spec:specs[0],text:specs[0].text.slice(0,-1)});
-  const boot = `import {__islandRegistration,activateIslands,h} from '/core.mjs';
-    window.runDecoder = async (metadata) => {
-      const errors=[],violations=[];
-      const originalError=console.error;
-      console.error=(...args)=>{errors.push(args.map(String).join(' '));originalError(...args)};
-      document.addEventListener('securitypolicyviolation',e=>violations.push(e.violatedDirective));
-      let calls=0,elapsedMs=null,observed=null,begin;
-      const Decoder=__islandRegistration(props=>{
-        const entered=performance.now();
-        elapsedMs=entered-begin;calls++;observed=props.value;
-        return h('div',null);
-      },metadata);
-      const records=[],observer=new MutationObserver(batch=>records.push(...batch));
-      observer.observe(document,{subtree:true,childList:true,attributes:true,characterData:true});
-      const registry={Decoder};
-      begin=performance.now();await activateIslands(registry);
-      const mutations=records.length+observer.takeRecords().length;observer.disconnect();
-      let valueSha256=null;
-      if(calls) {
-        const bytes=new TextEncoder().encode(JSON.stringify(observed));
-        valueSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
-      }
-      await new Promise(resolve=>setTimeout(resolve,0));
-      return {elapsedMs,calls,valueSha256,valueLength:observed?.length??null,mutations,
-        hostStatus:document.querySelector('[data-forma-island]').getAttribute('data-forma-status'),
-        stateBlocks:document.querySelectorAll('head script[data-island-state]').length,
-        consoleErrors:errors,policyViolations:violations};
-    };`;
+  const boot = decoderBootSource(diagnosticTiming);
   const server=createServer((request,response)=>{
     response.setHeader('Cache-Control','no-store');
     const path=new URL(request.url,'http://localhost').pathname;
@@ -241,6 +252,16 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
       const text=documents[index+2].text;
       const control={id,payloadBytes:Buffer.byteLength(text),payloadSha256:sha(text),observation:await observe(index+2)};
       report.controls.push(control);await onSample({id,phase:'control',observation:control.observation});
+    }
+    if(diagnosticTiming) {
+      report.diagnosticTimingControls=[];
+      for(const mode of ['busy','timer']) {
+        await page.goto(`http://127.0.0.1:${server.address().port}/0`);
+        await page.waitForFunction(()=>typeof window.decoderTimingControl==='function');
+        const observation=await page.evaluate(mode=>window.decoderTimingControl(mode),mode);
+        report.diagnosticTimingControls.push(observation);
+        await onSample({id:`diagnostic-${mode}`,phase:'diagnostic-control',observation});
+      }
     }
     return report;
   } finally {

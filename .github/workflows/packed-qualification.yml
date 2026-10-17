@@ -1,129 +1,119 @@
 name: Packed qualification
 
-# Manual, read-only P17 rehearsal. This never creates a tag, publishes packages,
-# closes a milestone, or substitutes for exact-main CI and the tagged release.
+# TEMPORARY NEVER-MERGE DIAGNOSTIC BRANCH. Original packed product is9efcfc2e;
+# this distinct harness observes public return/entry and long-task intervals.
 on:
   workflow_dispatch:
-    inputs:
-      target_tag:
-        description: Intended release tag; all seven checked-out versions must match
-        required: true
-        default: v3.0.0-beta.3
-        type: string
 concurrency:
-  group: packed-qualification-${{ github.ref }}
+  group: packed-decoder-diagnostic-${{ github.ref }}
   cancel-in-progress: false
+permissions:
+  contents: read
+  actions: read
 env:
   CARGO_BUILD_JOBS: '3'
-  CARGO_INCREMENTAL: '0'
-  CARGO_TERM_COLOR: never
-  CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+  VITEST_MAX_WORKERS: '2'
   PLAYWRIGHT_SKIP_BROWSER_GC: '1'
-  FORMA_PERFORMANCE_TARGET_TAG: ${{ inputs.target_tag }}
+  ORIGINAL_SOURCE: 9efcfc2e34c5a40c66339970118601772b63f474
 
 jobs:
-  pack:
-    permissions:
-      contents: read
+  decoder-diagnostic:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    outputs:
-      record-sha256: ${{ steps.pack.outputs.record-sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version
           package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
-        with:
-          toolchain: '1.93.1'
-      # `check` validates coordinated versions, not milestone readiness. An RC
-      # with pending gates must be able to collect its dry-run evidence first.
-      - name: Check the seven source versions against the intended tag
-        run: node scripts/release-set.mjs check "$FORMA_PERFORMANCE_TARGET_TAG"
-      - run: bash scripts/install-deps.sh
-      - run: npm audit signatures
-      - run: npm run build
-      - name: Pack committed candidates and record ten-file restoration
-        id: pack
-        run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"
-      - name: Retain original candidate archives and restoration record
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: qualification-candidates
-          path: ${{ runner.temp }}/candidate artifacts
-          if-no-files-found: error
-          retention-days: 30
-
-  verify:
-    needs: pack
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      # Separate checkout: no workspace dist can replace a packed product.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
-        with:
-          toolchain: '1.93.1'
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: qualification-candidates
-          path: ${{ runner.temp }}/candidate artifacts
-          digest-mismatch: error
-      - name: Authenticate the original DS11 source, versions and Cargo lock
-        env:
-          RECORD_SHA256: ${{ needs.pack.outputs.record-sha256 }}
+      - name: Retain exact diagnostic delta and refuse unrelated changes
         run: |
+          mkdir "$RUNNER_TEMP/decoder-inputs"
+          git diff "$ORIGINAL_SOURCE" HEAD > "$RUNNER_TEMP/decoder-inputs/diagnostic.diff"
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
-          import { readFileSync } from 'node:fs';
-          import { join } from 'node:path';
-          import { validateCandidate } from './scripts/candidate-scaffold.mjs';
-          import { assertReleaseSet } from './scripts/release-set.mjs';
-          const dir = join(process.env.RUNNER_TEMP, 'candidate artifacts');
-          const set = validateCandidate(dir, process.env.RECORD_SHA256, process.env.GITHUB_SHA);
-          assert.equal(set.dryRun, true, 'qualification requires original dry-packed candidates');
-          assert.equal(set.run, process.env.GITHUB_RUN_ID, 'DS11 must come from this run');
-          assertReleaseSet(set.packages, process.env.FORMA_PERFORMANCE_TARGET_TAG);
-          assert.deepEqual(readFileSync(join(dir, 'Cargo.lock')), readFileSync('Cargo.lock'), 'packed Cargo lock differs from this checkout');
+          import {execFileSync} from 'node:child_process';
+          const allowed=new Set(['.github/workflows/packed-qualification.yml','scripts/release-performance-decoder.mjs','scripts/decoder-timing-diagnostic.mjs','scripts/decoder-timing-diagnostic.test.mjs','scripts/run-decoder-timing-diagnostic.mjs']);
+          const changed=execFileSync('git',['diff','--name-only',process.env.ORIGINAL_SOURCE,'HEAD'],{encoding:'utf8'}).trim().split('\n');
+          for(const path of changed)assert(allowed.has(path),'unreviewed diagnostic scope: '+path);
+          console.log({diagnosticOnly:true,releaseAcceptance:false,originalProductSource:process.env.ORIGINAL_SOURCE,diagnosticHarness:process.env.GITHUB_SHA,changed});
           NODE
-      - run: bash scripts/install-deps.sh
-      - run: cargo install cargo-deny --version 0.20.2 --locked
-      - run: bash scripts/check-advisories.sh
-      - run: npm audit signatures
-      - name: Install the locked three-engine runners
-        timeout-minutes: 5
-        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
-      # 44 minutes plus the existing owner's 15-second cleanup fits the 45-minute
-      # step. The verifier's separate G6/P17 <= 1800-second gate is unchanged.
-      - name: Whole packed P17 under Linux process ownership
-        timeout-minutes: 45
+      - name: Fetch the fixed original candidate and authenticate source and archive
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir "$RUNNER_TEMP/p17"
-          python3 scripts/release-owned-linux.py "$RUNNER_TEMP/p17-owned" 2640 -- node scripts/verify-release-set.mjs "$RUNNER_TEMP/candidate artifacts" "$RUNNER_TEMP/p17/p17.json"
-      - name: Retain all original P17 results and owned cleanup, including failures
+          gh api repos/getforma-dev/forma/actions/runs/39016966304 > "$RUNNER_TEMP/decoder-inputs/run.json"
+          gh api repos/getforma-dev/forma/actions/artifacts/12094879342 > "$RUNNER_TEMP/decoder-inputs/artifact.json"
+          gh api repos/getforma-dev/forma/actions/artifacts/12094879342/zip > "$RUNNER_TEMP/decoder-inputs/original.zip"
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'decoder-inputs'
+          a=json.loads((p/'artifact.json').read_text());r=json.loads((p/'run.json').read_text());b=(p/'original.zip').read_bytes()
+          expected='68d9db63d8e223a4df05d6d5f6c20e5b028a035e9e58e6794e6f2da03809b771'
+          assert r['id']==39016966304 and r['run_attempt']==1 and r['head_sha']==os.environ['ORIGINAL_SOURCE']
+          assert a['id']==12094879342 and a['name']=='qualification-candidates' and not a['expired']
+          assert a['workflow_run']['id']==r['id'] and a['workflow_run']['head_sha']==r['head_sha']
+          assert len(b)==a['size_in_bytes']==2852769 and a['digest']=='sha256:'+expected and hashlib.sha256(b).hexdigest()==expected
+          print('Original source/run/size/API+producer archive digest verified')
+          PY
+          python3 scripts/release-unpack.py zip "$RUNNER_TEMP/decoder-inputs/original.zip" "$RUNNER_TEMP/decoder-artifacts" 268435456
+      - name: Install the unchanged locked harness dependencies and finite controls
+        run: |
+          bash scripts/install-deps.sh
+          npm audit signatures
+          node --test --test-concurrency=2 scripts/decoder-timing-diagnostic.test.mjs scripts/release-performance-decoder.test.mjs
+      - name: Stage original packed libraries without a rebuild
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync,mkdirSync,readdirSync,existsSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {execFileSync} from 'node:child_process';
+          import {validateCandidate} from './scripts/candidate-scaffold.mjs';
+          import {assertReleaseSet} from './scripts/release-set.mjs';
+          import {stageFixtureNpm,assertResolvesInside} from './scripts/release-fixture-apps.mjs';
+          import {auditCandidateSignatures} from './scripts/audit-release-signatures.mjs';
+          const tmp=process.env.RUNNER_TEMP,dir=join(tmp,'decoder-artifacts'),project=join(tmp,'packed-decoder');
+          const set=validateCandidate(dir,'e94d1ebdf491b961e6c70b84dc5ef96fa0a8feff3e6b6259386eb2cd98596f21',process.env.ORIGINAL_SOURCE);
+          assert.equal(set.run,'39016966304');assert.equal(set.dryRun,true);assertReleaseSet(set.packages,'v3.0.0-beta.3');
+          assert.deepEqual(readFileSync(join(dir,'Cargo.lock')),readFileSync('Cargo.lock'));
+          assert.deepEqual(readFileSync('package-lock.json'),execFileSync('git',['show',process.env.ORIGINAL_SOURCE+':package-lock.json']));
+          assert.equal(process.version,set.node);assert.equal(execFileSync('npm',['--version'],{encoding:'utf8'}).trim(),set.npm);
+          for(const name of ['core','compiler','build','create-app'])assert(!existsSync('packages/'+name+'/dist'));
+          mkdirSync(project);const install=stageFixtureNpm(set.packages,dir,JSON.parse(readFileSync('package-lock.json')));
+          for(const [name,value]of [['package.json',install.manifest],['package-lock.json',install.lock]])writeFileSync(join(project,name),JSON.stringify(value)+'\n',{flag:'wx'});
+          const lock=readFileSync(join(project,'package-lock.json'));
+          execFileSync('npm',['ci','--ignore-scripts','--no-audit','--no-fund'],{cwd:project,stdio:'inherit'});
+          assert.deepEqual(readFileSync(join(project,'package-lock.json')),lock);console.log(assertResolvesInside(project));
+          for(const file of ['package.json','package-lock.json'])writeFileSync(join(tmp,'decoder-inputs','packed-decoder-'+file),readFileSync(join(project,file)),{flag:'wx'});
+          console.log(auditCandidateSignatures(project,set.packages,dir));
+          const files=(root,rel='')=>readdirSync(join(root,rel),{withFileTypes:true}).flatMap(e=>{assert(!e.isSymbolicLink());const p=join(rel,e.name);return e.isDirectory()?files(root,p):[p];}).sort();
+          for(const name of ['core','compiler','build']){
+            const p=set.packages.find(p=>p.name==='@getforma/'+name),original=join(tmp,'original-'+name),installed=join(project,'node_modules/@getforma',name);
+            execFileSync('python3',['scripts/release-unpack.py','tar',join(dir,p.file),original,'268435456']);
+            const from=join(original,'package','dist'),to=join(installed,'dist');assert.deepEqual(files(from),files(to));
+            for(const file of files(from))assert.deepEqual(readFileSync(join(from,file)),readFileSync(join(to,file)));
+          }
+          console.log('All seven archives authenticated; actual installed core/compiler/build bytes equal original archives. No product or compiler rebuild.');
+          NODE
+      - name: Install the locked Chromium runner
+        timeout-minutes: 5
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: One diagnostic-only decoder observation with both live controls
+        timeout-minutes: 11
+        run: python3 scripts/release-owned-linux.py "$RUNNER_TEMP/decoder-owned" 600 -- node scripts/run-decoder-timing-diagnostic.mjs "$RUNNER_TEMP/packed-decoder" "$RUNNER_TEMP/decoder-evidence"
+      - name: Retain original inputs, all observations and cleanup on every outcome
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: packed-qualification-p17
+          name: packed-decoder-timing-diagnostic
           path: |
-            ${{ runner.temp }}/p17/
-            ${{ runner.temp }}/p17-owned/
+            ${{ runner.temp }}/decoder-inputs/
+            ${{ runner.temp }}/decoder-evidence/
+            ${{ runner.temp }}/decoder-owned/
           if-no-files-found: error
           retention-days: 30
