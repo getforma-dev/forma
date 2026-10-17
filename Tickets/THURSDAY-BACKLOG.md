@@ -30,6 +30,12 @@ Beta.4 outer publication elapsed 2461.377 s missed its 1800 s target; P17 itself
 4. FORMA-192 / FORMA-147 and Appendix E consumer migrations remain excluded. No application repo edits.
 5. Exact combined-source 20-run R17 campaign and current CI/security acceptance remain pending; the six helper tests changed timed workload. Do not relabel e75 timings as 72179 measurements.
 
+## Saved final-version preparation
+
+After Steps 1–3 were committed and pushed, the canonical version tool prepared all seven packages, crate manifests, lockfiles and template seeds at **3.0.0** (21 files; version consistency check passed). This is preparation only, not qualified publication. No contract gate was falsely marked done. PR #112 remains unmerged because exact final-source review/CI and the release-validator policy implementation are outstanding. The v3 snapshot is also pushed to design-doc-factory branch `codex/forma-v3-quota-handoff` at `ec11ecc`; unrelated local factory commits were not pushed.
+
+Automatic Actions triggered by the final preservation push may finish unattended; no agent polling or additional campaigns are authorized.
+
 ## Concrete release blocker before final
 
 `check-release-qualification.mjs` invokes `readBurnInReference` and `verifyFinalBurnIn` for v3.0.0; RC invokes `readRcAudit`. `release-contracts.json` still has audit/final rows pending. Simply bumping versions and pushing v3.0.0 will fail trusted publication and consume an immutable tag. Green ordinary main CI alone does not satisfy those validators. A separately reviewed/tested implementation of the founder's post-release deferrals (including RC-less final qualification if intended), or completion of the original evidence chain, is required. Preserve actual statuses; do not weaken unrelated product, security, OIDC or tag protections.
@@ -48,7 +54,7 @@ node scripts/release-set.mjs version 3.0.0 && node scripts/release-set.mjs check
 ```
 3. Save and push the reviewed final preparation onto PR #112 (inspect the diff before staging):
 ```sh
-git diff --check && git diff --stat && git add -u && git commit -m 'chore(release): prepare 3.0.0 final' && git push origin HEAD:forma-3-rc1-preparation
+git diff --check && git diff --stat && git add -u && { git diff --cached --quiet || git commit -m 'chore(release): prepare 3.0.0 final'; } && git push origin HEAD:forma-3-rc1-preparation
 ```
 4. Once that exact PR head is green and independently reviewed, merge with a merge commit:
 ```sh

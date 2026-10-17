@@ -11,5 +11,10 @@
   "workers": "stopped/completed",
   "releaseDeferralImplemented": false,
   "handoff": "Tickets/THURSDAY-BACKLOG.md",
-  "instruction": "All older active/running fields are historical. Resume only on founder request."
+  "instruction": "All older active/running fields are historical. Resume only on founder request.",
+  "finalVersionPreparation": "3.0.0, 21 canonical files, consistency check passed; not merged",
+  "factoryRecordLocal": "11c9cfae26622d33b78dbc8d8330adb2bd72c2a4",
+  "factoryRecordRemoteBranch": "codex/forma-v3-quota-handoff",
+  "factoryRecordRemoteCommit": "ec11ecc",
+  "automaticCI": "May finish unattended; no polling or additional campaigns"
 }

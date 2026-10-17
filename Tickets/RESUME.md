@@ -5,7 +5,7 @@
 
 Beta.4 is published and verified on main be8beb7d. RC P17 completed 61/61 on e75eeaaa with all 40 mobile traces/observers clear. Mutation 249 killed + 3 equivalents, six SR14 probes, and 20/20 average-cost indexed runs passed with original source scope preserved. Reviewed fixes (including six helper tests and clock correction) pushed to PR112 as 72179d43. Independent source approval is saved; whole-release audit, current-source timed campaign and CI acceptance remain pending.
 
-Founder deferred the 3600-second soak to post-release Thursday and final audit sign-off to backlog. **Release validators still require their evidence: a version bump/tag alone cannot publish final.** No fabricated success or reference. Backlog contains exact guarded founder commands, implementation blocker, evidence locations and remaining work. No RC/final tag exists; main remains be8beb7d. v3 is a concise pre-final as-built snapshot, not proof of final publication.
+Founder deferred the 3600-second soak to post-release Thursday and final audit sign-off to backlog. **Release validators still require their evidence: a version bump/tag alone cannot publish final.** No fabricated success or reference. Backlog contains exact guarded founder commands, implementation blocker, evidence locations and remaining work. Final manifests/locks/template seeds are saved at 3.0.0 on PR112; version consistency passed, final-source review/CI and validator implementation pending. No RC/final tag exists; main remains be8beb7d. v3 is a concise pre-final as-built snapshot, not proof of final publication.
 
 All earlier START HERE sections below are historical. Do not restart workers or follow their superseded queue automatically. Hard stop before application migrations.
 <!-- codex-live-end -->
