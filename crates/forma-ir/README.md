@@ -98,7 +98,7 @@ If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server
 
 ## Security
 
-**FMIR is a trusted input.** This crate validates structure and bounds so that malformed IR cannot read out of bounds, panic, or abort the process — but it does not sanitise the IR's *content*. An `.ir` file chooses what markup your page contains. Only run IR produced by a compiler you trust.
+**FMIR is a trusted input.** This crate validates structure and bounds, returning errors for malformed structures. Those checks do not recover allocation failure or a panic compiled with `panic = "abort"`; the typed `forma-server` request boundary catches unwinding faults. Structural validation does not sanitise the IR's *content*: an `.ir` file chooses what markup your page contains. In 3.0, only admit modules from the application's own trusted build; there is no untrusted-module admission mechanism. See the [security policy](../../SECURITY.md).
 
 - All dynamic text and attribute values are HTML-escaped; tag and attribute names are validated against `[A-Za-z_:][-A-Za-z0-9_:.]*`
 - URL-bearing attributes are scheme-checked and `on*` handlers dropped, matching `@getforma/core` so SSR and CSR agree

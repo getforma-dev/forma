@@ -76,7 +76,7 @@ export async function measureActivation(url,kind,{disabled=false,longTask=false}
 export async function audit(url,{saveArtifacts,onFailure=()=>{},includeTrace=false}={}){
  const [{default:lighthouse},chromeLauncher,{chromium},{defaultSettings}]=await Promise.all([import('lighthouse'),import('chrome-launcher'),import('@playwright/test'),import('lighthouse/core/config/constants.js')]);
  assert.deepEqual({...MOBILE_PROFILE,throttling:{...defaultSettings.throttling},screenEmulation:{...defaultSettings.screenEmulation},emulatedUserAgent:defaultSettings.emulatedUserAgent},MOBILE_PROFILE,'installed Lighthouse preset differs from the pinned measurement contract');
- const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox'],logLevel:'error'});
+ const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox','--enable-automation'],logLevel:'error'});
  try{
   // Lighthouse visits its neutral page before clearing cache/storage and starting
   // the trace. A same-origin, inert fixture page creates the destination renderer

@@ -113,7 +113,7 @@ in development and production before writing to a DOM sink:
 | A string as `dangerouslySetInnerHTML`'s `__html` | `FORMA_E_RAW_INNER_HTML` | `{ __html: trustedHtml(markup) }` |
 | A string to `setHTMLUnsafe()` | `FORMA_E_RAW_SET_HTML` | `setHTMLUnsafe(el, trustedHtml(markup))` |
 | A string to `template()` or `templateMany()` | `FORMA_E_RAW_TEMPLATE` | `template(trustedHtml(markup))` |
-| A string to the runtime's `reconcile()` | `FORMA_E_RAW_RECONCILE` | `reconcile(container, trustedHtml(markup))` |
+| A string to `mountMarkup()` or its handle's `update()` | `FORMA_E_MOUNT_ARGS` | `mountMarkup(root, trustedHtml(markup), { tier: 'reviewed', grants: {} })` or `handle.update(trustedHtml(markup))` |
 | A string as a `srcdoc` value | `FORMA_E_RAW_SRCDOC` | `srcdoc: trustedHtml(markup)` |
 | `h('script')` | `FORMA_E_SCRIPT_ELEMENT` | A script in the page, or a module the build bundles |
 | `data-bind:srcdoc`, or `{item…}` in a list row's `srcdoc`, in the HTML runtime | `FORMA_E_RUNTIME_SRCDOC` | The frame built with `h()` and `trustedHtml(markup)` |
