@@ -93,8 +93,10 @@ run or API failure refuses the release. It does not silently wait forever;
 rerun after CI completes if the tag arrived first.
 
 The credential-free `engines` job also runs the reusable Chromium, Firefox and
-WebKit suite on the tagged commit. P17 depends on all three engines succeeding;
-both publishing jobs depend on P17, so an engine failure blocks publication.
+WebKit suite on the tagged commit. P17 starts after packing and may overlap the
+engine suite. Both publishing jobs and the record job directly require successful
+engines and P17, so either failure blocks every release write. This changes only
+job ordering; all verification and timing limits remain in force.
 
 ## Packed set and template locks
 
@@ -201,6 +203,13 @@ then uploads the JSON record; a missing record fails the job. G6's measurement s
 at GitHub's tag-triggered workflow `created_at` (including queue time) and ends after
 GitHub acknowledges the release write. Actions does not expose exact tag-push
 network ingestion latency; the recorded timing basis states this limitation.
+After that acknowledged write, if valid current-tag metadata is absent from the
+complete release inventory, the record writer permits at most three additional
+complete inventory reads, two seconds apart, within one 20-second deadline that
+includes requests and sleeps. Prior DS12 records are authenticated once; changed
+selected history, malformed or unreadable responses, drafts and contradictory
+metadata still fail immediately. The writer never invents an inventory entry or
+changes `published_at`. Ordinary preflight/history reads do not enable this wait.
 
 ## Current development integration
 

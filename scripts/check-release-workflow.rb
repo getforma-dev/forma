@@ -16,9 +16,9 @@ GATE_KEY = %r{\AFORMA-\d{3}( [A-Za-z0-9()./-]+)*\z}.freeze
 PUBLISH = { 'publish-crates' => 'crates', 'publish-npm' => 'npm' }.freeze
 VERIFY = 'bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"'
 NEEDS = {
-  'check' => [], 'engines' => ['check'], 'pack' => ['check'], 'verify' => %w[check pack engines],
-  'publish-crates' => %w[check pack verify], 'publish-npm' => %w[check pack verify publish-crates],
-  'record' => %w[check pack verify publish-crates publish-npm]
+  'check' => [], 'engines' => ['check'], 'pack' => ['check'], 'verify' => %w[check pack],
+  'publish-crates' => %w[check pack engines verify], 'publish-npm' => %w[check pack engines verify publish-crates],
+  'record' => %w[check pack engines verify publish-crates publish-npm]
 }.freeze
 ACTIONS = %w[actions/checkout actions/setup-node actions/download-artifact dtolnay/rust-toolchain rust-lang/crates-io-auth-action].freeze
 P17_RUN = "mkdir \"$RUNNER_TEMP/p17\"\nnode scripts/verify-release-set.mjs \"$RUNNER_TEMP/release\" \"$RUNNER_TEMP/p17/p17.json\"\n".freeze
@@ -220,9 +220,8 @@ if ARGV.include?('--self-test') && errors.empty?
     ['new ungated job', 'J1', ->(d) { d['jobs']['other'] = {} }],
     ['OIDC on pack', 'P2', ->(d) { d['jobs']['pack']['permissions']['id-token'] = 'write' }],
     ['global OIDC', 'P1', ->(d) { d['permissions'] = 'write-all' }],
-    ['missing P17 dependency', 'J2', ->(d) { d['jobs']['publish-npm']['needs'].delete('verify') }],
+    ['P17 drops packed-set dependency', 'J2', ->(d) { d['jobs']['verify']['needs'].delete('pack') }],
     ['missing engine job', 'J1', ->(d) { d['jobs'].delete('engines') }],
-    ['bypassed engine dependency', 'J2', ->(d) { d['jobs']['verify']['needs'].delete('engines') }],
     ['skipped engine suite', 'E2', ->(d) { d['jobs']['engines']['if'] = 'false' }],
     ['replaced engine suite', 'B1', ->(d) { d['jobs']['engines']['uses'] = './.github/workflows/ci.yml' }],
     ['credential passed to engines', 'B1', ->(d) { d['jobs']['engines']['secrets'] = 'inherit' }],
@@ -241,6 +240,11 @@ if ARGV.include?('--self-test') && errors.empty?
     ['missing support history check', 'K6', ->(d) { d['jobs']['check']['steps'].reject! { |s| s['run'] == 'node scripts/check-release-support.mjs' } }],
     ['no release record', 'K1', ->(d) { d['jobs']['record']['steps'].reject! { |s| s['run'] } }]
   ]
+  %w[publish-crates publish-npm record].each do |name|
+    %w[engines verify].each do |prerequisite|
+      seeds << ["#{name} drops #{prerequisite} dependency", 'J2', ->(d) { d['jobs'][name]['needs'].delete(prerequisite) }]
+    end
+  end
   ['if false; then CHECK; fi', 'exit 0\nCHECK', 'f() { CHECK; }', 'CHECK || true', '"set" +e\nCHECK'].each do |wrapper|
     seeds << ["hidden check: #{wrapper}", 'E4', lambda { |d| d['jobs']['publish-npm']['steps'].find { |s| s['run'] == VERIFY }['run'] = wrapper.gsub('CHECK', VERIFY).gsub('\\n', "\n") }]
   end
@@ -257,4 +261,4 @@ abort(errors.join("\n")) unless errors.empty?
 ready = MILESTONES.select do |name|
   MILESTONES[0..MILESTONES.index(name)].all? { |m| contracts['milestones'][m]['gates'].values.all? { |g| g['status'] == 'done' } }
 end
-puts "release workflow: tag → exact CI → locked pack + three engines → P17 → crates → npm → record; credential jobs constrained; milestones ready to publish: #{ready.empty? ? 'none' : ready.join(', ')}"
+puts "release workflow: tag → exact CI → (locked pack → P17) alongside three engines → crates → npm → record; both verification gates required before publication; credential jobs constrained; milestones ready to publish: #{ready.empty? ? 'none' : ready.join(', ')}"
