@@ -316,6 +316,8 @@ export function p3Report(base: ReportBase & { next: number }, run: PageRun, next
 
 export interface CheckOptions extends PlanOptions {
   readonly browser: Browser;
+  /** Whole-module browser workers; renderBoth remains serial by default. */
+  readonly moduleWorkers?: 1 | 2;
   /** Test seam (renderBoth): rewrites the served document before the browser parses it. */
   readonly alterServerHtml?: (html: string) => string;
   /** Test seam: P2's observer watches a detached element (the positive control must then fail). */
@@ -340,78 +342,113 @@ export function fallbackReport(plan: ModulePlan, server: Served, options: PlanOp
 
 export interface Timings { prepare: number; launch: number; server: number; browser: number }
 
-/** Run P1, P2 and P3 over the plans; the reports in corpus and state order (a module's P3 after its states). */
+/** Run P1, P2 and P3 over the plans; native rendering still happens once for the whole batch. */
 export async function check(plans: readonly ModulePlan[], options: CheckOptions, timings: Timings): Promise<Report[]> {
   let started = performance.now();
   const served = serve(plans, options);
   timings.server += performance.now() - started;
   started = performance.now();
-  const reports: Report[] = [];
-  const page = new ParityPage(options.browser, options.bootTimeout);
   try {
-    for (const plan of plans) {
-      const name = plan.entry.name;
-      if (plan.failure) {
-        reports.push(makeReport({ module: name, seed: options.seed, index: plan.indices[0] ?? 0, check: 'P1', verdict: 'error', error: plan.failure }, null));
-        continue;
-      }
-      const server = served.get(name)!;
-      const fallback = fallbackReport(plan, server, options);
-      if (fallback) reports.push(fallback);
-      const transition = plan.entry.transition !== undefined && plan.script !== null;
-      const count = plan.indices.length;
-      const bases = plan.indices.map((index, k) => ({
-        module: name, seed: options.seed, index, state: plan.states[k]!, serverPath: server.path, next: plan.indices[(k + 1) % count]!,
-        ...(server.bind.length ? { bind: server.bind } : {}),
-      }));
-      const runs: (PageRun | null)[] = [];
-      // After a module's first boot timeout its remaining states are errors at once, not one
-      // timeout each: reported, never skipped, and the run goes on to the next module.
-      let bootTimedOut: number | null = null;
-      for (let k = 0; k < count; k++) {
-        const { next: _next, ...base } = bases[k]!;
-        if (bootTimedOut !== null) {
-          const error = `not run: the module's boot did not finish at state ${bootTimedOut}`;
-          reports.push(makeReport({ ...base, check: 'P1', verdict: 'error', error }, null));
-          if (plan.script !== null) reports.push(makeReport({ ...base, check: 'P2', verdict: 'error', error }, null));
-          runs.push(null);
-          continue;
-        }
-        const document = server.documents[k];
-        if (!document || 'error' in document) {
-          reports.push(makeReport({ ...base, check: 'P1', verdict: 'error', error: document ? `server: ${document.error}` : 'server: no entry' }, null));
-          runs.push(null);
-          continue;
-        }
-        if ('refused' in document) {
-          reports.push(makeReport({ ...base, check: 'P1', verdict: 'server-refused', refusal: document.refused }, null));
-          runs.push(null);
-          continue;
-        }
-        const html = options.alterServerHtml ? options.alterServerHtml(document.html) : document.html;
-        const run = await page.run({ html, headers: document.headers }, { twin: plan.twin, entry: plan.script }, {
-          module: name, index: base.index, state: base.state, schema: plan.described.schema, props: plan.entry.page.props, entry: plan.script !== null,
-          ...(transition ? { next: plan.states[(k + 1) % count]! } : {}),
-          ...(options.observeDetached ? { observeDetached: true } : {}),
-        });
-        runs.push(run);
-        if (run.error?.startsWith('the boot did not finish')) bootTimedOut = base.index;
-        const p1 = p1Report({ ...base, html }, run);
-        reports.push(p1.verdict === 'equal' || !plan.diagnostics.length ? p1 : { ...p1, compiler: plan.diagnostics });
-        if (plan.script !== null) reports.push(p2Report(base, run));
-      }
-      if (transition) {
-        for (let k = 0; k < count; k++) {
-          const run = runs[k];
-          if (run) reports.push(p3Report(bases[k]!, run, runs[(k + 1) % count]?.served ?? null));
-        }
-      } else {
-        reports.push(makeReport({ module: name, seed: options.seed, index: plan.indices[0] ?? 0, check: 'P3', verdict: 'no-setter', serverPath: server.path }, null));
-      }
-    }
+    return await browse(plans, served, options);
   } finally {
-    await page.close();
+    timings.browser += performance.now() - started;
   }
-  timings.browser += performance.now() - started;
+}
+
+type ModulePage = Pick<ParityPage, 'run' | 'close'>;
+const describeFailure = (error: unknown) => error instanceof Error ? error.stack ?? error.message : String(error);
+
+/** Browser phase only: isolated whole modules, joined cleanup, reports in original corpus order. */
+export async function browse(
+  plans: readonly ModulePlan[], served: ReadonlyMap<string, Served>, options: CheckOptions,
+  // Internal control seam: exercise the real module loop without launching a browser or native renderer.
+  createPage: () => ModulePage = () => new ParityPage(options.browser, options.bootTimeout),
+): Promise<Report[]> {
+  const workers = options.moduleWorkers ?? 1;
+  if (workers !== 1 && workers !== 2) throw new Error('moduleWorkers must be 1 or 2');
+  const reports: Report[][] = new Array(plans.length);
+  let next = 0;
+  const worker = async () => {
+    const page = createPage();
+    const failures: unknown[] = [];
+    try {
+      while (next < plans.length) {
+        const index = next++;
+        reports[index] = await checkModule(plans[index]!, served, options, page);
+      }
+    } catch (error) {
+      failures.push(error);
+    } finally {
+      try { await page.close(); } catch (error) { failures.push(error); }
+    }
+    if (failures.length) throw new AggregateError(failures, `parity module worker failed:\n${failures.map(describeFailure).join('\n')}`);
+  };
+  const results = await Promise.allSettled(Array.from({ length: Math.min(workers, plans.length) }, worker));
+  const failures = results.filter(result => result.status === 'rejected').map(result => result.reason);
+  if (failures.length) throw new AggregateError(failures, `parity browser phase failed:\n${failures.map(describeFailure).join('\n')}`);
+  return reports.flat();
+}
+
+/** A module's states and P3 next-state comparisons stay sequential on one isolated page. */
+async function checkModule(plan: ModulePlan, served: ReadonlyMap<string, Served>, options: CheckOptions, page: ModulePage): Promise<Report[]> {
+  const reports: Report[] = [];
+  const name = plan.entry.name;
+  if (plan.failure) {
+    reports.push(makeReport({ module: name, seed: options.seed, index: plan.indices[0] ?? 0, check: 'P1', verdict: 'error', error: plan.failure }, null));
+    return reports;
+  }
+  const server = served.get(name)!;
+  const fallback = fallbackReport(plan, server, options);
+  if (fallback) reports.push(fallback);
+  const transition = plan.entry.transition !== undefined && plan.script !== null;
+  const count = plan.indices.length;
+  const bases = plan.indices.map((index, k) => ({
+    module: name, seed: options.seed, index, state: plan.states[k]!, serverPath: server.path, next: plan.indices[(k + 1) % count]!,
+    ...(server.bind.length ? { bind: server.bind } : {}),
+  }));
+  const runs: (PageRun | null)[] = [];
+  // After a module's first boot timeout its remaining states are errors at once, not one
+  // timeout each: reported, never skipped, and the run goes on to the next module.
+  let bootTimedOut: number | null = null;
+  for (let k = 0; k < count; k++) {
+    const { next: _next, ...base } = bases[k]!;
+    if (bootTimedOut !== null) {
+      const error = `not run: the module's boot did not finish at state ${bootTimedOut}`;
+      reports.push(makeReport({ ...base, check: 'P1', verdict: 'error', error }, null));
+      if (plan.script !== null) reports.push(makeReport({ ...base, check: 'P2', verdict: 'error', error }, null));
+      runs.push(null);
+      continue;
+    }
+    const document = server.documents[k];
+    if (!document || 'error' in document) {
+      reports.push(makeReport({ ...base, check: 'P1', verdict: 'error', error: document ? `server: ${document.error}` : 'server: no entry' }, null));
+      runs.push(null);
+      continue;
+    }
+    if ('refused' in document) {
+      reports.push(makeReport({ ...base, check: 'P1', verdict: 'server-refused', refusal: document.refused }, null));
+      runs.push(null);
+      continue;
+    }
+    const html = options.alterServerHtml ? options.alterServerHtml(document.html) : document.html;
+    const run = await page.run({ html, headers: document.headers }, { twin: plan.twin, entry: plan.script }, {
+      module: name, index: base.index, state: base.state, schema: plan.described.schema, props: plan.entry.page.props, entry: plan.script !== null,
+      ...(transition ? { next: plan.states[(k + 1) % count]! } : {}),
+      ...(options.observeDetached ? { observeDetached: true } : {}),
+    });
+    runs.push(run);
+    if (run.error?.startsWith('the boot did not finish')) bootTimedOut = base.index;
+    const p1 = p1Report({ ...base, html }, run);
+    reports.push(p1.verdict === 'equal' || !plan.diagnostics.length ? p1 : { ...p1, compiler: plan.diagnostics });
+    if (plan.script !== null) reports.push(p2Report(base, run));
+  }
+  if (transition) {
+    for (let k = 0; k < count; k++) {
+      const run = runs[k];
+      if (run) reports.push(p3Report(bases[k]!, run, runs[(k + 1) % count]?.served ?? null));
+    }
+  } else {
+    reports.push(makeReport({ module: name, seed: options.seed, index: plan.indices[0] ?? 0, check: 'P3', verdict: 'no-setter', serverPath: server.path }, null));
+  }
   return reports;
 }
