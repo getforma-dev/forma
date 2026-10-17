@@ -57,17 +57,34 @@ pub fn finalize(pages: &Pages) {
     });
 }
 
-/// The build's own files, content-hashed and immutable, plus a favicon answer.
+/// The build's own files, content-hashed and immutable, plus measurement setup.
 pub fn with_assets<A: Embed + 'static>(router: Router) -> Router {
     forma_server::sw::configure(forma_server::sw::ServiceWorker::off())
         .expect("configured once, before the first page");
     router
+        .route("/__forma_performance_blank", get(performance_blank))
         .route("/favicon.ico", get(|| async { StatusCode::NO_CONTENT }))
         .route("/sw.js", get(forma_server::sw::serve_sw::<A>))
         .route(
             "/_assets/{*filename}",
             get(forma_server::assets::serve_asset::<A>),
         )
+}
+
+// Lighthouse's neutral page precedes its cache/storage reset and trace. It must
+// initialize only a same-origin renderer, never any application code or assets.
+async fn performance_blank() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "text/html; charset=utf-8"),
+            (header::CACHE_CONTROL, "no-store"),
+            (
+                header::CONTENT_SECURITY_POLICY,
+                "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+            ),
+        ],
+        "<!doctype html><title>Forma measurement setup</title>",
+    )
 }
 
 /// A rendered page as the response, with the walker's own counts in a header the
@@ -147,4 +164,31 @@ pub async fn instance() -> impl IntoResponse {
         ],
         "{}",
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn measurement_setup_is_inert_and_uncacheable() {
+        let response = performance_blank().await.into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(
+            response.headers()[header::CONTENT_TYPE],
+            "text/html; charset=utf-8"
+        );
+        assert_eq!(
+            response.headers()[header::CONTENT_SECURITY_POLICY],
+            "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+        );
+        let body = axum::body::to_bytes(response.into_body(), 1024)
+            .await
+            .expect("bounded setup body");
+        assert_eq!(
+            body.as_ref(),
+            b"<!doctype html><title>Forma measurement setup</title>"
+        );
+    }
 }

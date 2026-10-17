@@ -115,6 +115,7 @@ bash e2e/skew/build.sh
 step "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)"
 cargo fmt --manifest-path e2e/fixtures/apps/Cargo.toml --check
 cargo clippy --locked --manifest-path e2e/fixtures/apps/Cargo.toml --all-targets -- -D warnings
+cargo test --locked --manifest-path e2e/fixtures/apps/Cargo.toml --lib measurement_setup_is_inert_and_uncacheable
 step "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
 npm run test:browser -w packages/build
 node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.test.mjs
