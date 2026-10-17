@@ -4,7 +4,7 @@
 // in indexed-products.spec.ts; calibration never examines a relative result.
 export async function measureIndexedPublicSet() {
   // Diagnostic emission is synchronous and does not reorder operations.
-  // Node retains each completed row before its between-pair task opportunity.
+  // Emit each completed row before requesting its between-pair task opportunity.
   const progress = (row: object) => console.debug('[forma:indexed-progress] ' + JSON.stringify(row));
   progress({ phase: 'warmup', operationsPerOwner: 5000 });
   const handles = (window as any).__indexed;
