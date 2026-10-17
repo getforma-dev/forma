@@ -24,7 +24,7 @@ afterEach(() => {
 
 function refuseEmptyClass(beforeThrow: () => void = () => {}): DOMException {
   const error = new DOMException('The token provided must not be empty.', 'SyntaxError');
-  const prototype = Object.getPrototypeOf(document.createElement('p').classList);
+  const prototype = Object.getPrototypeOf(document.createElement('p').classList) as DOMTokenList;
   const toggle = prototype.toggle;
   vi.spyOn(prototype, 'toggle').mockImplementation(function(this: DOMTokenList, token: string, force?: boolean) {
     if (token === '') {
@@ -121,7 +121,7 @@ it('disposes successful and partially bound list rows when a later row refuses',
   vi.spyOn(reactive, 'createSignal').mockImplementation((...args) => {
     const pair = createSignal(...args); state.push(pair); return pair;
   });
-  const prototype = Object.getPrototypeOf(document.createElement('p').classList);
+  const prototype = Object.getPrototypeOf(document.createElement('p').classList) as DOMTokenList;
   const toggle = prototype.toggle;
   const error = new DOMException('row DOM write refused', 'SyntaxError');
   vi.spyOn(prototype, 'toggle').mockImplementation(function(this: DOMTokenList, token: string, force?: boolean) {
