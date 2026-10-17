@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Actual Linux process controls; no browser, timeout retries, or workload credit."""
 import importlib.util
+import errno
 import json
 import pathlib
 import os
@@ -11,10 +12,25 @@ import tempfile
 import time
 import textwrap
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('owned', pathlib.Path(__file__).with_name('release-owned-linux.py'))
 owned = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(owned)
+
+class ProcReads(unittest.TestCase):
+    def test_disappearing_entries_are_absent(self):
+        for error in (FileNotFoundError(errno.ENOENT,'absent entry'),ProcessLookupError(errno.ESRCH,'process reaped during read')):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(pathlib.Path,'read_text',side_effect=error):
+                    self.assertIsNone(owned.status(123))
+    def test_other_read_errors_are_not_hidden(self):
+        for error in (PermissionError(errno.EACCES,'denied entry'),OSError(errno.EIO,'failed read')):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(pathlib.Path,'read_text',side_effect=error):
+                    with self.assertRaises(type(error)) as raised:
+                        owned.status(123)
+                    self.assertIs(raised.exception,error)
 
 @unittest.skipUnless(sys.platform == 'linux', 'actual Linux subreaper controls run in Linux CI')
 class Ownership(unittest.TestCase):
@@ -48,7 +64,7 @@ class Ownership(unittest.TestCase):
             rows=json.loads(subprocess.check_output([sys.executable,'-c',{intermediate!r}],text=True))
             def remains(row):
                 try: stat=pathlib.Path(f'/proc/{{row[0]}}/stat').read_text()
-                except FileNotFoundError: return False
+                except (FileNotFoundError,ProcessLookupError): return False
                 return stat[stat.rfind(')')+2:].split()[19] == row[1]
             deadline=time.monotonic()+3
             while any(map(remains,rows)) and time.monotonic()<deadline: time.sleep(.01)

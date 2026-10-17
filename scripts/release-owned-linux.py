@@ -19,7 +19,7 @@ import time
 def status(pid):
     try:
         data = pathlib.Path(f'/proc/{pid}/stat').read_text()
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
         return None
     fields = data[data.rfind(')') + 2:].split()
     return {'pid': pid, 'ppid': int(fields[1]), 'state': fields[0], 'start': int(fields[19])}
