@@ -24,10 +24,10 @@ export const MOBILE_PROFILE=Object.freeze({
   "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36"
 });
 
-// Strict startup qualification; v4 additionally proves parser stylesheet and
-// isolated SVG-image lifecycle work before application execution. Failed
-// evidence remain historical. A fresh full campaign is still required.
+// Strict startup qualification; v5 proves native navigation lifecycle origin
+// without a duration heuristic. Application/unknown task limits are unchanged;
+// historical failures remain failed and a fresh full campaign is required.
 export const MOBILE_STARTUP_POLICY = Object.freeze({
- id:'N3-startup-strict50-v4',targetMs:50,maxTaskMs:50,
+ id:'N3-startup-strict50-v5',targetMs:50,maxTaskMs:50,
  runsPerRoute:20,responseAfterPaintMs:500,p95TbtMs:200,
 });

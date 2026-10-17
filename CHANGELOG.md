@@ -1,13 +1,20 @@
 # Changelog
 
-## [3.0.0-beta.2] — qualification pending
+## [3.0.0-beta.3] — qualification pending
+
+- Coordinate all seven packages and both template source seeds for the next beta verification. Beta.1 and beta.2 tags remain immutable and unpublished.
+- Retain failed Lighthouse reports and traces before refusing P17. Failed captures never become timing samples and are not automatically retried.
+- Determine native navigation lifecycle origin from the existing complete trace proof, without the internal 1 ms event-duration heuristic. Preserve the 50 ms application/unknown and independent-observer limits, every raw task and the requirement for a fresh twenty-run campaign per route.
+- Browser/P17 qualification and trusted publication remain pending.
+
+## [3.0.0-beta.2] — verification failed; unpublished
 
 - Refuse oversized default sorts from their existing length-only cost bound before scanning elements. Preserve the 50 ms SR33 limit and all admitted-sort charges.
 - Coordinate all seven packages and both template source seeds at beta.2. The immutable beta.1 tag failed its Firefox SR33 timing gate before any package publication; its original evidence remains retained.
 - Return typed errors from the canonical asset, manifest and nonce helpers. Callers of `assets::asset`, `assets::load_manifest`, `CspNonce::generate` and `generate_csp_nonce` must now propagate or handle their `Result`; the existing `try_*` aliases remain fallible.
 - Dispose registered resources when component setup or initial explicit runtime mounting fails, including retained listeners, effects, permitted requests and queued list-row enter animations. Preserve the original setup error and successful ownership behavior; already written DOM is not rolled back.
 - Allow the first published beta to establish the performance baseline from the authenticated latest alpha record even when an earlier beta tag never published. Published beta records cannot fall back to alpha; RC/final still require comparable performance evidence.
-- Tagged browser/P17 qualification and trusted publication remain pending.
+- Tagged browser suites passed. P17 stopped at Lighthouse `NO_NAVSTART` on login measurement 9; the partial evidence also retained a 66.737 ms document-navigation task counted by the then-current attribution guard. Publishing was skipped. The immutable tag and failed report remain unchanged.
 
 ## Unreleased — typed keyed row product coverage (FORMA-181 D)
 
