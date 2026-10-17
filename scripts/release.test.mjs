@@ -1,4 +1,5 @@
 import test from 'node:test';
+import './module-trust-policy.test.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
