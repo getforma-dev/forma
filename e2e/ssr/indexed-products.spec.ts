@@ -5,6 +5,7 @@ import { arch, cpus, platform, release } from 'node:os';
 import { SSR_ORIGIN } from './origin';
 import { measureIndexedPublicSet } from './indexed-timing';
 import { createIndexedProgressWriter } from './indexed-progress.mjs';
+import { assertIndexedPublicSetTiming, indexedRelativeMetric } from './indexed-timing-acceptance.mjs';
 
 test.use({ baseURL: SSR_ORIGIN });
 test.setTimeout(60_000);
@@ -107,7 +108,7 @@ test('indexed products: typed rows adopt without writes; set touches only one ro
   expect(errors).toEqual([]); expect(await page.evaluate(() => (window as any).__indexedErrors)).toEqual([]);
 });
 
-test('indexed products: complete public set in 2000 rows stays within a frame and within 10% of 200 rows', async ({ page }, info) => {
+test('indexed products: complete public set in 2000 rows has amortized cost within 10% of 200 rows and sampled frame guards', async ({ page }, info) => {
   // A default 1ms clock requests 512ms batches: 202 edit batches alone are
   // about 103s at calibration speed, before power-of-two overshoot and no-ops.
   // This bounds collection only; the 10% and 16ms operation limits stay below.
@@ -134,16 +135,10 @@ test('indexed products: complete public set in 2000 rows stays within a frame an
   }
   const evidence = info.outputPath('indexed-public-set.json');
   mkdirSync(dirname(evidence), { recursive: true });
-  writeFileSync(evidence, JSON.stringify({ ...report, machine: { platform: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length }, engine: info.project.name }, null, 2) + '\n');
+  writeFileSync(evidence, JSON.stringify({ ...report, relativeMetric: indexedRelativeMetric, machine: { platform: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length }, engine: info.project.name }, null, 2) + '\n');
   await info.attach('indexed-public-set.json', { path: evidence, contentType: 'application/json' });
   if (progressError) throw progressError;
-  expect(report.clock.resolved, 'clock resolution is insufficient at the bounded maximum batch; no timing acceptance is possible').toBe(true);
-  expect(report.rounds).toBe(101);
-  expect(report.rows).toEqual([200, 2000]); expect(report.labels).toEqual(['Timing B', 'Timing B']);
-  expect(report.summary.small.median).toBeGreaterThan(0);
-  expect(report.maximumSingle).toBeLessThan(16); expect(report.summary.large.p95).toBeLessThan(16);
-  expect(report.summary.large.median).toBeLessThanOrEqual(report.summary.small.median * 1.1);
-  expect(report.summary.large.p95).toBeLessThanOrEqual(report.summary.small.p95 * 1.1);
+  console.log('[forma:indexed-scaling]', JSON.stringify(assertIndexedPublicSetTiming(report)));
   expect(errors).toEqual([]); expect(await page.evaluate(() => (window as any).__indexedErrors)).toEqual([]);
 });
 

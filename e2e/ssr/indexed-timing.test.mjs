@@ -6,12 +6,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { measureIndexedPublicSet } from './indexed-timing.ts';
 import { createIndexedProgressWriter } from './indexed-progress.mjs';
+import { assertIndexedPublicSetTiming } from './indexed-timing-acceptance.mjs';
 
 // Run the exact serialized browser collector. The synthetic public operation
 // advances a quantized clock by a known cost, retaining identity no-ops; no
 // real browser time or product performance is inferred from these controls.
-async function collect({ largeFactor = 1, singleCost = .02, resolution = .1, underresolved = false, tooFast = false, messages = [], failAfterPairs = false, pauseCost = 0 } = {}) {
-  let elapsed = 0, clockCalls = 0, pausedElapsed = 0, lastProgress;
+async function collect({ largeFactor = 1, largeRoundFactor = () => 1, singleCost = .02, resolution = .1, underresolved = false, tooFast = false, messages = [], failAfterPairs = false, pauseCost = 0 } = {}) {
+  let elapsed = 0, clockCalls = 0, pausedElapsed = 0, lastProgress, pairedRound;
   const pauses = [];
   let failed = false, pausePending = false;
   const counts = { small: 0, large: 0 }, current = {}, intervals = [];
@@ -22,7 +23,8 @@ async function collect({ largeFactor = 1, singleCost = .02, resolution = .1, und
     assert.equal(key, 'row-0');
     assert.equal(value.id, 'row-0');
     counts[name]++;
-    const cost = current[name] === value ? .001 : singleCost * (name === 'large' ? largeFactor : 1);
+    const roundFactor = pairedRound === undefined ? 1 : largeRoundFactor(pairedRound);
+    const cost = current[name] === value ? .001 : singleCost * (name === 'large' ? largeFactor * roundFactor : 1);
     elapsed += tooFast ? 0 : cost;
     current[name] = value;
     // Keep only a count and endpoints per interval, not every operation.
@@ -36,6 +38,9 @@ async function collect({ largeFactor = 1, singleCost = .02, resolution = .1, und
       messages.push(text);
       const row = JSON.parse(text.slice('[forma:indexed-progress] '.length));
       lastProgress = row;
+      if (row.phase === 'paired') pairedRound = 0;
+      if (row.phase === 'paired-row') pairedRound = row.round + 1;
+      if (row.phase === 'noop') pairedRound = undefined;
       if (failAfterPairs && row.phase === 'paired-row' && row.round === 1) failed = true;
     } },
     setTimeout(callback, delay) {
@@ -91,6 +96,11 @@ test('fixed calibration resolves >=512 ticks and 32 ms before all 101 alternatin
   assert.ok(r.summary.large.median <= r.summary.small.median * 1.1);
   assert.ok(r.summary.large.p95 <= r.summary.small.p95 * 1.1);
   assert.ok(r.maximumSingle < 16);
+  const scaling = assertIndexedPublicSetTiming(r);
+  for (const name of ['small', 'large']) {
+    const totalElapsed = r.samples[name].reduce((sum, value) => sum + value * r.batch, 0);
+    assert.equal(scaling[`${name}MeanMs`], totalElapsed / (101 * r.batch));
+  }
 });
 
 test('exactly 202 async task opportunities follow complete pairs and their synthetic clock cost stays outside every measurement', async () => {
@@ -113,12 +123,13 @@ test('exactly 202 async task opportunities follow complete pairs and their synth
   assert.ok(Math.abs(r.maximumSingle - baseline.report.maximumSingle) < 1e-8);
 });
 
-test('synthetic 20% per-operation large-case cost remains outside both unchanged 10% constraints', async () => {
+test('synthetic 20% per-operation large-case cost fails the actual 10% amortized acceptance seam', async () => {
   const { report: r } = await collect({ largeFactor: 1.2 });
   assert.equal(r.clock.resolved, true);
   assert.equal(r.rounds, 101);
   assert.ok(r.summary.large.median > r.summary.small.median * 1.1);
   assert.ok(r.summary.large.p95 > r.summary.small.p95 * 1.1);
+  assert.throws(() => assertIndexedPublicSetTiming(r), /exceeds 10% scaling/);
 });
 
 test('synthetic linear 200→2000 cost remains rejected with one calibrated batch', async () => {
@@ -128,6 +139,7 @@ test('synthetic linear 200→2000 cost remains rejected with one calibrated batc
   assert.equal(r.samples.large.length, 101);
   assert.ok(r.summary.large.median > r.summary.small.median * 9);
   assert.ok(r.summary.large.p95 > r.summary.small.p95 * 9);
+  assert.throws(() => assertIndexedPublicSetTiming(r), /exceeds 10% scaling/);
 });
 
 test('synthetic 17 ms public-operation cost exceeds the separate 16 ms constraint', async () => {
@@ -135,6 +147,38 @@ test('synthetic 17 ms public-operation cost exceeds the separate 16 ms constrain
   assert.equal(r.clock.resolved, true);
   assert.ok(r.maximumSingle >= 17);
   assert.ok(r.summary.large.p95 >= 17);
+  assert.throws(() => assertIndexedPublicSetTiming(r), /sampled single public set must stay below 16 ms/);
+});
+
+test('explicit tradeoff: six doubled-cost rounds fail the old marginal p95 ratio but pass the all-cost mean', async t => {
+  const doubled = new Set([0, 17, 34, 51, 68, 85]);
+  const { report: r } = await collect({ largeRoundFactor: round => doubled.has(round) ? 2 : 1 });
+  const original = JSON.stringify(r);
+  assert.equal(r.samples.large.filter((value, i) => value > r.samples.small[i] * 1.5).length, 6);
+  assert.ok(r.summary.large.p95 > r.summary.small.p95 * 1.1, 'the old p95 oracle would reject these real cost tails');
+  const scaling = assertIndexedPublicSetTiming(r);
+  assert.ok(Math.abs(scaling.ratio - 107 / 101) < .001);
+  assert.equal(JSON.stringify(r), original, 'acceptance cannot trim or rewrite the retained raw report');
+  t.diagnostic(JSON.stringify({ synthetic: true, oldP95Ratio: r.summary.large.p95 / r.summary.small.p95, ...scaling }));
+});
+
+test('all costs remain: one twentyfold round fails the mean despite passing both old marginal relative gates', async t => {
+  const { report: r } = await collect({ largeRoundFactor: round => round === 50 ? 20 : 1 });
+  assert.ok(r.summary.large.median <= r.summary.small.median * 1.1);
+  assert.ok(r.summary.large.p95 <= r.summary.small.p95 * 1.1);
+  assert.equal(r.samples.large.filter((value, i) => value > r.samples.small[i] * 10).length, 1);
+  assert.throws(() => assertIndexedPublicSetTiming(r), /exceeds 10% scaling/);
+  t.diagnostic(JSON.stringify({ synthetic: true, oldP95Ratio: r.summary.large.p95 / r.summary.small.p95, proposedMeanRatio: r.samples.large.reduce((a, b) => a + b) / r.samples.small.reduce((a, b) => a + b) }));
+});
+
+test('the actual acceptance seam rejects missing and nonfinite costs instead of ignoring them', async () => {
+  const { report: r } = await collect();
+  for (const invalid of [NaN, Infinity, -1]) {
+    const changed = structuredClone(r); changed.samples.large[100] = invalid;
+    assert.throws(() => assertIndexedPublicSetTiming(changed), /finite and nonnegative/);
+  }
+  r.samples.large.pop();
+  assert.throws(() => assertIndexedPublicSetTiming(r), /every edit batch must contribute/);
 });
 
 test('insufficient clock observations retain calibration but produce no acceptance samples', async () => {
@@ -145,6 +189,7 @@ test('insufficient clock observations retain calibration but produce no acceptan
   assert.ok(r.clock.calibration.length > 0);
   assert.equal(r.rounds, 0);
   assert.deepEqual(r.samples, { small: [], large: [] });
+  assert.throws(() => assertIndexedPublicSetTiming(r), /clock resolution is insufficient/);
 });
 
 test('maximum batch exhaustion retains the bounded attempt and does not retry unresolved sampling', async () => {
@@ -160,6 +205,7 @@ test('maximum batch exhaustion retains the bounded attempt and does not retry un
   assert.equal(progress.filter(row => row.phase === 'calibration').length, 13);
   assert.equal(progress.filter(row => row.phase === 'paired-row' || row.phase === 'noop-row').length, 0);
   assert.deepEqual(progress.at(-1), { phase: 'complete', rounds: 0, batch: 1_048_576, resolved: false });
+  assert.throws(() => assertIndexedPublicSetTiming(r), /clock resolution is insufficient/);
 });
 
 test('a synthetic 1ms clock retains512ms calibration, all101 original pairs/no-ops and unchanged public work', async () => {
