@@ -113,10 +113,10 @@ Supporting hosted history is CI
 [38973465595](https://github.com/getforma-dev/forma/actions/runs/38973465595)
 at `5458180e` and all five engine/parity jobs in
 [38971435766](https://github.com/getforma-dev/forma/actions/runs/38971435766)
-at `3e6a34a3`. They are historical results for unchanged relevant paths, not
-claims of exact-current CI. The intervening public sanitizer fix has its own
-failing-before tests, passing focused/public-bundle checks and current packed
-acceptance. The a59 Node runs passed product tests but failed the stale
+at `3e6a34a3`. They provide historical support, not exact-current CI coverage.
+Intervening activation and public sanitizer changes have focused browser or
+public-bundle checks and current packed acceptance; the sanitizer fix also has
+failing-before tests. The a59 Node runs passed product tests but failed the stale
 documented test count; that one-line count is corrected. Fresh normal CI on the
 closure head remains a merge requirement and covers the complete integration.
 
