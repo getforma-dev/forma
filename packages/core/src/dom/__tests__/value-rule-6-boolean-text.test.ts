@@ -32,7 +32,7 @@ describe('rule 6 vectors: the String(flag) near miss and the idiom', () => {
 
   it.each(booleans.nearMissText)('$id: a served range holding the word adopts String(flag) without a write', async ({ value, expected }) => {
     const doc = document.implementation.createHTMLDocument();
-    expect(await adoptServed(servedRange(doc, expected), () => h('p', null, String(value)))).toEqual(WITHOUT_WRITE);
+    await expect(adoptServed(servedRange(doc, expected), () => h('p', null, String(value)))).resolves.toEqual(WITHOUT_WRITE);
   });
 
   it.each(booleans.idiom)('$id: the mixed idiom writes nothing for its boolean and the string otherwise; its served range adopts without a write', async ({ ready, expected }) => {
@@ -45,12 +45,12 @@ describe('rule 6 vectors: the String(flag) near miss and the idiom', () => {
     const doc = document.implementation.createHTMLDocument();
     const host = servedRange(doc, expected);
     const [flag, setFlag] = createSignal(ready);
-    expect(await adoptServed(host, () => h('p', null, () => flag() && 'Go'), text => {
+    await expect(adoptServed(host, () => h('p', null, () => flag() && 'Go'), text => {
       setFlag(!ready);
       expect(host.textContent!.replace(/\u200B/g, '')).toBe(ready ? '' : 'Go');
       setFlag(ready);
       expect(host.childNodes[1]).toBe(text);
       expect(text.data.replace(/\u200B/g, '')).toBe(expected);
-    })).toEqual(WITHOUT_WRITE);
+    })).resolves.toEqual(WITHOUT_WRITE);
   });
 });

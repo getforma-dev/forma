@@ -56,6 +56,13 @@ function mountOn(root: Element, markup: string | TrustedHtml, options: MountOpti
   return handle;
 }
 
+/** Cleaned unreviewed markup must still mount successfully. */
+function mountSuccessfully(root: Element, markup: string | TrustedHtml, options: MountOptions): MountHandle {
+  let handle!: MountHandle;
+  expect(() => { handle = mountOn(root, markup, options); }).not.toThrow();
+  return handle;
+}
+
 const text = (id: string): string | null => document.getElementById(id)!.textContent;
 const click = (id: string): void => { (document.getElementById(id) as HTMLElement).click(); };
 const denials = (): Detail[] => events.filter((e) => e.kind === 'grant-denied');
@@ -883,7 +890,7 @@ describe('tiers and configuration', () => {
       `<link rel="preconnect" data-bind:href="h"><link rel="stylesheet" href="/x.css">` +
       `<template><link rel="prefetch" href="http://127.0.0.1:3900/nested"></template>` +
       `<p id="kept" data-text="{'kept'}">-</p></div>`;
-    const handle = mountOn(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
+    const handle = mountSuccessfully(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
     await settle();
     expect(text('kept')).toBe('kept');
     expect(root.querySelectorAll('link')).toHaveLength(0);
@@ -929,7 +936,7 @@ describe('tiers and configuration', () => {
     const payload = (p: string): string =>
       `<link rel="icon" href="/decoy"><form><math><mtext></form><form><mglyph><style></math>` +
       `<link rel="preconnect" href="http://127.0.0.1:3900/${p}"></style></mglyph></form></mtext></math></form><p id="p">${p}</p>`;
-    const handle = mountOn(root, runtime.trustedHtml(payload('first')), { tier: 'unreviewed' });
+    const handle = mountSuccessfully(root, runtime.trustedHtml(payload('first')), { tier: 'unreviewed' });
     expect(text('p')).toBe('first');
     expect(root.querySelectorAll('link')).toHaveLength(0);
     expect(toRoot()).toBe(0);

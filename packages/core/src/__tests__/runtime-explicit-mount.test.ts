@@ -87,7 +87,9 @@ describe('FORMA-108: every binding has a named tier and explicit authority', () 
     vi.stubGlobal('origin', 'null');
     for (const name of ['first', 'second']) {
       const root = document.createElement('div'); document.body.append(root);
-      handles.push(runtime.mountMarkup(root, runtime.trustedHtml('<link rel="stylesheet" href="/blocked.css">'), { tier: 'unreviewed', config: { name, diagnostics: false } }));
+      expect(() => {
+        handles.push(runtime.mountMarkup(root, runtime.trustedHtml('<link rel="stylesheet" href="/blocked.css">'), { tier: 'unreviewed', config: { name, diagnostics: false } }));
+      }).not.toThrow();
       expect(root.querySelector('link')).toBeNull();
     }
     expect(runtime.getDiagnostics().map(({ code, mount, tier, count }) => ({ code, mount, tier, count }))).toEqual([
