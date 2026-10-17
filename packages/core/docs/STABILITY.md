@@ -22,7 +22,7 @@ package shows it as `@deprecated` in its types. See
 | `createStore` (deep reactivity) | **Stable** | Membership changes (`Object.keys`, spread, `for…in`) are not reactive by design |
 | Components (`defineComponent`, lifecycle) | **Stable** | |
 | Context (`createContext`, `provide`, `inject`) | **Stable** | |
-| Islands (`activateIslands`, disposal, triggers) | **3.0 beta candidate** | 156 tests across 12 dedicated files †; strict activation, later materialization, size and packed acceptance are qualified by the [beta record](../../../docs/release/BETA-QUALIFICATION.md). |
+| Islands (`activateIslands`, disposal, triggers) | **3.0 beta candidate** | 156 tests across 12 dedicated files †; accepted beta-source evidence for strict activation, later materialization, size and packed acceptance is in the [beta record](../../../docs/release/BETA-QUALIFICATION.md). Each later packed set requires fresh release qualification. |
 | `createHistory` (undo/redo) | **Stable** | Takes a `[get, set]` tuple; returns a controls object, not a tuple |
 | `createReducer` | **Stable** | |
 | `createResource` / `createSuspense` | **Stable** | Abortable; the Suspense boundary is captured at resource creation |
