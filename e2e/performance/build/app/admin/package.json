@@ -1,0 +1,9 @@
+{
+  "name": "forma-n7-a9-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:ssr": "node build.mjs --ssr --strict",
+    "dev:ssr": "node build.mjs --ssr --watch --strict"
+  }
+}

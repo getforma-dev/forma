@@ -215,6 +215,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "forma-n7-a9"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "forma-ir",
+ "forma-server",
+ "rust-embed",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "forma-n7-dependencies"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "forma-ir",
+ "forma-server",
+ "rust-embed",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "forma-server"
 version = "3.0.0-rc.1"
 dependencies = [
