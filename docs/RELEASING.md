@@ -203,6 +203,13 @@ then uploads the JSON record; a missing record fails the job. G6's measurement s
 at GitHub's tag-triggered workflow `created_at` (including queue time) and ends after
 GitHub acknowledges the release write. Actions does not expose exact tag-push
 network ingestion latency; the recorded timing basis states this limitation.
+After that acknowledged write, if valid current-tag metadata is absent from the
+complete release inventory, the record writer permits at most three additional
+complete inventory reads, two seconds apart, within one 20-second deadline that
+includes requests and sleeps. Prior DS12 records are authenticated once; changed
+selected history, malformed or unreadable responses, drafts and contradictory
+metadata still fail immediately. The writer never invents an inventory entry or
+changes `published_at`. Ordinary preflight/history reads do not enable this wait.
 
 ## Current development integration
 
