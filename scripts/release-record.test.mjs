@@ -94,8 +94,10 @@ test('RC cannot record without a real audit, nor with changed production after r
 
 test('the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones', () => {
   const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
-  // This alpha fixture must retain an open beta gate after the live beta closes.
+  // Keep the fixture's later gates open independently of live release progress.
   contracts.milestones.beta.gates['FORMA-188 fixture applications'].status = 'pending';
+  contracts.milestones.rc.gates['FORMA-145 audit'].status = 'pending';
+  contracts.milestones.final.gates['FORMA-191'].status = 'pending';
   const milestone = releaseMilestone(contracts, '3.0.0-alpha.1');
   const set = { tag: 'v3.0.0-alpha.1', commit: 'a'.repeat(40), run: 1, contracts, milestone, packages: [{ name: 'forma-ir', version: '3.0.0-alpha.1', sha256: 'b'.repeat(64) }] };
   const notes = releaseNotes(set, { ciRun: 2, elapsedSeconds: 12.34 }, '## [3.0.0-alpha.1]\n\nFirst alpha.', milestone);
