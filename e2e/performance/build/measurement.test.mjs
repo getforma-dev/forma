@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, delimiter } from 'node:path';
 import { sources, assertGraph, expectedFor, REVISION, NEXT_REVISION } from './workload.mjs';
-import { POLICY, aggregate, assertDependencyGraph, assertFreshApplication, assertPage, observeUpdate } from './measurement.mjs';
+import { POLICY, aggregate, assertDependencyGraph, assertFreshApplication, assertPage, observeUpdate, observeAffected, assertUnchangedPage } from './measurement.mjs';
 
 const source = 'a'.repeat(40);
 const inventory = assertGraph(sources());
@@ -142,7 +142,6 @@ test('actual workflow aggregation shell keeps a p95 failure nonzero and retains 
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-
 test('real log retention stays bounded after readiness and finalization refuses late faults', async () => {
   const { retainOutput, finalizeResult } = await import('./run.mjs');
   const directory = mkdtempSync(join(tmpdir(), 'forma-n7-output-'));
@@ -187,4 +186,36 @@ test('timed edit response retains its original body before enforcing the existin
   const bad = { ...good, headers: { 'cache-control': 'public, max-age=300' } };
   assert.throws(() => retainEditResponse(result, bad), /no-store/);
   assert.equal(result.lastEditResponse, bad);
+});
+
+
+test('affected siblings may publish later, but share the original save deadline and preserve every refusal', async () => {
+  let clock = 9000, calls = 0;
+  const records = [];
+  const body = (route, revision) => {
+    const index = route === '/page/00' ? 0 : 11;
+    return html(revision).replace('Workspace 0', `Workspace ${index}`) + expectedFor(index).map(name => `<div data-n7-component="${name}"></div>`).join('');
+  };
+  const read = async route => { clock += 100; return { status: 200, headers: { 'cache-control': 'no-store' }, html: body(route, route === '/page/11' && calls++ === 0 ? REVISION : NEXT_REVISION) }; };
+  const result = await observeAffected({ started: 0, now: () => clock, read, delay: async () => { clock += 10; }, record: row => records.push(row) });
+  assert.deepEqual(result, { firstObservedUpdatedMs: { '/page/00': 9100, '/page/11': 9310 }, maxMs: 9310 });
+  assert.equal(records.length, 3); assert(records[1].html.includes(REVISION)); assert(records[2].html.includes(NEXT_REVISION));
+  clock = 9900;
+  await assert.rejects(observeAffected({ started: 0, now: () => clock, read: async route => { clock += 25; return { status: 200, headers: { 'cache-control': 'no-store' }, html: body(route, REVISION) }; }, delay: async () => { clock += 50; }, record() {} }), /deadline/);
+  assert.equal(clock, 10000, 'the observation did not restart a fresh 10s clock');
+  for (const bad of [
+    { status: 500, headers: {}, html: 'actual failed response' },
+    { status: 200, headers: { 'cache-control': 'public' }, html: body('/page/00', NEXT_REVISION) },
+    { status: 200, headers: { 'cache-control': 'no-store' }, html: body('/page/00', NEXT_REVISION).replace('Workspace 0', 'Wrong content') },
+  ]) {
+    const retained = [];
+    await assert.rejects(observeAffected({ started: 0, now: () => 1, read: async () => bad, delay: async () => assert.fail('wrong response cannot retry'), record: row => retained.push(row) }));
+    assert.equal(retained.length, 1); assert.equal(retained[0].html, bad.html);
+  }
+  const errors = [];
+  await assert.rejects(observeAffected({ started: 0, now: () => 2, read: async () => { throw new Error('watcher fault'); }, record: row => errors.push(row) }), /watcher fault/);
+  assert.match(errors[0].error, /watcher fault/);
+  const before = '<head>nonce-one</head><main data-n7-component="Page01"><p>Original content</p></main>';
+  assertUnchangedPage(before, before.replace('nonce-one', 'nonce-two'), 1);
+  assert.throws(() => assertUnchangedPage(before, before.replace('Original content', 'Unexpected change'), 1), /unaffected rendered/);
 });

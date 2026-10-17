@@ -56,8 +56,16 @@ reload and requires the changed DOM marker followed by two animation frames.
 Polling, HTTP, transport, reload and frame latency remain inside the endpoint.
 The served-response milestone is retained separately; it cannot substitute for
 the visible endpoint. This is a harness-initiated reload, not automatic HMR.
-Both affected routes and the unaffected routes are checked after the observation.
-No server restart, IR-only update or unrelated fast route can satisfy it.
+After that fixed visible endpoint, both affected routes must be observed with the
+new generation within the original 10-second deadline measured before the save.
+Sibling watch publication may complete later; this correctness wait does not
+restart the clock or replace route 00's visible duration. Every original sibling
+response (including stale or refused responses), first observed update time and
+their maximum are retained. HTTP/cache/content/process errors fail immediately;
+a permanently stale route fails the same deadline. The final all-route check
+also requires each unaffected rendered page root to be byte-identical to its
+pre-edit response, allowing only response metadata outside that root to vary.
+No server restart, IR-only update or unrelated fast route can satisfy the endpoint.
 
 ## Manual campaign
 

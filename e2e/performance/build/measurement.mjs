@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { assertGraph, sources, expectedFor, NEXT_REVISION, REVISION } from './workload.mjs';
+import { assertGraph, sources, expectedFor, ROUTES, AFFECTED_ROUTES, NEXT_REVISION, REVISION } from './workload.mjs';
 
 export const POLICY = Object.freeze({
   id: 'n7-build-loop-v1', samples: 20, components: 300,
@@ -76,6 +76,39 @@ export async function observeUpdate({ started, now, read, reloadAndFrame, delay,
     await delay();
   }
   throw new Error('updated page observation deadline');
+}
+
+// Sibling watch contexts publish independently. This correctness observation
+// shares the original save deadline; it never restarts or replaces visibleMs.
+export async function observeAffected({ started, now, read, delay, record, deadlineMs = 10_000 }) {
+  const pending = new Set(AFFECTED_ROUTES);
+  const firstObservedUpdatedMs = {};
+  while (pending.size && now() - started < deadlineMs) {
+    for (const route of pending) {
+      let reply;
+      try { reply = await read(route); }
+      catch (error) { record({ route, atMs: now() - started, error: String(error) }); throw error; }
+      const atMs = now() - started;
+      record({ route, atMs, ...reply }); // Preserve even an HTTP/cache/content refusal.
+      assert.equal(reply.status, 200, 'affected route request failed');
+      assert.match(reply.headers['cache-control'] ?? '', /no-store/);
+      const changed = reply.html.includes(NEXT_REVISION);
+      assertPage(reply.html, ROUTES.indexOf(route), changed ? NEXT_REVISION : REVISION);
+      assert(atMs < deadlineMs, 'affected route observation deadline');
+      if (changed) { firstObservedUpdatedMs[route] = atMs; pending.delete(route); }
+    }
+    if (pending.size) await delay();
+  }
+  assert.equal(pending.size, 0, 'affected route observation deadline');
+  return { firstObservedUpdatedMs, maxMs: Math.max(...Object.values(firstObservedUpdatedMs)) };
+}
+
+export function assertUnchangedPage(original, current, routeIndex) {
+  const name = expectedFor(routeIndex)[0];
+  const root = new RegExp(`<main data-n7-component="${name}">[\\s\\S]*?</main>`);
+  const before = root.exec(original)?.[0], after = root.exec(current)?.[0];
+  assert(before && after, 'unaffected page root missing');
+  assert.equal(after, before, 'unaffected rendered page changed');
 }
 
 export function aggregate(samples, source) {

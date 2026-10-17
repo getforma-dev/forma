@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import os from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
 import { materialize, ROUTES, AFFECTED_ROUTES, REVISION, NEXT_REVISION, changeRevision, TIMED_ROUTE } from './workload.mjs';
-import { POLICY, assertDependencyGraph, assertFreshApplication, assertPage, observeUpdate, aggregate, readSample } from './measurement.mjs';
+import { POLICY, assertDependencyGraph, assertFreshApplication, assertPage, observeUpdate, observeAffected, assertUnchangedPage, aggregate, readSample } from './measurement.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../..');
@@ -121,6 +121,9 @@ async function sample(directory, sampleNumber, source, pilot) {
       assert.equal(reply.status, 200);
       assert.match(reply.headers['cache-control'] ?? '', /no-store/);
       assertPage(reply.html, i, changed && AFFECTED_ROUTES.includes(ROUTES[i]) ? NEXT_REVISION : REVISION);
+      if (changed && !AFFECTED_ROUTES.includes(ROUTES[i])) {
+        assertUnchangedPage(readFileSync(join(directory, `debug-page${i}.html`), 'utf8'), reply.html, i);
+      }
       const links = [...reply.html.matchAll(/<link\b[^>]*>/g)].map(match => match[0]).filter(tag => /\brel="stylesheet"/.test(tag));
       assert(links.length > 0, 'native page must include its stylesheet');
       for (const tag of links) {
@@ -211,7 +214,18 @@ async function sample(directory, sampleNumber, source, pilot) {
       },
     });
     checkpoint();
-    assert(!debug.owned.closed && !watcher.closed, 'watch/server exited during the edit');
+    result.affectedPolls = [];
+    result.affectedUpdate = await observeAffected({
+      started, now, delay: () => delay(10), record: row => { result.affectedPolls.push(row); },
+      read: async route => {
+        for (const owned of [debug.owned, watcher]) {
+          if (owned.fault) throw owned.fault;
+          assert(!owned.closed, 'watch/server exited during the edit');
+        }
+        return response(debug.origin, route);
+      },
+    });
+    checkpoint();
     await verifyRoutes(debug.origin, true, 'updated');
     cpSync(join(ADMIN, 'dist'), join(directory, 'updated-output'), { recursive: true });
     assert.deepEqual(browserErrors, [], 'browser errors invalidate the observation');
