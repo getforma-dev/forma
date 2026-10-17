@@ -85,3 +85,20 @@ The final tag operation alone is `git tag v3.0.0 && git push origin v3.0.0`; do 
 - New concise v3 snapshot: `~/dev/design-doc-factory/tasks/forma-stack/as-built-v3.md`; explicitly records pre-final state, not a final publication claim.
 
 Hard stop: no consumer migrations. Resume only on founder instruction; no scheduled agent wakeups.
+
+## Publication follow-through verified in the bounded session
+
+The actual release-record parser also requires a root3.0.0changelog entry. Added explicitly prepared/unpublished3.0.0sections to the root and remaining six package/crate changelogs (core was fixed in6aa2d342). All eight changelogs pass the real `changelogEntry` parser. Existing `node --test scripts/release-record.test.mjs`:11/11 PASS,1.055s. Full log:work/codex-release-lead/FINAL-CHANGELOG-RECORD-TEST.log. No workflow or qualification bypass was changed.
+
+## Thursday implementation map for L-66-QUOTA
+
+This source inspection replaces guesswork; do not fix just the first failing check.
+
+1. `scripts/release-set.mjs` (`assertMilestoneReady`) is called by both pack and publishers; contracts currently accept only pending/done. A reviewed, release-specific deferral representation must remain distinct from passed and must not become a generic global publish switch.
+2. `scripts/check-release-qualification.mjs` requires real audit evidence for RC and a real burn-in reference for final. Implement the founder exception explicitly for this release; retain all unrelated qualification checks. Do not manufacture references or silently catch missing evidence.
+3. `scripts/release-record.mjs:qualificationEvidence` independently reads audit/burn-in inputs after package publication. It must serialize truthful deferred status and actual P17 evidence, otherwise changing only preflight risks publishing packages and then failing the release record.
+4. `.github/workflows/rc-burn-in.yml` and `scripts/release-burn-in-inputs.mjs` currently authenticate a published RC plus D14 assets. Running Thursday against final requires an explicit supported final-set authentication path with the same package/producer/digest checks, not merely a renamed input. Keep3600creditedACTIVEseconds and all workloads unchanged.
+5. Add finite negative controls for wrong release, missing/changed decision, unknown deferral, failed P17, mismatched package identity and any fabricated passed audit/soak state. Exercise pack, publisher, record and post-release verifier paths together. Independent review and full ordinary CI are still needed before merge.
+6. Keep the original RC evidence chain available for releases without this specific decision. Preserve failed runs and actual zero credited soak seconds. After actual final publication, append actual registry/source facts to v3; do not treat this provisional record as a final-release receipt.
+
+The policy transition is wider than a safe one-line quick fix and is deferred to Thursday. No new expensive campaign, audit worker, monitor or publishing run was launched. CI39054689194 was queued and security39054689190 running at the one observation before this follow-through; they may be superseded by the final preservation push. Do not rerun obsolete heads.

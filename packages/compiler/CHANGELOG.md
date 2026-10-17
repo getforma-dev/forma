@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 - Preserve a standalone top-level `await activateIslands(...)` checkpoint when every registration is pruned. The compiler emits `await (void 0)` for that case; effectful arguments and consumed, nested or chained empty-registry calls still refuse BUILD-611.
 
 - FORMA-196: refuse native script elements with BUILD-623 and unrepresentable srcdoc markup with BUILD-624, matching core's existing Trusted Types and bundle-only boundaries. Preserve literal style, absent null/false srcdoc and explicit Browser typed raw APIs; retain the superseded FORMA-139 source/product evidence.

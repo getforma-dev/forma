@@ -34,6 +34,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 - N3 startup attribution v3 keeps the unchanged 50 ms application/activation limit
   and v2's exact pre-application layout/navigation proofs. It additionally
   separates the pinned Lighthouse idle check only with complete source, isolated

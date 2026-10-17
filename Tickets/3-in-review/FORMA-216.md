@@ -20,3 +20,5 @@ Inspect the new exact-head Actions result once it completes; independent review 
 ## Log
 
 - 2026-10-17T17:39:02.919986+00:00: Founder explicitly resumed bounded work with8%quota. Root diagnosed, corrected and locally verified; saving all work before relying on hosted checks.
+
+- Follow-through: remaining coordinated changelogs now have prepared final entries; actual parser8/8 and release-record tests11/11 pass. Publication pending remains explicit. Final pushed CI/review pending.

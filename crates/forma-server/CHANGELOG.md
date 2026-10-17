@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 - Complete the 3.0 fallible startup API (FORMA-202, L-13/DR-12): `assets::asset`, `assets::load_manifest`, `CspNonce::generate` and `generate_csp_nonce` return their existing asset/manifest or `NonceError` failures instead of panicking. The `try_*` forms remain compatibility aliases. Callers must propagate or handle the returned `Result`; the manifest validator, nonce bytes and render error policy are unchanged.
 
 - Execute every declared route JavaScript entry in manifest order with its nonce, integrity and crossorigin attributes. Earlier entries are no longer merely preloaded while only the last runs; dependency-only modulepreloads remain hints. Both typed SSR and Browser documents charge all entry tags to their complete output budget.

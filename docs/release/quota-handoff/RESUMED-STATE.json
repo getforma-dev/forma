@@ -7,5 +7,7 @@
   "CI": "new push pending",
   "monitor": "PAUSED",
   "agents": "stopped",
-  "remaining": "Independent review/CI; release-deferral implementation, audit, soak, final publication"
+  "remaining": "Independent review/CI; release-deferral implementation, audit, soak, final publication",
+  "additionalVerification": "8/8 changelog parser;11/11 release-record tests",
+  "deferralImplementation": "Thursday: exact source map in Tickets/THURSDAY-BACKLOG.md"
 }

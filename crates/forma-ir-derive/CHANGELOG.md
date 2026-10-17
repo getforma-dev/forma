@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 ## [3.0.0-alpha.2] - 2026-10-15
 
 Supersedes `3.0.0-alpha.1`, whose tag never published (its release run stopped in P17, the verification harness, before any publish job: the packed build's optional compiler peer resolved through the unbuilt workspace instead of the packed set; nothing reached the registries). The harness now resolves packed libraries inside the packed set and proves it. Version only; the alpha.1 notes below stand.

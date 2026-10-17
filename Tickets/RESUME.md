@@ -12,6 +12,7 @@ Beta.4 is published and verified on main be8beb7d. RC P17 completed 61/61 on e75
 Founder deferred the 3600-second soak to post-release Thursday and final audit sign-off to backlog. **Release validators still require their evidence: a version bump/tag alone cannot publish final.** No fabricated success or reference. Backlog contains exact guarded founder commands, implementation blocker, evidence locations and remaining work. Final manifests/locks/template seeds are saved at 3.0.0 on PR112; version consistency passed, final-source review/CI and validator implementation pending. No RC/final tag exists; main remains be8beb7d. v3 is a concise pre-final as-built snapshot, not proof of final publication.
 
 All earlier START HERE sections below are historical. Do not restart workers or follow their superseded queue automatically. Hard stop before application migrations.
+Additional bounded fix: root and all seven package changelogs now identify the prepared3.0.0set without a publication claim. Real changelog parser8/8 and release-record tests11/11 pass. Thursday backlog now includes the exact cross-layer implementation map for the founder deferrals. No merge/tag; inspect latest PR112 head, not obsolete cancelled runs.
 <!-- codex-live-end -->
 
 # START HERE: HANDOFF TO THE NEXT LEAD (written 2026-10-15 19:10 EDT by the Claude lead; the Codex lead takes over)

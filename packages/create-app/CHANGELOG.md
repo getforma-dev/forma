@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 ### Changed — FORMA-144 slice 3
 
 - Ship caret requirements for stable sets and exact prerelease requirements, while keeping the tested archive versions and hashes in both lockfiles. Source seeds remain exact; staging preserves typed Rust sources and restores files even on failure.
