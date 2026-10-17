@@ -1,0 +1,7 @@
+body { font: 16px system-ui, sans-serif; color: #243247; background: #f8fafc; }
+main { max-width: 72rem; margin: auto; padding: 2rem; }
+.panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+section, aside { border: 1px solid #cbd5e1; padding: 1rem; background: white; }
+label, output { display: block; }
+td, th { text-align: left; padding: .25rem; }
+.notice { padding: 1rem; border-left: 4px solid #2563eb; }

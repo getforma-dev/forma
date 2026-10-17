@@ -41,17 +41,17 @@
       "plan": "M4",
       "tags": "v3.0.0-rc.N: npm next, Cargo -rc.N",
       "gates": {
-        "FORMA-101": { "status": "pending", "scope": "the published server-renderable subset and coded build errors" },
-        "FORMA-139": { "status": "pending", "scope": "the conformance corpus, a fixture and a near miss per code" },
-        "FORMA-108": { "status": "pending", "scope": "the hostile corpus with zero executions" },
-        "FORMA-186": { "status": "pending", "scope": "the deployment identity and inert-or-reload on a skew" },
-        "FORMA-188 skew drill": { "status": "pending", "scope": "the skew drill green in P17" },
-        "FORMA-190": { "status": "pending", "scope": "the size report green on both templates at the recorded ceiling" },
+        "FORMA-101": { "status": "done", "scope": "the published server-renderable subset and coded build errors" },
+        "FORMA-139": { "status": "done", "scope": "the conformance corpus, a fixture and a near miss per code" },
+        "FORMA-108": { "status": "done", "scope": "the hostile corpus with zero executions" },
+        "FORMA-186": { "status": "done", "scope": "the deployment identity and inert-or-reload on a skew" },
+        "FORMA-188 skew drill": { "status": "done", "scope": "the skew drill green in P17" },
+        "FORMA-190": { "status": "done", "scope": "the size report green on both templates at the recorded ceiling" },
         "FORMA-141": { "status": "done", "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78" },
-        "FORMA-145 documentation": { "status": "pending", "scope": "the complete 3.0 upgrade guide and stability record match the final public surface" },
-        "FORMA-116": { "status": "pending", "scope": "reviewed governance source controls and actual SR14 security mutation probes; live rollout deferred by L-60" },
-        "FORMA-189": { "status": "pending", "scope": "the recall script and SECURITY.md generated from the release record" },
-        "FORMA-145 audit": { "status": "pending", "scope": "the whole-release audit on another model with an empty blocking list (D14)" }
+        "FORMA-145 documentation": { "status": "done", "scope": "the complete 3.0 upgrade guide and stability record match the final public surface" },
+        "FORMA-116": { "status": "done", "scope": "reviewed governance source controls and actual SR14 security mutation probes; live rollout deferred by L-60" },
+        "FORMA-189": { "status": "done", "scope": "the recall script and SECURITY.md generated from the release record" },
+        "FORMA-145 audit": { "status": "pending", "scope": "the whole-release audit on another model or a separate fresh-context reviewer under L-65, with an empty blocking list (D14)" }
       }
     },
     "final": {

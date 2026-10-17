@@ -1,11 +1,11 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0-beta.4` prerelease and require its coordinated publication. Cargo prerelease versions need explicit requirements:
+Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0-rc.1` prerelease and require its coordinated publication. Cargo prerelease versions need explicit requirements:
 
 ```toml
 [dependencies]
-forma-server = "=3.0.0-beta.4"
-forma-ir = "=3.0.0-beta.4"
+forma-server = "=3.0.0-rc.1"
+forma-ir = "=3.0.0-rc.1"
 ```
 
 The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.
@@ -78,7 +78,18 @@ Asset serving, opt-in checked service-worker configuration and the named preview
 
 ## The deployment identity
 
-Every page's root carries `data-forma-build="<the manifest's build>"`, on a server-rendered page and on a browser shell alike, escaped as an attribute value. `@getforma/build` computes that identity from the build's own outputs and compiles it into every bundle; `@getforma/core` compares the two before it activates anything and, on a mismatch, leaves the page inert. A manifest listing a `retained` asset that is not `immutable` is refused at start (`MANIFEST-103`).
+Every page's root carries `data-forma-build="<the manifest's build>"`, on a
+server-rendered page and on a browser shell alike, escaped as an attribute
+value. `@getforma/build` computes that identity from the build's own outputs
+and compiles it into every bundle. Core's `activateIslands()` and component
+`mount()` compare nonempty page and bundle identities before component execution.
+A mismatch keeps their work inert or triggers at most one automatic reload per
+page identity in the tab; cancellation or unavailable session storage keeps it
+inert. Missing identities remain unchecked. Direct `hydrateIsland()` and
+application-owned imports are outside this guard; see
+[deployment mismatch](../../packages/core/docs/ISLANDS.md#deployment-mismatch).
+A manifest listing a `retained` asset that is not `immutable` is refused at
+start (`MANIFEST-103`).
 
 ## Asset integrity
 

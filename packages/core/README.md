@@ -38,11 +38,12 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-These examples target the `3.0.0-beta.4` prerelease and require its coordinated
-publication. Install it explicitly:
+These examples target the prepared `3.0.0` final package set. Final publication
+is pending; the following install command becomes available only after the
+coordinated release succeeds. Until then, the published prerelease is beta.4.
 
 ```bash
-npm install @getforma/core@3.0.0-beta.4
+npm install @getforma/core@3.0.0
 ```
 
 For the separate stable 2.1.0 runtime, a CDN needs no build step or bundler.

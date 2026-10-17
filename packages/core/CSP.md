@@ -56,7 +56,7 @@ All four patterns work under strict CSP. Internally, string styles are parsed by
 |-----------|-----------------|-------------------|
 | `el.style.cssText = '...'` | Yes (`style-src` without `unsafe-inline`) | **No** — removed in v1.0.9 |
 | `el.setAttribute('style', '...')` | Yes | **No** |
-| `innerHTML` with `style="..."` | Yes | **Not for library-generated markup** — `h()` builds DOM with `createElement`/`textContent`. `innerHTML` is reached only through the explicit opt-in sinks: `dangerouslySetInnerHTML`, `setHTMLUnsafe()`, `template()` and `templateMany()`, `reconcile()`, `mountMarkup()` and the `srcdoc` attribute (the browser parses its value as a document), each of which takes `trustedHtml()`. See [SECURITY.md](./SECURITY.md#unsanitized-html-sinks) and [Trusted Types](#trusted-types). |
+| `innerHTML` with `style="..."` | Yes | **Not for library-generated markup** — `h()` builds DOM with `createElement`/`textContent`. `innerHTML` is reached only through the explicit opt-in sinks: `dangerouslySetInnerHTML`, `setHTMLUnsafe()`, `template()` and `templateMany()`, `mountMarkup()` and its returned handle's `update()`, and the `srcdoc` attribute (the browser parses its value as a document), each of which takes `trustedHtml()`. See [SECURITY.md](./SECURITY.md#unsanitized-html-sinks) and [Trusted Types](#trusted-types). |
 | `Object.assign(el.style, {...})` | No (CSSOM API) | **Yes** — all styles go through this |
 | `el.style.color = 'red'` | No (CSSOM API) | **Yes** (via Object.assign) |
 | `new Function(...)` | Yes (`script-src` without `unsafe-eval`) | **No** — an allowlist AST interpreter is used instead, in every build. There is no opt-in and no fallback; `scripts/verify-dist.mjs` greps every published artifact. |
@@ -153,11 +153,12 @@ is checked at runtime; owner and end date are checked by the consumer's SR8
   writes a `trustedHtml()` value as the `TrustedHTML` it is, so the page
   accepts it. Core refuses strings and look-alikes with stable codes before
   the browser sink, regardless of whether native Trusted Types is available.
-- **`forma-runtime`** is the zero-build runtime's parser's. `reconcile()` trims
-  what it is given before it parses it, so markup that arrived as a browser
-  `TrustedHTML` is minted again, trimmed, through this policy, and so is the
-  `srcdoc` of an iframe that markup parsed into, when the diff changes it. A
-  string given to `reconcile()` is never minted.
+- **`forma-runtime`** belongs to the internal parser used by the public
+  `mountMarkup()` and returned `MountHandle.update()` APIs. Internal
+  reconciliation trims trusted markup before parsing, so browser `TrustedHTML`
+  is minted again, trimmed, through this policy. A changed iframe `srcdoc`
+  within that trusted markup uses the same policy. Plain strings are refused
+  before parsing and are never minted; reconciliation is not a public export.
 
 Both pass markup through unchanged: what they enforce is that a raw entry is
 named. Each is created once per page, on first use, since an enforcing page
@@ -178,10 +179,10 @@ What core writes of its own passes such a policy:
 - `mount()`, the function it returns, and a reactive `dangerouslySetInnerHTML`
   that becomes `null` empty an element with `replaceChildren()`, which no
   policy checks.
-- `reconcile()` writes markup that arrived trusted through `forma-runtime`,
-  and its diff of that markup writes no `on*` attribute or script `src`: a
-  changed one is removed, as h() and adoption write no `on*` name either. The
-  raw-string call is refused before parsing or a cached-markup shortcut.
+- `mountMarkup()` and its returned handle's `update()` pass trusted markup to
+  the internal `forma-runtime` parser. Reconciliation writes no `on*` attribute
+  or script `src`: a changed one is removed, as h() and adoption write no `on*`
+  name either. Raw strings are refused before parsing or a cached-markup shortcut.
 
 Raw APIs accept only named trusted markup. Runtime `data-bind:srcdoc` and
 `{item…}` interpolation cannot carry that value, so both are refused before
@@ -223,6 +224,9 @@ If you see this with FormaJS v1.0.9+, the issue is outside FormaJS — check for
 
 ## Version History
 
+The 3.0.0 row describes the prepared final source; publication remains pending.
+It is not evidence that the package is available from a registry.
+
 The last row carries the same label as `CHANGELOG.md`'s `## [Unreleased]`
 heading, and moves to a version number when that entry does. A test pins both
 ends of that rule: the newest row says `Unreleased`, and the row below it ends
@@ -239,4 +243,5 @@ Verified by `src/__tests__/docs-truth.test.ts` > "CSP.md's version history ends 
 | 2.0.2 | No CSP-affecting changes since 2.0.1. |
 | 2.0.3 | No CSP-affecting changes since 2.0.2. |
 | 2.1.0 | Trusted Types: what core writes of its own passes `require-trusted-types-for 'script'; trusted-types forma forma-runtime` (its clears use `replaceChildren()`; the runtime's parser re-mints trusted markup through `forma-runtime`, and its diff of that markup writes no `on*` or script `src`), and every raw sink takes `trustedHtml()`, made by core's policy `forma`. Such a page reports only what the application writes as a string, the runtime's `srcdoc` bindings included. See [Trusted Types](#trusted-types). |
-| Unreleased | Staged 3.x refuses plain strings at raw APIs and refuses `h('script')`; runtime srcdoc bindings report coded refusals. Forma-server enforces both Trusted Types directives without requiring a reporting endpoint. |
+| 3.0.0 | Prepared final: refuses plain strings at raw APIs and refuses `h('script')`; runtime srcdoc bindings report coded refusals. Forma-server enforces both Trusted Types directives without requiring a reporting endpoint. |
+| Unreleased | No additional CSP changes beyond the prepared 3.0.0 set. |

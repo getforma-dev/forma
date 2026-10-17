@@ -31,6 +31,17 @@ function lint(doc) {
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 
+test('packed verification can overlap engines while every release writer requires both successful gates', () => {
+  assert.deepEqual(workflow.jobs.verify.needs, ['check', 'pack']);
+  for (const name of ['publish-crates', 'publish-npm', 'record']) {
+    for (const prerequisite of ['engines', 'verify']) {
+      assert(workflow.jobs[name].needs.includes(prerequisite), `${name} must directly require ${prerequisite}`);
+    }
+    assert.equal(workflow.jobs[name]['continue-on-error'], undefined);
+    assert.equal(workflow.jobs[name].if, name === 'record' ? undefined : "startsWith(github.ref, 'refs/tags/v')");
+  }
+});
+
 test('actual release workflow retains failed P17 bytes without changing publish success dependencies', () => {
   assert.equal(upload(workflow).if, 'always()', 'failed P17 must retain its actual diagnostic directory');
   assert.equal(p17(workflow)['continue-on-error'], undefined);
@@ -74,8 +85,16 @@ const mutations = [
   ['record job downloads evidence elsewhere', 'K8', doc => { doc.jobs.record.steps.find(step => step.with?.name === 'release-p17').with.path = '${{ runner.temp }}/other'; }],
   ['record job falls back to flat verification', 'K8', doc => { evidenceCheck(doc).run = evidenceCheck(doc).run.replace('node scripts/release-evidence.mjs', 'bash scripts/release-artifacts.sh'); }],
   ['publisher ignores failed needs', 'J3', doc => { doc.jobs['publish-crates'].if = "always() && startsWith(github.ref, 'refs/tags/v')"; }],
-  ['publisher drops verify dependency', 'J2', doc => { doc.jobs['publish-npm'].needs = doc.jobs['publish-npm'].needs.filter(name => name !== 'verify'); }],
+  ['P17 drops packed-set dependency', 'J2', doc => { doc.jobs.verify.needs = doc.jobs.verify.needs.filter(name => name !== 'pack'); }],
 ];
+
+for (const job of ['publish-crates', 'publish-npm', 'record']) {
+  for (const prerequisite of ['engines', 'verify']) {
+    mutations.push([`${job} drops ${prerequisite} dependency`, 'J2', doc => {
+      doc.jobs[job].needs = doc.jobs[job].needs.filter(name => name !== prerequisite);
+    }]);
+  }
+}
 
 for (const [name, rule, mutate] of mutations) {
   test(`release evidence refuses ${name}`, () => {

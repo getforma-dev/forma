@@ -127,8 +127,10 @@ creation is a plausible explanation, not a proven Chromium internal cause.
 
 The capture harness now uses a fixed inert same-origin neutral page before
 Lighthouse's normal cache/storage reset, throttling and trace start. Destination
-renderer initialization moves outside measurement; target navigation, resources
-and application work remain cold and measured. The setup contract and remaining
+renderer and origin-connection initialization move outside measurement; target
+resources are first fetched and application code first runs during measurement.
+All six diagnostic target responses report connection reuse, so these captures
+do not measure cold connection startup. The setup contract and remaining
 qualification requirement are described in [RELEASING](../RELEASING.md).
 Six predeclared captures, each with a fresh browser and origin, recorded the real
 target navigation in the initial trace renderer and passed the pinned trace

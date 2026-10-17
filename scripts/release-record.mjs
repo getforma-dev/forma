@@ -140,7 +140,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   record.elapsedSeconds = (now.getTime() - started) / 1000;
   record.timingBasis = 'GitHub tag-triggered workflow created_at to acknowledged GitHub Release write (queue included; push ingestion latency not available in Actions)';
   const metadata = await githubReleaseMetadata(set.tag);
-  const history = await readSupportHistory({ targetTag: set.tag, currentRecord: record, currentMetadata: metadata });
+  const history = await readSupportHistory({ targetTag: set.tag, currentRecord: record, currentMetadata: metadata, waitForCurrent: true });
   // published_at is immutable across record reruns; recordedAt is not a support clock.
   record.publishedAt = metadata.published_at;
   record.support = history.support;

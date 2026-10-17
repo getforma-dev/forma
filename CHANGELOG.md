@@ -34,6 +34,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 - N3 startup attribution v3 keeps the unchanged 50 ms application/activation limit
   and v2's exact pre-application layout/navigation proofs. It additionally
   separates the pinned Lighthouse idle check only with complete source, isolated
@@ -173,6 +181,11 @@
 ### Fixed — FORMA-105 (full-stack e2e lane)
 
 - `e2e/fixtures/formajs-runtime.global.js` and `e2e/fixtures/formajs.global.js` are no longer tracked; `e2e/sync-fixtures.sh` writes them from `packages/core/dist` and `scripts/check.sh` runs it first. The committed copies predated `trustedHtml()` and failed five cases of `e2e/full-stack.spec.ts` whenever the lane ran without a fresh sync. The spec now refuses to run without the bundles, naming the sync script, and the sync script prints core's build output when that build fails instead of exiting silently. Verified by `e2e/full-stack.spec.ts` > `the bundles are the fresh sync, not a stale copy`.
+
+## [3.0.0-rc.1]
+
+- Prepare the coordinated release-candidate versions, internal requirements and template lock seeds for all seven packages, preserving external dependency resolutions. Current installation examples select this explicit prerelease.
+- RC qualification and publication remain pending. The release requires a fresh packed-set rehearsal against the published beta performance baseline, independent whole-release audit, green exact-main CI and trusted tag verification. The subsequent automated RC burn-in remains a final-release gate.
 
 ## [3.0.0-beta.1]
 

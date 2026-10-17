@@ -59,7 +59,7 @@ export async function runSuite(options: SuiteOptions): Promise<SuiteResult> {
   timings.launch = performance.now() - phase;
   let reports: Report[];
   try {
-    reports = await check(plans, { seed: options.seed, states: options.states, browser, ...(options.lowLevel ? { lowLevel: true } : {}) }, timings);
+    reports = await check(plans, { seed: options.seed, states: options.states, browser, moduleWorkers: 2, ...(options.lowLevel ? { lowLevel: true } : {}) }, timings);
   } finally {
     await browser.close();
   }

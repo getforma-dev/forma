@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 - FORMA-182 qualification: use `ryu-js` 1.0.3 for ECMAScript number formatting.
   Rust's `LowerExp` chose the wrong shortest decimal at exact ties: binary64
   `c2eeb5cf467752d4` rendered as `-270129723325078.63` instead of JavaScript's

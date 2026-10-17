@@ -93,7 +93,8 @@ jobs:
           overwrite: true
 
   verify:
-    needs: [check, pack, engines]
+    # P17 consumes the packed set; both publishers separately require engines.
+    needs: [check, pack]
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -156,7 +157,7 @@ jobs:
 
   # Minimal credential job: no dependency installation, dependency code or cache.
   publish-crates:
-    needs: [check, pack, verify]
+    needs: [check, pack, engines, verify]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
@@ -193,7 +194,7 @@ jobs:
 
   # Minimal credential job: no dependency installation, dependency code or cache.
   publish-npm:
-    needs: [check, pack, verify, publish-crates]
+    needs: [check, pack, engines, verify, publish-crates]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
@@ -222,7 +223,7 @@ jobs:
         run: node scripts/release-publish.mjs "$RUNNER_TEMP/release" npm
 
   record:
-    needs: [check, pack, verify, publish-crates, publish-npm]
+    needs: [check, pack, engines, verify, publish-crates, publish-npm]
     permissions:
       contents: write
     runs-on: ubuntu-latest

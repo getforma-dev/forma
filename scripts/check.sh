@@ -113,6 +113,7 @@ fi
 
 step "e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications"
 node --test scripts/check-builds.test.mjs
+node --test e2e/performance/build/measurement.test.mjs
 node --test scripts/sync-fixtures.test.mjs
 # Subshells inherit the private build state and isolate fixture cwd/variables.
 (source e2e/sync-fixtures.sh)

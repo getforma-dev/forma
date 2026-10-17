@@ -50,3 +50,19 @@ test('missing real review bytes, same model, unaccepted review and blockers refu
   const e=JSON.parse(f.evidence);e.entries[0].content='same hash claim, different actual bytes';assert.throws(()=>validateAuditEvidence(f.report,bytes(e)),/evidence changed/);
  }finally{f.close();}
 });
+test('L-65 permits a separate fresh-context same-model review with actual initialization bytes',()=>{
+ const f=setup();try{
+  const initialization='actual fresh-context reviewer initialization with fork_turns none';
+  const report=structuredClone(f.report);report.reviewerModel.id=report.authorModel.id;
+  report.independence={method:'fresh-context',decision:'L-65',initializationEvidenceSha256:hash(initialization)};
+  const evidence=JSON.parse(f.evidence);evidence.entries.push({content:initialization,sha256:hash(initialization)});
+  validateAuditReport(report,f.input,f.inputBytes);validateAuditEvidence(report,bytes(evidence));
+  const rc=f.change('scripts/release-contracts.json',JSON.stringify({milestones:{rc:{gates:{'FORMA-145 audit':{status:'done',scope:'independent review'}}}}}));
+  assert.equal(bindAuditToRc({rcCommit:rc,reportBytes:bytes(report),inputBytes:f.inputBytes,root:f.root}).reviewedCommit,f.commit);
+  assert.throws(()=>validateAuditEvidence(report,f.evidence),'missing initialization cannot qualify');
+  evidence.entries.at(-1).content='different initialization';assert.throws(()=>validateAuditEvidence(report,bytes(evidence)),/evidence changed/);
+  for(const edit of [r=>delete r.independence,r=>r.independence.method='shared-context',r=>r.independence.decision='unapproved',r=>r.independence.initializationEvidenceSha256='',r=>r.independence.initializationEvidenceSha256=r.reviewerModel.sessionEvidenceSha256,r=>r.reviewerModel.sessionEvidenceSha256=r.authorModel.sessionEvidenceSha256,r=>r.accepted=false,r=>r.blockingFindings=['D14-1']]){
+   const r=structuredClone(report);edit(r);assert.throws(()=>validateAuditReport(r,f.input,f.inputBytes));
+  }
+ }finally{f.close();}
+});

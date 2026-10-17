@@ -136,6 +136,13 @@ function linesWith(warn: { mock: { calls: unknown[][] } }, code: string): string
   return warn.mock.calls.map((args) => String(args[0])).filter((line) => line.includes(code));
 }
 
+/** Assert expected-success operations before inspecting their returned values. */
+function succeeds<T>(write: () => T): T {
+  let result!: T;
+  expect(() => { result = write(); }).not.toThrow();
+  return result;
+}
+
 let sim: TrustedTypesSim | null = null;
 let warn: ReturnType<typeof vi.spyOn>;
 
@@ -337,11 +344,6 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     sim = enforceTrustedTypes();
     // These typed operations must succeed under enforcement. Assert that
     // contract before inspecting their DOM results or recorded violations.
-    const succeeds = <T>(write: () => T): T => {
-      let result!: T;
-      expect(() => { result = write(); }).not.toThrow();
-      return result;
-    };
     const container = document.createElement('div');
     container.append(document.createElement('p'), 'old text');
     document.body.append(container);
@@ -504,12 +506,12 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
       `<div data-forma-id="a"><iframe sandbox="" srcdoc="&lt;p&gt;${doc}&lt;/p&gt;"></iframe>` +
       `<button onclick="${handler}()">x</button><script type="text/x-inert" src="/${src}.js"></script><p title="${doc}">t</p></div>`,
     );
-    reconcile(live, markup('one', 'a', 'a'));
+    succeeds(() => reconcile(live, markup('one', 'a', 'a')));
     expect(live.querySelector('iframe')!.getAttribute('srcdoc')).toBe('<p>one</p>');
 
     // The diff path, three times: every TT-sink attribute changes each time.
     for (const [doc, handler, src] of [['two', 'b', 'b'], ['three', 'c', 'c'], ['four', 'd', 'd']] as const) {
-      reconcile(live, markup(doc, handler, src));
+      succeeds(() => reconcile(live, markup(doc, handler, src)));
       expect(live.querySelector('iframe')!.getAttribute('srcdoc'), doc).toBe(`<p>${doc}</p>`);
       // Not a sink: written as before.
       expect(live.querySelector('p')!.getAttribute('title')).toBe(doc);
@@ -612,6 +614,43 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     expect(sim.violations).toEqual([]);
   });
 
+  it('a refused typed reconcile write does not cache markup before a successful retry', () => {
+    sim = enforceTrustedTypes();
+    const live = document.createElement('div');
+    live.append('old');
+    const markup = trustedHtml('<p>new</p>');
+    const failure = new TypeError('the live HTML setter refused this write');
+    const write = vi.spyOn(live, 'innerHTML', 'set').mockImplementationOnce(() => { throw failure; });
+    try {
+      expect(() => reconcile(live, markup)).toThrow(failure);
+      expect(write).toHaveBeenCalledOnce();
+      expect(live.textContent).toBe('old');
+    } finally { write.mockRestore(); }
+    succeeds(() => reconcile(live, markup));
+    expect(live.innerHTML).toBe('<p>new</p>');
+    expect(sim.violations).toEqual([]);
+  });
+
+  it('a refused typed reactive HTML write does not suppress the next same-markup update', () => {
+    sim = enforceTrustedTypes();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const container = document.createElement('div');
+    const [html, setHtml] = createSignal({ __html: trustedHtml('<b>old</b>') });
+    const unmount = succeeds(() => mount(() => h('article', { dangerouslySetInnerHTML: html }), container));
+    const live = container.firstElementChild!;
+    const failure = new TypeError('the live HTML setter refused this write');
+    const write = vi.spyOn(live, 'innerHTML', 'set').mockImplementationOnce(() => { throw failure; });
+    try {
+      succeeds(() => setHtml({ __html: trustedHtml('<i>new</i>') }));
+      expect(write).toHaveBeenCalledOnce();
+      expect(live.innerHTML).toBe('<b>old</b>');
+      write.mockRestore();
+      succeeds(() => setHtml({ __html: trustedHtml('<i>new</i>') }));
+      expect(live.innerHTML).toBe('<i>new</i>');
+      expect(sim.violations).toEqual([]);
+    } finally { write.mockRestore(); unmount(); }
+  });
+
   it('a refused policy name warns once in development, and the sinks then write strings the page refuses', () => {
     // formajs#29's review (N4): another script took the name `forma` first.
     sim = enforceTrustedTypes();
@@ -633,7 +672,7 @@ describe('core under Trusted Types (simulated: happy-dom has none)', () => {
     // window.trustedTypes in an engine without Trusted Types.
     (globalThis as Record<string, unknown>).trustedTypes = document.createElement('a');
     try {
-      expect(isTrustedHtml({ toString: () => '<b>x</b>' })).toBe(false);
+      expect(succeeds(() => isTrustedHtml({ toString: () => '<b>x</b>' }))).toBe(false);
       const value = trustedHtml('<b>x</b>');
       expect(isTrustedHtml(value)).toBe(true);
       expect(h('div', { dangerouslySetInnerHTML: { __html: value } }).innerHTML).toBe('<b>x</b>');

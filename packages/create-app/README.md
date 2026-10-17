@@ -15,7 +15,7 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 > ```
 >
 > **You are here:** the front door. New to the stack? Read
-> **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)**
+> **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)**
 > — it explains the pipeline. All seven packages live in
 > [getforma-dev/forma](https://github.com/getforma-dev/forma) and publish as one set.
 > Existing 0.6.x projects can follow the
@@ -23,12 +23,12 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 
 ## Usage
 
-These registry commands target `3.0.0-beta.4` and require its coordinated
+These registry commands target `3.0.0-rc.1` and require its coordinated
 publication. For an unpublished set, use the packed candidate workflow
 described below. Release records report the qualification of each published set.
 
 ```bash
-npx @getforma/create-app@3.0.0-beta.4 my-app
+npx @getforma/create-app@3.0.0-rc.1 my-app
 cd my-app
 ```
 
@@ -48,11 +48,11 @@ because its `/api/*` routes have no authentication.
 ## Options
 
 ```bash
-npx @getforma/create-app@3.0.0-beta.4 my-app --template dashboard
-npx @getforma/create-app@3.0.0-beta.4 my-app --template minimal
-npx @getforma/create-app@3.0.0-beta.4 my-app --dry-run
-npx @getforma/create-app@3.0.0-beta.4 --help
-npx @getforma/create-app@3.0.0-beta.4 --version
+npx @getforma/create-app@3.0.0-rc.1 my-app --template dashboard
+npx @getforma/create-app@3.0.0-rc.1 my-app --template minimal
+npx @getforma/create-app@3.0.0-rc.1 my-app --dry-run
+npx @getforma/create-app@3.0.0-rc.1 --help
+npx @getforma/create-app@3.0.0-rc.1 --version
 ```
 
 Project names must start with a lowercase letter and use only lowercase
@@ -124,15 +124,17 @@ and that the minimal server refuses to start on a truncated module and
 answers a failed render with its own 500, carrying neither the error nor an
 empty shell. A distinct handler value of 7 must appear in raw SSR HTML;
 missing/wrong props and unbound routes must stop before a listener opens.
-Slice 2 owns adopting a differing server value during browser activation.
-The gate requires all 17 heavy controls plus the structural suite, with no skips.
+The packed native-island check adopts the server value without initial writes
+and checks that the static route requests no code in all three engines. The
+dashboard tooltip check keeps API values as text under enforced Trusted Types.
+The gate requires all 19 heavy controls plus the structural suite, with no skips.
 
 | Document | What it is |
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, the gates, and what a reviewer will ask |
 | [docs/TEMPLATES.md](docs/TEMPLATES.md) | Template anatomy, what the scaffolder rewrites, how to add one |
 | [docs/RENDERING-PHASES.md](docs/RENDERING-PHASES.md) | Phase 1 vs Phase 2, and the compiler rule that decides it |
-| [Stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md) | The whole pipeline and its reasoning. **Start here if you are new.** |
+| [Stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md) | The whole pipeline and its reasoning. **Start here if you are new.** |
 | [Testing policy](https://github.com/getforma-dev/forma/blob/main/docs/TESTING.md) | The standard every test in this stack is held to |
 
 ## Part of the Forma Stack
@@ -162,7 +164,7 @@ The gate requires all 17 heavy controls plus the structural suite, with no skips
 
 MIT
 
-## Source staging for 3.0.0-beta.4
+## Source staging for 3.0.0-rc.1
 
 The checked-in templates now use the declared-props and finalized Pages APIs.
 Minimal now declares a Counter island over its static home markup and a

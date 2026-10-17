@@ -15,7 +15,7 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version 3.0.0-beta.3
+node scripts/release-set.mjs version 3.0.0-rc.1
 bash scripts/install-deps.sh
 npm run check
 ```
@@ -25,7 +25,7 @@ the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `-dev` version also aligns the current
 template source seeds; it names no publishable milestone.
 Use the next unpublished version for the intended milestone. Add its root
-CHANGELOG heading (for example `## [3.0.0-beta.3]`), close only evidenced gates,
+CHANGELOG heading (for example `## [3.0.0-rc.1]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
 
@@ -54,6 +54,13 @@ an actual comparable published beta DS12 for RC performance. The workflow has
 no publication credentials, never writes DS12 to a Release, and neither closes
 gates nor replaces exact-main CI or the tagged release workflow. A failed run
 remains failed; another attempt requires an explicit decision.
+
+R17's separate serial indexed-update lane follows
+[the L-67 per-run cost contract](release/3.0-GATE-DISPOSITIONS.md#indexed-update-cost-l-67-2026-10-17).
+Its all-101 amortized costs, sampled frame guards and across-run summaries do
+not measure startup attribution or individual-edit latency p95.
+[RC qualification](release/RC-QUALIFICATION.md) keeps exact-source R17, internal
+build/rebuild, packed P17 and actual publication clocks separate.
 
 ## Milestone gate
 
@@ -93,8 +100,10 @@ run or API failure refuses the release. It does not silently wait forever;
 rerun after CI completes if the tag arrived first.
 
 The credential-free `engines` job also runs the reusable Chromium, Firefox and
-WebKit suite on the tagged commit. P17 depends on all three engines succeeding;
-both publishing jobs depend on P17, so an engine failure blocks publication.
+WebKit suite on the tagged commit. P17 starts after packing and may overlap the
+engine suite. Both publishing jobs and the record job directly require successful
+engines and P17, so either failure blocks every release write. This changes only
+job ordering; all verification and timing limits remain in force.
 
 ## Packed set and template locks
 
@@ -201,6 +210,18 @@ then uploads the JSON record; a missing record fails the job. G6's measurement s
 at GitHub's tag-triggered workflow `created_at` (including queue time) and ends after
 GitHub acknowledges the release write. Actions does not expose exact tag-push
 network ingestion latency; the recorded timing basis states this limitation.
+After that acknowledged write, if valid current-tag metadata is absent from the
+complete release inventory, the record writer permits at most three additional
+complete inventory reads, two seconds apart, within one 20-second deadline that
+includes requests and sleeps. Prior DS12 records are authenticated once; changed
+selected history, malformed or unreadable responses, drafts and contradictory
+metadata still fail immediately. The writer never invents an inventory entry or
+changes `published_at`. Ordinary preflight/history reads do not enable this wait.
+
+The actual beta.4 DS12 records 2,461.377 seconds including its record-only
+recovery, above the 1,800-second outer target. Its original P17 invocation
+passed separately in 1,165.054 seconds. That release-time miss remains explicit;
+the reviewed overlap and visibility changes do not predict the next result.
 
 ## Current development integration
 
@@ -227,7 +248,7 @@ bash scripts/install-deps.sh
 npm run build
 node scripts/release-set.mjs pack /absolute/path/to/empty-ds11 --dry-run
 bash scripts/release-artifacts.sh record /absolute/path/to/empty-ds11
-FORMA_PERFORMANCE_TARGET_TAG=v3.0.0-beta.3 node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
+FORMA_PERFORMANCE_TARGET_TAG=v3.0.0-rc.1 node scripts/verify-release-set.mjs /absolute/path/to/empty-ds11 /absolute/path/to/p17.json
 ruby scripts/check-release-workflow.rb --self-test
 bash scripts/test-release-artifacts.sh
 ```
@@ -309,9 +330,10 @@ Lighthouse visits the fixed same-origin `/__forma_performance_blank` fixture
 endpoint: a tiny `no-store` document with no application content or resources,
 protected by `default-src 'none'`. Lighthouse 13.5.0 then clears origin storage
 and browser caches, applies the unchanged mobile throttling, starts tracing and
-navigates to the target. This initializes the destination renderer and origin
-connection outside the measurement; it does not prefetch the target HTML,
-JavaScript or assets. Target resources and application work remain cold. This capture
+navigates to the target. This initializes the destination renderer and establishes
+an origin connection outside the measurement; it does not prefetch the target
+HTML, JavaScript or assets. Here “cold” means first-fetch application resources
+and unexecuted application code, not cold renderer or connection startup. This capture
 setup avoids creating a destination renderer during tracing, where a retained
 failed run lost its initial main-frame events. It is a measurement setup change,
 not an application speedup. Missing navigation events still fail the audit;
@@ -329,7 +351,7 @@ defaults, mobile profile, raw-task classifier and timing
 limits stay unchanged. The old observation remains failed, and a fresh complete
 packed P17 must qualify the changed setup.
 
-A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (for example `v3.0.0-beta.3`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first published 3.0.0 beta may record the verified absence of a performance contract in its latest published 3.0.0 alpha predecessor and establish the baseline. A beta tag that failed before publication remains immutable; its successor can still be the first published beta. A published beta with missing performance cannot fall back to alpha or bootstrap another beta. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.
+A dry-run P17 must set `FORMA_PERFORMANCE_TARGET_TAG` to its intended release (for example `v3.0.0-rc.1`); its result records `rehearsal: true`. Live P17 uses its actual tag and rejects a different override. The reader authenticates the previous unified GitHub Release record by its API SHA256 and validates exact package set, tag/commit, passed P17 and earlier publication. The first published 3.0.0 beta may record the verified absence of a performance contract in its latest published 3.0.0 alpha predecessor and establish the baseline. A beta tag that failed before publication remains immutable; its successor can still be the first published beta. A published beta with missing performance cannot fall back to alpha or bootstrap another beta. RC/final require a comparable prior DS12; failed fetches, corrupt records or incomplete advertised performance never mean absence.
 
 
 Startup evidence retains the original whole-page TBT/LCP and every raw task.
@@ -376,8 +398,8 @@ received bytes, parser-fed bytes and resulting parser subresource requests. The 
 admitted script-related records in that chain are source-bound Lighthouse and
 Puppeteer new-document bootstrap records; any application execution, unexpected script,
 event handler work, foreign identity, mixed or unknown event counts the whole
-task. This attribution keeps N3 on island activation without changing its 50 ms
-limit. Version 3 additionally recognizes the pinned Lighthouse 13.5.0 idle check
+task. This attribution keeps startup N3 qualification on island activation
+without changing its 50 ms limit. Version 3 additionally recognizes the pinned Lighthouse 13.5.0 idle check
 with exact source bytes, a context distinct from the application module and
 main-world bootstrap, one evaluation span, two microtasks and the exact 150 ms
 single-shot timer stack. Only that five-child trace shape is admitted; foreign,

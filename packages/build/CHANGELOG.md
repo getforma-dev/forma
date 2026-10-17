@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+Prepared as part of the coordinated seven-package 3.0.0 set, including the
+changes below and the preceding 3.0 prereleases. This heading does not assert
+publication; the release workflow and registry verification establish that.
+
 - L-64: raise the enforced N2 Forma-code route ceiling from 28,000 to 28,100 gzip bytes for cooperative island activation, conditional on the full 20-run campaign satisfying the original 50 ms N3 task ceiling. Exact 28,100 acceptance and 28,101 refusal remain tested. Other route classifications, attribution, JavaScript ceilings and zero-JavaScript rules are unchanged; the historical 28,071/28,000 refusal is retained. No performance pass is inferred from this policy change.
 
 ### N2 is 28,000 B (L-59)

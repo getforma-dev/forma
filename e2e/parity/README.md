@@ -74,7 +74,11 @@ step. `CARGO_TARGET_DIR` is honoured.
    for it; it is then rendered by the walker alone (`SlotData::from_json` +
    `walk_to_html_counted`) in a minimal document with as strict a script policy. The summary
    prints `server paths: typed N modules, walker-only M (module: codes)`.
-3. **Browse.** The boot serializes the served root (`[data-forma-ssr]`) before any script touches
+3. **Browse.** The suite runs at most two whole modules concurrently, each on its
+   own page and browser context. A module's states and P3 comparisons remain sequential;
+   reports retain corpus/state order and are written once after both workers close.
+   Native rendering still runs once for the complete batch. `renderBoth` stays serial.
+   The boot serializes the served root (`[data-forma-ssr]`) before any script touches
    it. For a page with islands it arms a MutationObserver over that root, imports the production
    entry and drains records through a microtask and a macrotask. Hosts whose `data-forma-hydrate`
    defers them are activated by driving the trigger, never skipped: `interaction` a pointerdown on

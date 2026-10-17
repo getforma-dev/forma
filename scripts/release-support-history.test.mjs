@@ -71,3 +71,109 @@ test('prospective release guard rejects too-close next majors before publication
   assert.equal(assertPublicationAllowed(history, 'v4.0.0', new Date('2027-04-30T23:30:00Z')).lines[1].until, '2027-10-30');
   assert.equal(history.support.lines[1].until, null);
 });
+
+function visibilityFixture(snapshots, { paginated = false, onRead = () => {} } = {}) {
+  const prior = fixture(), current = fixture('v3.0.1', '2026-11-01T00:00:00Z');
+  let clock = 0, reads = 0, downloads = 0, pages = 0;
+  const sleeps = [], old = Array.from({ length: 100 }, (_, i) => ({ tag_name: `old-${i}` }));
+  const options = { targetTag: current.record.tag, currentRecord: current.record, currentMetadata: current.metadata,
+    waitForCurrent: true, now: () => clock, sleep: async ms => { sleeps.push(ms); clock += ms; },
+    fetchImpl: async (url, { signal }) => {
+      assert(signal instanceof AbortSignal);
+      const page = /[?&]page=(\d+)/.exec(url);
+      if (!page) { downloads++; return new Response(prior.bytes); }
+      pages++;
+      if (page[1] === '1') { reads++; clock += onRead(reads) ?? 0; }
+      const snapshot = snapshots[Math.min(reads - 1, snapshots.length - 1)];
+      const rows = snapshot(prior, current);
+      if (rows instanceof Response) return rows;
+      return Response.json(paginated && page[1] === '1' ? old : rows);
+    } };
+  return { options, prior, current, state: () => ({ clock, reads, downloads, pages, sleeps }) };
+}
+
+test('acknowledged publication waits for complete inventory visibility without redownloading prior DS12', async () => {
+  const missing = p => [p.metadata], visible = (p, c) => [p.metadata, c.metadata];
+  const f = visibilityFixture([missing, missing, visible], { paginated: true });
+  const history = await readSupportHistory(f.options);
+  assert.deepEqual(f.state(), { clock: 4000, reads: 3, downloads: 1, pages: 6, sleeps: [2000, 2000] });
+  assert.deepEqual(history.releases.map(r => r.tag), ['v3.0.0', 'v3.0.1']);
+  assert.equal(history.targetMetadata.published_at, f.current.metadata.published_at);
+  assert.equal(history.sources[0].sha256, f.prior.metadata.assets[0].digest.slice(7));
+  assert.equal(history.sources[1].source, 'current verified DS11 and P17');
+  assert.equal(history.support.lines[0].until, '2027-04-30');
+  const finalInventory = [...Array.from({ length: 100 }, (_, i) => ({ tag_name: `old-${i}` })), f.prior.metadata, f.current.metadata];
+  assert.equal(history.inventorySha256, createHash('sha256').update(JSON.stringify(finalInventory)).digest('hex'));
+});
+
+test('persistent current absence stops after three additional complete inventories', async () => {
+  const f = visibilityFixture([p => [p.metadata]]);
+  await assert.rejects(readSupportHistory(f.options), /current publication absent from complete inventory/);
+  assert.deepEqual(f.state(), { clock: 6000, reads: 4, downloads: 1, pages: 4, sleeps: [2000, 2000, 2000] });
+});
+
+test('visibility deadline includes request time and refuses late visibility without another request', async () => {
+  for (const visible of [false, true]) {
+    const f = visibilityFixture([p => [p.metadata], (p, c) => visible ? [p.metadata, c.metadata] : [p.metadata]],
+      { onRead: n => n === 2 ? 18_000 : 0 });
+    await assert.rejects(readSupportHistory(f.options), /visibility deadline exceeded/);
+    assert.deepEqual(f.state(), { clock: 20_000, reads: 2, downloads: 1, pages: 2, sleeps: [2000] });
+  }
+});
+
+test('default preflight and current-history reads do not enable a visibility wait', async () => {
+  const f = visibilityFixture([p => [p.metadata]]);
+  await assert.rejects(readSupportHistory({ ...f.options, waitForCurrent: false }), /current publication absent/);
+  assert.equal(f.state().reads, 1); assert.deepEqual(f.state().sleeps, []);
+  const preflight = visibilityFixture([p => [p.metadata]]);
+  const result = await readSupportHistory({ ...preflight.options, waitForCurrent: false, currentRecord: undefined, currentMetadata: undefined });
+  assert.equal(result.targetMetadata, undefined); assert.equal(result.currentRecordPending, false);
+  assert.equal(preflight.state().reads, 1); assert.deepEqual(preflight.state().sleeps, []);
+  await assert.rejects(readSupportHistory({ ...preflight.options, currentRecord: undefined }), /requires the current verified publication/);
+  assert.equal(preflight.state().reads, 1);
+});
+
+test('visibility polling immediately refuses transport, malformed, draft, contradictory and changed history', async () => {
+  const cases = [
+    [() => new Response('failure', { status: 503 }), /unreadable/],
+    [() => new Response('not JSON'), /JSON/],
+    [() => Response.json({}), /malformed/],
+    [(p, c) => [p.metadata, c.metadata, c.metadata], /duplicate/],
+    [(p, c) => [p.metadata, { ...c.metadata, draft: true }], /draft/],
+    [(p, c) => [p.metadata, { ...c.metadata, prerelease: true }], /classification/],
+    [(p, c) => [p.metadata, { ...c.metadata, published_at: '2026-02-30T00:00:00Z' }], /calendar/],
+    [(p, c) => [p.metadata, { ...c.metadata, published_at: '2026-11-02T00:00:00Z' }], /changed/],
+    [(p, c) => [c.metadata], /history changed/],
+    [(p, c) => [{ ...p.metadata, draft: true }, c.metadata], /history changed/],
+    [(p, c) => [{ ...p.metadata, assets: [] }, c.metadata], /history changed/],
+    [(p, c) => [{ ...p.metadata, assets: [{ ...p.metadata.assets[0], digest: `sha256:${'0'.repeat(64)}` }] }, c.metadata], /history changed/],
+    [(p, c) => [p.metadata, c.metadata, fixture('v3.0.2', '2026-11-02T00:00:00Z').metadata], /history changed/],
+  ];
+  for (const [unsafe, expected] of cases) {
+    const f = visibilityFixture([p => [p.metadata], unsafe, (p, c) => [p.metadata, c.metadata]]);
+    await assert.rejects(readSupportHistory(f.options), expected);
+    assert.equal(f.state().reads, 2); assert.equal(f.state().downloads, 1);
+    assert.deepEqual(f.state().sleeps, [2000], 'unsafe response must not be retried into the following good response');
+  }
+});
+
+test('invalid current publication and incomplete prior stable history refuse before visibility polling', async () => {
+  for (const mutate of [
+    f => { f.options.currentRecord = { ...f.current.record, dryRun: true }; },
+    f => { f.options.currentMetadata = { ...f.current.metadata, draft: true }; },
+    f => { f.options.currentMetadata = { ...f.current.metadata, tag_name: 'v3.0.2' }; },
+    f => { f.options.currentMetadata = { ...f.current.metadata, published_at: 'invalid' }; },
+    f => { f.prior.metadata.assets = []; },
+    f => { f.prior.metadata.assets[0].digest = `sha256:${'0'.repeat(64)}`; },
+  ]) {
+    const f = visibilityFixture([p => [p.metadata]]); mutate(f);
+    await assert.rejects(readSupportHistory(f.options));
+    assert.equal(f.state().reads, 1); assert.deepEqual(f.state().sleeps, []);
+  }
+  const patch = fixture('v3.0.1'), current = fixture('v3.0.2', '2026-11-01T00:00:00Z');
+  let sleeps = 0;
+  await assert.rejects(readSupportHistory({ targetTag: current.record.tag, currentRecord: current.record, currentMetadata: current.metadata,
+    waitForCurrent: true, fetchImpl: transport([[patch.metadata]], patch.bytes), sleep: async () => { sleeps++; },
+  }), /omits the first final/);
+  assert.equal(sleeps, 0);
+});

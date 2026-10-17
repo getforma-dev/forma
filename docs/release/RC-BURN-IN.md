@@ -8,9 +8,19 @@ run and retained evidence.
 
 ## Audit and release chain
 
+Before freezing the RC tree, integrate the accepted beta source, prepare the RC
+versions, and close each non-audit RC contract row only with its actual evidence.
+The RC performance baseline must come from a successfully published beta DS12;
+a local rehearsal or a failed immutable beta tag cannot provide it. Complete
+current packed qualification and the required full mutation campaign before
+accepting the whole-release audit. Gate statuses and future evidence stay
+pending until those results exist.
+
 Prepare the coordinated RC version before freezing the product and harness tree
-for review. The reviewer uses a different model from the author. Retain the real
-review sessions and accepted findings, not just a generated "passed" string:
+for review. Use a different reviewer model, or the founder-authorized L-65
+fallback: a separate reviewer initialized with fresh context, including on the
+same model, who did not author the implementation. Retain the real review
+sessions and accepted findings, not just a generated "passed" string:
 
 - `docs/release/d14-report.json`: `d14-whole-release-v1`, exact reviewed commit/tree,
   SHA-256 of the full Git input inventory, author/reviewer model identities and
@@ -20,6 +30,16 @@ review sessions and accepted findings, not just a generated "passed" string:
   complete path/mode/blob inventory. Its bytes must match the report hash.
 - `docs/release/d14-review-evidence.json`: actual referenced review/acceptance
   text and its SHA-256 hashes, using `d14-review-evidence-v1`.
+
+The L-65 path adds `independence: { method: "fresh-context", decision: "L-65",
+initializationEvidenceSha256: "<actual initialization evidence digest>" }` to
+the report and includes the actual separate fresh-context initialization in the
+existing review-evidence bundle. Record the model/session actually used and
+verify the initialization from its tool/session record. Different evidence
+digests alone do not prove review independence or software quality. Both paths
+require an actual exact-tree whole-release review against the v2 specification
+and accepted founder decisions, P17, SR14/SR17/SR33 and release artifacts. L-65
+changes the allowed reviewer setup; it does not waive any acceptance gate.
 
 `readRcAudit()` recomputes the actual Git binding. After the audited tree, only
 exact audit-status completion, these review records, and independently reviewed
@@ -121,8 +141,11 @@ Successful setup is distinct from the authenticated published-RC campaign.
 The release verification job allows 60 minutes, including setup; its P17 step
 allows 45 minutes. The browser installation step retains its five-minute bound.
 These orchestration limits do not change samples, performance limits, child
-process deadlines, the existing P17/G6 elapsed-time acceptance ceiling of 1,800
-seconds, or the independent 3,600-second active burn-in requirement.
+process deadlines, the P17 verifier's hard elapsed-time limit of 1,800 seconds,
+or the independent 3,600-second active burn-in requirement. The outer release
+time is recorded against its separate G6 target; neither clock measures human
+maintainer effort. Beta.4 missed that outer target despite passing P17, as
+recorded in [RC qualification](RC-QUALIFICATION.md).
 
 The sizing basis is indicative rather than a completed new full run: the two
 current pilot Lighthouse audits took 15.89455 and 15.91504 seconds, so forty
