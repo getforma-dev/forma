@@ -21,7 +21,7 @@ set -euo pipefail
 #
 # Needs Node, npm and cargo. Every step fails loudly; nothing is skipped.
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FORMAJS_DIR="${FORMAJS_DIR:-$REPO_DIR/packages/core}"
 FORMA_DIR="${FORMA_DIR:-$REPO_DIR}"
@@ -69,7 +69,12 @@ npm install --prefix "$SCRIPT_DIR/app" --no-save --no-package-lock --ignore-scri
 echo "core:    $(node -p "require('$SCRIPT_DIR/app/node_modules/@getforma/core/package.json').version") from $(basename "$TARBALL")"
 
 # The build package under test is this working tree's.
-(cd "$REPO_DIR" && npm run build -w packages/compiler -w packages/build > /dev/null)
+if declare -F forma_check_build_package > /dev/null; then
+  forma_check_build_package "$REPO_DIR/packages/compiler" dist/index.js dist/index.d.ts
+  forma_check_build_package "$REPO_DIR/packages/build" dist/index.js dist/index.d.ts
+else
+  (cd "$REPO_DIR" && npm run build -w packages/compiler -w packages/build > /dev/null)
+fi
 
 node "$SCRIPT_DIR/build-app.mjs"
 

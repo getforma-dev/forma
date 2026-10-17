@@ -73,6 +73,7 @@ test('missing or ambiguous source coverage and unreadable traces never imply abs
   f=>{named(f,'EvaluateScript').args.data.stackTrace=[{scriptId:'404',url:''}];},
   f=>{named(f,'EvaluateScript').args.data.scriptId=-1;},
   f=>{named(f,'EvaluateScript').args.data.url='http://unknown.invalid/code.js';},
+  f=>{named(f,'v8.run').args.url='http://unknown.invalid/code.js';},
   f=>{const event=named(f,'EvaluateScript');event.name='FunctionCall';delete event.args.data.scriptId;event.args.data.url='http://unknown.invalid/code.js';},
   f=>{const e=structuredClone(named(f,'EvaluateScript'));e.ts+=90000;e.dur=100;f.trace.traceEvents.push(e);},
  ]){const f=correlationFixture();change(f);assert.equal(classify(f).kind,'application-or-unattributed');}

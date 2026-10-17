@@ -18,7 +18,7 @@ set -euo pipefail
 # Trusted Types report-only header in debug, which WebKit logs as a configuration error.
 # Needs Node and cargo. Every step fails loudly; nothing is skipped.
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FORMAJS_DIR="${FORMAJS_DIR:-$REPO_DIR/packages/core}"
 FORMA_DIR="${FORMA_DIR:-$REPO_DIR}"
@@ -62,7 +62,12 @@ mkdir -p "$SCRIPT_DIR/node_modules/@getforma"
 ln -sfn "$FORMAJS_DIR" "$SCRIPT_DIR/node_modules/@getforma/core"
 
 # The compiler and build package under test are this working tree's.
-(cd "$REPO_DIR" && npm run build -w packages/compiler -w packages/build > /dev/null)
+if declare -F forma_check_build_package > /dev/null; then
+  forma_check_build_package "$REPO_DIR/packages/compiler" dist/index.js dist/index.d.ts
+  forma_check_build_package "$REPO_DIR/packages/build" dist/index.js dist/index.d.ts
+else
+  (cd "$REPO_DIR" && npm run build -w packages/compiler -w packages/build > /dev/null)
+fi
 
 node "$SCRIPT_DIR/build-cases.mjs"
 

@@ -11,11 +11,13 @@ import {arch,cpus,platform,release,tmpdir,totalmem} from 'node:os';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const LIMIT = 1_048_576;
-// L-61: 12ms describes raw JSON.parse; complete public decoding must stay
-// within 30ms for every measured sample. N3's separate startup policy and 50ms target stay independently recorded.
+// FORMA-210 corrects the lead-added every-sample rule to the founder's L-61
+// p95 criterion. Keep every original public duration and correctness check;
+// N3's separate startup policy and 50ms target remain unchanged.
 export const DECODER_PROFILE = Object.freeze({
+  policy: 'public-decoder-p95-v1', statistic: 'nearest-rank-p95',
   browser: 'chromium', cpuSlowdown: 4, warmupsPerShape: 5, samplesPerShape: 40,
-  stateBytes: LIMIT, maxSampleMs: 30, freshDocumentPerSample: true,
+  stateBytes: LIMIT, maxP95Ms: 30, freshDocumentPerSample: true,
   start: 'immediately before packed activateIslands(registry)',
   end: 'first instruction of the registered component',
   registration: 'before start', validation: 'after end', retries: 0,
@@ -116,6 +118,7 @@ export function validateDecoder(report) {
   for(const key of ['node','platform','release','architecture','cpu']) assert(typeof report.machine?.[key]==='string'&&report.machine[key].length>0,`decoder: missing machine ${key}`);
   for(const key of ['logicalCpus','memoryBytes']) assert(Number.isSafeInteger(report.machine[key])&&report.machine[key]>0);
   assert.deepEqual(report.cases?.map(row=>row.id),DECODER_FIXTURES.map(f=>f.id));
+  const timings=[];
   for(const [index,row] of report.cases.entries()) {
     const fixture=DECODER_FIXTURES[index],payload=decoderPayload(fixture);
     assert.equal(sha(decoderSource(fixture.type)),fixture.sourceSha256);
@@ -128,10 +131,11 @@ export function validateDecoder(report) {
       for(const [i,observation] of observations.entries()) {
         assert.equal(observation.run,i+1,`decoder: duplicate/missing ${phase} run`);
         checkObservation(observation,payload);
-        if(phase==='sample') assert(observation.elapsedMs<=DECODER_PROFILE.maxSampleMs,`decoder ${row.id} sample ${i+1}: exceeds ${DECODER_PROFILE.maxSampleMs}ms`);
       }
     }
-    assert.deepEqual(row.summary,sortedSummary(row.samples),'decoder: summary differs from raw samples');
+    const summary=sortedSummary(row.samples);
+    assert.deepEqual(row.summary,summary,'decoder: summary differs from raw samples');
+    timings.push({id:row.id,p95Ms:summary.p95Ms});
   }
   assert.deepEqual(report.controls?.map(c=>c.id),['oversize-one-byte','malformed-json']);
   const first=decoderPayload(DECODER_FIXTURES[0]);
@@ -143,6 +147,10 @@ export function validateDecoder(report) {
     assert(control.observation.consoleErrors[0].includes(index===0?'state block exceeds one MiB':'invalid state JSON'),
       'decoder: control failed for a different reason');
   }
+  // Check all samples of both shapes and the refusal controls before timing.
+  // With forty samples, nearest-rank p95 is the 38th sorted original duration.
+  for(const row of timings) assert(row.p95Ms<=DECODER_PROFILE.maxP95Ms,
+    `decoder ${row.id} p95: exceeds ${DECODER_PROFILE.maxP95Ms}ms`);
   return report;
 }
 
