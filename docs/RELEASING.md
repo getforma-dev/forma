@@ -283,9 +283,10 @@ Lighthouse visits the fixed same-origin `/__forma_performance_blank` fixture
 endpoint: a tiny `no-store` document with no application content or resources,
 protected by `default-src 'none'`. Lighthouse 13.5.0 then clears origin storage
 and browser caches, applies the unchanged mobile throttling, starts tracing and
-navigates to the target. This initializes the destination renderer outside the
-measurement; it does not prefetch the target HTML, JavaScript or assets. The
-measured target navigation and application workload remain cold. This capture
+navigates to the target. This initializes the destination renderer and establishes
+an origin connection outside the measurement; it does not prefetch the target
+HTML, JavaScript or assets. Here “cold” means first-fetch application resources
+and unexecuted application code, not cold renderer or connection startup. This capture
 setup avoids creating a destination renderer during tracing, where a retained
 failed run lost its initial main-frame events. It is a measurement setup change,
 not an application speedup. Missing navigation events still fail the audit;
