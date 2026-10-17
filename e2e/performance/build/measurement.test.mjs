@@ -60,7 +60,7 @@ test('fresh application proof refuses prepared app messages, nested fingerprints
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-const html = revision => '<h1>Workspace 0</h1><li>Open</li><li>Closed</li><p class="notice">Pending review</p>' + expectedFor(0).map(name => `<aside data-n7-component="${name}">${name === 'Shared00' ? revision : 'content'}</aside>`).join('');
+const html = revision => '<h1><!--f:t0-->Workspace 0<!--/f:t0--></h1><li data-forma-key="1"><!--f:t2-->Open<!--/f:t2--></li><li data-forma-key="2"><!--f:t2-->Closed<!--/f:t2--></li><p class="notice">Pending review</p>' + expectedFor(0).map(name => `<aside data-n7-component="${name}">${name === 'Shared00' ? revision : 'content'}</aside>`).join('');
 test('real observation loop includes save, polling, HTTP and reload/frame time; IR-only, wrong-route and reload failures cannot pass', async () => {
   let clock = 7, calls = 0;
   const rows = [];
@@ -162,8 +162,18 @@ test('real log retention stays bounded after readiness and finalization refuses 
     owned.fault = new Error('late child failure');
     const childError = { failures: [], semanticChecksPassed: true };
     finalizeResult(childError, [owned]); assert.equal(childError.complete, false); assert.match(childError.failures[0], /late child failure/);
-    for (const missing of ['<h1>Workspace 0</h1>', '<li>Closed</li>', '<p class="notice">Pending review</p>']) {
+    for (const missing of ['Workspace 0', 'Closed', '<p class="notice">Pending review</p>']) {
       assert.throws(() => assertPage(html(REVISION).replace(missing, ''), 0, REVISION), /native typed/);
     }
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+
+test('native typed text requires the real matched marker/key envelope and exact content', () => {
+  const rendered = html(REVISION);
+  assertPage(rendered, 0, REVISION);
+  for (const [before, after] of [
+    ['Workspace 0', 'Workspace 1'], ['Open', 'Different'], ['Closed', ''],
+    ['data-forma-key="1"', 'data-forma-key="9"'], ['<!--/f:t0-->', '<!--/f:t9-->'],
+  ]) assert.throws(() => assertPage(rendered.replace(before, after), 0, REVISION), /native typed/);
 });

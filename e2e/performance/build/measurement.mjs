@@ -41,8 +41,12 @@ export function assertFreshApplication(target, dist, preparationMessages, appId)
 }
 
 export function assertPage(html, routeIndex, revision) {
-  assert(html.includes(`<h1>Workspace ${routeIndex}</h1>`), 'native typed title missing');
-  assert(html.includes('<li>Open</li>') && html.includes('<li>Closed</li>'), 'native typed list rows missing');
+  const title = /<h1><!--f:t(\d+)-->([^<]*)<!--\/f:t\1--><\/h1>/.exec(html);
+  assert.equal(title?.[2], `Workspace ${routeIndex}`, 'native typed title missing or wrong');
+  for (const [key, label] of [[1, 'Open'], [2, 'Closed']]) {
+    const row = new RegExp(`<li data-forma-key="${key}"><!--f:t(\\d+)-->([^<]*)<!--/f:t\\1--></li>`).exec(html);
+    assert.equal(row?.[2], label, 'native typed list row missing or wrong');
+  }
   assert(html.includes('<p class="notice">Pending review</p>'), 'native typed conditional notice missing');
   for (const component of expectedFor(routeIndex)) {
     assert(html.includes(`data-n7-component="${component}"`), `route ${routeIndex} lacks rendered ${component}`);

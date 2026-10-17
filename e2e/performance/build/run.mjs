@@ -103,16 +103,18 @@ async function sample(directory, sampleNumber, source, pilot) {
   }
   async function response(origin, route) {
     const reply = await fetch(origin + route, { cache: 'no-store', signal: AbortSignal.timeout(5_000) });
-    assert.match(reply.headers.get('cache-control') ?? '', /no-store/);
-    return { status: reply.status, html: await reply.text() };
+    return { url: origin + route, status: reply.status, headers: Object.fromEntries(reply.headers), html: await reply.text() };
   }
-  async function verifyRoutes(origin, changed) {
+  async function verifyRoutes(origin, changed, phase) {
     const stylesheets = new Set();
     for (let i = 0; i < ROUTES.length; i++) {
       const reply = await response(origin, ROUTES[i]);
+      // Preserve this original response before any refusal, separately per phase.
+      writeFileSync(join(directory, `${phase}-page${i}.html`), reply.html);
+      save(join(directory, `${phase}-page${i}.response.json`), { url: reply.url, status: reply.status, headers: reply.headers });
       assert.equal(reply.status, 200);
+      assert.match(reply.headers['cache-control'] ?? '', /no-store/);
       assertPage(reply.html, i, changed && AFFECTED_ROUTES.includes(ROUTES[i]) ? NEXT_REVISION : REVISION);
-      writeFileSync(join(directory, `${changed ? 'updated' : 'original'}-page${i}.html`), reply.html);
       const links = [...reply.html.matchAll(/<link\b[^>]*>/g)].map(match => match[0]).filter(tag => /\brel="stylesheet"/.test(tag));
       assert(links.length > 0, 'native page must include its stylesheet');
       for (const tag of links) {
@@ -121,10 +123,13 @@ async function sample(directory, sampleNumber, source, pilot) {
         stylesheets.add(path);
       }
     }
+    let stylesheet = 0;
     for (const path of stylesheets) {
       const reply = await fetch(origin + path, { signal: AbortSignal.timeout(5_000) });
-      assert.equal(reply.status, 200); assert.match(reply.headers.get('content-type') ?? '', /^text\/css\b/);
       const css = await reply.text();
+      writeFileSync(join(directory, `${phase}-css${stylesheet}.css`), css);
+      save(join(directory, `${phase}-css${stylesheet++}.response.json`), { url: origin + path, status: reply.status, headers: Object.fromEntries(reply.headers) });
+      assert.equal(reply.status, 200); assert.match(reply.headers.get('content-type') ?? '', /^text\/css\b/);
       assert.match(css, /\.panels\b/); assert.match(css, /display\s*:\s*grid\b/);
     }
   }
@@ -162,7 +167,7 @@ async function sample(directory, sampleNumber, source, pilot) {
     renameSync(dist, hiddenDist);
     try {
       const release = await serve(join(env.CARGO_TARGET_DIR, 'release/forma-n7-a9'), 'release-server');
-      await verifyRoutes(release.origin, false);
+      await verifyRoutes(release.origin, false, 'release');
       await stop(release.owned);
       result.releaseEmbeddingVerified = true;
     } finally {
@@ -175,7 +180,7 @@ async function sample(directory, sampleNumber, source, pilot) {
     const watcher = start('watch', 'npm', ['run', 'dev:ssr'], ADMIN);
     await waitFor(watcher, text => text.includes('FORMA_N7_WATCH_READY'), 'all watch entries');
     const debug = await serve(join(env.CARGO_TARGET_DIR, 'debug/forma-n7-a9'), 'debug-server');
-    await verifyRoutes(debug.origin, false);
+    await verifyRoutes(debug.origin, false, 'debug');
     const { chromium } = await import('@playwright/test');
     browser = await chromium.launch({ headless: true });
     result.profile.chromium = browser.version();
@@ -191,7 +196,7 @@ async function sample(directory, sampleNumber, source, pilot) {
     const started = now();
     result.edit = changeRevision(GENERATED);
     result.update = await observeUpdate({
-      started, now, read: () => response(debug.origin, TIMED_ROUTE), delay: () => delay(10),
+      started, now, read: async () => (result.lastEditResponse = await response(debug.origin, TIMED_ROUTE)), delay: () => delay(10),
       record: row => { result.polls.push(row); },
       reloadAndFrame: async () => {
         await page.reload({ waitUntil: 'load', timeout: 10_000 });
@@ -201,7 +206,7 @@ async function sample(directory, sampleNumber, source, pilot) {
     });
     checkpoint();
     assert(!debug.owned.closed && !watcher.closed, 'watch/server exited during the edit');
-    await verifyRoutes(debug.origin, true);
+    await verifyRoutes(debug.origin, true, 'updated');
     cpSync(join(ADMIN, 'dist'), join(directory, 'updated-output'), { recursive: true });
     assert.deepEqual(browserErrors, [], 'browser errors invalidate the observation');
     assert.deepEqual(readFileSync(join(ROOT, 'e2e/Cargo.lock')), lockBefore, 'locked graph changed');
