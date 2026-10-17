@@ -15,6 +15,7 @@ test('actual performance producer retains attempt and writes no complete marker 
   const dependencies={assert,join,createHash,createPerformanceJournal,writePerformanceRecord,completePerformanceJournal,ROOT:'/controlled-source',PERFORMANCE_CONTRACT:'measured-v1',
    digest:file=>{if(file===expectedExecutable)throw new Error('final native digest failed');return 'a'.repeat(64);},
    readPerformanceBaseline:async()=>({status:'bootstrap'}),recordPackedDecoder:async()=>({}),run:()=>{},json:()=>({}),validateNative:()=>{},validateMobile:()=>{},
+   finalizeMobileAttribution:rows=>assert.deepEqual(rows.map(row=>row.id),['tenant-login','islands-100']),
    withOwnedServer:async(_binary,_args,_project,fn)=>fn(null,'http://fixture.invalid/'),measureMobileRoute:async({id})=>({id,runs:[]}),
    mobileControls:async()=>({controls:{},observations:{}}),machineProfile:()=>({}),completePerformance:()=>({passed:true})};
   const verify=new Function(...Object.keys(dependencies),`return (${body.trim()});`)(...Object.values(dependencies));
