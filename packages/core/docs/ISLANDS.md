@@ -25,11 +25,11 @@ component then runs in an isolated reactive root; a failed sibling does not
 prevent another valid island from activating.
 
 `activateIslands()` returns a `Promise<void>` for the requested **load** islands.
-Preflight and claim reservation remain synchronous. Load activation uses a
-cooperative 12 ms slice, counted from before preflight, and yields between whole
-islands through browser timer tasks. The first slice runs before the call returns
-when preflight leaves time; an individual preflight or island can exceed the
-slice, and repeated separate application calls are not a hard task-duration bound. Await the result when subsequent code requires load activation to finish.
+Preflight and claim reservation remain synchronous. Load activation starts in a
+browser timer task unless first input promotes it sooner. Each timer drain starts
+a cooperative 12 ms slice and yields between whole islands. This is not a hard
+duration bound on synchronous preflight, an indivisible island, or application
+code. Await the result when subsequent code requires load activation to finish.
 The promise resolves after those islands activate, fail in isolation, or are
 disposed, including requested load work already pending from another call.
 Visible, idle and interaction islands complete their part when their triggers
