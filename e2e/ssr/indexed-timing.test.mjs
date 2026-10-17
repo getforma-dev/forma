@@ -24,6 +24,7 @@ function collect({ largeFactor = 1, singleCost = .02, underresolved = false, too
     } else pending.push({ name, count: 1, first: value.label, last: value.label });
   } }]));
   const context = {
+    navigator: { userAgent: 'deterministic collector control; not a browser' },
     window: { __indexed: handles },
     performance: { now() {
       clockCalls++;
@@ -43,7 +44,7 @@ function collect({ largeFactor = 1, singleCost = .02, underresolved = false, too
   return { report: JSON.parse(JSON.stringify(report)), counts, intervals };
 }
 
-test('fixed calibration resolves >=512 ticks and 32ms before all101 alternating pairs; work stays complete', () => {
+test('fixed calibration resolves >=512 ticks and 32 ms before all 101 alternating pairs; work stays complete', () => {
   const { report: r, counts, intervals } = collect();
   assert.equal(r.clock.resolved, true);
   assert.ok(Math.abs(r.clock.resolution - .1) < 1e-9);
@@ -69,7 +70,7 @@ test('fixed calibration resolves >=512 ticks and 32ms before all101 alternating 
   assert.ok(r.maximumSingle < 16);
 });
 
-test('a real20% increase in each large public operation remains outside both unchanged10% constraints', () => {
+test('synthetic 20% per-operation large-case cost remains outside both unchanged 10% constraints', () => {
   const { report: r } = collect({ largeFactor: 1.2 });
   assert.equal(r.clock.resolved, true);
   assert.equal(r.rounds, 101);
@@ -77,7 +78,7 @@ test('a real20% increase in each large public operation remains outside both unc
   assert.ok(r.summary.large.p95 > r.summary.small.p95 * 1.1);
 });
 
-test('linear200→2000 operation cost remains rejected even though both use one calibrated batch', () => {
+test('synthetic linear 200→2000 cost remains rejected with one calibrated batch', () => {
   const { report: r } = collect({ largeFactor: 2000 / 200 });
   assert.equal(r.clock.resolved, true);
   assert.equal(r.samples.small.length, 101);
@@ -86,7 +87,7 @@ test('linear200→2000 operation cost remains rejected even though both use one 
   assert.ok(r.summary.large.p95 > r.summary.small.p95 * 9);
 });
 
-test('an absolute17ms public operation still exceeds the separate16ms frame constraint', () => {
+test('synthetic 17 ms public-operation cost exceeds the separate 16 ms constraint', () => {
   const { report: r } = collect({ singleCost: 17 });
   assert.equal(r.clock.resolved, true);
   assert.ok(r.maximumSingle >= 17);
