@@ -329,9 +329,9 @@ const exactNavigationBootstrap = ({children,thread,task,end,frame,navigationId,u
 const idleSource={length:2573,sha256:'cd46c6127fbe327e1821308af46a058857f7fdb3279ddb3f01dcc461bfe2e3b8'};
 const idleStack=[['',26,5],['checkTimeSinceLastLongTaskInPage',22,10],['',40,3],['',41,7]];
 const insideSpan=(child,parent)=>child.ts>=parent.ts && child.ts+(child.dur??0)<=parent.ts+parent.dur;
-const boundSource=(metadata,thread,expected,frame,instantSource=false)=>{
+const boundSource=(metadata,thread,expected,frame,instantSource=false,sourceUrl='_lighthouse-eval.js')=>{
   const data=metadata?.args?.data;
-  if(metadata?.name!=='ScriptCatchup' || metadata.cat!=='disabled-by-default-devtools.v8-source-rundown' || metadata.ph!=='X' || !nonnegative(metadata.dur) || refs(metadata).some(ref=>ref!==frame) || data?.url!=='' || data.sourceUrl!=='_lighthouse-eval.js' || data.hasSourceUrl!==true || data.isModule!==false || typeof data.isolate!=='string' || !data.isolate || !Number.isSafeInteger(data.scriptId) || data.scriptId<=0 || !Number.isSafeInteger(data.executionContextId) || data.executionContextId<=0)return null;
+  if(metadata?.name!=='ScriptCatchup' || metadata.cat!=='disabled-by-default-devtools.v8-source-rundown' || metadata.ph!=='X' || !nonnegative(metadata.dur) || refs(metadata).some(ref=>ref!==frame) || data?.url!=='' || data.sourceUrl!==sourceUrl || data.hasSourceUrl!==true || data.isModule!==false || typeof data.isolate!=='string' || !data.isolate || !Number.isSafeInteger(data.scriptId) || data.scriptId<=0 || !Number.isSafeInteger(data.executionContextId) || data.executionContextId<=0)return null;
   const matching=thread.filter(e=>e.name==='ScriptCatchup' && e.args?.data?.isolate===data.isolate && e.args.data.scriptId===data.scriptId);
   const sources=matching.filter(e=>e.cat==='disabled-by-default-devtools.v8-source-rundown-sources');
   if(matching.length!==2 || sources.length!==1)return null;
@@ -402,7 +402,16 @@ function applicationInventory(thread,origin,frame,url){
       if(script.isolated)script.binding=binding;
     }
   }
-  return {scripts,urls};
+  // Exact pinned source rundown is metadata even in the main application
+  // context. This proof exempts only the two bound metadata records, never a
+  // FunctionCall/evaluation referring to their script ID or source URL.
+  const bootstrapRecords=new Set();
+  for(const {data,event} of scripts.values()){
+    const expected=auditBootstrapSources.get(data.sourceUrl);
+    const source=expected && boundSource(event,thread,expected,frame,true,data.sourceUrl);
+    if(source){bootstrapRecords.add(event);bootstrapRecords.add(source);}
+  }
+  return {scripts,urls,bootstrapRecords};
 }
 function noApplicationEvidence(children,task,end,frame,inventory){
   const records=[task,...children];
@@ -420,16 +429,21 @@ function noApplicationEvidence(children,task,end,frame,inventory){
       if(Array.isArray(value)){for(const child of value)inspect(child,key);return;}
       // ScriptCompiled.url is the context's document URL, not a script URL.
       const context=event.name==='ScriptCompiled' && value===event.args?.data;
-      const sourceKeys=context?['sourceUrl','fileName']:['url','sourceUrl','fileName','scriptURL'];
+      const bootstrap=inventory.bootstrapRecords.has(event) && value===event.args?.data;
+      const bootstrapMetadata=bootstrap && event.cat==='disabled-by-default-devtools.v8-source-rundown';
       const scriptObject=key==='stackTrace' || key==='callFrames' || 'scriptId' in value || 'functionName' in value;
+      // Document/request/initiator URLs identify resources, not execution.
+      // Nested initiator stacks still recurse through the same script checks.
+      const executableUrl=!context && (scriptObject || scriptEvent(event) || event.name==='v8.run');
+      const sourceKeys=['fileName','scriptURL',...bootstrapMetadata?[]:['sourceUrl',...executableUrl?['url']:[]]];
       for(const field of sourceKeys)if(typeof value[field]==='string' && value[field]){
         if(inventory.urls.has(value[field]))application=true;
-        else if((field!=='url' || scriptObject || scriptEvent(event)) && ![...inventory.scripts.values()].some(s=>s.isolated && [s.data.url,s.data.sourceUrl].includes(value[field])))unresolved=true;
+        else if(![...inventory.scripts.values()].some(s=>s.isolated && [s.data.url,s.data.sourceUrl].includes(value[field])))unresolved=true;
       }
       // EvaluateScript's own zero ID is a wrapper marker. Only that field may
       // use the isolated binding below; nested unknown references still fail.
       const anonymousWrapper=event.name==='EvaluateScript' && value===event.args?.data && value.scriptId===0;
-      if('scriptId' in value && (value.scriptId!==-1 || scriptEvent(event)) && !anonymousWrapper){
+      if('scriptId' in value && (value.scriptId!==-1 || scriptEvent(event)) && !anonymousWrapper && !bootstrap){
         const script=resolve(value.scriptId,value.isolate);
         if(script?.application)application=true;
         else if(script?.isolated)bound=true;

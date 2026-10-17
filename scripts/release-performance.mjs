@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {ROOT,json,run,digest} from './release-set.mjs';
 import {readPerformanceBaseline,PERFORMANCE_CONTRACT,compareReleaseTags} from './release-performance-baseline.mjs';
-import {completePerformance,validateNative,validateMobile,finalizeMobileAttribution} from './release-performance-contract.mjs';
+import {completePerformance,validateNative,finalizeMobileAttribution} from './release-performance-contract.mjs';
 import {measureMobileRoute,mobileControls} from './release-performance-mobile.mjs';
 import {measurePackedDecoder,validateDecoder} from './release-performance-decoder.mjs';
 import {machineProfile} from './release-measurements.mjs';
@@ -87,7 +87,9 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
    });
   }
   finalizeMobileAttribution(mobile);
-  validateMobile(mobile);
+  // Collect the last independent measurement before final N3 acceptance. The
+  // unchanged completePerformance validator still refuses any blocking task;
+  // a refusal retains client evidence without writing a completion marker.
   let client;
   await test('performance: founder client comparison completes in all three engines over packed core',async()=>{
    run(process.execPath,[join(ROOT,'e2e/performance/client/run.mjs'),'--browser','all'],ROOT,{stdio:'inherit',timeout:600000,env:{...process.env,FORMA_BENCH_CORE:join(project,'node_modules/@getforma/core'),FORMA_BENCH_OUTPUT:clientPath,FORMA_PERFORMANCE_EVIDENCE:output}});
