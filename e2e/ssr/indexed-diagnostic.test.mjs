@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { measureIndexedPublicSet } from './indexed-timing.ts';
 import { measureIndexedDiagnostic } from './indexed-diagnostic.ts';
+import { completeDiagnosticTrace } from './indexed-diagnostic-trace.mjs';
 
 const normalize = value => JSON.parse(JSON.stringify(value));
 async function collect(fn, arm, { markCost = 0, refuse = false } = {}) {
@@ -119,7 +120,18 @@ test('temporary donor/config retain exactly three ordered arms, original source,
   assert(config.includes('reuseExistingServer: false'));
   assert(workflow.includes('workflow_dispatch:')); assert(!workflow.includes('pull_request:'));
   assert(workflow.includes('test "$GITHUB_RUN_ATTEMPT" = 1'));
-  assert(workflow.includes('test "$(git rev-parse HEAD^)" = 93d3d9370b2b67ceed21c8f80d41566dbe6dca86'));
+  assert(workflow.includes('git merge-base --is-ancestor 93d3d9370b2b67ceed21c8f80d41566dbe6dca86 HEAD'));
   assert(workflow.includes('scripts/release-owned-linux.py "$RUNNER_TEMP/indexed-null-owned" 570 --'));
   assert(workflow.includes('if: always()')); assert(!workflow.includes('contents: write'));
+});
+
+
+test('actual post-EOF finalization refuses known loss and absent/nonboolean loss status', () => {
+  const complete = { dataLossOccurred: false, stream: 'actual-stream', traceFormat: 'json' };
+  assert.deepEqual(completeDiagnosticTrace(complete, 1234), { complete: true, bytes: 1234, dataLossOccurred: false });
+  for (const payload of [{ ...complete, dataLossOccurred: true }, { stream: 'actual-stream' },
+    { ...complete, dataLossOccurred: 'false' }, { ...complete, dataLossOccurred: 0 }, undefined]) {
+    assert.throws(() => completeDiagnosticTrace(payload, 1234), /trace data loss must be explicitly false/);
+  }
+  assert.deepEqual(complete, { dataLossOccurred: false, stream: 'actual-stream', traceFormat: 'json' });
 });

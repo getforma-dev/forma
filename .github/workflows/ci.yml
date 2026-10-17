@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
       - name: Refuse retries and record actual source and host
         shell: bash
         run: |
@@ -29,8 +29,8 @@ jobs:
             printf 'ImageOS=%s\nImageVersion=%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
           } > test-results/indexed-null/environment.txt
           test "$GITHUB_RUN_ATTEMPT" = 1
-          test "$(git rev-parse HEAD^)" = 93d3d9370b2b67ceed21c8f80d41566dbe6dca86
-          git diff --exit-code HEAD^ HEAD -- packages crates package-lock.json Cargo.lock e2e/Cargo.lock e2e/ssr/cases e2e/ssr/build.sh e2e/ssr/build-cases.mjs e2e/ssr/serve.mjs e2e/ssr/indexed-timing.ts e2e/ssr/indexed-progress.mjs scripts/release-owned-linux.py
+          git merge-base --is-ancestor 93d3d9370b2b67ceed21c8f80d41566dbe6dca86 HEAD
+          git diff --exit-code 93d3d9370b2b67ceed21c8f80d41566dbe6dca86 HEAD -- packages crates package-lock.json Cargo.lock e2e/Cargo.lock e2e/ssr/cases e2e/ssr/build.sh e2e/ssr/build-cases.mjs e2e/ssr/serve.mjs e2e/ssr/indexed-timing.ts e2e/ssr/indexed-progress.mjs scripts/release-owned-linux.py
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version-file: .node-version

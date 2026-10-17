@@ -7,6 +7,7 @@ import { arch, cpus, platform, release } from 'node:os';
 import { SSR_ORIGIN } from './origin';
 import { measureIndexedDiagnostic } from './indexed-diagnostic';
 import { createIndexedProgressWriter } from './indexed-progress.mjs';
+import { completeDiagnosticTrace } from './indexed-diagnostic-trace.mjs';
 
 const arms = ['small-large', 'small-small', 'large-large'] as const;
 for (const arm of arms) test(`diagnostic only: ${arm}`, async ({ page, browser }, info) => {
@@ -78,13 +79,16 @@ for (const arm of arms) test(`diagnostic only: ${arm}`, async ({ page, browser }
     if (tracing) {
       let timer: ReturnType<typeof setTimeout> | undefined;
       let fd: number | undefined, stream: string | undefined, bytes = 0;
+      let completion: { stream?: string; dataLossOccurred?: boolean } | undefined;
       try {
-        const complete = new Promise<{ stream?: string }>((resolve, reject) => {
+        const complete = new Promise<{ stream?: string; dataLossOccurred?: boolean }>((resolve, reject) => {
           session.once('Tracing.tracingComplete', resolve);
           timer = setTimeout(() => reject(new Error('trace completion deadline')), 15_000);
         });
         void complete.catch(() => {}); // The original promise is still awaited; avoid an early unhandled rejection.
-        await session.send('Tracing.end'); stream = (await complete).stream; clearTimeout(timer);
+        await session.send('Tracing.end'); completion = await complete; clearTimeout(timer);
+        save('trace-completion.json', completion); // Full original payload before any validation.
+        stream = completion.stream;
         assert(stream, 'missing original trace stream');
         fd = openSync(join(directory, 'trace.json'), 'wx');
         const deadline = Date.now() + 15_000;
@@ -96,8 +100,8 @@ for (const arm of arms) test(`diagnostic only: ${arm}`, async ({ page, browser }
           writeFileSync(fd, data); bytes += data.length;
           if (part.eof) break;
         }
-        save('trace-receipt.json', { complete: true, bytes });
-      } catch (cause) { faults.push(String(cause)); save('trace-receipt.json', { complete: false, bytes, error: String(cause) }); }
+        save('trace-receipt.json', completeDiagnosticTrace(completion, bytes));
+      } catch (cause) { faults.push(String(cause)); save('trace-receipt.json', { complete: false, bytes, dataLossOccurred: completion?.dataLossOccurred ?? null, error: String(cause) }); }
       finally {
         clearTimeout(timer); if (fd !== undefined) closeSync(fd);
         if (stream) await session.send('IO.close', { handle: stream }).catch(cause => faults.push(String(cause)));
