@@ -1,6 +1,6 @@
 {
   "name": "@getforma/build",
-  "version": "3.0.0-beta.2",
+  "version": "3.0.0-beta.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
     "smol-toml": "1.9.1"
   },
   "peerDependencies": {
-    "@getforma/compiler": "^3.0.0 || =3.0.0-beta.2"
+    "@getforma/compiler": "^3.0.0 || =3.0.0-beta.3"
   },
   "peerDependenciesMeta": {
     "@getforma/compiler": {
