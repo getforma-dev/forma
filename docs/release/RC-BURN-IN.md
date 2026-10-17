@@ -9,8 +9,10 @@ run and retained evidence.
 ## Audit and release chain
 
 Prepare the coordinated RC version before freezing the product and harness tree
-for review. The reviewer uses a different model from the author. Retain the real
-review sessions and accepted findings, not just a generated "passed" string:
+for review. Use a different reviewer model, or the founder-authorized L-65
+fallback: a separate reviewer initialized with fresh context, including on the
+same model, who did not author the implementation. Retain the real review
+sessions and accepted findings, not just a generated "passed" string:
 
 - `docs/release/d14-report.json`: `d14-whole-release-v1`, exact reviewed commit/tree,
   SHA-256 of the full Git input inventory, author/reviewer model identities and
@@ -20,6 +22,16 @@ review sessions and accepted findings, not just a generated "passed" string:
   complete path/mode/blob inventory. Its bytes must match the report hash.
 - `docs/release/d14-review-evidence.json`: actual referenced review/acceptance
   text and its SHA-256 hashes, using `d14-review-evidence-v1`.
+
+The L-65 path adds `independence: { method: "fresh-context", decision: "L-65",
+initializationEvidenceSha256: "<actual initialization evidence digest>" }` to
+the report and includes the actual separate fresh-context initialization in the
+existing review-evidence bundle. Record the model/session actually used and
+verify the initialization from its tool/session record. Different evidence
+digests alone do not prove review independence or software quality. Both paths
+require an actual exact-tree whole-release review against the v2 specification
+and accepted founder decisions, P17, SR14/SR17/SR33 and release artifacts. L-65
+changes the allowed reviewer setup; it does not waive any acceptance gate.
 
 `readRcAudit()` recomputes the actual Git binding. After the audited tree, only
 exact audit-status completion, these review records, and independently reviewed

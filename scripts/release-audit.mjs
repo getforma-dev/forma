@@ -20,6 +20,18 @@ function model(value) {
   assert(value.provider.trim() && value.id.trim()); hash(value.sessionEvidenceSha256, 'actual model session evidence');
   return `${value.provider}:${value.id}`;
 }
+function independence(report) {
+  const author = model(report.authorModel), reviewer = model(report.reviewerModel);
+  assert.notEqual(report.authorModel.sessionEvidenceSha256, report.reviewerModel.sessionEvidenceSha256, 'D14 requires separate author and reviewer sessions');
+  if (report.independence === undefined) {
+    assert.notEqual(author, reviewer, 'D14 same-model review requires the L-65 fresh-context method');
+    return;
+  }
+  assert.equal(report.independence.method, 'fresh-context', 'D14: unknown independence method');
+  assert.equal(report.independence.decision, 'L-65', 'D14: fresh-context review requires L-65');
+  hash(report.independence.initializationEvidenceSha256, 'D14 actual fresh-context initialization evidence');
+  assert(![report.authorModel.sessionEvidenceSha256, report.reviewerModel.sessionEvidenceSha256, report.acceptanceEvidenceSha256].includes(report.independence.initializationEvidenceSha256), 'D14: initialization must have its own actual evidence');
+}
 const documentation = path => /^(?:docs\/(?!archive\/|evidence\/).+\.md|docs\/release\/d14-(?:report|input-manifest|review-evidence)\.json|CHANGELOG\.md|packages\/(?:core|compiler|build|create-app)\/CHANGELOG\.md|crates\/(?:forma-ir|forma-ir-derive|forma-server)\/CHANGELOG\.md)$/.test(path);
 
 /** An input manifest covers every tracked blob, including modes. */
@@ -41,7 +53,7 @@ export function validateAuditReport(report, input, inputBytes) {
   assert.equal(report.reviewedCommit, input.commit); assert.equal(report.reviewedTree, input.tree);
   hash(report.inputManifestSha256, 'D14 input manifest');
   assert.equal(report.inputManifestSha256, sha(inputBytes));
-  assert.notEqual(model(report.authorModel), model(report.reviewerModel), 'D14 requires a different model');
+  independence(report);
   timestamp(report.reviewedAt);
   assert.equal(report.accepted, true, 'D14 review is not accepted');
   assert(Array.isArray(report.findings)); assert(report.findings.length <= 10_000);
@@ -93,10 +105,12 @@ export function bindAuditToRc({ rcCommit, reportBytes, inputBytes, root = ROOT }
 }
 
 export function validateAuditEvidence(report, evidenceBytes) {
+  independence(report);
   const evidence = JSON.parse(evidenceBytes);
   assert.equal(evidence.contract, 'd14-review-evidence-v1');
   const expected = new Set([report.authorModel.sessionEvidenceSha256, report.reviewerModel.sessionEvidenceSha256,
     report.acceptanceEvidenceSha256, ...report.findings.map(finding => finding.evidenceSha256)]);
+  if (report.independence) expected.add(report.independence.initializationEvidenceSha256);
   assert(Array.isArray(evidence.entries) && evidence.entries.length === expected.size);
   for (const item of evidence.entries) {
     assert.equal(typeof item.content, 'string'); assert(item.content.trim().length > 0);
