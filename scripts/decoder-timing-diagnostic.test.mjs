@@ -54,3 +54,27 @@ test('the actual served boot keeps the public64ms value while measuring10ms sync
   }else assert.equal(value.timing,undefined);
  }
 });
+
+
+test('an early timing refusal cannot mask later sample or original refusal-control corruption',async()=>{
+ const {validateDecoder,validateDecoderCorrectnessForDiagnostic}=await import('./release-performance-decoder.mjs');
+ const {decoder}=await import('./release-performance-test-fixtures.mjs');
+ const slow=()=>{const report=decoder();report.cases[0].samples[0].elapsedMs=64;report.cases[0].summary.maxMs=64;return report;};
+ const report=slow(),untouched=structuredClone(report);
+ assert.throws(()=>validateDecoder(report),/ascii-string sample 1: exceeds 30ms/);
+ assert.equal(validateDecoderCorrectnessForDiagnostic(report),report);
+ assert.deepEqual(report,untouched,'diagnostic correctness must not rewrite original evidence');
+ for(const [mutate,expected] of [
+  [r=>{r.cases[0].samples[1].valueSha256='b'.repeat(64);},/projected value differs/],
+  [r=>{r.cases[1].samples[39].calls=0;},/incorrect component entry count/],
+  [r=>{r.cases[1].samples[39].pageErrors=['later error'];},/uncaught browser error/],
+  [r=>{r.controls[1].observation.calls=1;},/incorrect component entry count/],
+  [r=>{const errors=['[forma] FORMA_E_ISLAND_STATE: wrong reason'];r.controls[1].observation.consoleErrors=errors;r.controls[1].observation.browserConsoleErrors=errors;},/different reason/],
+  [r=>{r.cases[0].summary.maxMs=30;},/summary differs/],
+ ]){
+  const invalid=slow();mutate(invalid);const original=structuredClone(invalid);
+  assert.throws(()=>validateDecoder(invalid),/ascii-string sample 1: exceeds 30ms/,'original first refusal remains unchanged');
+  assert.throws(()=>validateDecoderCorrectnessForDiagnostic(invalid),expected,'all later correctness checks remain required');
+  assert.deepEqual(invalid,original);
+ }
+});

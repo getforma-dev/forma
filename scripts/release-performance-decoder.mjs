@@ -102,7 +102,7 @@ function checkObservation(observation,payload,negative=false) {
     assert.equal(observation.valueLength,payload.value.length);
   }
 }
-export function validateDecoder(report) {
+function validateDecoderReport(report,requireSampleTiming) {
   assert.equal(report?.schema,1); assert.equal(report.pilot,false,'decoder: a pilot cannot qualify a release');
   assert.deepEqual(report.profile,DECODER_PROFILE,'decoder: actual measurement profile differs');
   assert.equal(report.responsePolicy,DECODER_CSP,'decoder: actual enforced Trusted Types header differs');
@@ -129,7 +129,7 @@ export function validateDecoder(report) {
       for(const [i,observation] of observations.entries()) {
         assert.equal(observation.run,i+1,`decoder: duplicate/missing ${phase} run`);
         checkObservation(observation,payload);
-        if(phase==='sample') assert(observation.elapsedMs<=DECODER_PROFILE.maxSampleMs,`decoder ${row.id} sample ${i+1}: exceeds ${DECODER_PROFILE.maxSampleMs}ms`);
+        if(requireSampleTiming&&phase==='sample') assert(observation.elapsedMs<=DECODER_PROFILE.maxSampleMs,`decoder ${row.id} sample ${i+1}: exceeds ${DECODER_PROFILE.maxSampleMs}ms`);
       }
     }
     assert.deepEqual(row.summary,sortedSummary(row.samples),'decoder: summary differs from raw samples');
@@ -145,6 +145,19 @@ export function validateDecoder(report) {
       'decoder: control failed for a different reason');
   }
   return report;
+}
+
+// The release validator always enforces every original check, including the
+// inclusive 30ms limit. There is no public option to disable release timing.
+export function validateDecoder(report) {
+  return validateDecoderReport(report,true);
+}
+// Diagnostic collection must check every sample/control even after the
+// original validator has refused an early timing sample. Reuse its exact
+// correctness/provenance checks without rewriting raw durations or summaries.
+// This result cannot establish release acceptance.
+export function validateDecoderCorrectnessForDiagnostic(report) {
+  return validateDecoderReport(report,false);
 }
 
 export function decoderBootSource(diagnosticTiming=false) {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,openSync,writeFileSync,fsyncSync,closeSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {measurePackedDecoder,validateDecoder} from './release-performance-decoder.mjs';
+import {measurePackedDecoder,validateDecoder,validateDecoderCorrectnessForDiagnostic} from './release-performance-decoder.mjs';
 import {summarizeTiming,validateTimingControls} from './decoder-timing-diagnostic.mjs';
 const [projectArg,outputArg]=process.argv.slice(2);assert(projectArg&&outputArg&&process.argv.length===4);
 const project=resolve(projectArg),output=resolve(outputArg);mkdirSync(output);
@@ -19,6 +19,10 @@ try{
  try{validateDecoder(report);originalValidator={passed:true};}
  catch(error){originalValidator={passed:false,error:String(error?.stack??error)};}
  save('original-validator-verdict.json',{diagnosticOnly:true,releaseAcceptance:false,...originalValidator});
+ // The original validator stops at its first failure. An expected timing
+ // refusal cannot hide a later bad value, browser error, or refusal control.
+ validateDecoderCorrectnessForDiagnostic(report);
+ save('diagnostic-correctness.json',{diagnosticOnly:true,releaseAcceptance:false,passed:true});
  const observations=report.cases.map(row=>({id:row.id,originalSummary:row.summary,warmups:row.warmups.map(s=>({run:s.run,...summarizeTiming(s.timing,s.elapsedMs)})),samples:row.samples.map(s=>({run:s.run,...summarizeTiming(s.timing,s.elapsedMs)}))}));
  const refusals=report.controls.map(c=>({id:c.id,...summarizeTiming(c.observation.timing,c.observation.elapsedMs)}));
  const controls=validateTimingControls(report.diagnosticTimingControls);
