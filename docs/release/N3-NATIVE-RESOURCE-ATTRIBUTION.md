@@ -1,6 +1,6 @@
 # Native navigation, parser and SVG-image attribution
 
-`N3-startup-strict50-v5` keeps every application, mixed, unknown and independent
+`N3-startup-strict50-v6` keeps every application, mixed, unknown and independent
 observer task subject to 50 ms. It extends positive attribution of browser work
 outside island activation; it changes no product code, fixture, profile, sample
 count, response deadline or whole-page metric.
@@ -14,6 +14,13 @@ the exact admitted native records, and satisfy every frame, resource and
 nesting check. Any handler execution, unknown or foreign-frame child, or
 post-script work keeps the whole task counted. This is not a general exemption
 for lifecycle event names or long pre-script tasks.
+
+Version 6 also accepts the observed thread-scoped instant form of those native
+lifecycle records (`EventDispatch`, `devtools.timeline`, phase `I`, scope `t`,
+no recorded duration and a positive safe-integer `sampleTraceId`). It requires
+the same complete task and origin proof as the complete-event form. The instant
+record is not evidence of zero execution cost or absence of listeners; any
+execution or unknown record in the task still prevents exclusion.
 
 A stylesheet task requires one parser-initiated same-origin request from the
 committed main document, its matching successful response/data/finish, and the
@@ -59,3 +66,10 @@ heuristic kept that task counted. Separate version 5 analysis preserves the
 66.737 ms raw duration while proving its origin. The ninth audit's separate
 `NO_NAVSTART` capture failure remains unresolved; neither reanalysis nor the
 eight retained pairs constitutes a completed P17 qualification.
+
+The later beta.3 rehearsal remains failed at 60 of 61 checks. Its tenant-login
+run 1 retained a 52.182 ms navigation task with an instant native `unload`
+record; the task ended 714.431 ms before the first application compile. Separate
+version 6 replay changes only that task's attribution across the 40 saved
+observations, retaining its raw duration and every other task and metric. This
+replay does not qualify the original P17 or replace a fresh complete campaign.
