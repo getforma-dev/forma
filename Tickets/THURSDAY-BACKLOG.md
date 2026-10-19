@@ -1,3 +1,7 @@
+# Resume date corrected: Monday, October19,2026
+
+Read [MONDAY-RESUME.md](MONDAY-RESUME.md) for current state. The founder resumed work today; previous Thursday scheduling/pause instructions below are historical.
+
 # Thursday backlog — founder quota directive
 
 ## Resumed bounded work — 2026-10-17

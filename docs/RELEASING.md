@@ -3,7 +3,11 @@
 FORMA-187 prepares the merged repository for one release of seven packages.
 The checked-in contract record, `scripts/release-contracts.json`, states which
 tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
-every gate of its milestone and of the earlier milestones is done. Read that
+every gate of its milestone and of the earlier milestones is done, except the
+explicit 3.0.0 post-release soak obligation under L-66-QUOTA. That exception
+requires an authenticated published RC, its P17 and independent audit, and the
+reviewed final source changes; it records deferred status and zero soak credit.
+See [the post-release soak path](release/RC-BURN-IN.md). Read the contract
 record for the candidate's current readiness; a version string alone does not
 authorize publication. See [the milestone gate](#milestone-gate) below and the
 historical [alpha runbook](release/ALPHA-RUNBOOK.md). Earlier alpha and A2 results
@@ -82,16 +86,21 @@ and the lint rejects one (`liveReleaseReady` or a top-level `pending` list).
 The lint (`ruby scripts/check-release-workflow.rb --self-test`) checks the
 contract's shape beside the workflow: exactly `alpha`, `beta`, `rc`, `final` in
 order (C1); each with a plan milestone and non-empty gates whose keys are tickets
-and whose entries carry a `done`/`pending` status and a scope (C2); no gate in
+and whose entries carry a `done`/`pending` status and a scope (C2), with only the
+exact 3.0.0 final soak permitted to carry the checked L-66-QUOTA `deferred`
+descriptor; no gate in
 two milestones (C3); no global switch (C4); the one release version the gates
 are written for, `version`, which the resolver asserts against the tag's base
 version so a `v3.1.0-alpha.1` cannot pass 3.0.0's gates (C5). Its self-test
-seeds thirteen contract violations beside the thirty-two workflow ones, and its
-last line names the
+seeds ordinary contract and workflow violations plus ten malformed soak-deferral
+cases and one accepted deferral case. Its last line names the
 milestones that may publish today. The GitHub Release names the milestone, where
 it went on npm (`next` for a pre-release, `latest` for the final) and every gate
 still open before the later milestones (`releaseNotes` in
 `scripts/release-record.mjs`); DS12 carries the resolved milestone as `milestone`.
+A deferred soak is reported separately as an outstanding post-release obligation,
+never as a completed burn-in or a fabricated run. Later verification must retain
+the immutable release record's original zero-credit statement.
 
 Only tag pushes trigger release.yml. `check` requires the latest readable,
 successful main-push CI run for the exact commit, including the executed R17

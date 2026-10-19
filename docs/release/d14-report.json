@@ -1,0 +1,41 @@
+{
+  "contract": "d14-whole-release-v1",
+  "reviewedCommit": "62be639fd26abff108e4b1a4eb89c56c2a50fff3",
+  "reviewedTree": "c6fb6e1f3b0d271db846c64ab8403bf848e6f3c0",
+  "inputManifestSha256": "6d74bf15ff58a1e6be7ee3ac8651632c90aad97008b641906d9984ff85bfd55e",
+  "authorModel": {
+    "provider": "openai",
+    "id": "gpt-6-astra",
+    "sessionEvidenceSha256": "e3a12fb66f9739ff8e293941ee05194be0bf7cb47d753149dfe406a3f475a5db"
+  },
+  "reviewerModel": {
+    "provider": "openai",
+    "id": "gpt-6-astra",
+    "sessionEvidenceSha256": "fc716b726d983e982f4e1ac88bdeb44b5436645120d84ddf86c97b3fab196838"
+  },
+  "independence": {
+    "method": "fresh-context",
+    "decision": "L-65",
+    "initializationEvidenceSha256": "c604b617e333270657f796b9ac119d80886b2e2b45a602bb7a3908fc7f9b91af"
+  },
+  "reviewedAt": "2026-10-19T17:16:58Z",
+  "accepted": true,
+  "findings": [
+    {
+      "id": "D14-001",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The retained correction separates the P17 hard limit, outer release wall-clock target and human maintainer effort; the original outer-clock miss remains a miss.",
+      "evidenceSha256": "7c33f5a0baacc20428d82e3f9b080f19397a2ecbad0d3d639fc1927d64f4d631"
+    },
+    {
+      "id": "D14-002",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The supported post-final verifier authenticates the immutable deferred final record, same published RC and later hosted workload, retaining zero credit in the original final record.",
+      "evidenceSha256": "1a3b38cb38dbda6a17538180bea7f37ad4f4de9786aaf369a3d083365319c3ae"
+    }
+  ],
+  "blockingFindings": [],
+  "acceptanceEvidenceSha256": "04d2e16e2226f6c4917220dcb7b6786394899e4184bdae72d45a78edfc4ca7f3"
+}

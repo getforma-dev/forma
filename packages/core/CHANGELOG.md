@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0 set will be recorded here.
+Changes after the prepared 3.0.0-rc.1 set will be recorded here.
 
-## [3.0.0] - Prepared; publication pending
+## [3.0.0-rc.1] - Prepared; publication pending
 
-The entries below describe the prepared final source, not a published release.
+The entries below describe the prepared release-candidate source, not a published release.
 The release workflow and registry verification establish publication.
 
 - FORMA-204: a component whose setup throws now runs its registered teardown, including listeners, tracked effects and context providers, before propagating the original error. Mount callbacks remain uncalled and cleanup errors do not prevent later teardown.

@@ -2,11 +2,11 @@
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0 set will be recorded here.
+Changes after the prepared 3.0.0-rc.1 set will be recorded here.
 
-## [3.0.0] - Prepared; publication pending
+## [3.0.0-rc.1] - Prepared; publication pending
 
-Prepared as part of the coordinated seven-package 3.0.0 set, including the
+Prepared as part of the coordinated seven-package 3.0.0-rc.1 set, including the
 changes below and the preceding 3.0 prereleases. This heading does not assert
 publication; the release workflow and registry verification establish that.
 

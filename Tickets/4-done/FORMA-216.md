@@ -1,6 +1,6 @@
 # FORMA-216: Reconcile final-version documentation before publication
 
-Status: In review; local regression checks pass, pushed PR112 CI and independent review pending.
+Status: Done. Merged in PR112 after independent review and exact-head green CI; merged-main CI also passed.
 Repository: getforma-dev/forma only. Found in PR112 source b58bc9b3.
 
 ## Evidence and root cause
@@ -22,3 +22,5 @@ Inspect the new exact-head Actions result once it completes; independent review 
 - 2026-10-17T17:39:02.919986+00:00: Founder explicitly resumed bounded work with8%quota. Root diagnosed, corrected and locally verified; saving all work before relying on hosted checks.
 
 - Follow-through: remaining coordinated changelogs now have prepared final entries; actual parser8/8 and release-record tests11/11 pass. Publication pending remains explicit. Final pushed CI/review pending.
+
+- 2026-10-19: Closed after PR112 merge ee7e5751 and successful exact-main CI39056716276. Source integration and applicable checks completed; original source review/negative controls retained. This closure does not claim whole-release audit, soak or final publication.
