@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0-rc.1 set will be recorded here.
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+- Prepare the coordinated final versions, dependency locks and template source seeds from the audited 3.0.0-rc.1 source. No product behavior changes in this preparation.
+- Final publication requires verified RC publication, the independently reviewed final delta, exact-source CI and the trusted release workflow. The L-66-QUOTA post-release soak remains a separate outstanding obligation until its actual completion is verified.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 

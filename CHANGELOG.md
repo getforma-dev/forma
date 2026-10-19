@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+- Prepare the coordinated final versions, dependency locks and template source seeds from the audited 3.0.0-rc.1 source. No product behavior changes in this preparation.
+- Final publication requires verified RC publication, the independently reviewed final delta, exact-source CI and the trusted release workflow. The L-66-QUOTA post-release soak remains a separate outstanding obligation until its actual completion is verified.
+
 ## [3.0.0-beta.4] — qualification pending
 
 - Coordinate all seven packages and both template source seeds for the next beta verification, and update maintained installation examples. Beta.1, beta.2 and beta.3 remain immutable unpublished tags.
@@ -31,10 +40,6 @@
 ## Unreleased — the client list fixture is admitted (FORMA-188, L-58)
 
 - Move the client-list island fixture to the positive corpus after the accepted N2 increase. Its strict build must emit one island route with positive Forma/JavaScript byte counts below the report's own ceilings and an empty exceeded verdict; the obsolete BUILD-819 wording assertion is removed.
-
-## [Unreleased]
-
-Changes after the prepared 3.0.0-rc.1 set will be recorded here.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 
