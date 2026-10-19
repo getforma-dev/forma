@@ -92,8 +92,20 @@ test('RC cannot record without a real audit, nor with changed production after r
   await assert.rejects(qualificationEvidence({ ...f, set: { ...f.set, commit }, env: { ...f.env, GITHUB_SHA: commit, P17_MANIFEST_SHA256: manifestSha256 } }), /production\/harness changed/);
 });
 
-test('the GitHub Release names the milestone, where it went on npm, and every gate still open before later milestones', () => {
+for (const deferredInput of [false, true]) test(`the GitHub Release names the milestone, channel and later gates (deferred input: ${deferredInput})`, () => {
   const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
+  if (deferredInput) {
+    const soak = contracts.milestones.final.gates['FORMA-145 soak'];
+    soak.status = 'deferred';
+    soak.deferral = { decision: 'L-66-QUOTA', finalVersion: '3.0.0', reference: 'docs/release/post-release-soak.json' };
+  }
+  // Reconstruct an alpha fixture, not a contradictory snapshot of live final progress.
+  for (const [name, milestone] of Object.entries(contracts.milestones)) {
+    for (const gate of Object.values(milestone.gates)) {
+      gate.status = name === 'alpha' ? 'done' : 'pending';
+      delete gate.deferral;
+    }
+  }
   // Keep the fixture's later gates open independently of live release progress.
   contracts.milestones.beta.gates['FORMA-188 fixture applications'].status = 'pending';
   contracts.milestones.rc.gates['FORMA-145 audit'].status = 'pending';

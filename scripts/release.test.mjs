@@ -11,11 +11,30 @@ import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemp
 const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
 const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
 const milestoneNames = ['alpha', 'beta', 'rc', 'final'];
-const seededMilestones = statuses => seededContract(c => {
+const seededMilestones = (statuses, source = contracts()) => {
+  const c = structuredClone(source);
   for (const milestone of milestoneNames) {
     assert(['done', 'pending'].includes(statuses[milestone]), `${milestone}: explicit seeded status required`);
-    for (const gate of Object.values(c.milestones[milestone].gates)) gate.status = statuses[milestone];
+    for (const gate of Object.values(c.milestones[milestone].gates)) {
+      gate.status = statuses[milestone];
+      delete gate.deferral; // Synthetic done/pending states cannot retain a live deferral.
+    }
   }
+  return c;
+};
+test('synthetic milestone states do not inherit a live final soak deferral', () => {
+  const source = contracts(), soak = source.milestones.final.gates['FORMA-145 soak'];
+  soak.status = 'deferred';
+  soak.deferral = { decision: 'L-66-QUOTA', finalVersion: '3.0.0', reference: 'docs/release/post-release-soak.json' };
+  for (const status of ['done', 'pending']) {
+    const seeded = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: status }, source);
+    assert.equal('deferral' in seeded.milestones.final.gates['FORMA-145 soak'], false);
+    assert.equal(releaseMilestone(seeded, '3.0.0').ready, status === 'done');
+  }
+  assert.equal(soak.status, 'deferred');
+  assert.equal(releaseMilestone(source, '3.0.0').deferred.length, 1);
+  soak.status = 'done';
+  assert.throws(() => releaseMilestone(source, '3.0.0'), /completed\/pending gate cannot carry a deferral/);
 });
 test('L-60 defers live governance only; source probes and other release gates still block', () => {
   const c = contracts();
