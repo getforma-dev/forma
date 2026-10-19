@@ -51,7 +51,7 @@
         "FORMA-145 documentation": { "status": "done", "scope": "the complete 3.0 upgrade guide and stability record match the final public surface" },
         "FORMA-116": { "status": "done", "scope": "reviewed governance source controls and actual SR14 security mutation probes; live rollout deferred by L-60" },
         "FORMA-189": { "status": "done", "scope": "the recall script and SECURITY.md generated from the release record" },
-        "FORMA-145 audit": { "status": "pending", "scope": "the whole-release audit on another model or a separate fresh-context reviewer under L-65, with an empty blocking list (D14)" }
+        "FORMA-145 audit": { "status": "done", "scope": "the whole-release audit on another model or a separate fresh-context reviewer under L-65, with an empty blocking list (D14)" }
       }
     },
     "final": {
