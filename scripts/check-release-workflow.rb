@@ -166,6 +166,12 @@ def violations(doc)
   out
 end
 
+def soak_deferral?(version, milestone, ticket, gate)
+  version == '3.0.0' && milestone == 'final' && ticket == 'FORMA-145 soak' &&
+    gate.is_a?(Hash) && gate['status'] == 'deferred' &&
+    gate['deferral'] == { 'decision' => 'L-66-QUOTA', 'finalVersion' => '3.0.0', 'reference' => 'docs/release/post-release-soak.json' }
+end
+
 def contract_violations(contracts)
   out = []
   return ['C0 contract file must be a mapping'] unless contracts.is_a?(Hash)
@@ -180,7 +186,8 @@ def contract_violations(contracts)
     next unless m.is_a?(Hash) && m['gates'].is_a?(Hash)
     m['gates'].each do |ticket, gate|
       out << "C2 #{name}: #{ticket} is not a ticket gate" unless ticket.is_a?(String) && ticket.match?(GATE_KEY)
-      stated = gate.is_a?(Hash) && %w[done pending].include?(gate['status']) && gate['scope'].is_a?(String) && !gate['scope'].strip.empty?
+      ordinary = gate.is_a?(Hash) && %w[done pending].include?(gate['status']) && !gate.key?('deferral')
+      stated = gate.is_a?(Hash) && (ordinary || soak_deferral?(contracts['version'], name, ticket, gate)) && gate['scope'].is_a?(String) && !gate['scope'].strip.empty?
       out << "C2 #{name}: #{ticket} needs a done/pending status and a scope" unless stated
       out << "C3 #{ticket} gates both #{seen[ticket]} and #{name}" if seen.key?(ticket)
       seen[ticket] = name
@@ -212,6 +219,27 @@ if ARGV.include?('--self-test') && errors.empty?
   contract_seeds.each do |name, rule, mutate|
     seeded = Marshal.load(Marshal.dump(contracts)); mutate.call(seeded)
     errors << "self-test failed to reject contract #{name} with #{rule}" unless contract_violations(seeded).any? { |v| v.start_with?(rule) }
+  end
+  deferred = Marshal.load(Marshal.dump(contracts))
+  deferred['milestones']['final']['gates']['FORMA-145 soak'].merge!('status' => 'deferred', 'deferral' => {
+    'decision' => 'L-66-QUOTA', 'finalVersion' => '3.0.0', 'reference' => 'docs/release/post-release-soak.json'
+  })
+  errors << 'self-test rejected explicit 3.0.0 post-release soak policy' unless contract_violations(deferred).empty?
+  deferral_seeds = [
+    ['wrong release', ->(c) { c['version'] = '3.0.1' }],
+    ['wrong gate', ->(c) { c['milestones']['final']['gates']['FORMA-191'] = c['milestones']['final']['gates'].delete('FORMA-145 soak') }],
+    ['wrong milestone', ->(c) { c['milestones']['rc']['gates']['FORMA-145 soak'] = c['milestones']['final']['gates'].delete('FORMA-145 soak') }],
+    ['wrong decision', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['deferral']['decision'] = 'L-66' }],
+    ['wrong reference', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['deferral']['reference'] = 'elsewhere.json' }],
+    ['wrong final version', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['deferral']['finalVersion'] = '3.0.1' }],
+    ['missing descriptor', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak'].delete('deferral') }],
+    ['empty scope', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['scope'] = ' ' }],
+    ['done with deferral', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['status'] = 'done' }],
+    ['pending with deferral', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['status'] = 'pending' }]
+  ]
+  deferral_seeds.each do |name, mutate|
+    seeded = Marshal.load(Marshal.dump(deferred)); mutate.call(seeded)
+    errors << "self-test failed to reject soak deferral #{name}" if contract_violations(seeded).empty?
   end
   seeds = [
     ['branch trigger', 'T1', ->(d) { d['on']['push']['branches'] = ['main'] }],
@@ -255,10 +283,12 @@ if ARGV.include?('--self-test') && errors.empty?
     errors << "self-test failed to reject #{name} with #{rule}" unless violations(seeded).any? { |v| v.start_with?(rule) }
   end
   puts "#{seeds.length} SR13/SR43 workflow and #{contract_seeds.length} milestone-contract seeded violations rejected" if errors.empty?
+  puts "explicit post-release soak accepted; #{deferral_seeds.length} invalid deferrals rejected" if errors.empty?
   errors << 'release helper tests failed' unless system('node', '--test', *Dir.glob('scripts/release*.test.mjs').sort)
 end
 abort(errors.join("\n")) unless errors.empty?
 ready = MILESTONES.select do |name|
-  MILESTONES[0..MILESTONES.index(name)].all? { |m| contracts['milestones'][m]['gates'].values.all? { |g| g['status'] == 'done' } }
+  MILESTONES[0..MILESTONES.index(name)].all? { |m| contracts['milestones'][m]['gates'].all? { |ticket, g| g['status'] == 'done' || (name == 'final' && soak_deferral?(contracts['version'], m, ticket, g)) } }
 end
 puts "release workflow: tag → exact CI → (locked pack → P17) alongside three engines → crates → npm → record; both verification gates required before publication; credential jobs constrained; milestones ready to publish: #{ready.empty? ? 'none' : ready.join(', ')}"
+puts 'FORMA-145 soak: deferred after final 3.0.0 under L-66-QUOTA; zero active credit, not passed' if contracts.dig('milestones', 'final', 'gates', 'FORMA-145 soak', 'status') == 'deferred'
