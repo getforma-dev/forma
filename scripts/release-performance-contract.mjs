@@ -49,9 +49,13 @@ export function validateActivation(probe,{islands}) {
  assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_STARTUP_POLICY.maxTaskMs),'N3: task over50ms');
  assert.deepEqual(probe.errors,[],'N3: browser errors');return afterPaint;
 }
-export function validateMobileControls(observations){
- const {dead,slow}=observations??{};
- for(const [name,probe] of [['dead',dead],['slow',slow]]){
+export const INPUT_PROTOCOL='separate-input-tasks-v1';
+export function validateMobileControls(observations,{inputProtocol=INPUT_PROTOCOL}={}){
+ assert([INPUT_PROTOCOL,'batched-input-v0'].includes(inputProtocol),'N3: unknown input protocol');
+ const {dead,slow,slowInput}=observations??{};
+ const current=inputProtocol===INPUT_PROTOCOL;
+ if(!current)assert(!Object.hasOwn(observations??{},'slowInput'),'N3: legacy controls contain a prospective input control');
+ for(const [name,probe] of [['dead',dead],['slow',slow],...(current?[['slow input',slowInput]]:[])]){
   assert.equal(probe?.expected,100,`N3 ${name} control: expected islands absent`);
   assert.equal(probe.hosts,100,`N3 ${name} control: served hosts absent`);
   assert.equal(probe.hostStatuses?.length,100,`N3 ${name} control: host observations absent`);
@@ -61,17 +65,19 @@ export function validateMobileControls(observations){
   for(const task of probe.longTasks){finite(task.startTime,'N3 control task start');assert(finite(task.duration,'N3 control task duration')>0);}
  }
  assert.equal(dead.active,0,'N3 dead control unexpectedly activated');assert.equal(dead.responded,0,'N3 dead control unexpectedly responded');assert.equal(dead.lastResponseMs,null);
- assert.equal(slow.active,100,'N3 slow control did not activate');assert.equal(slow.responded,100,'N3 slow control did not respond');finite(slow.lastResponseMs,'N3 slow control last response');
- const injected=slow.injectedTask;assert(injected,'N3 injected task interval absent');
+ assert.throws(()=>validateActivation(dead,{islands:100}),/did not activate|did not respond/);
+ for(const [label,probe,key] of [['startup',slow,'injectedTask'],...(current?[['input',slowInput,'injectedInputTask']]:[])]){
+ assert.equal(probe.active,100,`N3 ${label} control did not activate`);assert.equal(probe.responded,100,`N3 ${label} control did not respond`);finite(probe.lastResponseMs,`N3 ${label} control last response`);
+ const injected=probe[key];assert(injected,`N3 injected ${label} task interval absent`);
  finite(injected.startTime,'N3 injected task start');finite(injected.endTime,'N3 injected task end');
  // Long-task durations may be rounded to a millisecond. Attribute the actual
  // over-one-hundred-millisecond injection, not a different slow task.
  assert(injected.endTime-injected.startTime>=109,'N3 injected task did not run for110 milliseconds');
- assert(slow.longTasks.some(task=>task.duration>=109&&task.startTime<=injected.startTime&&task.startTime+task.duration>=injected.endTime-1),'N3 injected task was not observed');
- assert.throws(()=>validateActivation(dead,{islands:100}),/did not activate|did not respond/);
+ assert(probe.longTasks.some(task=>task.duration>=109&&task.startTime<=injected.startTime&&task.startTime+task.duration>=injected.endTime-1),`N3 injected ${label} task was not observed`);
  // Isolate the task oracle: a late response must not make this control pass.
- assert.throws(()=>validateActivation({...slow,lastResponseMs:slow.firstPaintMs},{islands:100}),/over50ms/);
- return {deadActivationRefused:true,longTaskRefused:true};
+ assert.throws(()=>validateActivation({...probe,lastResponseMs:probe.firstPaintMs},{islands:100}),/over50ms/);
+ }
+ return {deadActivationRefused:true,longTaskRefused:true,...(current?{longInputRefused:true}:{})};
 }
 function validateMobileObservations(rows) {
  exactKeys(rows?.map(row=>row.id)??[],['tenant-login','islands-100'],'N3 routes');
@@ -165,16 +171,21 @@ export function validateComparison(report){
  }
  return report;
 }
-export function validatePerformanceRecord(performance,{baseline=null}={}){
+export function validatePerformanceRecord(performance,{baseline=null,allowLegacyInputProtocol=false}={}){
  assert.equal(performance?.contract,PERFORMANCE_CONTRACT,'performance: contract absent');assert.equal(performance.passed,true,'performance: failed measurements');
  const {machine,controls}=performance;
  assert(machine?.profile&&machine?.node&&machine?.cpuModel,'performance: machine/profile missing');
- assert.deepEqual(controls,validateMobileControls(performance.controlObservations),'N3: paired controls did not refuse');
+ // Only the authenticated historical-baseline reader admits the old absent
+ // protocol field. Current measurements must carry the new input control.
+ const historical=allowLegacyInputProtocol&&performance.inputProtocol===undefined;
+ const inputProtocol=historical?'batched-input-v0':performance.inputProtocol;
+ assert(historical||inputProtocol===INPUT_PROTOCOL,'N3: current input protocol required');
+ assert.deepEqual(controls,validateMobileControls(performance.controlObservations,{inputProtocol}),'N3: paired controls did not refuse');
  validateNative({schema:1,pilot:false,profile:performance.nativeProfile,n1:performance.n1,n5:performance.n5,boundaries:performance.boundaries},baseline);
  validateMobile(performance.mobile);validateComparison(performance.client);validateDecoder(performance.decoder);return performance;
 }
 export function completePerformance({native,mobile,client,decoder,baseline,machine,controls,controlObservations}){
  assert(['bootstrap','comparable'].includes(baseline?.status),'performance: no authenticated baseline');
  validateNative(native,baseline);
- return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,passed:true,machine,baseline,controls,controlObservations,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
+ return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,inputProtocol:INPUT_PROTOCOL,passed:true,machine,baseline,controls,controlObservations,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
 }

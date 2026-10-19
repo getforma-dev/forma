@@ -24,7 +24,7 @@ export function mobile(){
   return {id,pilot:false,profile:MOBILE_PROFILE,p95TbtMs:0,runs,startup:summarizeMobileStartup(runs)};
  });
 }
-export function performanceRecord(){const n=native();return {contract:'measured-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true},controlObservations:controlObservations(),n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
+export function performanceRecord(){const n=native();return {contract:'measured-v1',inputProtocol:'separate-input-tasks-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true},controlObservations:controlObservations(),n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 // Synthetic finite validator inputs only. These figures are never used as
@@ -53,5 +53,5 @@ export function decoder() {
 
 export function controlObservations(){
  const common={expected:100,hosts:100,hostStatuses:Array(100).fill('pending'),firstPaintMs:100,longTasks:[],errors:[],done:true};
- return {dead:{...structuredClone(common),active:0,responded:0,lastResponseMs:null},slow:{...structuredClone(common),active:100,responded:100,lastResponseMs:300,longTasks:[{startTime:150,duration:111}],injectedTask:{startTime:150.2,endTime:260.2}}};
+ return {dead:{...structuredClone(common),active:0,responded:0,lastResponseMs:null},slow:{...structuredClone(common),active:100,responded:100,lastResponseMs:300,longTasks:[{startTime:150,duration:111}],injectedTask:{startTime:150.2,endTime:260.2}},slowInput:{...structuredClone(common),active:100,responded:100,lastResponseMs:320,longTasks:[{startTime:160,duration:111}],injectedInputTask:{startTime:160.2,endTime:270.2}}};
 }

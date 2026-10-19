@@ -56,7 +56,9 @@ export function validateBaselineRecord(record, {tag, currentTag, publishedAt, be
   assert.equal(contract, PERFORMANCE_CONTRACT, 'DS12: unsupported performance contract');
   const performance = record.measurements.measurements?.performance;
   assert.equal(performance?.contract, PERFORMANCE_CONTRACT, 'DS12: declared performance record missing');
-  validatePerformanceRecord(performance);
+  // Published predecessor records retain their original input protocol and
+  // controls. This compatibility path is never used for current qualification.
+  validatePerformanceRecord(performance,{allowLegacyInputProtocol:true});
   return {...provenance, status:'comparable', n1:performance.n1.map(({nominalNodes,p99NodesPerSecond})=>({nominalNodes,p99NodesPerSecond}))};
 }
 
