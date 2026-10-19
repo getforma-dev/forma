@@ -1,7 +1,7 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "ebdefab8042a449b3283c2ecc41846ac5703434c",
-  "tree": "0b7ade04d4ecef766ad8bf32b1edec614d757722",
+  "commit": "3a8ed877ae1f11a9d92fe5fbecca15768d4c9ae7",
+  "tree": "e590ddc7293eb7a4cca76b8dddfeb0205eadc6f2",
   "entries": [
     {
       "path": ".gitattributes",
@@ -111,7 +111,7 @@
     {
       "path": "CHANGELOG.md",
       "mode": "100644",
-      "blob": "cc6d24ab771d05e8ea8137ae34ebf5562a4b4c11"
+      "blob": "391ed9011fa0d9b10482feda278d2d2c82e748d0"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -121,12 +121,12 @@
     {
       "path": "Cargo.lock",
       "mode": "100644",
-      "blob": "0549bcbdcec5a7344d17af507b85ed5a031b1153"
+      "blob": "320febb5c57f6d8cd72323ef213490300bd657bf"
     },
     {
       "path": "Cargo.toml",
       "mode": "100644",
-      "blob": "6b0d0b34a9cd323a81cc6d0b845ffbaee27e7978"
+      "blob": "fb67c65434cd15359850ccf9216f7e71136bc412"
     },
     {
       "path": "LICENSE",
@@ -136,7 +136,7 @@
     {
       "path": "README.md",
       "mode": "100644",
-      "blob": "df014555f57085996fd18261dd7b083b443e8f98"
+      "blob": "9b8f0ac63d68ba7781b343e9fa7b241d7edb49d7"
     },
     {
       "path": "SECURITY.md",
@@ -181,12 +181,12 @@
     {
       "path": "crates/forma-ir-derive/CHANGELOG.md",
       "mode": "100644",
-      "blob": "20c5988ab0c16c2b1055d62d4aedb934ad279812"
+      "blob": "7dd539b76f52c0a2880788485b5de49414946da3"
     },
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
       "mode": "100644",
-      "blob": "ccd555f3e606bccb2921df84183b9af2590ed3fa"
+      "blob": "8d0b5b8be1a27f17670a2e94033705f1b00056c1"
     },
     {
       "path": "crates/forma-ir-derive/LICENSE",
@@ -206,17 +206,17 @@
     {
       "path": "crates/forma-ir/CHANGELOG.md",
       "mode": "100644",
-      "blob": "bb943f62d0adcc802aa7e44990baac9ecf0f357e"
+      "blob": "087a809f8d008f343a2e53f1a325f85b4c55b044"
     },
     {
       "path": "crates/forma-ir/Cargo.toml",
       "mode": "100644",
-      "blob": "eadcd39787d1ad66de5e603ce40559b3914c5d8b"
+      "blob": "6970b417505dcdccc19a67765582b1474ee63073"
     },
     {
       "path": "crates/forma-ir/README.md",
       "mode": "100644",
-      "blob": "326298de366efd239c43fa6ec377f29a5d03fa60"
+      "blob": "f796de83ede7724603291842ec23def540ab834e"
     },
     {
       "path": "crates/forma-ir/examples/island_state_roundtrip.rs",
@@ -1251,17 +1251,17 @@
     {
       "path": "crates/forma-server/CHANGELOG.md",
       "mode": "100644",
-      "blob": "ef10eaf6b07ec232c897ebad44b69c151c25ffca"
+      "blob": "44a019494d8891d82b84b472b0aa814dfcd3113d"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
       "mode": "100644",
-      "blob": "347ab69fd9f5295fa97e231360bd1427c47e879b"
+      "blob": "e2dd1c2932ab404594dcff0d831b10c22f4efcc8"
     },
     {
       "path": "crates/forma-server/README.md",
       "mode": "100644",
-      "blob": "7be5047416ad9d45d5d3ee7e0ad188a365a28592"
+      "blob": "be60fa70ca72312b2f3e451d7d668dba25b92772"
     },
     {
       "path": "crates/forma-server/examples/parity_render.rs",
@@ -11956,17 +11956,17 @@
     {
       "path": "docs/release/d14-input-manifest.json",
       "mode": "100644",
-      "blob": "17177c0da04718d8511a7eaf63fd506eebc728d5"
+      "blob": "5bb878146652c45b7fb065a4c09c92263d220db1"
     },
     {
       "path": "docs/release/d14-report.json",
       "mode": "100644",
-      "blob": "e1b84ed0c4ec88bccb54516dc52e1dd6be02e871"
+      "blob": "e12c2cba0506a4510ae72d86454fd802260cc6f9"
     },
     {
       "path": "docs/release/d14-review-evidence.json",
       "mode": "100644",
-      "blob": "41cf9831cb4540cdd619cf12b20a87adc281cfb4"
+      "blob": "18b55c7c5ac9eb20d20421f1ada1ca70607d17d8"
     },
     {
       "path": "docs/release/quota-handoff/INDEPENDENT-CLOSURE-REVIEW-72179d43.txt",
@@ -12236,7 +12236,7 @@
     {
       "path": "e2e/Cargo.lock",
       "mode": "100644",
-      "blob": "8a46da8e87725f709b3a5a1c9e9aa6edf045c183"
+      "blob": "2f603fffd0bc541795899c590420a80962d4e7f4"
     },
     {
       "path": "e2e/Cargo.toml",
@@ -13286,7 +13286,7 @@
     {
       "path": "fuzz/Cargo.lock",
       "mode": "100644",
-      "blob": "b36df8c780c85b390cbd123e109e9ea04553b90c"
+      "blob": "49edf2a082071ee430176a53ddfd2f48b9307f89"
     },
     {
       "path": "fuzz/Cargo.toml",
@@ -13391,7 +13391,7 @@
     {
       "path": "package-lock.json",
       "mode": "100644",
-      "blob": "4ec94f590a6a6fecc5c308a7c65aecfaf0d7f97a"
+      "blob": "73f6a7553da0f26bcdab742fbfe1360bccea69e0"
     },
     {
       "path": "package.json",
@@ -13401,12 +13401,12 @@
     {
       "path": "packages/build/CHANGELOG.md",
       "mode": "100644",
-      "blob": "f43add43819b1137758e939e3af4cd937fd984d1"
+      "blob": "4162f4934923e96e5fcd75c805eaa594eb93cb5d"
     },
     {
       "path": "packages/build/README.md",
       "mode": "100644",
-      "blob": "32503b2a69392017146b214f77a6fa1a3ea7ebdf"
+      "blob": "f3abbd67b0c1581c02908f19c8ed9014d9e284af"
     },
     {
       "path": "packages/build/browser-tests/helpers/README.md",
@@ -13436,7 +13436,7 @@
     {
       "path": "packages/build/package.json",
       "mode": "100644",
-      "blob": "f30c7de1f996331f163d2e6b1176b8dbbbb19d21"
+      "blob": "9718fe95dae7681c084b70b389957f5fed1328b7"
     },
     {
       "path": "packages/build/playwright.config.ts",
@@ -14206,12 +14206,12 @@
     {
       "path": "packages/compiler/CHANGELOG.md",
       "mode": "100644",
-      "blob": "91dab682bf0a5a437eb63dfd7362fede05cebd52"
+      "blob": "3ab22490c80b974a9acee61c03048402bc912428"
     },
     {
       "path": "packages/compiler/README.md",
       "mode": "100644",
-      "blob": "32b23aa791d455cb88bdb9efdc2054af13a71cb1"
+      "blob": "328180d94073c297125086162c84a45cadfce4c0"
     },
     {
       "path": "packages/compiler/docs/subset.md",
@@ -14221,7 +14221,7 @@
     {
       "path": "packages/compiler/package.json",
       "mode": "100644",
-      "blob": "9b77e7de288919d49e56a9f0442d1e85bef01a40"
+      "blob": "29ac86278155957dd8675efdd1645ef9ffea3805"
     },
     {
       "path": "packages/compiler/scripts/check-release-workflow.rb",
@@ -15696,7 +15696,7 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "mode": "100644",
-      "blob": "0398ca5cb25d12cde2fcd32028fb9d7efbe82fe6"
+      "blob": "df8c4f30daa3364247f9fa7716d52013b53b7d65"
     },
     {
       "path": "packages/core/CONTRIBUTING.md",
@@ -15706,7 +15706,7 @@
     {
       "path": "packages/core/CSP.md",
       "mode": "100644",
-      "blob": "09775179a6d8e7770c930ec9997db7faca208480"
+      "blob": "ab001880f7ff3a05c4cc0cd4061c9ba09c74f1d7"
     },
     {
       "path": "packages/core/LICENSE",
@@ -15716,7 +15716,7 @@
     {
       "path": "packages/core/README.md",
       "mode": "100644",
-      "blob": "74859089f348121825562b4234231240aa4e0e60"
+      "blob": "123f6500c8022fae81fbaf768533915f675d1035"
     },
     {
       "path": "packages/core/SECURITY.md",
@@ -16446,7 +16446,7 @@
     {
       "path": "packages/core/package.json",
       "mode": "100644",
-      "blob": "2e617c275f811f26186ead3a58714dcfe87f93ab"
+      "blob": "e485007189d596b7f96100822f6d21b519af39e5"
     },
     {
       "path": "packages/core/playwright.config.ts",
@@ -18331,7 +18331,7 @@
     {
       "path": "packages/create-app/CHANGELOG.md",
       "mode": "100644",
-      "blob": "849fa99882ca45276ca08b67963a3ef517f9a00a"
+      "blob": "c647a766e0bb2832b679186684b3c3b91e563064"
     },
     {
       "path": "packages/create-app/CONTRIBUTING.md",
@@ -18346,7 +18346,7 @@
     {
       "path": "packages/create-app/README.md",
       "mode": "100644",
-      "blob": "8e2f20db6f1fd49ce4e275aaeeef5c6e84d3c71b"
+      "blob": "17e68dfbe8b247ed736db22c81107b41138a3dcf"
     },
     {
       "path": "packages/create-app/docs/README.md",
@@ -18376,7 +18376,7 @@
     {
       "path": "packages/create-app/package.json",
       "mode": "100644",
-      "blob": "fe9371bd939ff01f2c47b4e371935c3fceacb325"
+      "blob": "6ac862dc2bc4dc4630226c54f80f02f830b3daed"
     },
     {
       "path": "packages/create-app/scripts/check-release-workflow.rb",
@@ -18406,17 +18406,17 @@
     {
       "path": "packages/create-app/template-lock-seeds.json",
       "mode": "100644",
-      "blob": "84fa8f3f5d2701863038b6c72741c03da2d59fb9"
+      "blob": "eca8b1d69d35b4c24bcc0f162f68b0c405f14e94"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
       "mode": "100644",
-      "blob": "445980af5a33892454e5561d29231ae51cdfe077"
+      "blob": "142e96b741c70bbb8b2422aa5ee8bfa86c1d2920"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
       "mode": "100644",
-      "blob": "934564840f33a8953488a8bc26628de0b58947e1"
+      "blob": "9428dc069ebea168174802e6b6f54018c09119a2"
     },
     {
       "path": "packages/create-app/templates/dashboard/README.md",
@@ -18441,12 +18441,12 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
       "mode": "100644",
-      "blob": "776bd3a5ad3ad556b71ee4cf64f50a9ae51c6a34"
+      "blob": "5cc068a8a20580db6ee3bde4902a3134ac07bc3e"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
       "mode": "100644",
-      "blob": "e690d4d534ed928dc34ce7ec1159d3d87ddd0346"
+      "blob": "f797b1c5b8cefcbcd59728e7291bea64ffb8f462"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/playwright.config.ts",
@@ -18536,12 +18536,12 @@
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
       "mode": "100644",
-      "blob": "53f82a4d265a273709369850fbe28ab073d3d17a"
+      "blob": "f068e7aed2e2ad663535ed215e358f45e6069dae"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
       "mode": "100644",
-      "blob": "34969b134b3c55d3f2ec96018256c66d52f380e6"
+      "blob": "1271e971b479d4738639d0b00f08f82518ff8f66"
     },
     {
       "path": "packages/create-app/templates/minimal/README.md",
@@ -18566,12 +18566,12 @@
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
       "mode": "100644",
-      "blob": "97e5737b9a5d9ee9d12569cfe710fac96ddb3a5a"
+      "blob": "4908dabe18519cd2520060861e61a107f7efb6b3"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
       "mode": "100644",
-      "blob": "f8740768df0c2f0d2976d52876a1c8f0fdede7a1"
+      "blob": "b0516bd595b1c4a4c39f2c7e786c5c742508adda"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/src/about/app.tsx",
@@ -19291,7 +19291,7 @@
     {
       "path": "scripts/release-record.test.mjs",
       "mode": "100644",
-      "blob": "8eaa12ba099837a959c07e52354808bc800e95c7"
+      "blob": "16f3818eb94c0ae405cf68bd6feba388740b1fbb"
     },
     {
       "path": "scripts/release-security.mjs",
@@ -19411,7 +19411,7 @@
     {
       "path": "scripts/release.test.mjs",
       "mode": "100644",
-      "blob": "eb1ae97ff986b7197906c4e5dd2ec910b64f9020"
+      "blob": "7230f46151d7a5ce9f580793fd90593386383121"
     },
     {
       "path": "scripts/reviewer-static-executable.test.mjs",

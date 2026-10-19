@@ -1,7 +1,7 @@
 {
   "name": "@getforma/core",
   "author": "Forma <victor@getforma.dev>",
-  "version": "3.0.0-rc.2",
+  "version": "3.0.0-rc.3",
   "description": "Real DOM reactive library — fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. The CDN HTML runtime uses a CSP-safe allowlist expression interpreter with zero eval. Bundle sizes are measured by scripts/check-size.mjs.",
   "type": "module",
   "main": "./dist/index.cjs",
