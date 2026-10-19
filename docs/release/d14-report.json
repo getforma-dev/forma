@@ -1,24 +1,24 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "ebdefab8042a449b3283c2ecc41846ac5703434c",
-  "reviewedTree": "0b7ade04d4ecef766ad8bf32b1edec614d757722",
-  "inputManifestSha256": "7e983cf94b4882e57061f348ad16980a0baf2110babf008ff12556a1bb2d76d5",
+  "reviewedCommit": "3a8ed877ae1f11a9d92fe5fbecca15768d4c9ae7",
+  "reviewedTree": "e590ddc7293eb7a4cca76b8dddfeb0205eadc6f2",
+  "inputManifestSha256": "a22658337ce7e12e47c4f3e373c53b8e091b5358406d402b3bac8d3a1257da03",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "e3a12fb66f9739ff8e293941ee05194be0bf7cb47d753149dfe406a3f475a5db"
+    "sessionEvidenceSha256": "45f5bb7304b2916d0fd48bc7977243158712945c0521e953fa48fb318dc2b951"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "fc716b726d983e982f4e1ac88bdeb44b5436645120d84ddf86c97b3fab196838"
+    "sessionEvidenceSha256": "8a56b2f761a760d39d4a37810aebbd71c6e7963303c83ba8d667783511320816"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "c604b617e333270657f796b9ac119d80886b2e2b45a602bb7a3908fc7f9b91af"
+    "initializationEvidenceSha256": "2ea328a2a39c0cd86c575267f86da844b52720bdc2e1b37a137b0cb67f9b18b8"
   },
-  "reviewedAt": "2026-10-19T18:58:01Z",
+  "reviewedAt": "2026-10-19T20:56:50Z",
   "accepted": true,
   "findings": [
     {
@@ -48,8 +48,29 @@
       "disposition": "resolved",
       "rationale": "The RC.2 README now correctly identifies RC.1 as the published prerelease, while retaining the pending publication status of RC.2.",
       "evidenceSha256": "2d7ecca4b78ae8c56788bc65797322af2458ba2b0daa9bd4e810a12fe24abe02"
+    },
+    {
+      "id": "RC3-001",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "Synthetic done/pending milestone fixtures now clone source and remove only incompatible deferral metadata. Ordinary/deferred controls pass while production rejection remains unchanged; original final CI failure remains retained.",
+      "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
+    },
+    {
+      "id": "RC3-002",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The alpha notes fixture now explicitly seeds alpha done and later milestones pending, including ordinary/deferred inputs. Existing assertions remain; the added finite R17 case is disclosed, not claimed to have an unchanged twenty-run timing distribution.",
+      "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
+    },
+    {
+      "id": "RC3-003",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The reviewed README now identifies actually published RC.2 and retains RC.3 publication-pending wording; earlier stale-copy findings remain historical.",
+      "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "069ee26523643f4d2bfad1d7ae8c1c31ca5cb9352710aff38d1397fb898688a8"
+  "acceptanceEvidenceSha256": "e7b6a70e40b9df1b07cea6fe1460c0a78b1bbb0b2f9efc1530f9c37601546e0e"
 }
