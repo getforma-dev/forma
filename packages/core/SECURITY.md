@@ -268,7 +268,7 @@ Stated here rather than left for a reader to discover:
 
 | Version | Supported |
 |---------|-----------|
-| 3.0.x | Prepared final; publication pending. Report candidate vulnerabilities through the same process above. |
+| 3.0.x | Release candidate prepared; final publication pending. Report candidate vulnerabilities through the same process above. |
 | 2.1.x | Yes |
 | 2.0.x | Security fixes only — upgrade to 2.1, which is additive within 2.x |
 | 1.5.x | Security fixes only |

@@ -17,7 +17,7 @@ categories = ["web-programming"]
 [dependencies]
 # ECMAScript shortest-decimal tie handling as well as exponent thresholds.
 ryu-js = "=1.0.3"
-forma-ir-derive = { version = "=3.0.0", path = "../forma-ir-derive" }
+forma-ir-derive = { version = "=3.0.0-rc.1", path = "../forma-ir-derive" }
 # Public JSON import must round serialized finite f64 values exactly.
 serde_json = { workspace = true, features = ["float_roundtrip"] }
 tracing = { workspace = true, optional = true }
