@@ -19,3 +19,14 @@ The founder corrected the resume date: **Monday, October19**, not ThursdayOctobe
 5. Hard stop before AppendixE consumer migrations. FORMA207monitor remains paused to avoid duplicate monitoring; recurrence evidence can be checked in newP17 artifacts.
 
 Original evidence locations and failed outcomes remain in THURSDAY-BACKLOG.md (historicalfilename retained for existinglinks). The20-run average-cost result and61/61P17 on e75 remain valid for that source, not substitutes for new outcomes. Auditandsoak creditedcompletion remainpending/zero until verified.
+
+## Monday work in progress
+
+The resume branch now prepares **3.0.0-rc.1** (`e4d59b9e`), preserving beta → audited published RC → final. Main remains `ee7e5751` and its successful CI is unchanged. Canonical version consistency and20/20 docs checks pass on the RC preparation.
+
+- Main-source packed P17:39285412822; full20-run R17:39285416133, measured sourceee7e5751 (donorworkflow0c380a2e). Both were still queued at the latest observation; no repeated dispatches. Actual handles saved inwork/codex-release-lead/MONDAY-QUALIFICATION-RUNS.json.
+- Existing fresh-context auditor completed the ee7 source/evidence recheck: no new blocking product/security defect, D14-001 resolved. This is not final acceptance of the upcoming combinedRCtree. Receipt:work/FORMA-d14-final-rc1/RESUMED-MAIN-REVIEW-20261019.md.
+- recover_ci_fixes implements the narrowly scoped post-final soak path in isolated work/FORMA-187-release-overlap/forma. Actual audited published RC, originalP17, exact reviewed finaldiff and immutable packageidentities remain required. Normal completed-soak path remains. New controls belong torelease-workflowCI; do not silently weaken or replace R17 samples.
+- Founder decision captured separately in design-doc-factory tasks/forma-stack/decisions/L-66-QUOTA.md (e652402) and mirrored indocs/release/L-66-QUOTA.md. This is a decisionrecord, not proof of any test or audit.
+
+Next: integrate the finite policy patch, independently review/freeze exactRCsource, validate CI andqualification applicability, then obtain actual D14acceptance. No tag untiltheactual preflight succeeds. After final publication run theexisting authenticatedRC burn-in and complete v3 withactualoutcomes, thenhalt.
