@@ -38,12 +38,12 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-These examples target the prepared `3.0.0-rc.3` release-candidate package set. RC publication
+These examples target the prepared `3.0.0-rc.4` release-candidate package set. RC publication
 is pending; the following install command becomes available only after the
 coordinated release succeeds. The published prerelease is RC.2; its GitHub Release record identifies the verified package set.
 
 ```bash
-npm install @getforma/core@3.0.0-rc.3
+npm install @getforma/core@3.0.0-rc.4
 ```
 
 For the separate stable 2.1.0 runtime, a CDN needs no build step or bundler.

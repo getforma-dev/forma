@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.4] - Prepared; publication pending
+
+- Bound each background island-load callback to four direct queue entries as well as its existing 12 ms deadline. Preserve whole-island adoption, synchronous input promotion, cancellation and readiness; neither bound can preempt an expensive island or additional promoted work.
+- Keep the strict 50 ms mobile-task and 500 ms response gates. RC.3 failed its tagged mobile campaign and remains unpublished and immutable; this candidate requires fresh packed qualification and independent audit before publication.
+- Coordinate all seven package versions and source template seeds. The actual same-RC active soak remains outstanding after final publication under L-66-QUOTA.
+
 ## [3.0.0-rc.3] - Prepared; publication pending
 
 - Coordinate the seven-package RC.3 set and template source seeds; published RC.2 remains unchanged.
@@ -16,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0-rc.3 set will be recorded here.
+Changes after the prepared 3.0.0-rc.4 set will be recorded here.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 
