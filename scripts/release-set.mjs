@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
 import { commandInvocation } from './portable-command.mjs';
 import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
+import { SOAK_GATE, validateSoakGate } from './release-soak-deferral.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const NPM = ['core', 'compiler', 'build', 'create-app'];
@@ -61,7 +62,8 @@ export function milestoneOf(version) {
 }
 // Which tickets gate which milestone is the contract file's statement, not a switch. A
 // milestone inherits every earlier milestone's gates; it may publish only when all of
-// them are done. The later milestones' open gates are reported, never enforced early.
+// them are done, except the explicit 3.0.0 post-release soak obligation. Later
+// milestones' open gates are reported, never enforced early.
 export function releaseMilestone(contracts, version) {
   const name = milestoneOf(version);
   assert(name, `${version} is a development version; no milestone publishes it`);
@@ -72,7 +74,7 @@ export function releaseMilestone(contracts, version) {
   const base = version.split('-')[0];
   assert.equal(base, contracts.version, `the contract gates ${contracts.version}, not ${base}; write the next release's contract first`);
   const order = MILESTONES.indexOf(name);
-  const blocking = [], later = {}, seen = new Set();
+  const blocking = [], later = {}, seen = new Set(), deferred = [];
   MILESTONES.forEach((milestone, i) => {
     const entry = contracts.milestones[milestone];
     assert(entry?.gates && typeof entry.gates === 'object' && !Array.isArray(entry.gates) && Object.keys(entry.gates).length, `contract names no gates for ${milestone}`);
@@ -81,13 +83,20 @@ export function releaseMilestone(contracts, version) {
       assert(/^FORMA-\d{3}(?: [A-Za-z0-9()./-]+)*$/.test(ticket), `${milestone}: ${ticket} is not a ticket gate`);
       assert(!seen.has(ticket), `${ticket}: gates more than one milestone`);
       seen.add(ticket);
+      if (milestone === 'final' && ticket === SOAK_GATE && gate?.status === 'deferred') {
+        validateSoakGate(gate, version, milestone, ticket);
+        assert(typeof gate.scope === 'string' && gate.scope.trim(), 'deferred soak needs its unchanged scope');
+        deferred.push({ ticket, milestone, ...gate.deferral });
+        continue;
+      }
       assert(['done', 'pending'].includes(gate?.status) && typeof gate.scope === 'string' && gate.scope.trim(), `${milestone}: ${ticket} needs a done/pending status and a scope`);
+      assert(!('deferral' in gate), `${ticket}: a completed/pending gate cannot carry a deferral`);
       if (gate.status !== 'pending') continue;
       if (i <= order) blocking.push(`${ticket} (${milestone}): ${gate.scope}`);
       else (later[milestone] ??= []).push(`${ticket}: ${gate.scope}`);
     }
   });
-  return { name, plan: contracts.milestones[name].plan, version, ready: blocking.length === 0, blocking, later };
+  return { name, plan: contracts.milestones[name].plan, version, ready: blocking.length === 0, blocking, later, ...(deferred.length ? { deferred } : {}) };
 }
 export function assertMilestoneReady(contracts, version) {
   const milestone = releaseMilestone(contracts, version);

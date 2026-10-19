@@ -10,6 +10,7 @@ import { hostileIds, fixtureCheckIds } from './release-burn-in-identities.mjs';
 import { validateBurnInReport, readFuzzCompletion } from './release-burn-in-report.mjs';
 import { requireSkewChecks } from './release-skew-drill.mjs';
 import { securityHarnessHashes, validateHostileProof } from './release-security.mjs';
+import { SOAK_CONTRACT, SOAK_GATE, SOAK_REFERENCE, validateSoakGate, validateSoakReference, soakDisposition } from './release-soak-deferral.mjs';
 
 export function readBurnInReference(root = ROOT) {
   const path = join(root, 'docs/release/rc-burn-in.json');
@@ -27,12 +28,20 @@ export function readBurnInReference(root = ROOT) {
 }
 
 export function finalDiffBinding(reference, finalCommit, root = ROOT) {
-  assert.equal(reference.contract, 'rc-burn-in-reference-v1'); assert.match(reference.rcCommit ?? '', /^[a-f0-9]{40}$/);
+  const deferred = reference.contract === SOAK_CONTRACT;
+  if (deferred) validateSoakReference(reference);
+  else assert.equal(reference.contract, 'rc-burn-in-reference-v1');
+  assert.match(reference.rcCommit ?? '', /^[a-f0-9]{40}$/);
   assert.equal(reference.finalVersion, '3.0.0'); assert.match(reference.rcTag ?? '', /^v3\.0\.0-rc\.[1-9][0-9]*$/);
   assert.equal(typeof reference.reviewEvidence?.content, 'string'); assert(reference.reviewEvidence.content.trim());
   assert.equal(sha256(Buffer.from(reference.reviewEvidence.content)), reference.reviewEvidence.sha256, 'final diff review evidence changed');
   run('git', ['merge-base', '--is-ancestor', reference.rcCommit, finalCommit], root);
   const before = auditInputManifest(reference.rcCommit, root), after = auditInputManifest(finalCommit, root);
+  if (deferred) {
+    assert.equal(after.entries.find(row => row.path === SOAK_REFERENCE)?.mode, '100644', 'deferral must be a committed regular reference');
+    assert.deepEqual(JSON.parse(run('git', ['show', `${finalCommit}:${SOAK_REFERENCE}`], root)), reference, 'deferral differs from final committed reference');
+    validateSoakGate(JSON.parse(run('git', ['show', `${finalCommit}:scripts/release-contracts.json`], root)).milestones.final.gates[SOAK_GATE], '3.0.0');
+  }
   const scratch = mkdtempSync(join(tmpdir(), 'forma-final-diff-'));
   let versions;
   try {
@@ -43,14 +52,18 @@ export function finalDiffBinding(reference, finalCommit, root = ROOT) {
   const old = new Map(before.entries.map(row => [row.path, row])), current = new Map(after.entries.map(row => [row.path, row])), changes = [];
   for (const path of [...new Set([...old.keys(), ...current.keys()])].sort()) {
     const a = old.get(path), b = current.get(path); if (JSON.stringify(a) === JSON.stringify(b)) continue;
-    if (path === 'docs/release/rc-burn-in.json') continue; // The reviewed reference cannot embed its own commit/blob.
+    if (path === (deferred ? SOAK_REFERENCE : 'docs/release/rc-burn-in.json')) continue; // The reviewed reference cannot embed its own commit/blob.
     assert(a && b && a.mode === b.mode, `final adds/removes/changes mode: ${path}`);
     const bytes = run('git', ['show', `${finalCommit}:${path}`], root, { encoding: 'buffer' });
     if (versions.has(path)) assert.deepEqual(bytes, Buffer.from(versions.get(path)), `final version preparation differs: ${path}`);
     else if (path === 'scripts/release-contracts.json') {
       const x = JSON.parse(run('git', ['show', `${reference.rcCommit}:${path}`], root)), y = JSON.parse(bytes);
       for (const [name, gate] of Object.entries(x.milestones.final.gates)) {
-        assert(['pending', 'done'].includes(gate.status)); assert.equal(y.milestones.final.gates[name].status, 'done'); gate.status = 'done';
+        assert(['pending', 'done'].includes(gate.status));
+        if (deferred && name === SOAK_GATE) {
+          validateSoakGate(y.milestones.final.gates[name], '3.0.0');
+          gate.status = 'deferred'; gate.deferral = y.milestones.final.gates[name].deferral;
+        } else { assert.equal(y.milestones.final.gates[name].status, 'done'); gate.status = 'done'; }
       }
       assert.deepEqual(x, y, 'final changes release contract beyond final gate completion');
     } else assert(/^(?:docs\/(?!archive\/|evidence\/).+\.md|(?:README|CHANGELOG)\.md|(?:packages\/(?:core|compiler|build|create-app)|crates\/(?:forma-ir|forma-ir-derive|forma-server))\/(?:README|CHANGELOG)\.md|packages\/core\/(?:CSP|SECURITY)\.md)$/.test(path), `final product/harness drift: ${path}`);
@@ -59,6 +72,19 @@ export function finalDiffBinding(reference, finalCommit, root = ROOT) {
   for (const [path, text] of versions) assert.equal(run('git', ['show', `${finalCommit}:${path}`], root), text, `final version file not prepared: ${path}`);
   assert.deepEqual(changes, reference.reviewedChanges, 'actual final diff differs from independently reviewed binding');
   return changes;
+}
+export async function verifyFinalSoakDeferral({ reference, commit, root = ROOT, authenticate = authenticateRc }) {
+  assert.equal(run('git', ['rev-parse', 'HEAD'], root).trim(), commit);
+  assert.equal(run('git', ['status', '--porcelain', '--untracked-files=no'], root).trim(), '');
+  const changes = finalDiffBinding(reference, commit, root);
+  // Missing/unrelated RC tags fail before network work, just as authenticateRc requires.
+  assert.equal(run('git', ['rev-parse', `${reference.rcTag}^{commit}`], root).trim(), reference.rcCommit, 'deferral RC tag differs');
+  const directory = mkdtempSync(join(tmpdir(), 'forma-post-release-soak-'));
+  try {
+    const authenticated = await authenticate({ tag: reference.rcTag, commit: reference.rcCommit, directory: join(directory, 'rc'), root, checkoutRequired: false });
+    for (const key of ['ds12Sha256', 'p17EvidenceSha256', 'd14EvidenceSha256']) assert.equal(authenticated[key], reference[key], `published RC ${key} differs`);
+    return { ...soakDisposition(reference), publishedRcAuthenticated: true, reviewedFinalChanges: changes };
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 export function validateFixtureProof(proof, expectedIds = fixtureCheckIds()) {
   const observed = [...proof.pages.pages.map(p => `fixture:${p.app}:${p.page}`), ...proof.pages.extras.map(name => `extra:${name}`), 'template:minimal:adoption', 'template:minimal:static', 'template:dashboard:interaction'];

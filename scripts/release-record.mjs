@@ -11,6 +11,7 @@ import { renderSecurity } from './release-support.mjs';
 import { verifyEvidence } from './release-evidence.mjs';
 import { AUDIT_FILES, readRcAudit } from './release-audit.mjs';
 import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
+import { SOAK_GATE, readSoakDeferral, soakDisposition } from './release-soak-deferral.mjs';
 
 export function releaseRecordBytes(record, maxBytes = RELEASE_RECORD_MAX_BYTES) {
   const bytes = Buffer.from(JSON.stringify(record, null, 2) + '\n');
@@ -60,7 +61,17 @@ export async function qualificationEvidence({ set, reportPath, directory, env = 
     // The check job authenticates the hosted result before either publisher.
     // Record the same immutable source pointer; do not replace that preflight
     // with a post-publication network check or manufacture a new pass here.
-    const { readBurnInReference } = await import('./release-burn-in-final.mjs');
+    const { readBurnInReference, finalDiffBinding } = await import('./release-burn-in-final.mjs');
+    if (set.contracts?.milestones?.final?.gates?.[SOAK_GATE]?.status === 'deferred') {
+      assertMilestoneReady(set.contracts, set.tag.slice(1));
+      assert.deepEqual(set.contracts, JSON.parse(run('git', ['show', `${set.commit}:scripts/release-contracts.json`], root)), 'DS11 deferral contract differs from committed source');
+      const retained = readSoakDeferral(root, set.contracts, set.tag.slice(1)), file = join(directory, retained.assetName);
+      finalDiffBinding(retained.reference, set.commit, root);
+      writeFileSync(file, retained.bytes);
+      fields.postReleaseSoak = { ...soakDisposition(retained.reference), file: retained.assetName, sha256: retained.sha256 };
+      assets.push(file);
+      return { fields, assets, report };
+    }
     const retained = readBurnInReference(root), file = join(directory, retained.assetName);
     writeFileSync(file, retained.bytes);
     fields.burnIn = { file: retained.assetName, sha256: retained.sha256,
@@ -103,7 +114,10 @@ export function releaseNotes(set, record, entry, milestone) {
   const later = Object.entries(milestone.later).map(([name, gates]) => `- before ${name} (${set.contracts.milestones[name].plan}): ${gates.join('; ')}`);
   const pending = later.length ? `Pending before later milestones:\n${later.join('\n')}` : 'Pending before later milestones: none.';
   const rows = set.packages.map(p => `| ${p.name} | ${p.version} | \`${p.sha256}\` |`).join('\n');
-  return `${entry}\n\nMilestone: ${milestone.name} (${milestone.plan}), ${standing}. Every gate of ${milestone.name} and its predecessors is done.\n\n${pending}\n\nCommit: \`${set.commit}\` · run: ${set.run} · CI: ${record.ciRun}\n\n| Package | Version | SHA-256 |\n|---|---|---|\n${rows}\n\nContract versions: \`${JSON.stringify(set.contracts)}\`\n\nTag-event run to record: ${record.elapsedSeconds.toFixed(1)} seconds; target 1800 seconds. Full measurements and DS11 hashes are in the attached JSON.\n${measurementsNotes(record.measurements ?? {})}`;
+  const gates = milestone.deferred?.length
+    ? 'All other gates are done. FORMA-145 soak is deferred until after this final release under L-66-QUOTA: 3,600 active seconds remain required on the authenticated RC; zero credit and no burn-in pass are claimed.'
+    : `Every gate of ${milestone.name} and its predecessors is done.`;
+  return `${entry}\n\nMilestone: ${milestone.name} (${milestone.plan}), ${standing}. ${gates}\n\n${pending}\n\nCommit: \`${set.commit}\` · run: ${set.run} · CI: ${record.ciRun}\n\n| Package | Version | SHA-256 |\n|---|---|---|\n${rows}\n\nContract versions: \`${JSON.stringify(set.contracts)}\`\n\nTag-event run to record: ${record.elapsedSeconds.toFixed(1)} seconds; target 1800 seconds. Full measurements and DS11 hashes are in the attached JSON.\n${measurementsNotes(record.measurements ?? {})}`;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) try {
