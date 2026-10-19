@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { boundedResponse, namedAsset, verifyAssetBytes, verifyRegistryArchive, verifyRun } from './release-burn-in-inputs.mjs';
+import { boundedResponse, namedAsset, verifyAssetBytes, verifyRegistryArchive, verifyRun, releaseReader, API } from './release-burn-in-inputs.mjs';
 const bytes = Buffer.from('actual original archive'), sha = createHash('sha256').update(bytes).digest('hex');
 const asset = {name:'release-record.json',url:'https://api.github.com/repos/getforma-dev/forma/releases/assets/123',digest:`sha256:${sha}`,size:bytes.length};
 test('release asset identity and actual bytes both authenticate',()=>{
@@ -66,4 +66,26 @@ test('record-only retry retains the earlier successful verify proof but never ac
  assert.equal(await attempt({rows:{...jobs,jobs:[{...jobs.jobs[0],steps:[{...jobs.jobs[0].steps[0],conclusion:'failure'}]}]}}),false);
  // The permission is specific to P17. A failed exact burn-in attempt refuses.
  assert.equal(await attempt({name:'rc-burn-in',workflow:'.github/workflows/rc-burn-in.yml',event:'workflow_dispatch',requiredJob:'burn-in',requiredStep:'Continuous packed RC workloads',prior:{...producer,path:'.github/workflows/rc-burn-in.yml',event:'workflow_dispatch'}}),false);
+});
+
+
+test('Actions artifact downloads negotiate JSON redirects while release assets negotiate binary', async () => {
+ const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
+ const { tmpdir } = await import('node:os');
+ const { join } = await import('node:path');
+ const directory = mkdtempSync(join(tmpdir(), 'forma-artifact-media-'));
+ const archive = `${API}/actions/artifacts/123/zip`, release = `${API}/releases/assets/456`;
+ const get = releaseReader({ token: 'test-read-token', fetchImpl: async (url, options) => {
+   assert.equal(options.headers.Authorization, 'Bearer test-read-token');
+   const required = url === archive ? 'application/vnd.github+json' : 'application/octet-stream';
+   if (options.headers.Accept !== required) return new Response('Unsupported Accept header', { status: 415 });
+   return new Response(bytes);
+ } });
+ try {
+   const destination = join(directory, 'artifact.zip');
+   const downloaded = await get(archive, { binary: true, destination, limit: bytes.length });
+   assert.deepEqual(downloaded, { bytes: bytes.length, sha256: sha });
+   assert.deepEqual(readFileSync(destination), bytes);
+   assert.deepEqual(await get(release, { binary: true, limit: bytes.length }), bytes);
+ } finally { rmSync(directory, { recursive: true, force: true }); }
 });

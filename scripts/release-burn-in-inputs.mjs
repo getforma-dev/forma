@@ -25,7 +25,10 @@ export async function boundedResponse(response, limit) {
 export function releaseReader({ fetchImpl = fetch, token = process.env.GH_TOKEN } = {}) {
   return async (url, { binary = false, limit = binary ? 8 * MiB : 4 * MiB, destination, evidenceRoot } = {}) => {
     assert(url.startsWith(`${API}/`), 'untrusted release API URL');
-    const response = await fetchImpl(url, { headers: { Accept: binary ? 'application/octet-stream' : 'application/vnd.github+json', 'User-Agent': 'getforma-rc-burn-in', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, signal: AbortSignal.timeout(60_000) });
+    // Actions archives return a signed redirect through the JSON API; release
+    // assets instead require the binary media type. Response bytes stay bounded.
+    const actionArchive = url.startsWith(`${API}/actions/artifacts/`) && url.endsWith('/zip');
+    const response = await fetchImpl(url, { headers: { Accept: binary && !actionArchive ? 'application/octet-stream' : 'application/vnd.github+json', 'User-Agent': 'getforma-rc-burn-in', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, signal: AbortSignal.timeout(60_000) });
     if (destination) {
       assert(binary && response.ok, 'artifact download failed');
       if (evidenceRoot) limit = Math.min(limit, evidenceRoom(evidenceRoot));
