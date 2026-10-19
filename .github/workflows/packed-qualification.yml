@@ -35,7 +35,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh run download 39334279022 --repo getforma-dev/forma --name qualification-candidates --dir "$RUNNER_TEMP/rc4-packed"
-      - name: Three original and three callback-instrumented observations
+      - name: Eight original observations with same-navigation CDP trace only
         run: python3 scripts/release-owned-linux.py "$RUNNER_TEMP/diagnostic-owned" 900 -- node scripts/diagnose-219-input.mjs
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
