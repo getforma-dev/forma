@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
+import {createHash} from 'node:crypto';
 import {chromium} from 'playwright-core';
 import {digest} from './release-set.mjs';
 import {prepareCandidate} from './candidate-scaffold.mjs';
@@ -27,12 +28,22 @@ try{
    const context=await browser.newContext({viewport:{width:s.width,height:s.height},deviceScaleFactor:s.deviceScaleFactor,isMobile:true,userAgent:MOBILE_PROFILE.emulatedUserAgent,serviceWorkers:'block'});
    await context.addInitScript(activationInstrumentation,{kind:'islands-100'});
    await context.addInitScript(()=>{globalThis.__formaLoadDiagnostic=[];});
+   const original=await (await fetch(origin+'/_assets/islands100.e5ae4fca.js')).text();
+   const needle='function mo(e=performance.now()+12){ft=void 0,je++;try{for(let t of He.values()){if(performance.now()>=e)break;t()}}finally{je--,En()}}';
+   assert.equal(original.split(needle).length,2,'diagnostic must match exact RC3 drain function once');
+   const instrumented='function mo(e=performance.now()+12){let diagnostic={start:performance.now(),work:[]};globalThis.__formaLoadDiagnostic.push(diagnostic);ft=void 0,je++;try{for(let t of He.values()){if(performance.now()>=e)break;let start=performance.now();t();diagnostic.work.push({start,duration:performance.now()-start})}}finally{diagnostic.end=performance.now();je--,En()}}';
+   const changed=original.replace(needle,instrumented);
+   const sri=body=>'sha384-'+createHash('sha384').update(body).digest('base64');
+   await context.route('**/pages/islands-100',async route=>{
+    const response=await route.fetch(),html=await response.text();save('original-page.html',html);
+    assert(html.includes(sri(original)),'original document must bind original bundle');
+    // This diagnostic document binds its changed diagnostic bytes normally;
+    // retain CSP and SRI enforcement. It is never an acceptance observation.
+    await route.fulfill({response,body:html.replaceAll(sri(original),sri(changed))});
+   });
    await context.route('**/_assets/islands100.*.js',async route=>{
     const response=await route.fetch(),body=await response.text();save('original-bundle.js',body);
-    const needle='function mo(e=performance.now()+12){ft=void 0,je++;try{for(let t of He.values()){if(performance.now()>=e)break;t()}}finally{je--,En()}}';
-    assert.equal(body.split(needle).length,2,'diagnostic must match exact RC3 drain function once');
-    const instrumented='function mo(e=performance.now()+12){let diagnostic={start:performance.now(),work:[]};globalThis.__formaLoadDiagnostic.push(diagnostic);ft=void 0,je++;try{for(let t of He.values()){if(performance.now()>=e)break;let start=performance.now();t();diagnostic.work.push({start,duration:performance.now()-start})}}finally{diagnostic.end=performance.now();je--,En()}}';
-    await route.fulfill({response,body:body.replace(needle,instrumented)});
+    assert.equal(body,original);await route.fulfill({response,body:changed});
    });
    const page=await context.newPage(),cdp=await context.newCDPSession(page);
    await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});
@@ -40,9 +51,10 @@ try{
    await cdp.send('Emulation.setCPUThrottlingRate',{rate:t.cpuSlowdownMultiplier});
    await cdp.send('Profiler.enable');await cdp.send('Profiler.setSamplingInterval',{interval:250});await cdp.send('Profiler.start');
    await page.goto(url,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__formaPerformance?.done);await page.waitForTimeout(100);
-   save('instrumented-activation.json',await page.evaluate(()=>window.__formaPerformance));
-   save('instrumented-loads.json',await page.evaluate(()=>globalThis.__formaLoadDiagnostic));
+   const observation=await page.evaluate(()=>window.__formaPerformance),loads=await page.evaluate(()=>globalThis.__formaLoadDiagnostic);
+   save('instrumented-activation.json',observation);save('instrumented-loads.json',loads);
    save('instrumented-profile.json',(await cdp.send('Profiler.stop')).profile);
+   assert.equal(observation.active,100,'instrumented workload must actually run');assert(loads.length>0,'instrumented load timing absent');
    save('result.json',{diagnostic:true,releaseQualified:false,thresholdsUnchanged:true,source:set.commit,unmodifiedRuns:3,instrumentedRuns:1});
   }finally{await browser.close();}
  });
