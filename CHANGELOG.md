@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0-rc.2] - Prepared; publication pending
+
+- Coordinate the seven-package RC.2 set and template source seeds. RC.1 remains published and immutable; no runtime behavior changes in this preparation.
+- Correct the release verifier's Actions archive request media type, with a regression test reproducing the observed HTTP 415. Release asset downloads keep their binary media type, and archive identity, provenance and size checks remain enforced.
+- Require independent review, exact-source CI and the new tag's packed qualification before trusted publication. Actual post-release soak remains outstanding.
+
 ## [3.0.0-beta.4] — qualification pending
 
 - Coordinate all seven packages and both template source seeds for the next beta verification, and update maintained installation examples. Beta.1, beta.2 and beta.3 remain immutable unpublished tags.
@@ -34,7 +40,7 @@
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0-rc.1 set will be recorded here.
+Changes after the prepared 3.0.0-rc.2 set will be recorded here.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 
