@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0-rc.3] - Prepared; publication pending
+
+- Coordinate the seven-package RC.3 set and template source seeds; published RC.2 remains unchanged.
+- Correct synthetic release-test fixtures to reconstruct their declared milestone states without carrying live final-soak deferral metadata. Exercise both ordinary and deferred input snapshots; production gate validation remains strict and unchanged.
+- Require independent review, exact-source CI and tagged packed qualification before trusted publication. Final publication and the actual post-release active soak remain outstanding.
+
 ## [3.0.0-rc.2] - Prepared; publication pending
 
 - Coordinate the seven-package RC.2 set and template source seeds. RC.1 remains published and immutable; no runtime behavior changes in this preparation.
@@ -8,7 +14,7 @@
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0-rc.2 set will be recorded here.
+Changes after the prepared 3.0.0-rc.3 set will be recorded here.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 

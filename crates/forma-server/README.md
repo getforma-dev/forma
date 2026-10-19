@@ -1,11 +1,11 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0-rc.2` prerelease and require its coordinated publication. Cargo prerelease versions need explicit requirements:
+Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0-rc.3` prerelease and require its coordinated publication. Cargo prerelease versions need explicit requirements:
 
 ```toml
 [dependencies]
-forma-server = "=3.0.0-rc.2"
-forma-ir = "=3.0.0-rc.2"
+forma-server = "=3.0.0-rc.3"
+forma-ir = "=3.0.0-rc.3"
 ```
 
 The [archived A2 README](../../docs/archive/2026-10-15-declared-props/forma-server-README.md) preserves the old slot-injection API.

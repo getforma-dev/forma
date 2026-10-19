@@ -8,12 +8,12 @@ FMIR binary format parser, walker, and HTML generator for the [Forma Stack](http
 
 ## Install
 
-These examples target the `3.0.0-rc.2` prerelease and require its coordinated
+These examples target the `3.0.0-rc.3` prerelease and require its coordinated
 publication. Request the prerelease explicitly:
 
 ```toml
 [dependencies]
-forma-ir = "=3.0.0-rc.2"
+forma-ir = "=3.0.0-rc.3"
 ```
 
 ## What It Does
@@ -59,7 +59,7 @@ islands open where the walk stopped. It catches a panic inside the walk as
 
 ## FMIR v3 development
 
-The `3.0.0-rc.2` package set implements FMIR v3. Modules carry a 24-byte signature/version/length/CRC
+The `3.0.0-rc.3` package set implements FMIR v3. Modules carry a 24-byte signature/version/length/CRC
 header and a variable section table; the reader accepts writers of its own major up to its own minor; patch is ignored.
 Package prerelease suffixes are absent from the numeric wire triple.
 V2 modules require rebuilding. `IrModule::parse` validates every bytecode string reference,
