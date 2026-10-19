@@ -162,11 +162,38 @@ its hosted evidence verification remain available unchanged.
 After final publication, dispatch the unchanged `rc-burn-in.yml` at that exact
 RC tag, with the same `rc_tag` input. Its workloads, 3,600 active seconds,
 zero-fault rules, original archive authentication and cleanup requirements do
-not change. Retain and authenticate the actual later result separately, linked
-to the immutable final DS12/reference digest and identical RC tag/commit and
-DS12/P17/D14 identities. Never rewrite final DS12's original deferred claim to
-imply the soak passed before publication. A failure remains a failed post-release
-verification obligation; scheduling is not evidence credit.
+not change. After it completes, check out the exact published `v3.0.0` tag with
+its RC tag available locally and run the supported read-only consumer:
+
+```sh
+node scripts/release-soak-completion.mjs v3.0.0 FINAL_COMMIT RUN_ID RUN_ATTEMPT MANIFEST_SHA256 /absolute/fresh/output-directory
+```
+
+Use the actual final commit and later `rc-burn-in` run ID, attempt and nested
+manifest digest from its retained original output. The output directory must
+not exist, its parent must exist, and it must be outside the tagged checkout,
+including after resolving symlinks. A read-only `GH_TOKEN` may authenticate API
+reads; this command has no publishing action. No real run identity is placed in
+the immutable deferred reference.
+
+The consumer authenticates the actual final GitHub release and DS12/reference
+assets, their exact committed final identity/diff and original zero-credit
+disposition. It reauthenticates the same RC archives/P17/D14 and requires a
+successful exact hosted soak producer created and started after the final's
+original publication time. The existing raw workload validator then requires
+all tasks, at least 3,600 active seconds, zero faults and complete cleanup.
+The external directory retains the original final assets, RC evidence, hosted
+soak provenance and downloaded artifact. On success `verification.json` binds
+those identities/digests and records actual active nanoseconds and rounds;
+the CLI prints that same receipt. After output initialization, a refusal exits
+nonzero and retains `verification-error.json` plus evidence already acquired,
+with no successful receipt. Invalid arguments, source or output paths refuse
+before creating the output directory. Use a fresh directory for any independently authorized later check;
+there is no automatic retry or overwrite.
+
+Never rewrite final DS12's original deferred claim to imply the soak passed
+before publication. This separate receipt completes the later obligation only;
+a failed campaign remains failed and scheduling earns no evidence credit.
 
 ## Implementation qualification
 

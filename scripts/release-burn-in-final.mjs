@@ -132,20 +132,25 @@ export function validateBurnInFiles(directory, expected, report = json(join(dire
   }
   return report;
 }
+// Both pre-final and post-final consumers use the same authenticated archive,
+// harness and complete raw-workload validation. Scheduling earns no credit.
+export function validateAuthenticatedBurnIn(evidence, reference, authenticated, root = ROOT) {
+  const expected = json(join(evidence.files, 'expected.json'));
+  assert.equal(expected.rcTag, reference.rcTag); assert.equal(expected.sourceCommit, reference.rcCommit);
+  for (const key of ['ds12Sha256', 'p17EvidenceSha256', 'd14EvidenceSha256']) assert.equal(expected[key], authenticated[key]);
+  assert.deepEqual(expected.packages, authenticated.packages);
+  const core = authenticated.packages.find(p => p.name === '@getforma/core');
+  assert.equal(expected.runtimeSha256, sha256(run('tar', ['-xOf', join(authenticated.archives, core.file), 'package/dist/formajs-runtime.global.js'], root, { encoding: 'buffer' })), 'hostile runtime differs from original published archive');
+  assert.equal(expected.harnessSha256, sha256(run('git', ['ls-tree', '-r', '-z', reference.rcCommit], root, { encoding: 'buffer' })));
+  return validateBurnInFiles(evidence.files, expected);
+}
 export async function verifyFinalBurnIn({ reference, commit, root = ROOT }) {
   assert.equal(run('git', ['rev-parse', 'HEAD'], root).trim(), commit); assert.equal(run('git', ['status', '--porcelain', '--untracked-files=no'], root).trim(), '');
   const changes = finalDiffBinding(reference, commit, root), directory = mkdtempSync(join(tmpdir(), 'forma-final-burn-in-'));
   try {
     const authenticated = await authenticateRc({ tag: reference.rcTag, commit: reference.rcCommit, directory: join(directory, 'rc'), root, checkoutRequired: false });
     const evidence = await downloadRunEvidence({ get: releaseReader(), runId: reference.runId, runAttempt: reference.runAttempt, name: 'rc-burn-in', manifestSha256: reference.manifestSha256, destination: join(directory, 'run'), commit: reference.rcCommit, tag: reference.rcTag, workflow: '.github/workflows/rc-burn-in.yml', event: 'workflow_dispatch', requiredJob: 'burn-in', requiredStep: 'Continuous packed RC workloads' });
-    const expected = json(join(evidence.files, 'expected.json'));
-    assert.equal(expected.rcTag, reference.rcTag); assert.equal(expected.sourceCommit, reference.rcCommit);
-    for (const key of ['ds12Sha256', 'p17EvidenceSha256', 'd14EvidenceSha256']) assert.equal(expected[key], authenticated[key]);
-    assert.deepEqual(expected.packages, authenticated.packages);
-    const core = authenticated.packages.find(p => p.name === '@getforma/core');
-    assert.equal(expected.runtimeSha256, sha256(run('tar', ['-xOf', join(authenticated.archives, core.file), 'package/dist/formajs-runtime.global.js'], root, { encoding: 'buffer' })), 'hostile runtime differs from original published archive');
-    assert.equal(expected.harnessSha256, sha256(run('git', ['ls-tree', '-r', '-z', reference.rcCommit], root, { encoding: 'buffer' })));
-    const report = validateBurnInFiles(evidence.files, expected);
+    const report = validateAuthenticatedBurnIn(evidence, reference, authenticated, root);
     return { rcTag: reference.rcTag, rcCommit: reference.rcCommit, runId: reference.runId, runAttempt: reference.runAttempt, manifestSha256: reference.manifestSha256, artifactSha256: evidence.artifact.digest.slice(7), activeNanoseconds: report.activeNanoseconds, rounds: report.rounds.length, reviewedFinalChanges: changes, hostedAttestationVerified: true };
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
