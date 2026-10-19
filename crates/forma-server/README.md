@@ -1,6 +1,6 @@
 # forma-server
 
-Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0` final set and require its coordinated publication. Pin the coordinated final set explicitly:
+Typed server rendering and explicit browser shells for the Forma stack. These examples target the `3.0.0` final set and require its coordinated publication. Cargo prerelease versions need explicit requirements:
 
 ```toml
 [dependencies]
