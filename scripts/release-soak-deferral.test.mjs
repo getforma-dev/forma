@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -13,6 +13,14 @@ import { finalDiffBinding, verifyFinalSoakDeferral } from './release-burn-in-fin
 import { checkReleaseQualification } from './check-release-qualification.mjs';
 import { qualificationEvidence, releaseNotes } from './release-record.mjs';
 import { recordEvidence } from './release-evidence.mjs';
+import { soakDisposition } from './release-soak-deferral.mjs';
+import { soakCompletionCli, verifyPostReleaseSoak } from './release-soak-completion.mjs';
+import { API } from './release-burn-in-inputs.mjs';
+import { CONTRACT, FUZZ_TARGETS, ENGINES, SKEW_CHECKS } from './release-burn-in-report.mjs';
+import { hostileIds, fixtureCheckIds } from './release-burn-in-identities.mjs';
+import { securityHarnessHashes } from './release-security.mjs';
+import { cases, profiles } from '../packages/core/e2e/hostile-widgets/catalogue.mjs';
+import { capabilityCases } from '../packages/core/e2e/hostile-widgets/capabilities.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const encode = value => JSON.stringify(value, null, 2) + '\n';
@@ -158,4 +166,155 @@ test('DS12 copies exact deferred obligation without inventing a soak run or chan
   const reference = structuredClone(f.reference); reference.reviewEvidence.content += ' changed';
   f.write(SOAK_REFERENCE, encode(reference)); await assert.rejects(qualificationEvidence(f), /bytes changed/);
   rmSync(join(f.root, SOAK_REFERENCE)); await assert.rejects(qualificationEvidence(f), /ENOENT/);
+});
+
+// The later completion consumer exercises actual API-byte, ZIP, nested-manifest
+// and all-workload validators. Only the independently tested RC authenticator is
+// injected; the returned archive is real and its bytes are checked below.
+async function completionFixture(t) {
+  const f = fixture(t); f.git('tag', 'v3.0.0');
+  const evidence = mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
+  t.after(() => rmSync(evidence, { recursive: true, force: true }));
+  const archiveRoot = join(evidence, 'archive'), raw = join(evidence, 'raw');
+  mkdirSync(join(archiveRoot, 'package/dist'), { recursive: true }); mkdirSync(raw);
+  const runtime = Buffer.from('synthetic runtime, never release evidence');
+  writeFileSync(join(archiveRoot, 'package/dist/formajs-runtime.global.js'), runtime);
+  execFileSync('tar', ['-czf', join(evidence, 'core.tgz'), '-C', archiveRoot, 'package']);
+  const identities = [['npm', '@getforma/core'], ['npm', '@getforma/compiler'], ['npm', '@getforma/build'], ['npm', '@getforma/create-app'], ['crates', 'forma-ir'], ['crates', 'forma-ir-derive'], ['crates', 'forma-server']];
+  const packages = identities.map(([registry, name], i) => ({ registry, name, version: '3.0.0-rc.1', file: i ? `archive-${i}.tgz` : 'core.tgz', bytes: i ? 100 : readFileSync(join(evidence, 'core.tgz')).length, sha256: i ? 'd'.repeat(64) : sha(readFileSync(join(evidence, 'core.tgz'))) }));
+  const expected = { rcTag: f.reference.rcTag, sourceCommit: f.reference.rcCommit, ...f.authenticated, packages,
+    runtimeSha256: sha(runtime), harnessSha256: sha(execFileSync('git', ['ls-tree', '-r', '-z', f.reference.rcCommit], { cwd: f.root })), hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds() };
+  const hostile = { schema: 1, passed: true, completeMatrix: true, selection: null, sourceCommit: f.reference.rcCommit,
+    sourceClean: true, runtimeSha256: sha(runtime), harnessSources: securityHarnessHashes(), pageErrors: [],
+    requested: cases().length, requestedCapabilityControls: capabilityCases.length * profiles.length,
+    cases: cases().map(({ id }) => ({ id, live: true, executed: 0, outsideReads: 0, unauthorizedRequests: 0 })),
+    capabilities: capabilityCases.flatMap(({ id }) => profiles.map(profile => ({ id: `${id}/${profile}` }))),
+    observers: profiles.map(profile => ({ profile, executions: 1, outsideReads: 1, response: 200, unexpectedResponse: 404, trustedTypesRefused: true })),
+    explicitMount: profiles.flatMap(profile => [{ id: `no-auto/${profile}`, unauthorizedRequests: 0, served: 'raw', injected: 'raw' }, ...['omitted-compiled', 'omitted-reviewed'].map(id => ({ id: `${id}/${profile}`, unauthorizedRequests: 0, live: true, reach: 'confined', failed: 'data-fetch denied: the mount grants no fetch', activations: 0, outsideReads: 0, codes: ['FORMA_E_GRANT_FETCH', 'FORMA_E_GRANT_NAVIGATE'] }))]), catalogueSha256: 'a'.repeat(64) };
+  const fixtureProof = { pages: {
+    pages: fixtureCheckIds().filter(id => id.startsWith('fixture:')).map(id => { const [, app, ...page] = id.split(':'); return { app, page: page.join(':'), mutations: 0, elements: 1 }; }),
+    extras: fixtureCheckIds().filter(id => id.startsWith('extra:')).map(id => id.slice(6)) }, templates: {
+    minimal: { island: { errors: [], violations: [], transitions: [7, 8, 0, 1], adoption: { mutations: [], sameNodes: true, sameHost: true } }, static: { executableScripts: 0, modulepreloads: 0, errors: [], violations: [] } },
+    dashboard: { interacted: true, pageErrors: [], violations: [], tooltip: { apiTextStayedText: true, violations: { normal: [], hostile: [] }, normal: ['00:00', '23:00'].map(hour => ({ hour, values: ['1', '2'], hiddenOnLeave: true })), hostile: { hour: '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">', values: ['1', '2'], hiddenOnLeave: true } } } } };
+  const put = (path, value) => writeFileSync(join(raw, path), typeof value === 'string' ? value : encode(value));
+  let time = 0n;
+  const rounds = Array.from({ length: 15 }, (_, index) => {
+    const dir = `round-${String(index + 1).padStart(3, '0')}`; mkdirSync(join(raw, dir));
+    const startedNs = String(time);
+    const tasks = [...FUZZ_TARGETS.map(target => `fuzz:${target}`), 'hostile', ...ENGINES.map(engine => `skew:${engine}`), 'fixtures'].map((id, n) => {
+      const task = { id, startedNs: String(time), finishedNs: String(time += 60_000_000_000n), complete: true, exitCode: 0, faults: [], activeNanoseconds: id.startsWith('fuzz:') ? '60000000000' : '0' };
+      let proof;
+      if (id.startsWith('fuzz:')) {
+        const target = id.slice(5), log = 'Done 100 runs in 60 second(s)\n';
+        Object.assign(task, { executions: 100, fuzzSeconds: 60, seed: index * 4 + n, findings: 0 });
+        put(`${dir}/${target}.log`, log); proof = { target, seed: task.seed, logSha256: sha(log) };
+      } else if (id === 'hostile') { Object.assign(task, { completeMatrix: true, caseIds: hostileIds() }); proof = hostile; }
+      else if (id.startsWith('skew:')) { task.checks = SKEW_CHECKS; proof = { checks: SKEW_CHECKS,
+        builds: { A: 'a'.repeat(16), B: 'b'.repeat(16), B2: 'b'.repeat(16), C: 'c'.repeat(16), S: 'd'.repeat(16) },
+        requests: [{ instance: 'B', status: 200, cacheControl: 'public, immutable' }, { instance: 'S', status: 404 }] }; }
+      else { task.checkIds = fixtureCheckIds(); proof = fixtureProof; }
+      put(`${dir}/${id.replaceAll(':', '-')}.json`, proof); task.reportSha256 = sha(encode(proof)); return task;
+    });
+    const round = { index: index + 1, complete: true, startedNs, finishedNs: String(time), tasks }; put(`${dir}/round.json`, round); return round;
+  });
+  const report = { contract: CONTRACT, ...expected, harnessCommit: f.reference.rcCommit, complete: true, zeroFaults: true, faults: [], cleanup: { complete: true, remainingOwnedPids: [], failures: [] }, rounds, startedNs: '0', finishedNs: String(time), activeNanoseconds: '3600000000000', orchestrationNanoseconds: String(time - 3_600_000_000_000n) };
+  const record = { schema: 1, dryRun: false, tag: 'v3.0.0', commit: f.commit, milestone: { name: 'final' }, packages: packages.map(p => ({ ...p, version: '3.0.0' })), measurements: { passed: true, commit: f.commit }, postReleaseSoak: { ...soakDisposition(f.reference), file: 'post-release-soak-reference.json', sha256: sha(encode(f.reference)) } };
+  const runProof = { repository: { full_name: 'getforma-dev/forma' }, head_sha: f.reference.rcCommit, head_branch: f.reference.rcTag, path: '.github/workflows/rc-burn-in.yml', event: 'workflow_dispatch', status: 'completed', conclusion: 'success', id: 246, run_attempt: 1, created_at: '2026-10-20T12:00:00Z', run_started_at: '2026-10-20T12:00:10Z' };
+  const jobs = { total_count: 1, jobs: [{ name: 'burn-in', conclusion: 'success', steps: [{ name: 'Continuous packed RC workloads', conclusion: 'success' }] }] };
+  let zip, manifest, count = 0;
+  async function pack() {
+    put('expected.json', expected); put('burn-in.json', report);
+    rmSync(join(raw, 'EVIDENCE-SHA256.json'), { force: true }); manifest = await recordEvidence(raw);
+    const path = join(evidence, 'artifact.zip');
+    execFileSync('python3', ['-c', 'import pathlib,sys,zipfile\np=pathlib.Path(sys.argv[1])\nwith zipfile.ZipFile(sys.argv[2],"w",zipfile.ZIP_DEFLATED) as z:\n for f in sorted(p.rglob("*")):\n  if f.is_file(): z.write(f, f.relative_to(p).as_posix())', raw, path]); zip = readFileSync(path);
+  }
+  await pack();
+  const metadata = { id: 123, tag_name: 'v3.0.0', draft: false, prerelease: false, published_at: '2026-10-20T11:00:00Z' };
+  let refBytes = Buffer.from(encode(f.reference));
+  const fetchImpl = async (url, options) => {
+    count++; assert.equal(options.method, undefined, 'reader must never write remotely');
+    const bytes = Buffer.from(encode(record));
+    const assets = [{ name: 'release-record.json', url: `${API}/releases/assets/1`, digest: `sha256:${sha(bytes)}`, size: bytes.length }, { name: 'post-release-soak-reference.json', url: `${API}/releases/assets/2`, digest: `sha256:${sha(refBytes)}`, size: refBytes.length }];
+    if (url === `${API}/releases/tags/v3.0.0`) return Response.json({ assets, ...metadata });
+    if (url === assets[0].url) return new Response(bytes);
+    if (url === assets[1].url) return new Response(refBytes);
+    if (url === `${API}/actions/runs/246/attempts/1`) return Response.json(runProof);
+    if (url === `${API}/actions/runs/246/attempts/1/jobs?per_page=100`) return Response.json(jobs);
+    if (url === `${API}/actions/runs/246/artifacts?per_page=100`) return Response.json({ total_count: 1, artifacts: [{ id: 4, name: 'rc-burn-in', expired: false, workflow_run: { id: 246, head_sha: f.reference.rcCommit }, digest: `sha256:${sha(zip)}`, size_in_bytes: zip.length, archive_download_url: `${API}/actions/artifacts/4/zip` }] });
+    if (url === `${API}/actions/artifacts/4/zip`) return new Response(zip);
+    throw Error(`unexpected synthetic API read ${url}`);
+  };
+  const authenticated = { ...f.authenticated, packages, archives: evidence };
+  const authenticate = async args => { assert.equal(args.tag, f.reference.rcTag); assert.equal(args.commit, f.reference.rcCommit); assert.equal(args.checkoutRequired, false); return authenticated; };
+  let serial = 0;
+  const args = () => ({ root: f.root, tag: 'v3.0.0', commit: f.commit, runId: 246, runAttempt: 1, manifestSha256: manifest, directory: join(evidence, `result-${++serial}`), fetchImpl, authenticate });
+  return { ...f, args, record, metadata, authenticated, expected, report, runProof, jobs, pack, raw, evidence,
+    reads: () => count, replaceReference: bytes => { refBytes = bytes; } };
+}
+
+test('post-final CLI authenticates later hosted raw evidence and writes a separate immutable zero-credit binding', async t => {
+  const f = await completionFixture(t), args = f.args(), original = encode(f.record), ref = readFileSync(join(f.root, SOAK_REFERENCE));
+  const result = await soakCompletionCli([args.tag, args.commit, String(args.runId), String(args.runAttempt), args.manifestSha256, args.directory], args);
+  assert.equal(result.status, 'passed'); assert.equal(result.soak.activeNanoseconds, '3600000000000'); assert.equal(result.soak.rounds, 15);
+  assert.equal(result.soak.hostedAttestationVerified, true); assert.deepEqual(result.soak.cleanup, f.report.cleanup);
+  assert.equal(result.final.ds12Sha256, sha(original)); assert.equal(result.final.referenceSha256, sha(ref));
+  assert.equal(result.final.originalDisposition.activeNanoseconds, '0'); assert.equal(result.final.originalDisposition.burnInPassed, false);
+  assert.deepEqual(json(join(args.directory, 'verification.json')), result); assert.equal(readFileSync(join(args.directory, 'final-release-record.json'), 'utf8'), original);
+  assert.deepEqual(readFileSync(join(f.root, SOAK_REFERENCE)), ref); assert.equal(encode(f.record), original); assert.equal(f.git('status', '--porcelain'), '');
+  await assert.rejects(verifyPostReleaseSoak(args), /must be fresh/);
+});
+
+test('post-final consumer refuses false publication, source, deferred disposition or reference assets', async t => {
+  const f = await completionFixture(t);
+  for (const [object, key, value, message] of [
+    [f.record, 'tag', 'v3.0.1', /manifest disagrees/], [f.record, 'commit', 'f'.repeat(40), /commit|P17/i],
+    [f.metadata, 'draft', true, /draft/], [f.metadata, 'prerelease', true, /prerelease/],
+    [f.record, 'burnIn', { passed: true }, /original deferred/],
+    [f.record, 'postReleaseSoak', { ...f.record.postReleaseSoak, activeNanoseconds: '1' }, /deferred binding/],
+    [f.metadata, 'assets', [], /requires exactly one/],
+    [f.metadata, 'assets', [{ name: 'release-record.json', url: `${API}/releases/assets/1`, size: Buffer.byteLength(encode(f.record)), digest: `sha256:${'f'.repeat(64)}` }], /digest differs/],
+  ]) { const old = object[key]; object[key] = value; const args = f.args(); await assert.rejects(verifyPostReleaseSoak(args), message); assert(!existsSync(join(args.directory, 'verification.json'))); assert.equal(json(join(args.directory, 'verification-error.json')).status, 'failed'); if (old === undefined) delete object[key]; else object[key] = old; }
+  f.replaceReference(Buffer.from(encode({ ...f.reference, rcCommit: 'f'.repeat(40) })));
+  await assert.rejects(verifyPostReleaseSoak(f.args()), /reference differs/);
+});
+
+test('later soak must match authenticated RC, successful exact hosted producer and post-publication creation', async t => {
+  const f = await completionFixture(t);
+  for (const key of ['ds12Sha256', 'p17EvidenceSha256', 'd14EvidenceSha256']) {
+    const old = f.authenticated[key]; f.authenticated[key] = 'f'.repeat(64); await assert.rejects(verifyPostReleaseSoak(f.args()), /deferred RC .* differs/); f.authenticated[key] = old;
+  }
+  for (const [key, value] of [['head_sha', 'f'.repeat(40)], ['head_branch', 'v3.0.0-rc.2'], ['path', '.github/workflows/ci.yml'], ['conclusion', 'failure'], ['created_at', '2026-10-20T10:59:59Z'], ['run_started_at', '2026-10-20T10:59:59Z'], ['created_at', 'invalid']]) {
+    const old = f.runProof[key]; f.runProof[key] = value; await assert.rejects(verifyPostReleaseSoak(f.args())); f.runProof[key] = old;
+  }
+  f.jobs.jobs[0].steps[0].conclusion = 'failure'; await assert.rejects(verifyPostReleaseSoak(f.args()), /workload step/);
+  f.jobs.jobs[0].steps[0].conclusion = 'success'; await assert.rejects(verifyPostReleaseSoak({ ...f.args(), manifestSha256: 'f'.repeat(64) }), /manifest differs/);
+  await assert.rejects(verifyPostReleaseSoak({ ...f.args(), authenticate: async () => { throw Error('actual published RC authentication refused'); } }), /RC authentication refused/);
+});
+
+test('post-final consumer revalidates complete active work, zero faults, all raw cases and cleanup', async t => {
+  const f = await completionFixture(t);
+  for (const [object, key, value, message] of [[f.report, 'activeNanoseconds', '3599000000000', /active duration/], [f.report, 'zeroFaults', false, /fault flag/], [f.report, 'complete', false, /incomplete campaign/], [f.report.cleanup, 'remainingOwnedPids', [123], /cleanup/], [f.expected, 'd14EvidenceSha256', 'f'.repeat(64), /strictly equal/]]) {
+    const old = object[key]; object[key] = value; await f.pack(); await assert.rejects(verifyPostReleaseSoak(f.args()), message); object[key] = old;
+  }
+  // Self-consistent shortened work still cannot earn an hour.
+  const task = f.report.rounds.at(-1).tasks[0]; task.fuzzSeconds = 59; task.activeNanoseconds = '59000000000';
+  f.report.activeNanoseconds = '3599000000000'; f.report.orchestrationNanoseconds = String(BigInt(f.report.orchestrationNanoseconds) + 1_000_000_000n);
+  await f.pack(); await assert.rejects(verifyPostReleaseSoak(f.args()), /less than 3600/);
+  task.fuzzSeconds = 60; task.activeNanoseconds = '60000000000'; f.report.activeNanoseconds = '3600000000000'; f.report.orchestrationNanoseconds = String(BigInt(f.report.orchestrationNanoseconds) - 1_000_000_000n);
+  // An authenticated nested inventory cannot replace per-task semantic proof.
+  const raw = join(f.raw, 'round-001/fixtures.json'), proof = json(raw); proof.templates.dashboard.interacted = false;
+  writeFileSync(raw, encode(proof)); f.report.rounds[0].tasks.at(-1).reportSha256 = sha(encode(proof));
+  writeFileSync(join(f.raw, 'round-001/round.json'), encode(f.report.rounds[0]));
+  await f.pack(); await assert.rejects(verifyPostReleaseSoak(f.args()), /strictly equal/);
+});
+
+test('completion requires exact clean final tag and fresh external output before any API read', async t => {
+  const f = await completionFixture(t);
+  for (const patch of [{ tag: 'v3.0.1' }, { commit: f.reference.rcCommit }, { runId: 0 }, { runAttempt: 0 }, { manifestSha256: 'missing' }, { directory: join(f.root, 'output') }, { directory: 'relative' }]) await assert.rejects(verifyPostReleaseSoak({ ...f.args(), ...patch }));
+  const alias = join(f.evidence, 'checkout-link'); symlinkSync(f.root, alias, 'dir');
+  await assert.rejects(verifyPostReleaseSoak({ ...f.args(), directory: join(alias, 'output') }), /outside/);
+  f.write('runtime.js', 'dirty'); await assert.rejects(verifyPostReleaseSoak(f.args()), /source must be clean/); f.git('checkout', '--', 'runtime.js');
+  f.git('tag', '-d', 'v3.0.0'); f.git('tag', 'v3.0.0', f.reference.rcCommit); await assert.rejects(verifyPostReleaseSoak(f.args()), /final tag differs/);
+  await assert.rejects(soakCompletionCli(['v3.0.0', f.commit, '1junk', '1', 'a'.repeat(64), join(f.evidence, 'unused')]), /usage/);
+  assert.equal(f.reads(), 0);
 });
