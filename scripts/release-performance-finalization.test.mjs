@@ -42,7 +42,7 @@ test('actual N3 refusal retains the unchanged client stage before final failure,
    json:file=>file.endsWith('client-report.json')?client:native(),validateNative:()=>{},validateMobile,finalizeMobileAttribution,
    withOwnedServer:async(_binary,_args,_project,fn)=>fn(null,'http://fixture.invalid/'),
    measureMobileRoute:async({id,onSample})=>{const row=rows.find(r=>r.id===id);row.runs.forEach(onSample);return row;},
-   mobileControls:async()=>({controls:{deadActivationRefused:true,longTaskRefused:true},observations:controlObservations()}),
+   mobileControls:async()=>({controls:{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true},observations:controlObservations()}),
    machineProfile:()=>({node:'test',cpuModel:'test'}),completePerformance};
   const verify=new Function(...Object.keys(dependencies),`return (${body.trim()});`)(...Object.values(dependencies));
   await assert.rejects(verify({staged:{project:'/controlled-project',targetDir:'/controlled-target'},set:{commit:'a'.repeat(40)},test:async(_name,fn)=>fn(),target:{tag:'v3.0.0-beta.3',rehearsal:true},before:'2026-10-17T00:00:00Z',report,evidenceDirectory:parent}),/application\/unattributed task over50ms/);

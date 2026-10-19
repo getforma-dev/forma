@@ -16,6 +16,23 @@ function host(name: string, trigger = 'load') {
 }
 
 describe('shared load scheduling', () => {
+  it('bounds a clock-flat batch while preserving pending input, cancellation and readiness', async () => {
+    const names = [...'ABCDEFGHIJ'], seen: string[] = [];
+    document.body.innerHTML = names.map(name => host(name)).join(''); installState();
+    const registry = emptyRegistry(Object.fromEntries(names.map(name => [name, () => {seen.push(name); return tree(name);}])));
+    let done = false;
+    const ready = activateIslands(registry).then(() => {done = true;});
+    vi.advanceTimersToNextTimer();
+    expect(seen).toEqual(['A', 'B', 'C', 'D']);
+    await Promise.resolve(); expect(done).toBe(false);
+    deactivateIsland(document.querySelector<HTMLElement>('[data-forma-component="E"]')!);
+    document.querySelector<HTMLElement>('[data-forma-component="G"]')!.dispatchEvent(new Event('pointerdown'));
+    expect(seen).toEqual(['A', 'B', 'C', 'D', 'G']);
+    vi.runAllTimers(); await ready;
+    expect(seen).toEqual(['A', 'B', 'C', 'D', 'G', 'F', 'H', 'I', 'J']);
+    expect(done).toBe(true); expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('queues even the first load until a timer while readiness remains pending', async () => {
     document.body.innerHTML = host('A'); installState();
     const component = vi.fn(() => tree('A'));

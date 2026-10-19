@@ -6,8 +6,14 @@ Changes after the prepared 3.0.0 set will be recorded here.
 
 ## [3.0.0] - Prepared; publication pending
 
-- Prepare coordinated final versions, dependency locks and template source seeds from the independently audited 3.0.0-rc.3 source, including the release-test fixture correction. No product behavior changes in this preparation.
-- Final publication requires verified RC.3 publication, the independently reviewed final delta, exact-source CI and trusted publishing. The L-66-QUOTA post-release soak remains outstanding until its actual completion is verified.
+- Prepare coordinated final versions, dependency locks and template source seeds from the independently audited RC.4 source and evidence at 46d081f7. Preserve its product, tests and qualification harness unchanged.
+- Final publication requires actual RC.4 merge ancestry and authenticated publication, an independently reviewed final delta, exact-source CI and trusted publishing. The retained RC.2 post-release-soak reference is stale preparation metadata; it does not bind this candidate to RC.4. The L-66-QUOTA actual post-release soak remains outstanding.
+
+## [3.0.0-rc.4] - Prepared; publication pending
+
+- Bound each background island-load callback to four direct queue entries as well as its existing 12 ms deadline. Preserve whole-island adoption, synchronous input promotion, cancellation and readiness; neither bound can preempt an expensive island or additional promoted work.
+- Keep the strict 50 ms mobile-task and 500 ms response gates. RC.3 failed its tagged mobile campaign and remains unpublished and immutable; this candidate requires fresh packed qualification and independent audit before publication.
+- Coordinate all seven package versions and source template seeds. The actual same-RC active soak remains outstanding after final publication under L-66-QUOTA.
 
 ## [3.0.0-rc.3] - Prepared; publication pending
 

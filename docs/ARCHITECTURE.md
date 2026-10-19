@@ -226,7 +226,7 @@ error naming route and component, and catches a panic in the walk as
 `RenderError::Fault`; `render_browser_shell` serves a route declared
 `ssr: false` (DR-11, DR-12; D10 below).
 
-**`@getforma/core` adoption.** `activateIslands()` performs synchronous preflight and reserves claims, then cooperatively drains whole load islands across timer tasks. Its promise resolves when requested load work finishes, fails in isolation, or is disposed; deferred triggers settle once armed. Input can promote queued SSR work synchronously. The 12 ms slice is not a hard bound on indivisible work or arbitrary application code. `activateIslands` → `hydrateIslandRoot` →
+**`@getforma/core` adoption.** `activateIslands()` performs synchronous preflight and reserves claims, then cooperatively drains whole load islands across timer tasks. Its promise resolves when requested load work finishes, fails in isolation, or is disposed; deferred triggers settle once armed. Input can promote queued SSR work synchronously. Each background drain keeps its 12 ms deadline and takes at most four direct queue entries. Neither bound preempts indivisible work, additional input promotion or arbitrary application code. `activateIslands` → `hydrateIslandRoot` →
 `hydrateIsland` → `adoptNode`. During hydration `h()` returns *descriptors*, not
 elements; `adoptNode` walks the descriptor tree against the SSR DOM, attaching
 event listeners and reactive effects to nodes that already exist. No elements
