@@ -23,12 +23,12 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 
 ## Usage
 
-These registry commands target `3.0.0-rc.1` and require its coordinated
+These registry commands target `3.0.0-rc.2` and require its coordinated
 publication. For an unpublished set, use the packed candidate workflow
 described below. Release records report the qualification of each published set.
 
 ```bash
-npx @getforma/create-app@3.0.0-rc.1 my-app
+npx @getforma/create-app@3.0.0-rc.2 my-app
 cd my-app
 ```
 
@@ -48,11 +48,11 @@ because its `/api/*` routes have no authentication.
 ## Options
 
 ```bash
-npx @getforma/create-app@3.0.0-rc.1 my-app --template dashboard
-npx @getforma/create-app@3.0.0-rc.1 my-app --template minimal
-npx @getforma/create-app@3.0.0-rc.1 my-app --dry-run
-npx @getforma/create-app@3.0.0-rc.1 --help
-npx @getforma/create-app@3.0.0-rc.1 --version
+npx @getforma/create-app@3.0.0-rc.2 my-app --template dashboard
+npx @getforma/create-app@3.0.0-rc.2 my-app --template minimal
+npx @getforma/create-app@3.0.0-rc.2 my-app --dry-run
+npx @getforma/create-app@3.0.0-rc.2 --help
+npx @getforma/create-app@3.0.0-rc.2 --version
 ```
 
 Project names must start with a lowercase letter and use only lowercase
@@ -164,7 +164,7 @@ The gate requires all 19 heavy controls plus the structural suite, with no skips
 
 MIT
 
-## Source staging for 3.0.0-rc.1
+## Source staging for 3.0.0-rc.2
 
 The checked-in templates now use the declared-props and finalized Pages APIs.
 Minimal now declares a Counter island over its static home markup and a

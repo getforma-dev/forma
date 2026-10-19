@@ -1,8 +1,8 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "62be639fd26abff108e4b1a4eb89c56c2a50fff3",
-  "reviewedTree": "c6fb6e1f3b0d271db846c64ab8403bf848e6f3c0",
-  "inputManifestSha256": "6d74bf15ff58a1e6be7ee3ac8651632c90aad97008b641906d9984ff85bfd55e",
+  "reviewedCommit": "ebdefab8042a449b3283c2ecc41846ac5703434c",
+  "reviewedTree": "0b7ade04d4ecef766ad8bf32b1edec614d757722",
+  "inputManifestSha256": "7e983cf94b4882e57061f348ad16980a0baf2110babf008ff12556a1bb2d76d5",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
@@ -18,7 +18,7 @@
     "decision": "L-65",
     "initializationEvidenceSha256": "c604b617e333270657f796b9ac119d80886b2e2b45a602bb7a3908fc7f9b91af"
   },
-  "reviewedAt": "2026-10-19T17:16:58Z",
+  "reviewedAt": "2026-10-19T18:58:01Z",
   "accepted": true,
   "findings": [
     {
@@ -34,8 +34,22 @@
       "disposition": "resolved",
       "rationale": "The supported post-final verifier authenticates the immutable deferred final record, same published RC and later hosted workload, retaining zero credit in the original final record.",
       "evidenceSha256": "1a3b38cb38dbda6a17538180bea7f37ad4f4de9786aaf369a3d083365319c3ae"
+    },
+    {
+      "id": "D14-003",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The actual Actions archive HTTP 415 was reproduced and fixed with API media negotiation while preserving binary release-asset handling and all provenance checks. Corrected authentication verified the immutable RC.1 artifacts; corrected RC.2 remains required for the hosted soak runner.",
+      "evidenceSha256": "4c25e8308993a3511e8defd8f78446cb452a307d19a40bb839647ddae46478c6"
+    },
+    {
+      "id": "D14-004",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The RC.2 README now correctly identifies RC.1 as the published prerelease, while retaining the pending publication status of RC.2.",
+      "evidenceSha256": "2d7ecca4b78ae8c56788bc65797322af2458ba2b0daa9bd4e810a12fe24abe02"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "04d2e16e2226f6c4917220dcb7b6786394899e4184bdae72d45a78edfc4ca7f3"
+  "acceptanceEvidenceSha256": "069ee26523643f4d2bfad1d7ae8c1c31ca5cb9352710aff38d1397fb898688a8"
 }

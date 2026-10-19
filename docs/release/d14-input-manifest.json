@@ -1,7 +1,7 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "62be639fd26abff108e4b1a4eb89c56c2a50fff3",
-  "tree": "c6fb6e1f3b0d271db846c64ab8403bf848e6f3c0",
+  "commit": "ebdefab8042a449b3283c2ecc41846ac5703434c",
+  "tree": "0b7ade04d4ecef766ad8bf32b1edec614d757722",
   "entries": [
     {
       "path": ".gitattributes",
@@ -111,7 +111,7 @@
     {
       "path": "CHANGELOG.md",
       "mode": "100644",
-      "blob": "2ecaae1b02addb6a7506146d8d425e6a2c806c72"
+      "blob": "cc6d24ab771d05e8ea8137ae34ebf5562a4b4c11"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -121,12 +121,12 @@
     {
       "path": "Cargo.lock",
       "mode": "100644",
-      "blob": "c236957c00bed1404de3c80050fdce195d5a0504"
+      "blob": "0549bcbdcec5a7344d17af507b85ed5a031b1153"
     },
     {
       "path": "Cargo.toml",
       "mode": "100644",
-      "blob": "feccc4ce91d039093e644574f514ec3fad366447"
+      "blob": "6b0d0b34a9cd323a81cc6d0b845ffbaee27e7978"
     },
     {
       "path": "LICENSE",
@@ -136,7 +136,7 @@
     {
       "path": "README.md",
       "mode": "100644",
-      "blob": "32b24d94c550e80a6bd5fbb9765ecedaeafe1179"
+      "blob": "df014555f57085996fd18261dd7b083b443e8f98"
     },
     {
       "path": "SECURITY.md",
@@ -181,12 +181,12 @@
     {
       "path": "crates/forma-ir-derive/CHANGELOG.md",
       "mode": "100644",
-      "blob": "1b8d163a344fa82ef95509d27b5869a0c1c4c1b2"
+      "blob": "20c5988ab0c16c2b1055d62d4aedb934ad279812"
     },
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
       "mode": "100644",
-      "blob": "5b4d338dd787249c8d0a935820cccc8b2fb2aace"
+      "blob": "ccd555f3e606bccb2921df84183b9af2590ed3fa"
     },
     {
       "path": "crates/forma-ir-derive/LICENSE",
@@ -206,17 +206,17 @@
     {
       "path": "crates/forma-ir/CHANGELOG.md",
       "mode": "100644",
-      "blob": "a298435203e361f227adfc1060489c103c3e01f1"
+      "blob": "bb943f62d0adcc802aa7e44990baac9ecf0f357e"
     },
     {
       "path": "crates/forma-ir/Cargo.toml",
       "mode": "100644",
-      "blob": "a767c685fb3041397c319a710ea56822c58d398b"
+      "blob": "eadcd39787d1ad66de5e603ce40559b3914c5d8b"
     },
     {
       "path": "crates/forma-ir/README.md",
       "mode": "100644",
-      "blob": "d9d4975b0bf42561b0fbeacd37856f4b4d6db67f"
+      "blob": "326298de366efd239c43fa6ec377f29a5d03fa60"
     },
     {
       "path": "crates/forma-ir/examples/island_state_roundtrip.rs",
@@ -1251,17 +1251,17 @@
     {
       "path": "crates/forma-server/CHANGELOG.md",
       "mode": "100644",
-      "blob": "741f7e96727c44b4a8f367dfef8d6669bbf730ba"
+      "blob": "ef10eaf6b07ec232c897ebad44b69c151c25ffca"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
       "mode": "100644",
-      "blob": "5158f9953688d29e792d3625430a67c27b1a2b4d"
+      "blob": "347ab69fd9f5295fa97e231360bd1427c47e879b"
     },
     {
       "path": "crates/forma-server/README.md",
       "mode": "100644",
-      "blob": "5de13cd18c1887da3b9bc402d1a957581d2f7163"
+      "blob": "7be5047416ad9d45d5d3ee7e0ad188a365a28592"
     },
     {
       "path": "crates/forma-server/examples/parity_render.rs",
@@ -11954,6 +11954,21 @@
       "blob": "3f9be5046b5ce7bb3ff81f06b2c45e3588bdf20a"
     },
     {
+      "path": "docs/release/d14-input-manifest.json",
+      "mode": "100644",
+      "blob": "17177c0da04718d8511a7eaf63fd506eebc728d5"
+    },
+    {
+      "path": "docs/release/d14-report.json",
+      "mode": "100644",
+      "blob": "e1b84ed0c4ec88bccb54516dc52e1dd6be02e871"
+    },
+    {
+      "path": "docs/release/d14-review-evidence.json",
+      "mode": "100644",
+      "blob": "41cf9831cb4540cdd619cf12b20a87adc281cfb4"
+    },
+    {
       "path": "docs/release/quota-handoff/INDEPENDENT-CLOSURE-REVIEW-72179d43.txt",
       "mode": "100644",
       "blob": "5c6bbe69643547cb2d0551bad0d8f1335f160aa8"
@@ -12221,7 +12236,7 @@
     {
       "path": "e2e/Cargo.lock",
       "mode": "100644",
-      "blob": "656e996d5141b27d86482f16f0b385a74dfec08a"
+      "blob": "8a46da8e87725f709b3a5a1c9e9aa6edf045c183"
     },
     {
       "path": "e2e/Cargo.toml",
@@ -13271,7 +13286,7 @@
     {
       "path": "fuzz/Cargo.lock",
       "mode": "100644",
-      "blob": "2785fda7dfc894c400d48603ec258d3a600bb207"
+      "blob": "b36df8c780c85b390cbd123e109e9ea04553b90c"
     },
     {
       "path": "fuzz/Cargo.toml",
@@ -13376,7 +13391,7 @@
     {
       "path": "package-lock.json",
       "mode": "100644",
-      "blob": "723732bef33d38f8c2b0bc9a65804a072b7c1800"
+      "blob": "4ec94f590a6a6fecc5c308a7c65aecfaf0d7f97a"
     },
     {
       "path": "package.json",
@@ -13386,12 +13401,12 @@
     {
       "path": "packages/build/CHANGELOG.md",
       "mode": "100644",
-      "blob": "3367c2473598554f1e0aaeb6c1cdf45d685d81cb"
+      "blob": "f43add43819b1137758e939e3af4cd937fd984d1"
     },
     {
       "path": "packages/build/README.md",
       "mode": "100644",
-      "blob": "f89398e1d9ac8cdf5cab590266692bd5216f3ca1"
+      "blob": "32503b2a69392017146b214f77a6fa1a3ea7ebdf"
     },
     {
       "path": "packages/build/browser-tests/helpers/README.md",
@@ -13421,7 +13436,7 @@
     {
       "path": "packages/build/package.json",
       "mode": "100644",
-      "blob": "2352b282cb06ec641edffb40c6ec75895ba5f2ad"
+      "blob": "f30c7de1f996331f163d2e6b1176b8dbbbb19d21"
     },
     {
       "path": "packages/build/playwright.config.ts",
@@ -14191,12 +14206,12 @@
     {
       "path": "packages/compiler/CHANGELOG.md",
       "mode": "100644",
-      "blob": "cc1129c3b64725f68359af93de84dc225c7119d3"
+      "blob": "91dab682bf0a5a437eb63dfd7362fede05cebd52"
     },
     {
       "path": "packages/compiler/README.md",
       "mode": "100644",
-      "blob": "114cb483d6c23905c7b0ba24bcfcd57ea1ae3538"
+      "blob": "32b23aa791d455cb88bdb9efdc2054af13a71cb1"
     },
     {
       "path": "packages/compiler/docs/subset.md",
@@ -14206,7 +14221,7 @@
     {
       "path": "packages/compiler/package.json",
       "mode": "100644",
-      "blob": "bd57df255fd6279a10dcf42f073ff882a78e9d0b"
+      "blob": "9b77e7de288919d49e56a9f0442d1e85bef01a40"
     },
     {
       "path": "packages/compiler/scripts/check-release-workflow.rb",
@@ -15681,7 +15696,7 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "mode": "100644",
-      "blob": "e68df47fad00ed88232c9e487e0185b6c53344a5"
+      "blob": "0398ca5cb25d12cde2fcd32028fb9d7efbe82fe6"
     },
     {
       "path": "packages/core/CONTRIBUTING.md",
@@ -15691,7 +15706,7 @@
     {
       "path": "packages/core/CSP.md",
       "mode": "100644",
-      "blob": "993063b0c052b2331dd4aad639fd13397694fbf4"
+      "blob": "09775179a6d8e7770c930ec9997db7faca208480"
     },
     {
       "path": "packages/core/LICENSE",
@@ -15701,7 +15716,7 @@
     {
       "path": "packages/core/README.md",
       "mode": "100644",
-      "blob": "ae25eeebd93849793f8ff62c07f7f4d7658d248d"
+      "blob": "74859089f348121825562b4234231240aa4e0e60"
     },
     {
       "path": "packages/core/SECURITY.md",
@@ -16431,7 +16446,7 @@
     {
       "path": "packages/core/package.json",
       "mode": "100644",
-      "blob": "c1ae2a24c9c24dd5e9496365b4fd972b33da62a8"
+      "blob": "2e617c275f811f26186ead3a58714dcfe87f93ab"
     },
     {
       "path": "packages/core/playwright.config.ts",
@@ -18316,7 +18331,7 @@
     {
       "path": "packages/create-app/CHANGELOG.md",
       "mode": "100644",
-      "blob": "45950abac40fb7515360d3df4ed60a11b1e0c9c9"
+      "blob": "849fa99882ca45276ca08b67963a3ef517f9a00a"
     },
     {
       "path": "packages/create-app/CONTRIBUTING.md",
@@ -18331,7 +18346,7 @@
     {
       "path": "packages/create-app/README.md",
       "mode": "100644",
-      "blob": "7c447e8ffad6b358a24176f57ca4290f0b62c67f"
+      "blob": "8e2f20db6f1fd49ce4e275aaeeef5c6e84d3c71b"
     },
     {
       "path": "packages/create-app/docs/README.md",
@@ -18361,7 +18376,7 @@
     {
       "path": "packages/create-app/package.json",
       "mode": "100644",
-      "blob": "79c1c18ee7036e326ea092ecc052d9199bf88600"
+      "blob": "fe9371bd939ff01f2c47b4e371935c3fceacb325"
     },
     {
       "path": "packages/create-app/scripts/check-release-workflow.rb",
@@ -18391,17 +18406,17 @@
     {
       "path": "packages/create-app/template-lock-seeds.json",
       "mode": "100644",
-      "blob": "a81de06c6edef5b05b76ff6013bad7a627f4cf72"
+      "blob": "84fa8f3f5d2701863038b6c72741c03da2d59fb9"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
       "mode": "100644",
-      "blob": "a1f65c6bfb731bdeca60f527a31fe28d2ba91953"
+      "blob": "445980af5a33892454e5561d29231ae51cdfe077"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
       "mode": "100644",
-      "blob": "c8e0b672f1810ea11703490b8e48c66d47d93b77"
+      "blob": "934564840f33a8953488a8bc26628de0b58947e1"
     },
     {
       "path": "packages/create-app/templates/dashboard/README.md",
@@ -18426,12 +18441,12 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
       "mode": "100644",
-      "blob": "0560baf1dc89f532a85c869aab0e85dc2c7fc82d"
+      "blob": "776bd3a5ad3ad556b71ee4cf64f50a9ae51c6a34"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
       "mode": "100644",
-      "blob": "4f91b032bededc553461241f198743fe222235e1"
+      "blob": "e690d4d534ed928dc34ce7ec1159d3d87ddd0346"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/playwright.config.ts",
@@ -18521,12 +18536,12 @@
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
       "mode": "100644",
-      "blob": "35a2e8e8c0af1e015f5e2f61aa4411a41243b2ba"
+      "blob": "53f82a4d265a273709369850fbe28ab073d3d17a"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
       "mode": "100644",
-      "blob": "66e400143eb936805040ebf76eacb0b585f8735c"
+      "blob": "34969b134b3c55d3f2ec96018256c66d52f380e6"
     },
     {
       "path": "packages/create-app/templates/minimal/README.md",
@@ -18551,12 +18566,12 @@
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
       "mode": "100644",
-      "blob": "20ba666c1bdc548d795dfccab6f8127eaa27b0ed"
+      "blob": "97e5737b9a5d9ee9d12569cfe710fac96ddb3a5a"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
       "mode": "100644",
-      "blob": "be347575371101bd9b4d145ffb444c0dd0809451"
+      "blob": "f8740768df0c2f0d2976d52876a1c8f0fdede7a1"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/src/about/app.tsx",
@@ -18961,12 +18976,12 @@
     {
       "path": "scripts/release-burn-in-inputs.mjs",
       "mode": "100644",
-      "blob": "e59a5990162ed13a471713d4163739d7bc5d4cb7"
+      "blob": "2752aff1cf64d4bb8ad68630756f182e0f797a0c"
     },
     {
       "path": "scripts/release-burn-in-inputs.test.mjs",
       "mode": "100644",
-      "blob": "40fcb5f08d75aa5bd75665cf4b50f371dd134921"
+      "blob": "a60312c8ee3776ef6f214a702611abcc07065f90"
     },
     {
       "path": "scripts/release-burn-in-report.mjs",
