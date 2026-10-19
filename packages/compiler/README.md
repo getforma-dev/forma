@@ -12,7 +12,7 @@ The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transf
 ## Install
 
 These examples target the `3.0.0` final set and require its coordinated
-publication. Select that prerelease explicitly:
+publication. Select that version explicitly:
 
 ```bash
 npm install -D @getforma/compiler@3.0.0
@@ -163,7 +163,7 @@ imports are not package exports. The runtime surface is pinned by
 ## Peer Dependencies
 
 - `esbuild >=0.17.0` (optional — for esbuild SSR plugin)
-- `@getforma/core ^3.0.0` for the current minor; the coordinated `=3.0.0` package is the explicit prerelease alternative. Patch differences are compatible.
+- `@getforma/core ^3.0.0` for the current minor. Patch differences are compatible.
 
 ## Part of the Forma Stack
 

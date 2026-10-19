@@ -10,7 +10,7 @@ Production build pipeline for [FormaJS](https://github.com/getforma-dev/forma) a
 ## Install
 
 These examples target the `3.0.0` final set and require its coordinated
-publication. Select that prerelease explicitly:
+publication. Select that version explicitly:
 
 ```bash
 npm install -D @getforma/build@3.0.0
@@ -606,7 +606,7 @@ nowhere or loops is a `BUILD-814` (exclude it if it is not source), and a
 file reached by two paths is read once. It needs nothing beyond this package:
 an application that does not build with `@getforma/build` (a Rust-only one,
 or one that uses `@getforma/core` alone) runs it with
-`npx -p @getforma/build@3.0.0 forma-raw-lint …` after RC publication.
+`npx -p @getforma/build@3.0.0 forma-raw-lint …` after final publication.
 
 **Point it at source, not build output.** A bundle that includes core carries
 core's own raw entries: the registry key survives minification, and a
