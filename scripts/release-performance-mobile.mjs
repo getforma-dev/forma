@@ -9,7 +9,7 @@ import {percentile,validateMobileControls} from './release-performance-contract.
 
 
 // Serialized into each fresh page before any application script executes.
-export function activationInstrumentation({kind,longTask}) {
+export function activationInstrumentation({kind,longTask,longInput}) {
  const expected=kind==='islands-100'?100:2;
  const result=window.__formaPerformance={expected,active:0,responded:0,firstPaintMs:null,lastResponseMs:null,longTasks:[],errors:[],done:false};
  const observer=new PerformanceObserver(list=>{for(const entry of list.getEntries())result.longTasks.push({startTime:entry.startTime,duration:entry.duration});});observer.observe({type:'longtask',buffered:true});
@@ -17,6 +17,29 @@ export function activationInstrumentation({kind,longTask}) {
  addEventListener('unhandledrejection',event=>result.errors.push(String(event.reason)));
  addEventListener('forma:error',event=>result.errors.push(String(event.detail?.code??event.detail)));
  const completed=new Set();
+ // A physical input is a separate browser task. Ten synchronous .click() calls
+ // in one RAF instead manufacture one task containing ten priority adoptions.
+ const inputs=kind==='islands-100'?new MessageChannel():null;
+ const pendingInputs=[];
+ const stop=()=>{result.done=true;pendingInputs.length=0;inputs?.port1.close();inputs?.port2.close();};
+ const enqueue=callback=>{pendingInputs.push(callback);inputs.port2.postMessage(null);};
+ if(inputs)inputs.port1.onmessage=()=>{const next=pendingInputs.shift();if(!result.done)next?.();};
+ function update(){
+  result.responded=completed.size;result.active=completed.size;
+  if(result.responded===expected&&result.firstPaintMs!==null){stop();return true;}
+  return false;
+ }
+ function clickBatch(hosts,index=0){
+  if(result.done)return;
+  const host=hosts[index],button=host.querySelector('.tile-more'),output=host.querySelector('.tile-count');
+  if(button&&output){
+   const before=Number(output.textContent);button.click();
+   if(Number(output.textContent)===before+1){completed.add(host);result.lastResponseMs=performance.now();}
+  }
+  if(update())return;
+  if(index+1<hosts.length)enqueue(()=>clickBatch(hosts,index+1));
+  else requestAnimationFrame(tick);
+ }
  const loginInputs=[['oauth','#oauth-google','#oauth-chosen','Continuing with Google'],['auth','#lc-toggle','#auth-subtitle','Create your account']];
  let loginInput=0;
  function tick(){
@@ -26,13 +49,10 @@ export function activationInstrumentation({kind,longTask}) {
   result.firstPaintMs=performance.getEntriesByName('first-paint')[0]?.startTime??null;
   if(hosts.length===expected){
    if(kind==='islands-100'){
-    // Ten real events per animation frame avoid adding one artificial100-click
-    // long task. Each retained node must synchronously reflect its own update.
-    for(const host of hosts.filter(h=>!completed.has(h)).slice(0,10)){
-     const button=host.querySelector('.tile-more'),output=host.querySelector('.tile-count');
-     if(!button||!output)continue;const before=Number(output.textContent);button.click();
-     if(Number(output.textContent)===before+1){completed.add(host);result.lastResponseMs=performance.now();}
-    }
+    // Keep ten attempts per frame and the original absolute paint deadline,
+    // but issue each click in its own task, without waiting for readiness.
+    const batch=hosts.filter(h=>!completed.has(h)).slice(0,10);
+    if(batch.length){enqueue(()=>clickBatch(batch));return;}
    }else{
     // These two distinct user clicks arrive as separate input tasks. Do not combine their handlers
     // (including any priority adoption) into one artificial collector callback.
@@ -44,24 +64,24 @@ export function activationInstrumentation({kind,longTask}) {
      break;
     }
    }
-   result.responded=completed.size;result.active=completed.size;
-   if(result.responded===expected&&result.firstPaintMs!==null){result.done=true;return;}
+   if(update())return;
   }
   if(!result.done)requestAnimationFrame(tick);
  }
  if(longTask)addEventListener('DOMContentLoaded',()=>{const startTime=performance.now(),until=startTime+110;while(performance.now()<until){}result.injectedTask={startTime,endTime:performance.now()};},{once:true});
- setTimeout(()=>{result.done=true;},8000);
+ if(longInput)addEventListener('click',()=>{const startTime=performance.now(),until=startTime+110;while(performance.now()<until){}result.injectedInputTask={startTime,endTime:performance.now()};},{once:true,capture:true});
+ setTimeout(stop,8000);
  const start=()=>{if(!result.done)requestAnimationFrame(tick);};
  if(document.readyState==='loading')addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
-export async function measureActivation(url,kind,{disabled=false,longTask=false}={}){
+export async function measureActivation(url,kind,{disabled=false,longTask=false,longInput=false}={}){
  const {chromium}=await import('@playwright/test');
  const browser=await chromium.launch({headless:true});
  try{
   const screen=MOBILE_PROFILE.screenEmulation;
   const context=await browser.newContext({viewport:{width:screen.width,height:screen.height},deviceScaleFactor:screen.deviceScaleFactor,isMobile:true,userAgent:MOBILE_PROFILE.emulatedUserAgent,serviceWorkers:'block'});
   if(disabled)await context.route('**/*',route=>route.request().resourceType()==='script'?route.abort():route.continue());
-  await context.addInitScript(activationInstrumentation,{kind,longTask});
+  await context.addInitScript(activationInstrumentation,{kind,longTask,longInput});
   const page=await context.newPage(),cdp=await context.newCDPSession(page),throttle=MOBILE_PROFILE.throttling;
   await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});
   await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:throttle.requestLatencyMs,downloadThroughput:throttle.downloadThroughputKbps*1024/8,uploadThroughput:throttle.uploadThroughputKbps*1024/8,connectionType:'cellular4g'});
@@ -122,6 +142,8 @@ export async function mobileControls(url,onPhase=()=>{}){
  await onPhase({phase:'dead',observation:dead});
  const slow=await measureActivation(url,'islands-100',{longTask:true});
  await onPhase({phase:'slow',observation:slow});
- const observations={dead,slow};
+ const slowInput=await measureActivation(url,'islands-100',{longInput:true});
+ await onPhase({phase:'slow-input',observation:slowInput});
+ const observations={dead,slow,slowInput};
  return {controls:validateMobileControls(observations),observations};
 }

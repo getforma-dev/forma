@@ -27,7 +27,9 @@ prevent another valid island from activating.
 `activateIslands()` returns a `Promise<void>` for the requested **load** islands.
 Preflight and claim reservation remain synchronous. Load activation starts in a
 browser timer task unless first input promotes it sooner. Each timer drain starts
-a cooperative 12 ms slice and yields between whole islands. This is not a hard
+a cooperative 12 ms slice, takes at most four direct queue entries, and yields
+between whole islands. Input promotion can activate additional work synchronously.
+These limits are not a hard
 duration bound on synchronous preflight, an indivisible island, or application
 code. Await the result when subsequent code requires load activation to finish.
 The promise resolves after those islands activate, fail in isolation, or are

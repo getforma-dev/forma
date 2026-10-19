@@ -224,7 +224,7 @@ If you see this with FormaJS v1.0.9+, the issue is outside FormaJS — check for
 
 ## Version History
 
-The Unreleased row describes the prepared 3.0.0-rc.3 source; publication remains pending.
+The Unreleased row describes the prepared 3.0.0-rc.4 source; publication remains pending.
 It is not evidence that the package is available from a registry.
 
 The last row carries the same label as `CHANGELOG.md`'s `## [Unreleased]`

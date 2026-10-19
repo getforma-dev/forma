@@ -102,5 +102,15 @@ test('a single application task, whole-page TBT and the original paired negative
  assert.throws(()=>validateMobile(finalizeMobileAttribution(rows)),/over50ms/);
  const slow=campaign();for(const run of slow[0].runs){const lhr=JSON.parse(run.lighthouse.rawLhr);lhr.audits['total-blocking-time'].numericValue=200;run.lighthouse=traceMeasurement(lhr,decodeMobileTrace(run.lighthouse.trace));}slow[0].p95TbtMs=200;
  assert.throws(()=>finalizeMobileAttribution(slow),/TBT/);
- assert.deepEqual(validateMobileControls(controlObservations()),{deadActivationRefused:true,longTaskRefused:true});
+ assert.deepEqual(validateMobileControls(controlObservations()),{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true});
+});
+
+test('the slow input control must reject its own task, not lateness or an unrelated task',()=>{
+ for(const edit of [
+  controls=>delete controls.slowInput,
+  controls=>delete controls.slowInput.injectedInputTask,
+  controls=>controls.slowInput.longTasks=[],
+  controls=>controls.slowInput.longTasks=[{startTime:500,duration:200}],
+  controls=>{controls.slowInput.longTasks=[{startTime:160,duration:50}];controls.slowInput.lastResponseMs=1000;},
+ ]){const controls=controlObservations();edit(controls);assert.throws(()=>validateMobileControls(controls));}
 });

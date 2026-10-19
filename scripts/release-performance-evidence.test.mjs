@@ -1,6 +1,19 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {validateComparison,validateMobile,validatePerformanceRecord} from './release-performance-contract.mjs';
+
+test('only historical baseline validation can admit the original input-control protocol',()=>{
+ const historical=performanceRecord();delete historical.inputProtocol;
+ delete historical.controlObservations.slowInput;delete historical.controls.longInputRefused;
+ assert.throws(()=>validatePerformanceRecord(historical),/current input protocol required/);
+ validatePerformanceRecord(historical,{allowLegacyInputProtocol:true});
+ for(const protocol of ['separate-input-tasks-v1','batched-input-v0','unknown']){
+  const claimed={...historical,inputProtocol:protocol};
+  assert.throws(()=>validatePerformanceRecord(claimed,{allowLegacyInputProtocol:true}));
+ }
+ const current=performanceRecord();delete current.controlObservations.slowInput;
+ assert.throws(()=>validatePerformanceRecord(current,{allowLegacyInputProtocol:true}));
+});
 import {validateBaselineRecord} from './release-performance-baseline.mjs';
 import {comparison,mobile,performanceRecord} from './release-performance-test-fixtures.mjs';
 const context={tag:'v3.0.0-beta.1',currentTag:'v3.0.0-rc.1',publishedAt:'2026-10-16T00:00:00Z',before:'2026-10-17T00:00:00Z',digest:'a'.repeat(64)};

@@ -88,9 +88,12 @@ function queueLoad(value: ValidatedIsland, children: ReadonlyMap<Element, Valida
 
 function drainLoads(deadline = performance.now() + 12): void {
   loadTimer = undefined; loadBusy++;
+  // Bound direct work even when the clock stays flat. A single adoption stays
+  // atomic; input promotion still takes precedence over this background queue.
+  let remaining = 4;
   try {
     for (const work of pendingLoad.values()) {
-      if (performance.now() >= deadline) break;
+      if (!remaining-- || performance.now() >= deadline) break;
       work();
     }
   } finally {

@@ -1,24 +1,24 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "3a8ed877ae1f11a9d92fe5fbecca15768d4c9ae7",
-  "reviewedTree": "e590ddc7293eb7a4cca76b8dddfeb0205eadc6f2",
-  "inputManifestSha256": "a22658337ce7e12e47c4f3e373c53b8e091b5358406d402b3bac8d3a1257da03",
+  "reviewedCommit": "03651b9b9fc26d530d81cf2f2537862c82be3cd9",
+  "reviewedTree": "77eef7c5dcc97930e4f323b669f97d0f0fa7ab93",
+  "inputManifestSha256": "07481a79f1098507e6c5bea9e21a13c5ec6d42f7f4157741cdc21a3f2fa57aaa",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "45f5bb7304b2916d0fd48bc7977243158712945c0521e953fa48fb318dc2b951"
+    "sessionEvidenceSha256": "4a09c3bb8b494ce3697c04804268de57a123f82d2b889a1f4c7d04cae3744e80"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "8a56b2f761a760d39d4a37810aebbd71c6e7963303c83ba8d667783511320816"
+    "sessionEvidenceSha256": "fa1421fadd9da5f607166217761e683b244363dba99af12372e06a63dedc956e"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "2ea328a2a39c0cd86c575267f86da844b52720bdc2e1b37a137b0cb67f9b18b8"
+    "initializationEvidenceSha256": "3160e9a8354c4d18bb6298ec4489049114155c166428425a038402d12519fe15"
   },
-  "reviewedAt": "2026-10-19T20:56:50Z",
+  "reviewedAt": "2026-10-19T23:39:51.605Z",
   "accepted": true,
   "findings": [
     {
@@ -69,8 +69,36 @@
       "disposition": "resolved",
       "rationale": "The reviewed README now identifies actually published RC.2 and retains RC.3 publication-pending wording; earlier stale-copy findings remain historical.",
       "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
+    },
+    {
+      "id": "RC4-001",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "The19 raw Lighthouse tasks over50ms and whole-page target miss remain retained; actual same-navigation traces classify pre-application browser layout, all40 independent observers are zero, and no application/unresolved task exceeds the unchanged50ms gate.",
+      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
+    },
+    {
+      "id": "RC4-002",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "The source-bound prospective separate-input protocol has mandatory slow-input refusal and fresh complete qualification. OriginalRC3 and329d failed runs remain failed; no retroactive waiver or cap-alone causal claim.",
+      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
+    },
+    {
+      "id": "RC4-003",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "Completed252-mutation evidence retains actual329d producer with explicit unchanged-subject/corpus/test/dependency/workflow applicability to0365; the fresh0365 R17 distribution and P17 are independently reviewed.",
+      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
+    },
+    {
+      "id": "RC4-004",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "N6 partly-met coverage, whole-page/outer-clock and other target limits, L60 governance deferrals and L66-QUOTA zero-credit deferred-final policy remain explicit. No completed soak, main publication gate or final package qualification is invented.",
+      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "e7b6a70e40b9df1b07cea6fe1460c0a78b1bbb0b2f9efc1530f9c37601546e0e"
+  "acceptanceEvidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
 }

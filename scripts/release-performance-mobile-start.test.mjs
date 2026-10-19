@@ -6,13 +6,15 @@ import {validateActivation,validateMobileControls} from './release-performance-c
 
 // Execute the actual init-script function. No browser, elapsed timing or
 // invented performance result from this fixture is release evidence.
-function probe({readyState='loading',responsive=true,longTask=false,kind='islands-100',loginResponsive={oauth:true,auth:true},missing=[]}={}) {
- const events=new Map(),frames=[],timeouts=[];
+function probe({readyState='loading',responsive=true,longTask=false,longInput=false,kind='islands-100',loginResponsive={oauth:true,auth:true},missing=[]}={}) {
+ const events=new Map(),frames=[],timeouts=[],messages=[];
  let scans=0,clicks=0,clock=0,clockStep=0,observer;
+ let closedPorts=0;
+ function dispatch(name,event={}){for(const entry of [...(events.get(name)??[])]){if(entry.once)events.set(name,events.get(name).filter(item=>item!==entry));entry.callback(event);}}
  const observed=[],loginClicks=[];
  const hosts=Array.from({length:kind==='islands-100'?100:2},()=>{
   const output={textContent:'0'};
-  const button={click(){clicks++;if(responsive)output.textContent=String(Number(output.textContent)+1);}};
+  const button={click(){dispatch('click');clicks++;if(responsive)output.textContent=String(Number(output.textContent)+1);}};
   return {getAttribute:()=> 'pending',querySelector:selector=>selector==='.tile-more'?button:output};
  });
  const loginOutputs={oauth:{textContent:''},auth:{textContent:'Sign in to your account'}};
@@ -23,16 +25,19 @@ function probe({readyState='loading',responsive=true,longTask=false,kind='island
  };
  const context={window:{},document:{readyState,querySelectorAll(){scans++;return hosts;},querySelector(selector){return missing.includes(selector)?null:loginSelectors[selector]??null;}},
   PerformanceObserver:class{constructor(callback){observer=callback;}observe(options){observed.push(options);}},
+  MessageChannel:class{constructor(){let closed=false;this.port1={close(){closed=true;closedPorts++;},onmessage:null};this.port2={close(){closedPorts++;},postMessage:()=>messages.push(()=>{if(!closed)this.port1.onmessage?.();})};}},
   addEventListener(name,callback,options){const list=events.get(name)??[];list.push({callback,once:options?.once});events.set(name,list);},
   requestAnimationFrame(callback){frames.push(callback);},setTimeout(callback,delay){timeouts.push({callback,delay});},
   performance:{getEntriesByName:name=>name==='first-paint'?[{startTime:25}]:[],now(){const value=clock;clock+=clockStep;return value;}}};
- runInNewContext(`(${activationInstrumentation.toString()})({kind:${JSON.stringify(kind)},longTask:${longTask}})`,context);
+ runInNewContext(`(${activationInstrumentation.toString()})({kind:${JSON.stringify(kind)},longTask:${longTask},longInput:${longInput}})`,context);
  return {
   get result(){return structuredClone(context.window.__formaPerformance);},
-  get scans(){return scans;},get clicks(){return clicks;},frames,timeouts,observed,loginClicks,
+  get scans(){return scans;},get clicks(){return clicks;},get closedPorts(){return closedPorts;},frames,timeouts,messages,observed,loginClicks,
   setClock(value,step=0){clock=value;clockStep=step;},
-  dispatch(name,event={}){for(const entry of [...(events.get(name)??[])]){if(entry.once)events.set(name,events.get(name).filter(item=>item!==entry));entry.callback(event);}},
+  dispatch,
   frame(){assert(frames.length,'response frame was not scheduled');frames.shift()();},
+  input(){assert(messages.length,'input task was not scheduled');messages.shift()();},
+  batch(){while(messages.length){const before=clicks;messages.shift()();assert(clicks-before<=1,'one input task must issue at most one click');}},
   longTasks(entries){observer({getEntries:()=>entries});},
  };
 }
@@ -44,7 +49,7 @@ test('loading documents do not poll or click before their one DOMContentLoaded s
  assert.deepEqual(page.timeouts.map(timer=>timer.delay),[8000]);
  page.dispatch('DOMContentLoaded');assert.equal(page.frames.length,1);
  page.dispatch('DOMContentLoaded');assert.equal(page.frames.length,1);
- page.frame();assert.equal(page.scans,1);assert.equal(page.clicks,10);
+ page.frame();assert.equal(page.scans,1);assert.equal(page.clicks,0);page.batch();assert.equal(page.clicks,10);
  assert.equal(page.timeouts.length,1,'DOMContentLoaded must not reset the absolute timeout');
 });
 
@@ -104,7 +109,7 @@ test('interactive and complete documents start immediately without a later dupli
  for(const readyState of ['interactive','complete']){
   const page=probe({readyState});assert.equal(page.frames.length,1);
   page.dispatch('DOMContentLoaded');assert.equal(page.frames.length,1);
-  page.frame();assert.equal(page.clicks,10);
+  page.frame();assert.equal(page.clicks,0);page.batch();assert.equal(page.clicks,10);
  }
 });
 
@@ -136,11 +141,12 @@ test('early long tasks and errors remain observed before response polling starts
 
 test('response latency keeps the original first-paint and absolute response timestamps',()=>{
  const page=probe();page.setClock(100);page.dispatch('DOMContentLoaded');
- for(let frame=0;frame<10;frame++){page.setClock(120+frame*10);page.frame();}
+ for(let frame=0;frame<10;frame++){page.setClock(120+frame*10);page.frame();page.batch();}
  assert.equal(page.result.responded,100);assert.equal(page.result.active,100);assert.equal(page.clicks,100);
  assert.equal(page.result.firstPaintMs,25);assert.equal(page.result.lastResponseMs,210);
  assert.equal(page.result.lastResponseMs-page.result.firstPaintMs,185);
  assert.equal(page.result.done,true);assert.equal(page.frames.length,0);
+ assert.equal(page.closedPorts,2);
 });
 
 test('dead responses and the original DOMContentLoaded slow-task controls remain effective',()=>{
@@ -150,6 +156,30 @@ test('dead responses and the original DOMContentLoaded slow-task controls remain
  const interval=slow.result.injectedTask;assert(interval.endTime-interval.startTime>=110);
  assert.equal(slow.clicks,0,'the existing slow injection must precede the first response frame');
  slow.longTasks([{startTime:interval.startTime,duration:Math.floor(interval.endTime-interval.startTime)}]);
- for(let frame=0;frame<10;frame++)slow.frame();
- assert.deepEqual(validateMobileControls({dead:dead.result,slow:slow.result}),{deadActivationRefused:true,longTaskRefused:true});
+ for(let frame=0;frame<10;frame++){slow.frame();slow.batch();}
+ const slowInput=probe({longInput:true});slowInput.setClock(0,1);slowInput.dispatch('DOMContentLoaded');
+ slowInput.frame();assert.equal(slowInput.result.injectedInputTask,undefined);slowInput.input();
+ const inputInterval=slowInput.result.injectedInputTask;assert(inputInterval.endTime-inputInterval.startTime>=110);
+ slowInput.longTasks([{startTime:inputInterval.startTime,duration:Math.floor(inputInterval.endTime-inputInterval.startTime)}]);
+ slowInput.batch();for(let frame=1;frame<10;frame++){slowInput.frame();slowInput.batch();}
+ assert.deepEqual(validateMobileControls({dead:dead.result,slow:slow.result,slowInput:slowInput.result}),{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true});
+});
+
+test('each early island input is its own task and timeout cancels queued inputs',()=>{
+ const page=probe();page.dispatch('DOMContentLoaded');page.frame();
+ assert.equal(page.clicks,0);assert.equal(page.messages.length,1);
+ page.input();assert.equal(page.clicks,1);assert.equal(page.result.responded,1);
+ assert.equal(page.frames.length,0,'next frame waits for the bounded input batch');
+ page.timeouts[0].callback();page.batch();
+ assert.equal(page.clicks,1);assert.equal(page.closedPorts,2);assert.equal(page.frames.length,0);
+ assert.throws(()=>validateActivation(page.result,{islands:100}));
+});
+
+test('task-separated island inputs still fail late responses and retain all raw tasks',()=>{
+ const page=probe();page.dispatch('DOMContentLoaded');page.setClock(526);
+ page.longTasks([{startTime:40,duration:51}]);
+ for(let frame=0;frame<10;frame++){page.frame();page.batch();}
+ assert.equal(page.clicks,100);assert.deepEqual(page.result.longTasks,[{startTime:40,duration:51}]);
+ assert.throws(()=>validateActivation(page.result,{islands:100}),/later than500ms/);
+ const timely={...page.result,lastResponseMs:100};assert.throws(()=>validateActivation(timely,{islands:100}),/over50ms/);
 });
