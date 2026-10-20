@@ -7,71 +7,71 @@
   "activeNanoseconds": "0",
   "requiredActiveNanoseconds": "3600000000000",
   "burnInPassed": false,
-  "rcTag": "v3.0.0-rc.2",
-  "rcCommit": "ad94a1a7021f91cb11d618ebeca59c659ccf6109",
-  "ds12Sha256": "714d13681cbd236c28bd9e62f44e440bebe5bbe322e459a9ce24a3926d68ed7d",
-  "p17EvidenceSha256": "bdc3b7199178d450d82c718e1ee0f63261df60d6c975cb56a51566906e11c773",
-  "d14EvidenceSha256": "1371388fb3066c52e8a316966aa812bb09609d47c43b77dfd2bff025d6094cd6",
+  "rcTag": "v3.0.0-rc.4",
+  "rcCommit": "0e7debb890f6f40c072e878cf6ff1695eba2cfaa",
+  "ds12Sha256": "ff08917e10e6b79490e3c17644d4f7457d17f5087330060f9ca46da6acdbb563",
+  "p17EvidenceSha256": "f25c0f609b7dd1ea93b5e01c7af94b90f0f395d9c5eb5b9f6b22ef558c68d4cf",
+  "d14EvidenceSha256": "3ddf29d118e3f6e734e3e2535c36dbc10d49e61349943a7629feede5a07d89fd",
   "reviewedChanges": [
     {
       "path": "CHANGELOG.md",
-      "before": "cc6d24ab771d05e8ea8137ae34ebf5562a4b4c11",
-      "afterSha256": "f27f17b42252cf4fc12c6bcd67d660d66a62abf67cf02b7c0f5c9264b0641a96"
+      "before": "2bc92c1b9560ddb9e33981837c87bd275d449a37",
+      "afterSha256": "c252bc2ced2b0a23619afcab545aadc900379ac6975fda7e588824460f8a6a1f"
     },
     {
       "path": "Cargo.lock",
-      "before": "0549bcbdcec5a7344d17af507b85ed5a031b1153",
+      "before": "f0957f75a3aa52d283422912e75ada3f12457240",
       "afterSha256": "8059f3304ac2abb2ef20847ff0cfeda8b3c66ce2c2aaac5e73ab91152592075c"
     },
     {
       "path": "Cargo.toml",
-      "before": "6b0d0b34a9cd323a81cc6d0b845ffbaee27e7978",
+      "before": "15cfd51e19e5a310ad5690add69845db2a9ed7ea",
       "afterSha256": "5b853ef019ef81c428f0b2f0faaa0248cfb14104ce99dd9c30915dc3ff8d4252"
     },
     {
       "path": "README.md",
-      "before": "df014555f57085996fd18261dd7b083b443e8f98",
+      "before": "b862c62ba4708bcd7d1c69c5e922e9f25d947ebc",
       "afterSha256": "7f22a77f176d424db07541ba96d8c733306edc1fdd85c7e5391fa7a366841526"
     },
     {
       "path": "crates/forma-ir-derive/CHANGELOG.md",
-      "before": "20c5988ab0c16c2b1055d62d4aedb934ad279812",
-      "afterSha256": "9bd170cf94337f7758fa9255b17387fa5c05537fec4abbb966daf2e03f9a6346"
+      "before": "750abcf2c8b4a2a9da73ed39dcd67f1c03d52dd3",
+      "afterSha256": "b2212bbac2afd6522fc75ab4888b1cc25a9e4c1114d81c978d9a7ba4c539156e"
     },
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
-      "before": "ccd555f3e606bccb2921df84183b9af2590ed3fa",
+      "before": "5588d804318b471be9586f50b3a68b0b5e9a384a",
       "afterSha256": "7023c21a02660b58e5f12a85bda301fcacaa3173e6fc72fed35cc2a81e011c3c"
     },
     {
       "path": "crates/forma-ir/CHANGELOG.md",
-      "before": "bb943f62d0adcc802aa7e44990baac9ecf0f357e",
-      "afterSha256": "3d6f1e1ab88e60aa1d9a8af53c5a4c751dc3d62b5b38687cc0af660f47b3edea"
+      "before": "8612c13fd2e84fa682e0983c3a1f9e25b5db41a5",
+      "afterSha256": "889fe40881ea5b88967986593cb7ce0f8678efadb997665545094a0207efda66"
     },
     {
       "path": "crates/forma-ir/Cargo.toml",
-      "before": "eadcd39787d1ad66de5e603ce40559b3914c5d8b",
+      "before": "023cf84b6e50caa3bda5ff7a3360c41d4a2c5af5",
       "afterSha256": "403feb9bae671188d0c33e484765a510f2ba225d5c2e11d9a11f73b3e97cdb3d"
     },
     {
       "path": "crates/forma-ir/README.md",
-      "before": "326298de366efd239c43fa6ec377f29a5d03fa60",
+      "before": "49f6ab4c28d403e5a59df2bd82c477261ddec9db",
       "afterSha256": "10617be8250b67e8891152cffe50b5d815448ac20f8db42118d1a4158faf9611"
     },
     {
       "path": "crates/forma-server/CHANGELOG.md",
-      "before": "ef10eaf6b07ec232c897ebad44b69c151c25ffca",
-      "afterSha256": "067a79ad2f9747d89158208d064767bd7490017ce936977568abca5cf6a5ddde"
+      "before": "d4faaf8e845fb0e262576405b503c388c1d23d69",
+      "afterSha256": "fc743e48ef2a99dc84f359b1dd0ff014c2f7c81a9361d21c7d7db429a3877c0c"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
-      "before": "347ab69fd9f5295fa97e231360bd1427c47e879b",
+      "before": "170f5492e9f217383e99267b7867006cd79d1424",
       "afterSha256": "e0c5a305ea0fd6e4228b347001a7f0f6bf74bc8cb1eba45a665e22590c7cf0de"
     },
     {
       "path": "crates/forma-server/README.md",
-      "before": "7be5047416ad9d45d5d3ee7e0ad188a365a28592",
-      "afterSha256": "dfcddced5ef9f9a9721f0e8e4d82e23883add0da2aee2ed0a0308152cfa31885"
+      "before": "df64235c59a30ca01ac425cf63431cca7953ca4e",
+      "afterSha256": "c72755d1cb1b646749a2d6bf4b91253cfdd98ce3c6f64b48c6f168333a7bdba9"
     },
     {
       "path": "docs/RELEASING.md",
@@ -80,127 +80,127 @@
     },
     {
       "path": "e2e/Cargo.lock",
-      "before": "8a46da8e87725f709b3a5a1c9e9aa6edf045c183",
+      "before": "6fdfcb63c311eb9fe59009d8e4991852001360ae",
       "afterSha256": "1290702cd56fd80dd9999792fbf29e504a182d88df387da604490be6e019edf9"
     },
     {
       "path": "fuzz/Cargo.lock",
-      "before": "b36df8c780c85b390cbd123e109e9ea04553b90c",
+      "before": "bfa8443642d6f54e49494e17c48dda01540964e5",
       "afterSha256": "247cabee466763e4d0e9ac2902f5acd614f6a3766e277e37d73085732f0b6fff"
     },
     {
       "path": "package-lock.json",
-      "before": "4ec94f590a6a6fecc5c308a7c65aecfaf0d7f97a",
+      "before": "9ea0c0c3cef82a1f439dfb2081e2939b48579854",
       "afterSha256": "409b35e69ac09b3a5cec011129673aad16583a735019a46db620d2c9429c10d9"
     },
     {
       "path": "packages/build/CHANGELOG.md",
-      "before": "f43add43819b1137758e939e3af4cd937fd984d1",
-      "afterSha256": "7baf5987dc4c9c88868410e93ea81591bf6a1ea297fdd04ba93062bcca9b30b3"
+      "before": "0da24c0c53f208cd02d02a794b9cf7609c0b8a72",
+      "afterSha256": "8cfb955a164d2fa802aac9675e3ceeaecb2926a8988475657983a54183dd3faa"
     },
     {
       "path": "packages/build/README.md",
-      "before": "32503b2a69392017146b214f77a6fa1a3ea7ebdf",
+      "before": "348a91ece686f8a8788681f09bf5abbeac8f053f",
       "afterSha256": "c2542eaf05b7fa997ee92a81fef1f0379a6b5ddcd07acd77a1e1f76a559f69b8"
     },
     {
       "path": "packages/build/package.json",
-      "before": "f30c7de1f996331f163d2e6b1176b8dbbbb19d21",
+      "before": "2f2c6773159a5b115170a7c147b342408a32b7d9",
       "afterSha256": "1a746e6d278004c9fb20fb81027312eac17930cdc50ddc53babc284270aaef11"
     },
     {
       "path": "packages/compiler/CHANGELOG.md",
-      "before": "91dab682bf0a5a437eb63dfd7362fede05cebd52",
-      "afterSha256": "f1f25a464646350d2a0a94daad704b14949e74215cb54fef3d82f807a1e37e75"
+      "before": "ef67ab9dc2c9608a5687db4e8c24238c4717b687",
+      "afterSha256": "3425ee8caeb11a5a12f9b04ade34f2d191d830c6f661bfc2c8718d876fb5a224"
     },
     {
       "path": "packages/compiler/README.md",
-      "before": "32b23aa791d455cb88bdb9efdc2054af13a71cb1",
+      "before": "3460f76141cc854cd6fe5e686f7972a51298fe8b",
       "afterSha256": "580f5a9b74dea4b581388fc9df30e485bbd52f406e26169e8ad8e1ab701a7d97"
     },
     {
       "path": "packages/compiler/package.json",
-      "before": "9b77e7de288919d49e56a9f0442d1e85bef01a40",
+      "before": "3109e58b4c9760aa01e9c09aa4364b009ff211e8",
       "afterSha256": "51e22775cdee0db1dfde69b06a522c2e85f15530b62fc25370ee245791451d4b"
     },
     {
       "path": "packages/core/CHANGELOG.md",
-      "before": "0398ca5cb25d12cde2fcd32028fb9d7efbe82fe6",
-      "afterSha256": "13d276a6f29bc6ac2b82a9de3efa33eb198bb9694f9f722c101c052270515c1e"
+      "before": "da674fa2badc648986d46377719756cc20ca054c",
+      "afterSha256": "85f0bd855cdc7d5c5a5d02a5c13d026327bba16e2d5e82ecfa9465af3d1cd6c9"
     },
     {
       "path": "packages/core/CSP.md",
-      "before": "09775179a6d8e7770c930ec9997db7faca208480",
+      "before": "e0fc67f894299afb8a2a19cdaeb6183c24348130",
       "afterSha256": "8141d7086198b13b2c22edff83eceb10d38710daad3d024c010eb563caf705a4"
     },
     {
       "path": "packages/core/README.md",
-      "before": "74859089f348121825562b4234231240aa4e0e60",
+      "before": "48ff5eb4716bfd87f766e78a3faed714c670ad8f",
       "afterSha256": "52c3fd7d03770b32346420f559dcf477cf294520d4e796aeb6b36cae56776c68"
     },
     {
       "path": "packages/core/package.json",
-      "before": "2e617c275f811f26186ead3a58714dcfe87f93ab",
+      "before": "5df7d0670f04f333bc8050ca997e61a5d81cb694",
       "afterSha256": "47f30fa594c7b99983d91ac5a2c0f58c87588a864b218ac474e026564ffe508e"
     },
     {
       "path": "packages/create-app/CHANGELOG.md",
-      "before": "849fa99882ca45276ca08b67963a3ef517f9a00a",
-      "afterSha256": "4f24e4708b973e7fa1df9b61ff1a0fd1bd86a91d7dabbd4eb635c84ae4b41e87"
+      "before": "1e4c17ea77fb99a327b1f94593eb41fb5fb750e4",
+      "afterSha256": "e0da4ad6c3a8a4912cd7b3acde179354809f52501fa2262551611f17a95efd50"
     },
     {
       "path": "packages/create-app/README.md",
-      "before": "8e2f20db6f1fd49ce4e275aaeeef5c6e84d3c71b",
+      "before": "ac819d59766ac80ce4e76928efcf908ddfc49eab",
       "afterSha256": "45eb01ce54371bfd69b0a85398d5e55c9caffa468d982cea7f34f4564a7a942f"
     },
     {
       "path": "packages/create-app/package.json",
-      "before": "fe9371bd939ff01f2c47b4e371935c3fceacb325",
+      "before": "11cdabf6842dac3c16940cb823dbb484a6f10b19",
       "afterSha256": "399dee8cfed7dfdea9c58cc9bdb075184cea54ceb456d678496bae1122db82a7"
     },
     {
       "path": "packages/create-app/template-lock-seeds.json",
-      "before": "84fa8f3f5d2701863038b6c72741c03da2d59fb9",
+      "before": "74bf452277f9f96af5c81ec2ac52bf2cc855b02a",
       "afterSha256": "addace2fd832ce48b8beffb6eb386b3550fce61d74a57562dcd3a8b8f768b08e"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
-      "before": "445980af5a33892454e5561d29231ae51cdfe077",
+      "before": "7d35ec7ed9a0786b655dcfcc4454c827b267fe42",
       "afterSha256": "adabc4d62818c49e89841004545ec859a6ea81eb8e2d9812fce7b3d87987e33d"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
-      "before": "934564840f33a8953488a8bc26628de0b58947e1",
+      "before": "2d8125d7a6c832dfa05ba2091f68160ca95f752f",
       "afterSha256": "9d00e8f18951340274b727dbbb05f1e41602f4f3b62b8e0dae20dfaa3873cf24"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
-      "before": "776bd3a5ad3ad556b71ee4cf64f50a9ae51c6a34",
+      "before": "fdb0866d3de5c89d1ebfc9a3e33e263138ed33cd",
       "afterSha256": "7b362495cce9ee92ebd56546906d80a1956cc2a64014e6395e218003e13e4996"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
-      "before": "e690d4d534ed928dc34ce7ec1159d3d87ddd0346",
+      "before": "d03c0bf4d2bd65be339873175ecd7b00c4241887",
       "afterSha256": "212fd542150fec280f142dcb56c68f901cb922ed534a727b97b3e48fa466f571"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
-      "before": "53f82a4d265a273709369850fbe28ab073d3d17a",
+      "before": "3d065745700f2d6a7761e932dbf544fe0fb1f199",
       "afterSha256": "1873d4e638b49f6aa418a68b04a98fa61d3703f7eb2bdf29551747c3b152544a"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
-      "before": "34969b134b3c55d3f2ec96018256c66d52f380e6",
+      "before": "909cbbe2ea6618932470f0b28d86f0525bed0cab",
       "afterSha256": "3b3fc0624cb7a291db8284f2a4537cf4ba54435d581c812493b4dd1a9826574e"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
-      "before": "97e5737b9a5d9ee9d12569cfe710fac96ddb3a5a",
+      "before": "3110c3d79d66d7965019ba06c1d61ce138dc0342",
       "afterSha256": "44b2809bea6983190a16a90b754e36799120cfc78673a59f9e9acd8aa96c04d4"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
-      "before": "f8740768df0c2f0d2976d52876a1c8f0fdede7a1",
+      "before": "c433bbeed52cf2772401e63af574a75d3004f6c5",
       "afterSha256": "a0bcb681de06e41fb3457c93996392a9fc77ff69178b369574de72eebced8ebc"
     },
     {
@@ -214,7 +214,7 @@
     "sha256": "c6c3961b108e70ab1658bae2d4effe73cf81f3ee36aec895b2fa0d06b3e53d7f"
   },
   "reviewEvidence": {
-    "content": "# Independent final closing review from published RC.2\n\n**Approve the bounded final source delta and proposed reference at commit `9791a7717c90ea2c202a866080275c2c06898cd6`, tree `4b9e4cde4ea7d5cfb26c6f16afdc305c00951867`. No blocking finding remains in this reviewed scope.** The source is clean. This approves composing the actual review text into the reference; a short binding recheck of the resulting reference-only commit, required final PR CI, exact merged-main CI, and the trusted final release workflow remain required. It does not certify final publication or completed soak.\n\nReviewer: independent Codex agent task `/root/final_rc2_review`, session `01a155d1-b205-7032-99f5-ea3ad1addacc`. I did not author or modify the reviewed implementation or proposal. I am a newly instantiated reviewer after the app restart, not the prior reviewer's continuing session; I inspected the retained prior genuine review as evidence. The precise backend model identifier is not exposed to this session, so none is invented. Review completed at 2026-10-19T20:22:15+00:00.\n\nThe immutable-by-policy RC tag `v3.0.0-rc.2` locally resolves to `ad94a1a7021f91cb11d618ebeca59c659ccf6109`, tree `a05ac6a927641af869563f433a7afbd81297148b`; it is an ancestor of the reviewed final commit. The entire RC-to-final change consists of 39 existing regular files with unchanged modes: 21 canonical version/lock/template-seed files, 17 allowed documentation files, and `scripts/release-contracts.json`. I reconstructed the version inputs from actual RC Git objects outside the checkout and called the existing read-only `versionFiles(..., '3.0.0')`: every output matches the final bytes. I independently reconstructed the full sorted before-blob/after-SHA256 vector and compared it with `FINAL-RC2-REFERENCE-PROPOSAL.json`; all 39 entries match. The structural path/mode restrictions in `finalDiffBinding` are satisfied. `git diff --check` passes. This is source/reference validation, not a test campaign.\n\nThe 38 version/documentation files are unchanged from the genuinely reviewed preparation `3de2d164c579041ce067c9aca1724cb11feceaac`, tree `bf31466ae74f1ba8a38a4723517104c8281669ce`, whose review and exact recheck I inspected. The new difference is only the gate record. Documentation retains prepared/publication-pending final language, coordinated installation versions, original changelog history and the separate outstanding post-release soak. Product implementations, template implementations, security subjects/oracles, performance collectors, thresholds, tests, workflows and release helpers have no RC-to-final delta. The original full-252 campaign's recorded applicability therefore remains applicable through this bounded preparation; this review neither repeats nor rebrands that campaign or the original twenty-command timing distribution.\n\nI read the exact `release-burn-in-final.mjs`, `release-soak-deferral.mjs` and `docs/release/L-66-QUOTA.md` contracts. The gate change is exactly the permitted final completion: FORMA-144 slice 3 and FORMA-191 become done; FORMA-146 stays done; only FORMA-145 soak becomes deferred under the exact version-specific L-66-QUOTA policy. Canonical template preparation and the actual successful RC.2 packed measurements support these dispositions. They do not waive the final tag's own required packed qualification. The proposal's decision evidence matches the committed decision document byte for byte. Its status is deferred, activeNanoseconds is `0`, requiredActiveNanoseconds is `3600000000000`, and burnInPassed is false. Review evidence was honestly absent before this review. Neither completed nor deferred reference is yet committed, so I did not claim an actual successful `finalDiffBinding` invocation at this incomplete composition stage; that exact committed-reference check belongs to the immediate binding recheck.\n\nI independently checked retained original publication evidence in `FORMA-rc1-publication/run-39313188229`: authenticated output, DS12, release metadata, P17 provenance and raw files, four D14 assets and all seven registry archives. All seven archive digests match the authenticated set and DS12. The retained successful trusted release run is `39313188229`, attempt 1, for the exact RC.2 source. Original P17 equals DS12's nested measurements. The 214-entry evidence manifest, including all 211 files and their sizes/digests, matches the published P17 manifest binding. The three proposed bindings match actual retained bytes:\n\n- DS12: `714d13681cbd236c28bd9e62f44e440bebe5bbe322e459a9ce24a3926d68ed7d`.\n- P17 manifest: `bdc3b7199178d450d82c718e1ee0f63261df60d6c975cb56a51566906e11c773`.\n- D14 RC binding: `1371388fb3066c52e8a316966aa812bb09609d47c43b77dfd2bff025d6094cd6`.\n\nI reapplied the unchanged pure `bindAuditToRc` and `validateAuditEvidence` functions to original bytes. They reproduce the genuine accepted audit at `ebdefab8042a449b3283c2ecc41846ac5703434c`, tree `0b7ade04d4ecef766ad8bf32b1edec614d757722`, and its four-file binding into the published RC.2 tree shared with `b2d260ab370d86a61e38dbee50432bf0b60bc12d`. All original resolved finding histories and scope limits remain. This is not a fabricated fresh whole-release acceptance. Retained GitHub metadata reports `immutable: false`; this review claims the unchanged tag/source and authenticated bytes, not enabled GitHub Release immutable mode.\n\nActual RC.2 P17 passes 61/61 checks in 1236.013 seconds. I inspected the retained raw mobile/decoder data and applied the unchanged pure performance validator successfully, without running any workloads. Both original 20-run mobile routes remain complete; all forty independent probes have no long tasks or errors, complete their expected activations and responses, and satisfy the 500 ms response bound. The single raw 50.582 ms task in islands-100 run 17 is retained as positively attributed pre-application browser layout; its whole-page target miss remains true. Decoder p95 is 10.4 ms for ASCII and 25.6 ms for the array shape, with original forty-sample summaries retained. Outer release elapsed remains 2034.628 seconds, above the distinct 1800-second target. No raw task, tail, historical failure, or outer-target miss is erased.\n\nFinal publication may precede the unchanged same-RC soak only under this recorded L-66-QUOTA disposition and the existing authenticated final-reference route. After actual final publication, run at least 3600 ACTIVE zero-fault seconds of the required packed RC.2 stress, fuzz and skew/upgrade workloads with complete hosted evidence and cleanup; verify the outcome through the supported completion path and retain a separate later completion receipt. The final release's original DS12 must remain deferred with zero credited work. Waiting or scheduling earns no credit. Final PR/exact-main CI and trusted publication remain operational requirements, and work must halt before external application migrations.\n\nNo source edits, downloads, remote mutations, test reruns, measurement campaigns, subagents or application-repository actions were performed by this reviewer. Hash comparisons above establish release-reference integrity, not a substitute for substantive review or quality proof.\n",
-    "sha256": "6e13e8d7c6f9240e69cced86d5b2d6af61c1982b5a8b5738698b0fc3bc68255a"
+    "content": "PENDING independent final review of the actual published RC.4 reference and bounded final delta. This proposal is not release-approved; no final publication or soak completion is claimed.\n",
+    "sha256": "51c50ab1bb0ca92c7b050045eb4269f2e71347be8a40a27b5b423809cb828ff9"
   }
 }
