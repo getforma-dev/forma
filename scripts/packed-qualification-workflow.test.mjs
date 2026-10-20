@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { ROOT, CRATES, NPM, digest, assertReleaseSet, releaseMilestone } from './release-set.mjs';
 import { performanceTarget } from './release-performance.mjs';
 import { P17_BUDGET_SECONDS, p17Time } from './release-measurements.mjs';
+import { SOAK_GATE, SOAK_POLICY } from './release-soak-deferral.mjs';
 
 const actual = JSON.parse(execFileSync('ruby', ['-rjson', '-ryaml', '-e',
   'v=YAML.load(STDIN.read); v["on"]=v.delete(true) if v.key?(true); puts JSON.generate(v)'],
@@ -93,12 +94,16 @@ test('publishing, source substitution, skipped verification, weakened time bound
 // fixtures. These controls do not pack, build, install, contact registries or run P17.
 const auth = step(actual, 'verify', authName).run.match(/^node --input-type=module <<'NODE'\n([\s\S]*)\nNODE\n?$/)?.[1];
 assert(auth, 'expected one inline Node authentication command');
-function authenticate(version, mutate = () => {}) {
+function authenticate(version, mutate = () => {}, source = JSON.parse(readFileSync(join(ROOT, 'scripts/release-contracts.json')))) {
   const temporary = mkdtempSync(join(tmpdir(), 'forma-qualification-input-'));
   try {
     const dir = join(temporary, 'candidate artifacts'); mkdirSync(dir);
-    const contracts = JSON.parse(readFileSync(join(ROOT, 'scripts/release-contracts.json')));
-    for (const gate of Object.values(contracts.milestones.rc.gates)) gate.status = 'pending';
+    const contracts = structuredClone(source);
+    // These are synthetic beta/RC rehearsals, even when the source is final.
+    for (const name of ['rc', 'final']) for (const gate of Object.values(contracts.milestones[name].gates)) {
+      gate.status = 'pending';
+      delete gate.deferral;
+    }
     const set = { schema: 1, dryRun: true, commit: 'a'.repeat(40), run: '42', contracts,
       packages: [...CRATES.map(name => ({ name, path: `crates/${name}`, registry: 'crates' })),
         ...NPM.map(name => ({ name: `@getforma/${name}`, path: `packages/${name}`, registry: 'npm' }))]
@@ -121,6 +126,24 @@ test('the real DS11 check permits beta and pending RC rehearsals without a publi
     assert.deepEqual(performanceTarget(set, env), { tag: `v${version}`, rehearsal: true });
     if (version.includes('-rc')) assert.equal(releaseMilestone(set.contracts, version).ready, false);
   }
+});
+test('rehearsal fixtures seeded from final contracts retain pending gates without inheriting the final-only deferral', () => {
+  const source = JSON.parse(readFileSync(join(ROOT, 'scripts/release-contracts.json')));
+  for (const milestone of Object.values(source.milestones)) for (const gate of Object.values(milestone.gates)) gate.status = 'done';
+  source.milestones.final.gates[SOAK_GATE] = { ...source.milestones.final.gates[SOAK_GATE], status: 'deferred', deferral: { ...SOAK_POLICY } };
+  const original = structuredClone(source);
+  assert.equal(releaseMilestone(source, '3.0.0').ready, true);
+  assert.throws(() => releaseMilestone(source, '3.0.0-rc.1'), /only authorized for final/);
+  for (const version of ['3.0.0-beta.3', '3.0.0-rc.1']) {
+    const { result, set } = authenticate(version, undefined, source);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(releaseMilestone(set.contracts, '3.0.0-rc.1').ready, false);
+    for (const name of ['rc', 'final']) for (const gate of Object.values(set.contracts.milestones[name].gates)) {
+      assert.equal(gate.status, 'pending');
+      assert.equal(Object.hasOwn(gate, 'deferral'), false);
+    }
+  }
+  assert.deepEqual(source, original, 'seeding a rehearsal must not modify the final source contracts');
 });
 test('the real DS11 check refuses wrong source/run/target, modified archives/lock, missing package and live-record substitution', () => {
   for (const mutate of [

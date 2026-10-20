@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0-rc.5] - Prepared; publication pending
+
+- Correct the synthetic packed-qualification prerelease fixture so it cannot inherit a final-only soak deferral. The real guard, runtime, qualification harness and thresholds are unchanged; the regression rejects the original inconsistent fixture and preserves rejection of unnormalized deferrals.
+- Published RC.4 remains immutable and qualified. This successor carries the test repair through the existing exact-source audit and final-diff rules; final publication and the actual post-release active soak remain outstanding.
+- Coordinate all seven package versions, dependency locks and scaffold source seeds. Require independent review, exact-source CI, packed qualification and trusted publication.
+
 ## [3.0.0-rc.4] - Prepared; publication pending
 
 - Bound each background island-load callback to four direct queue entries as well as its existing 12 ms deadline. Preserve whole-island adoption, synchronous input promotion, cancellation and readiness; neither bound can preempt an expensive island or additional promoted work.

@@ -1,104 +1,125 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "03651b9b9fc26d530d81cf2f2537862c82be3cd9",
-  "reviewedTree": "77eef7c5dcc97930e4f323b669f97d0f0fa7ab93",
-  "inputManifestSha256": "07481a79f1098507e6c5bea9e21a13c5ec6d42f7f4157741cdc21a3f2fa57aaa",
+  "reviewedCommit": "d549642104d8d56ecc05737e697080d7b803f36b",
+  "reviewedTree": "4e9f9b2a60d67d3db1ec9694dbce181747d38ff3",
+  "inputManifestSha256": "472272b6981d8f0c237b630b37216bd90517e68276a15af16a6d5e473afff3be",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "4a09c3bb8b494ce3697c04804268de57a123f82d2b889a1f4c7d04cae3744e80"
+    "sessionEvidenceSha256": "faf15dd645b113f1539757e6c1ec2c6618725db8acb581b0c5ec4e5009bac344"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "fa1421fadd9da5f607166217761e683b244363dba99af12372e06a63dedc956e"
+    "sessionEvidenceSha256": "61018c16f39c9ca2f1841ee3ab22342e90b51c28083f9ca8bf55c7915d0128fd"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "3160e9a8354c4d18bb6298ec4489049114155c166428425a038402d12519fe15"
+    "initializationEvidenceSha256": "5d59226e737afbf643d125da01e526a4036dae99ba98937945ce2d62bdb3d058"
   },
-  "reviewedAt": "2026-10-19T23:39:51.605Z",
+  "reviewedAt": "2026-10-20T01:38:40.518Z",
   "accepted": true,
   "findings": [
     {
       "id": "D14-001",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The retained correction separates the P17 hard limit, outer release wall-clock target and human maintainer effort; the original outer-clock miss remains a miss.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The retained correction separates the P17 hard limit, outer release wall-clock target and human maintainer effort; the original outer-clock miss remains a miss.",
       "evidenceSha256": "7c33f5a0baacc20428d82e3f9b080f19397a2ecbad0d3d639fc1927d64f4d631"
     },
     {
       "id": "D14-002",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The supported post-final verifier authenticates the immutable deferred final record, same published RC and later hosted workload, retaining zero credit in the original final record.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The supported post-final verifier authenticates the immutable deferred final record, same published RC and later hosted workload, retaining zero credit in the original final record.",
       "evidenceSha256": "1a3b38cb38dbda6a17538180bea7f37ad4f4de9786aaf369a3d083365319c3ae"
     },
     {
       "id": "D14-003",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The actual Actions archive HTTP 415 was reproduced and fixed with API media negotiation while preserving binary release-asset handling and all provenance checks. Corrected authentication verified the immutable RC.1 artifacts; corrected RC.2 remains required for the hosted soak runner.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The actual Actions archive HTTP 415 was reproduced and fixed with API media negotiation while preserving binary release-asset handling and all provenance checks. Corrected authentication verified the immutable RC.1 artifacts; corrected RC.2 remains required for the hosted soak runner.",
       "evidenceSha256": "4c25e8308993a3511e8defd8f78446cb452a307d19a40bb839647ddae46478c6"
     },
     {
       "id": "D14-004",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The RC.2 README now correctly identifies RC.1 as the published prerelease, while retaining the pending publication status of RC.2.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The RC.2 README now correctly identifies RC.1 as the published prerelease, while retaining the pending publication status of RC.2.",
       "evidenceSha256": "2d7ecca4b78ae8c56788bc65797322af2458ba2b0daa9bd4e810a12fe24abe02"
     },
     {
       "id": "RC3-001",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Synthetic done/pending milestone fixtures now clone source and remove only incompatible deferral metadata. Ordinary/deferred controls pass while production rejection remains unchanged; original final CI failure remains retained.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. Synthetic done/pending milestone fixtures now clone source and remove only incompatible deferral metadata. Ordinary/deferred controls pass while production rejection remains unchanged; original final CI failure remains retained.",
       "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
     },
     {
       "id": "RC3-002",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The alpha notes fixture now explicitly seeds alpha done and later milestones pending, including ordinary/deferred inputs. Existing assertions remain; the added finite R17 case is disclosed, not claimed to have an unchanged twenty-run timing distribution.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The alpha notes fixture now explicitly seeds alpha done and later milestones pending, including ordinary/deferred inputs. Existing assertions remain; the added finite R17 case is disclosed, not claimed to have an unchanged twenty-run timing distribution.",
       "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
     },
     {
       "id": "RC3-003",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The reviewed README now identifies actually published RC.2 and retains RC.3 publication-pending wording; earlier stale-copy findings remain historical.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The reviewed README now identifies actually published RC.2 and retains RC.3 publication-pending wording; earlier stale-copy findings remain historical.",
       "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
     },
     {
       "id": "RC4-001",
       "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "The19 raw Lighthouse tasks over50ms and whole-page target miss remain retained; actual same-navigation traces classify pre-application browser layout, all40 independent observers are zero, and no application/unresolved task exceeds the unchanged50ms gate.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The19 raw Lighthouse tasks over50ms and whole-page target miss remain retained; actual same-navigation traces classify pre-application browser layout, all40 independent observers are zero, and no application/unresolved task exceeds the unchanged50ms gate.",
       "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
     },
     {
       "id": "RC4-002",
       "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "The source-bound prospective separate-input protocol has mandatory slow-input refusal and fresh complete qualification. OriginalRC3 and329d failed runs remain failed; no retroactive waiver or cap-alone causal claim.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. The source-bound prospective separate-input protocol has mandatory slow-input refusal and fresh complete qualification. OriginalRC3 and329d failed runs remain failed; no retroactive waiver or cap-alone causal claim.",
       "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
     },
     {
       "id": "RC4-003",
       "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "Completed252-mutation evidence retains actual329d producer with explicit unchanged-subject/corpus/test/dependency/workflow applicability to0365; the fresh0365 R17 distribution and P17 are independently reviewed.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. Completed252-mutation evidence retains actual329d producer with explicit unchanged-subject/corpus/test/dependency/workflow applicability to0365; the fresh0365 R17 distribution and P17 are independently reviewed.",
       "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
     },
     {
       "id": "RC4-004",
       "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "N6 partly-met coverage, whole-page/outer-clock and other target limits, L60 governance deferrals and L66-QUOTA zero-credit deferred-final policy remain explicit. No completed soak, main publication gate or final package qualification is invented.",
+      "rationale": "Historical retained finding; original producer and date remain in its evidence. N6 partly-met coverage, whole-page/outer-clock and other target limits, L60 governance deferrals and L66-QUOTA zero-credit deferred-final policy remain explicit. No completed soak, main publication gate or final package qualification is invented.",
       "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
+    },
+    {
+      "id": "RC5-001",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "Exact d549 includes seven corrected maintained READMEs and actual RC.4 publication wording; all reviewed source is covered by the new input manifest.",
+      "evidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
+    },
+    {
+      "id": "RC5-002",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The synthetic rehearsal fixture now seeds its own milestone shape and preserves correct production refusal; fresh exact-source CI passes, with the original final failure retained.",
+      "evidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
+    },
+    {
+      "id": "RC5-003",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "Fresh original P17, CI and SR14 evidence passes; actual5c9 and synthetic eaa producers remain explicit, with complete archive-member and source applicability to exact d549. Historical mutation/R17 producer identities and all remaining operational/soak limits remain preserved.",
+      "evidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
+  "acceptanceEvidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
 }
