@@ -40,7 +40,7 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 These examples target the prepared `3.0.0` final package set. Final publication
 is pending; the following install command becomes available only after the
-coordinated release succeeds. Release records identify each published set.
+coordinated release succeeds. The published prerelease is RC.4; its GitHub Release record identifies the verified package set.
 
 ```bash
 npm install @getforma/core@3.0.0

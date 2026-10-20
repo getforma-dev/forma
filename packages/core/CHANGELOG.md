@@ -1,15 +1,21 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
 ## [Unreleased]
 
 Changes after the prepared 3.0.0 set will be recorded here.
 
 ## [3.0.0] - Prepared; publication pending
 
-- Prepare coordinated final versions, dependency locks and template source seeds from the independently audited RC.4 source and evidence at 46d081f7. Preserve its product, tests and qualification harness unchanged.
-- Final publication requires actual RC.4 merge ancestry and authenticated publication, an independently reviewed final delta, exact-source CI and trusted publishing. The post-release-soak reference binds the final delta to the authenticated published RC.4 evidence; independent final review and exact-source CI remain required before publication. The L-66-QUOTA actual post-release soak remains outstanding.
+- Prepare coordinated final versions, dependency locks and template source seeds from RC.5 candidate d5496421, including the reviewed packed-qualification test-fixture repair. Preserve that candidate's product, tests and qualification harness unchanged.
+- RC.5 audit, exact-main qualification and authenticated publication remain required, followed by an independently reviewed final delta, final CI and trusted publication. The retained RC.4 post-release-soak reference is stale for this RC.5 preparation and does not make it release-ready; no RC.5 identity or approval is invented. The L-66-QUOTA actual post-release soak remains outstanding.
 
-All notable changes to this project will be documented in this file.
+## [3.0.0-rc.5] - Prepared; publication pending
+
+- Correct the synthetic packed-qualification prerelease fixture so it cannot inherit a final-only soak deferral. The real guard, runtime, qualification harness and thresholds are unchanged; the regression rejects the original inconsistent fixture and preserves rejection of unnormalized deferrals.
+- Published RC.4 remains immutable and qualified. This successor carries the test repair through the existing exact-source audit and final-diff rules; final publication and the actual post-release active soak remain outstanding.
+- Coordinate all seven package versions, dependency locks and scaffold source seeds. Require independent review, exact-source CI, packed qualification and trusted publication.
 
 ## [3.0.0-rc.4] - Prepared; publication pending
 
