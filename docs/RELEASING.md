@@ -19,7 +19,7 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version 3.0.0-rc.1
+node scripts/release-set.mjs version 3.0.0
 bash scripts/install-deps.sh
 npm run check
 ```
@@ -29,7 +29,7 @@ the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `-dev` version also aligns the current
 template source seeds; it names no publishable milestone.
 Use the next unpublished version for the intended milestone. Add its root
-CHANGELOG heading (for example `## [3.0.0-rc.1]`), close only evidenced gates,
+CHANGELOG heading (for example `## [3.0.0]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
 

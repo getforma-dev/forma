@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+- Prepare coordinated final versions, dependency locks and template source seeds from published RC.5 at12320f43, including the reviewed packed-qualification test-fixture repair. Preserve its product, tests and qualification harness unchanged.
+- RC.5 passed its independent whole-release audit, exact-main CI and tagged61/61 P17, then published all seven verified packages through trusted publishing. Bind the final preparation to those actual RC.5 records. Final-delta review, exact final CI and trusted final publication remain required; the L-66-QUOTA post-final soak remains deferred with zero active credit until a separate authenticated completion receipt.
+
 ## [3.0.0-rc.5] - Prepared; publication pending
 
 - Correct the synthetic packed-qualification prerelease fixture so it cannot inherit a final-only soak deferral. The real guard, runtime, qualification harness and thresholds are unchanged; the regression rejects the original inconsistent fixture and preserves rejection of unnormalized deferrals.
@@ -25,10 +34,6 @@ All notable changes to this project will be documented in this file.
 - Coordinate the seven-package RC.2 set and template source seeds. RC.1 remains published and immutable; no runtime behavior changes in this preparation.
 - Correct the release verifier's Actions archive request media type, with a regression test reproducing the observed HTTP 415. Release asset downloads keep their binary media type, and archive identity, provenance and size checks remain enforced.
 - Require independent review, exact-source CI and the new tag's packed qualification before trusted publication. Actual post-release soak remains outstanding.
-
-## [Unreleased]
-
-Changes after the prepared 3.0.0-rc.4 set will be recorded here.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+Changes after the prepared 3.0.0 set will be recorded here.
+
+## [3.0.0] - Prepared; publication pending
+
+- Prepare coordinated final versions, dependency locks and template source seeds from published RC.5 at12320f43, including the reviewed packed-qualification test-fixture repair. Preserve its product, tests and qualification harness unchanged.
+- RC.5 passed its independent whole-release audit, exact-main CI and tagged61/61 P17, then published all seven verified packages through trusted publishing. Bind the final preparation to those actual RC.5 records. Final-delta review, exact final CI and trusted final publication remain required; the L-66-QUOTA post-final soak remains deferred with zero active credit until a separate authenticated completion receipt.
+
 ## [3.0.0-rc.5] - Prepared; publication pending
 
 - Correct the synthetic packed-qualification prerelease fixture so it cannot inherit a final-only soak deferral. The real guard, runtime, qualification harness and thresholds are unchanged; the regression rejects the original inconsistent fixture and preserves rejection of unnormalized deferrals.
@@ -55,10 +64,6 @@
 ## Unreleased — the client list fixture is admitted (FORMA-188, L-58)
 
 - Move the client-list island fixture to the positive corpus after the accepted N2 increase. Its strict build must emit one island route with positive Forma/JavaScript byte counts below the report's own ceilings and an empty exceeded verdict; the obsolete BUILD-819 wording assertion is removed.
-
-## [Unreleased]
-
-Changes after the prepared 3.0.0-rc.4 set will be recorded here.
 
 ## [3.0.0-rc.1] - Prepared; publication pending
 

@@ -149,7 +149,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir"
-version = "3.0.0-rc.5"
+version = "3.0.0"
 dependencies = [
  "forma-ir",
  "forma-ir-derive",
@@ -161,7 +161,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir-derive"
-version = "3.0.0-rc.5"
+version = "3.0.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -170,7 +170,7 @@ dependencies = [
 
 [[package]]
 name = "forma-server"
-version = "3.0.0-rc.5"
+version = "3.0.0"
 dependencies = [
  "axum",
  "base64",
