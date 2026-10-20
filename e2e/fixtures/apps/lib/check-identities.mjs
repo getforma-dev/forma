@@ -5,6 +5,7 @@ export const EXTRA_NAMES = {
     "/household: a failed load names the attempt, keeps the snapshot, and Retry recovers"
   ],
   "fauth": [
+    "/t/acme/login: a delayed logo reserves its final space before image decode",
     "/t/quote/login: a tenant named with script and markup renders as text and runs nothing",
     "/t/unknown/login: an unknown tenant is a 404, not a page",
     "/t/lockbox/login: an invite-only tenant offers no provider button and no sign-up switch"

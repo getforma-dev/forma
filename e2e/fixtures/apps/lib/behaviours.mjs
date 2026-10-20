@@ -191,6 +191,36 @@ export const EXTRAS = {
   ],
   fauth: [
     {
+      name: '/t/acme/login: a delayed logo reserves its final space before image decode',
+      async run({ browser, origin }) {
+        const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 412, height: 823 } });
+        try {
+          const tab = await context.newPage();
+          let logoRequest;
+          await tab.route('**/fixture/logo.svg', (route) => { logoRequest = route; });
+          await tab.goto(new URL('/t/acme/login', origin).href, { waitUntil: 'domcontentloaded' });
+          await expect.poll(() => Boolean(logoRequest)).toBe(true);
+          // DOMContentLoaded does not wait for CSS when page scripts are disabled.
+          await expect.poll(() => tab.locator('link[rel="stylesheet"]').evaluateAll(
+            (links) => links.length > 0 && links.every((link) => link.sheet?.cssRules.length > 0),
+          )).toBe(true);
+          const logo = tab.locator('#tenant-logo');
+          await expect(logo).toHaveJSProperty('naturalWidth', 0);
+          const geometry = () => tab.evaluate(() => {
+            const box = document.querySelector('#tenant-logo').getBoundingClientRect();
+            return { width: box.width, height: box.height, nextTop: document.querySelector('#tenant-name').getBoundingClientRect().top };
+          });
+          const reserved = await geometry();
+          expect({ width: reserved.width, height: reserved.height }).toEqual({ width: 24, height: 24 });
+          await logoRequest.continue();
+          await logo.evaluate((image) => image.decode());
+          await expect(logo).toHaveJSProperty('naturalWidth', 24);
+          await expect(logo).toHaveJSProperty('naturalHeight', 24);
+          expect(await geometry()).toEqual(reserved);
+        } finally { await context.close(); }
+      },
+    },
+    {
       name: '/t/quote/login: a tenant named with script and markup renders as text and runs nothing',
       async run({ browser, origin }) {
         const context = await browser.newContext();
@@ -226,6 +256,7 @@ export const EXTRAS = {
       async run({ browser, origin }) {
         const { context, page } = await open(browser, origin, '/t/lockbox/login');
         try {
+          await expect(page.locator('#tenant-logo')).toHaveCount(0);
           await expect(page.locator('#oauth-google')).toHaveCount(0);
           await expect(page.locator('#oauth-github')).toHaveCount(0);
           await expect(page.locator('#lc-toggle')).toHaveCount(0);
