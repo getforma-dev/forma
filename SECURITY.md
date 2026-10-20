@@ -61,6 +61,14 @@ Known residual: an *under*-long control-flow length whose orphaned bytes still d
 ## Supported Versions
 
 <!-- forma-supported-lines:start -->
-The unified 3.x set is in pre-release. Its final release has not started the
-six-month maintenance window for v1's lines; no end date is asserted yet.
+Generated from the published release records and their original GitHub publication dates.
+
+| Line | Security support | End date (UTC) |
+|---|---|---|
+| v1 maintenance: core 2.x; crates 0.2.x; build 0.3.x; compiler 0.3.x | Critical and High fixes | 2027-04-20 |
+| 3.x unified set | Critical and High fixes | Current major; six months after its successor ships |
+
+The next unified major may ship no earlier than 2027-04-20T04:09:01.000Z.
+Critical and High fixes target seven calendar days on each supported line.
+End dates do not restart on a patch release or a release-record rerun.
 <!-- forma-supported-lines:end -->
