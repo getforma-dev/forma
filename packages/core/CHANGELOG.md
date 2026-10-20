@@ -8,8 +8,8 @@ Changes after the prepared 3.0.0 set will be recorded here.
 
 ## [3.0.0] - Prepared; publication pending
 
-- Prepare coordinated final versions, dependency locks and template source seeds from RC.5 candidate d5496421, including the reviewed packed-qualification test-fixture repair. Preserve that candidate's product, tests and qualification harness unchanged.
-- RC.5 audit, exact-main qualification and authenticated publication remain required, followed by an independently reviewed final delta, final CI and trusted publication. The retained RC.4 post-release-soak reference is stale for this RC.5 preparation and does not make it release-ready; no RC.5 identity or approval is invented. The L-66-QUOTA actual post-release soak remains outstanding.
+- Prepare coordinated final versions, dependency locks and template source seeds from published RC.5 at12320f43, including the reviewed packed-qualification test-fixture repair. Preserve its product, tests and qualification harness unchanged.
+- RC.5 passed its independent whole-release audit, exact-main CI and tagged61/61 P17, then published all seven verified packages through trusted publishing. Bind the final preparation to those actual RC.5 records. Final-delta review, exact final CI and trusted final publication remain required; the L-66-QUOTA post-final soak remains deferred with zero active credit until a separate authenticated completion receipt.
 
 ## [3.0.0-rc.5] - Prepared; publication pending
 

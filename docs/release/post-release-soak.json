@@ -7,70 +7,70 @@
   "activeNanoseconds": "0",
   "requiredActiveNanoseconds": "3600000000000",
   "burnInPassed": false,
-  "rcTag": "v3.0.0-rc.4",
-  "rcCommit": "0e7debb890f6f40c072e878cf6ff1695eba2cfaa",
-  "ds12Sha256": "ff08917e10e6b79490e3c17644d4f7457d17f5087330060f9ca46da6acdbb563",
-  "p17EvidenceSha256": "f25c0f609b7dd1ea93b5e01c7af94b90f0f395d9c5eb5b9f6b22ef558c68d4cf",
-  "d14EvidenceSha256": "3ddf29d118e3f6e734e3e2535c36dbc10d49e61349943a7629feede5a07d89fd",
+  "rcTag": "v3.0.0-rc.5",
+  "rcCommit": "12320f4340d87cbb96575b5bb3b7eab42121d477",
+  "ds12Sha256": "d6c1d212f88fcaf77e9d4e551f17f177ff93348edb944803a93aedca3d0ad760",
+  "p17EvidenceSha256": "ad454003d69f0345d69abea2911f09daa27439dec174e9d078a8869eb4d70676",
+  "d14EvidenceSha256": "7dcf0c9ecaba81f504c83813a56c617bc1c5a1c917d08c5dff513501e9e0d73d",
   "reviewedChanges": [
     {
       "path": "CHANGELOG.md",
-      "before": "2bc92c1b9560ddb9e33981837c87bd275d449a37",
-      "afterSha256": "67f7b4a93c65a59751890e6eb324a21ccfb23f4e3a947fdbf4c7f3f3d83ef693"
+      "before": "c99c43a611fd7285059fffcac5b39930958f3ef0",
+      "afterSha256": "8fe796b08b961cc270815965e06e34feb1e0db096cf275ea32aaff9baf209832"
     },
     {
       "path": "Cargo.lock",
-      "before": "f0957f75a3aa52d283422912e75ada3f12457240",
+      "before": "edd0827f91e83d6e0d6c06a0d3c225f751016adf",
       "afterSha256": "8059f3304ac2abb2ef20847ff0cfeda8b3c66ce2c2aaac5e73ab91152592075c"
     },
     {
       "path": "Cargo.toml",
-      "before": "15cfd51e19e5a310ad5690add69845db2a9ed7ea",
+      "before": "7d53ff9128e672b52cd339929199f19930531caa",
       "afterSha256": "5b853ef019ef81c428f0b2f0faaa0248cfb14104ce99dd9c30915dc3ff8d4252"
     },
     {
       "path": "README.md",
-      "before": "b862c62ba4708bcd7d1c69c5e922e9f25d947ebc",
+      "before": "99a51501f824c2e77a9af3d609e3ed327c711016",
       "afterSha256": "7f22a77f176d424db07541ba96d8c733306edc1fdd85c7e5391fa7a366841526"
     },
     {
       "path": "crates/forma-ir-derive/CHANGELOG.md",
-      "before": "750abcf2c8b4a2a9da73ed39dcd67f1c03d52dd3",
-      "afterSha256": "c8661c3a81653cffd056ba9728d9ddd39b39cfa029d2f6376c9980fb82c3312d"
+      "before": "713437b4fb1bc8eb196164aa0c61ae117c2529ea",
+      "afterSha256": "9f810c574dd086111e23b0e4a1f57145ac22d2d1456c2723b00c5d01b323da98"
     },
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
-      "before": "5588d804318b471be9586f50b3a68b0b5e9a384a",
+      "before": "b55e1eda2b653fb4ba5b99698d2c0c506c7d75c5",
       "afterSha256": "7023c21a02660b58e5f12a85bda301fcacaa3173e6fc72fed35cc2a81e011c3c"
     },
     {
       "path": "crates/forma-ir/CHANGELOG.md",
-      "before": "8612c13fd2e84fa682e0983c3a1f9e25b5db41a5",
-      "afterSha256": "17f80acd292be6f93010735ab4416ab4f91e34d605208320d47b48b658e4c01a"
+      "before": "2dda4e6fb85401b3b895d731967459b36b4791f2",
+      "afterSha256": "572e6ab5898a64fed833f43715bc505deb596f600661c1c72f9a3eb4c3687eea"
     },
     {
       "path": "crates/forma-ir/Cargo.toml",
-      "before": "023cf84b6e50caa3bda5ff7a3360c41d4a2c5af5",
+      "before": "a245e19c96e89d108542059c1cda374bc3e299d7",
       "afterSha256": "403feb9bae671188d0c33e484765a510f2ba225d5c2e11d9a11f73b3e97cdb3d"
     },
     {
       "path": "crates/forma-ir/README.md",
-      "before": "49f6ab4c28d403e5a59df2bd82c477261ddec9db",
+      "before": "f2d94d38c8a77243e4327176f89b9b488ff7ea03",
       "afterSha256": "10617be8250b67e8891152cffe50b5d815448ac20f8db42118d1a4158faf9611"
     },
     {
       "path": "crates/forma-server/CHANGELOG.md",
-      "before": "d4faaf8e845fb0e262576405b503c388c1d23d69",
-      "afterSha256": "7021be4739798cbe9d3599ae29a6885263735ef7ee8ec7ca016950f580656fdd"
+      "before": "ce24a19f8456afc5a0cd525e2e75c3ccbc8c5782",
+      "afterSha256": "70c0964aed582c2ba766c01dd2e9eca8dc1efeda4c6580ad283502d8936ea4d9"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
-      "before": "170f5492e9f217383e99267b7867006cd79d1424",
+      "before": "92eefa94e6abcbd1c6d7d59f976e4c35a959b891",
       "afterSha256": "e0c5a305ea0fd6e4228b347001a7f0f6bf74bc8cb1eba45a665e22590c7cf0de"
     },
     {
       "path": "crates/forma-server/README.md",
-      "before": "df64235c59a30ca01ac425cf63431cca7953ca4e",
+      "before": "41acab8642d7b4d33548fa20233a34955bccec54",
       "afterSha256": "c72755d1cb1b646749a2d6bf4b91253cfdd98ce3c6f64b48c6f168333a7bdba9"
     },
     {
@@ -80,53 +80,53 @@
     },
     {
       "path": "e2e/Cargo.lock",
-      "before": "6fdfcb63c311eb9fe59009d8e4991852001360ae",
+      "before": "1590faf1d52afae7cbba75b689e368c2f78b83d9",
       "afterSha256": "1290702cd56fd80dd9999792fbf29e504a182d88df387da604490be6e019edf9"
     },
     {
       "path": "fuzz/Cargo.lock",
-      "before": "bfa8443642d6f54e49494e17c48dda01540964e5",
+      "before": "9af21c2c1539a42e5f498e7080f0b42398b8e731",
       "afterSha256": "247cabee466763e4d0e9ac2902f5acd614f6a3766e277e37d73085732f0b6fff"
     },
     {
       "path": "package-lock.json",
-      "before": "9ea0c0c3cef82a1f439dfb2081e2939b48579854",
+      "before": "2651bca5c076b52dcf488a0a8349d104d94900fb",
       "afterSha256": "409b35e69ac09b3a5cec011129673aad16583a735019a46db620d2c9429c10d9"
     },
     {
       "path": "packages/build/CHANGELOG.md",
-      "before": "0da24c0c53f208cd02d02a794b9cf7609c0b8a72",
-      "afterSha256": "9c392505180ef7522913e1d983069b28e735be1ef57ce9b2b01b47483ac3b4a8"
+      "before": "940a95afb659b298b0a9def7b29c3fa1cf8b2e70",
+      "afterSha256": "466f15fdf975678047d0cd8732d3b12fa2f768a948b19108b3d24efdbd6955ec"
     },
     {
       "path": "packages/build/README.md",
-      "before": "348a91ece686f8a8788681f09bf5abbeac8f053f",
+      "before": "e7977bc21e894253c908f3ec4e6651f9d73b69f8",
       "afterSha256": "c2542eaf05b7fa997ee92a81fef1f0379a6b5ddcd07acd77a1e1f76a559f69b8"
     },
     {
       "path": "packages/build/package.json",
-      "before": "2f2c6773159a5b115170a7c147b342408a32b7d9",
+      "before": "267fe9ecadfe5210d0ea2be375ad177ccacf29c6",
       "afterSha256": "1a746e6d278004c9fb20fb81027312eac17930cdc50ddc53babc284270aaef11"
     },
     {
       "path": "packages/compiler/CHANGELOG.md",
-      "before": "ef67ab9dc2c9608a5687db4e8c24238c4717b687",
-      "afterSha256": "d6a2cba066be85bb6ebe33b0e232aa669fef5dee3f860badb0d37e1fa3da10fb"
+      "before": "2566d520499be7bd74acb1fb7fdd82393025eb7b",
+      "afterSha256": "9cc31ecddc0e0d51a420552b81dae89c0731c21eea9b3ed8158718d9c8719980"
     },
     {
       "path": "packages/compiler/README.md",
-      "before": "3460f76141cc854cd6fe5e686f7972a51298fe8b",
+      "before": "87f226d84e3b3d9e16ea484a6c993b64d9944676",
       "afterSha256": "580f5a9b74dea4b581388fc9df30e485bbd52f406e26169e8ad8e1ab701a7d97"
     },
     {
       "path": "packages/compiler/package.json",
-      "before": "3109e58b4c9760aa01e9c09aa4364b009ff211e8",
+      "before": "e97cd90a683f651f3631e95453c7a8c1da569bc2",
       "afterSha256": "51e22775cdee0db1dfde69b06a522c2e85f15530b62fc25370ee245791451d4b"
     },
     {
       "path": "packages/core/CHANGELOG.md",
-      "before": "da674fa2badc648986d46377719756cc20ca054c",
-      "afterSha256": "6f1d051ab7371ef4799458635f1b924b01e6a0db3664526a28297f5e10b22f42"
+      "before": "e8092aadd4f8bf6486cf1362f1aae0b856f06cde",
+      "afterSha256": "19fedc85252815e9396cfaa11fec54094b12fe77448049d667e1ae7546d1a38b"
     },
     {
       "path": "packages/core/CSP.md",
@@ -135,72 +135,72 @@
     },
     {
       "path": "packages/core/README.md",
-      "before": "48ff5eb4716bfd87f766e78a3faed714c670ad8f",
-      "afterSha256": "52c3fd7d03770b32346420f559dcf477cf294520d4e796aeb6b36cae56776c68"
+      "before": "3a0edb0c6eaf8bc53dc6b0ce9eb5752bf2f44980",
+      "afterSha256": "89df9dd449ffdf34754ab063eae74f53d176ef436d34ed806d0a23acdefbac14"
     },
     {
       "path": "packages/core/package.json",
-      "before": "5df7d0670f04f333bc8050ca997e61a5d81cb694",
+      "before": "ade83889adb6e44a4e992916a80afc4fc1666f6b",
       "afterSha256": "47f30fa594c7b99983d91ac5a2c0f58c87588a864b218ac474e026564ffe508e"
     },
     {
       "path": "packages/create-app/CHANGELOG.md",
-      "before": "1e4c17ea77fb99a327b1f94593eb41fb5fb750e4",
-      "afterSha256": "be3cba2588d4ee065df73c27d6adc673c4e09e8b7818280abd271e93d2a8ff57"
+      "before": "ca01625c232dea2d6bb437788c210336b336f47d",
+      "afterSha256": "ed3ccf6bc32fbf8584b0919c7a76c75b10fd0bf8fea2e844920bf1c65a8907d1"
     },
     {
       "path": "packages/create-app/README.md",
-      "before": "ac819d59766ac80ce4e76928efcf908ddfc49eab",
+      "before": "4d454f95adb834a35a985a1b0ec1077349de6c9b",
       "afterSha256": "45eb01ce54371bfd69b0a85398d5e55c9caffa468d982cea7f34f4564a7a942f"
     },
     {
       "path": "packages/create-app/package.json",
-      "before": "11cdabf6842dac3c16940cb823dbb484a6f10b19",
+      "before": "70ac423f8d2d4c259250df20837d04ef2d0e423e",
       "afterSha256": "399dee8cfed7dfdea9c58cc9bdb075184cea54ceb456d678496bae1122db82a7"
     },
     {
       "path": "packages/create-app/template-lock-seeds.json",
-      "before": "74bf452277f9f96af5c81ec2ac52bf2cc855b02a",
+      "before": "ec578aa68721cd99b6169eeefbe9b3f3eff60697",
       "afterSha256": "addace2fd832ce48b8beffb6eb386b3550fce61d74a57562dcd3a8b8f768b08e"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
-      "before": "7d35ec7ed9a0786b655dcfcc4454c827b267fe42",
+      "before": "bbe26e4290ab8dec22bded240c246a6e4eee77f1",
       "afterSha256": "adabc4d62818c49e89841004545ec859a6ea81eb8e2d9812fce7b3d87987e33d"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
-      "before": "2d8125d7a6c832dfa05ba2091f68160ca95f752f",
+      "before": "dd1135e905baa393095e7f8e5f0beb9240a08bec",
       "afterSha256": "9d00e8f18951340274b727dbbb05f1e41602f4f3b62b8e0dae20dfaa3873cf24"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
-      "before": "fdb0866d3de5c89d1ebfc9a3e33e263138ed33cd",
+      "before": "0b9c2bae661e0accb077c8d4ebbcfb665b173dde",
       "afterSha256": "7b362495cce9ee92ebd56546906d80a1956cc2a64014e6395e218003e13e4996"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
-      "before": "d03c0bf4d2bd65be339873175ecd7b00c4241887",
+      "before": "982ebca9b7cb4d5d591a4a862a5a46c0310db6fe",
       "afterSha256": "212fd542150fec280f142dcb56c68f901cb922ed534a727b97b3e48fa466f571"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
-      "before": "3d065745700f2d6a7761e932dbf544fe0fb1f199",
+      "before": "7612e14514839bd0859c46532786fc18b4ccea84",
       "afterSha256": "1873d4e638b49f6aa418a68b04a98fa61d3703f7eb2bdf29551747c3b152544a"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
-      "before": "909cbbe2ea6618932470f0b28d86f0525bed0cab",
+      "before": "076c8787ec032226a05b491810937961540891d9",
       "afterSha256": "3b3fc0624cb7a291db8284f2a4537cf4ba54435d581c812493b4dd1a9826574e"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
-      "before": "3110c3d79d66d7965019ba06c1d61ce138dc0342",
+      "before": "6ea42d7d815d874d892988dd71c18e18c5ff9dee",
       "afterSha256": "44b2809bea6983190a16a90b754e36799120cfc78673a59f9e9acd8aa96c04d4"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
-      "before": "c433bbeed52cf2772401e63af574a75d3004f6c5",
+      "before": "d124268ffd7fb46dbc2578a7e2c44867208a7016",
       "afterSha256": "a0bcb681de06e41fb3457c93996392a9fc77ff69178b369574de72eebced8ebc"
     },
     {
@@ -214,7 +214,7 @@
     "sha256": "c6c3961b108e70ab1658bae2d4effe73cf81f3ee36aec895b2fa0d06b3e53d7f"
   },
   "reviewEvidence": {
-    "content": "# Independent final delta and published RC4 reference review\n\n**Approved for the reviewed final delta and actual published-RC4 reference, subject to embedding this genuine receipt, a reference-only binding recheck and the remaining final CI/publication gates.** Actual review decision at 2026-10-20T00:54:47.590Z. Exact reviewed final proposal `c8cf23ba1415a710f5ee89939508882f8fc3277e`, tree `26fcf00309c74f4b024adb28bac3431661252a5d`, against published RC4 commit `0e7debb890f6f40c072e878cf6ff1695eba2cfaa`, tag `v3.0.0-rc.4`. No unresolved blocker in this scoped review.\n\nReviewer `/root/final_rc2_review`, actual session `01a155d1-b205-7032-99f5-ea3ad1addacc`, model `openai:gpt-6-astra` as independently verified from original session metadata earlier in this session. I authored neither product changes nor this final proposal. This continues my genuine independent preparation/binding review; it is not a fabricated new whole-release audit or campaign.\n\n## Exact final delta and resolved finding\n\nThe tracked checkout is clean. The actual RC4 tag resolves to0e7debb8, whose entire tree equals accepted evidence commit46d081f7. Actual published RC4 is an ancestor of this candidate. Intermediate5e723a17 retained the exact previously reviewed998b920b preparation tree while adding actual main ancestry.\n\nMy prior independent998b preparation review established all21 canonical final version/lock/template-seed outputs against the unchanged versionFiles projection,17 maintained documents,134 preserved historical changelog sections and no product/test/harness/workflow/audit drift. This review reapplied the actual existing `finalDiffBinding` to the committed corrected proposal and its39-file vector. Every canonical final version output, permitted maintained-document change, final gate transition, before-blob identity and after-content digest passes. The reference is the sole additional file and is excluded from its own reviewedChanges as required by the existing contract. Product/runtime/native/compiler implementation, tests, qualification/security harnesses, workflows and D14 evidence remain unchanged from published RC4. No final-diff exception was introduced.\n\n**Resolved finding FINAL-RC4-001:** original proposal41441c24 replaced the old RC2 reference but all eight new final changelog entries still called it stale RC2 metadata. I reported the factual inconsistency and withheld approval of that wording. Correctedc8cf23ba changes exactly those eight sentences and the eight corresponding reference afterSha256 values. I independently compared every correction and verified no other41441c24-to-c8cf23ba change. Historical sections remain intact; prepared/publication-pending wording and final CI/review requirements remain explicit.\n\nThe final144/191 gates reflect the carried final cleanup/measurement disposition; actual new final package qualification is still mandatory in the unchanged trusted release path. The soak gate remains explicitly deferred under L66-QUOTA, with zero active nanoseconds, required3,600,000,000,000 active nanoseconds and burnInPassed:false. The recorded founder decision is unchanged. The proposal's reviewEvidence is deliberately PENDING: validator success alone is not approval. This actual receipt supplies the independent decision only after the completed review described here.\n\n## Actual published RC4 bindings independently checked\n\nRetained original evidence is under `work/FORMA-rc1-publication/run-39346639836`. I read the actual published DS12, metadata, P17 provenance, D14 files and retained registry/archive bytes, rather than accepting a summary alone. The original successful push run is39346639836, attempt1, exact0e7debb8; publication time is2026-10-20T00:46:25Z. The actual local tag matches. GitHub's immutable-release feature is false in metadata; no contrary claim is made. The release tag remains immutable by policy.\n\nThe committed reference matches the actual bytes:\n\n- DS12 SHA-256 `ff08917e10e6b79490e3c17644d4f7457d17f5087330060f9ca46da6acdbb563`.\n- P17 evidence manifest SHA-256 `f25c0f609b7dd1ea93b5e01c7af94b90f0f395d9c5eb5b9f6b22ef558c68d4cf`.\n- D14 RC binding SHA-256 `3ddf29d118e3f6e734e3e2535c36dbc10d49e61349943a7629feede5a07d89fd`.\n\nI reapplied the existing readRecordedSet/publishedRelease checks, verified release asset sizes/digests for DS12 and all four D14 files, and reproduced the real bindAuditToRc plus validateAuditEvidence result. It retains the genuine whole-release acceptance of03651b9b/tree77eef7c5 and its actual reviewer/session/findings history. The new published binding is not a relabeled older RC or a new audit assertion.\n\nAll seven retained registry archives match their exact DS12 SHA-256 and actual registry checksum/integrity metadata using verifyRegistryArchive. The registry receipt is ready for the coordinated3.0.0-rc.4 set. The original P17 ZIP also matches its retained GitHub artifact size and SHA-256 (`f2c3e55b581c09ff4ec9246515e6a1529facd61b1e680003ded1b9f09f4c49a0`). Rehashing the original extracted evidence with verifyEvidence validates215 entries including212 files against the bound manifest. Published p17.json matches its release asset and is deeply identical to DS12 measurements.\n\n## Actual performance scope and limits\n\nPublished RC4 P17 reports61/61 checks passed in1124.467seconds, below its hard1800-second budget. I reapplied the unchanged current performance validator, including `separate-input-tasks-v1`, all native/mobile/client/decoder requirements and the actual dead/startup-slow/slow-input control observations. This is actual published RC4 evidence, not final-version P17.\n\nI independently read all40 raw activation observations: every observer has zero long tasks, expected responses complete, and each island run responds for all100 hosts. Island response-after-paint spans310.5\u2013382ms, below the unchanged500ms bound. Demanding decoder p95/max remains13.1/22.1ms; ASCII p95/max10.0/13.1ms in the validated record.\n\nOne raw Lighthouse island-navigation task remains50.870ms. Recomputing attribution from its original raw LHR and same-navigation trace reproduces `browser-internal-unattributed`, with no application-script evidence and forty clean independent probes. It starts604.110ms after navigation, ends654.980ms, and first script is1365.492ms: the task ends710.512ms before first script. This is not a claim that a separate independent probe shares that exact event, nor a new claim of pure layout classification. The raw task and wholePageTargetMiss remain retained; existing L66 corroboration and strict application/unresolved gates pass without deleting it. Outer release elapsed1809.84seconds still misses the separate1800-second target. Neither miss is rewritten as a universal performance pass.\n\nThe genuine RC4 audit's actual mutation/R17/SR14 producers and explicit unchanged-input applicability remain intact because this final delta changes no product or qualification subject. No new mutation campaign, new twenty-command timing distribution or fresh whole-release audit is claimed here. Original failed RC3/329d qualifications and disclosed N6/sampling/governance limits remain historical facts.\n\n## Remaining conditions\n\nEmbed this exact actual receipt as reviewEvidence, commit only that reference change and request the short exact binding recheck. Require successful final PR CI/security, exact-main CI, final-version packed/P17 qualification and trusted final publication/authentication. This receipt approves the reviewed transition/reference, not an unobserved final CI result or final registry publication.\n\nAfter final publication, run the unchanged minimum3,600 ACTIVE-second zero-fault burn-in against this same authenticated published RC4 set, with actual required stress/fuzz/skew workloads and a separate completion receipt. Original final DS12 must stay deferred with zero credit; setup/idle time is not active soak. Complete final factual/support/parity/v3 closure and halt before external application migrations.\n\nNo network request, download, Actions polling, source/Git mutation, new tests or campaign reruns were performed. Pure validation of retained original bytes and temporary canonical-projection scratch are review activities, not new measurements. Only this external receipt was written.\n",
-    "sha256": "47436cad4b8adf1ab326acee4bbc3ec8bc31d8023e434d5c4a892ccb09174467"
+    "content": "PENDING: final delta over authenticated published RC.5 awaits actual independent review. This placeholder is not an approval.",
+    "sha256": "88a63f08700005f233d5c857a163c7c55f181e5edcd2a134dc32fcfdec16b833"
   }
 }
