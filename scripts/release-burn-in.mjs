@@ -5,19 +5,9 @@ import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, rmdirSync, rmSync, writeFileSync, writeSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { workerContext } from './release-soak-context-v2.mjs';
 import { ROOT, digest, json, run } from './release-set.mjs';
-import { authenticateRc } from './release-burn-in-inputs.mjs';
-import { prepareBurnIn } from './release-burn-in-stage.mjs';
-import { CONTRACT, ENGINES, FUZZ_TARGETS, MIN_ACTIVE_NS, readFuzzCompletion } from './release-burn-in-report.mjs';
-import { securityHarnessHashes, validateHostileProof } from './release-security.mjs';
-import { hostileIds, fixtureCheckIds } from './release-burn-in-identities.mjs';
-import { readApps } from '../e2e/fixtures/apps/lib/build-apps.mjs';
-import { verifyStagedFixturePages } from './release-fixture-apps.mjs';
-import { requireSkewChecks } from './release-skew-drill.mjs';
-import { runSkewDrill } from '../e2e/skew/run-drill.mjs';
-import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from './release-template-islands.mjs';
-import { withOwnedServer } from './owned-server.mjs';
 import { recordEvidence } from './release-evidence.mjs';
 import { evidenceBytes, evidenceRoom } from './release-burn-in-storage.mjs';
 export { evidenceBytes } from './release-burn-in-storage.mjs';
@@ -62,23 +52,41 @@ async function task(round, id, directory, fn) {
     round.tasks.push(row); return row;
   } finally { clearTimeout(timeout); }
 }
-export async function worker({ tag, commit, attempt, work }) {
+export function loadPayloadPlaywright(payloadRoot) {
+  return import(pathToFileURL(join(payloadRoot, 'node_modules/@playwright/test/index.mjs')).href);
+}
+export async function worker({ tag, commit, attempt, work, payloadRoot }) {
+  const orchestration = payloadRoot ? workerContext({ payloadRoot, tag, commit }) : undefined;
+  const module = path => import(pathToFileURL(join(payloadRoot ?? ROOT, path)).href);
+  // Every workload producer and its ROOT-bound dependencies use the RC checkout.
+  const { ROOT: payload, run } = await module('scripts/release-set.mjs');
+  const { authenticateRc } = await module('scripts/release-burn-in-inputs.mjs');
+  const { CONTRACT, ENGINES, FUZZ_TARGETS, MIN_ACTIVE_NS, readFuzzCompletion } = await module('scripts/release-burn-in-report.mjs');
+  const { prepareBurnIn } = await module('scripts/release-burn-in-stage.mjs');
+  const { securityHarnessHashes, validateHostileProof } = await module('scripts/release-security.mjs');
+  const { hostileIds, fixtureCheckIds } = await module('scripts/release-burn-in-identities.mjs');
+  const { readApps } = await module('e2e/fixtures/apps/lib/build-apps.mjs');
+  const { verifyStagedFixturePages } = await module('scripts/release-fixture-apps.mjs');
+  const { requireSkewChecks } = await module('scripts/release-skew-drill.mjs');
+  const { runSkewDrill } = await module('e2e/skew/run-drill.mjs');
+  const { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } = await module('scripts/release-template-islands.mjs');
+  const { withOwnedServer } = await module('scripts/owned-server.mjs');
   assert.equal(process.platform, 'linux'); assert(!process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, 'burn-in must not carry publishing authority');
   assert.equal(process.env.GITHUB_REPOSITORY, 'getforma-dev/forma'); assert.equal(process.env.GITHUB_EVENT_NAME, 'workflow_dispatch');
-  assert.equal(process.env.GITHUB_REF, `refs/tags/${tag}`); assert.equal(process.env.GITHUB_SHA, commit);
-  mkdirSync(attempt); const inputs = join(attempt, 'inputs'), preparedProof = [];
+  if (!orchestration) { assert.equal(process.env.GITHUB_REF, `refs/tags/${tag}`); assert.equal(process.env.GITHUB_SHA, commit); }
+  mkdirSync(attempt); if (orchestration) saveExclusive(join(attempt, 'orchestration-v2.json'), orchestration); const inputs = join(attempt, 'inputs'), preparedProof = [];
   const report = { contract: CONTRACT, rcTag: tag, sourceCommit: commit, harnessCommit: commit, complete: false, zeroFaults: false, faults: [], rounds: [], cleanup: { complete: false, remainingOwnedPids: [], failures: ['awaiting Linux supervisor'] } };
   try {
     const auth = await authenticateRc({ tag, commit, directory: inputs });
     const staged = await prepareBurnIn({ authenticated: auth, work, test: async (name, fn) => { await fn(); preparedProof.push(name); } });
-    const { chromium, firefox, webkit } = await import('@playwright/test');
+    const { chromium, firefox, webkit } = await loadPayloadPlaywright(payload);
     const launchers = { chromium, firefox, webkit };
     const runtime = join(staged.extracted['@getforma/core'], 'dist/formajs-runtime.global.js'), runtimeSha256 = digest(runtime);
-    const harnessSha256 = sha(run('git', ['ls-tree', '-r', '-z', commit], ROOT, { encoding: 'buffer' }));
+    const harnessSha256 = sha(run('git', ['ls-tree', '-r', '-z', commit], payload, { encoding: 'buffer' }));
     const expected = { rcTag: tag, sourceCommit: commit, packages: auth.packages, ds12Sha256: auth.ds12Sha256, p17EvidenceSha256: auth.p17EvidenceSha256, d14EvidenceSha256: auth.d14EvidenceSha256, harnessSha256, runtimeSha256, hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds(staged.fixtures.project) };
-    const protectedPaths = [ ...Object.values(staged.binaries), ...Object.values(staged.templates).flatMap(p => [p.binary, join(p.project, 'admin/dist')]), staged.skew.binary, ...['A', 'B', 'B2', 'C', 'S'].map(name => staged.skew.deployments[name].dist), join(staged.fixtures.project, 'out'), ...Object.keys(readApps(staged.fixtures.project).apps).map(name => join(staged.fixtures.targetDir, 'release', `fixture-${name}`)), ...Object.values(launchers).map(engine => engine.executablePath()), runtime, join(ROOT, 'package-lock.json') ];
+    const protectedPaths = [ ...Object.values(staged.binaries), ...Object.values(staged.templates).flatMap(p => [p.binary, join(p.project, 'admin/dist')]), staged.skew.binary, ...['A', 'B', 'B2', 'C', 'S'].map(name => staged.skew.deployments[name].dist), join(staged.fixtures.project, 'out'), ...Object.keys(readApps(staged.fixtures.project).apps).map(name => join(staged.fixtures.targetDir, 'release', `fixture-${name}`)), ...Object.values(launchers).map(engine => engine.executablePath()), runtime, join(payload, 'package-lock.json') ];
     const before = fileInventory(protectedPaths);
-    saveExclusive(join(attempt, 'expected.json'), expected); saveExclusive(join(attempt, 'prepared.json'), { preparedProof, before, tools: { node: process.version, rust: run('rustc', ['-Vv']), fuzz: run('cargo', ['fuzz', '--version'], staged.fuzz), playwright: json(join(ROOT, 'node_modules/@playwright/test/package.json')).version }, staged: { descriptor: staged.descriptor, templateSources: staged.templateSources, cliSignatures: staged.cliSignatures, cliLock: staged.cliLock, fuzzLock: staged.fuzzLock, sourceReport: staged.sourceReport } });
+    saveExclusive(join(attempt, 'expected.json'), expected); saveExclusive(join(attempt, 'prepared.json'), { preparedProof, before, tools: { node: process.version, rust: run('rustc', ['-Vv']), fuzz: run('cargo', ['fuzz', '--version'], staged.fuzz), playwright: json(join(payload, 'node_modules/@playwright/test/package.json')).version }, staged: { descriptor: staged.descriptor, templateSources: staged.templateSources, cliSignatures: staged.cliSignatures, cliLock: staged.cliLock, fuzzLock: staged.fuzzLock, sourceReport: staged.sourceReport } });
     evidenceBytes(attempt);
     Object.assign(report, expected); delete report.hostileCaseIds; delete report.fixtureCheckIds;
     let active = 0n;
@@ -101,7 +109,7 @@ export async function worker({ tag, commit, attempt, work }) {
       }
       await task(round, 'hostile', directory, async () => {
         const out = join(directory, 'hostile-raw.json');
-        await loggedChild(process.execPath, [join(ROOT, 'packages/core/e2e/hostile-widgets/run.mjs'), `--runtime=${runtime}`, `--out=${out}`], { cwd: ROOT, log: join(directory, 'hostile.log'), timeout: 180_000 });
+        await loggedChild(process.execPath, [join(payload, 'packages/core/e2e/hostile-widgets/run.mjs'), `--runtime=${runtime}`, `--out=${out}`], { cwd: payload, log: join(directory, 'hostile.log'), timeout: 180_000 });
         const proof = validateHostileProof(json(out), { commit, runtimeSha256, harnessSources: securityHarnessHashes() });
         return { proof, fields: { completeMatrix: true, caseIds: observedHostileIds(proof) } };
       });
@@ -134,13 +142,14 @@ export async function worker({ tag, commit, attempt, work }) {
   } catch (error) { report.faults.push({ message: error.message, stack: error.stack }); throw error; }
   finally { saveExclusive(join(attempt, 'workloads.json'), report); }
 }
-export async function finalize({ attempt, ownership, work }) {
+export async function finalize({ attempt, ownership, work, payloadRoot }) {
+  if (payloadRoot) workerContext({ payloadRoot });
   const supervisor = json(join(ownership, 'supervisor.json')), report = json(join(attempt, 'workloads.json')), expected = json(join(attempt, 'expected.json'));
   assert.equal(supervisor.complete, true, 'Linux ownership or worker failed'); assert.equal(supervisor.exitCode, 0);
   assert.equal(supervisor.cleanup.complete, true); assert.deepEqual(supervisor.cleanup.remainingOwnedPids, []); assert.deepEqual(supervisor.cleanup.failures, []); assert.deepEqual(supervisor.faults, []);
   assert.equal(report.workloadsComplete, true); assert.deepEqual(report.faults, []);
   report.cleanup = { complete: true, remainingOwnedPids: [], failures: [] }; report.complete = true; report.zeroFaults = true;
-  const { validateBurnInFiles } = await import('./release-burn-in-final.mjs');
+  const { validateBurnInFiles } = await import(pathToFileURL(join(payloadRoot ?? ROOT, 'scripts/release-burn-in-final.mjs')).href);
   validateBurnInFiles(attempt, expected, report); evidenceRoom(attempt, 64 * MiB);
   rmSync(work, { recursive: true }); assert(!existsSync(work));
   saveExclusive(join(attempt, 'ownership.json'), supervisor); saveExclusive(join(attempt, 'burn-in.json'), report);
