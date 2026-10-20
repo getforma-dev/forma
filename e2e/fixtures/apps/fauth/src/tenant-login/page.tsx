@@ -6,7 +6,7 @@ export function TenantLoginPage(props: TenantLoginProps) {
     <main class="lc-page">
       <div class="lc-card">
         <div class="lc-logo-area">
-          {createShow(() => props.hasLogo, () => <img class="lc-logo" id="tenant-logo" src={props.logoUrl} alt={props.appName} />)}
+          {createShow(() => props.hasLogo, () => <img class="lc-logo" id="tenant-logo" src={props.logoUrl} alt={props.appName} width={24} height={24} />)}
           <div class="lc-app-name" id="tenant-name">{props.appName}</div>
         </div>
         <OAuthButtons hasGoogle={props.hasGoogle} hasGithub={props.hasGithub} hasEmail={props.hasEmail} />

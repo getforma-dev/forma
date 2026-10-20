@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { loadPayloadPlaywright } from './release-burn-in.mjs';
 import { ROOT, json } from './release-set.mjs';
@@ -14,7 +15,6 @@ import { verifyPostReleaseSoak } from './release-soak-completion.mjs';
 import { verifyPostReleaseSoakV2 } from './release-soak-completion-v2.mjs';
 import { API, verifyRun } from './release-burn-in-inputs.mjs';
 import { CONTRACT, FUZZ_TARGETS, ENGINES, SKEW_CHECKS } from './release-burn-in-report.mjs';
-import { hostileIds, fixtureCheckIds } from './release-burn-in-identities.mjs';
 import { securityHarnessHashes } from './release-security.mjs';
 import { cases, profiles } from '../packages/core/e2e/hostile-widgets/catalogue.mjs';
 import { capabilityCases } from '../packages/core/e2e/hostile-widgets/capabilities.mjs';
@@ -43,6 +43,9 @@ function checkouts(t) {
   return { root, payloadRoot, donorRoot, directory, pin, context, env, reference, authenticated, commit: FINAL_COMMIT };
 }
 async function completionFixture(t, f) {
+  // Synthetic evidence describes the pinned RC workload, not today's added checks.
+  const { hostileIds, fixtureCheckIds } = await import(pathToFileURL(join(f.payloadRoot, 'scripts/release-burn-in-identities.mjs')).href);
+  const fixtureIds = fixtureCheckIds(join(f.payloadRoot, 'e2e/fixtures/apps'));
   const evidence = mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
   t.after(() => rmSync(evidence, { recursive: true, force: true }));
   const archiveRoot = join(evidence, 'archive'), raw = join(evidence, 'raw');
@@ -53,7 +56,7 @@ async function completionFixture(t, f) {
   const identities = [['npm', '@getforma/core'], ['npm', '@getforma/compiler'], ['npm', '@getforma/build'], ['npm', '@getforma/create-app'], ['crates', 'forma-ir'], ['crates', 'forma-ir-derive'], ['crates', 'forma-server']];
   const packages = identities.map(([registry, name], i) => ({ registry, name, version: RC_TAG.slice(1), file: i ? `archive-${i}.tgz` : 'core.tgz', bytes: i ? 100 : readFileSync(join(evidence, 'core.tgz')).length, sha256: i ? 'd'.repeat(64) : sha(readFileSync(join(evidence, 'core.tgz'))) }));
   const expected = { rcTag: f.reference.rcTag, sourceCommit: f.reference.rcCommit, ...f.authenticated, packages,
-    runtimeSha256: sha(runtime), harnessSha256: sha(execFileSync('git', ['ls-tree', '-r', '-z', f.reference.rcCommit], { cwd: f.root })), hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds() };
+    runtimeSha256: sha(runtime), harnessSha256: sha(execFileSync('git', ['ls-tree', '-r', '-z', f.reference.rcCommit], { cwd: f.root })), hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureIds };
   const hostile = { schema: 1, passed: true, completeMatrix: true, selection: null, sourceCommit: f.reference.rcCommit,
     sourceClean: true, runtimeSha256: sha(runtime), harnessSources: securityHarnessHashes(), pageErrors: [],
     requested: cases().length, requestedCapabilityControls: capabilityCases.length * profiles.length,
@@ -62,8 +65,8 @@ async function completionFixture(t, f) {
     observers: profiles.map(profile => ({ profile, executions: 1, outsideReads: 1, response: 200, unexpectedResponse: 404, trustedTypesRefused: true })),
     explicitMount: profiles.flatMap(profile => [{ id: `no-auto/${profile}`, unauthorizedRequests: 0, served: 'raw', injected: 'raw' }, ...['omitted-compiled', 'omitted-reviewed'].map(id => ({ id: `${id}/${profile}`, unauthorizedRequests: 0, live: true, reach: 'confined', failed: 'data-fetch denied: the mount grants no fetch', activations: 0, outsideReads: 0, codes: ['FORMA_E_GRANT_FETCH', 'FORMA_E_GRANT_NAVIGATE'] }))]), catalogueSha256: 'a'.repeat(64) };
   const fixtureProof = { pages: {
-    pages: fixtureCheckIds().filter(id => id.startsWith('fixture:')).map(id => { const [, app, ...page] = id.split(':'); return { app, page: page.join(':'), mutations: 0, elements: 1 }; }),
-    extras: fixtureCheckIds().filter(id => id.startsWith('extra:')).map(id => id.slice(6)) }, templates: {
+    pages: fixtureIds.filter(id => id.startsWith('fixture:')).map(id => { const [, app, ...page] = id.split(':'); return { app, page: page.join(':'), mutations: 0, elements: 1 }; }),
+    extras: fixtureIds.filter(id => id.startsWith('extra:')).map(id => id.slice(6)) }, templates: {
     minimal: { island: { errors: [], violations: [], transitions: [7, 8, 0, 1], adoption: { mutations: [], sameNodes: true, sameHost: true } }, static: { executableScripts: 0, modulepreloads: 0, errors: [], violations: [] } },
     dashboard: { interacted: true, pageErrors: [], violations: [], tooltip: { apiTextStayedText: true, violations: { normal: [], hostile: [] }, normal: ['00:00', '23:00'].map(hour => ({ hour, values: ['1', '2'], hiddenOnLeave: true })), hostile: { hour: '<img data-forma-tooltip-probe src="/__forma_tooltip_probe__" onerror="globalThis.__formaTooltipExecuted=true">', values: ['1', '2'], hiddenOnLeave: true } } } } };
   const put = (path, value) => writeFileSync(join(raw, path), typeof value === 'string' ? value : encode(value));
@@ -82,7 +85,7 @@ async function completionFixture(t, f) {
       else if (id.startsWith('skew:')) { task.checks = SKEW_CHECKS; proof = { checks: SKEW_CHECKS,
         builds: { A: 'a'.repeat(16), B: 'b'.repeat(16), B2: 'b'.repeat(16), C: 'c'.repeat(16), S: 'd'.repeat(16) },
         requests: [{ instance: 'B', status: 200, cacheControl: 'public, immutable' }, { instance: 'S', status: 404 }] }; }
-      else { task.checkIds = fixtureCheckIds(); proof = fixtureProof; }
+      else { task.checkIds = fixtureIds; proof = fixtureProof; }
       put(`${dir}/${id.replaceAll(':', '-')}.json`, proof); task.reportSha256 = sha(encode(proof)); return task;
     });
     const round = { index: index + 1, complete: true, startedNs, finishedNs: String(time), tasks }; put(`${dir}/round.json`, round); return round;
@@ -165,6 +168,14 @@ test('v2 authenticates donor API/archive provenance then unchanged RC raw valida
   assert.equal(result.soak.activeNanoseconds, '3600000000000');
   assert.equal(result.orchestration.donor.commit, f.pin.donorCommit);
   assert.equal(result.rc.commit, RC_COMMIT); assert.equal(result.final.originalDisposition.activeNanoseconds, '0');
+  const rcFixtureIds = f.expected.fixtureCheckIds;
+  const postReleaseCheck = 'extra:fauth: /t/acme/login: a delayed logo reserves its final space before image decode';
+  assert(!rcFixtureIds.includes(postReleaseCheck));
+  for (const ids of [[...rcFixtureIds, postReleaseCheck], rcFixtureIds.slice(1)]) {
+    f.expected.fixtureCheckIds = ids; await f.pack();
+    await assert.rejects(verifyPostReleaseSoakV2(f.args()), /fixture expectation differs from authenticated source/);
+  }
+  f.expected.fixtureCheckIds = rcFixtureIds; await f.pack();
   await assert.rejects(verifyPostReleaseSoak(f.args()));
   for (const [key, value] of [['head_sha', RC_COMMIT], ['head_branch', 'wrong'], ['path', '.github/workflows/rc-burn-in.yml'], ['conclusion', 'failure']]) {
     const previous = f.runProof[key]; f.runProof[key] = value;
