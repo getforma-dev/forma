@@ -16,7 +16,7 @@
     {
       "path": "CHANGELOG.md",
       "before": "2bc92c1b9560ddb9e33981837c87bd275d449a37",
-      "afterSha256": "c252bc2ced2b0a23619afcab545aadc900379ac6975fda7e588824460f8a6a1f"
+      "afterSha256": "67f7b4a93c65a59751890e6eb324a21ccfb23f4e3a947fdbf4c7f3f3d83ef693"
     },
     {
       "path": "Cargo.lock",
@@ -36,7 +36,7 @@
     {
       "path": "crates/forma-ir-derive/CHANGELOG.md",
       "before": "750abcf2c8b4a2a9da73ed39dcd67f1c03d52dd3",
-      "afterSha256": "b2212bbac2afd6522fc75ab4888b1cc25a9e4c1114d81c978d9a7ba4c539156e"
+      "afterSha256": "c8661c3a81653cffd056ba9728d9ddd39b39cfa029d2f6376c9980fb82c3312d"
     },
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
@@ -46,7 +46,7 @@
     {
       "path": "crates/forma-ir/CHANGELOG.md",
       "before": "8612c13fd2e84fa682e0983c3a1f9e25b5db41a5",
-      "afterSha256": "889fe40881ea5b88967986593cb7ce0f8678efadb997665545094a0207efda66"
+      "afterSha256": "17f80acd292be6f93010735ab4416ab4f91e34d605208320d47b48b658e4c01a"
     },
     {
       "path": "crates/forma-ir/Cargo.toml",
@@ -61,7 +61,7 @@
     {
       "path": "crates/forma-server/CHANGELOG.md",
       "before": "d4faaf8e845fb0e262576405b503c388c1d23d69",
-      "afterSha256": "fc743e48ef2a99dc84f359b1dd0ff014c2f7c81a9361d21c7d7db429a3877c0c"
+      "afterSha256": "7021be4739798cbe9d3599ae29a6885263735ef7ee8ec7ca016950f580656fdd"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
@@ -96,7 +96,7 @@
     {
       "path": "packages/build/CHANGELOG.md",
       "before": "0da24c0c53f208cd02d02a794b9cf7609c0b8a72",
-      "afterSha256": "8cfb955a164d2fa802aac9675e3ceeaecb2926a8988475657983a54183dd3faa"
+      "afterSha256": "9c392505180ef7522913e1d983069b28e735be1ef57ce9b2b01b47483ac3b4a8"
     },
     {
       "path": "packages/build/README.md",
@@ -111,7 +111,7 @@
     {
       "path": "packages/compiler/CHANGELOG.md",
       "before": "ef67ab9dc2c9608a5687db4e8c24238c4717b687",
-      "afterSha256": "3425ee8caeb11a5a12f9b04ade34f2d191d830c6f661bfc2c8718d876fb5a224"
+      "afterSha256": "d6a2cba066be85bb6ebe33b0e232aa669fef5dee3f860badb0d37e1fa3da10fb"
     },
     {
       "path": "packages/compiler/README.md",
@@ -126,7 +126,7 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "before": "da674fa2badc648986d46377719756cc20ca054c",
-      "afterSha256": "85f0bd855cdc7d5c5a5d02a5c13d026327bba16e2d5e82ecfa9465af3d1cd6c9"
+      "afterSha256": "6f1d051ab7371ef4799458635f1b924b01e6a0db3664526a28297f5e10b22f42"
     },
     {
       "path": "packages/core/CSP.md",
@@ -146,7 +146,7 @@
     {
       "path": "packages/create-app/CHANGELOG.md",
       "before": "1e4c17ea77fb99a327b1f94593eb41fb5fb750e4",
-      "afterSha256": "e0da4ad6c3a8a4912cd7b3acde179354809f52501fa2262551611f17a95efd50"
+      "afterSha256": "be3cba2588d4ee065df73c27d6adc673c4e09e8b7818280abd271e93d2a8ff57"
     },
     {
       "path": "packages/create-app/README.md",
@@ -210,7 +210,7 @@
     }
   ],
   "decisionEvidence": {
-    "content": "# L-66-QUOTA — release verification timing and quota recovery\n\nRecorded 2026-10-19 from the founder's instructions in the Forma release chat. This is a decision record, not an audit acceptance, test result or proof of publication. The historical L-66 browser-trace attribution decision is unchanged; the quota directive reused that number, so this record uses the distinct identifier L-66-QUOTA.\n\n## Primary instructions\n\nThe founder's October17 quota directive explicitly listed:\n\n> Full 3,600-second active `L-62` burn-in soak (deferred to run as a post-release verification gate on Thursday).\n\nIt separately deferred:\n\n> Final `L-65` clean-room sign-off on the combined doc/helper delta.\n\nThe founder then authorized only focused independent review and merging PR112 with green CI, retaining the later audit/soak work. PR112 merged after that focused approval; this did not satisfy whole-release audit or authorize an otherwise failing tag.\n\nOn October19 the founder corrected the schedule:\n\n> Check main CI once and update the Thursday handoff to today, it was not Thursday it was Monday in which we had to keep going. Thus continue the goal.\n\nThe resume date is therefore **Monday, October19,2026**. Earlier Thursday scheduling and the operational pause are superseded. The post-release placement of the soak remains the explicit timing decision; no instruction changes its workload, credited duration or zero-fault requirement.\n\n## Applied scope\n\n- Resume the independent whole-release audit before publishing the RC. Preserve the original beta → independently audited RC → final release sequence.\n- Permit final publication before the L-62 soak only through a narrowly scoped, reviewed implementation for3.0.0 that authenticates the published RC set, original P17/audit evidence and the reviewed canonical final delta.\n- Represent the soak as **deferred, zero credited active seconds**, never passed. Preserve the ordinary completed-soak route for cases that have actual evidence.\n- Run the unchanged3600-second active zero-fault packed RC burn-in after final publication, against the exact authenticated RC used to qualify final. Record its actual later outcome separately; never rewrite the final release's original deferred claim as if the run had occurred earlier.\n- Keep trusted OIDC publishing, immutable tags, independent source review, green CI, source-bound packed verification and all product/security tests. No generic publish override or fabricated audit/soak reference.\n- After final publication and post-release verification, update the v3 as-built record with actual results and halt before AppendixE consumer migrations. FORMA192/147 external application work remains excluded.\n\n## Current implementation status\n\nMain ee7e5751 prepares3.0.0 but cannot yet publish final: current validators still require the original completed-soak reference. The narrow implementation is being prepared before the final RC audit freeze so final-diff validation does not need an exception for new release code after RC. No actualRC tag, audit acceptance, burn-in reference or final publication is created by this record. Existing failed runs remain failed.\n",
+    "content": "# L-66-QUOTA \u2014 release verification timing and quota recovery\n\nRecorded 2026-10-19 from the founder's instructions in the Forma release chat. This is a decision record, not an audit acceptance, test result or proof of publication. The historical L-66 browser-trace attribution decision is unchanged; the quota directive reused that number, so this record uses the distinct identifier L-66-QUOTA.\n\n## Primary instructions\n\nThe founder's October17 quota directive explicitly listed:\n\n> Full 3,600-second active `L-62` burn-in soak (deferred to run as a post-release verification gate on Thursday).\n\nIt separately deferred:\n\n> Final `L-65` clean-room sign-off on the combined doc/helper delta.\n\nThe founder then authorized only focused independent review and merging PR112 with green CI, retaining the later audit/soak work. PR112 merged after that focused approval; this did not satisfy whole-release audit or authorize an otherwise failing tag.\n\nOn October19 the founder corrected the schedule:\n\n> Check main CI once and update the Thursday handoff to today, it was not Thursday it was Monday in which we had to keep going. Thus continue the goal.\n\nThe resume date is therefore **Monday, October19,2026**. Earlier Thursday scheduling and the operational pause are superseded. The post-release placement of the soak remains the explicit timing decision; no instruction changes its workload, credited duration or zero-fault requirement.\n\n## Applied scope\n\n- Resume the independent whole-release audit before publishing the RC. Preserve the original beta \u2192 independently audited RC \u2192 final release sequence.\n- Permit final publication before the L-62 soak only through a narrowly scoped, reviewed implementation for3.0.0 that authenticates the published RC set, original P17/audit evidence and the reviewed canonical final delta.\n- Represent the soak as **deferred, zero credited active seconds**, never passed. Preserve the ordinary completed-soak route for cases that have actual evidence.\n- Run the unchanged3600-second active zero-fault packed RC burn-in after final publication, against the exact authenticated RC used to qualify final. Record its actual later outcome separately; never rewrite the final release's original deferred claim as if the run had occurred earlier.\n- Keep trusted OIDC publishing, immutable tags, independent source review, green CI, source-bound packed verification and all product/security tests. No generic publish override or fabricated audit/soak reference.\n- After final publication and post-release verification, update the v3 as-built record with actual results and halt before AppendixE consumer migrations. FORMA192/147 external application work remains excluded.\n\n## Current implementation status\n\nMain ee7e5751 prepares3.0.0 but cannot yet publish final: current validators still require the original completed-soak reference. The narrow implementation is being prepared before the final RC audit freeze so final-diff validation does not need an exception for new release code after RC. No actualRC tag, audit acceptance, burn-in reference or final publication is created by this record. Existing failed runs remain failed.\n",
     "sha256": "c6c3961b108e70ab1658bae2d4effe73cf81f3ee36aec895b2fa0d06b3e53d7f"
   },
   "reviewEvidence": {

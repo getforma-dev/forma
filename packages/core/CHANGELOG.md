@@ -7,7 +7,7 @@ Changes after the prepared 3.0.0 set will be recorded here.
 ## [3.0.0] - Prepared; publication pending
 
 - Prepare coordinated final versions, dependency locks and template source seeds from the independently audited RC.4 source and evidence at 46d081f7. Preserve its product, tests and qualification harness unchanged.
-- Final publication requires actual RC.4 merge ancestry and authenticated publication, an independently reviewed final delta, exact-source CI and trusted publishing. The retained RC.2 post-release-soak reference is stale preparation metadata; it does not bind this candidate to RC.4. The L-66-QUOTA actual post-release soak remains outstanding.
+- Final publication requires actual RC.4 merge ancestry and authenticated publication, an independently reviewed final delta, exact-source CI and trusted publishing. The post-release-soak reference binds the final delta to the authenticated published RC.4 evidence; independent final review and exact-source CI remain required before publication. The L-66-QUOTA actual post-release soak remains outstanding.
 
 All notable changes to this project will be documented in this file.
 
