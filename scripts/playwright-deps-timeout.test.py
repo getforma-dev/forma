@@ -68,10 +68,21 @@ else:
                 with lock.open('rb') as handle:
                     with self.assertRaises(BlockingIOError):
                         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    self.assertEqual(process.wait(timeout=8), 137)
-                    # Kernel advisory locks disappear only after the holder
-                    # closes/exits; this cannot pass merely because Node exited.
-                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    # sudo may itself receive SIGKILL (-9 in subprocess) or
+                    # report its child's shell-style status (128 + SIGKILL).
+                    self.assertIn(process.wait(timeout=8), [-signal.SIGKILL, 128 + signal.SIGKILL])
+                    # sudo may exit before the killed child is scheduled to
+                    # close its descriptors. Require actual lock acquisition
+                    # within a short bound, before any fixture cleanup runs.
+                    deadline = time.monotonic() + 2
+                    while True:
+                        try:
+                            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                            break
+                        except BlockingIOError:
+                            if time.monotonic() >= deadline:
+                                raise
+                            time.sleep(.01)
             finally:
                 if details:
                     # Only the isolated fixture's group; no apt processes or
