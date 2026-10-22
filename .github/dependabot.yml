@@ -4,12 +4,43 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions-routine:
+        applies-to: version-updates
+        patterns:
+          - "actions/*"
+        update-types:
+          - minor
+          - patch
   # Historical dependency snapshots are evidence, not maintained installations.
   # Ignore update PRs there; Dependabot alerts remain visible. exclude-paths
-  # alone would affect version updates, not security updates.
+  # alone would affect version updates, not security updates. Explicit manifest
+  # directories avoid ambiguity after a hosted security job omitted the glob rule.
+  # scripts/dependabot-policy.mjs checks this list when archive records change.
   - package-ecosystem: npm
     directories:
-      - "/docs/archive/**"
+      - "/docs/archive/2026-10-15-template-slice1/packages/create-app/templates/dashboard/admin"
+      - "/docs/archive/2026-10-15-template-slice1/packages/create-app/templates/minimal/admin"
+      - "/docs/archive/forma-144-final-before"
+      - "/docs/archive/forma-144-final-before/packages/build"
+      - "/docs/archive/forma-144-final-before/packages/compiler"
+      - "/docs/archive/forma-144-final-before/packages/core"
+      - "/docs/archive/forma-144-final-before/packages/create-app"
+      - "/docs/archive/forma-144-final-before/packages/create-app/templates/dashboard/admin"
+      - "/docs/archive/forma-144-final-before/packages/create-app/templates/minimal/admin"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/literal-style"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/safe-iframe"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/script-html"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/script-html-case"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/script-svg"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/srcdoc-declared"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/srcdoc-false"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/srcdoc-mixed-case"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/srcdoc-null"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/srcdoc-static"
+      - "/docs/archive/forma-196-native-raw-boundary/first-227/cases/typed-srcdoc"
+      - "/docs/archive/playwright-firefox-channel/originals"
+      - "/docs/archive/playwright-firefox-channel/originals/packages/core"
     schedule:
       interval: weekly
     open-pull-requests-limit: 0

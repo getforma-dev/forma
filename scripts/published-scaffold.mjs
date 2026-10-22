@@ -6,6 +6,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { setTimeout as sleepFor } from 'node:timers/promises';
 import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, packedRuntimeLock } from './release-set.mjs';
 import { runCandidate } from './candidate-scaffold.mjs';
 
@@ -15,17 +16,57 @@ export function sourceVersion(root = ROOT) {
   for (const name of NPM) assert.equal(json(join(root,`packages/${name}/package.json`)).version, version, 'source versions must be coordinated');
   return version;
 }
-export async function publishedStatus(version, request = fetch) {
+const RETRY_STATUSES = new Set([429, 502, 503, 504]);
+const TRANSIENT_NETWORK_CODES = new Set([
+  'ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN',
+  'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_SOCKET',
+]);
+function transientNetworkError(error) {
+  // Native fetch wraps connection failures in TypeError.cause; a generic
+  // TypeError, AbortError or malformed JSON is not evidence of a transient outage.
+  for (let cause = error, depth = 0; cause && depth < 4; cause = cause.cause, depth++) {
+    if (cause.name === 'TimeoutError' || TRANSIENT_NETWORK_CODES.has(cause.code)) return true;
+  }
+  return false;
+}
+export async function publishedStatus(version, request = fetch, { sleep = sleepFor, warn = console.warn } = {}) {
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3);
   if (version.endsWith('-dev')) return {ready:false, version, missing:['development versions are not published'], packages:[]};
   const packages = [], missing = [];
+  // Two retries across the entire seven-record lookup, not per package. Even
+  // nine 20-second timeouts plus 1s/2s backoff total at most 183s of network
+  // waits, leaving room for setup within the five-minute preflight job.
+  let retries = 0;
+  async function readRecord(url, name) {
+    for (;;) {
+      let response, metadata, failure;
+      try {
+        response = await request(url, {headers:{'User-Agent':'getforma-scaffold-ci'}, signal:AbortSignal.timeout(20_000)});
+        if (response.ok) metadata = await response.json();
+      } catch (error) {
+        if (!transientNetworkError(error)) throw error;
+        failure = error;
+      }
+      if (!failure && RETRY_STATUSES.has(response.status)) {
+        failure = Error(`${name}: registry readiness unreadable (${response.status})`);
+        // Release unread error bodies before requesting again; cleanup failure
+        // must not replace the original registry failure or reset its budget.
+        try { await response.body?.cancel(); }
+        catch (error) { warn(`::warning::${name}: registry error-body cleanup failed`, error); }
+      }
+      if (!failure) return { response, metadata };
+      if (retries === 2) throw failure;
+      const delay = ++retries * 1_000;
+      warn(`::warning::${name}: transient registry metadata failure; shared retry ${retries}/2 in ${delay}ms`, failure);
+      await sleep(delay);
+    }
+  }
   for (const [registry, names] of [['npm', NPM.map(n=>`@getforma/${n}`)], ['crates', CRATES]]) {
     for (const name of names) {
       const url = registry === 'npm' ? `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}` : `https://crates.io/api/v1/crates/${name}/${version}`;
-      const response = await request(url,{headers:{'User-Agent':'getforma-scaffold-ci'},signal:AbortSignal.timeout(20_000)});
+      const { response, metadata } = await readRecord(url, name);
       if(response.status === 404) {missing.push(`${name}@${version}`); continue;}
       assert(response.ok, `${name}: registry readiness unreadable (${response.status})`);
-      const metadata = await response.json();
       if(registry === 'npm') {
         assert.equal(metadata.name,name); assert.equal(metadata.version,version);
         assert(/^sha512-[A-Za-z0-9+/]+={0,2}$/.test(metadata.dist?.integrity ?? ''), `${name}: registry archive lacks SHA-512`);

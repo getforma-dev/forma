@@ -9,7 +9,8 @@
  *    before any script has touched it.
  * 2. P2 (pages with islands): a MutationObserver armed over the served root, the module's
  *    production entry imported (its evaluation is `activateIslands` with the compiled
- *    registrations), records drained through a microtask and a macrotask. Hosts whose
+ *    registrations), its load-activation promises awaited, then records drained through a
+ *    microtask and a macrotask. The observer stays connected across every yielded batch. Hosts whose
  *    `data-forma-hydrate` defers them are activated by driving the trigger (`interaction`: a
  *    pointerdown on the host; `visible`: the host scrolled into view and two frames; `idle`: an
  *    idle callback), never skipped, and every host must hold core's disposer afterwards (a host
@@ -26,7 +27,7 @@
  */
 import { canonicalizeDom } from './dom-canon.mts';
 import type { Schema } from './generate.mts';
-import { CORE_URL } from './bundle.mts';
+import { CORE_URL, ENTRY_CORE_URL } from './bundle.mts';
 
 /** Revive dates (epoch milliseconds on the wire) into `Date` by the schema, as core's decoder does. Runs in the page. */
 export function reviveByType(value: unknown, type: { kind: string; element?: unknown; inner?: unknown; object?: number }, schema: Schema): unknown {
@@ -75,6 +76,7 @@ export function describeRecord(record: MutationRecord, root: Node): Record<strin
 
 export const BOOT_SOURCE = `// FORMA-183 parity harness boot (e2e/parity/src/boot.mts)
 import { mount } from '${CORE_URL}';
+import { waitForActivation } from '${ENTRY_CORE_URL}';
 const canonicalizeDom = ${canonicalizeDom.toString()};
 const reviveByType = ${reviveByType.toString()};
 const nodePath = ${nodePath.toString()};
@@ -112,6 +114,10 @@ const settle = async () => { await new Promise(resolve => queueMicrotask(resolve
       const observer = new MutationObserver(list => { for (const record of list) records.push(describeRecord(record, root)); });
       observer.observe(target, { subtree: true, childList: true, attributes: true, characterData: true, attributeOldValue: true, characterDataOldValue: true });
       await import('/_parity/entry.mjs');
+      // Import completion is not activation completion: load islands yield in
+      // batches. Await the real entry calls; the existing boot deadline still
+      // fails a promise that never settles, and P2 still checks every host.
+      await waitForActivation();
       await settle();
       // Deferred hosts are activated by driving their triggers, never skipped. A host holds core's
       // disposer once its hydration ran (core sets it when hydration starts, removes it on failure).

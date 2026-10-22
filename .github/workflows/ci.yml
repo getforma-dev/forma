@@ -91,19 +91,27 @@ jobs:
           key: playwright-apt-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}-chromium
       - name: Install chromium's system packages, retried once
         # Normally seconds (formajs measured 22 MB in 2s); each attempt is cut
-        # at 4 minutes, with up to 60 s of waiting for the dpkg lock between
-        # them: about 9m40s at worst.
+        # at 4 minutes, with a bounded lock wait and dpkg recovery between
+        # attempts: about 9m45s at worst, including signal escalation.
         timeout-minutes: 11
         env:
           PLAYWRIGHT_VERSION: ${{ steps.pw.outputs.version }}
         run: |
+          python3 scripts/playwright-deps-timeout.test.py
+          python3 scripts/prefer-ubuntu-archive.test.py
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
           shopt -s nullglob
           mkdir -p ~/.cache/playwright-apt
           cached=(~/.cache/playwright-apt/*.deb)
           echo "${#cached[@]} archives restored from the cache"
           if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
           for attempt in 1 2; do
-            if timeout --kill-after=20s 4m npx --yes "playwright@$PLAYWRIGHT_VERSION" install-deps chromium; then
+            # Root owns the timeout and apt process group; runner-owned timeout
+            # cannot terminate privileged apt children after a stalled mirror.
+            if sudo timeout --kill-after=20s 4m env "PATH=$PATH" \
+              "npm_config_cache=$RUNNER_TEMP/playwright-root-npm" \
+              "$(command -v node)" "$(command -v npx)" --yes --ignore-scripts \
+              "playwright@$PLAYWRIGHT_VERSION" install-deps chromium; then
               break
             fi
             if [ "$attempt" = 2 ]; then
@@ -111,18 +119,15 @@ jobs:
               exit 1
             fi
             echo "::warning::installing chromium's system packages failed or ran past 4 minutes; retrying once"
-            # `timeout` runs as the runner user and cannot signal the root
-            # `apt-get` that `sudo` started, so after a cut it may still hold
-            # the dpkg lock; then `dpkg --configure -a` fails on that lock,
-            # and under errexit the step ended here, so the retry never ran
-            # (A2 audit F17a, FORMA-180). Its failure is tolerated and the
-            # lock waited out, up to 60 seconds, before attempt 2.
-            sudo dpkg --configure -a || true
-            for waited in $(seq 1 60); do
-              if ! sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; then break; fi
-              if [ "$waited" = 60 ]; then echo "::warning::the dpkg lock is still held after 60s; attempt 2 runs anyway"; fi
-              sleep 1
-            done
+            # Recover only after the lock is released. Bound recovery too;
+            # never start another apt transaction while the old one owns it.
+            if ! sudo timeout --kill-after=5s 60s sh -c '
+              while fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
+              dpkg --configure -a
+            '; then
+              echo "::error::apt lock/recovery did not complete; refusing a competing retry"
+              exit 1
+            fi
           done
           fresh=(/var/cache/apt/archives/*.deb)
           if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
@@ -497,6 +502,8 @@ jobs:
           ruby scripts/check-toolchain-policy.rb
       - name: Registry reconciliation failures and read-only workflow controls
         run: node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs
+      - name: Dependabot archive exclusions and active dependency controls
+        run: node --test scripts/dependabot-policy.test.mjs
 
   # Candidate archives are always built and tested, even while registry versions
   # are unpublished. No publication credential or registry preflight gates these.
@@ -627,9 +634,43 @@ jobs:
       - run: npm audit signatures
       - name: Portable commands and owned listener controls
         run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs
+      - name: Resolve Linux scaffold system-package cache
+        if: runner.os == 'Linux'
+        id: scaffold-pw
+        shell: bash
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - name: Cache Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-all
+          # Seed from the same image/version's WebKit cache; apt validates
+          # archives against its signed index and downloads missing packages.
+          restore-keys: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-webkit
+      - name: Restore Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
       - name: Install locked three-engine template runners
         timeout-minutes: 8
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
+      - name: Retain Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
       - name: Packed candidate full scaffold suite
         env:
           RECORD_SHA256: ${{ needs.candidate-pack.outputs.record-sha256 }}
@@ -701,9 +742,43 @@ jobs:
           restore-keys: published-registry-${{ runner.os }}-
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
+      - name: Resolve Linux scaffold system-package cache
+        if: runner.os == 'Linux'
+        id: scaffold-pw
+        shell: bash
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - name: Cache Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-all
+          # Seed from the same image/version's WebKit cache; apt validates
+          # archives against its signed index and downloads missing packages.
+          restore-keys: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-webkit
+      - name: Restore Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
       - name: Install locked three-engine template runners
         timeout-minutes: 8
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
+      - name: Retain Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
       - name: Published CLI full scaffold suite
         run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
       - name: Preserve registry scaffold evidence

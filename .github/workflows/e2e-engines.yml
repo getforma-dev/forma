@@ -80,18 +80,22 @@ jobs:
       - name: Install ${{ matrix.browser }}'s system packages, retried once
         # Normally under a minute (WebKit's 117 MB in 15s, Chromium's 22 MB in
         # 2s); each attempt is cut at 4 minutes, so a stalled mirror costs two
-        # attempts, not the job. Worst case about 9m40s; 11 holds it.
+        # attempts, not the job. Worst case about 9m45s; 11 holds it.
         timeout-minutes: 11
         env:
           BROWSER: ${{ matrix.browser }}
         run: |
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
           shopt -s nullglob
           mkdir -p ~/.cache/playwright-apt
           cached=(~/.cache/playwright-apt/*.deb)
           echo "${#cached[@]} archives restored from the cache"
           if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
           for attempt in 1 2; do
-            if timeout --kill-after=20s 4m npx playwright install-deps "$BROWSER"; then
+            # Use the installed CLI directly: no root npm invocation or shared
+            # npm cache. Root owns both the deadline and apt's process group.
+            if sudo timeout --kill-after=20s 4m env "PATH=$PATH" \
+              "$(command -v node)" "$PWD/node_modules/playwright/cli.js" install-deps "$BROWSER"; then
               break
             fi
             if [ "$attempt" = 2 ]; then
@@ -99,18 +103,15 @@ jobs:
               exit 1
             fi
             echo "::warning::installing $BROWSER's system packages failed or ran past 4 minutes; retrying once"
-            # `timeout` runs as the runner user and cannot signal the root
-            # `apt-get` that `sudo` started, so after a cut it may still hold
-            # the dpkg lock; then `dpkg --configure -a` fails on that lock,
-            # and under errexit the step ended here, so the retry never ran
-            # (A2 audit F17a, FORMA-180). Its failure is tolerated and the
-            # lock waited out, up to 60 seconds, before attempt 2.
-            sudo dpkg --configure -a || true
-            for waited in $(seq 1 60); do
-              if ! sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; then break; fi
-              if [ "$waited" = 60 ]; then echo "::warning::the dpkg lock is still held after 60s; attempt 2 runs anyway"; fi
-              sleep 1
-            done
+            # Recover only after the lock is released. Bound recovery too;
+            # never start another apt transaction while the old one owns it.
+            if ! sudo timeout --kill-after=5s 60s sh -c '
+              while fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
+              dpkg --configure -a
+            '; then
+              echo "::error::apt lock/recovery did not complete; refusing a competing retry"
+              exit 1
+            fi
           done
           fresh=(/var/cache/apt/archives/*.deb)
           if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
@@ -135,8 +136,17 @@ jobs:
           echo "::error::installing $BROWSER failed twice; see the output above"
           exit 1
 
-      # Builds core's dist, then runs every spec in this engine's project.
-      - run: npm run test:e2e:engines -w packages/core -- --project=${{ matrix.browser }}
+      # Build once. Keep the cost/bounds timing specs out of concurrent browser
+      # work; the two selections are complementary and retain every test.
+      - name: Core browser behavior
+        run: >-
+          npm run test:e2e:engines -w packages/core -- --project=${{ matrix.browser }} --workers=2 --grep-invert 'expr-cost\.spec\.ts|sr33\.spec\.ts' --output test-results/functional-${{ matrix.browser }}
+      # Functional workers have exited. Keep the same operations, strict 50 ms
+      # assertions and zero retries; do not select the best of repeated samples.
+      - name: Core expression cost and bounds timing, serial
+        working-directory: packages/core
+        run: >-
+          npx playwright test --project=${{ matrix.browser }} --workers=1 --grep 'expr-cost\.spec\.ts|sr33\.spec\.ts' --output test-results/timing-${{ matrix.browser }}
 
       # These native/parser controls are blocking in every release engine;
       # R17 runs the same tests with its provisioned Chromium by default.
@@ -189,8 +199,8 @@ jobs:
       matrix:
         browser: [firefox, webkit]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # The harness is TypeScript run by Node's type stripping (Node 24).
           node-version-file: .node-version
@@ -201,10 +211,18 @@ jobs:
           key: parity-engines
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - name: Resolve Playwright version
+      - name: Resolve Playwright version and runner image
         id: pw
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      # Reuse E2E's exact per-image/version/engine archives. apt still checks
+      # its signed package index and archive checksums before installation.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
@@ -212,14 +230,28 @@ jobs:
         timeout-minutes: 10
         env:
           BROWSER: ${{ matrix.browser }}
-        run: npx playwright install --with-deps "$BROWSER"
+        run: |
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
+          npx playwright install --with-deps "$BROWSER"
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
+      - name: Yielded activation readiness and late-write control
+        env:
+          FORMA_PARITY_BROWSER: ${{ matrix.browser }}
+        run: node --test e2e/parity/tests/activation-readiness.test.mts
       - name: Parity over step 1 in ${{ matrix.browser }}
         env:
           BROWSER: ${{ matrix.browser }}
         run: |
           node --input-type=module -e 'import assert from "node:assert/strict"; import {readExpected} from "./e2e/parity/src/expected.mts"; assert.equal(readExpected().length, 0, "blocking parity requires an empty expected-divergent list");'
           node e2e/parity/src/run.mts --step 1 --states 10 --browser "$BROWSER" --report "$RUNNER_TEMP/parity/report.jsonl"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: parity-report-${{ matrix.browser }}
