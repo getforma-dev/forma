@@ -82,7 +82,7 @@ step "packed compiler API and actual optional-compiler compatibility"
 node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test.mjs
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
-node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs
+node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs scripts/package-metadata.test.mjs
 ruby scripts/check-toolchain-policy.rb
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
 node --test scripts/release-fixture-apps.test.mjs scripts/release-measurements.test.mjs scripts/release-record.test.mjs scripts/release-skew-contract.test.mjs scripts/release-performance-baseline.test.mjs scripts/release-performance-contract.test.mjs scripts/release-performance-evidence.test.mjs scripts/release-performance-attribution.test.mjs scripts/release-record-limits.test.mjs scripts/release-record-download.test.mjs scripts/release-performance-decoder.test.mjs scripts/release-performance-durability.test.mjs
