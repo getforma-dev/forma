@@ -80,7 +80,7 @@ jobs:
       - name: Install ${{ matrix.browser }}'s system packages, retried once
         # Normally under a minute (WebKit's 117 MB in 15s, Chromium's 22 MB in
         # 2s); each attempt is cut at 4 minutes, so a stalled mirror costs two
-        # attempts, not the job. Worst case about 9m40s; 11 holds it.
+        # attempts, not the job. Worst case about 9m45s; 11 holds it.
         timeout-minutes: 11
         env:
           BROWSER: ${{ matrix.browser }}
@@ -91,7 +91,10 @@ jobs:
           echo "${#cached[@]} archives restored from the cache"
           if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
           for attempt in 1 2; do
-            if timeout --kill-after=20s 4m npx playwright install-deps "$BROWSER"; then
+            # Use the installed CLI directly: no root npm invocation or shared
+            # npm cache. Root owns both the deadline and apt's process group.
+            if sudo timeout --kill-after=20s 4m env "PATH=$PATH" \
+              "$(command -v node)" "$PWD/node_modules/playwright/cli.js" install-deps "$BROWSER"; then
               break
             fi
             if [ "$attempt" = 2 ]; then
@@ -99,18 +102,15 @@ jobs:
               exit 1
             fi
             echo "::warning::installing $BROWSER's system packages failed or ran past 4 minutes; retrying once"
-            # `timeout` runs as the runner user and cannot signal the root
-            # `apt-get` that `sudo` started, so after a cut it may still hold
-            # the dpkg lock; then `dpkg --configure -a` fails on that lock,
-            # and under errexit the step ended here, so the retry never ran
-            # (A2 audit F17a, FORMA-180). Its failure is tolerated and the
-            # lock waited out, up to 60 seconds, before attempt 2.
-            sudo dpkg --configure -a || true
-            for waited in $(seq 1 60); do
-              if ! sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; then break; fi
-              if [ "$waited" = 60 ]; then echo "::warning::the dpkg lock is still held after 60s; attempt 2 runs anyway"; fi
-              sleep 1
-            done
+            # Recover only after the lock is released. Bound recovery too;
+            # never start another apt transaction while the old one owns it.
+            if ! sudo timeout --kill-after=5s 60s sh -c '
+              while fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
+              dpkg --configure -a
+            '; then
+              echo "::error::apt lock/recovery did not complete; refusing a competing retry"
+              exit 1
+            fi
           done
           fresh=(/var/cache/apt/archives/*.deb)
           if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
