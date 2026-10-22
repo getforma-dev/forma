@@ -30,7 +30,7 @@
     "tsup": "^8.5.1",
     "typescript": "^5.7.3",
     "validate-npm-package-name": "^7.0.2",
-    "vitest": "^5.0.5"
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=22"

@@ -129,6 +129,18 @@ source fails instead of accepting stale data. The CI deny job also checks the e2
 Cargo license/source rules. `advisories.yml` repeats the check weekly; Dependabot maintains the
 GitHub Action SHA pins. cargo-deny 0.20.2 is installed with its published lockfile.
 
+Dependency security updates for active npm projects remain enabled. The root
+Vite override selects the patched 7.x line; upgrading to Vite 8/Vitest 5 is a
+separate compatibility change, including the benchmark API and matching coverage
+provider. Update Vitest and `@vitest/coverage-v8` together when their peer contract
+requires it; do not bypass npm's peer resolution.
+
+`docs/archive/**` contains historical dependency snapshots, including files bound
+to recorded evidence. Dependabot ignores update PRs for that directory while its
+security alerts remain visible. Those files are not current installations; retain
+their bytes and update the active dependency graph instead. The archive-only npm
+configuration does not disable updates or alerts for active packages/templates.
+
 A CSS build requires a local `@tailwindcss/cli`; builds never fetch it with `npx`. `alien-signals`
 is pinned exactly to 3.1.2. The private workspace uses the pinned Node build toolchain while
 Node 22/24 compatibility jobs exercise the published packages' Node 22 floor. The dated

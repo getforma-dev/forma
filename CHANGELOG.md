@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0 set will be recorded here.
+- Patch the development Vite dependency to 7.3.7 while retaining the compatible
+  Vitest 4/coverage and benchmark APIs. Avoid the unrelated Vitest 5 migration
+  proposed by the grouped security update.
+- Exclude historical dependency snapshots under `docs/archive/**` from Dependabot
+  update PRs without suppressing their alerts or changing active-project updates.
 
 ## [3.0.0] - Prepared; publication pending
 
