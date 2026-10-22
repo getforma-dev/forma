@@ -201,9 +201,17 @@ jobs:
           key: parity-engines
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - name: Resolve Playwright version
+      - name: Resolve Playwright version and runner image
         id: pw
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      # Reuse E2E's exact per-image/version/engine archives. apt still checks
+      # its signed package index and archive checksums before installation.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
@@ -212,7 +220,16 @@ jobs:
         timeout-minutes: 10
         env:
           BROWSER: ${{ matrix.browser }}
-        run: npx playwright install --with-deps "$BROWSER"
+        run: |
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
+          npx playwright install --with-deps "$BROWSER"
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
       - name: Yielded activation readiness and late-write control
         env:
           FORMA_PARITY_BROWSER: ${{ matrix.browser }}
