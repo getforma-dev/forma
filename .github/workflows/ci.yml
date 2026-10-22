@@ -497,6 +497,8 @@ jobs:
           ruby scripts/check-toolchain-policy.rb
       - name: Registry reconciliation failures and read-only workflow controls
         run: node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs
+      - name: Dependabot archive exclusions and active dependency controls
+        run: node --test scripts/dependabot-policy.test.mjs
 
   # Candidate archives are always built and tested, even while registry versions
   # are unpublished. No publication credential or registry preflight gates these.

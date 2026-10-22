@@ -7,13 +7,13 @@
  *
  * Nothing listens on a port: every URL under http://parity.invalid/ is fulfilled by `page.route`,
  * as core's state-roundtrip spec does. Core is `packages/core/dist/forma.esm.js`, served once at
- * `/_parity/core.mjs`, which every bundle imports.
+ * `/_parity/core.mjs`; entries import a pass-through that records activation promises.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium, firefox, webkit, type Browser, type Page } from '@playwright/test';
 import { BOOT_SOURCE } from './boot.mts';
-import { CORE_URL } from './bundle.mts';
+import { CORE_URL, ENTRY_CORE_URL, ENTRY_CORE_SOURCE } from './bundle.mts';
 import type { CanonNode } from './compare.mts';
 import type { Json, Schema } from './generate.mts';
 import { BOOT_FILE } from './manifest.mts';
@@ -134,6 +134,7 @@ export class ParityPage {
       if (path === '/') return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', headers: { ...this.document.headers }, body: this.document.html });
       if (path === `/_assets/${BOOT_FILE}`) return script(BOOT_SOURCE);
       if (path === CORE_URL) return script(this.core);
+      if (path === ENTRY_CORE_URL) return script(ENTRY_CORE_SOURCE);
       if (path === '/_parity/input.json') return route.fulfill({ contentType: 'application/json', body: this.input });
       if (path === '/_parity/entry.mjs' && this.entry !== null) return script(this.entry);
       if (path === '/_parity/twin.mjs') return script(this.twin);

@@ -1,7 +1,7 @@
 /**
  * The two browser bundles of a corpus module, built in-process with esbuild, `formajs` and
- * `@getforma/core` resolved to the one served core module (`/_parity/core.mjs`) so every bundle on
- * the page shares one runtime instance.
+ * `@getforma/core` resolved through a pass-through module to the one served core instance.
+ * The pass-through records activation promises without changing their timing or result.
  *
  * - The twin: the module's page function, exported as `Page`, for core's render of a state (P1).
  * - The entry: the module's own `app.ts` built through `formaSsrPlugin`, as `@getforma/build`
@@ -17,6 +17,20 @@ import { formaSsrPlugin, getSsrEntryProducts } from '@getforma/compiler';
 import { REPO } from './server.mts';
 
 export const CORE_URL = '/_parity/core.mjs';
+export const ENTRY_CORE_URL = '/_parity/entry-core.mjs';
+export const ENTRY_CORE_SOURCE = `
+export * from '${CORE_URL}';
+import { activateIslands as activate } from '${CORE_URL}';
+const pending = [];
+export function activateIslands(...args) {
+  const ready = activate(...args);
+  pending.push(ready);
+  return ready;
+}
+export async function waitForActivation() {
+  while (pending.length) await Promise.all(pending.splice(0));
+}
+`;
 
 export interface PageComponent {
   /** Repository-relative path of the file exporting the page function. */
@@ -29,7 +43,7 @@ export interface PageComponent {
 const coreExternal: esbuild.Plugin = {
   name: 'parity-core',
   setup(build) {
-    build.onResolve({ filter: /^(formajs|@getforma\/core)$/ }, () => ({ path: CORE_URL, external: true }));
+    build.onResolve({ filter: /^(formajs|@getforma\/core)$/ }, () => ({ path: ENTRY_CORE_URL, external: true }));
   },
 };
 

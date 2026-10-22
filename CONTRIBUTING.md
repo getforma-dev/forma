@@ -141,10 +141,28 @@ provider. Update Vitest and `@vitest/coverage-v8` together when their peer contr
 requires it; do not bypass npm's peer resolution.
 
 `docs/archive/**` contains historical dependency snapshots, including files bound
-to recorded evidence. Dependabot ignores update PRs for that directory while its
-security alerts remain visible. Those files are not current installations; retain
-their bytes and update the active dependency graph instead. The archive-only npm
-configuration does not disable updates or alerts for active packages/templates.
+to recorded evidence. The Dependabot configuration explicitly lists their npm
+manifest directories and ignores update PRs there; security alerts remain visible.
+Those files are not current installations. Retain their bytes and update the
+active dependency graph instead. Keep the archive directory list current when
+adding a snapshot. CI checks its coverage and rejects wildcard ignores covering
+active packages/templates. The hosted updater once omitted the configured ignore
+conditions immediately after a policy change; if another archive-only PR appears,
+inspect its updater job before closing it without merging. Local policy checks
+cannot guarantee the hosted service applies the configuration.
+
+Routine minor/patch updates to GitHub-owned Actions are grouped to avoid redundant
+CI campaigns. Major changes still need compatibility review. Keep all uses pinned
+to full commit SHAs, including less frequently exercised jobs.
+
+For a red dependency PR, inspect the failed step before treating it as an upgrade
+regression. An npm 503/timeout is an unavailable dependency service; a vulnerability,
+peer conflict or failed test is a different failure. Retain original logs, verify
+registry recovery and rerun only failed jobs on an unchanged reviewed head.
+Do not retry a repeated browser failure without investigation, suppress audits,
+accept stale advisory data or waive downstream checks that were skipped. The
+published-version metadata preflight retries transient failures within a shared
+budget; persistent registry failures remain errors. Audits remain fail-closed.
 
 A CSS build requires a local `@tailwindcss/cli`; builds never fetch it with `npx`. `alien-signals`
 is pinned exactly to 3.1.2. The private workspace uses the pinned Node build toolchain while
