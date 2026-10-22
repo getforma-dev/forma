@@ -38,16 +38,18 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-These examples target the coordinated `3.0.0` final package set. Check the
-[GitHub Release record](https://github.com/getforma-dev/forma/releases) for publication
-and verification status. The qualified RC.5 prerelease is also recorded there.
+These examples target the published, coordinated `3.0.0` package set.
+The [3.0.0 release](https://github.com/getforma-dev/forma/releases/tag/v3.0.0)
+contains its qualification and publication records.
 
 ```bash
 npm install @getforma/core@3.0.0
 ```
 
-For the separate stable 2.1.0 runtime, a CDN needs no build step or bundler.
-These pinned stable examples do not select the prepared beta or its new APIs:
+For the separate stable 2.1.0 runtime, the following URLs are retained only as
+historical examples. They use the old automatic lifecycle, not the explicit
+3.0 mount contract shown below. For current no-build usage, serve the
+`dist/formajs-runtime.global.js` artifact from your installed 3.0.0 package:
 
 ```html
 <!-- jsDelivr (recommended) -->
@@ -117,11 +119,12 @@ Verified by `src/__tests__/readme-examples.test.ts` > "the intro counter works w
 
 ## Why FormaJS
 
-**Components run once.** No virtual DOM, no diffing, no reconciliation overhead. `h('div')` returns an actual `HTMLDivElement`. When a signal changes, only the specific text node or attribute that reads it updates — not the component, not the tree.
+**Components run once.** No virtual DOM or component-tree diffing. Keyed lists still reconcile their rows. `h('div')` returns an actual `HTMLDivElement`. When a signal changes, only the specific text node or attribute that reads it updates — not the component, not the tree.
 
 **Fine-grained reactivity.** Powered by [alien-signals](https://github.com/johnsoncodehk/signals) 3.x. The signal graph tracks dependencies automatically. No dependency arrays, no stale closures, no `useCallback` / `useMemo` ceremony.
 
-**Three entry points, one engine.** Start with a CDN script tag, graduate to a full build pipeline without rewriting.
+**Three entry points, one engine.** Use JSX or hyperscript for components, or explicitly mount reviewed HTML markup.
+Native SSR additionally requires declared props and the compiler’s admitted subset.
 
 **Islands over SPAs.** Compiled `activateIslands()` validates each original SSR region before activation: successful adoption makes zero initial DOM writes, mismatches refuse without repair, and failures remain isolated per island. Load work cooperatively yields between whole islands; await `activateIslands()` for requested load completion. Deferred triggers (`visible`, `idle`, `interaction`) settle readiness once armed; disposal releases owned work. → [docs/ISLANDS.md](docs/ISLANDS.md)
 
@@ -144,7 +147,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
   Benchmarked by: bench/list.bench.ts > "same keys, same order — reconciler fast path"
 - **The historical adoption baseline was cheaper than its CSR control**, with HTML parsing subtracted. This measured the retired walker; it does not establish the strict transaction's current cost.
   Benchmarked by: bench/hydrate.bench.ts > "1000 rows: parse + adopt by data-forma-key"
-- **The CSP-safe interpreter is faster than the `eval` path it replaced** — and it needs no `unsafe-eval` in your CSP.
+- **The historical benchmark measured the CSP-safe interpreter faster than the `eval` path it replaced** — and it needs no `unsafe-eval` in your CSP.
   Benchmarked by: bench/expression.bench.ts > "8 count-dependent expressions: write → evaluate → text (×20)"
 
 ---
@@ -158,7 +161,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
 | [docs/ISLANDS.md](docs/ISLANDS.md) | Hydrating server-rendered HTML, seeding signals from server data, keyed list adoption |
 | [docs/CDN-AND-EXPORTS.md](docs/CDN-AND-EXPORTS.md) | Which CDN build to load, and what each subpath export contains |
 | [docs/COMPARISONS.md](docs/COMPARISONS.md) | Coming from React, and how this differs from Solid |
-| [docs/STABILITY.md](docs/STABILITY.md) | What is stable, what is beta, and the one known gap |
+| [docs/STABILITY.md](docs/STABILITY.md) | Shipped APIs, experimental compatibility, and removed entry points |
 | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | Benchmarked hot paths, with noise floors |
 | [SECURITY.md](SECURITY.md) · [CSP.md](CSP.md) | Threat model; running under a strict Content-Security-Policy |
 | [docs/README.md](docs/README.md) | The full documentation index, including design records |
@@ -188,7 +191,7 @@ Examples: [`examples/`](./examples) — counter, counter-jsx, csp, todo, data-ta
 
 | Package | Description |
 |---|---|
-| [@getforma/create-app](https://github.com/getforma-dev/create-forma-app) | `npx @getforma/create-app` — scaffolds a Rust server + TypeScript frontend project |
+| [@getforma/create-app](https://github.com/getforma-dev/forma/tree/main/packages/create-app) | `npx @getforma/create-app` — scaffolds a Rust server + TypeScript frontend project |
 
 ---
 

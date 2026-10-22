@@ -5,8 +5,8 @@ application repository or reinstate the declined M1 environment approval.
 Source tests and a local outbox are not evidence of enabled GitHub protections
 or delivered messages. L-60 (approved 2026-10-16) defers the live identity,
 new protection enforcement and external alert rollout beyond 3.0. The reviewed
-source and actual SR14 mutation probes remain in the 3.0 RC gate; that gate is
-still pending until its source/evidence acceptance is recorded. The deferred
+source and actual SR14 mutation probes were accepted in the 3.0 release chain;
+see the [final as-built summary](../release/V3-AS-BUILT.md). The deferred
 criteria are not passed. All publishing remains the existing tokenless
 trusted-publishing workflow.
 
@@ -18,7 +18,7 @@ retagging, D14, all product/performance gates and the real RC soak remain requir
 See [the release disposition](../release/3.0-GATE-DISPOSITIONS.md#live-governance-rollout-l-60-2026-10-16)
 and [the evidence addendum](../evidence/forma-116-live-deferral/README.md).
 
-## Current observation
+## Recorded observation (2026-10-16)
 
 Read-only checks on 2026-10-16 found `Victor-Villacis` is the sole organization
 owner and repository administrator. The active `gh` identity is also

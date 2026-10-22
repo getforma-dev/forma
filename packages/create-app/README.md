@@ -23,9 +23,10 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 
 ## Usage
 
-These registry commands target `3.0.0` and require its coordinated
-publication. For an unpublished set, use the packed candidate workflow
-described below. Release records report the qualification of each published set.
+These registry commands use the published, coordinated `3.0.0` set.
+Contributor builds of unpublished changes use the packed candidate workflow
+below. [Release records](https://github.com/getforma-dev/forma/releases/tag/v3.0.0)
+report qualification of the published set.
 
 ```bash
 npx @getforma/create-app@3.0.0 my-app
@@ -67,8 +68,8 @@ exists.
 
 | Template | Rendering | Description |
 |----------|-----------|-------------|
-| `dashboard` | Phase 1 (client mount) | DevOps admin panel — 4 pages, 8 API routes, SVG chart, Tailwind CSS, Gruvbox theme, 16 Playwright tests |
-| `minimal` | Phase 1, or Phase 2 SSR with `npm run build:ssr` | Rust server + a single-file JSX page, ready to build on |
+| `dashboard` | Explicit Browser rendering | DevOps admin panel — 4 pages, 8 API routes, SVG chart, Tailwind CSS, Gruvbox theme, 16 Playwright tests |
+| `minimal` | Browser, or native SSR with `npm run build:ssr` | Rust server + a Counter page and a static About page |
 
 The dashboard explicitly uses client rendering. The FMIR compiler walks source
 rather than executing it and accepts only the documented native subset. It
@@ -133,7 +134,7 @@ The gate requires all 19 heavy controls plus the structural suite, with no skips
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, the gates, and what a reviewer will ask |
 | [docs/TEMPLATES.md](docs/TEMPLATES.md) | Template anatomy, what the scaffolder rewrites, how to add one |
-| [docs/RENDERING-PHASES.md](docs/RENDERING-PHASES.md) | Phase 1 vs Phase 2, and the compiler rule that decides it |
+| [docs/RENDERING-PHASES.md](docs/RENDERING-PHASES.md) | Explicit Browser and native SSR modes, and the admitted compiler subset |
 | [Stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md) | The whole pipeline and its reasoning. **Start here if you are new.** |
 | [Testing policy](https://github.com/getforma-dev/forma/blob/main/docs/TESTING.md) | The standard every test in this stack is held to |
 
@@ -164,14 +165,13 @@ The gate requires all 19 heavy controls plus the structural suite, with no skips
 
 MIT
 
-## Source staging for 3.0.0
+## Source templates and published artifacts
 
-The checked-in templates now use the declared-props and finalized Pages APIs.
-Minimal now declares a Counter island over its static home markup and a
-separate empty-props About page. The native handler starts at7 while explicit
-Browser mode starts at0. Source tests pair its emitted contract and browser
-registration; final integrated adoption/zero-network acceptance and slice3's
-release/size qualification remain required.
+The checked-in templates use the declared-props and finalized Pages APIs.
+Minimal declares a Counter island over its static home markup and a separate
+empty-props About page. The native handler starts at 7 while explicit Browser
+mode starts at 0. The published 3.0.0 set includes integrated island adoption
+and static-route checks; later candidates require their own packed qualification.
 
 Source template locks are explicitly identified **seeds** at the coordinated
 package version. They retain every external registry checksum and omit only

@@ -78,11 +78,16 @@ back most often:
 
 ## Documentation
 
-Docs are held to the same standard as code. Cite the test that proves a
-claimed behaviour; do not copy a number from one document into another without
-re-running the thing that produces it; do not delete a superseded document,
-move it to [`docs/archive/`](docs/archive/) and add its entry to the index
-there.
+Docs describe implemented behavior and cite the owning code/tests. Keep the
+[documentation index](docs/README.md) current. New measurements name their source
+and environment; when summarizing an existing release, cite its actual retained
+producer and scope rather than presenting it as a fresh run.
+
+Preserve historical contracts, source snapshots and verification evidence in the
+indexed archives; some are executable test inputs. Internal work boards, quota
+notes and agent handoffs belong outside the source checkout. Preserve existing
+records before relocating them and update active links without rewriting old
+release manifests or Git history. See [documentation placement](docs/REPOSITORY-LAYOUT.md).
 
 ## Workspaces and lockfiles
 

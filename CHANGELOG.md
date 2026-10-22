@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Reconcile public guides with shipped 3.0 APIs and final release/soak evidence;
+  organize application, contributor and historical documentation, and relocate
+  internal work-board/session snapshots outside the source tree while preserving
+  original Git history and verification evidence.
+
+
 - Patch the development Vite dependency to 7.3.7 while retaining the compatible
   Vitest 4/coverage and benchmark APIs. Avoid the unrelated Vitest 5 migration
   proposed by the grouped security update.

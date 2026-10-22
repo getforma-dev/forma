@@ -1,6 +1,6 @@
 # FormaJS Full-Stack E2E Tests
 
-Browser-level verification of the entire Forma pipeline. Tests run in a real Chromium browser via Playwright. Fixtures are **auto-synced** from the FormaJS build — no manual copying.
+Browser-level verification of the Forma pipeline through Playwright. The integrated source check runs Chromium; the focused full-stack configuration runs Chromium, Firefox and WebKit. Fixtures are **auto-synced** from the current core build.
 
 ## What's Tested
 
@@ -47,14 +47,12 @@ exercises the whole Phase 2 chain, one page per case in `e2e/ssr/cases/`:
    own CSP nonce), and Playwright reads the parsed DOM, live control values and
    `FormData` before JavaScript, after activation and after interaction.
 
-The cases are the Forma Stack audit's verified failures (FORMA-001). Each one
-that fails today is written as the behaviour v2 requires: the test asserts its
-case's preconditions normally, then calls `test.fail()`, with a comment naming
-the ticket whose fix flips it, just before the defect assertion. A broken
-precondition is therefore a real failure; only the named defect is expected.
-When the fix lands, Playwright reports an unexpected pass and the job goes red
-until that line is removed. `ledger-arrival` is the positive fixture: Ledger's
-pattern of seeding an island's signals from its props before the component runs.
+These cases preserve regression coverage for the Forma Stack audit's failures
+(FORMA-001). The current regression spec requires its cases to pass; the earlier
+expected-failure annotations have been removed as the fixes landed. It checks
+served preconditions before exercising activation and interaction. The
+`ledger-arrival` fixture seeds an island's signals from its declared props before
+the component runs; this internal fixture does not establish an application migration.
 
 Since 3.0.0 (FORMA-105, DR-6) every entry has the one shape the compiler
 accepts (`BUILD-611`, [`docs/DIAGNOSTICS.md`](../docs/DIAGNOSTICS.md)): a

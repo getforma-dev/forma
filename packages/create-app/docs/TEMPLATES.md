@@ -43,9 +43,9 @@ The repository's `scripts/template-lock-seeds.test.mjs` and
 unchanged Rust source and restoration. Historical template guidance is in
 [the migration archive](../../../docs/archive/2026-10-15-template-slice1/README.md).
 
-## Slice 1 qualification
+## Recorded dependency qualification
 
-The historical FORMA-165 gate required one physical esbuild copy. Slice 1
+The historical FORMA-165 gate required one physical esbuild copy. The 3.0 template
 preserves the old external resolution `node_modules/esbuild@0.28.2` and the
 current recorded build closure at
 `node_modules/@getforma/build/node_modules/esbuild@0.28.1`. The minimal lock
@@ -56,7 +56,7 @@ match a recorded location/version and every required recorded copy to exist;
 its report records the actual inventory and optional omissions. No external
 pin is upgraded to force deduplication.
 
-## Slice 3 dependency decision
+## Retained dependency decision
 
 Keep the two reviewed template esbuild resolutions for 3.0: the direct
 0.28.2 and the candidate build closure's 0.28.1. Both satisfy the declared
@@ -76,10 +76,10 @@ does not describe that separate graph. Scripts remain off and every scaffold
 install still checks registry signatures. See
 [the migration guide](UPGRADING-3.0.md) for the consumer changes.
 
-## Slice 2 source and qualification
+## Native template source and qualification
 
 Home passes its declared count to a unary Counter with component-local state.
-The native handler starts at7; an explicit Browser build starts at0. The
+The native handler starts at 7; an explicit Browser build starts at 0. The
 compiler removes the authenticated native page mount and injects Counter's
 exact schema/binding metadata. About's empty-props page has no registered
 islands; its native manifest retains its IR and stylesheet with empty JS.
@@ -90,7 +90,8 @@ whole-page SSR hydration call. Do not wrap it in an SSR runtime conditional,
 use its return, or add a second root: unsupported entry shapes refuse.
 
 The actual emitted source tests are in `tests/template-islands.test.ts`.
-Final slice2 acceptance additionally requires the integrated strict adopter,
-actual packed handler7 → activation → increment8/reset0, zero adoption writes
-and a real static navigation with no script/worker requests. Preserve slice1's
+Packed acceptance checks the integrated strict adopter, actual handler
+7 → activation → increment 8/reset 0, zero adoption writes and a real static
+navigation with no script/worker requests. These controls shipped with the
+qualified 3.0.0 set and must pass again for a new candidate. Preserve the earlier
 raw-HTTP-only reports as historical evidence; they do not prove these claims.

@@ -6,7 +6,8 @@ Which file to load, and what each entry point contains.
 > published release. It does not describe the 3.x runtime mount contract.
 > Pin a published version in production rather than `@latest`; a CDN URL is a
 > dependency, and `@latest` is an unpinned one. The 3.x example below serves
-> the installed artifact locally rather than assuming a published v3 URL.
+> the installed 3.0.0 artifact locally. Copy `dist/formajs-runtime.global.js`
+> from that package into the served `/vendor/` directory.
 
 ---
 
@@ -62,7 +63,12 @@ are no bare specifiers and no code-split chunks for the browser to resolve.
 (`dist/index.js` is the npm entry — it code-splits and imports
 `"alien-signals"`, which a browser cannot resolve.)
 
+The following import retains the historical 2.1.0 pin. For 3.0.0, copy its
+`dist/forma.esm.js` to your served `/vendor/` directory and import from
+`/vendor/forma.esm.js` instead. Provide an element with `id="app"`.
+
 ```html
+<div id="app"></div>
 <script type="module">
   import { createSignal, h, mount } from "https://cdn.jsdelivr.net/npm/@getforma/core@2.1.0/dist/forma.esm.js";
 

@@ -36,9 +36,10 @@ does not produce a valid activation capability.
 `FORMA_E_ISLAND_SCHEMA` identifies a value outside the declared schema.
 
 Browser-shell routes mount through their browser entry without SSR preflight.
-Future adoption work may receive actual getter/setter pairs from a compiler-owned
-scope sink. This decoder does not infer setters from prop names or source slots,
-and does not implement that separate adoption transaction.
+The shipped adoption transaction receives compiler-prepared signal identities
+and writable-binding hooks. This state decoder validates the declared inputs;
+it does not infer setters from prop names or source slots. See
+[ISLANDS.md](ISLANDS.md) for the integrated public activation contract.
 
 The fixed controls are in `src/dom/__tests__/island-state.test.ts`. They include
 100 values for each supported schema kind, numeric/text boundary values, exact

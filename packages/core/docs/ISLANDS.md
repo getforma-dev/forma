@@ -49,7 +49,7 @@ no island transaction is split. Input promotion can exceed the
 background slice. Other islands continue in FIFO order, and disposal releases
 pending activation and its temporary listeners.
 
-This is the 3.0 development contract. Legacy `(element, props)` registrations,
+This is the shipped 3.0 contract. Legacy `(element, props)` registrations,
 `data-forma-props` and `#__forma_islands` no longer provide SSR state. Rebuild the
 page and browser entry together. An uncompiled SSR callback is refused; a
 Browser-shell route remains an ordinary browser mount without this preflight.
@@ -439,7 +439,7 @@ walker emits them and this runtime consumes them.
 
 - [Island state wire grammar](../../../docs/proposals/FORMA-103-STATE-WIRE.md)
   — canonical identities, declared input bindings and bounded snapshots
-- [Stack architecture §3](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)
+- [3.0 architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)
   — the contracts, and where each one is enforced
 - [FMIR format](https://github.com/getforma-dev/forma/blob/main/docs/FMIR-FORMAT.md)
   — the binary the server renders from

@@ -1,15 +1,15 @@
 # Testing policy — the whole Forma stack
 
-**Status:** normative. This is the standard a reviewer applies to any PR in
-`forma`, `formajs`, `forma-tools` or `create-forma-app`.
+**Status:** normative for the unified `getforma-dev/forma` workspace. The
+examples retain their historical source names; current paths are under
+`packages/`, `crates/` and `e2e/`.
 
 **Where it came from:** every rule below is derived from a defect one of these
 suites actually shipped — none of it is generic advice. The evidence is a
 mutation-probe audit run on 2026-08-05 (42 hand-rolled probes plus a Stryker
 run against `formajs`; 32 binary probes against `@getforma/compiler`, replayed
 through the real Rust FMIR consumer). The audit itself, with the per-file
-findings and the remediation plan it produced, is kept in the repo it audited:
-`formajs/docs/TEST-SUITE-AUDIT.md`.
+findings and the remediation plan it produced, is retained in [the historical audit](../packages/core/docs/TEST-SUITE-AUDIT.md).
 
 **Why it is worth reading before you write a test.** At audit time the
 `formajs` suite detected 69% of injected defects overall, 43% on
@@ -333,26 +333,32 @@ specific test**, or it does not go in.
 
 ## Enforcement — what runs today, and what is proposed
 
-Verified against the workflow files on 2026-08-05. Nothing in this section is
-aspirational unless it says "proposed".
+Current source is [the integrated check](../scripts/check.sh),
+[CI](../.github/workflows/ci.yml), [engine checks](../.github/workflows/e2e-engines.yml),
+[native security probes](../.github/workflows/security-probes.yml) and
+[nightly probes](../.github/workflows/nightly-probes.yml). Historical audit
+percentages above are not current coverage or mutation results.
 
-**In CI today**
-
-| Gate | Where |
+| Gate | Current owner |
 |---|---|
-| Full unit suite on every push and PR | all four repos |
-| Coverage report (text and lcov, no threshold) | `formajs` only, `npm run test:coverage`; `forma`, `forma-tools` and `create-forma-app` collect none |
-| Cross-implementation FMIR contract: the real compiler emits `.ir` files, the real Rust parser reads them and diffs against committed goldens | `forma-tools` `npm run emit:corpus` → `forma` `crates/forma-ir/src/js_emitter_contract.rs`; CI fails with regeneration instructions |
-| Linear-cost regression gate on the SSR list walk (wall time *and* allocation count) | `forma` `crates/forma-ir/tests/list_scaling.rs` |
-| Bundle-size ceilings on the real ESM import graph | `formajs` `npm run check:size` |
-| Built-artifact greps (no `new Function` in the hardened build) | `formajs` `scripts/verify-dist.mjs`, run as the last build step |
-| Windows *and* Linux matrix | `forma-tools`, `create-forma-app` — this toolchain's first field-reported bug was Windows-only and structural |
-| Scaffold E2E behind an explicit flag, as its own job and before publish | `create-forma-app` (`FORMA_SCAFFOLD_E2E=1`) |
-| 32-bit target job (`usize` is 32 bits on wasm32) and per-crate MSRV pins | `forma` |
-| Release-profile job: `cargo clippy -p forma-server --release` (with `-D warnings`) and `cargo test -p forma-server --release`. It is the only job that compiles forma-server's `cfg(not(debug_assertions))` code; 0.2.0 shipped a release-only 404 there while every other job was green | `forma` `test-release` (added 2026-10-14, after the date above) |
+| Workspace builds, unit tests, core types and packaging | `npm run check` builds/tests all four npm packages and the three Rust crates. |
+| Compiler/native FMIR contract and typed props | The integrated command regenerates the compiler corpus, checks the native fixtures and runs reader tests. |
+| Native/browser parity and values | Blocking parity and generated value-rule checks run against actual compiler, native walker and browser products. |
+| Size and native list-cost regressions | Core's import-graph size gates and native list-scaling tests remain distinct from application/browser performance. |
+| Browser interaction and serial indexed-update timing | Integrated Chromium lanes; additional engine/parity jobs cover Firefox/WebKit under their workflow triggers. |
+| Linux/Windows, Node compatibility, 32-bit, MSRV and release builds | Separate jobs in the same CI workflow, alongside the integrated command. |
+| Scaffolder integration | Packed-candidate and published-CLI jobs run on Linux and Windows. Published checks require registry availability; candidate qualification is independent. |
+| Expression and mutation controls | Integrated probe-anchor/expression checks, nightly core mutation campaign and path-triggered native security mutations. Each has its own asserted result and refusal rules. |
 
-**Proposed, not yet wired** (each is lint-grade and would have caught real dead
-weight the day it was written):
+The core coverage command remains available to contributors; availability is not
+proof that a coverage report or a threshold runs in every CI job. See the
+[release summary](release/V3-AS-BUILT.md) for source-bound campaign results.
+
+**Historical audit proposals** (not a statement of current implementation):
+
+The list below preserves the original suggestions. The targeted mutation
+workflows above now exist; a general diff-scoped mutation-coverage policy or
+every proposed lint is not implied by them.
 
 1. **No-assertion lint** — fail any `it()` body containing zero `expect(`.
 2. **Self-skip lint** — fail on `existsSync(…) { … return }`, `it.skip`,
@@ -376,9 +382,9 @@ weight the day it was written):
 
 ## Where to go next
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — what the stack is and why it is shaped
+- [`ARCHITECTURE-3.0.md`](ARCHITECTURE-3.0.md) — what the stack is and why it is shaped
   this way. Read this first if you are new.
 - [`FMIR-FORMAT.md`](FMIR-FORMAT.md) — the binary layout and its stability
   contract, i.e. the thing the cross-implementation test is defending.
-- `formajs/docs/TEST-SUITE-AUDIT.md` — the full audit: per-file findings, the
-  probe results behind every number above, and the remediation plan in flight.
+- [the historical test-suite audit](../packages/core/docs/TEST-SUITE-AUDIT.md) — the full audit: per-file findings, the
+  probe results behind every number above, and the remediation plan recorded at that time.

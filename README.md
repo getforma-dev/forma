@@ -3,91 +3,84 @@
 [![CI](https://github.com/getforma-dev/forma/actions/workflows/ci.yml/badge.svg)](https://github.com/getforma-dev/forma/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The [Forma Stack](https://getforma.dev): a reactive DOM library with
-fine-grained signals, a compiler that turns TypeScript components into a binary
-IR (FMIR), and Rust crates that render that IR to HTML on the server, so the
-server never needs a JavaScript runtime. One product, one repository, seven
-packages.
+Forma combines TypeScript UI, fine-grained signals and optional native Rust
+rendering. Write components with TSX or `h()`. Use the browser runtime on a
+static site, or compile supported components to FMIR and render them in Rust
+with typed request data. Interactive islands adopt the server's existing DOM.
+The Rust rendering path needs no JavaScript server runtime.
 
-These examples target the prepared coordinated `3.0.0` final set and require
-its publication. Select that explicit version in package install commands;
-unversioned npm commands select the stable `latest` channel. Release records
-report the qualification of each published set.
+**[Forma 3.0.0 is released](https://github.com/getforma-dev/forma/releases/tag/v3.0.0).**
+One repository ships seven coordinated packages. Start with the
+[documentation](docs/README.md), [3.0 upgrade guide](docs/UPGRADING-3.0.md), or
+[release results and limits](docs/release/V3-AS-BUILT.md).
 
+## Start an application
+
+With Node 22+ and Rust 1.85+:
+
+```sh
+npx @getforma/create-app@3.0.0 my-app --template minimal
+cd my-app
 ```
-TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
-         packages/compiler                    crates/forma-ir            packages/core
-```
 
-## The packages
+Follow the generated README to build the frontend and run the Rust server.
+The minimal template demonstrates Browser rendering and an explicit native SSR
+build; the dashboard template uses Browser rendering. See
+[scaffolder usage](packages/create-app/README.md) and
+[rendering modes](packages/create-app/docs/RENDERING-PHASES.md).
 
-| Package | Where | Published as |
-|---|---|---|
-| The client runtime: signals, `h()`, islands, hydration, the zero-build HTML runtime | [`packages/core`](packages/core) | [`@getforma/core`](https://www.npmjs.com/package/@getforma/core) |
-| The compiler: TypeScript components to FMIR, declared props and islands, the diagnostics catalogue | [`packages/compiler`](packages/compiler) | [`@getforma/compiler`](https://www.npmjs.com/package/@getforma/compiler) |
-| The build pipeline: bundling, hashing, compression, the asset manifest, the raw-markup lint | [`packages/build`](packages/build) | [`@getforma/build`](https://www.npmjs.com/package/@getforma/build) |
-| The scaffolder: `npx @getforma/create-app` | [`packages/create-app`](packages/create-app) | [`@getforma/create-app`](https://www.npmjs.com/package/@getforma/create-app) |
-| The FMIR format: parser and native HTML walker | [`crates/forma-ir`](crates/forma-ir) | [`forma-ir`](https://crates.io/crates/forma-ir) |
-| Derive macros for forma-ir (`#[derive(PageProps)]`) | [`crates/forma-ir-derive`](crates/forma-ir-derive) | [`forma-ir-derive`](https://crates.io/crates/forma-ir-derive) |
-| Typed page rendering and Axum responses, asset serving, CSP, the service worker | [`crates/forma-server`](crates/forma-server) | [`forma-server`](https://crates.io/crates/forma-server) |
+For a browser-only application or static landing page, install
+`@getforma/core@3.0.0` and follow the [core quickstart](packages/core/README.md).
+That path does not require Rust or FMIR.
 
-Each package keeps its own README, CHANGELOG and tests. The Rust half as a
-whole is described in [`crates/README.md`](crates/README.md); the stack's
-architecture, what crosses each boundary and why, in
-[`docs/ARCHITECTURE-3.0.md`](docs/ARCHITECTURE-3.0.md); the binary format in
-[`docs/FMIR-FORMAT.md`](docs/FMIR-FORMAT.md); the build diagnostics in
-[`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md).
+## Choose what runs where
 
-## One command
+| Mode | Build and runtime |
+|---|---|
+| Browser UI on static hosting | Bundle core with your TSX/JavaScript; serve HTML, CSS and JavaScript. Signals update the browser DOM. |
+| Native Rust SSR with islands | Compile the admitted TSX subset to FMIR. Rust supplies declared props and renders a complete HTML response per request; core activates declared interactive regions. |
+| Native static route | Render an island-free FMIR page in Rust with no executable JavaScript entry. This is a server-rendered route, distinct from hosting prebuilt static files. |
+| Explicit HTML runtime | Mount reviewed markup through a runtime owner with an explicit security tier and capability grants. |
 
-```bash
+Native compilation accepts a [defined subset](packages/compiler/docs/subset.md),
+not arbitrary TypeScript execution. Unsupported native source fails with a coded
+diagnostic; Browser mode is an explicit choice. Forma 3.0 does not provide React
+component compatibility, JavaScript SSR, streaming native pages or an integrated
+server-component caching layer. Application APIs, authentication and storage
+remain application responsibilities. See [architecture](docs/ARCHITECTURE-3.0.md).
+
+## Packages
+
+| Package | Purpose |
+|---|---|
+| [`@getforma/core`](packages/core) | Signals, DOM components, island adoption and the explicit HTML runtime |
+| [`@getforma/compiler`](packages/compiler) | TypeScript/TSX subset, declared schemas and FMIR emission |
+| [`@getforma/build`](packages/build) | Bundling, assets, manifests, integrity and deployment retention |
+| [`@getforma/create-app`](packages/create-app) | Minimal and dashboard starters |
+| [`forma-ir`](crates/forma-ir) | FMIR validation, typed props and native HTML walking |
+| [`forma-ir-derive`](crates/forma-ir-derive) | Rust `PageProps` derive |
+| [`forma-server`](crates/forma-server) | Typed pages, complete responses, assets and Axum integration |
+
+## Work on the framework
+
+Use the Node version in [`.node-version`](.node-version), stable Rust with
+`rustfmt` and `clippy`, and Playwright Chromium. Then run:
+
+```sh
 git clone https://github.com/getforma-dev/forma.git
 cd forma
 npm run check
 ```
 
-`npm run check` ([`scripts/check.sh`](scripts/check.sh)) installs the npm
-workspace, builds every package in both languages and runs every test: the
-crates' lints, tests and docs, the four npm packages' builds and suites, core's
-size and packaging gates, the compiler-to-walker FMIR contract, and the
-browser lanes that take a page from TypeScript source through the compiler and
-the Rust walker to a hydrated DOM in Chromium. CI runs the same command on
-every push and pull request ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
-Within that invocation, the fixture and core browser lanes reuse package builds
-that already succeeded in the same shell; missing required outputs still fail.
-Standalone build and browser commands continue to build normally. This removes
-duplicate work without removing tests. The serial indexed-update lane follows
-[the L-67 per-run cost contract](docs/release/3.0-GATE-DISPOSITIONS.md#indexed-update-cost-l-67-2026-10-17).
-[RC qualification](docs/release/RC-QUALIFICATION.md) records the original-source
-twenty-run N7 results and distinguishes them from packed P17 and release timing.
-These measurements are not a guarantee for every machine.
-It needs Node 24 (`.node-version`; the parity harness's step runs TypeScript by
-Node's type stripping, and the script stops at once on a Node without it), a
-stable Rust toolchain with `rustfmt`, `clippy` and
-Playwright's Chromium
-(`npx playwright install chromium`, once).
+This is the integrated build/test command. Additional platform, scaffold,
+security and release checks run in [Actions](.github/workflows).
+[CONTRIBUTING.md](CONTRIBUTING.md) covers setup and verification;
+[SECURITY.md](SECURITY.md) covers reporting and support windows.
 
-## Layout
-
-```
-crates/          the Cargo workspace: forma-ir, forma-ir-derive, forma-server
-packages/        the npm workspace: core, compiler, build, create-app
-e2e/             the cross-package browser lanes (compiler → walker → core), their own Cargo workspace
-docs/            the stack's documents: architecture, the FMIR format, testing policy, diagnostics
-scripts/         check.sh (the one command) and the release checks
-.github/         one CI workflow, the crates' release workflow, the engines and nightly-probe gates
-```
-
-The repository took the four repositories' histories at the merge (FORMA-113).
-An old commit is where `git log` finds it under its new path; an old tag is
-`formajs/<tag>`, `forma-tools/<tag>` or `create-forma-app/<tag>`; the crates'
-tags (`ir-v*`, `server-v*`) kept their names.
-
-## Contributing and security
-
-[`CONTRIBUTING.md`](CONTRIBUTING.md) is the way in, with each package's own
-guide beside its code. [`SECURITY.md`](SECURITY.md) says how to report a
-vulnerability and where each half's policy lives.
+`packages/` and `crates/` hold the implementation; `e2e/` holds cross-package
+fixtures; `docs/` holds guides, contracts and retained evidence. The former
+standalone repositories are maintenance sources for older lines, not the place
+to develop 3.x. See [repository and documentation layout](docs/REPOSITORY-LAYOUT.md).
 
 ## License
 

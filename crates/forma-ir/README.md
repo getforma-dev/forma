@@ -8,8 +8,7 @@ FMIR binary format parser, walker, and HTML generator for the [Forma Stack](http
 
 ## Install
 
-These examples target the `3.0.0` final set and require its coordinated
-publication. Request that version explicitly:
+These examples target the published, coordinated `3.0.0` package set. Request that version explicitly:
 
 ```toml
 [dependencies]
@@ -28,7 +27,11 @@ forma-ir = "=3.0.0"
 The on-disk layout and its stability contract are documented in
 [`docs/FMIR-FORMAT.md`](https://github.com/getforma-dev/forma/blob/main/docs/FMIR-FORMAT.md).
 
-## Quick Start
+## Low-level walker example
+
+Applications normally use [typed page rendering](../forma-server/README.md),
+which binds declared props and returns a complete response. `SlotData` is the
+low-level walker input; arbitrary JSON slot names do not replace that contract.
 
 ```rust
 use forma_ir::{IrModule, SlotData, walker};
@@ -57,7 +60,7 @@ returns a `WalkFailure` with the counts reached and the component path, the
 islands open where the walk stopped. It catches a panic inside the walk as
 `IrError::Panicked`, while the application unwinds on panic.
 
-## FMIR v3 development
+## FMIR v3
 
 The `3.0.0` package set implements FMIR v3. Modules carry a 24-byte signature/version/length/CRC
 header and a variable section table; the reader accepts writers of its own major up to its own minor; patch is ignored.
@@ -71,10 +74,11 @@ for the maintained contract and [`CHANGELOG.md`](CHANGELOG.md) for the breaking 
 includes every section, including unknown optional bytes and island extensions.
 
 The `wasm` feature and its JavaScript exports were removed in 3.0.0. Browser
-islands re-render with `@getforma/core`. `walk_island` remains internal and is
+islands adopt the compiled native markup with `@getforma/core`; explicit
+`browserOnly` islands construct their client content. `walk_island` remains internal and is
 not a supported API; server callers use the full-page walker.
 
-## Declared page props (3.0.0 development)
+## Declared page props
 
 `#[derive(forma_ir::PageProps)]` describes named Rust structs and unit enums using
 FMIR's actual props schema. `props::BoundProps::<P>::bind(module, route)` checks
@@ -130,7 +134,7 @@ If you're using Axum, use [`forma-server`](https://crates.io/crates/forma-server
 
 | Package | Description |
 |---|---|
-| [@getforma/create-app](https://github.com/getforma-dev/create-forma-app) | `npx @getforma/create-app` — scaffolds Rust server + TypeScript frontend |
+| [@getforma/create-app](https://github.com/getforma-dev/forma/tree/main/packages/create-app) | `npx @getforma/create-app` — scaffolds Rust server + TypeScript frontend |
 
 ## License
 

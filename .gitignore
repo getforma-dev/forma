@@ -45,3 +45,6 @@ e2e/fixtures/formajs.global.js
 packages/core/fuzz/expressions/out/
 packages/core/e2e/hostile-widgets/out/
 packages/core/probes/expression-floor.json
+
+# Maintainer work boards and session recovery belong outside the public checkout.
+/Tickets/

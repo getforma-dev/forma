@@ -13,12 +13,12 @@ Props flow down. You import, export and compose the same way. The difference is
 
 React re-runs your component function on every state change, diffs a virtual
 DOM, and patches the real one. FormaJS runs each component **once**. Signals
-update only the specific DOM nodes that read them. No reconciliation, no stale
-closures, no `useCallback`.
+update only the specific DOM nodes that read them. Keyed lists reconcile rows, while signal bindings update text and attributes
+without re-running the component.
 
 | React | FormaJS | What changes |
 |---|---|---|
-| `useState` | `createSignal` | Same `[value, setter]` tuple |
+| `useState` | `createSignal` | `[getter, setter]` tuple; read with `count()` |
 | `useMemo` | `createComputed` | No dependency array — auto-tracks |
 | `useEffect` | `createEffect` | No dependency array — auto-tracks |
 | `useReducer` | `createReducer` | Same dispatch pattern |
@@ -71,4 +71,4 @@ It is not a framework with opinions about routing, data fetching or state
 management. It is a reactive DOM library — you bring the architecture. The
 pieces that *are* opinionated (the compiler, the build pipeline, the Rust
 server) are separate packages you add when you want them; see the
-[stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md).
+[stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md).

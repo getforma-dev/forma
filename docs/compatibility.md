@@ -1,16 +1,11 @@
 # Forma compatibility contract
 
-This is the current 3.x development contract introduced by FORMA-112, on the
-FORMA-185 FMIR v3 format. The seven packages share a release version:
-`forma-ir`, `forma-ir-derive`, `forma-server`, `@getforma/core`,
-`@getforma/compiler`, `@getforma/build`, and `@getforma/create-app`.
-It is not a declaration that the remaining 3.0.0 milestone work has shipped.
-`scripts/release-contracts.json` states which tickets gate which milestone: the
-alpha and beta gates have accepted evidence, while RC/final obligations remain
-open. See the [beta qualification record](release/BETA-QUALIFICATION.md).
-A tag publishes only after its milestone gates, exact-main CI and tagged
-verification pass (`docs/RELEASING.md`, "Milestone gate"). Gate completion is
-not a claim of publication. Historical A2 and earlier evidence is retained.
+This is the shipped 3.x contract on FMIR v3 and manifest schema 2. The seven
+packages share a release version: `forma-ir`, `forma-ir-derive`, `forma-server`,
+`@getforma/core`, `@getforma/compiler`, `@getforma/build` and `@getforma/create-app`.
+[3.0.0 is published](release/V3-AS-BUILT.md); historical A2, beta and RC records
+retain their original scopes. Future releases require their own reviewed source,
+CI and packed qualification; a matching version label alone is not proof.
 
 ## Window and upgrade order
 

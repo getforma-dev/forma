@@ -1,5 +1,12 @@
 # Published RC burn-in and final evidence
 
+**3.0 completion:** the separate post-release receipt verifies 3,660 active
+seconds, 15 complete rounds, zero faults and complete cleanup. See
+[the final summary and original receipts](V3-AS-BUILT.md#completed-post-release-soak).
+The procedures below explain the original and repaired verification paths;
+setup requirements and earlier pending checkpoints are not the current status.
+The original publication record retains its then-deferred, zero-credit claim.
+
 L-62 replaces the former seven-day soak with at least 3,600 seconds of actual
 continuous stress work in hosted CI after a published RC has passed P17 and its
 independent whole-release D14 review. Preparing this workflow does not complete

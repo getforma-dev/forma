@@ -11,8 +11,7 @@ The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transf
 
 ## Install
 
-These examples target the `3.0.0` final set and require its coordinated
-publication. Select that version explicitly:
+These examples target the published, coordinated `3.0.0` package set. Select that version explicitly:
 
 ```bash
 npm install -D @getforma/compiler@3.0.0
@@ -186,14 +185,14 @@ imports are not package exports. The runtime surface is pinned by
 
 | Package | Description |
 |---|---|
-| [@getforma/create-app](https://github.com/getforma-dev/create-forma-app) | `npx @getforma/create-app` — scaffolds a Rust server + TypeScript frontend project |
+| [@getforma/create-app](https://github.com/getforma-dev/forma/tree/main/packages/create-app) | `npx @getforma/create-app` — scaffolds a Rust server + TypeScript frontend project |
 
 ## License
 
 MIT
 
 
-### Paired entry product transport (staged FORMA-105)
+### Paired entry product transport
 
 `formaSsrPlugin` requires esbuild `write: false`. After a successful awaited
 `build()` or `rebuild()`, call `getSsrEntryProducts(result)` on that exact result
@@ -202,9 +201,9 @@ page, IR output path and SHA-256, the emitted island definitions and
 `browserRequired`. The latter is based on the compiled definition set, including
 conditional islands; an unused registration does not make a static page require
 JavaScript. This transport does not itself remove browser code or publish files.
-The islands-only entry rewrite below is a separate compiler checkpoint. Build
-graph/manifest filtering consumes these accepted records; it remains an
-integration gate, not a consequence of calling the accessor.
+The islands-only entry rewrite below and build graph/manifest filtering
+consume these accepted records. The shipped `@getforma/build` integration
+publishes the complete product; calling the accessor alone publishes nothing.
 
 The accessor refuses failed results or replaced/mutated IR outputs. It returns
 no native records for an explicit Browser-only build; callers must require one
@@ -263,8 +262,8 @@ refused. These errors fail builds with or without strict mode.
 
 A zero-island product records `browserRequired: false`; the publisher must keep
 its explicit SSR mode/IR while omitting final JavaScript/module-preload links.
-The compiler alone does not claim a zero-request route, complete105 acceptance,
-or changed package size limits. Browser routes (`ssr: false`) remain normal
+A zero-request route additionally depends on the build manifest and server
+response policy; the compiler accessor alone does not establish that behavior. Browser routes (`ssr: false`) remain normal
 client mounts and do not use this native entry rewrite.
 
 Multiple native entry plugins in one esbuild operation share a private
@@ -288,5 +287,5 @@ loading shared modules, then composes those hooks with entry edits in original
 coordinates. Shared helper uses with conflicting writable codecs retain their
 signal tuples but receive no setter authority. Each module receives one hygienic
 hook import, and unchanged native bytes/contracts remain the authority for
-browser registration. This is compiler preparation; the104 adoption transaction
-and final combined browser/packed acceptance remain separate gates.
+browser registration. These compiler hooks feed the shipped strict adoption transaction. Browser
+and packed-package checks qualify their integration separately from emission.

@@ -52,8 +52,8 @@ FORMA_HOST=0.0.0.0 cargo run
 
 **The `/api/*` routes have no authentication.** Every one of the eight endpoints
 below answers any request that reaches the process. Today they return the mock
-data in `src/data.rs`, so exposure costs you nothing — the moment you point them
-at a real database, put authentication in front of them. The server prints a
+data in `src/data.rs`, so they demonstrate the UI without a database. Before connecting real data or
+exposing privileged operations, add application authentication and authorization. The server prints a
 warning at startup whenever `FORMA_HOST` is set to a non-loopback address.
 
 **No service worker.** `main.rs` configures forma-server's worker setting off
@@ -127,7 +127,7 @@ admin/src/
 flowchart TB
   subgraph client["Browser"]
     direction TB
-    mount["mount('#app')"]
+    mount["mount(component, '#app')"]
     signals["Signals & Effects<br/><i>createSignal · createShow · createList<br/>createComputed · createEffect · onCleanup</i>"]
     jsx["JSX → h() → Real DOM"]
     mount --> signals --> jsx
@@ -167,8 +167,8 @@ constructs fail with code, file and location. Silent placeholder output is
 not the current template contract.
 
 The minimal template demonstrates declared props and actual FMIR rendering.
-It still mounts the whole browser page with a matching initial count; island
-state adoption remains a separate migration. See the maintained
+Its native build removes the whole-page mount, adopts only the Counter island
+from declared server state, and serves About without a JavaScript entry. See the maintained
 [rendering guide](https://github.com/getforma-dev/forma/blob/main/packages/create-app/docs/RENDERING-PHASES.md)
 and [compiler contract](https://github.com/getforma-dev/forma/blob/main/packages/compiler/README.md).
 

@@ -59,17 +59,13 @@ contents, including an empty server-marked root. Use declared
 `activateIslands({ Counter })` for SSR interaction. Browser routes and explicit
 `browserOnly` islands remain supported. Public direct `hydrateIsland()` remains
 a separate caller-owned API; it does not regain compiled registration authority.
-This is a staged FORMA-105 boundary pending the compiler, FORMA-104 adoption and
-template successor integration.
+This boundary is implemented in 3.0; see the [island guide](../packages/core/docs/ISLANDS.md) and [template rendering modes](../packages/create-app/docs/RENDERING-PHASES.md).
 
-## Staged island adoption diagnostics (FORMA-104)
+## Island adoption diagnostics (FORMA-104)
 
-This is the approved target contract for the pending FORMA-104 activation
-integration. Private preparation/lifecycle helpers already use several of these
-codes; the complete host event, diagnostic location and status behavior below is
-not a claim about the currently exported activation path. No new callable public
-API is introduced by this catalogue update. Ordinary CSR error handling remains
-unchanged.
+The 3.0 activation path uses these diagnostics for checked adoption and its
+preparation/lifecycle failures. Private helpers are implementation details, not
+additional callable public APIs. Ordinary CSR error handling is separate.
 
 | Code | Boundary | Meaning and corrective action |
 | --- | --- | --- |

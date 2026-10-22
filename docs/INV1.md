@@ -52,9 +52,9 @@ boundary from FORMA-109; this specification is not a general HTML sanitizer.
 ## Verification
 
 - Native: `walker::tests::inv1_vectors`.
-- Core: `src/dom/__tests__/inv1-vectors.test.ts`, alongside the renderer contract
+- Core: `packages/core/src/dom/__tests__/inv1-vectors.test.ts`, alongside the renderer contract
   and trusted-HTML suites.
-- Browser: `e2e/inv1.spec.ts`, including a rejected-name island, a working
+- Browser: `packages/core/e2e/inv1.spec.ts`, including a rejected-name island, a working
   neighbor, retained mutation observations, and a positive later-write control.
 
 The JavaScript unit DOM has a stale `getAttribute('xml:lang')` cache after a

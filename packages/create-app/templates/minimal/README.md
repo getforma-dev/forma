@@ -11,7 +11,7 @@ cargo run
 
 Open [http://localhost:3000](http://localhost:3000). The server listens on
 loopback only. This build explicitly selects Browser routes and serves page shells.
-The home counter starts at0; `/about` shows a simple information page.
+The home counter starts at 0; `/about` shows a simple information page.
 Set `FORMA_PORT` to choose another port (0 asks the OS to assign one). The
 server prints `FORMA_LISTENING` with its address after successfully binding.
 
@@ -34,9 +34,9 @@ with `count: u32`, loads the modules, binds `pages.bind::<HomeProps>("home")`
 once and calls `pages.finalize()` before opening the listener.
 
 Each native home request calls `home.render(&HomeProps { count: 7 }, &ctx)`.
-The heading, paragraphs and count7 are already in the HTML. `Counter(props)`
+The heading, paragraphs and count 7 are already in the HTML. `Counter(props)`
 is the only registered island; its local signal starts from the validated
-server props. Increment changes7 to8 and Reset changes it to0. The surrounding
+server props. Increment changes 7 to 8 and Reset changes it to 0. The surrounding
 heading, paragraph and navigation remain server-rendered markup.
 
 The standalone `mount` in the source selects Home for the compiler. Native

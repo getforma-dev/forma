@@ -12,7 +12,7 @@ go next*. Everything with depth is here.
 | [ISLANDS.md](ISLANDS.md) | Hydrating server-rendered HTML: getting props in, seeding signals from server data, keyed list adoption, triggers, disposal |
 | [CDN-AND-EXPORTS.md](CDN-AND-EXPORTS.md) | Which build to load from a CDN, and what each subpath export contains |
 | [COMPARISONS.md](COMPARISONS.md) | Coming from React (and the one habit to break), and how this differs from Solid |
-| [STABILITY.md](STABILITY.md) | What is stable, what is beta, and the one known gap |
+| [STABILITY.md](STABILITY.md) | Shipped APIs, experimental compatibility, and removed entry points |
 
 ## Guarantees and measurements
 
@@ -38,17 +38,17 @@ so.
 
 ## The rest of the stack
 
-FormaJS is the client runtime of a four-repo product:
+FormaJS is the client runtime in the unified Forma repository, alongside three
+other npm packages and three Rust crates:
 
 ```
 TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
-         forma-tools                          forma                    THIS REPO
+         packages/compiler                    crates/forma-ir          packages/core
 ```
 
-- [Stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE.md)
-  — read this first if you are new to the stack. §3 specifies the contracts
-  this runtime shares with the server: hydration markers, `data-forma-*`
-  attributes, the island props protocol.
+- [Stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)
+  — read this first if you are new to the stack. It describes declared props,
+  typed Rust rendering and checked island adoption.
 - [Testing policy](https://github.com/getforma-dev/forma/blob/main/docs/TESTING.md)
   — the standard every test here is held to.
 - [FMIR format](https://github.com/getforma-dev/forma/blob/main/docs/FMIR-FORMAT.md)

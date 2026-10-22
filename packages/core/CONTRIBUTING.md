@@ -2,16 +2,17 @@
 
 ## Setup
 
-Node **>= 20.19.0** is required for development — that is the floor `vite`
-declares, and `package.json`'s `engines` / `devEngines` state it so `npm ci`
-warns instead of failing later in a confusing way. CI runs the same floor.
+Use the workspace toolchain pinned in the repository's `.node-version`
+(currently Node 24.22.0). Published npm packages require Node 22 or newer;
+the contributor workspace has a separate pinned toolchain.
 
 ```bash
-git clone https://github.com/getforma-dev/formajs.git
-cd formajs
-npm install
-npm test        # run tests
-npm run build   # build dist/ (ends with scripts/verify-dist.mjs)
+git clone https://github.com/getforma-dev/forma.git
+cd forma
+npm ci --ignore-scripts
+npm run build
+cd packages/core
+npm test        # run core tests
 ```
 
 ## Development
@@ -19,13 +20,13 @@ npm run build   # build dist/ (ends with scripts/verify-dist.mjs)
 - `npm test` — run vitest
 - `npm run test:watch` — watch mode
 - `npm run test:e2e` — build dist, then run Playwright against the real artifacts in Chromium (what CI runs on every merge)
-- `npm run test:e2e:engines` — the same suite in Chromium, Firefox and WebKit (`npx playwright install chromium firefox webkit` once); a release runs it before publishing, and `gh workflow run e2e-engines.yml --ref <branch>` runs it in CI
+- `npm run test:e2e:engines` — the same suite in Chromium, Firefox and WebKit (`npx playwright install chromium firefox webkit` once); a release runs it before publishing, and the unified workflow runs the corresponding browser lanes
 - `npm run build` — build all output formats, then verify them
 - `npm run check:size` — gzip the real ESM import graph per entry (the CI gate)
 - `npm run check:pack` — `publint` + `@arethetypeswrong/cli`, over the package and again over its development build (`scripts/check-pack-development.mjs`)
 - `npm run check:baseline -- [ref]` — after `npm run build`: build `ref` (default `origin/main`) in a temporary worktree and fail unless every production file under `dist/` is byte-identical to it; for a change that claims to leave the published files as they were
 - `npm run typecheck` — type check without emitting (covers `tsup.config.ts` and `scripts/`)
-- `ruby scripts/check-release-workflow.rb --self-test` and `bash scripts/test-release-artifacts.sh` — the release workflow's SR43 lint (only the publish job holds `id-token: write`, with no cache and no dependency code beside it) and the packed-tarball check the publish job runs before publishing; CI's `release-workflow` job runs both after actionlint
+- From the repository root, `ruby scripts/check-release-workflow.rb --self-test` and `bash scripts/test-release-artifacts.sh` check publishing authority and packed-artifact integrity. See [the release runbook](../../docs/RELEASING.md).
 
 ## Where the documentation lives
 
@@ -51,11 +52,10 @@ suite. That is deliberate — see `src/__tests__/readme-flagship.test.ts` and
 `src/__tests__/readme-directive-table.test.ts`, which keep their names because
 the archived hardening ledger cites them by path.
 
-This repo is one of four. The stack-wide
+This package lives in the unified Forma repository. The stack-wide
 [testing policy](https://github.com/getforma-dev/forma/blob/main/docs/TESTING.md)
-applies here too, and the `Verified by:` citation contract below is this repo's
-implementation of it — FormaJS uses it more heavily than any of its siblings, so
-if the two ever disagree, the stricter one wins.
+applies here too; the `Verified by:` citation contract below is its package-level
+implementation. Paths in these core citations are relative to `packages/core`.
 
 ## Code Style
 
