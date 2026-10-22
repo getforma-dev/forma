@@ -219,7 +219,7 @@ jobs:
         run: |
           node --input-type=module -e 'import assert from "node:assert/strict"; import {readExpected} from "./e2e/parity/src/expected.mts"; assert.equal(readExpected().length, 0, "blocking parity requires an empty expected-divergent list");'
           node e2e/parity/src/run.mts --step 1 --states 10 --browser "$BROWSER" --report "$RUNNER_TEMP/parity/report.jsonl"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: parity-report-${{ matrix.browser }}
