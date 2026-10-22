@@ -217,7 +217,7 @@ manifest. Refused watch cycles retain the previously accepted records and files.
 The compiler exposes no mutable `onStart` metadata callback.
 
 
-### Islands-only browser entries (staged FORMA-105)
+### Islands-only browser entries (FORMA-105)
 
 A native entry may select its page with a standalone named core import:
 

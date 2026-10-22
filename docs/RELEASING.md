@@ -23,7 +23,8 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version <next-unpublished-version>
+# Replace X.Y.Z with the reviewed, unpublished release version.
+node scripts/release-set.mjs version X.Y.Z
 bash scripts/install-deps.sh
 npm run check
 ```
