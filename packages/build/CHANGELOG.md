@@ -4,6 +4,9 @@
 
 Changes after the prepared 3.0.0 set will be recorded here.
 
+- **`outputDir` that is a symbolic link (a junction on Windows) is refused, with `BUILD-824`, before anything is written** (FORMA-170). The atomic swap renamed a real staging directory over the link, so the link became a directory and the previous build stayed in the link's old target, where a server reading the link kept serving it; watch mode removed the link when it emptied `outputDir`. The error names the link and its target (a dangling link is refused too), and the link, its target and the directory beside it are left untouched. A symlinked directory above `outputDir` is still followed. Following the link was considered and not chosen: it would move the output to a path the configuration does not name. No other behavior changes.
+- Tests: `tests/build.test.ts` > "refuses before writing: the link stays a link to the same target, whose files are unchanged, with nothing left beside it", "refuses a link written with a trailing separator, which the filesystem would otherwise resolve", "refuses a link to a directory that no longer exists, naming where it pointed", "does not refuse a symlinked parent: the output is swapped in beside outputDir, inside the parent the link names", "still swaps a real outputDir in whole, the previous output replaced and nothing left beside it", "refuses watch mode too: it empties outputDir first, which would remove the link"; `tests/output.test.ts` > "refuses a symlinked output before recovering or creating anything beside it (BUILD-824)".
+
 ## [3.0.0] - Prepared; publication pending
 
 - Prepare coordinated final versions, dependency locks and template source seeds from published RC.5 at12320f43, including the reviewed packed-qualification test-fixture repair. Preserve its product, tests and qualification harness unchanged.

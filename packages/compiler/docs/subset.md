@@ -893,3 +893,13 @@ minimum does not replace the compiler's current peer dependency requirement.
 **Build result.** Error: publication is refused.
 
 [Lifecycle tests](../../build/tests/preview-frame.test.ts).
+
+### BUILD-824 — outputDir is a symbolic link
+
+**Why.** outputDir itself (not a directory above it) is a symbolic link, or a junction on Windows, to a directory or to nothing. The build replaces outputDir whole: a production build renames a real staging directory over it and watch mode empties it first, so either would turn the link into a directory and leave the previous build in the link's old target, where whatever serves the link keeps reading it. The build refuses before it writes or deletes anything, and names the link and where it points.
+
+**Fix.** Set outputDir to the directory the link points at, or build into a real directory and copy it where the link points. A symbolic link above outputDir (a symlinked parent directory) is followed and is not this error. Remove a link that points at nothing.
+
+**Build result.** Error: publication is refused.
+
+[Lifecycle tests](../../build/tests/build.test.ts).

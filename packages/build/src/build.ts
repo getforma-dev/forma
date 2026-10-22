@@ -34,7 +34,7 @@ import { createRequire } from 'node:module';
 import { APP_NAME, serviceWorkerSource } from './service-worker.js';
 import { splitGraph, type SplitGraph } from './split-graph.js';
 import { entryProducts, browserEntries, type EntryProduct, type EntryProducts } from './entry-products.js';
-import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles } from './output.js';
+import { createStagingDirectory, replaceDirectory, writeFileAtomic, publishOutputFiles, symlinkedOutputProblem } from './output.js';
 import { computeIdentity, DEV_IDENTITY, identityBanner, type IdentityFile } from './identity.js';
 import { readPreviousDist, retainFrom, type PreviousRelease } from './retention.js';
 import { FRAME_RUNTIME_ASSET, readFrameRuntime, type FrameRuntime } from './preview-frame.js';
@@ -426,6 +426,18 @@ function validateConfig(config: BuildConfig): void {
         `diagnosticsJson '${config.diagnosticsJson}' is inside outputDir '${config.outputDir}': the build replaces outputDir whole, and its files are served; write the report outside it`,
       );
     }
+  }
+
+  // A production build swaps a real directory over outputDir, and watch mode
+  // empties it with rmSync and mkdirSync (which removes a link, not its
+  // target); either way a symlink becomes a directory and the previous build
+  // is stranded in its target (FORMA-170). Refused here, before anything is
+  // written, in both modes.
+  // Verified by: packages/build/tests/build.test.ts > "refuses before writing: the link stays a link to the same target, whose files are unchanged, with nothing left beside it"
+  // Verified by: packages/build/tests/build.test.ts > "refuses watch mode too: it empties outputDir first, which would remove the link"
+  if (typeof config.outputDir === 'string') {
+    const linked = symlinkedOutputProblem(config.outputDir);
+    if (linked) problems.push(linked);
   }
 
   if (problems.length > 0) {

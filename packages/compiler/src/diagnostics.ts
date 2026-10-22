@@ -323,6 +323,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     "`previewFrame` is on, and esbuild cannot minify dist/formajs-frame.global.js of the @getforma/core the bundles import: a production build writes the frame's runtime minified (its bytes are on every preview document), so the file must be JavaScript esbuild can parse for ES2022.",
     'Reinstall @getforma/core and leave the file as published: no editor, formatter or patch may rewrite it.'),
 
+  entry('BUILD-824', 'outputDir is a symbolic link',
+    "outputDir itself (not a directory above it) is a symbolic link, or a junction on Windows, to a directory or to nothing. The build replaces outputDir whole: a production build renames a real staging directory over it and watch mode empties it first, so either would turn the link into a directory and leave the previous build in the link's old target, where whatever serves the link keeps reading it. The build refuses before it writes or deletes anything, and names the link and where it points.",
+    "Set outputDir to the directory the link points at, or build into a real directory and copy it where the link points. A symbolic link above outputDir (a symlinked parent directory) is followed and is not this error. Remove a link that points at nothing."),
+
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);
 

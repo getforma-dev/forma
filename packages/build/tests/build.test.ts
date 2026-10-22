@@ -15,6 +15,9 @@ import {
   mkdirSync,
   readdirSync,
   chmodSync,
+  lstatSync,
+  realpathSync,
+  symlinkSync,
 } from 'node:fs';
 import { delimiter, join, sep } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -736,6 +739,113 @@ describe('@getforma/build — atomic output (L-21)', () => {
     expect(readFileSync(join(outDir, result.manifest.aliases['app.js']!), 'utf8')).toContain('second good build');
     expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'fonts', 'src']);
   }, 30_000);
+
+  // FORMA-170. The swap renames a real staging directory over `outputDir`; over
+  // a symlink that turns the link into a directory and leaves the previous
+  // build in the link's old target, where whatever serves the link keeps
+  // reading it (watch mode removes the link outright). Following the link is
+  // not offered: the build refuses a symlinked `outputDir` (a junction on
+  // Windows) before it writes anything.
+  describe('a symlinked outputDir (BUILD-824)', () => {
+    /** A link (a junction on Windows, which needs no privilege) at `link` to `target`. */
+    const linkTo = (target: string, link: string) => symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
+    const refused = /invalid config[\s\S]*BUILD-824 outputDir .* is a symbolic link to .*the build replaces outputDir whole/;
+
+    /** A served folder holding a previous build's files, and `outDir` linked to it. */
+    function linkedOutput(): { served: string; before: Record<string, string> } {
+      const served = join(tmpRoot, 'served');
+      mkdirSync(join(served, 'assets'), { recursive: true });
+      writeFileSync(join(served, 'index.html'), '<p>previous build</p>');
+      writeFileSync(join(served, 'assets', 'app.0123abcd.js'), Buffer.from([0, 255, 1, 254, 2]));
+      linkTo(served, outDir);
+      return { served, before: snapshot(served) };
+    }
+
+    it('refuses before writing: the link stays a link to the same target, whose files are unchanged, with nothing left beside it', async () => {
+      const { served, before } = linkedOutput();
+      const beside = readdirSync(tmpRoot).sort();
+
+      const error = await build(config).then(() => undefined, (e: unknown) => e as Error);
+      expect(error?.message).toMatch(refused);
+      expect(error?.message).toContain(outDir);
+      expect(error?.message).toContain(realpathSync(served));
+
+      expect(lstatSync(outDir).isSymbolicLink()).toBe(true);
+      expect(realpathSync(outDir)).toBe(realpathSync(served));
+      expect(snapshot(served)).toEqual(before);
+      expect(readdirSync(tmpRoot).sort()).toEqual(beside);
+      expect(readdirSync(served).sort()).toEqual(['assets', 'index.html']);
+    }, 30_000);
+
+    it('refuses a link written with a trailing separator, which the filesystem would otherwise resolve', async () => {
+      const { served, before } = linkedOutput();
+      const beside = readdirSync(tmpRoot).sort();
+
+      await expect(build({ ...config, outputDir: `${outDir}${sep}` })).rejects.toThrow(refused);
+
+      expect(lstatSync(outDir).isSymbolicLink()).toBe(true);
+      expect(snapshot(served)).toEqual(before);
+      expect(readdirSync(tmpRoot).sort()).toEqual(beside);
+    }, 30_000);
+
+    it('refuses a link to a directory that no longer exists, naming where it pointed', async () => {
+      const gone = join(tmpRoot, 'gone');
+      mkdirSync(gone);
+      linkTo(gone, outDir);
+      rmSync(gone, { recursive: true });
+      const beside = readdirSync(tmpRoot).sort();
+
+      const error = await build(config).then(() => undefined, (e: unknown) => e as Error);
+      expect(error?.message).toMatch(/BUILD-824 outputDir .* is a symbolic link to .*gone.*which does not exist/);
+
+      expect(lstatSync(outDir).isSymbolicLink()).toBe(true);
+      expect(existsSync(gone)).toBe(false);
+      expect(readdirSync(tmpRoot).sort()).toEqual(beside);
+    }, 30_000);
+
+    it('does not refuse a symlinked parent: the output is swapped in beside outputDir, inside the parent the link names', async () => {
+      const realParent = join(tmpRoot, 'real-parent');
+      mkdirSync(realParent);
+      const via = join(tmpRoot, 'via');
+      linkTo(realParent, via);
+      const outputDir = join(via, 'dist');
+
+      await build({ ...config, outputDir });
+      writeFileSync(join(srcDir, 'app.ts'), 'export const label = "second, through the parent link";\n');
+      const result = await build({ ...config, outputDir });
+
+      expect(lstatSync(via).isSymbolicLink()).toBe(true);
+      expect(lstatSync(join(realParent, 'dist')).isDirectory()).toBe(true);
+      expect(lstatSync(join(realParent, 'dist')).isSymbolicLink()).toBe(false);
+      expect(readFileSync(join(realParent, 'dist', result.manifest.aliases['app.js']!), 'utf8')).toContain('through the parent link');
+      expect(readdirSync(realParent)).toEqual(['dist']);
+    }, 60_000);
+
+    it('still swaps a real outputDir in whole, the previous output replaced and nothing left beside it', async () => {
+      await build(config);
+      writeFileSync(join(outDir, 'stale.js'), 'stale');
+      writeFileSync(join(srcDir, 'app.ts'), 'export const label = "after the link check";\n');
+
+      const result = await build(config);
+
+      expect(lstatSync(outDir).isSymbolicLink()).toBe(false);
+      expect(readdirSync(outDir)).not.toContain('stale.js');
+      expect(readFileSync(join(outDir, result.manifest.aliases['app.js']!), 'utf8')).toContain('after the link check');
+      expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'fonts', 'src']);
+    }, 60_000);
+
+    it('refuses watch mode too: it empties outputDir first, which would remove the link', async () => {
+      const { served, before } = linkedOutput();
+      const beside = readdirSync(tmpRoot).sort();
+
+      await expect(build({ ...config, watch: true })).rejects.toThrow(refused);
+
+      expect(lstatSync(outDir).isSymbolicLink()).toBe(true);
+      expect(realpathSync(outDir)).toBe(realpathSync(served));
+      expect(snapshot(served)).toEqual(before);
+      expect(readdirSync(tmpRoot).sort()).toEqual(beside);
+    }, 30_000);
+  });
 });
 
 // ---------------------------------------------------------------------------

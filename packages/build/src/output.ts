@@ -18,22 +18,30 @@
  * the directory. So the directory swap takes two renames, and each rename that
  * fails with EPERM, EACCES or EBUSY on Windows is retried for a few seconds
  * before the build gives up — with `outputDir` restored.
+ *
+ * A symlinked `outputDir` (a junction on Windows) is refused, not followed
+ * (BUILD-824): the swap renames a real directory over `outputDir`, which over
+ * a link replaces the link and strands the previous build in its target
+ * ({@link symlinkedOutputProblem}).
  */
 
 import {
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
+  readlinkSync,
+  realpathSync,
   renameSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { randomBytes } from 'node:crypto';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
 /** The filesystem calls this module makes, injectable so tests can fail them. */
 export interface OutputFs {
@@ -226,11 +234,69 @@ function recoverAbandoned(target: string): void {
 }
 
 /**
+ * Why `outputDir` itself cannot be swapped, when it is a symbolic link (a
+ * junction on Windows), else `undefined` (BUILD-824).
+ *
+ * The swap renames a real staging directory over `outputDir`. Over a link that
+ * replaces the link with a directory and leaves the previous build in the
+ * link's old target, where whatever serves the link keeps reading it. Staging
+ * beside the target instead would silently move the output somewhere the
+ * configuration does not name, so the build refuses and names both.
+ *
+ * Only the last component is a link in this sense. A symlinked ancestor
+ * (`/var` on macOS, `link/dist` with `link` a symlink to a directory) is
+ * followed on purpose: the staging directory is created beside `outputDir`
+ * through that ancestor, so it and `outputDir` are in the same real
+ * directory, and the swap replaces `outputDir` there, leaving the ancestor
+ * untouched. A link to nothing (dangling) is refused too: it is still a link
+ * the swap would replace, and its target is reported as written. The path is
+ * resolved first, so a trailing separator (which makes the filesystem follow
+ * a final link) cannot hide it. A path that does not exist, or cannot be
+ * examined, is not refused here: the build meets that error where it already
+ * does.
+ *
+ * Verified by: packages/build/tests/build.test.ts > "refuses before writing: the link stays a link to the same target, whose files are unchanged, with nothing left beside it"
+ * Verified by: packages/build/tests/build.test.ts > "refuses a link to a directory that no longer exists, naming where it pointed"
+ * Verified by: packages/build/tests/build.test.ts > "does not refuse a symlinked parent: the output is swapped in beside outputDir, inside the parent the link names"
+ */
+export function symlinkedOutputProblem(outputDir: string): string | undefined {
+  const link = resolve(outputDir);
+  try {
+    if (!lstatSync(link).isSymbolicLink()) return undefined;
+  } catch {
+    return undefined;
+  }
+  let target: string;
+  let dangling = false;
+  try {
+    target = realpathSync(link);
+  } catch {
+    dangling = true;
+    try {
+      target = resolve(dirname(link), readlinkSync(link));
+    } catch {
+      target = '(unreadable)';
+    }
+  }
+  return (
+    `BUILD-824 outputDir '${outputDir}' is a symbolic link to '${target}'${dangling ? ', which does not exist' : ''}: ` +
+    'the build replaces outputDir whole, so the swap would turn the link into a directory and leave the previous build in ' +
+    (dangling ? "the link's old target" : `'${target}'`) +
+    `; ${dangling ? 'remove the link, or ' : ''}set outputDir to ${dangling ? 'a real directory' : `'${target}'`}` +
+    ', or build into a real directory and copy it where the link points'
+  );
+}
+
+/**
  * Create an empty staging directory beside `target`, on the same filesystem,
  * so the final swap is a rename rather than a copy.
  * Verified by: packages/build/tests/output.test.ts > "removes what a killed build left beside the output, and only that"
+ * Verified by: packages/build/tests/output.test.ts > "refuses a symlinked output before recovering or creating anything beside it (BUILD-824)"
  */
 export function createStagingDirectory(target: string): string {
+  // Before anything beside `target` is touched, recovery's deletions included.
+  const linked = symlinkedOutputProblem(target);
+  if (linked) throw new Error(`@getforma/build: ${linked}`);
   recoverAbandoned(target);
   const staging = sibling(target, STAGING);
   mkdirSync(staging, { recursive: true });

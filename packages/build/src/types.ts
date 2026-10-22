@@ -54,7 +54,12 @@ export interface BuildConfig {
   routes: Record<string, RouteMapping>;
   /** CSS entries to generate (tailwind and/or concatenation) */
   cssEntries?: CssEntry[];
-  /** Output directory for all built assets */
+  /**
+   * Output directory for all built assets. The build replaces it whole, so it
+   * must not itself be a symbolic link or junction (`BUILD-824`: the build
+   * fails before writing anything, naming the link and its target); a
+   * symlinked directory above it is followed.
+   */
   outputDir: string;
   /** 3.x migration bridge for 'formajs'; warns once per build() with importing files. Prefer '@getforma/core'. */
   formaAlias?: string;
