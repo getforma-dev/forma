@@ -98,6 +98,8 @@ jobs:
           PLAYWRIGHT_VERSION: ${{ steps.pw.outputs.version }}
         run: |
           python3 scripts/playwright-deps-timeout.test.py
+          python3 scripts/prefer-ubuntu-archive.test.py
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
           shopt -s nullglob
           mkdir -p ~/.cache/playwright-apt
           cached=(~/.cache/playwright-apt/*.deb)
@@ -652,6 +654,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
           shopt -s nullglob
           mkdir -p ~/.cache/playwright-apt
           cached=(~/.cache/playwright-apt/*.deb)
@@ -759,6 +762,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
+          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
           shopt -s nullglob
           mkdir -p ~/.cache/playwright-apt
           cached=(~/.cache/playwright-apt/*.deb)
