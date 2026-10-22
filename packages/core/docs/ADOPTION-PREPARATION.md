@@ -1,5 +1,10 @@
 # Staged private adoption content helpers
 
+> Historical contributor checkpoint for FORMA-104. The staged/pending language
+> below describes that checkpoint, not release status. Forma 3.0 ships strict
+> adoption; use [ISLANDS.md](ISLANDS.md) for its public activation contract and
+> [the compiler subset](../../compiler/docs/subset.md) for current admission.
+
 These FORMA-104 helpers are source-private preparation infrastructure. They are
 not a new public API or a claim that the pending adopter switch is complete.
 Ordinary `h()`/CSR and the currently exported direct hydration implementation are

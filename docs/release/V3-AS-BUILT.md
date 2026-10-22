@@ -1,46 +1,90 @@
-# Forma 3.0 — v3 as-built system design record
+# Forma 3.0 as built
 
-Recorded 2026-10-17 under founder L-66-QUOTA. This concise record describes **published beta.4 and the qualified e75eeaaa RC candidate**. It does not certify 3.0.0 final: no RC/final tag or final publication exists at this checkpoint. It preserves v1/v2 unchanged. Final publication, deferred verification and independent record acceptance must be appended when they actually occur.
+Forma **3.0.0 was published on 2026-10-20 at 04:09:01 UTC**, from
+[`2006423b`](https://github.com/getforma-dev/forma/commit/2006423b21fe0f8dd5a510bd09bfe3b8748327a5).
+All four npm packages and three Rust crates were verified against the original
+packed archives. This public summary reconciles the delivered v3 design record
+with the published evidence. It supersedes this path's
+[beta-era checkpoint](https://github.com/getforma-dev/forma/blob/4d521384dd89319aea2ccfe4efbb603815cecc8c/docs/release/V3-AS-BUILT.md),
+which remains historical.
 
-## Implemented architecture
+## What shipped
 
-Forma consists of four coordinated npm packages (`@getforma/core`, `@getforma/compiler`, `@getforma/build`, `create-forma-app`) and three Rust crates (`forma-ir`, `forma-ir-derive`, `forma-server`). TypeScript authoring is compiled into a checked native-renderable subset and FMIR v3. Rust renders declared page data; the browser activates a literal registry of client islands and adopts compatible server DOM. Unsupported constructs produce coded compiler diagnostics or require an explicit client rendering boundary. Server functions, the WASM walker and Node rendering are removed from this release architecture.
+The coordinated set is `@getforma/core`, `@getforma/compiler`, `@getforma/build`,
+`@getforma/create-app`, `forma-ir`, `forma-ir-derive` and `forma-server`.
 
-Declared data and schema-bound state blocks link compiler output, native rendering and browser setup. JSON decoding retains pollution-key stripping and schema validation. Adoption preserves initial DOM, uses keyed list identity and coded mismatch handling, and owns reactive cleanup. Cooperative activation yields between batches of islands to keep the main thread responsive; it does not preempt an arbitrarily expensive individual island. The former startup exception is superseded by measured yielding behavior in the accepted campaigns.
+TypeScript/TSX components use fine-grained signals in the browser. For native
+rendering, the compiler accepts a defined subset, emits FMIR v3 and declares
+page/island schemas. Rust binds handwritten `PageProps` types at startup,
+finalizes every SSR route before listening, and renders typed request data into
+a complete `PageResponse`. That response keeps HTML, nonce, CSP and `no-store`
+headers together. Type mismatches refuse binding; optional Rust code generation
+is not part of 3.0.
 
-The native response boundary carries HTML and its headers together. Contextual escaping, constrained expression evaluation, CSP, Trusted Types, digest verification, worker integrity and deployment identity checks cover distinct trust boundaries. Stale or incompatible deployment state becomes inert or reloads according to the tested skew protocol. Prior asset retention supports checked upgrades. These controls and their finite hostile/mutation corpora do not establish universal security or consumer production behavior.
+The browser validates state and adopts compatible server nodes. Island activation
+yields between batches; it cannot preempt an expensive individual component.
+Static native routes omit executable JavaScript. Explicit Browser routes and the
+separate HTML runtime remain supported; the HTML runtime requires an owner,
+security tier and explicit capability grants.
 
-Minimal and dashboard scaffolds, three internal fixture applications, parity cases and packed installation tests exercise the same published package set. Release publication uses GitHub Actions OIDC trusted publishing, coordinated versions and immutable tags. No personal publishing tokens or application migrations are part of this work.
+Build assets, modules, manifests and deployment identity form one output.
+Digest checks, strict adoption, explicit raw-HTML trust boundaries, bounded
+expressions and skew/retention behavior defend different contracts. They do not
+establish universal security or application-level production guarantees.
+See [architecture](../ARCHITECTURE-3.0.md), [upgrade guidance](../UPGRADING-3.0.md)
+and [security/support](../../SECURITY.md).
 
-## Exact qualified state
+## Actual qualification
 
-| Item | Evidence and result |
+These are historical results for their identified producers, not measurements of
+every later `main` commit or every consumer device.
+
+| Evidence | Result and scope |
 |---|---|
-| Published beta.4 | Main `be8beb7d0a9291944f29881d8eb63712a68bd922`; Release 39046246527; all seven registry archives verified against the packed artifacts. |
-| beta.4 packed verification | 61/61 checks; 1165.054 s; all 40 mobile traces and 40 independent observer lists contain zero long tasks. |
-| RC packed candidate | `e75eeaaa35c98370146c4df81e7a0a4e6bec89ad`; run 39049587766; 61/61 in 1224.085 s; all 40 mobile traces/observers clear; ownership cleanup complete. |
-| Decoder on RC | Demanding 1 MiB tree p95 20.9 ms, max 23.8 ms; ASCII p95 9.2 ms. Section 8.3's raw JSON.parse estimate is not an end-to-end security-decoder ceiling. |
-| Route budgets | Counter SSR 26,208 gzip bytes; indexed SSR 28,046 bytes, below the approved 28,100-byte ceiling. These are separate routes. |
-| Indexed update / suite timing | Run 39043878960 on e75: 20/20 complete runs pass; command p95 570.93 s, max 573.99 s. Mean complete-update cost uses all 101 samples per size, keeps 10% scaling and sampled 16 ms guards. |
-| Mutation campaign | Run 39004991447 on source 0967: 249 killed + three predeclared equivalents, zero survivors; reviewed unchanged-input applicability, not a rerun on the latest docs/helper composition. |
-| SR14 probes | Run 39043883979: six clean/mutant/restored triples passed. |
-| Latest source composition | `72179d43587ffb5f837d4d3282ba95df3ce63bf4`: reviewed DAG overlap, bounded inventory visibility, six helper tests, evidence closure and P17/outer-clock documentation correction. Independent source approval and 319/319 local helpers; fresh combined timing, CI acceptance and whole-release sign-off pending. |
+| [Final release record](https://github.com/getforma-dev/forma/releases/download/v3.0.0/release-record.json) | Seven coordinated 3.0.0 archives; trusted publication completed on attempt 2 of run 39364435446. Attempt 1 uploaded core but timed out waiting for registry visibility; its failure remains recorded. |
+| [Final P17](https://github.com/getforma-dev/forma/releases/download/v3.0.0/p17.json) | 61/61 checks, 1,312.457 seconds. Its producer remains run 39364435446 attempt 1; publication retry did not rerun P17. |
+| Mobile startup and input | 20 runs each for tenant login and 100 islands, with 40 clean independent probes and zero input errors. Raw traces retain 20 pre-application layout tasks and one 54.1 ms browser-internal unattributed task. A passing counted-application gate is not a claim that every raw browser task was below 50 ms. |
+| Complete 1 MiB decoder | Demanding 20,000-string array p95 21.6 ms, max 23.2 ms; ASCII p95 15.9 ms, max 16.2 ms. Security stripping and schema checks remain enabled. These are full-decoder measurements, not the earlier approximate raw-JSON-parse estimate. |
+| Indexed update statistic | L-67 uses each run's mean complete-update cost across all 101 samples, with ≤10% scaling growth, sampled <16 ms guards and 20 successful runs. It does not report individual-edit latency p95. |
+| Mutation evidence | [Full campaign 39334278798](https://github.com/getforma-dev/forma/actions/runs/39334278798) on 329d5655: 252 cases, 249 killed and three predeclared equivalents, zero survivors/unqualified cases. Its unchanged-input applicability is retained in the accepted RC audit chain. SR14's six native production-mutation probes passed separately; neither campaign is relabeled as a fresh run on final. |
+| Whole-release audit | Independent accepted D14 review and its RC binding are retained with [published RC.5](https://github.com/getforma-dev/forma/releases/tag/v3.0.0-rc.5). Final follows the reviewed canonical RC-to-final delta. |
+| Outer release duration | 2,460.096 seconds: the separate 1,800-second outer target was missed even though P17 met its own limit. |
 
-The overlap permits packed verification to run alongside engine checks; publication still depends on both. The visibility repair adds bounded retries only after an acknowledged release write when its inventory entry is absent. Transport, malformed history and identity errors still fail. Neither fix is claimed to have improved measured release duration yet. Actual beta.4 outer elapsed 2461.377 s missed the 1800 s target even though its distinct P17 clock passed. One record-only retry completed beta publication; original failed evidence remains preserved.
+The 28,100-byte gzip N2 limit applies to Forma code attributed to the release
+fixture routes; package bundle caps are separate. It is not a maximum for an
+entire application's code or a responsiveness guarantee. Keep framework
+regression budgets strict and measure real browser behavior for an application.
 
-## Decisions, limits and deferred verification
+## Completed post-release soak
 
-- L-60 defers the separate agent identity, new founder-only protection rollout and external alert service. Existing review, CI, tag and trusted publishing controls remain.
-- L-61 separates the descriptive raw-parse estimate from measured complete decoding with security invariants. Recorded p95 is source/environment-specific, not a universal physical guarantee.
-- L-67 adopts per-run mean complete indexed-update cost prospectively. Raw tails stay recorded; intermittent relative spikes may pass. Historical failed runs are not relabeled.
-- Existing L-66 concerns trace attribution. **L-66-QUOTA (2026-10-17)** is a separately named founder directive to pause now and defer work; it does not overwrite attribution history.
-- Founder now defers L-62's full 3600-second active zero-fault burn-in to Thursday as post-release verification. Credited time is **zero**. Current release validators still enforce the previous pre-final evidence chain; implementing the policy transition remains work, not a passed gate.
-- L-65 final clean-room acceptance of the composed docs/helper tree is deferred. Interim review found a clock-documentation issue corrected in source; no final audit acceptance is asserted.
-- FORMA-207 remains unresolved: the original 99.342 ms Chrome Reading Mode task did not recur in bounded captures or later campaigns. Nonrecurrence does not prove its cause or universal safety. Monitor paused.
-- FORMA-192, FORMA-147 and Appendix E external consumer migrations remain outside scope. Field device behavior, application operational results and future six-month support delivery are not established by these lab tests.
+L-66-QUOTA allowed the required active burn-in after final publication. The
+original final record therefore correctly says **deferred, zero credit**. It
+has not been rewritten to claim a pre-publication pass.
 
-## Handoff and halt
+The separate [completion receipt](https://github.com/getforma-dev/forma/releases/download/v3.0.0/post-release-soak-verification-v2.json)
+and [independent review](https://github.com/getforma-dev/forma/releases/download/v3.0.0/post-release-soak-independent-review.md)
+verify **3,660 active seconds, 15 complete rounds, zero faults and complete
+cleanup** in [run 39372081554](https://github.com/getforma-dev/forma/actions/runs/39372081554).
+The payload was the authenticated published RC.5 set; a separately reviewed
+donor supplied orchestration. The original failed post-final campaign remains
+failed. See [burn-in procedure and provenance](RC-BURN-IN.md).
 
-The authoritative operational checklist is [Tickets/THURSDAY-BACKLOG.md](https://github.com/getforma-dev/forma/blob/forma-3-rc1-preparation/Tickets/THURSDAY-BACKLOG.md); local copy is `~/dev/Forma/Tickets/THURSDAY-BACKLOG.md`. It records exact evidence paths, stopped workers, guarded founder commands and the validator gap. No false audit/burn-in artifact may substitute for deferred work. Ordinary green main CI alone does not authorize the current final publisher.
+## Limits and work outside this release
 
-This Markdown snapshot is committed now at the founder's request. PDF/HTML/DOCX rendering and post-final archival reconciliation are deferred; no rendered delivery or final publication is claimed. On an explicit resumption, finish the release-policy implementation or original evidence chain, publish through trusted Actions, verify all seven final packages, and append actual final facts. Halt before any consumer migration.
+- No JavaScript SSR, WASM walker, server-function API, arbitrary native TypeScript
+  execution, streaming native-page response or integrated server-component cache.
+  Hashed asset caching and explicit asset retention are different mechanisms.
+- Native props/schema agreement is checked; matching TypeScript declarations and
+  Rust structs are still authored separately.
+- Lab results do not certify reference-phone performance, field reliability,
+  every hardware target or any external application's migration.
+- L-60's distinct agent identity, new live protection enforcement and external
+  alert delivery remain deferred. Existing review, CI, tag policy and trusted
+  publishing still apply.
+- Older supported lines receive Critical/High maintenance through 2027-04-20
+  under the [published support policy](SUPPORT-AND-RECALL.md). That is an ongoing
+  obligation, not proof of future response times.
+
+The release and delivered v3 record are complete. Application migrations and
+feature proposals are separate work; this record does not start them. Current
+maintenance commits do not retag or replace the immutable 3.0.0 archives.

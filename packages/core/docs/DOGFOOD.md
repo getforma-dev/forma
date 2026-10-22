@@ -1,5 +1,11 @@
 # Forma dogfood findings
 
+> Historical cross-repository findings ledger. Repository names, release pins
+> and review states below belong to the recorded work; they do not describe
+> current 3.0 qualification or authorize application migrations. Current
+> framework contracts are in [the 3.0 architecture](../../../docs/ARCHITECTURE-3.0.md)
+> and [the public runtime index](README.md).
+
 Forma applications are integration tests for the stack. When an application exposes a
 framework or toolchain defect, the fix belongs in the owning repository and the
 application must verify the released or linked fix before the finding is closed.

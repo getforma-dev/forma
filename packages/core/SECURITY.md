@@ -268,10 +268,10 @@ Stated here rather than left for a reader to discover:
 
 | Version | Supported |
 |---------|-----------|
-| 3.0.x | Release candidate prepared; final publication pending. Report candidate vulnerabilities through the same process above. |
-| 2.1.x | Yes |
-| 2.0.x | Security fixes only — upgrade to 2.1, which is additive within 2.x |
-| 1.5.x | Security fixes only |
-| 1.1.x – 1.4.x | No — upgrade to 2.0 |
-| 1.0.x | No — upgrade for the 1.1–2.0 correctness, security and RPC hardening |
-| < 1.0 | No |
+| 3.0.x | Current unified major; Critical and High security fixes under the stack policy. |
+| 2.x | Maintenance line; Critical and High fixes through the date in the stack policy. |
+| < 2.0 | No |
+
+The [stack security policy](../../SECURITY.md#supported-versions) is the
+authoritative support schedule and response target for published releases.
+Its dates derive from the original publication records.

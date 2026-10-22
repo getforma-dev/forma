@@ -9,8 +9,7 @@ Production build pipeline for [FormaJS](https://github.com/getforma-dev/forma) a
 
 ## Install
 
-These examples target the `3.0.0` final set and require its coordinated
-publication. Select that version explicitly:
+These examples target the published, coordinated `3.0.0` package set. Select that version explicitly:
 
 ```bash
 npm install -D @getforma/build@3.0.0
@@ -698,16 +697,16 @@ TypeScript and JavaScript, inline scripts in HTML included:
 | Exit | What the lint finds |
 |---|---|
 | `trustedHtml` | Each call of `trustedHtml()`, under any name it is imported or destructured as (`@getforma/core`, `./runtime`, the CDN's `FormaRuntime`), and each reference to it that is not a call, or that exports it under another name. |
-| `dangerouslySetInnerHTML` | Any `__html` key, wherever it is written, whose value is not a `trustedHtml(…)` call or a `const` in scope bound to one (a string still works in 2.x and warns in development); and the prop itself set to a value the lint cannot read as `{ __html: … }`: by JSX, `h()`, a quoted or computed key (a `const` holding the name included), shorthand, `obj.prop =`, `obj['prop'] =` or `Reflect.set(obj, 'prop', …)`. |
+| `dangerouslySetInnerHTML` | Any `__html` key, wherever it is written, whose value is not a `trustedHtml(…)` call or a `const` in scope bound to one (3.0 refuses a plain string at this sink); and the prop itself set to a value the lint cannot read as `{ __html: … }`: by JSX, `h()`, a quoted or computed key (a `const` holding the name included), shorthand, `obj.prop =`, `obj['prop'] =` or `Reflect.set(obj, 'prop', …)`. |
 | `setHTMLUnsafe` | Core's `setHTMLUnsafe(el, markup)` given markup not traced to `trustedHtml()`. |
 | `template` | Core's `template(markup)`, likewise. |
 | `templateMany` | Core's `templateMany(markup)`, likewise. |
-| `reconcile` | The runtime's `reconcile(el, markup)`, likewise. |
-| `mountMarkup` | The runtime's `mountMarkup(root, markup, options)` (core 2.1.0's tiered mount), likewise: a string still works in 2.x. |
+| `reconcile` | A legacy runtime `reconcile(el, markup)` call, likewise. The lint recognizes this removed API for migration audits; use a `mountMarkup` handle's `update` in 3.0. |
+| `mountMarkup` | The runtime's `mountMarkup(root, markup, options)` with an explicit tier, likewise: 3.0 requires trusted markup. |
 | `MountHandle.update` | `update(markup)` on the handle `mountMarkup()` returns, given markup not traced to `trustedHtml()`: on a variable, field or property assigned the handle (`=`, `??=`, `\|\|=`, `&&=`, or an arm of a ternary), by dot or by bracket (`w.update(…)`, `w['update'](…)`), chained on the call (`mountMarkup(…).update(…)`), or destructured from it (`const { update } = mountMarkup(…)`, `{ update: up }`). The follow is by name, file-wide: a second object held under a handle's name, or another `update` destructured in the same file, is reported too, and an entry on the list says so. |
 | `srcdoc` | A `srcdoc` prop, attribute or property (any case) set to a value not traced to `trustedHtml()`: JSX, `h()`, a quoted or computed key, `setAttr`/`setAttribute(…, 'srcdoc', …)` (a template literal or a `const` holding the name included), `.srcdoc =`, `['srcdoc'] =`, `Reflect.set` and `Object.defineProperty`. |
-| `core-reexport` | `export * from '@getforma/core'` (or a subpath, or `export * as x from …`): every raw sink of core's behind the application's own module, where the lint does not follow its importers. A named re-export of a sink (`export { reconcile } from '@getforma/core/runtime'`, or a sink imported from core and exported) is reported under the sink's own exit. |
-| `h('script')` | A `script` element built by core's `h()`: `h('script', …)` (any case), under a name `h` is imported as, on core's namespace, or JSX `<script>`. Its `src` runs under `'strict-dynamic'`; it warns in development and 3.0.0 refuses it (FORMA-109). |
+| `core-reexport` | `export * from '@getforma/core'` (or a subpath, or `export * as x from …`): every raw sink of core's behind the application's own module, where the lint does not follow its importers. A named re-export of a sink (`export { mountMarkup } from '@getforma/core/runtime'`, or a sink imported from core and exported) is reported under the sink's own exit. |
+| `h('script')` | A `script` element built by core's `h()`: `h('script', …)` (any case), under a name `h` is imported as, on core's namespace, or JSX `<script>`. Its `src` runs under `'strict-dynamic'`; 3.0 refuses it in development and production (FORMA-109). |
 
 Markup, in HTML files and in string literals in either language:
 
@@ -849,7 +848,7 @@ What it cannot see, and review must:
 
 | Package | Description |
 |---|---|
-| [@getforma/create-app](https://github.com/getforma-dev/create-forma-app) | `npx @getforma/create-app` — scaffolds a Rust server + TypeScript frontend project |
+| [@getforma/create-app](https://github.com/getforma-dev/forma/tree/main/packages/create-app) | `npx @getforma/create-app` — scaffolds a Rust server + TypeScript frontend project |
 
 ## License
 

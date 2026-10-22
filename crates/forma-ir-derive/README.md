@@ -3,7 +3,7 @@
 `#[derive(PageProps)]` supplies Forma's Rust page contract. Use its re-export
 from `forma-ir`; applications do not need a direct dependency on this proc-macro
 crate. The historical version 0.0.0 was a reservation placeholder. The current
-3.0.0 development implementation supports the declared FMIR props schema.
+3.0.0 implementation supports the declared FMIR props schema.
 
 ```rust
 use forma_ir::PageProps;

@@ -9,7 +9,7 @@ move. **Experimental** means do not build on it yet. **Deprecated** means it
 still works as documented and is removed in the major its row names; a
 [development build](#development-builds) logs a coded warning, and an installed
 package shows it as `@deprecated` in its types. See
-[Deprecated entry points](#deprecated-entry-points).
+[Removed in 3.0.0](#removed-in-300).
 
 | Feature | Status | Notes |
 |---|---|---|
@@ -22,15 +22,15 @@ package shows it as `@deprecated` in its types. See
 | `createStore` (deep reactivity) | **Stable** | Membership changes (`Object.keys`, spread, `for…in`) are not reactive by design |
 | Components (`defineComponent`, lifecycle) | **Stable** | |
 | Context (`createContext`, `provide`, `inject`) | **Stable** | |
-| Islands (`activateIslands`, disposal, triggers) | **3.0 beta candidate** | 156 tests across 12 dedicated files †; accepted beta-source evidence for strict activation, later materialization, size and packed acceptance is in the [beta record](../../../docs/release/BETA-QUALIFICATION.md). Each later packed set requires fresh release qualification. |
+| Islands (`activateIslands`, disposal, triggers) | **Shipped in 3.0.0** | 156 tests across 12 dedicated files †; strict activation validates and adopts compiled islands without initial repair writes. The [3.0.0 release record](https://github.com/getforma-dev/forma/releases/tag/v3.0.0) contains packed qualification; a test count alone is not a coverage or performance guarantee. |
 | `createHistory` (undo/redo) | **Stable** | Takes a `[get, set]` tuple; returns a controls object, not a tuple |
 | `createReducer` | **Stable** | |
 | `createResource` / `createSuspense` | **Stable** | Abortable; the Suspense boundary is captured at resource creation |
 | `createPortal`, `svg()`, `template()` | **Stable** | |
 | `trustedHtml()`, the raw-HTML entry every raw sink takes | **Stable** | A plain string at a raw sink, and `h('script')`, are refused: see [Deprecated forms](#deprecated-forms). |
 | `data-fetch`, `data-transition:*`, `data-ref` | **Stable** | |
-| Tiered mount (`mountMarkup(root, markup, { tier, grants, config })`) | **3.0 development** | Every call names a tier. Omitted grants give none; explicit fetch, DOM and navigate grants bound the handed root. The handle owns update/disposal. See [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants). |
-| Preview frame runtime (`dist/formajs-frame.global.js`) | **Beta** | New in 2.1.0: the runtime a server writes inline into the opaque-origin preview frame; renders the module its host sends in tier `'unreviewed'`. Its message protocol (`module` in; `ready`, `resize`, `error` out) may still move before 3.0.0. |
+| Tiered mount (`mountMarkup(root, markup, { tier, grants, config })`) | **Shipped in 3.0.0** | Every call names a tier. Omitted grants give none; explicit fetch, DOM and navigate grants bound the handed root. The handle owns update/disposal. See [HTML-RUNTIME.md](HTML-RUNTIME.md#mounting-markup-you-did-not-write-tiers-and-grants). |
+| Preview frame runtime (`dist/formajs-frame.global.js`) | **Beta** | New in 2.1.0: the runtime a server writes inline into the opaque-origin preview frame; renders the module its host sends in tier `'unreviewed'`. Its message protocol (`module` in; `ready`, `resize`, `error` out) remains marked beta. |
 | Tierless HTML runtime lifecycle and automatic mounting | **Removed in 3.0.0** | Use `mountMarkup(root, trustedHtml(markup), { tier, grants, config })` and its update/unmount handle. Importing the runtime and DOM changes never bind markup. The obsolete manual attribute grants no authority; development only warns `FORMA_W_MANUAL_MOUNT_REMOVED`. |
 | TC39 Signals compat (`State`, `Computed`) | **Beta** | Tracks an evolving TC39 proposal |
 | Development build (the `development` export condition) | **Beta** | Each subpath's `development` condition selects a twin under `dist/dev/` that keeps the `__DEV__` warnings; the CDN bundles have none. What the warnings say may change in any release. See [Development builds](#development-builds). |
@@ -48,7 +48,7 @@ Verified by `src/__tests__/docs-truth.test.ts` > "the island coverage figure mat
 
 `@getforma/core/server`, `@getforma/core/ssr` and `@getforma/core/wasm` no longer
 resolve. Call authenticated Rust routes with `fetch` for server work, render
-pages with forma-server, and re-render islands with core's `h()`.
+pages with forma-server, and activate compiled islands with `activateIslands()`.
 `@getforma/build` rejects `"use server"` directives with `BUILD-808`.
 The [pre-removal API documentation](archive/2026-10-15-legacy-apis/STABILITY.md)
 is retained for 2.x users.
@@ -58,10 +58,10 @@ Verified by `src/__tests__/package-exports.test.ts` > "publishes the exact v3 su
 ## Explicit HTML runtime migration
 
 The runtime's `initRuntime`, `destroyRuntime`, `mount`, `unmount`, `reconcile`,
-`setDebug`, `setDiagnostics` and `setDirectiveMap` exports are removed in3.0.0.
+`setDebug`, `setDiagnostics` and `setDirectiveMap` exports are removed in 3.0.0.
 Use `mountMarkup(root, trustedHtml(markup), { tier, grants, config })`,
-`handle.update()` and `handle.unmount()`. The component entry's `mount()` is
-unchanged. No automatic scan, body observer or tierless warning path remains.
+`handle.update()` and `handle.unmount()`. The component entry's `mount()` constructs Browser content and refuses
+server-marked roots; it is not a whole-page hydration API. No automatic scan, body observer or tierless warning path remains.
 The obsolete `data-forma-mount="manual"` attribute only produces the development
 migration hint `FORMA_W_MANUAL_MOUNT_REMOVED`; production omits that warning.
 

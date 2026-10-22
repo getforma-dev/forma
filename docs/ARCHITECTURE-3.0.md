@@ -36,6 +36,15 @@ Deployment identity couples served HTML and JavaScript. A mismatch remains inert
 
 R17 checks the integrated source; the blocking parity harness compares native and browser products. P17 runs against all seven packed artifacts with workspace builds unavailable, including both templates, internal fixture applications, security and deployment drills, and recorded performance measurements. Independent review and green applicable CI precede merge commits. Publishing uses the trusted-publishing workflow and immutable version tags.
 
-The current release decisions are documented in [gate dispositions](release/3.0-GATE-DISPOSITIONS.md): N2 is 28,100 Forma gzip bytes per route under L-64, conditional on the full 20-run strict 50 ms startup qualification, the decoder criterion follows L61, and L62 requires a one-hour fault-free packed-RC CI burn-in after RC qualification and the independent whole-release audit. Live identity/protection/alert rollout is explicitly deferred under L60. None of those statements is a claim that pending measurements have passed. External application migrations are outside this release's scope.
+The [3.0 as-built summary](release/V3-AS-BUILT.md) records actual final publication,
+P17 results and the completed post-release burn-in. The [gate decisions](release/3.0-GATE-DISPOSITIONS.md)
+retain the original scopes and deferrals. N2 bounds Forma code on the release
+fixtures at 28,100 gzip bytes, not total application size. The startup gate counts
+application tasks separately from retained browser/layout observations; field
+performance still requires measurement. L-60's live identity/protection/alert
+rollout remains deferred. External application migrations are separate work.
 
-The [historical architecture](ARCHITECTURE.md) preserves earlier rationale and APIs. It is not the current API reference; the eventual v3 as-built design record will pin the final release and its actual qualification evidence.
+The [historical architecture](ARCHITECTURE.md) preserves earlier rationale and
+APIs. It is not the current API reference. The 3.0 native path emits complete
+responses, with no integrated streaming-page or server-component cache layer.
+Static asset caching and deployment retention do not imply request-data caching.

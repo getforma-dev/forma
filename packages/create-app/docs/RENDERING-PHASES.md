@@ -8,7 +8,7 @@ A failed SSR render returns a coded error; it never selects the browser mode.
 
 Minimal declares `HomeProps { count: number }` in its same-file TypeScript
 page and a matching derived Rust struct. `build:ssr` emits actual FMIR and
-Rust supplies7 to Counter through the declared state contract. Its unary
+Rust supplies 7 to Counter through the declared state contract. Its unary
 Counter owns the signal; the authenticated native root mount is removed from
 the browser product. An explicit Browser build retains its independent zero
 default. About has empty props and no islands: its native route retains IR
@@ -17,7 +17,7 @@ zero-write adoption; the packed activation checks qualify that separately.
 
 Dashboard retains an explicit Browser route for every page. It has no compiler
 dependency and no SSR build command. Its API-backed client behavior has not
-been migrated to declared server props in slice 1.
+been migrated to declared server props.
 
 The compiler reads source rather than executing it. Unsupported constructs
 refuse with mandatory codes; strict builds also reject advisory diagnostics. Consult the maintained

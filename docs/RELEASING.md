@@ -1,6 +1,10 @@
 # Unified releases
 
-FORMA-187 prepares the merged repository for one release of seven packages.
+The unified repository publishes seven coordinated packages. **3.0.0 is already
+published**; its [as-built summary](release/V3-AS-BUILT.md) records qualification
+and completed post-release verification. This document explains the release
+mechanisms and retains historical 3.0 examples. Never reuse an existing tag or
+version. For a new release, first prepare its own reviewed contract and evidence.
 The checked-in contract record, `scripts/release-contracts.json`, states which
 tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
 every gate of its milestone and of the earlier milestones is done, except the
@@ -19,7 +23,8 @@ Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime
 and crate MSRV floors remain independent and retain their CI matrix.
 
 ```
-node scripts/release-set.mjs version 3.0.0
+# Replace X.Y.Z with the reviewed, unpublished release version.
+node scripts/release-set.mjs version X.Y.Z
 bash scripts/install-deps.sh
 npm run check
 ```
@@ -28,7 +33,7 @@ The version command changes seven manifests, their exact internal requirements,
 the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `-dev` version also aligns the current
 template source seeds; it names no publishable milestone.
-Use the next unpublished version for the intended milestone. Add its root
+Replace the placeholder with the next unpublished version for the intended milestone. Add its root
 CHANGELOG heading (for example `## [3.0.0]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.

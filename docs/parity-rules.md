@@ -5,8 +5,10 @@ finite browser gates. The FORMA-182 qualification follow-up extends rule 1
 to ordinary SSR/browser-shell metadata, relocates the frozen namespace vectors
 with a real native producer, and adds the seeded three-path campaign in
 `e2e/value-rules/`. Its first pilot found and preserved a rule-2 decimal tie
-regression. The full million-comparisons-per-rule qualification and exact
-release evidence remain required; the pilot is not a completion claim.
+regression. The subsequent [source-qualified campaign](release-evidence/value-rules-qualification.md)
+completed seven million comparisons plus 123,118 expected refusals. That result
+belongs to its recorded source; [final release evidence](release/V3-AS-BUILT.md)
+is separate, and the original failed pilot remains failed.
 `renderBoth` is FORMA-184's private harness helper. Namespace-stack/dynamic
 SVG-title and native non-boolean `SHOW_IF` refusals remain explicit 3.1
 proposals under L-57.

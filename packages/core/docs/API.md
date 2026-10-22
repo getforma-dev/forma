@@ -1,7 +1,7 @@
 # Core API
 
 Everything on this page is exported from `@getforma/core` unless a subpath is
-named. For the network, storage, server and SSR entry points see
+named. For the network, storage and runtime entry points see
 [`CDN-AND-EXPORTS.md`](CDN-AND-EXPORTS.md); for island hydration see
 [`ISLANDS.md`](ISLANDS.md).
 
@@ -9,9 +9,9 @@ named. For the network, storage, server and SSR entry points see
 
 ## The `h()` function
 
-`h()` is the core of FormaJS rendering. Every component — whether written in
-JSX, hyperscript, or compiled from the HTML runtime — resolves to `h()` calls
-that create real DOM elements.
+`h()` is the core of FormaJS rendering. JSX components compile to `h()` calls, and hyperscript calls `h()` directly
+to create real DOM elements. The separate HTML runtime binds explicitly
+mounted markup through its directive engine.
 
 ```ts
 h(tag, props?, ...children)

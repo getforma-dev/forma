@@ -10,7 +10,7 @@ These files are never imported by the TypeScript build or by any vitest suite;
 they are read off disk exactly as the plugin reads a real page, so the corpus
 exercises the shipped code path rather than a test-only re-implementation.
 
-## Key paths (FORMA-181 checkpoint A)
+## Historical key-path checkpoint (FORMA-181 A)
 
 `list-same-source` is the only case with `createList`; since checkpoint A its `.ir` carries
 section `0x0006` with both LISTs' offsets and the path `["id"]`, and its `.dump` shows that
@@ -238,12 +238,13 @@ npm run emit:corpus -w @getforma/compiler # writes crates/forma-ir/tests/fixture
 npm run emit:corpus -w @getforma/compiler -- <out-dir>       # or to a directory of your choosing
 ```
 
-The `.ir` files and their golden HTML are committed in the `forma` repo under
+The `.ir` files and their golden HTML live in this unified repository under
 `crates/forma-ir/tests/fixtures/js-emitter/`. After an intentional emitter
-change, re-emit here, copy the `.ir` files over, and regenerate the goldens
-with `UPDATE_GOLDEN=1 cargo test -p forma-ir --lib js_emitter_contract`.
+change, re-emit into that directory and review the diff before updating goldens
+with `UPDATE_GOLDEN=1 cargo test --locked -p forma-ir --lib js_emitter_contract`.
 
-The `fmir-contract` job in this repo's CI does the same thing on every PR — it
-checks out `forma`, emits the corpus over its committed fixtures, runs that
-test, and fails if either the render or the bytes moved. So a compiler change
-that makes FMIR unreadable fails the COMPILER's build, not just the consumer's.
+The integrated `npm run check` lane (`scripts/check.sh`) emits the corpus and
+runs the real Rust consumer against it. A compiler change that makes FMIR
+unreadable is caught within the same repository. Historical cases above retain
+their original failure descriptions; current native admission is documented in
+[the compiler subset](../../../docs/subset.md).

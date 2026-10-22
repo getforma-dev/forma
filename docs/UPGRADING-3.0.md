@@ -1,6 +1,6 @@
 # Upgrading to Forma 3.0
 
-This guide describes the coordinated 3.0 development tree. Release readiness is recorded in `scripts/release-contracts.json`; publication and the final release record remain separate gates. It describes the changes an application will need, without claiming that an application has been migrated.
+This guide describes the published coordinated 3.0.0 APIs. See the [as-built summary](release/V3-AS-BUILT.md) for actual publication and qualification. It explains an application upgrade; it does not claim that any external application has already migrated.
 
 ## Move the coordinated set
 
@@ -77,7 +77,7 @@ not an attacker who can replace both the files and their manifest.
 
 ## Full asset digests
 
-Rebuild schema2 manifests with complete canonical SHA-384 metadata before starting the reader. Every asset requires `integrity`, including retained files; a filename hash is not a substitute. Manually constructed Browser manifests follow the same checks. External script, stylesheet and modulepreload tags now include integrity and anonymous crossorigin attributes while retaining their existing nonces. Inline bodies remain nonce-protected. A typed preload no longer present in the response's accepted manifest returns RENDER-104, so development reloads must refresh that table rather than emitting an unchecked reference.
+Rebuild schema 2 manifests with complete canonical SHA-384 metadata before starting the reader. Every asset requires `integrity`, including retained files; a filename hash is not a substitute. Manually constructed Browser manifests follow the same checks. External script, stylesheet and modulepreload tags now include integrity and anonymous crossorigin attributes while retaining their existing nonces. Inline bodies remain nonce-protected. A typed preload no longer present in the response's accepted manifest returns RENDER-104, so development reloads must refresh that table rather than emitting an unchecked reference.
 
 ## Static routes and explicit Browser mode
 
@@ -91,6 +91,8 @@ Enabled worker registration now requires a page JS entry. Static pages do not ne
 
 Build and deploy assets, manifest and native modules from the same accepted output. Before `mount` or `activateIslands`, the bundle compares its identity to the page root. A mismatch leaves the page inert and dispatches the cancelable Document event `forma:skew` with `{ page, bundle, reload }`. Its automatic reload is bounded to once per full page identity when storage is available. Public direct `hydrateIsland` and application-owned dynamic imports remain outside that guard; the application handles its own failed imports. See [the deployment contract](../packages/core/docs/ISLANDS.md#deployment-mismatch).
 
-Keep the scripts-off install policy and registry signature checks, and inspect the build’s actual size report. L-64 permits a Forma-code route ceiling of 28,100 bytes gzip, conditional on the full 20-run campaign passing the original 50 ms startup ceiling; package bundle caps remain separately enforced. Framework release qualification runs R17, both packed templates, parity and the fixture/P17 matrix. An upgrade guide or successful build cannot substitute for those product checks. After P17 and D14 pass, the published RC still requires at least 3,600 seconds of active, zero-fault hosted stress, fuzz and skew qualification before final publication; see the [packed RC burn-in procedure](release/RC-BURN-IN.md).
+Keep the scripts-off install policy and registry signature checks, and inspect the build’s actual size report. The framework's own release fixtures enforce the L-64 ceiling of 28,100 gzip bytes of attributed Forma code; this is not a whole-application size maximum or a substitute for browser measurements. Package bundle caps remain separate. Framework release qualification includes R17, packed templates, parity and P17. A successful application build alone does not reproduce those checks.
+
+The 3.0.0 release's independently audited RC and final qualification are complete. L-66-QUOTA scheduled its active burn-in after final publication; the later receipt verifies 3,660 active seconds with zero faults, while the immutable original record retains its then-deferred status. See the [as-built summary](release/V3-AS-BUILT.md) and [burn-in procedure](release/RC-BURN-IN.md). This historical exception does not waive verification for a future release.
 
 For rollback, restore the previously tested source, both lockfiles and matching deployment artifacts together. Do not combine an old reader with FMIR 3 or an old manifest with a new browser bundle. Preserve one previous deployment’s artifacts where the retention policy permits it; security releases intentionally retain none. Consult [the support policy](../SECURITY.md) for the release family’s published maintenance window.

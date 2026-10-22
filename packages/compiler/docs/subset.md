@@ -706,6 +706,10 @@ A compiled entry may use standalone top-level `await activateIslands(...)` when 
 
 **Fix.** Install @getforma/core 2.1.0 or later where the bundles import it from, or turn `previewFrame` off.
 
+The diagnostic names the version that introduced the frame runtime. For a 3.0
+application, use the matching coordinated 3.0 package set; this historical
+minimum does not replace the compiler's current peer dependency requirement.
+
 **Build result.** Error: publication is refused.
 
 [Lifecycle tests](../../build/tests/preview-frame.test.ts).
