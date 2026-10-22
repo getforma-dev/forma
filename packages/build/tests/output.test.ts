@@ -11,7 +11,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -218,6 +218,21 @@ describe('createStagingDirectory', () => {
     for (const name of kept) expect(left).toContain(name);
     expect(existsSync(staging)).toBe(true);
     expect(readdirSync(staging)).toEqual([]);
+  });
+
+  it('refuses a symlinked output before recovering or creating anything beside it (BUILD-824)', () => {
+    const link = join(root, 'link');
+    symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
+    // What a killed build left beside the link: recovery would delete it.
+    const abandoned = `.link.forma-staging-${deadPid()}-0a1b2c3d`;
+    mkdirSync(join(root, abandoned));
+    const before = readdirSync(root).sort();
+
+    expect(() => createStagingDirectory(link)).toThrow(/BUILD-824 outputDir .*link' is a symbolic link to .*dist'/);
+
+    expect(readdirSync(root).sort()).toEqual(before);
+    expect(readdirSync(target)).toEqual(['previous.js']);
+    expect(readFileSync(join(target, 'previous.js'), 'utf8')).toBe('previous build');
   });
 });
 

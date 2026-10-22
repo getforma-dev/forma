@@ -4,6 +4,8 @@
 
 Changes after the prepared 3.0.0 set will be recorded here.
 
+- Catalogue `BUILD-824` (`outputDir` is a symbolic link), reported by `@getforma/build` before it writes anything (FORMA-170); the conformance test and `docs/subset.md` list it. The compiler itself reports nothing new.
+
 ## [3.0.0] - Prepared; publication pending
 
 - Prepare coordinated final versions, dependency locks and template source seeds from published RC.5 at12320f43, including the reviewed packed-qualification test-fixture repair. Preserve its product, tests and qualification harness unchanged.

@@ -20,7 +20,8 @@
  * BUILD-810 to BUILD-814 (the raw-entry lint, forma-raw-lint, whose corpus is
  * packages/build/tests/fixtures/raw-lint), server-directive removal (BUILD-808) and
  * BUILD-819 (the size report's gate, packages/build/tests/route-size.test.ts) and BUILD-820, BUILD-821 and
- * BUILD-822 (retention's previous release, packages/build/tests/retention.test.ts). Each has its own
+ * BUILD-822 (retention's previous release, packages/build/tests/retention.test.ts) and BUILD-824 (a symlinked outputDir,
+ * packages/build/tests/build.test.ts). Each has its own
  * test, here or in the build package.
  *
  * The catalogue, the fixtures and `packages/compiler/docs/subset.md` are checked against
@@ -46,7 +47,7 @@ const CATALOGUE_DOC = resolve(__dirname, '../docs/subset.md');
 /** Codes with no page that can trigger them; each is tested on its own. */
 const NOT_A_PAGE = new Set([
   'BUILD-606', 'BUILD-801', 'BUILD-805', 'BUILD-806', 'BUILD-807', 'BUILD-808',
-  'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820', 'BUILD-821', 'BUILD-822', 'BUILD-823',
+  'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820', 'BUILD-821', 'BUILD-822', 'BUILD-823', 'BUILD-824',
 ]);
 
 interface Marker { code: string; file: string; line: number }
@@ -180,7 +181,7 @@ describe('the code catalogue', () => {
     }
     expect([...used]).toEqual(expect.arrayContaining([
       'BUILD-801', 'BUILD-805', 'BUILD-806', 'BUILD-807', 'BUILD-808',
-      'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820', 'BUILD-821', 'BUILD-822',
+      'BUILD-809', 'BUILD-810', 'BUILD-811', 'BUILD-812', 'BUILD-813', 'BUILD-814', 'BUILD-815', 'BUILD-816', 'BUILD-817', 'BUILD-818', 'BUILD-819', 'BUILD-820', 'BUILD-821', 'BUILD-822', 'BUILD-824',
     ]));
     for (const code of used) expect(catalogued.has(code), code).toBe(true);
     // Every walker report names a code: no warnDegraded call without one.
