@@ -135,8 +135,17 @@ jobs:
           echo "::error::installing $BROWSER failed twice; see the output above"
           exit 1
 
-      # Builds core's dist, then runs every spec in this engine's project.
-      - run: npm run test:e2e:engines -w packages/core -- --project=${{ matrix.browser }}
+      # Build once. Keep the cost/bounds timing specs out of concurrent browser
+      # work; the two selections are complementary and retain every test.
+      - name: Core browser behavior
+        run: >-
+          npm run test:e2e:engines -w packages/core -- --project=${{ matrix.browser }} --workers=2 --grep-invert 'expr-cost\.spec\.ts|sr33\.spec\.ts' --output test-results/functional-${{ matrix.browser }}
+      # Functional workers have exited. Keep the same operations, strict 50 ms
+      # assertions and zero retries; do not select the best of repeated samples.
+      - name: Core expression cost and bounds timing, serial
+        working-directory: packages/core
+        run: >-
+          npx playwright test --project=${{ matrix.browser }} --workers=1 --grep 'expr-cost\.spec\.ts|sr33\.spec\.ts' --output test-results/timing-${{ matrix.browser }}
 
       # These native/parser controls are blocking in every release engine;
       # R17 runs the same tests with its provisioned Chromium by default.

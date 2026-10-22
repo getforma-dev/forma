@@ -632,9 +632,42 @@ jobs:
       - run: npm audit signatures
       - name: Portable commands and owned listener controls
         run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs
+      - name: Resolve Linux scaffold system-package cache
+        if: runner.os == 'Linux'
+        id: scaffold-pw
+        shell: bash
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - name: Cache Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-all
+          # Seed from the same image/version's WebKit cache; apt validates
+          # archives against its signed index and downloads missing packages.
+          restore-keys: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-webkit
+      - name: Restore Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
       - name: Install locked three-engine template runners
         timeout-minutes: 8
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
+      - name: Retain Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
       - name: Packed candidate full scaffold suite
         env:
           RECORD_SHA256: ${{ needs.candidate-pack.outputs.record-sha256 }}
@@ -706,9 +739,42 @@ jobs:
           restore-keys: published-registry-${{ runner.os }}-
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
+      - name: Resolve Linux scaffold system-package cache
+        if: runner.os == 'Linux'
+        id: scaffold-pw
+        shell: bash
+        run: |
+          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - name: Cache Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/playwright-apt
+          key: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-all
+          # Seed from the same image/version's WebKit cache; apt validates
+          # archives against its signed index and downloads missing packages.
+          restore-keys: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-webkit
+      - name: Restore Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          mkdir -p ~/.cache/playwright-apt
+          cached=(~/.cache/playwright-apt/*.deb)
+          echo "${#cached[@]} archives restored from the cache"
+          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
       - name: Install locked three-engine template runners
         timeout-minutes: 8
         run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
+      - name: Retain Linux scaffold system-package archives
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          fresh=(/var/cache/apt/archives/*.deb)
+          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
+          echo "${#fresh[@]} archives kept for the cache"
       - name: Published CLI full scaffold suite
         run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
       - name: Preserve registry scaffold evidence
