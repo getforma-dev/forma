@@ -4,3 +4,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  # Historical dependency snapshots are evidence, not maintained installations.
+  # Ignore update PRs there; Dependabot alerts remain visible. exclude-paths
+  # alone would affect version updates, not security updates.
+  - package-ecosystem: npm
+    directories:
+      - "/docs/archive/**"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
