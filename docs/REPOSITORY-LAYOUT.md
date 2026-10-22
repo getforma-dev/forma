@@ -39,12 +39,20 @@ public: they explain the scope of the actual evidence, including deferrals.
 | [forma-tools](https://github.com/getforma-dev/forma-tools) | `packages/compiler`, `packages/build` | Main development moved; retain `maint/0.3.x` and its maintenance publishing path. |
 | [create-forma-app](https://github.com/getforma-dev/create-forma-app) | `packages/create-app` | Main development moved; retain `maint/0.6.x` and its maintenance publishing path. |
 
-Do not archive these repositories solely because 3.0 shipped. The
-[cut policy](repository-merge/CUT.md) and [support policy](../SECURITY.md) retain
-older-line maintenance through **2027-04-20**. Archive only after that obligation
-ends, or after branch history, issue ownership and authorized trusted publishing
-have been relocated and verified. Archiving a repository is a separate owner
-action, not part of a documentation cleanup.
+The original [cut policy](repository-merge/CUT.md) retained writable maintenance
+repositories. On **2026-10-21**, the owner authorized archiving these three
+repositories after this documentation update passes CI and merges. This changes
+their operational availability, not the [support commitment](../SECURITY.md)
+through **2027-04-20**. Archival preserves branches, tags, releases and history as
+read-only records; it does not relocate or verify a replacement publisher.
+
+Before a supported legacy fix, the owner must unarchive the affected repository,
+restore and verify its existing maintenance workflow and trusted publisher, and
+complete the reviewed fix and release. Alternatively, separately authorize and
+verify a replacement maintenance route. Report security issues through the
+[security contact](../SECURITY.md#reporting-vulnerabilities), not a new issue in
+an archived repository. The framework and separate application repositories
+remain active.
 
 Historical imported tags use `formajs/<tag>`, `forma-tools/<tag>` and
 `create-forma-app/<tag>`; original Rust tags retain their names. Other repositories

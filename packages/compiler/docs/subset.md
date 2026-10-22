@@ -704,7 +704,11 @@ A compiled entry may use standalone top-level `await activateIslands(...)` when 
 
 **Why.** `previewFrame` is on, and the @getforma/core the bundles import has no dist/formajs-frame.global.js (it ships from core 2.1.0), or no core is found: there is no runtime to copy, and forma-server would refuse to start the frame (FRAME-101).
 
-**Fix.** Install the matching coordinated 3.0 @getforma/core package where the bundles import it from, or turn `previewFrame` off.
+**Fix.** Install @getforma/core 2.1.0 or later where the bundles import it from, or turn `previewFrame` off.
+
+The diagnostic names the version that introduced the frame runtime. For a 3.0
+application, use the matching coordinated 3.0 package set; this historical
+minimum does not replace the compiler's current peer dependency requirement.
 
 **Build result.** Error: publication is refused.
 
