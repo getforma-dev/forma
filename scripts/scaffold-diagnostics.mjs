@@ -78,10 +78,10 @@ export function describeScaffoldDir(dir) {
 // only, so no locale changes a figure. Sent encoded, so no argument quoting applies.
 const WINDOWS_PROCESSES = "Get-CimInstance Win32_Process | ForEach-Object { '{0}|{1}|{2}|{3}|{4}' -f $_.ProcessId,$_.ParentProcessId,($_.UserModeTime+$_.KernelModeTime),$_.WorkingSetSize,$_.Name }";
 
-function listProcesses(platform, run) {
+function listProcesses(platform, run, timeout) {
   if (platform === 'win32') {
     const result = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(WINDOWS_PROCESSES, 'utf16le').toString('base64')],
-      { encoding: 'utf8', timeout: 20_000, windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
+      { encoding: 'utf8', timeout, windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
     if (result.error) throw result.error;
     if (result.status !== 0) throw new Error(`powershell exited ${result.status}: ${String(result.stderr ?? '').trim().slice(0, 300)}`);
     return String(result.stdout).split(/\r?\n/).filter(Boolean).map(line => {
@@ -89,7 +89,7 @@ function listProcesses(platform, run) {
       return { pid: Number(pid), ppid: Number(ppid), load: Number(ticks) / 1e7, memoryMb: Math.round(Number(bytes) / 1048576), name: name.join('|') };
     }).filter(row => Number.isInteger(row.pid));
   }
-  const result = run('ps', ['-A', '-o', 'pid=', '-o', 'ppid=', '-o', 'pcpu=', '-o', 'rss=', '-o', 'comm='], { encoding: 'utf8', timeout: 20_000, maxBuffer: 16 * 1024 * 1024 });
+  const result = run('ps', ['-A', '-o', 'pid=', '-o', 'ppid=', '-o', 'pcpu=', '-o', 'rss=', '-o', 'comm='], { encoding: 'utf8', timeout, maxBuffer: 16 * 1024 * 1024 });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`ps exited ${result.status}: ${String(result.stderr ?? '').trim().slice(0, 300)}`);
   return String(result.stdout).split(/\r?\n/).map(line => /^\s*(\d+)\s+(\d+)\s+([\d.]+)\s+(\d+)\s+(.*)$/.exec(line)).filter(Boolean)
@@ -101,11 +101,12 @@ function listProcesses(platform, run) {
  * CPU seconds since start; elsewhere: by %CPU) and any processes whose parent is `parentPid`, i.e.
  * children a killed process left running. Windows keeps a dead parent's id on its children; POSIX
  * reparents them, so there the list only shows children of a parent that is still alive. Never
- * throws; `run` is replaceable for tests.
+ * throws; `timeout` bounds the listing, so a caller can keep it inside its own budget; `run` is
+ * replaceable for tests.
  */
-export function processSnapshot({ parentPid, limit = 8, platform = process.platform, run = spawnSync } = {}) {
+export function processSnapshot({ parentPid, limit = 8, platform = process.platform, timeout = 10_000, run = spawnSync } = {}) {
   try {
-    const rows = listProcesses(platform, run);
+    const rows = listProcesses(platform, run, timeout);
     const unit = platform === 'win32' ? 's CPU' : '% CPU';
     const show = row => `${row.name} pid ${row.pid} (${platform === 'win32' ? row.load.toFixed(1) : row.load}${unit}, ${row.memoryMb} MB)`;
     const busiest = [...rows].sort((a, b) => b.load - a.load).slice(0, limit).map(show);

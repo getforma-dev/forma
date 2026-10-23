@@ -67,9 +67,10 @@ test('a Windows snapshot ranks by CPU seconds and lists what still runs under th
   // id|parent|CPU in 100 ns ticks|working set bytes|name, as the PowerShell line prints them.
   const stdout = ['4|0|9000000000|1048576|System', '812|4|31200000000|220200960|MsMpEng.exe', '1200|900|50000000|52428800|git.exe', '1300|900|10000000|10485760|git.exe', '900|7|20000000|41943040|node.exe', ''].join('\r\n');
   let call;
-  const snapshot = processSnapshot({ platform: 'win32', parentPid: 900, limit: 2, run: (command, args, options) => { call = { command, args, options }; return fakeRun(stdout)(); } });
+  const snapshot = processSnapshot({ platform: 'win32', parentPid: 900, limit: 2, timeout: 4_000, run: (command, args, options) => { call = { command, args, options }; return fakeRun(stdout)(); } });
   assert.equal(call.command, 'powershell.exe');
-  assert(call.args.includes('-EncodedCommand') && call.options.timeout > 0, 'bounded and encoded');
+  assert(call.args.includes('-EncodedCommand'), 'encoded, so no argument quoting applies');
+  assert.equal(call.options.timeout, 4_000, 'bounded by the caller');
   assert.match(Buffer.from(call.args.at(-1), 'base64').toString('utf16le'), /Get-CimInstance Win32_Process/);
   const [busiest, children] = snapshot.split('\n');
   assert.equal(busiest, 'processes on win32: 5 listed; busiest: MsMpEng.exe pid 812 (3120.0s CPU, 210 MB); System pid 4 (900.0s CPU, 1 MB)');
@@ -78,7 +79,9 @@ test('a Windows snapshot ranks by CPU seconds and lists what still runs under th
 
 test('a POSIX snapshot ranks by %CPU and reports no survivors when none remain', () => {
   const stdout = '    1     0  0.0  1024 /sbin/launchd\n  501     1 87.5 204800 /usr/bin/cargo\n  777   501  3.0  2048 rustc\n';
-  const snapshot = processSnapshot({ platform: 'linux', parentPid: 42, limit: 2, run: fakeRun(stdout) });
+  let timeout;
+  const snapshot = processSnapshot({ platform: 'linux', parentPid: 42, limit: 2, run: (command, args, options) => { timeout = options.timeout; return fakeRun(stdout)(); } });
+  assert.equal(timeout, 10_000, 'bounded by default');
   assert.equal(snapshot, 'processes on linux: 3 listed; busiest: cargo pid 501 (87.5% CPU, 200 MB); rustc pid 777 (3% CPU, 2 MB)\nstill running under pid 42: none');
 });
 

@@ -91,12 +91,16 @@ function recordTiming({ name, ...row }: TimingRow) {
   recordObservation(name, row);
 }
 
-/** A timed-out or unspawnable child: how long it ran, how far a scaffold got, what the host was doing. */
-function explainChildFailure(phase: string, result: SpawnSyncReturns<string>, ms: number, dest?: string): string {
+/**
+ * A timed-out or unspawnable child: how long it ran, how far a scaffold got, what the host was doing.
+ * The snapshot is bounded so that both children plus it stay inside the callers' 60s hook budget
+ * (25 + 25 + 5); otherwise a hook timeout would replace this evidence.
+ */
+function explainChildFailure(phase: string, result: SpawnSyncReturns<string>, ms: number, { dest, snapshotMs }: { dest?: string; snapshotMs: number }): string {
   const code = (result.error as NodeJS.ErrnoException | undefined)?.code;
   const lines = [`[${phase}] ${code ?? result.error} after ${ms} ms of its ${CLI_TIMEOUT_MS} ms budget (pid ${result.pid}, signal ${result.signal ?? 'none'})`];
   if (dest) lines.push(`[${phase}] destination ${describeScaffoldDir(dest)}`);
-  if (code === 'ETIMEDOUT') lines.push(`[${phase}] ${processSnapshot({ parentPid: result.pid })}`);
+  if (code === 'ETIMEDOUT') lines.push(`[${phase}] ${processSnapshot({ parentPid: result.pid, timeout: snapshotMs })}`);
   return lines.join('\n');
 }
 
@@ -123,14 +127,14 @@ export function runCli(args: string[], cwd: string, env: Record<string, string> 
     env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
   const cliMs = Math.round(performance.now() - started);
-  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, explainChildFailure('scaffold CLI', result, cliMs, dest), result.stdout].filter(Boolean).join('\n');
+  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, explainChildFailure('scaffold CLI', result, cliMs, { dest, snapshotMs: 10_000 }), result.stdout].filter(Boolean).join('\n');
   const phases: Record<string, number> = { cli: cliMs };
   let outcome = result;
   if (CANDIDATE_CONTEXT && result.status === 0 && args[0] && !args[0].startsWith('-') && !args.includes('--dry-run')) {
     const stagingStarted = performance.now();
     const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', timeout:CLI_TIMEOUT_MS, maxBuffer:64*1024*1024, env:process.env});
     phases.staging = Math.round(performance.now() - stagingStarted);
-    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, explainChildFailure('candidate project staging', staged, phases.staging), staged.stdout].filter(Boolean).join('\n');
+    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, explainChildFailure('candidate project staging', staged, phases.staging, { snapshotMs: 5_000 }), staged.stdout].filter(Boolean).join('\n');
     if (staged.status !== 0) outcome = staged;
   }
   recordTiming(timingRow('scaffold CLI', { label, phases, budgets: { cli: CLI_TIMEOUT_MS, staging: CLI_TIMEOUT_MS }, ok: !outcome.error, status: outcome.status }));
