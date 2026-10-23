@@ -9,22 +9,30 @@ failures = []
 # ecosystem rewrites a trailing `# v<version>` comment together with the SHA. Every
 # SHA-pinned third-party `uses:` in every workflow (release.yml included: SR43's
 # shape lint checks the pin, not this comment) therefore ends with exactly
-# `# v<major>[.<minor>[.<patch>]]`, the release the SHA is. `./` local actions and
+# `# v<major>.<minor>.<patch>`, the release the SHA is. `./` local actions and
 # local reusable workflows are exempt, as they are from the pin itself; a `uses:`
 # that is not a 40-hex pin is S3's failure, not this one's.
-VERSION_COMMENT = /\A# v\d+(?:\.\d+){0,2}\z/
+# All three parts (FORMA-256): a one- or two-part comment names a major or minor
+# line, and a floating tag such as `v4` moves to each new release, so it does not
+# say which release the SHA is. Dependabot writes the most specific tag at the new
+# SHA (merged PR #34 rewrote `# v4` to `# v7.0.1`), and every action pinned here
+# apart from the exception below tags each release vX.Y.Z, so its bumps keep three
+# parts.
+VERSION_COMMENT = /\A# v\d+\.\d+\.\d+\z/
+PARTIAL_VERSION_COMMENT = /\A# v\d+(?:\.\d+)?\z/
 # The only exceptions, each with its reason. dtolnay/rust-toolchain publishes its
-# channels as branches (stable, beta, nightly, 1.NN) that it rebuilds by force-push,
-# and its one tag, v1, was observed at the master tip; no release tag names a SHA.
+# channels as branches (stable, beta, nightly, 1.NN) that it rebuilds by force-push.
+# Its one tag and release, v1, was observed at the master tip: a major tag that
+# moves with master, so it does not name the release a SHA is.
 # A commit that a rebuild drops from a channel branch can be garbage-collected
 # (upstream's README warns of this), so a pin is a commit in master's history,
 # commented `# master`, and passes `toolchain:` explicitly because master's
 # action.yml requires it (FORMA-251). An action leaves this list when it starts
-# publishing release tags.
+# publishing a release tag for each version.
 BRANCH_PINNED = {
   'dtolnay/rust-toolchain' => {
     comments: ['# master'],
-    reason: 'branch-published toolchain action with no release tags to name'
+    reason: 'branch-published toolchain action whose one tag, v1, moves with master'
   }
 }.freeze
 
@@ -89,7 +97,8 @@ Dir.glob(File.join(root, '.github/workflows/*.{yml,yaml}')).sort.each do |path|
     exception = BRANCH_PINNED[action.split('@').first]
     next if comment && (comment.match?(VERSION_COMMENT) || (exception && exception[:comments].include?(comment)))
     also = exception ? " or #{exception[:comments].map { |c| "`#{c}`" }.join(' or ')} (#{exception[:reason]})" : ''
-    failures << "#{path}:#{node.start_line + 1}: #{job}: #{action} needs a trailing `# v<major>[.<minor>[.<patch>]]`#{also} comment naming its release (found: #{comment || 'none'})"
+    why = comment&.match?(PARTIAL_VERSION_COMMENT) ? '; a one- or two-part version names a major or minor line, not the release' : ''
+    failures << "#{path}:#{node.start_line + 1}: #{job}: #{action} needs a trailing `# v<major>.<minor>.<patch>`#{also} comment naming its release#{why} (found: #{comment || 'none'})"
   end
 end
 
