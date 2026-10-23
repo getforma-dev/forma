@@ -1393,7 +1393,7 @@
   ],
   "find": "          if (items.length * weight > LIST_WEIGHT_CAP) {",
   "replace": "          if (items.length > LIST_WEIGHT_CAP) {",
-  "note": "the data-list cap counts rows and not what each costs to build, so 140,000 rows of a 140-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+  "note": "the data-list cap counts rows and not what each costs to build, so 160,000 rows of a 160-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
  },
  {
   "id": "runtime/list-cap-weight-ignores-attributes",
@@ -1431,8 +1431,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "            throw exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (${LIST_WEIGHT_CAP} rows times weight)`);",
-  "replace": "            throw Object.assign(exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (${LIST_WEIGHT_CAP} rows times weight)`), { defer: false });",
+  "find": "            throw exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (rows \u00d7 weight is capped at ${LIST_WEIGHT_CAP})`);",
+  "replace": "            throw Object.assign(exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (rows \u00d7 weight is capped at ${LIST_WEIGHT_CAP})`), { defer: false });",
   "note": "a data-list refused on its length arms the task's cap like a refusal that weighed something, so a binding of 200,000 units and a list of 1,000 rows after it wait a task though the refusal cost nothing (FORMA-172, FORMA-249). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a refused list delays no binding and no list after it\""
  },
  {

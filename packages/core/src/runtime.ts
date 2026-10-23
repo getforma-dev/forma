@@ -1474,19 +1474,22 @@ const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.
  * a row: 1, and 1 for each element and attribute of the row template (a nested
  * `<template>`'s contents included, which are cloned with the row). A pass
  * builds the rows it lacks and rebinds the rest, at about the same cost a row,
- * so the product bounds the pass whatever its expression cost (FORMA-172).
- * `Array.from({length: 249990})` made 249,990 rows in one task, 3.3 s at 4x
- * CPU throttling. A list over the cap is refused on its length, before any
- * item is read or any row built; one under it renders as before, in one task.
- * Sized from data: the heaviest of 195 real row templates surveyed weighs
- * 123, so 1,000 of its rows fit with room for templates up to 140; and the
- * slowest row shape that binds measured 7 microseconds a unit of weight at 4x,
- * so the largest list the cap admits builds in about 1 s, where 249,990 rows
- * took 3.3 s.
+ * so the product bounds one pass of one list, however long its items (FORMA-172).
+ * It does not bound the lists an outer list's rows hold, which one pass of the
+ * outer list makes together (SECURITY.md; FORMA-255).
+ * `Array.from({length: 249990})` made 249,990 rows in one task, 3.2 to 4.0 s at
+ * 4x CPU throttling on an M1 Pro. A list over the cap is refused on its
+ * length, before any item is read or any row built; one under it renders as
+ * before, in one task. Sized from the templates actually served: vector-studio
+ * stamps `data-fm` on every element of a module it loads, so its team-roster
+ * row weighs 150 and its todo-list row 144, and 1,000 rows of either fit. The
+ * largest lists the cap admits take about 1.1 to 1.4 s at 4x on an M1 Pro and
+ * about twice that on a CI runner (SECURITY.md has the measurements).
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list of 250,000 items is refused before any item is read"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list exactly at the cap renders, and one row more is refused"
+ * Verified by: src/__tests__/runtime-list-cap.test.ts > "the heaviest served row template renders up to the cap and is refused one row past it"
  */
-const LIST_WEIGHT_CAP = 140_000;
+const LIST_WEIGHT_CAP = 160_000;
 
 /** Strip one balanced `{ … }` wrapper, honouring string and template literals. */
 function stripBraces(raw: string): string {
@@ -2192,7 +2195,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         let n = 0;
         if (Array.isArray(items)) {
           if (items.length * weight > LIST_WEIGHT_CAP) {
-            throw exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (${LIST_WEIGHT_CAP} rows times weight)`);
+            throw exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (rows × weight is capped at ${LIST_WEIGHT_CAP})`);
           }
           for (const item of items) {
             for (const f of fields) {

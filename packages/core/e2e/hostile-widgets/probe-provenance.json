@@ -973,7 +973,7 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "29814ae748d6bd6ee72cc1fdea0c91d686a62987d13a1c19a0d1bc7266a581a2",
+    "sha256": "ab2d7330f8b4a447e86cd1a62c64f9092f1f3de9f3ace745f75657553de612ac",
     "total": 261,
     "rows": [
       {
@@ -1772,7 +1772,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-structural-regression",
-          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: the data-list cap counts rows and not what each costs to build, so 140,000 rows of a 140-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: the data-list cap counts rows and not what each costs to build, so 160,000 rows of a 160-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
         }
       },
       {

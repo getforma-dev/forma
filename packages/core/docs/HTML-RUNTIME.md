@@ -112,12 +112,15 @@ Four properties, each mechanical:
   before it renders in the next task instead (SECURITY.md, "Termination and
   budgets"). A `data-list` is not charged to that budget; a pass over it is
   refused, on the list's length and before any row is built, when its rows
-  times the weight of a row pass 140,000. A row weighs 1, and 1 more for each
+  times the weight of a row pass 160,000. A row weighs 1, and 1 more for each
   element and attribute of the row template (a nested `<template>`'s contents
-  included), so the cap admits 70,000 rows of `<li>{item}</li>` (weight 2) and
-  1,138 rows of the heaviest real row template measured (weight 123). A refused
-  list reports `FORMA_E_BUDGET` and keeps the rows it had. Under the cap a list
-  renders as before, in one task however long it is. Show a long list a page
+  included), so the cap admits 80,000 rows of `<li>{item}</li>` (weight 2) and
+  1,066 rows of the heaviest served row template found (vector-studio's team
+  roster with `data-fm` on every element, weight 150). The cap is per pass: the
+  lists an outer list's rows hold are made in one task and not bounded together
+  (FORMA-255). A refused list reports `FORMA_E_BUDGET` and keeps the rows it
+  had. Under the cap a list renders as before, in one task however long it is.
+  Show a long list a page
   at a time: ask for the page where the data comes from, or slice it in the
   expression (`items.slice(start, start + 200)`, charged the length of the
   array it reads, so for arrays of up to about 250,000 items).
@@ -199,7 +202,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
 | `data-on:event` | Event handler | `data-on:click="{count++}"` |
 | `data-class:name` | Conditional CSS class | `data-class:active="{isActive}"` |
 | `data-bind:attr` | Dynamic attribute | `data-bind:href="{url}"` |
-| `data-list` | List rendering (keyed reconciliation); a pass of more than 140,000 rows × row weight is refused with `FORMA_E_BUDGET` | `data-list="{items}"` |
+| `data-list` | List rendering (keyed reconciliation); a pass of more than 160,000 rows × row weight is refused with `FORMA_E_BUDGET` | `data-list="{items}"` |
 | `data-computed` | Computed value | `data-computed="doubled = count * 2"` |
 | `data-persist` | Persist state to localStorage | `data-persist="{count}"` |
 | `data-fetch` | Fetch data from URL into a new state key | `data-fetch="GET /api/items → items"` |

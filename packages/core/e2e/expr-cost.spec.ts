@@ -157,7 +157,7 @@ test('FORMA-025: data-text of a value heavier than the budget is refused before 
 
 /**
  * FORMA-172 in a real browser: an absolute cap on a `data-list` pass. A pass
- * over more than 140,000 of rows times row weight (1, and 1 for each element
+ * over more than 160,000 of rows times row weight (1, and 1 for each element
  * and attribute of the row template) is refused before any item is read; a
  * list under the cap renders as it did, in the task that hands it its items.
  * Chromium runs at 4x CPU throttling, as sr33.spec.ts does; Firefox and WebKit
@@ -166,7 +166,7 @@ test('FORMA-025: data-text of a value heavier than the budget is refused before 
  * on refusals that measure about a millisecond at 4x, and the passes that
  * build rows are only reported.
  */
-const LIST_CAP = 140_000;
+const LIST_CAP = 160_000;
 
 async function throttled(page: import('@playwright/test').Page, browserName: string): Promise<number> {
   if (browserName !== 'chromium') return 1;
@@ -229,18 +229,31 @@ test('FORMA-172: a data-list of 250,000 items is refused before any item is read
   expect(past.ms).toBeLessThan(50);
 });
 
-test('FORMA-172: 1,000 rows of the heaviest real row template, and lists at the cap, render whole', async ({ page, browserName }) => {
+test('FORMA-172: 1,000 rows of each served vector-studio template, and lists at the cap, render whole', async ({ page, browserName }) => {
   test.setTimeout(240_000);
   await page.goto('/runtime-bare.html');
   const rate = await throttled(page, browserName);
+  const fixture = async (name: string): Promise<string> => (await (await page.request.get(`/${name}`)).text()).replace(/<!--[\s\S]*?-->/, '');
 
-  // vector-studio's todo-list row (e2e/fixtures/vector-studio-todo-row.html): weight 123.
-  const heaviest = await (await page.request.get('/vector-studio-todo-row.html')).text();
+  // The rows vector-studio serves (data-fm stamped): todo-list weight 144, team-roster 150.
+  const todo = await fixture('vector-studio-todo-row.html');
   const todos = "Array.from({length: 1000}, (_, i) => ({ id: i, title: 'Task ' + i, done: i % 3 === 0, priority: ['high', 'medium', 'low'][i % 3], due: i % 2 ? '2025-07-10' : '' }))";
-  const real = await listPass(page, `<div data-list="{v === null ? [] : v}">${heaviest}</div>`, todos, 'article', { tasks: [], editingId: null, editingText: '' });
-  console.log(`FORMA-172 ${browserName} ${rate}x: 1,000 rows of the heaviest real template (weight 123): ${real.built} rows in one ${real.ms.toFixed(0)} ms task`);
-  expect(real.built).toBe(1000);
-  expect(real.budget).toBe(0);
+  const served = await listPass(page, `<div data-list="{v === null ? [] : v}">${todo}</div>`, todos, 'article', { tasks: [], editingId: null, editingText: '' });
+  console.log(`FORMA-172 ${browserName} ${rate}x: 1,000 rows of vector-studio's served todo-list template (weight 144): ${served.built} rows in one ${served.ms.toFixed(0)} ms task`);
+  expect(served.built).toBe(1000);
+  expect(served.budget).toBe(0);
+
+  const roster = await fixture('vector-studio-roster-row.html');
+  const people = (n: number): string => `Array.from({length: ${n}}, (_, i) => ({ id: i, name: 'Person ' + i, initials: 'P' + (i % 10), role: 'Engineer', dept: 'Platform', email: 'p' + i + '@example.com', phone: '555-0100', bio: 'Builds things.', linkedin: '#', twitter: '#' }))`;
+  const most = Math.floor(LIST_CAP / 150);
+  const atCap = await listPass(page, `<div data-list="{v === null ? [] : v}">${roster}</div>`, people(most), 'article');
+  console.log(`FORMA-172 ${browserName} ${rate}x: ${most} rows of vector-studio's served team-roster template (weight 150, at the cap): ${atCap.built} rows in one ${atCap.ms.toFixed(0)} ms task`);
+  expect(atCap.built).toBe(most);
+  expect(atCap.budget).toBe(0);
+  const pastCap = await listPass(page, `<div data-list="{v === null ? [] : v}">${roster}</div>`, people(most + 1), 'article');
+  console.log(`FORMA-172 ${browserName} ${rate}x: ${most + 1} served team-roster rows (one past the cap) refused in ${pastCap.ms.toFixed(1)} ms`);
+  expect(pastCap.built).toBe(0);
+  expect(pastCap.budget).toBe(1);
 
   // The largest lists the cap admits, for the lightest row and a table row with directives.
   const lightest = await listPass(page, LI_LIST, numbers(LIST_CAP / 2), 'li');
@@ -249,9 +262,10 @@ test('FORMA-172: 1,000 rows of the heaviest real row template, and lists at the 
   expect(lightest.budget).toBe(0);
 
   const table = '<table><tbody data-list="{v === null ? [] : v}"><tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr></tbody></table>';
-  const rows = `Array.from({length: ${LIST_CAP / 14}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
+  const tableRows = Math.floor(LIST_CAP / 14);
+  const rows = `Array.from({length: ${tableRows}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
   const tabled = await listPass(page, table, rows, 'tr');
-  console.log(`FORMA-172 ${browserName} ${rate}x: ${LIST_CAP / 14} table rows (weight 14, at the cap): ${tabled.built} rows in one ${tabled.ms.toFixed(0)} ms task`);
-  expect(tabled.built).toBe(LIST_CAP / 14);
+  console.log(`FORMA-172 ${browserName} ${rate}x: ${tableRows} table rows (weight 14, at the cap): ${tabled.built} rows in one ${tabled.ms.toFixed(0)} ms task`);
+  expect(tabled.built).toBe(tableRows);
   expect(tabled.budget).toBe(0);
 });
