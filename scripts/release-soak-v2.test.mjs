@@ -15,7 +15,6 @@ import { verifyPostReleaseSoak } from './release-soak-completion.mjs';
 import { verifyPostReleaseSoakV2 } from './release-soak-completion-v2.mjs';
 import { API, verifyRun } from './release-burn-in-inputs.mjs';
 import { CONTRACT, FUZZ_TARGETS, ENGINES, SKEW_CHECKS } from './release-burn-in-report.mjs';
-import { securityHarnessHashes } from './release-security.mjs';
 import { cases, profiles } from '../packages/core/e2e/hostile-widgets/catalogue.mjs';
 import { capabilityCases } from '../packages/core/e2e/hostile-widgets/capabilities.mjs';
 import { FINAL_COMMIT, RC_COMMIT, RC_TAG, WORKFLOW, sourceStatus, requirePayload, workerContext, donorDiff, validateDonorReview } from './release-soak-context-v2.mjs';
@@ -46,7 +45,9 @@ async function completionFixture(t, f) {
   // Synthetic evidence describes the pinned RC workload, not today's added checks.
   const { hostileIds, fixtureCheckIds } = await import(pathToFileURL(join(f.payloadRoot, 'scripts/release-burn-in-identities.mjs')).href);
   const fixtureIds = fixtureCheckIds(join(f.payloadRoot, 'e2e/fixtures/apps'));
-  const evidence = mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
+  // The RC raw validators compare the report with the pinned RC checkout's harness, so the synthetic report takes its hashes from there, not from the live tree.
+  const { securityHarnessHashes } = await import(pathToFileURL(join(f.payloadRoot, 'scripts/release-security.mjs')).href);
+  const evidence =mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
   t.after(() => rmSync(evidence, { recursive: true, force: true }));
   const archiveRoot = join(evidence, 'archive'), raw = join(evidence, 'raw');
   mkdirSync(join(archiveRoot, 'package/dist'), { recursive: true }); mkdirSync(raw);

@@ -107,10 +107,15 @@ describe('the runtime charges its own conversions to text (FORMA-025)', () => {
     // A thousand rows each placing (or keyed by) the long string.
     runtime.setScopeValue(root, 'rows', BIG.map((name) => ({ name })));
     // Each conversion weighs more than the whole budget, which no task could
-    // hold, so all six are refused and reported at once, not retried (S2).
+    // hold, so each is refused and reported, never retried (S2). They are not
+    // all reported at once (FORMA-178): a reported refusal arms the cap as a
+    // wait does, so the three of `v`, which the capped weighing finds past the
+    // budget in one string, are reported in the update, but the three of
+    // `rows` are counted only to the cap, wait, and are reported one to a
+    // task, each weighed in full once.
     expect(runtime.getDiagnostics().map((d) => [d.code, d.expr, d.count])).toEqual([
       ['FORMA_E_BUDGET', 'v', 3],
-      ['FORMA_E_BUDGET', 'rows', 3],
+      ['FORMA_E_BUDGET', 'rows', 1],
     ]);
     for (let i = 0; i < 10; i++) await tick();
     // Each keeps what the last value it converted wrote.

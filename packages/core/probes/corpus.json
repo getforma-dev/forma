@@ -1341,8 +1341,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "        if (err.defer) later();\n        else reportExprFailure(el, stripBraces(expression), err, scope.mount);",
-  "replace": "        reportExprFailure(el, stripBraces(expression), err, scope.mount);",
+  "find": "        if (err.defer) later();\n        else {\n          reportExprFailure(el, stripBraces(expression), err, scope.mount);\n          reported(err);\n        }",
+  "replace": "        reportExprFailure(el, stripBraces(expression), err, scope.mount);\n        reported(err);",
   "note": "a binding refused only because its task's budget was spent is reported and left unrendered instead of retried (FORMA-028). Verified by: src/__tests__/runtime-task-budget.test.ts > \"ten bindings at the cap spend one budget per task and all of them render\""
  },
  {
@@ -1411,7 +1411,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    throw over(err, units <= LIMITS.ALLOC_BUDGET && (units > cap || ctx.unitsBefore));",
+  "find": "    throw over(err, !final);",
   "replace": "    throw over(err, units > cap || ctx.unitsBefore);",
   "note": "a charge larger than the whole budget is deferred when the task had spent anything, so it is priced again in every retry tick before it is reported (FORMA-028 review, S2). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a binding too heavy for any task is priced once and reported once\""
  },
@@ -1441,18 +1441,18 @@
   "tags": [
    "correctness"
   ],
-  "find": "  meter.cap = meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP;\n  spend();",
+  "find": "  armCap();\n  spend();",
   "replace": "  spend();",
   "note": "after a binding waits, the bindings after it count each charge to the room left, so each a little heavier than that room weighs its value that far before it is refused: twenty made a 57 ms task at 4x (FORMA-173). Verified by: src/__tests__/runtime-task-budget.test.ts > \"bindings that each weigh most of the budget are refused cheaply while they wait\""
  },
  {
   "id": "runtime/waiting-cap-zero",
-  "file": "src/runtime.ts",
+  "file": "src/expr/interp.ts",
   "tags": [
    "correctness"
   ],
-  "find": "const WAITING_CAP = 10_000;",
-  "replace": "const WAITING_CAP = 0;",
+  "find": "export const WAITING_CAP = 10_000;",
+  "replace": "export const WAITING_CAP = 0;",
   "note": "once a binding waits, every later binding that charges anything waits a retry tick per heavy binding ahead of it, 1 or 2 frames of stale text (FORMA-173 review, G1). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a light binding after one that waits renders in the same task\""
  },
  {
@@ -1471,8 +1471,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "  meter.cap = meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP;",
-  "replace": "  meter.cap = WAITING_CAP;",
+  "find": "  meter.cap = Math.min(meter.cap, meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP);",
+  "replace": "  meter.cap = Math.min(meter.cap, WAITING_CAP);",
   "note": "the cap bounds what each binding after a wait counts but not what they count together: 400 bindings each a little over the cap counted 10,000 units apiece, a 71 ms task at 4x (FORMA-173 review, H1). Verified by: src/__tests__/runtime-task-budget.test.ts > \"the cap drops to 0 once the task's refusals have counted the allowance\""
  },
  {
@@ -1481,9 +1481,25 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if (units > 0 && cap < Infinity) m!.lost = (m!.lost ?? 0) + Math.min(units, cap);\n",
+  "find": "    if (units > 0 && m) m.lost = (m.lost ?? 0) + Math.min(units, counted);\n",
   "replace": "",
   "note": "what a charge refused while capped counted is not added to the meter's lost units, so the allowance is never reached and the cap never drops (FORMA-173 review, H1). Verified by: src/__tests__/runtime-task-budget.test.ts > \"the cap drops to 0 once the task's refusals have counted the allowance\""
+ },
+ {
+  "id": "runtime/reported-refusal-no-cap",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "  if (err.code === 'FORMA_E_BUDGET') armCap();",
+  "replace": "",
+  "note": "a reported budget refusal no longer arms the task's cap, so bindings each too heavy for any task are each weighed to the whole budget in one task: 20 of them 53 ms at 4x, 40 about 99 ms (FORMA-178). Verified by: src/__tests__/runtime-task-budget.test.ts > \"bindings each too heavy for any task are reported one to a task, each weighed in full once\""
+ },
+ {
+  "id": "expr/final-refusal-not-counted",
+  "file": "src/expr/interp.ts",
+  "tags": [],
+  "find": "    const counted = cap < Infinity ? cap : final ? WAITING_CAP : 0;",
+  "replace": "    const counted = cap < Infinity ? cap : 0;",
+  "note": "a reported refusal that finds no cap set counts nothing toward the task's allowance, so the cap it arms drops to 0 one refusal later than a wait's would (FORMA-178). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a reported refusal counts toward the allowance as a wait does\""
  },
  {
   "id": "runtime/dispatch-resets-cap",

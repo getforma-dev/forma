@@ -99,6 +99,23 @@ export interface Meter {
   lost?: number;
 }
 
+/**
+ * After a binding has had to wait, the most one charge in this task is counted
+ * to. A light binding after it (a case mapping, a formatted number, a joined
+ * list of fifty names, about 1,150 units) is counted in full and still fits
+ * the room left, so it renders now; a heavier value is refused after counting
+ * this far, and waits too. A list longer than the cap is refused on its
+ * length alone. Without a cap, each binding after the first to wait weighed
+ * its value up to the room left (twenty a little heavier than that room: a
+ * 57 ms task at 4x); with a cap of zero, a light binding waited a retry tick
+ * for every heavy one ahead of it, 1 or 2 frames of stale text (FORMA-173
+ * review, G1). Measured at 4x: with 1,000 the fifty-name join still waited;
+ * with 10,000 it renders in the mount task, and the waiting cases stay under
+ * 30 ms a task.
+ * Verified by: src/__tests__/runtime-task-budget.test.ts > "a light binding after one that waits renders in the same task"
+ */
+export const WAITING_CAP = 10_000;
+
 export interface EvalCtx {
   scope: ScopeLike;
   frame: Frame | null;
@@ -228,7 +245,9 @@ export function room(ctx: EvalCtx): number {
  * (`Array.from`'s length); a value weighed late in a busy task is counted only
  * to the room left, so it waits once and is weighed in full when it runs first.
  * While a cap is set, what a refused charge counted (at most the cap) is
- * added to the meter's `lost`, the work the runtime's allowance bounds.
+ * added to the meter's `lost`, the work the runtime's allowance bounds; a
+ * final refusal that finds none set adds `WAITING_CAP`, as a wait would, and
+ * the runtime arms the cap when it reports it (FORMA-178).
  * Verified by: src/expr/__tests__/native-cost.test.ts > "the budget is per evaluation and cumulative across its calls"
  * Verified by: src/__tests__/runtime-task-budget.test.ts > "a binding too heavy for any task is priced once and reported once"
  */
@@ -238,9 +257,13 @@ export function charge(ctx: EvalCtx, units: number, what: string, at: number): v
   const cap = m?.cap ?? Infinity;
   if (!(units >= 0 && units <= cap && (ctx.cost += units) <= LIMITS.ALLOC_BUDGET)) {
     ctx.cost = spent;
-    if (units > 0 && cap < Infinity) m!.lost = (m!.lost ?? 0) + Math.min(units, cap);
+    const final = !(units <= LIMITS.ALLOC_BUDGET && (units > cap || ctx.unitsBefore));
+    // Counted to the cap; a final refusal that finds none set (the first, or
+    // the only one in its task) is counted as a wait would be (FORMA-178).
+    const counted = cap < Infinity ? cap : final ? WAITING_CAP : 0;
+    if (units > 0 && m) m.lost = (m.lost ?? 0) + Math.min(units, counted);
     const err = exprError('FORMA_E_BUDGET', `${what} would exceed the ${LIMITS.ALLOC_BUDGET}-unit allocation budget`, at);
-    throw over(err, units <= LIMITS.ALLOC_BUDGET && (units > cap || ctx.unitsBefore));
+    throw over(err, !final);
   }
 }
 

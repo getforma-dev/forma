@@ -58,6 +58,7 @@ import {
   type FormaExprError,
   type Meter,
   type TextCost,
+  WAITING_CAP,
 } from './expr';
 import { sourceIsDev, warnDeprecated } from './deprecated';
 
@@ -1378,23 +1379,6 @@ function nextTask(): void {
 }
 
 /**
- * After a binding has had to wait, the most one charge in this task is counted
- * to. A light binding after it (a case mapping, a formatted number, a joined
- * list of fifty names, about 1,150 units) is counted in full and still fits
- * the room left, so it renders now; a heavier value is refused after counting
- * this far, and waits too. A list longer than the cap is refused on its
- * length alone. Without a cap, each binding after the first to wait weighed
- * its value up to the room left (twenty a little heavier than that room: a
- * 57 ms task at 4x); with a cap of zero, a light binding waited a retry tick
- * for every heavy one ahead of it, 1 or 2 frames of stale text (FORMA-173
- * review, G1). Measured at 4x: with 1,000 the fifty-name join still waited;
- * with 10,000 it renders in the mount task, and the waiting cases stay under
- * 30 ms a task.
- * Verified by: src/__tests__/runtime-task-budget.test.ts > "a light binding after one that waits renders in the same task"
- */
-const WAITING_CAP = 10_000;
-
-/**
  * What the charges refused while capped may count in all in one task. The cap
  * bounds what each binding after a wait counts; this bounds them together:
  * once they pass it the cap drops to 0, and every later charge in the task is
@@ -1408,15 +1392,35 @@ const WAITING_CAP = 10_000;
 const WAITING_ALLOWANCE = 50_000;
 
 /**
+ * Cap each charge the rest of this task counts (`WAITING_CAP`, or 0 once the
+ * refusals have counted `WAITING_ALLOWANCE`). Armed by a binding that has to
+ * wait, and by a reported budget refusal: bindings each too heavy for any
+ * task were each weighed to the whole budget in one task, 20 of them 53 ms at
+ * 4x and 40 about 99 ms (FORMA-178, from FORMA-173's final review). A
+ * reported refusal counts toward the allowance as a wait does (`charge`), and
+ * the bindings after it are priced only to the cap: one that is too heavy for
+ * any task waits, is weighed in full once in a task where it runs first, and
+ * is reported there. They are reported one to a task, not all at once.
+ * Verified by: src/__tests__/runtime-task-budget.test.ts > "bindings each too heavy for any task are reported one to a task, each weighed in full once"
+ */
+function armCap(): void {
+  meter.cap = Math.min(meter.cap, meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP);
+}
+
+/** A budget refusal that is reported, not retried: it arms the cap as a wait does (`armCap`). */
+function reported(err: FormaExprError): void {
+  if (err.code === 'FORMA_E_BUDGET') armCap();
+}
+
+/**
  * Re-run the binding (or computed) being evaluated in the next task, and cap
- * each charge the rest of this task counts (`WAITING_CAP`, or 0 once the
- * refusals have counted `WAITING_ALLOWANCE`).
+ * each charge the rest of this task counts (`armCap`).
  * Verified by: src/__tests__/runtime-task-budget.test.ts > "bindings that each weigh most of the budget are refused cheaply while they wait"
  */
 function later(): void {
   retries();
   deferred = true;
-  meter.cap = meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP;
+  armCap();
   spend();
 }
 
@@ -1443,7 +1447,10 @@ function converts(el: Element, scope: Scope, what: string, value: unknown): bool
   } catch (err) {
     if (!isExprError(err)) throw err;
     if (err.defer) later();
-    else reportExprFailure(el, what, err, scope.mount);
+    else {
+      reportExprFailure(el, what, err, scope.mount);
+      reported(err);
+    }
     return false;
   }
 }
@@ -1770,7 +1777,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       } catch (err) {
         if (!isExprError(err)) throw err;
         if (err.defer) later();
-        else reportExprFailure(el, stripBraces(expression), err, scope.mount);
+        else {
+          reportExprFailure(el, stripBraces(expression), err, scope.mount);
+          reported(err);
+        }
         return EXPR_FAILED;
       }
     };

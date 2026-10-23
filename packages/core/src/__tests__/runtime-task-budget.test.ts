@@ -107,11 +107,13 @@ describe('the task budget (FORMA-028)', () => {
       <p data-out data-text="{${spending(300_010)}}">server</p>
     </div>`;
     mountFixture(container);
-    // The first is refused in a task it started: reported at once. Its refused
-    // charge never ran, so the second fits. The third asks for more than the
-    // whole budget, which no task could hold: reported at once too, though
-    // the task had spent 200,000 before it.
-    expect(texts()).toEqual(['server', '199990', 'server']);
+    // The first is refused in a task it started: reported at once, and arms
+    // the task's cap as a wait does (FORMA-178). The second would have fitted
+    // the room left (its refused neighbour never ran), but is past the cap, so
+    // it waits a task and renders there. The third asks for more than the whole
+    // budget, which no task could hold: reported at once too, a charge a cost
+    // row sizes directly being counted, and refused, without any weighing.
+    expect(texts()).toEqual(['server', 'server', 'server']);
     expect(codes()).toEqual(['FORMA_E_BUDGET', 'FORMA_E_BUDGET']);
     await settle();
     expect(texts()).toEqual(['server', '199990', 'server']);
@@ -183,6 +185,97 @@ describe('the task budget (FORMA-028)', () => {
     expect(out.slice(1).every((t) => t.length === 360_889)).toBe(true);
     expect(reads.n).toBe((20 * 2 + 1) * 62_000);
     expect(codes()).toEqual([]);
+  });
+
+  it('bindings each too heavy for any task are reported one to a task, each weighed in full once', { timeout: HEAVY_WAIT_TIMEOUT_MS }, async () => {
+    // FORMA-178, from FORMA-173's final review: bindings each converting a value
+    // too heavy for any task (75,000 numbers, 300,000 units), with nothing spent
+    // before them, were each refused as final and each weighed to the whole
+    // budget in one task: 20 of them took about 53 ms at 4x, 40 about 99 ms.
+    // The list is read through a proxy that counts its element reads, a stand-in
+    // for the weighing done: one full weighing of it queues, so reads, all 75,000 elements
+    // (its length alone counts 75,000 of the 250,000-unit budget), and a task
+    // that weighs one in full and holds the rest to the cap reads no more. Now a reported refusal arms the cap as a wait does and counts toward
+    // the per-task allowance: the first is weighed in full and reported, the
+    // others read none of their list and wait, and each is weighed in full, once,
+    // in a task of its own where it runs first.
+    const FULL = 75_000;
+    for (const count of [20, 40]) {
+      container.innerHTML = `<div data-forma-state='{"v":null}'>${'<p data-out data-text="{v === null ? \'\' : v}">server</p>'.repeat(count)}</div>`;
+      mountFixture(container);
+      const root = container.firstElementChild!;
+      const c = counted(75_000);
+      reads.n = 0;
+      runtime.setScopeValue(root, 'v', c);
+      const perTask = [reads.n];
+      const reported: number[] = [runtime.getDiagnostics().reduce((n, d) => n + d.count, 0)];
+      for (let i = 0; i < count + 10; i++) {
+        const before = reads.n;
+        await tick();
+        perTask.push(reads.n - before);
+        reported.push(runtime.getDiagnostics().reduce((n, d) => n + d.count, 0));
+      }
+      const worst = Math.max(...perTask);
+      expect(worst, `${count}: the most element reads in one task`).toBeLessThanOrEqual(FULL + 1_000);
+      expect(perTask.reduce((a, b) => a + b, 0), `${count}: each weighed in full once`).toBe(count * FULL);
+      expect(runtime.getDiagnostics().map((d) => [d.code, d.count]), `${count}: each reported once`).toEqual([['FORMA_E_BUDGET', count]]);
+      expect(Math.max(...reported.map((r, i) => r - (reported[i - 1] ?? 0))), `${count}: the most reported in one task`).toBeLessThanOrEqual(2);
+      expect(container.querySelectorAll('[data-forma-expr-error]')).toHaveLength(count);
+      expect(texts().every((t) => t.length < 10), `${count}: nothing is converted`).toBe(true);
+      unmountFixture(container);
+      runtime.clearDiagnostics();
+    }
+  });
+
+  it('a light binding after a reported refusal renders in the same task', async () => {
+    // FORMA-178 keeps FORMA-173's G1: a reported refusal arms the same cap as a
+    // wait (10,000 units), not zero, so after one the bindings that fit the cap
+    // (a case mapping, a joined list of fifty names, one that charges nothing)
+    // still render in the task. Two-sided: a 20,000-unit list is past the cap
+    // and waits a task, then renders; the refusal is reported once.
+    const names = Array.from({ length: 50 }, (_, i) => `name-${i}`.padEnd(20, '.'));
+    const big = Array.from({ length: 5000 }, (_, i) => i);
+    container.innerHTML = `<div data-forma-state='${JSON.stringify({ label: 'item', names, big })}'>
+      <p data-out data-text="{${spending(300_000)}}">server</p>
+      ${'<p data-out data-text="{label.toUpperCase()}">server</p>'.repeat(20)}
+      ${'<p data-out data-text="{names.join(\', \')}">server</p>'.repeat(20)}
+      ${'<p data-out data-text="{label}">server</p>'.repeat(20)}
+      <p data-out data-text="{big}">server</p>
+    </div>`;
+    mountFixture(container);
+    const out = texts();
+    expect(out[0]).toBe('server');
+    expect(out.slice(1, 21).every((t) => t === 'ITEM'), 'case mappings render in the mount task').toBe(true);
+    expect(out.slice(21, 41).every((t) => t === names.join(', ')), 'joined lists render in the mount task').toBe(true);
+    expect(out.slice(41, 61).every((t) => t === 'item'), 'free bindings render in the mount task').toBe(true);
+    expect(out[61]).toBe('server');
+    expect(codes()).toEqual(['FORMA_E_BUDGET']);
+    await settle();
+    expect(texts()[61]).toBe(big.join(','));
+    expect(runtime.getDiagnostics().map((d) => [d.code, d.count])).toEqual([['FORMA_E_BUDGET', 1]]);
+  });
+
+  it('a reported refusal counts toward the allowance as a wait does', async () => {
+    // FORMA-178: the refusal itself counts the cap (10,000 units) toward the
+    // task's allowance (50,000), so the cap drops to 0 after the fifth refusal
+    // that follows it, not the sixth as after FORMA-173's wait (the H1 test
+    // above: its first refusal at no cap counts nothing). Sixty bindings each a
+    // little over the cap (a list of 2,600 numbers, 10,400 units) follow a
+    // binding of 300,000 units; a refusal before the drop reads its list once,
+    // and one after it reads none of it.
+    const p = (): string => '<p data-out data-text="{c === null ? \'\' : c}">server</p>';
+    container.innerHTML = `<div data-forma-state='{"c":null}'><p data-out data-text="{c === null ? 0 : ${spending(300_000)}}">server</p>${p().repeat(60)}</div>`;
+    mountFixture(container);
+    const root = container.firstElementChild!;
+    const c = counted(2600);
+    reads.n = 0;
+    runtime.setScopeValue(root, 'c', c);
+    expect(reads.n, 'element reads in the update').toBe(5 * 2600);
+    expect(codes()).toEqual(['FORMA_E_BUDGET']);
+    expect(texts().slice(1).filter((t) => t !== '' && t !== 'server')).toHaveLength(0);
+    await settle(40);
+    expect(texts().slice(1).every((t) => t === c.join(',')), 'every binding renders').toBe(true);
+    expect(runtime.getDiagnostics().map((d) => [d.code, d.count])).toEqual([['FORMA_E_BUDGET', 1]]);
   });
 
   it('a light binding after one that waits renders in the same task', async () => {
