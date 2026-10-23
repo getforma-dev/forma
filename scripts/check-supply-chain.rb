@@ -14,22 +14,46 @@ failures = []
 # that is not a 40-hex pin is S3's failure, not this one's.
 VERSION_COMMENT = /\A# v\d+(?:\.\d+){0,2}\z/
 # The only exceptions, each with its reason. dtolnay/rust-toolchain publishes its
-# channels as branches (stable, beta, nightly, master, 1.NN) that it rebuilds, and
-# its only tag (v1, on 2026-10-23) follows master; no release tag names a SHA, so a
-# pin carries the branch name it was taken from. An action leaves this list when it
-# starts publishing release tags.
+# channels as branches (stable, beta, nightly, 1.NN) that it rebuilds by force-push,
+# and its one tag, v1, was observed at the master tip; no release tag names a SHA.
+# A commit that a rebuild drops from a channel branch can be garbage-collected
+# (upstream's README warns of this), so a pin is a commit in master's history,
+# commented `# master`, and passes `toolchain:` explicitly because master's
+# action.yml requires it (FORMA-251). An action leaves this list when it starts
+# publishing release tags.
 BRANCH_PINNED = {
   'dtolnay/rust-toolchain' => {
-    comments: ['# stable', '# master'],
+    comments: ['# master'],
     reason: 'branch-published toolchain action with no release tags to name'
   }
 }.freeze
 
+# Aliases and merge keys (FORMA-251). The comment check reads `uses:` only where it
+# is written, at jobs.<id>.uses and jobs.<id>.steps[].uses; it does not resolve YAML
+# aliases (`*name`) or merge keys (`<<`). A `uses` reached only through one (a step
+# `- *checkout` anchored under a top-level `x-` key, `- <<: *checkout`, `uses: *pin`,
+# `- <<: {uses: ...}`) would go unchecked here, while the 40-hex pass below resolves
+# it on Psych 3 and raises on an alias from Psych 4.0.1 (bundled since Ruby 3.1; CI
+# runs 3.2), whose YAML.load_file is a safe load.
+# Rather than reimplement anchor scoping and merge precedence, any alias or merge
+# key in a workflow is rejected with its line; no workflow uses either, and
+# check-release-workflow.rb already loads release.yml with `aliases: false`.
+def each_indirection(node, &block)
+  if node.is_a?(Psych::Nodes::Alias)
+    yield node, "alias `*#{node.anchor}`"
+  elsif node.is_a?(Psych::Nodes::Mapping)
+    node.children.each_slice(2) do |key, value|
+      next unless key.is_a?(Psych::Nodes::Scalar) && key.value == '<<' && !value.is_a?(Psych::Nodes::Alias)
+      yield key, 'merge key `<<`'
+    end
+  end
+  Array(node.children).each { |child| each_indirection(child, &block) }
+end
+
 # Yields [job name, scalar node] for each real `uses:` value: a job's reusable
 # workflow or a step's action. The YAML parse, not a line scan, so that block-scalar
 # text and commented-out lines never count and the scalar's end locates its comment.
-def each_uses_node(path)
-  document = Psych.parse_file(path)
+def each_uses_node(document)
   return unless document && document.root.is_a?(Psych::Nodes::Mapping)
   mapping = ->(node) { node.is_a?(Psych::Nodes::Mapping) ? node.children.each_slice(2).to_a : [] }
   key = ->(node, name) { node.is_a?(Psych::Nodes::Scalar) && node.value == name }
@@ -49,9 +73,15 @@ def each_uses_node(path)
   end
 end
 
+indirect = []
 Dir.glob(File.join(root, '.github/workflows/*.{yml,yaml}')).sort.each do |path|
   lines = File.read(path, encoding: 'UTF-8').lines
-  each_uses_node(path) do |job, node|
+  document = Psych.parse_file(path)
+  each_indirection(document.root) do |node, what|
+    indirect << path
+    failures << "#{path}:#{node.start_line + 1}: YAML #{what}: write it out in full; the pin and version-comment checks read each `uses:` where it is written and do not follow aliases or merge keys"
+  end if document
+  each_uses_node(document) do |job, node|
     action = node.value
     next if action.start_with?('./') || !action.match?(/@[a-f0-9]{40}\z/)
     rest = lines[node.end_line].to_s[node.end_column..-1].to_s
@@ -66,6 +96,8 @@ end
 Dir.glob(File.join(root, '.github/workflows/*.{yml,yaml}')).each do |path|
   # FORMA-187's dedicated seeded SR43 lint owns the release workflow.
   next if File.basename(path) == 'release.yml'
+  # Already rejected above; from Psych 4.0.1 YAML.load_file would raise on its aliases.
+  next if indirect.include?(path)
   doc = YAML.load_file(path)
   (doc['jobs'] || {}).each do |name, job|
     (job['steps'] || []).each do |step|

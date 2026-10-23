@@ -142,7 +142,10 @@ The templates ship `_npmrc` (npm excludes `.npmrc` from tarballs); scaffolding r
 templates, then the locked Rust graph. It explicitly fetches the advisory DB, so an unavailable
 source fails instead of accepting stale data. The CI deny job also checks the e2e graph and all
 Cargo license/source rules. `advisories.yml` repeats the check weekly; Dependabot maintains the
-GitHub Action SHA pins. cargo-deny 0.20.2 is installed with its published lockfile.
+GitHub Action SHA pins. Each pin ends with a `# vX.Y.Z` comment naming the release that SHA is,
+which `scripts/check-supply-chain.rb` checks; the one exception is `dtolnay/rust-toolchain`,
+which publishes no release tags and is pinned to a commit in its master history as `# master`
+with an explicit `toolchain:` input. cargo-deny 0.20.2 is installed with its published lockfile.
 
 Dependency security updates for active npm projects remain enabled. The root
 Vite override selects the patched 7.x line; upgrading to Vite 8/Vitest 5 is a
