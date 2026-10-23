@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
 import { TEMPLATES, validateProjectName } from '../src/scaffold';
-import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures, recordObservation } from './helpers';
+import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures, recordObservation, checkN8 } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -510,6 +510,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     // includes diagnostic Report-Only TT without an endpoint, which WebKit logs.
     const cargo = run('cargo', ['build', '--locked', '--release'], dest);
     expect(cargo.status, cargo.stderr).toBe(0);
+    await checkN8('minimal', dest, name);
     const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist/manifest.json'), 'utf8'));
     await withServer(dest, name, async (body, response) => {
       expect(response.headers.get('content-security-policy-report-only')).toBeNull();
@@ -583,6 +584,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     expect(build.status, build.stdout + build.stderr).toBe(0);
     const cargo = run('cargo', ['build', '--locked', '--release'], dest);
     expect(cargo.status, cargo.stderr).toBe(0);
+    await checkN8('dashboard', dest, name);
     await withServer(dest, name, async (_body, response) => {
       expect(response.headers.get('content-security-policy-report-only')).toBeNull();
       for (const [engine, launcher] of Object.entries({ chromium, firefox, webkit })) {

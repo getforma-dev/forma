@@ -40,7 +40,17 @@ release profile, each crate at exactly its declared `rust-version` with the
 committed lock (`cargo +1.71 check -p forma-ir --all-targets --locked`,
 `cargo +1.85 check -p forma-server --all-targets --locked`), cargo-deny, the
 compiler and build package and the crates on Windows, the release workflow's
-SR43 lint, and create-app's scaffold gate against the published packages. Two
+SR43 lint, and create-app's scaffold gate against the published packages. That
+gate also holds N8, the framework's footprint: on Linux, after each template's
+`cargo build --release`, it compares the binary and its start with a minimal Axum
+binary built from the same lock, reports both differences in the job summary and
+the scaffold report, and fails when Forma adds more than 3 MB (3,000,000 bytes) or
+100 ms (the median of 15 timed starts, process spawn to the printed
+`FORMA_LISTENING` line, against the baseline's median).
+[`scripts/n8-size-start.mjs`](scripts/n8-size-start.mjs) holds the method and
+[`scripts/n8-size-start.test.mjs`](scripts/n8-size-start.test.mjs) its thresholds,
+which need no Rust (`node --test scripts/n8-size-start.test.mjs`); to look at it
+locally, set `FORMA_N8=1` with `FORMA_SCAFFOLD_E2E=1`. Two
 workflows run on their own schedule: core's suite in all three engines
 (`e2e-engines.yml`, before a release) and the nightly mutation probes
 (`nightly-probes.yml`).
