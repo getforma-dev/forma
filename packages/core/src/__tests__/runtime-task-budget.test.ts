@@ -193,12 +193,13 @@ describe('the task budget (FORMA-028)', () => {
     // before them, were each refused as final and each weighed to the whole
     // budget in one task: 20 of them took about 53 ms at 4x, 40 about 99 ms.
     // The list is read through a proxy that counts its element reads, a stand-in
-    // for the weighing done: one full weighing of it queues, so reads, all 75,000 elements
-    // (its length alone counts 75,000 of the 250,000-unit budget), and a task
-    // that weighs one in full and holds the rest to the cap reads no more. Now a reported refusal arms the cap as a wait does and counts toward
-    // the per-task allowance: the first is weighed in full and reported, the
-    // others read none of their list and wait, and each is weighed in full, once,
-    // in a task of its own where it runs first.
+    // for the weighing done: weighing one in full queues, and so reads, all
+    // 75,000 of its elements (its length alone counts 75,000 of the 250,000-unit
+    // budget), and a task that weighs one in full and holds the rest to the cap
+    // reads no more. Now a reported refusal arms the cap as a wait does and
+    // counts toward the per-task allowance: the first is weighed in full and
+    // reported, the others read none of their list and wait, and each is weighed
+    // in full, once, in a task of its own where it runs first.
     const FULL = 75_000;
     for (const count of [20, 40]) {
       container.innerHTML = `<div data-forma-state='{"v":null}'>${'<p data-out data-text="{v === null ? \'\' : v}">server</p>'.repeat(count)}</div>`;
@@ -253,6 +254,84 @@ describe('the task budget (FORMA-028)', () => {
     await settle();
     expect(texts()[61]).toBe(big.join(','));
     expect(runtime.getDiagnostics().map((d) => [d.code, d.count])).toEqual([['FORMA_E_BUDGET', 1]]);
+  });
+
+  it('a cheap refusal that weighed nothing does not delay a binding that fits', async () => {
+    // FORMA-249, from FORMA-178's review: `reported` armed the cap on every
+    // FORMA_E_BUDGET, but only a refusal the budget meter itself makes (an
+    // allocation charge or the step count, `over()`, which sets `defer`) has
+    // done any weighing. `repeat()` past its cap of 10,000, `flat()` past its
+    // depth, and a string past 1 MiB are refused by a length check before any
+    // work, set no `defer`, and counted nothing toward the allowance. After one
+    // of them a binding that fits the budget (200,000 of 250,000 units) was
+    // past the 10,000-unit cap and rendered one task late; as before FORMA-178
+    // it renders in the same task. Each is reported once.
+    const cases: [string, string][] = [
+      ['repeat() past its cap', `'x'.repeat(20000)`],
+      ['flat() past its depth', '[[1]].flat(99)'],
+      ['a string past 1 MiB', '`${s}`'],
+    ];
+    for (const [name, cheap] of cases) {
+      container.innerHTML = `<div data-forma-state='{"s":""}'>
+        <p data-out data-text="{s.length === 0 ? 0 : ${cheap}}">server</p>
+        <p data-out data-text="{s.length === 0 ? 0 : ${spending(200_000)}}">server</p>
+      </div>`;
+      mountFixture(container);
+      runtime.clearDiagnostics();
+      runtime.setScopeValue(container.firstElementChild!, 's', 'x'.repeat(1_048_577));
+      // A refused binding leaves its previous text ('0') in place.
+      expect(texts(), `${name}: the fitting binding renders in the same task`).toEqual(['0', '199990']);
+      expect(codes(), `${name}: the refusal is reported`).toEqual(['FORMA_E_BUDGET']);
+      await settle();
+      expect(texts(), `${name}: nothing else changes`).toEqual(['0', '199990']);
+      expect(runtime.getDiagnostics().map((d) => [d.code, d.count]), `${name}: reported once`).toEqual([['FORMA_E_BUDGET', 1]]);
+      unmountFixture(container);
+      runtime.clearDiagnostics();
+    }
+  });
+
+  it('a light binding renders in the same task only while at most five too-heavy bindings precede it', { timeout: HEAVY_WAIT_TIMEOUT_MS }, async () => {
+    // FORMA-249, from FORMA-178's review: the documented "light bindings still
+    // render in the same task" holds only up to a point. Each reported refusal
+    // and each wait counts 10,000 units toward the task's 50,000-unit allowance,
+    // so after the fifth too-heavy binding the cap is still 10,000, and after the
+    // sixth it is 0 and a light binding that charges anything (here
+    // `label.toUpperCase()`, twenty of them) waits a tick. N too-heavy bindings,
+    // then the twenty; `late` is how many ticks after the update the last light
+    // binding renders. Before FORMA-178 it was 0 in every case.
+    // - row: each charges 299,990 units that a cost-table row sizes directly, so
+    //   it is refused at once and reported in its task; from the sixth in a task
+    //   the cap is 0, so the rest wait, six are reported to a task, and the
+    //   light bindings render in the task where fewer than six are left.
+    // - list: each converts a 75,000-number list (a weighed value), so only the
+    //   first in a task is weighed in full and reported, the rest wait, and the
+    //   light bindings render once fewer than six are left: N - 5 ticks.
+    const light = '<p data-light data-text="{v === null ? \'\' : label.toUpperCase()}">server</p>';
+    const forms = {
+      row: { heavy: `<p data-text="{v === null ? 0 : ${spending(300_000)}}">server</p>`, value: [1], late: { 1: 0, 5: 0, 6: 1, 7: 1, 10: 1, 12: 2, 20: 3, 40: 6 } },
+      list: { heavy: '<p data-text="{v === null ? \'\' : v}">server</p>', value: Array.from({ length: 75_000 }, (_, i) => i), late: { 1: 0, 5: 0, 6: 1, 7: 2, 10: 5, 20: 15, 40: 35 } },
+    };
+    for (const [form, { heavy, value, late }] of Object.entries(forms)) {
+      for (const [n, expected] of Object.entries(late)) {
+        const count = Number(n);
+        await tick();
+        container.innerHTML = `<div data-forma-state='{"v":null,"label":"item"}'>${heavy.repeat(count)}${light.repeat(20)}</div>`;
+        mountFixture(container);
+        runtime.setScopeValue(container.firstElementChild!, 'v', value);
+        const rendered = (): number => [...container.querySelectorAll('[data-light]')].filter((e) => e.textContent === 'ITEM').length;
+        let ticks = 0;
+        while (rendered() < 20 && ticks < 100) {
+          await tick();
+          ticks++;
+        }
+        expect(ticks, `${form} ${count}: ticks after the update before the light bindings render`).toBe(expected);
+        await settle(count + 5);
+        expect(rendered(), `${form} ${count}: every light binding renders`).toBe(20);
+        expect(runtime.getDiagnostics().map((d) => [d.code, d.count]), `${form} ${count}: each too-heavy binding is reported once`).toEqual([['FORMA_E_BUDGET', count]]);
+        unmountFixture(container);
+        runtime.clearDiagnostics();
+      }
+    }
   });
 
   it('a reported refusal counts toward the allowance as a wait does', async () => {

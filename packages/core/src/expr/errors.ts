@@ -50,9 +50,14 @@ export interface FormaExprError extends Error {
   /** 0-based column in the expression source, or -1 when not positional. */
   column: number;
   /**
-   * Set on a `FORMA_E_BUDGET` refusal when the evaluation began with part of
-   * its task's budget already spent (FORMA-028): run first in a later task it
-   * may fit, so the runtime retries it there instead of reporting it.
+   * Set only on a `FORMA_E_BUDGET` refusal the budget meter makes (an
+   * allocation charge or the step count). True when the evaluation began with
+   * part of its task's budget already spent (FORMA-028): run first in a later
+   * task it may fit, so the runtime retries it there instead of reporting it.
+   * False when it is final, and reported. Left unset by the refusals that
+   * check a length or a count before any work (`repeat()` past its cap,
+   * `flat()` too deep, a string past 1 MiB, an index past the budget): the
+   * runtime reports those as final and arms nothing for them (FORMA-249).
    */
   defer?: boolean;
 }

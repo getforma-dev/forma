@@ -1407,9 +1407,17 @@ function armCap(): void {
   meter.cap = Math.min(meter.cap, meter.lost > WAITING_ALLOWANCE ? 0 : WAITING_CAP);
 }
 
-/** A budget refusal that is reported, not retried: it arms the cap as a wait does (`armCap`). */
+/**
+ * A budget refusal that is reported, not retried: it arms the cap as a wait
+ * does (`armCap`). Only one the budget meter made, with `defer` set false,
+ * has done any weighing; the refusals that check a length or a count first
+ * (`repeat()` past 10,000, `flat()` too deep, a string past 1 MiB) do none,
+ * set no `defer`, and arm nothing, so a binding after one that fits is not
+ * delayed (FORMA-249, from FORMA-178's review).
+ * Verified by: src/__tests__/runtime-task-budget.test.ts > "a cheap refusal that weighed nothing does not delay a binding that fits"
+ */
 function reported(err: FormaExprError): void {
-  if (err.code === 'FORMA_E_BUDGET') armCap();
+  if (err.defer === false) armCap();
 }
 
 /**

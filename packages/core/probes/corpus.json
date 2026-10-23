@@ -1489,9 +1489,17 @@
   "id": "runtime/reported-refusal-no-cap",
   "file": "src/runtime.ts",
   "tags": [],
-  "find": "  if (err.code === 'FORMA_E_BUDGET') armCap();",
+  "find": "  if (err.defer === false) armCap();",
   "replace": "",
   "note": "a reported budget refusal no longer arms the task's cap, so bindings each too heavy for any task are each weighed to the whole budget in one task: 20 of them 53 ms at 4x, 40 about 99 ms (FORMA-178). Verified by: src/__tests__/runtime-task-budget.test.ts > \"bindings each too heavy for any task are reported one to a task, each weighed in full once\""
+ },
+ {
+  "id": "runtime/reported-cheap-refusal-arms-cap",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "  if (err.defer === false) armCap();",
+  "replace": "  armCap();",
+  "note": "a reported refusal that weighed nothing (repeat() past its cap, flat() too deep, a string past 1 MiB: no `defer` set) arms the task's cap like an allocation refusal, so a binding that fits waits a task after one (FORMA-249, from FORMA-178's review). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a cheap refusal that weighed nothing does not delay a binding that fits\""
  },
  {
   "id": "expr/final-refusal-not-counted",
