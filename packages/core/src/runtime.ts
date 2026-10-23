@@ -1484,7 +1484,7 @@ const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.
  * stamps `data-fm` on every element of a module it loads, so its team-roster
  * row weighs 150 and its todo-list row 144, and 1,000 rows of either fit. The
  * largest lists the cap admits take about 1.1 to 1.4 s at 4x on an M1 Pro and
- * about twice that on a CI runner (SECURITY.md has the measurements).
+ * 3.5 to 4.6 s on a CI runner (SECURITY.md has the measurements).
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list of 250,000 items is refused before any item is read"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list exactly at the cap renders, and one row more is refused"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "the heaviest served row template renders up to the cap and is refused one row past it"
