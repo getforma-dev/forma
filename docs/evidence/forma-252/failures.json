@@ -1,0 +1,169 @@
+{
+ "schema": 1,
+ "source": "GitHub Actions artifacts (vitest.json, scaffold report) and job logs, read 2026-10-23; commit is the checked-out tree the job built (for pull requests GitHub's merge ref, see commitIs)",
+ "failures": [
+  {
+   "what": "PR152 head dd886ad5 (FORMA-245): scaffold CLI spawnSync ETIMEDOUT",
+   "run": 39883361936,
+   "attempt": 1,
+   "job": 120186406762,
+   "url": "https://github.com/getforma-dev/forma/actions/runs/39883361936/job/120186406762",
+   "lane": "candidate-scaffold (windows-latest)",
+   "commit": "226950be0faf10fd406784f7e8320c6af3e9058a",
+   "image": "windows-2025-vs2026 20261021.278.1",
+   "region": "eastus",
+   "observationsRecordedBeforeTheFailure": [
+    "minimal: esbuild inventory",
+    "minimal: chromium actual native island and static route",
+    "minimal: firefox actual native island and static route",
+    "minimal: webkit actual native island and static route",
+    "dashboard: chromium tooltip text and policy",
+    "dashboard: firefox tooltip text and policy",
+    "dashboard: webkit tooltip text and policy"
+   ],
+   "jobTimings": {
+    "npmCiSeconds": "33.0",
+    "playwrightInstallSeconds": "342.0",
+    "prepBeforeVitestSeconds": "23.0",
+    "vitestTransformSeconds": "7.87",
+    "vitestImportSeconds": "9.25",
+    "templatesFileMs": "42685",
+    "templateIslandsFileMs": "86632",
+    "suiteSeconds": "646"
+   },
+   "failedTests": [
+    {
+     "file": "tests/scaffold.test.ts",
+     "title": "refuses My-App (upper case) before writing anything, naming the rule",
+     "durationMs": 100,
+     "failureMessages": [
+      "AssertionError: expected [ 'probe-dashboard/.git/HEAD', \u2026(112) ] to deeply equal [ 'probe-dashboard/.git/HEAD', \u2026(111) ]\n    at D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:139:30\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2025:60\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+     ]
+    },
+    {
+     "file": "tests/scaffold.test.ts",
+     "title": "dashboard: npm ci, frontend build, cargo check --locked",
+     "durationMs": 25013,
+     "failureMessages": [
+      "AssertionError: scaffold CLI: Error: spawnSync C:\\hostedtoolcache\\windows\\node\\24.22.0\\x64\\node.exe ETIMEDOUT\n\n  Forma \u2014 Create a new full-stack application\n\n\n  Scaffolding project...\n: expected null to be +0 // Object.is equality\n    at D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:241:46\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+     ]
+    },
+    {
+     "file": "tests/template-islands.test.ts",
+     "title": "scaffolds a declared Counter and a separate truly static native page",
+     "durationMs": 25642,
+     "failureMessages": [
+      "AssertionError: scaffold CLI: Error: spawnSync C:\\hostedtoolcache\\windows\\node\\24.22.0\\x64\\node.exe ETIMEDOUT\n\n  Forma \u2014 Create a new full-stack application\n\n\n  Scaffolding project...\n: expected null to be +0 // Object.is equality\n    at scaffold (D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:19:40)\n    at D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:41:19\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+     ]
+    },
+    {
+     "file": "tests/template-islands.test.ts",
+     "title": "pairs actual Counter metadata with its native module and never mounts the native page in JavaScript",
+     "durationMs": 27138,
+     "failureMessages": [
+      "AssertionError: scaffold CLI: Error: spawnSync C:\\hostedtoolcache\\windows\\node\\24.22.0\\x64\\node.exe ETIMEDOUT\n\n  Forma \u2014 Create a new full-stack application\n\n\n  Scaffolding project...\n: expected null to be +0 // Object.is equality\n    at scaffold (D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:19:40)\n    at D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:53:19\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)"
+     ]
+    },
+    {
+     "file": "tests/template-islands.test.ts",
+     "title": "classifies the actual About source as static and removes its native selector",
+     "durationMs": 31644,
+     "failureMessages": [
+      "AssertionError: scaffold CLI: Error: spawnSync C:\\hostedtoolcache\\windows\\node\\24.22.0\\x64\\node.exe ETIMEDOUT\n\n  Forma \u2014 Create a new full-stack application\n\n\n  Scaffolding project...\n: expected null to be +0 // Object.is equality\n    at scaffold (D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:19:40)\n    at D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:67:19\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)",
+      "Error: EPERM, Permission denied: 'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\forma-template-islands-7nQfpv'\n    at Proxy.rmSync (node:fs:1282:18)\n    at rmrf (D:/a/forma/forma/packages/create-app/tests/helpers.ts:66:6)\n    at Array.forEach (<anonymous>)\n    at D:/a/forma/forma/packages/create-app/tests/template-islands.test.ts:15:33\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at wrapper (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:750:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2622:52"
+     ]
+    },
+    {
+     "file": "tests/templates.test.ts",
+     "title": "compiles the actual scaffolded local page with one declared SERVER count and a Counter island",
+     "durationMs": 32012,
+     "failureMessages": [
+      "Error: EPERM, Permission denied: 'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\forma-template-props-5Z5H0v'\n    at Proxy.rmSync (node:fs:1282:18)\n    at rmrf (D:/a/forma/forma/packages/create-app/tests/helpers.ts:66:6)\n    at D:/a/forma/forma/packages/create-app/tests/templates.test.ts:520:17\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)"
+     ]
+    }
+   ],
+   "commitIs": "pull-request merge ref refs/pull/152/merge: 226950be merges PR head dd886ad5 into main b4faca0a"
+  },
+  {
+   "what": "main merge 50740c21 (PR154): page.goto Timeout 15000ms in verifyMinimalIsland",
+   "run": 39980387199,
+   "attempt": 1,
+   "job": 120506279341,
+   "url": "https://github.com/getforma-dev/forma/actions/runs/39980387199/job/120506279341",
+   "lane": "candidate-scaffold (windows-latest)",
+   "commit": "50740c2189aa95d58f270b6173e3e75ae28b837c",
+   "image": "windows-2025-vs2026 20261021.278.1",
+   "region": "westus3",
+   "observationsRecordedBeforeTheFailure": [
+    "dashboard: esbuild inventory",
+    "minimal: esbuild inventory",
+    "minimal: chromium actual native island and static route",
+    "dashboard: chromium tooltip text and policy",
+    "dashboard: firefox tooltip text and policy",
+    "dashboard: webkit tooltip text and policy"
+   ],
+   "jobTimings": {
+    "npmCiSeconds": "19.0",
+    "playwrightInstallSeconds": "185.0",
+    "prepBeforeVitestSeconds": "4.4",
+    "vitestTransformSeconds": "1.13",
+    "vitestImportSeconds": "2.13",
+    "templatesFileMs": "2589",
+    "templateIslandsFileMs": "3079",
+    "suiteSeconds": "512"
+   },
+   "failedTests": [
+    {
+     "file": "tests/scaffold.test.ts",
+     "title": "minimal: packed native island adopts without writes and static route requests no code in all engines",
+     "durationMs": 117593,
+     "failureMessages": [
+      "page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"http://127.0.0.1:50652/\", waiting until \"commit\"\n\n    at verifyMinimalIsland (D:/a/forma/forma/scripts/release-template-islands.mjs:84:33)\n    at profile (D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:522:26)\n    at withOwnedServer (D:/a/forma/forma/scripts/owned-server.mjs:25:16)\n    at D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:515:5\n    at D:\\a\\forma\\forma\\node_modules\\@vitest\\runner\\dist\\chunk-artifact.js:1903:20"
+     ]
+    }
+   ],
+   "commitIs": "main push: merge commit 50740c21 of PR154 (head e34cb9aa)"
+  },
+  {
+   "what": "FORMA-236 control (PR147 head ae2eb36f, attempt 2): locator.boundingBox Timeout 15000ms in the dashboard tooltip check",
+   "run": 39715843496,
+   "attempt": 2,
+   "job": 119634921005,
+   "url": "https://github.com/getforma-dev/forma/actions/runs/39715843496/job/119634921005",
+   "lane": "scaffold (windows-latest)",
+   "commit": "7ee70a17f53780010ab859d0e89bd596ec9bf155",
+   "image": "windows-2025-vs2026 20261007.264.1",
+   "region": "centralus",
+   "observationsRecordedBeforeTheFailure": [
+    "dashboard: esbuild inventory",
+    "minimal: esbuild inventory",
+    "minimal: chromium actual native island and static route",
+    "minimal: firefox actual native island and static route",
+    "minimal: webkit actual native island and static route",
+    "dashboard: chromium tooltip text and policy"
+   ],
+   "jobTimings": {
+    "npmCiSeconds": "13.0",
+    "playwrightInstallSeconds": "149.0",
+    "prepBeforeVitestSeconds": "3.5",
+    "vitestTransformSeconds": "0.841",
+    "vitestImportSeconds": "1.72",
+    "templatesFileMs": "2069",
+    "templateIslandsFileMs": "2481",
+    "suiteSeconds": "474"
+   },
+   "failedTests": [
+    {
+     "file": "tests/scaffold.test.ts",
+     "title": "dashboard: chart tooltip keeps API values as text under enforced policy in all engines",
+     "durationMs": 46691,
+     "failureMessages": [
+      "locator.boundingBox: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('svg[viewBox=\"0 0 600 200\"]')\n    - locator resolved to visible <svg viewBox=\"0 0 600 200\" class=\"w-full h-auto\">\u2026</svg>\n\n    at hover (D:/a/forma/forma/scripts/release-template-islands.mjs:185:29)\n    at interactDashboard (D:/a/forma/forma/scripts/release-template-islands.mjs:199:43)\n    at verifyDashboardTemplate (D:/a/forma/forma/scripts/release-template-islands.mjs:222:21)\n    at profile (D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:591:31)\n    at withOwnedServer (D:/a/forma/forma/scripts/owned-server.mjs:25:16)\n    at D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:586:5\n    at D:\\a\\forma\\forma\\node_modules\\@vitest\\runner\\dist\\chunk-artifact.js:1903:20"
+     ]
+    }
+   ],
+   "commitIs": "pull-request merge ref refs/pull/147/merge: 7ee70a17 merges PR head ae2eb36f into main 4d521384"
+  }
+ ],
+ "note": "jobTimings are this job's own; percentiles in README.md are over 89 unique Windows jobs (re-run attempts that carried a job over are counted once)"
+}

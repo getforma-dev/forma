@@ -10,6 +10,7 @@ import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, pack, packedRuntime
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { requireN8Observations } from './n8-size-start.mjs';
+import { summarizeTimings } from './scaffold-diagnostics.mjs';
 
 const sourceFiles = ['minimal', 'dashboard'].flatMap(template => ['src/main.rs', 'Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(file => `packages/create-app/templates/${template}/${file}`));
 export function templateHashes(root = ROOT) { return Object.fromEntries(sourceFiles.map(file => [file, digest(join(root, file))])); }
@@ -154,6 +155,8 @@ export function runCandidate(context, reportPath) {
   } finally {
     report.observations = readObservations(context);
     save(reportPath, report);
+    // FORMA-252: one line of measured headroom on every run, pass or fail (the rows are in the report).
+    console.log(summarizeTimings(report.observations, report.platform));
   }
   return report;
 }

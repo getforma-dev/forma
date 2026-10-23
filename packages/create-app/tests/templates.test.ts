@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, TEMPLATE_INFO } from '../src/scaffold';
-import { REPO_ROOT, TEMPLATES_DIR, listFiles, run, runCli, mkTmpDir, rmrf } from './helpers';
+import { REPO_ROOT, TEMPLATES_DIR, listFiles, run, runCli, inTmpDir } from './helpers';
 import { collectDiagnostics, generateRealIr } from '../../compiler/src/index';
 import { getSlots } from '../../compiler/tests/helpers/fmir';
 
@@ -508,8 +508,7 @@ describe('the published package', () => {
 
 describe('minimal template', () => {
   it('compiles the actual scaffolded local page with one declared SERVER count and a Counter island', () => {
-    const dir = mkTmpDir('forma-template-props-');
-    try {
+    inTmpDir('forma-template-props-', (dir) => {
       const created = runCli(['declared-page', '--template', 'minimal'], dir);
       expect(created.status, created.stderr).toBe(0);
       const { result, diagnostics } = collectDiagnostics(() => generateRealIr(path.join(dir, 'declared-page/admin/src/home/app.tsx')));
@@ -517,7 +516,7 @@ describe('minimal template', () => {
       expect(result).not.toBeNull();
       expect(result!.islands.map(island => island.name)).toEqual(['Counter']);
       expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint])).toEqual([['count', 3]]);
-    } finally { rmrf(dir); }
+    });
     // Actual packed Windows CLI/staging reached 10.571s, before compilation.
   }, 60_000);
   it('declares the same count prop in its page and Rust handler with a distinct server seed', () => {

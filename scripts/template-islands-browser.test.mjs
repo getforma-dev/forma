@@ -9,9 +9,10 @@ const state = value => `<script type="application/json" data-island-state>${JSON
 const host = '<section data-forma-island="0" data-forma-component="Counter" data-forma-state="0" data-forma-h="0123456789abcdef"><p class="count">Count: <span>7</span></p><button>Increment</button><button>Reset</button></section>';
 const listeners = `let value=7; const span=document.querySelector('.count span'), buttons=document.querySelectorAll('button'); buttons[0].addEventListener('click',()=>{span.textContent=String(++value)}); buttons[1].addEventListener('click',()=>{value=0;span.textContent='0'});`;
 const manifest = { routes: { '/': {mode:'ssr',js:['entry.js'],css:['style.css'],ir:'home.ir'}, '/about': {mode:'ssr',js:[],css:['style.css'],ir:'about.ir'} } };
-async function fixture({script=listeners, staticScript=false, earlyScript=''}, visit) {
+async function fixture({script=listeners, staticScript=false, earlyScript='', hangDocument=false}, visit) {
   const server=createServer((request,response)=>{
     const headers={'cache-control':'no-store','content-security-policy':csp};
+    if(hangDocument&&request.url==='/')return;
     if(request.url==='/favicon.ico'){response.writeHead(204);response.end();return;}
     if(request.url==='/_assets/entry.js'){response.writeHead(200,{'content-type':'text/javascript',...headers});response.end(script);return;}
     if(request.url==='/_assets/style.css'){response.writeHead(200,{'content-type':'text/css',...headers});response.end('main{color:rgb(1,2,3)}');return;}
@@ -22,7 +23,7 @@ async function fixture({script=listeners, staticScript=false, earlyScript=''}, v
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const browser=await chromium.launch({headless:true});
   try{return await visit(browser,`http://127.0.0.1:${server.address().port}`);}
-  finally{await browser.close();await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}
+  finally{await browser.close();server.closeAllConnections();await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}
 }
 
 test('template observation admits listener-only activation and requires all three value transitions',async()=>{
@@ -74,4 +75,23 @@ test('static observation refuses a self-removing inline executable seen during p
   await fixture({earlyScript:"globalThis.__unexpectedStaticExecution=true;document.currentScript.remove();"},async(browser,origin)=>{
     await assert.rejects(verifyStaticTemplate(browser,origin,manifest),/static executable inventory/);
   });
+});
+
+test('a navigation that never commits keeps its error message and carries the page timeline (FORMA-252)',async()=>{
+  await fixture({hangDocument:true},async(browser,origin)=>{
+    await assert.rejects(verifyMinimalIsland(browser,origin,manifest,7,{timeout:1000}),error=>{
+      assert.match(error.message,/page\.goto: Timeout 1000ms exceeded/);
+      assert.doesNotMatch(error.message,/\+\d+ms /,'the timeline stays out of the message');
+      assert.equal(Object.getOwnPropertyDescriptor(error,'formaTimeline')?.enumerable,false,'the timeline stays out of enumerations and serialisation');
+      assert.equal(Object.keys(error).includes('formaTimeline'),false);
+      const timeline=error.formaTimeline.join('\n');
+      assert.match(timeline,/^\+\d+ms goto http:\/\/127\.0\.0\.1:\d+ \(waitUntil commit, timeout 1000 ms\)\n\+\d+ms request GET document http:\/\/127\.0\.0\.1:\d+\/$/m,timeline);
+      assert.doesNotMatch(timeline,/response|navigated/,'the server never answered the document');
+      return true;
+    });
+  });
+});
+test('a completed observation records its timeline without exposing it in the result',async()=>{
+  const result=await fixture({},(browser,origin)=>verifyMinimalIsland(browser,origin,manifest));
+  assert.equal(Object.hasOwn(result,'timeline'),false);
 });

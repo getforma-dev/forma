@@ -14,11 +14,40 @@ function policy(response) {
     return csp;
   });
 }
+// A bounded page timeline (FORMA-252): navigation, network and error events in milliseconds from
+// page creation. A failing observation carries it as `error.formaTimeline`; the message is left
+// as it is, so callers that match messages are unaffected. It tells a navigation that never left
+// the browser from a request the server never answered.
+function pageTimeline(page) {
+  const started = performance.now(), timeline = [];
+  // `entry` may be a function, so callers build text only when a timeline is kept; a note never throws.
+  const note = entry => {
+    if (timeline.length >= 150) return;
+    let text;
+    try { text = typeof entry === 'function' ? entry() : entry; } catch (error) { text = `(note failed: ${error?.message ?? error})`; }
+    timeline.push(`+${Math.round(performance.now() - started)}ms ${String(text).slice(0, 300)}`);
+  };
+  page.on('request', request => note(`request ${request.method()} ${request.resourceType()} ${request.url()}`));
+  page.on('response', response => note(`response ${response.status()} ${response.url()}`));
+  page.on('requestfailed', request => note(`requestfailed ${request.failure()?.errorText ?? ''} ${request.url()}`));
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) note(`navigated ${frame.url()}`); });
+  page.on('domcontentloaded', () => note('domcontentloaded'));
+  page.on('load', () => note('load'));
+  page.on('crash', () => note('page crashed'));
+  return { timeline, note };
+}
+function withTimeline(error, observed) {
+  if (error !== null && typeof error === 'object' && !Object.hasOwn(error, 'formaTimeline')) {
+    Object.defineProperty(error, 'formaTimeline', { value: [...observed.timeline], enumerable: false, configurable: true });
+  }
+  return error;
+}
 async function observe(context, timeout = 15_000) {
   const page = await context.newPage(), errors = [], requests = [], workers = [];
+  const { timeline, note } = pageTimeline(page);
   page.setDefaultTimeout(timeout);
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', error => { errors.push(error.message); note(`pageerror ${error.message}`); });
+  page.on('console', message => { if (message.type() === 'error') { errors.push(message.text()); note(`console error ${message.text()}`); } });
   page.on('request', request => requests.push({ url: request.url(), type: request.resourceType() }));
   context.on('serviceworker', worker => workers.push(worker.url()));
   await page.addInitScript(() => {
@@ -40,7 +69,7 @@ async function observe(context, timeout = 15_000) {
       globalThis.__formaTemplateViolations.push({ directive: event.effectiveDirective, disposition: event.disposition, uri: event.blockedURI });
     });
   });
-  return { page, errors, requests, workers };
+  return { page, errors, requests, workers, timeline, note };
 }
 async function settle(page) {
   await page.waitForLoadState('networkidle');
@@ -80,8 +109,10 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
   const held = new Promise(resolve => { release = resolve; });
   let requested = false;
   try {
-    await page.route(entry, async route => { requested = true; await held; await route.continue(); });
+    await page.route(entry, async route => { requested = true; observed.note('module entry held'); await held; await route.continue(); });
+    observed.note(`goto ${origin} (waitUntil commit, timeout ${timeout} ms)`);
     const response = await page.goto(origin, { waitUntil: 'commit' });
+    observed.note(`goto committed ${response?.status()}`);
     const csp = await policy(response);
     // A module waits for parsing. Interactive means the parser finished while
     // the intercepted module is still unable to execute (DOMContentLoaded waits).
@@ -108,7 +139,7 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
       globalThis.__formaTemplateAdoption = { nodes, host, observer, records };
       return { count: entry.p.count, hash: entry.h, nodes: nodes.length };
     }, expectedCount);
-    release();
+    release(); observed.note('module entry released');
     await awaitPageModules(page, [entry], timeout);
     const adoption = await page.evaluate(() => {
       const check = globalThis.__formaTemplateAdoption;
@@ -135,7 +166,8 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
     assert.deepEqual(observed.workers, [], 'minimal template registered a worker');
     return { before, adoption, transitions: [expectedCount, expectedCount + 1, 0, 1], servedPolicy: csp,
       errors: observed.errors, violations, workers: observed.workers };
-  } finally { release(); await context.close(); }
+  } catch (error) { throw withTimeline(error, observed); }
+  finally { release(); await context.close(); }
 }
 
 /** A fresh context must obtain static markup and CSS without executing code. */
@@ -146,6 +178,7 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
   assert.equal(owner.modulepreload?.length ?? 0, 0, 'static route advertises module preload');
   const context = await browser.newContext(), observed = await observe(context), { page } = observed;
   try {
+    observed.note(`goto ${new URL(route, origin).href} (waitUntil networkidle)`);
     const response = await page.goto(new URL(route, origin).href, { waitUntil: 'networkidle' });
     const csp = await policy(response); await settle(page);
     await requireExecutableInventory(page);
@@ -161,11 +194,12 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
     const violations = await noErrors(observed);
     return { route, requests: observed.requests, workers: observed.workers, executableScripts: 0, modulepreloads: 0,
       errors: observed.errors, violations, servedPolicy: csp };
-  } finally { await context.close(); }
+  } catch (error) { throw withTimeline(error, observed); }
+  finally { await context.close(); }
 }
 
 /** The same Browser-template positive interaction used by P17 and RC stress. */
-export async function interactDashboard(page, { violationKey = '__formaTemplateViolations' } = {}) {
+export async function interactDashboard(page, { violationKey = '__formaTemplateViolations', note = () => {} } = {}) {
   const collectViolations = async () => {
     // Native CSP events are queued. Read the caller's navigation-time collector
     // before reload replaces the document and its init-script-owned array.
@@ -181,11 +215,15 @@ export async function interactDashboard(page, { violationKey = '__formaTemplateV
   assert(points.length >= 2, 'dashboard chart needs its actual request-volume points');
   const hover = async (point, last = false) => {
     const chart = page.locator('svg[viewBox="0 0 600 200"]');
+    note(() => `hover ${last ? 'last' : 'first'} point ${String(JSON.stringify(point?.hour)).slice(0, 60)}: waiting for the chart`);
     await chart.waitFor({ state: 'visible' });
+    note('chart visible; measuring its box');
     const box = await chart.boundingBox(); assert(box);
+    note('chart measured; hovering');
     await chart.hover({ position: { x: box.width * (last ? 560 : 40) / 600, y: box.height / 2 } });
     const tooltip = chart.locator('..').locator('div.pointer-events-none');
     await tooltip.waitFor({ state: 'visible' });
+    note('tooltip visible');
     await tooltip.getByText(point.hour, { exact: true }).waitFor();
     const values = await tooltip.locator('span.font-mono').allTextContents();
     // Match the browser's locale rather than the Node host's locale.
@@ -204,6 +242,7 @@ export async function interactDashboard(page, { violationKey = '__formaTemplateV
   await page.route(endpoint, handler);
   let hostileObservation;
   try {
+    note('reload with the hostile chart payload');
     await policy(await page.reload({ waitUntil: 'networkidle' }));
     hostileObservation = await hover(hostile);
     assert.equal(intercepted, 1, 'hostile chart payload did not reach the real API consumer exactly once');
@@ -218,10 +257,12 @@ export async function interactDashboard(page, { violationKey = '__formaTemplateV
 export async function verifyDashboardTemplate(browser, origin) {
   const context = await browser.newContext(), observed = await observe(context);
   try {
+    observed.note(`goto ${origin} (waitUntil networkidle, timeout 20000 ms)`);
     const csp = await policy(await observed.page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 }));
-    const tooltip = await interactDashboard(observed.page);
+    const tooltip = await interactDashboard(observed.page, { note: observed.note });
     assert.equal(await observed.page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'dashboard did not activate');
     await settle(observed.page); await noErrors(observed);
     return { interacted: true, tooltip, csp, pageErrors: observed.errors, violations: [] };
-  } finally { await context.close(); }
+  } catch (error) { throw withTimeline(error, observed); }
+  finally { await context.close(); }
 }
