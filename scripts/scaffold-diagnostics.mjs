@@ -109,7 +109,8 @@ export function processSnapshot({ parentPid, limit = 8, platform = process.platf
     const rows = listProcesses(platform, run, timeout);
     const unit = platform === 'win32' ? 's CPU' : '% CPU';
     const show = row => `${row.name} pid ${row.pid} (${platform === 'win32' ? row.load.toFixed(1) : row.load}${unit}, ${row.memoryMb} MB)`;
-    const busiest = [...rows].sort((a, b) => b.load - a.load).slice(0, limit).map(show);
+    // Windows reports idle CPU time as the System Idle Process (pid 0); it is never a busy process.
+    const busiest = rows.filter(row => platform !== 'win32' || row.pid !== 0).sort((a, b) => b.load - a.load).slice(0, limit).map(show);
     const parts = [`processes on ${platform}: ${rows.length} listed; busiest: ${busiest.join('; ') || 'none'}`];
     if (parentPid !== undefined) {
       const children = rows.filter(row => row.ppid === parentPid && row.pid !== parentPid).map(show);

@@ -65,7 +65,7 @@ const fakeRun = stdout => () => ({ status: 0, stdout, stderr: '' });
 
 test('a Windows snapshot ranks by CPU seconds and lists what still runs under the killed pid', () => {
   // id|parent|CPU in 100 ns ticks|working set bytes|name, as the PowerShell line prints them.
-  const stdout = ['4|0|9000000000|1048576|System', '812|4|31200000000|220200960|MsMpEng.exe', '1200|900|50000000|52428800|git.exe', '1300|900|10000000|10485760|git.exe', '900|7|20000000|41943040|node.exe', ''].join('\r\n');
+  const stdout = ['0|0|99000000000|8192|System Idle Process', '4|0|9000000000|1048576|System', '812|4|31200000000|220200960|MsMpEng.exe', '1200|900|50000000|52428800|git.exe', '1300|900|10000000|10485760|git.exe', '900|7|20000000|41943040|node.exe', ''].join('\r\n');
   let call;
   const snapshot = processSnapshot({ platform: 'win32', parentPid: 900, limit: 2, timeout: 4_000, run: (command, args, options) => { call = { command, args, options }; return fakeRun(stdout)(); } });
   assert.equal(call.command, 'powershell.exe');
@@ -73,7 +73,7 @@ test('a Windows snapshot ranks by CPU seconds and lists what still runs under th
   assert.equal(call.options.timeout, 4_000, 'bounded by the caller');
   assert.match(Buffer.from(call.args.at(-1), 'base64').toString('utf16le'), /Get-CimInstance Win32_Process/);
   const [busiest, children] = snapshot.split('\n');
-  assert.equal(busiest, 'processes on win32: 5 listed; busiest: MsMpEng.exe pid 812 (3120.0s CPU, 210 MB); System pid 4 (900.0s CPU, 1 MB)');
+  assert.equal(busiest, 'processes on win32: 6 listed; busiest: MsMpEng.exe pid 812 (3120.0s CPU, 210 MB); System pid 4 (900.0s CPU, 1 MB)');
   assert.equal(children, 'still running under pid 900: git.exe pid 1200 (5.0s CPU, 50 MB); git.exe pid 1300 (1.0s CPU, 10 MB)');
 });
 
