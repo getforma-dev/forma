@@ -9,6 +9,7 @@ import { createRequire } from 'node:module';
 import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, pack, packedRuntimeLock, stageNpmLock, stageCargoLock, assertNpmTemplateLock, assertCargoCandidateLock } from './release-set.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
+import { requireN8Observations } from './n8-size-start.mjs';
 
 const sourceFiles = ['minimal', 'dashboard'].flatMap(template => ['src/main.rs', 'Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(file => `packages/create-app/templates/${template}/${file}`));
 export function templateHashes(root = ROOT) { return Object.fromEntries(sourceFiles.map(file => [file, digest(join(root, file))])); }
@@ -120,6 +121,23 @@ export function requireHeavyResults(report) {
   return {total:cases.length, heavy:REQUIRED_HEAVY.length, required:REQUIRED_HEAVY};
 }
 
+/**
+ * The verdict on a scaffold run: every required heavy case passed, and (N8, FORMA-164) on Linux both
+ * templates' size and start figures are in the report and inside the ceilings. Pure, so it is tested
+ * without a toolchain; `report.observations` must already be loaded.
+ */
+export function judgeCandidate(report, rawResults) {
+  report.cases = requireHeavyResults(rawResults);
+  requireN8Observations(report.observations ?? [], report.platform);
+  report.passed = true;
+  return report;
+}
+
+function readObservations(context) {
+  const observations = join(context.work,'observations.jsonl');
+  return existsSync(observations) ? readFileSync(observations,'utf8').trim().split('\n').filter(Boolean).map(line=>JSON.parse(line)) : [];
+}
+
 export function runCandidate(context, reportPath) {
   const rawReport = join(context.work, 'vitest.json');
   const require = createRequire(join(ROOT,'packages/create-app/package.json'));
@@ -131,10 +149,10 @@ export function runCandidate(context, reportPath) {
   const report = {schema:1, passed:false, mode:context.mode ?? 'candidate', commit:context.commit, recordSha256:context.recordSha256, platform:process.platform};
   try {
     assert.equal(result.error, undefined); assert.equal(result.status, 0, 'scaffold suite command failed');
-    report.cases = requireHeavyResults(json(rawReport)); report.passed = true;
+    report.observations = readObservations(context);
+    judgeCandidate(report, json(rawReport));
   } finally {
-    const observations = join(context.work,'observations.jsonl');
-    report.observations = existsSync(observations) ? readFileSync(observations,'utf8').trim().split('\n').filter(Boolean).map(line=>JSON.parse(line)) : [];
+    report.observations = readObservations(context);
     save(reportPath, report);
   }
   return report;

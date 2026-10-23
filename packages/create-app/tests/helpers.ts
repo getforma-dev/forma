@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { commandInvocation } from '../../../scripts/portable-command.mjs';
 import { withOwnedServer } from '../../../scripts/owned-server.mjs';
+import { assertN8, buildBaseline, describeN8, measureTemplate, n8Name } from '../../../scripts/n8-size-start.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -103,6 +104,30 @@ export function auditSignatures(admin: string) {
 export function recordObservation(name: string, details: Record<string, unknown>) {
   const directory = process.env.FORMA_SCAFFOLD_REPORT_DIR;
   if (directory) fs.appendFileSync(path.join(directory, 'observations.jsonl'), JSON.stringify({name, ...details}) + '\n');
+}
+
+let n8Baseline: string | undefined;
+
+/**
+ * N8 (FORMA-164): after a template's `cargo build --release`, measure what Forma adds to the binary and
+ * to server start against a minimal Axum baseline built from the same lock (scripts/n8-size-start.mjs),
+ * record the figures in the scaffold report, then fail over 3 MB or 100 ms. Linux only: that is where CI
+ * timing is taken; FORMA_N8=1 measures on another platform for a local look (candidate-scaffold.mjs
+ * requires the observations on Linux alone).
+ */
+export async function checkN8(template: string, projectDir: string, binaryName: string) {
+  if (process.platform !== 'linux' && process.env.FORMA_N8 !== '1') return;
+  const binary = serverBinary(projectDir, binaryName, 'release');
+  n8Baseline ??= buildBaseline({
+    dir: path.join(path.dirname(projectDir), 'n8-baseline'),
+    lockFile: path.join(projectDir, 'Cargo.lock'),
+    targetDir: process.env.CARGO_TARGET_DIR ?? path.join(projectDir, 'target'),
+  });
+  const row = await measureTemplate({ template, binary, cwd: projectDir, baselineBinary: n8Baseline });
+  console.log(describeN8(row));
+  // Recorded before it can fail, so a failing report still carries the figures.
+  recordObservation(n8Name(template), { ...row });
+  assertN8(row);
 }
 
 /** Run a command; `env` overrides variables, e.g. `FORMA_STRICT` for a build. */

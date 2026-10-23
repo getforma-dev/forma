@@ -11,6 +11,9 @@
 - Patch the development Vite dependency to 7.3.7 while retaining the compatible
   Vitest 4/coverage and benchmark APIs. Avoid the unrelated Vitest 5 migration
   proposed by the grouped security update.
+- Measure N8 in CI (FORMA-164): the scaffold gate builds each template's release binary on Linux, compares its
+  size and its start with a minimal Axum baseline from the same lock, reports both differences, and fails when
+  Forma adds more than 3 MB or 100 ms. Tests and CI only; no shipped package changes.
 - Exclude historical dependency snapshots under `docs/archive/**` from Dependabot
   update PRs without suppressing their alerts or changing active-project updates.
 

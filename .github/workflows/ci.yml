@@ -529,7 +529,7 @@ jobs:
       - run: npm audit signatures
       - run: npm run build
       - name: Candidate boundary controls
-        run: node --test scripts/candidate-scaffold.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release.test.mjs
+        run: node --test scripts/candidate-scaffold.test.mjs scripts/n8-size-start.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release.test.mjs
       - name: Pack committed candidates and record ten-file restoration
         id: pack
         run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"
@@ -677,6 +677,15 @@ jobs:
         # Node reads host paths itself. No shell builds an npm command string;
         # the owned scratch and artifact paths deliberately contain spaces.
         run: node --input-type=module -e "import {prepareCandidate,runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process'; const tmp=process.env.RUNNER_TEMP; const sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(); runCandidate(prepareCandidate(join(tmp,'candidate artifacts'),process.env.RECORD_SHA256,sha,join(tmp,'candidate scaffold')),join(tmp,'candidate-scaffold-report.json'));"
+      # N8 (FORMA-164): what Forma adds to each template's release binary and to its
+      # start, measured inside the suite above (scripts/n8-size-start.mjs). The suite
+      # fails over 3 MB or 100 ms; this puts the figures on the run page.
+      - name: N8 figures in the job summary
+        if: always() && runner.os == 'Linux'
+        run: |
+          if [ -f "$RUNNER_TEMP/candidate-scaffold-report.json" ]; then
+            node scripts/n8-size-start.mjs summary "$RUNNER_TEMP/candidate-scaffold-report.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Preserve scaffold evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -781,6 +790,12 @@ jobs:
           echo "${#fresh[@]} archives kept for the cache"
       - name: Published CLI full scaffold suite
         run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
+      - name: N8 figures in the job summary
+        if: always() && runner.os == 'Linux'
+        run: |
+          if [ -f "$RUNNER_TEMP/published-scaffold-report.json" ]; then
+            node scripts/n8-size-start.mjs summary "$RUNNER_TEMP/published-scaffold-report.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Preserve registry scaffold evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
