@@ -4,6 +4,65 @@ require 'yaml'
 require 'json'
 root = ARGV[0] || File.expand_path('..', __dir__)
 failures = []
+
+# FORMA-117: a 40-hex pin is exact but unreadable, and Dependabot's github-actions
+# ecosystem rewrites a trailing `# v<version>` comment together with the SHA. Every
+# SHA-pinned third-party `uses:` in every workflow (release.yml included: SR43's
+# shape lint checks the pin, not this comment) therefore ends with exactly
+# `# v<major>[.<minor>[.<patch>]]`, the release the SHA is. `./` local actions and
+# local reusable workflows are exempt, as they are from the pin itself; a `uses:`
+# that is not a 40-hex pin is S3's failure, not this one's.
+VERSION_COMMENT = /\A# v\d+(?:\.\d+){0,2}\z/
+# The only exceptions, each with its reason. dtolnay/rust-toolchain publishes its
+# channels as branches (stable, beta, nightly, master, 1.NN) that it rebuilds, and
+# its only tag (v1, on 2026-10-23) follows master; no release tag names a SHA, so a
+# pin carries the branch name it was taken from. An action leaves this list when it
+# starts publishing release tags.
+BRANCH_PINNED = {
+  'dtolnay/rust-toolchain' => {
+    comments: ['# stable', '# master'],
+    reason: 'branch-published toolchain action with no release tags to name'
+  }
+}.freeze
+
+# Yields [job name, scalar node] for each real `uses:` value: a job's reusable
+# workflow or a step's action. The YAML parse, not a line scan, so that block-scalar
+# text and commented-out lines never count and the scalar's end locates its comment.
+def each_uses_node(path)
+  document = Psych.parse_file(path)
+  return unless document && document.root.is_a?(Psych::Nodes::Mapping)
+  mapping = ->(node) { node.is_a?(Psych::Nodes::Mapping) ? node.children.each_slice(2).to_a : [] }
+  key = ->(node, name) { node.is_a?(Psych::Nodes::Scalar) && node.value == name }
+  mapping.(document.root).each do |top, jobs|
+    next unless key.(top, 'jobs')
+    mapping.(jobs).each do |job_name, job|
+      mapping.(job).each do |field, value|
+        yield job_name.value, value if key.(field, 'uses') && value.is_a?(Psych::Nodes::Scalar)
+        next unless key.(field, 'steps') && value.is_a?(Psych::Nodes::Sequence)
+        value.children.each do |step|
+          mapping.(step).each do |step_field, action|
+            yield job_name.value, action if key.(step_field, 'uses') && action.is_a?(Psych::Nodes::Scalar)
+          end
+        end
+      end
+    end
+  end
+end
+
+Dir.glob(File.join(root, '.github/workflows/*.{yml,yaml}')).sort.each do |path|
+  lines = File.read(path, encoding: 'UTF-8').lines
+  each_uses_node(path) do |job, node|
+    action = node.value
+    next if action.start_with?('./') || !action.match?(/@[a-f0-9]{40}\z/)
+    rest = lines[node.end_line].to_s[node.end_column..-1].to_s
+    comment = rest[/\A\s+(#.*?)\s*\z/, 1]
+    exception = BRANCH_PINNED[action.split('@').first]
+    next if comment && (comment.match?(VERSION_COMMENT) || (exception && exception[:comments].include?(comment)))
+    also = exception ? " or #{exception[:comments].map { |c| "`#{c}`" }.join(' or ')} (#{exception[:reason]})" : ''
+    failures << "#{path}:#{node.start_line + 1}: #{job}: #{action} needs a trailing `# v<major>[.<minor>[.<patch>]]`#{also} comment naming its release (found: #{comment || 'none'})"
+  end
+end
+
 Dir.glob(File.join(root, '.github/workflows/*.{yml,yaml}')).each do |path|
   # FORMA-187's dedicated seeded SR43 lint owns the release workflow.
   next if File.basename(path) == 'release.yml'
@@ -34,4 +93,4 @@ failures << 'alien-signals must be exactly 3.1.2' unless pkg.dig('dependencies',
   failures << "#{folder}: missing ignore-scripts=true" unless File.exist?(config) && File.read(config).lines.any? { |l| l.strip == 'ignore-scripts=true' }
 end
 abort failures.join("\n") unless failures.empty?
-puts 'Supply-chain policy: workflow pins, locked installs, scripts-off, exact runtime dependency pass.'
+puts 'Supply-chain policy: workflow pins and version comments, locked installs, scripts-off, exact runtime dependency pass.'

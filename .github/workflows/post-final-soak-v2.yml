@@ -18,18 +18,18 @@ jobs:
       CARGO_TERM_COLOR: never
       CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: donor
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: rc
           ref: 12320f4340d87cbb96575b5bb3b7eab42121d477
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: rc/.node-version
           package-manager-cache: false
@@ -39,7 +39,7 @@ jobs:
           node donor/scripts/release-soak-context-v2.mjs check "$GITHUB_WORKSPACE/rc" "$RUNNER_TEMP/soak-orchestration/before.json"
           cd rc
           python3 scripts/release-owned-linux.test.py
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: '1.93.1'
       - name: Install immutable RC tools and pinned sanitizer harness
@@ -65,21 +65,21 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/soak-orchestration"
           node donor/scripts/release-soak-context-v2.mjs status "$GITHUB_WORKSPACE/rc" "$RUNNER_TEMP/soak-orchestration/after.json"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rc-burn-in
           path: ${{ runner.temp }}/burn-in-evidence/
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rc-burn-in-ownership
           path: ${{ runner.temp }}/burn-in-owned/
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rc-soak-orchestration
