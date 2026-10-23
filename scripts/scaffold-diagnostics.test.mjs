@@ -33,6 +33,54 @@ test('a stack read before the append is rewritten to carry the text once', () =>
   assert.equal(occurrences(error.stack, '[owned server]'), 1);
 });
 
+test('the text reaches the stack once when it or the message holds frame-like lines, as a Rust or Node backtrace does (FORMA-265)', () => {
+  // An owned-server output tail can end in a Rust backtrace, whose location lines look like frames.
+  const backtrace = [
+    "[owned server] output thread 'main' panicked at src/main.rs:3:5:",
+    'stack backtrace:',
+    '   0: rust_begin_unwind',
+    '             at /rustc/90b35a6239c3d8bdabc530a6a0816f7ff89a0aaf/library/std/src/panicking.rs:665:5',
+  ].join('\n');
+  const cases = [
+    { message: 'page.goto: Timeout 15000ms exceeded.', text: backtrace },
+    { message: 'visit failed: Error: inner\n    at inner (file:///app/server.mjs:1:1)', text: '[owned server] still running' },
+  ];
+  for (const { message, text } of cases) {
+    for (const read of [false, true]) {
+      const error = new Error(message);
+      if (read) error.stack;
+      appendDiagnostics(error, text);
+      assert.equal(error.message, `${message}\n${text}`);
+      assert.equal(occurrences(error.stack, '[owned server]'), 1, `${read ? 'read' : 'unread'} stack:\n${error.stack}`);
+      assert(error.stack.startsWith(`Error: ${message}\n${text}\n    at `), error.stack);
+    }
+  }
+});
+
+test('a read stack takes the text even when its frames already hold the same characters (FORMA-265)', () => {
+  const error = new Error('');
+  const frame = error.stack.split('\n')[1];
+  const text = frame.replace(/^\s+at /, '');
+  appendDiagnostics(error, text);
+  assert.deepEqual(error.stack.split('\n').slice(0, 3), ['Error', text, frame], 'only text before the first frame counts as already there');
+});
+
+test('a read stack takes the text after its message even when the error name contains that message (FORMA-265 review)', () => {
+  class TimeoutError extends Error { constructor(message) { super(message); this.name = 'TimeoutError'; } }
+  const renamed = () => { const error = new Error('Error'); error.stack; error.name = 'Other'; return error; };
+  // A header that no longer ends with the message: the text still follows the first line.
+  const rewritten = () => { const error = new Error('first'); error.stack; error.message = 'second'; return error; };
+  const errors = [new TimeoutError('Timeout'), new Error('Error'), new Error('r'), new TypeError('Type'), new Error(': '),
+    new DOMException('Timeout', 'TimeoutError'), new assert.AssertionError({ message: 'Assertion' }), renamed(), rewritten()];
+  for (const error of errors) {
+    const header = error.stack.split('\n')[0], message = error.message;
+    appendDiagnostics(error, '[diag] detail');
+    assert.equal(error.message, `${message}\n[diag] detail`);
+    assert(error.stack.startsWith(`${header}\n[diag] detail\n    at `), error.stack);
+    assert.equal(occurrences(error.stack, '[diag] detail'), 1);
+  }
+});
+
 test('a DOMException timeout, whose message is a getter, keeps its identity and takes the text (FORMA-252 review B1)', async () => {
   const made = new DOMException('The operation was aborted due to timeout', 'TimeoutError');
   assert.equal(appendDiagnostics(made, '[owned server] readiness GET / failed'), made);

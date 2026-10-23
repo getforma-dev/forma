@@ -4,7 +4,8 @@ export type TimingRow = {
   name: string; id: 'TIMING'; kind: string; label?: string; phases: Record<string, number>;
   budgets?: Record<string, number>; ok: boolean; [detail: string]: unknown;
 };
-export function appendDiagnostics<E>(error: E, text: string): E extends Error ? E : Error;
+/** `error` itself when it took the text or `text` is empty; otherwise a new Error: from a non-Error, or wrapping, as its `cause`, an error whose message cannot be redefined (frozen, sealed or non-extensible). */
+export function appendDiagnostics<E>(error: E, text: string): E | Error;
 export function tail(text: string, limit?: number): string;
 export function formatMs(ms: number): string;
 export function describeScaffoldDir(dir: string): string;

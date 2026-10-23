@@ -16,8 +16,8 @@ export const TIMING_ID = 'TIMING';
  * The message is redefined rather than assigned: a `DOMException` (what `fetch` rejects with on
  * `AbortSignal.timeout`) has only a prototype getter for it, and assigning throws in strict mode.
  * V8 formats a stack nobody has read yet from the current message, so the stack is rewritten only
- * when it was formatted before. An error that cannot take the new message (frozen) is wrapped,
- * with the original as `cause`; callers throw what this returns.
+ * when it was formatted before. An error whose message cannot be redefined (frozen, sealed or
+ * non-extensible) is wrapped, with the original as `cause`; callers throw what this returns.
  */
 export function appendDiagnostics(error, text) {
   if (!text) return error;
@@ -30,14 +30,19 @@ export function appendDiagnostics(error, text) {
   }
   try {
     const stack = target.stack;
-    // The header is everything before the first frame; a lazily formatted one already holds `after`.
-    if (typeof stack === 'string' && !stack.split(/\n\s+at /)[0].includes(after)) {
-      const at = before ? stack.indexOf(before) : -1;
+    // A lazily formatted stack already holds `after` in its header: found, with no frame line before
+    // it. Only the text before `after` is searched for a frame, since the message and the text may
+    // hold frame-like lines of their own (a Rust or Node backtrace in a server's output, FORMA-265);
+    // a match that only the frames hold is not the header, so that stack still takes the text.
+    const found = typeof stack === 'string' ? stack.indexOf(after) : -1;
+    if (typeof stack === 'string' && (found < 0 || /\n\s+at /.test(stack.slice(0, found)))) {
+      // The old message ends the header's first line (`Name: message`), so it is looked for there
+      // first: a message the name also contains (`TimeoutError: Timeout`) is otherwise found inside
+      // the name. A header of another shape falls back to the first match.
+      const newline = stack.indexOf('\n'), head = (newline < 0 ? stack.length : newline) - before.split('\n', 1)[0].length;
+      const at = !before ? -1 : head >= 0 && stack.startsWith(before, head) ? head : stack.indexOf(before);
       if (at >= 0) target.stack = stack.slice(0, at) + after + stack.slice(at + before.length);
-      else {
-        const newline = stack.indexOf('\n');
-        target.stack = newline < 0 ? `${stack}\n${text}` : `${stack.slice(0, newline)}\n${text}${stack.slice(newline)}`;
-      }
+      else target.stack = newline < 0 ? `${stack}\n${text}` : `${stack.slice(0, newline)}\n${text}${stack.slice(newline)}`;
     }
   } catch {
     // A stack that cannot be rewritten keeps its first form; the message carries the text.
