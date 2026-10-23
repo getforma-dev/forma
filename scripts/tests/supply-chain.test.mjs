@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -87,8 +87,8 @@ for (const [name, body] of [
   ['a quoted action', `      - uses: "actions/checkout@${PIN}" # v4.2.2`],
   ['extra spaces before the comment', `      - uses: actions/checkout@${PIN}    # v4.2.2`],
   ['a local action, which has no SHA to explain', '      - uses: ./.github/actions/local'],
-  ['the branch-published toolchain action pinned from stable', `      - uses: dtolnay/rust-toolchain@${PIN} # stable`],
-  ['the branch-published toolchain action pinned from master', `      - uses: dtolnay/rust-toolchain@${PIN} # master`],
+  ['the branch-published toolchain action pinned from master', `      - uses: dtolnay/rust-toolchain@${PIN} # master\n        with:\n          toolchain: stable`],
+  ['an anchor that nothing aliases', `      - &checkout\n        uses: actions/checkout@${PIN} # v4.2.2`],
   ['uses text inside a run script', `      - run: |\n          uses: actions/checkout@${PIN}`],
   ['a commented-out step', `      # - uses: actions/checkout@${PIN}\n      - run: echo ok`],
 ]) test(`version comment lint accepts ${name}`, (t) => success(lint(commentFixture(t, 'extra.yml', steps(body)))));
@@ -117,6 +117,9 @@ for (const [name, body, found] of [
   ['words after the version', `      - uses: actions/checkout@${PIN} # v4.2.2 latest`, /found: # v4\.2\.2 latest\)$/],
   ['an empty comment', `      - uses: actions/checkout@${PIN} #`, /found: #\)$/],
   ['an unlisted branch on the branch-published toolchain action', `      - uses: dtolnay/rust-toolchain@${PIN} # nightly`, /found: # nightly\)$/],
+  // FORMA-251: a rebuilt `stable` branch drops its old commits, which upstream warns
+  // can be garbage-collected; pins come from master's history instead.
+  ['stable on the branch-published toolchain action', `      - uses: dtolnay/rust-toolchain@${PIN} # stable`, /found: # stable\)$/],
   ['no comment on the branch-published toolchain action', `      - uses: dtolnay/rust-toolchain@${PIN}`, /found: none\)$/],
 ]) test(`version comment lint rejects ${name}`, (t) => {
   const r = lint(commentFixture(t, 'extra.yml', steps(body)));
@@ -155,6 +158,43 @@ test('version comment lint reports every offending pin with its file, line and j
   assert.match(lines[0], /extra\.yml:4: one: actions\/checkout@/); assert.match(lines[1], /extra\.yml:8: two: actions\/cache@/);
 });
 
+// FORMA-251: the comment check reads `uses:` where it is written and does not follow
+// YAML aliases or merge keys, while the 40-hex check resolves them (Psych 3) or raises
+// on an alias (Psych 4.0.1+). Every construct that could carry an uncommented pin past
+// the comment check is therefore rejected, on one line, with no Ruby backtrace.
+const ANCHORED = `x-steps:\n  checkout: &checkout\n    uses: actions/checkout@${PIN}\n  pin: &pin actions/checkout@${PIN}\n`;
+for (const [name, file, yaml, line, what] of [
+  ['a step that is an alias', 'extra.yml', `${ANCHORED}${steps('      - *checkout')}`, 8, /YAML alias `\*checkout`/],
+  ['a merge key with an alias', 'extra.yml', `${ANCHORED}${steps('      - <<: *checkout\n        with: {}')}`, 8, /YAML alias `\*checkout`/],
+  ['a uses value that is an alias', 'extra.yml', `${ANCHORED}${steps('      - uses: *pin')}`, 8, /YAML alias `\*pin`/],
+  ['a merge key with an inline mapping', 'extra.yml', steps(`      - <<: {uses: actions/checkout@${PIN}}`), 4, /YAML merge key `<<`/],
+  ['an alias in release.yml, which the 40-hex pass skips', 'release.yml', `${ANCHORED}${steps('      - *checkout')}`, 8, /YAML alias `\*checkout`/],
+  ['a job that is an alias', 'extra.yml', `x-job: &job\n  steps:\n    - uses: actions/checkout@${PIN} # v4.2.2\njobs:\n  build: *job\n`, 5, /YAML alias `\*job`/],
+  ['an alias to an unpinned action, reported once', 'extra.yml', `x-steps:\n  checkout: &checkout\n    uses: actions/checkout@v4\n${steps('      - *checkout')}`, 7, /YAML alias `\*checkout`/],
+]) test(`version comment lint rejects ${name}`, (t) => {
+  const r = lint(commentFixture(t, file, yaml));
+  assert.notEqual(r.status, 0);
+  const lines = r.stderr.trim().split('\n'); assert.equal(lines.length, 1, r.stderr);
+  assert.match(lines[0], new RegExp(`${file.replace('.', '\\.')}:${line}: `)); assert.match(lines[0], what);
+  assert.match(lines[0], /do not follow aliases or merge keys$/);
+});
+
+// FORMA-251: a workflow saved with CRLF line endings is read the same way.
+test('version comment lint reads CRLF workflows like LF ones', (t) => {
+  const crlf = (text) => text.replace(/\n/g, '\r\n');
+  success(lint(commentFixture(t, 'extra.yml', crlf(steps(`      - uses: actions/checkout@${PIN} # v4.2.2\n      - run: echo ok`)))));
+  success(lint(commentFixture(t, 'extra.yml', crlf(steps(`      - uses: dtolnay/rust-toolchain@${PIN} # master   `)))));
+  for (const [body, line, found] of [
+    [`      - uses: actions/checkout@${PIN}\n      - run: echo ok`, 4, /found: none\)$/],
+    [`      - name: Checkout\n        uses: actions/checkout@${PIN} # main`, 5, /found: # main\)$/],
+  ]) {
+    const r = lint(commentFixture(t, 'extra.yml', crlf(steps(body))));
+    assert.notEqual(r.status, 0);
+    const lines = r.stderr.trim().split('\n'); assert.equal(lines.length, 1, r.stderr);
+    assert.doesNotMatch(lines[0], /\r/); assert.match(lines[0], new RegExp(`extra\\.yml:${line}: build: `)); assert.match(lines[0], found);
+  }
+});
+
 // The live workflows: an independent reading of the text, then a mutation of every file.
 const liveWorkflows = () => {
   const folder = join(root, '.github/workflows');
@@ -162,19 +202,47 @@ const liveWorkflows = () => {
 };
 const pinLine = /^\s*(?:-\s+)?uses:\s+(\S+)@([a-f0-9]{40})(.*)$/;
 
-test('every SHA-pinned action in the live workflows carries its release comment, one comment per SHA', () => {
-  const comments = new Map(); let pins = 0;
-  for (const { name, text } of liveWorkflows()) text.split('\n').forEach((line, index) => {
+// An independent, offline reading of the pins: each needs its comment, only the
+// branch-published toolchain action may say `# master`, and (FORMA-251) the mapping
+// is one-to-one per action: a SHA carries one comment and a comment names one SHA,
+// so a comment cannot outlive a partial pin move or a partial Dependabot bump.
+const pinErrors = (workflows) => {
+  const errors = [], commentOf = new Map(), shaOf = new Map(); let pins = 0;
+  for (const { name, text } of workflows) text.split(/\r?\n/).forEach((line, index) => {
     const m = pinLine.exec(line); if (!m) return;
     pins += 1; const [, action, sha, rest] = m, here = `${name}:${index + 1}`;
-    const comment = /^\s+(# (?:v\d+(?:\.\d+){0,2}|stable|master))\s*$/.exec(rest)?.[1];
-    assert.ok(comment, `${here}: ${action}@${sha} has no version comment`);
-    if (/^# (?:stable|master)$/.test(comment)) assert.equal(action, 'dtolnay/rust-toolchain', `${here}: only the branch-published toolchain action may name a branch`);
-    const key = `${action}@${sha}`; assert.equal(comments.get(key) ?? comment, comment, `${here}: ${key} carries two different comments`);
-    comments.set(key, comment);
+    const comment = /^\s+(# (?:v\d+(?:\.\d+){0,2}|master))\s*$/.exec(rest)?.[1];
+    if (!comment) return errors.push(`${here}: ${action}@${sha} has no version comment`);
+    if (comment === '# master' && action !== 'dtolnay/rust-toolchain') errors.push(`${here}: only the branch-published toolchain action may name a branch`);
+    const pin = `${action}@${sha}`, named = `${action} ${comment}`;
+    if ((commentOf.get(pin) ?? comment) !== comment) errors.push(`${here}: ${pin} carries two comments: ${commentOf.get(pin)} and ${comment}`);
+    if ((shaOf.get(named) ?? sha) !== sha) errors.push(`${here}: ${named} names two SHAs: ${shaOf.get(named)} and ${sha}`);
+    if (!commentOf.has(pin)) commentOf.set(pin, comment);
+    if (!shaOf.has(named)) shaOf.set(named, sha);
   });
+  return { pins, errors };
+};
+
+test('every SHA-pinned action in the live workflows carries its release comment, one comment per SHA and one SHA per comment', () => {
+  const { pins, errors } = pinErrors(liveWorkflows());
+  assert.deepEqual(errors, []);
   assert.ok(pins >= 50, `read only ${pins} pins`);
   success(lint(root));
+});
+
+test('the offline pin reading catches a second SHA under one comment and a second comment on one SHA', () => {
+  const other = 'a'.repeat(40), file = (...lines) => [{ name: 'x.yml', text: `${lines.join('\r\n')}\r\n` }];
+  assert.deepEqual(pinErrors(file(`      - uses: actions/checkout@${PIN} # v4.2.2`, `      - uses: actions/checkout@${PIN} # v4.2.2`, `      - uses: actions/cache@${other} # v4.2.2`)).errors, []);
+  for (const [lines, error] of [
+    [[`      - uses: actions/checkout@${PIN} # v4.2.2`, `      - uses: actions/checkout@${other} # v4.2.2`], /^x\.yml:2: actions\/checkout # v4\.2\.2 names two SHAs/],
+    [[`      - uses: actions/checkout@${PIN} # v4.2.2`, `        uses: actions/checkout@${PIN} # v4.2.3`], /^x\.yml:2: actions\/checkout@[a-f0-9]{40} carries two comments/],
+    [[`      - uses: dtolnay/rust-toolchain@${PIN} # master`, `      - uses: dtolnay/rust-toolchain@${other} # master`], /^x\.yml:2: dtolnay\/rust-toolchain # master names two SHAs/],
+    [[`      - uses: actions/checkout@${PIN} # master`], /^x\.yml:1: only the branch-published toolchain action/],
+    [[`      - uses: dtolnay/rust-toolchain@${PIN} # stable`], /^x\.yml:1: dtolnay\/rust-toolchain@[a-f0-9]{40} has no version comment/],
+  ]) {
+    const { errors } = pinErrors(file(...lines));
+    assert.equal(errors.length, 1, errors.join('\n')); assert.match(errors[0], error);
+  }
 });
 
 test('removing the comment from one pin of any live workflow is rejected, release.yml included', (t) => {

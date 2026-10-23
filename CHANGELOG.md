@@ -16,6 +16,11 @@
   Forma adds more than 3 MB or 100 ms. Tests and CI only; no shipped package changes.
 - Exclude historical dependency snapshots under `docs/archive/**` from Dependabot
   update PRs without suppressing their alerts or changing active-project updates.
+- Move the `dtolnay/rust-toolchain` pins taken from its rebuilt `stable` branch to a
+  commit in its master history with an explicit `toolchain: stable` (same toolchain),
+  name `Swatinem/rust-cache`'s exact release, reject YAML aliases and merge keys in
+  workflows, and run the supply-chain lint before the advisory checks (FORMA-251).
+  CI and documentation only; no shipped package changes.
 
 ## [3.0.0] - Prepared; publication pending
 
