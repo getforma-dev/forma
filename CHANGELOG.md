@@ -27,7 +27,8 @@
   supply-chain lint before the advisory checks (FORMA-251).
   CI and documentation only; no shipped package changes.
 - Require the full three-part `# vX.Y.Z` release in action-pin comments and test that the
-  CI deny job runs the supply-chain lint before any cargo-deny or advisory step (FORMA-256).
+  CI deny job runs the supply-chain lint, unconditionally and in the default shell, before
+  the Rust toolchain or any cargo-deny or advisory step (FORMA-256).
   CI and documentation only; no shipped package changes.
 
 ## [3.0.0] - Prepared; publication pending

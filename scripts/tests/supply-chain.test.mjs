@@ -69,8 +69,8 @@ for (const [name, mutate] of [
 });
 
 // FORMA-117: every SHA-pinned third-party action ends with `# v<major>.<minor>.<patch>`
-// (Dependabot keeps that comment current with the SHA; FORMA-256 requires all three
-// parts). release.yml is included even though check-supply-chain.rb leaves its pin
+// (a Dependabot bump keeps a matching comment current with the SHA; FORMA-256 requires
+// all three parts). release.yml is included even though check-supply-chain.rb leaves its pin
 // shape to check-release-workflow.rb.
 const PIN = '11d5960a326750d5838078e36cf38b85af677262';
 const lint = (dir) => run('ruby', [join(root, 'scripts/check-supply-chain.rb'), dir], root);
@@ -130,9 +130,9 @@ for (const [name, body, found] of [
 });
 
 // FORMA-256: a one- or two-part comment names a major or minor line (a floating tag
-// such as v4 moves to each new release), not the release the SHA is. Dependabot writes
-// the most specific tag at the new SHA, so its bumps carry three parts (merged PR #34
-// rewrote `# v4` to `# v7.0.1`).
+// such as v4 moves to each new release), not the release the SHA is. A Dependabot bump
+// writes the new SHA's most specific tag into a comment that names a version tagged at
+// the old SHA, so its bumps carry three parts (merged PR #34 rewrote `# v4` to `# v7.0.1`).
 for (const [name, yaml, line, found] of [
   ['a major version', steps(`      - uses: actions/checkout@${PIN} # v4`), 4, /found: # v4\)$/],
   ['a minor version', steps(`      - uses: actions/checkout@${PIN} # v4.2`), 4, /found: # v4\.2\)$/],
@@ -289,38 +289,46 @@ test('removing the comment from one pin of any live workflow is rejected, releas
 const ciWorkflow = () => JSON.parse(execFileSync('ruby', ['-rjson', '-ryaml', '-e', 'puts JSON.generate(YAML.load(STDIN.read))'],
   { input: readFileSync(join(root, '.github/workflows/ci.yml')), encoding: 'utf8' }));
 const SUPPLY_CHAIN_STEP = 'Supply-chain regression tests';
-// A step that installs or runs cargo-deny or fetches advisory data, read from its
-// `uses`, `with` and `run`. Swatinem/rust-cache counts: its default `cache-bin: true`
-// restores ~/.cargo/bin, which is where a warm run's cargo-deny comes from.
-const advisoryWork = (step) => /^Swatinem\/rust-cache@/.test(step.uses ?? '')
+// A step the lint must precede, read from its `uses`, `with` and `run`: one that
+// installs or runs cargo-deny or fetches advisory data, or installs the Rust
+// toolchain. Swatinem/rust-cache counts: its default `cache-bin: true` restores
+// ~/.cargo/bin, which is where a warm run's cargo-deny comes from. So does
+// dtolnay/rust-toolchain: a rustup outage, or a broken or garbage-collected pin,
+// would end the job before the lint reports.
+const mustFollowLint = (step) => /^(?:Swatinem\/rust-cache|dtolnay\/rust-toolchain)@/.test(step.uses ?? '')
   || /cargo[ -]deny|check-advisories|\b(?:npm|cargo)[ -]audit\b|advisory-db|rustsec/i.test([step.uses, JSON.stringify(step.with ?? {}), step.run].join('\n'));
 const checkDenyOrder = (workflow) => {
-  const steps = workflow.jobs?.deny?.steps ?? [];
+  const job = workflow.jobs?.deny, steps = job?.steps ?? [];
+  assert.ok(job?.if === undefined && job?.['continue-on-error'] === undefined, 'the deny job is conditional or may fail');
   const named = steps.flatMap((step, index) => (step.name === SUPPLY_CHAIN_STEP ? [index] : []));
   assert.equal(named.length, 1, `the deny job has ${named.length} "${SUPPLY_CHAIN_STEP}" steps`);
   const [at] = named, lint = steps[at];
   assert.ok(lint.if === undefined && lint['continue-on-error'] === undefined, 'the supply-chain step is conditional or may fail');
+  // The default shell runs with -e, so a lint failure stops the step before the tests
+  // run; a `shell: bash {0}` (no -e) would let passing tests hide it.
+  assert.ok(lint.shell === undefined && job.defaults?.run?.shell === undefined && workflow.defaults?.run?.shell === undefined,
+    'the supply-chain step does not run in the default shell');
   assert.match(lint.run ?? '', /^ruby scripts\/check-supply-chain\.rb$/m);
   assert.match(lint.run ?? '', /^node --test scripts\/tests\/supply-chain\.test\.mjs$/m);
   const node = steps.findIndex(step => step.uses?.startsWith('actions/setup-node@'));
   assert.ok(node >= 0 && node < at, `the supply-chain step (${at}) runs before setup-node (${node}) selects Node`);
   assert.ok(steps.some(step => /\bcargo install cargo-deny\b/.test(step.run ?? '')) && steps.some(step => /check-advisories\.sh/.test(step.run ?? '')),
     'the deny job no longer installs cargo-deny or fetches advisories; update this check');
-  const first = steps.findIndex(advisoryWork);
-  assert.ok(at < first, `the supply-chain step (${at}) runs after step ${first} (${steps[first]?.name ?? steps[first]?.uses}), which installs or runs cargo-deny or fetches advisories`);
+  const first = steps.findIndex(mustFollowLint);
+  assert.ok(at < first, `the supply-chain step (${at}) runs after step ${first} (${steps[first]?.name ?? steps[first]?.uses}), which installs the Rust toolchain, installs or runs cargo-deny, or fetches advisories`);
 };
 
-test('the deny job runs the supply-chain lint and its tests before anything installs or runs cargo-deny or fetches advisories', () => {
+test('the deny job runs the supply-chain lint and its tests before the Rust toolchain, cargo-deny or an advisory fetch', () => {
   checkDenyOrder(ciWorkflow());
 });
 
-test('the deny-job order check rejects the lint moved after cargo-deny work, ahead of setup-node, made optional, or preceded by advisory work', () => {
+test('the deny-job order check rejects the lint moved after Rust, cargo-deny or advisory work, ahead of setup-node, made optional, or run without -e', () => {
   const ci = ciWorkflow(), steps = ci.jobs.deny.steps, from = steps.findIndex(step => step.name === SUPPLY_CHAIN_STEP);
   const others = steps.filter((_, index) => index !== from);
-  const node = others.findIndex(step => step.uses?.startsWith('actions/setup-node@')), first = others.findIndex(advisoryWork);
+  const node = others.findIndex(step => step.uses?.startsWith('actions/setup-node@')), first = others.findIndex(mustFollowLint);
   const withSteps = (list) => { const copy = structuredClone(ci); copy.jobs.deny.steps = list; return copy; };
-  // Every position: allowed only after setup-node and before the first cargo-deny/advisory step.
-  assert.ok(node >= 0 && first > node, `setup-node at ${node}, first cargo-deny/advisory step at ${first}`);
+  // Every position: allowed only after setup-node and before the first step the lint must precede.
+  assert.ok(node >= 0 && first > node, `setup-node at ${node}, first step the lint must precede at ${first}`);
   let rejected = 0;
   for (let to = 0; to <= others.length; to += 1) {
     const moved = withSteps([...others.slice(0, to), steps[from], ...others.slice(to)]);
@@ -329,8 +337,17 @@ test('the deny-job order check rejects the lint moved after cargo-deny work, ahe
   }
   assert.ok(rejected >= 3, `rejected only ${rejected} positions`);
   const lint = steps[from], before = (step) => withSteps([...steps.slice(0, from), step, ...steps.slice(from)]);
+  // The window need not be adjacent: a harmless step between setup-node and the lint is allowed.
+  assert.doesNotThrow(() => checkDenyOrder(before({ name: 'Show Node', run: 'node --version' })));
   const sha = 'a'.repeat(40);
+  const setDeny = (edit) => { const copy = structuredClone(ci); edit(copy.jobs.deny, copy); return copy; };
   for (const [name, mutated] of [
+    ['the toolchain step before it', before({ uses: `dtolnay/rust-toolchain@${sha}`, with: { toolchain: 'stable' } })],
+    ['a shell without -e on the lint', withSteps(steps.map(step => (step === lint ? { ...step, shell: 'bash {0}' } : step)))],
+    ['a deny-job default shell', setDeny(job => { job.defaults = { run: { shell: 'bash {0}' } }; })],
+    ['a workflow default shell', setDeny((_, workflow) => { workflow.defaults = { run: { shell: 'bash {0}' } }; })],
+    ['continue-on-error on the deny job', setDeny(job => { job['continue-on-error'] = true; })],
+    ['an if on the deny job', setDeny(job => { job.if = "github.event_name == 'push'"; })],
     ['a cargo deny fetch before it', before({ run: 'cargo deny --locked fetch db' })],
     ['the advisory script before it', before({ run: 'bash scripts/check-advisories.sh' })],
     ['an npm audit before it', before({ run: 'npm audit --omit=dev' })],

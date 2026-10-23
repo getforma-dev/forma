@@ -6,7 +6,7 @@ root = ARGV[0] || File.expand_path('..', __dir__)
 failures = []
 
 # FORMA-117: a 40-hex pin is exact but unreadable, and Dependabot's github-actions
-# ecosystem rewrites a trailing `# v<version>` comment together with the SHA. Every
+# ecosystem rewrites a matching trailing `# v<version>` comment with the SHA. Every
 # SHA-pinned third-party `uses:` in every workflow (release.yml included: SR43's
 # shape lint checks the pin, not this comment) therefore ends with exactly
 # `# v<major>.<minor>.<patch>`, the release the SHA is. `./` local actions and
@@ -14,10 +14,12 @@ failures = []
 # that is not a 40-hex pin is S3's failure, not this one's.
 # All three parts (FORMA-256): a one- or two-part comment names a major or minor
 # line, and a floating tag such as `v4` moves to each new release, so it does not
-# say which release the SHA is. Dependabot writes the most specific tag at the new
-# SHA (merged PR #34 rewrote `# v4` to `# v7.0.1`), and every action pinned here
-# apart from the exception below tags each release vX.Y.Z, so its bumps keep three
-# parts.
+# say which release the SHA is. This checks the comment's shape only, not that it
+# names the SHA's release. A Dependabot bump rewrites a comment that ends with a
+# version tagged at the old SHA to the new SHA's most specific tag (merged PR #34
+# rewrote `# v4` to `# v7.0.1`) and leaves any other comment unchanged; every action
+# pinned here apart from the exception below tags each release vX.Y.Z, so its bumps
+# keep three parts.
 VERSION_COMMENT = /\A# v\d+\.\d+\.\d+\z/
 PARTIAL_VERSION_COMMENT = /\A# v\d+(?:\.\d+)?\z/
 # The only exceptions, each with its reason. dtolnay/rust-toolchain publishes its
