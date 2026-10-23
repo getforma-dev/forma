@@ -65,6 +65,22 @@ test('a read stack takes the text even when its frames already hold the same cha
   assert.deepEqual(error.stack.split('\n').slice(0, 3), ['Error', text, frame], 'only text before the first frame counts as already there');
 });
 
+test('a read stack takes the text after its message even when the error name contains that message (FORMA-265 review)', () => {
+  class TimeoutError extends Error { constructor(message) { super(message); this.name = 'TimeoutError'; } }
+  const renamed = () => { const error = new Error('Error'); error.stack; error.name = 'Other'; return error; };
+  // A header that no longer ends with the message: the text still follows the first line.
+  const rewritten = () => { const error = new Error('first'); error.stack; error.message = 'second'; return error; };
+  const errors = [new TimeoutError('Timeout'), new Error('Error'), new Error('r'), new TypeError('Type'), new Error(': '),
+    new DOMException('Timeout', 'TimeoutError'), new assert.AssertionError({ message: 'Assertion' }), renamed(), rewritten()];
+  for (const error of errors) {
+    const header = error.stack.split('\n')[0], message = error.message;
+    appendDiagnostics(error, '[diag] detail');
+    assert.equal(error.message, `${message}\n[diag] detail`);
+    assert(error.stack.startsWith(`${header}\n[diag] detail\n    at `), error.stack);
+    assert.equal(occurrences(error.stack, '[diag] detail'), 1);
+  }
+});
+
 test('a DOMException timeout, whose message is a getter, keeps its identity and takes the text (FORMA-252 review B1)', async () => {
   const made = new DOMException('The operation was aborted due to timeout', 'TimeoutError');
   assert.equal(appendDiagnostics(made, '[owned server] readiness GET / failed'), made);
