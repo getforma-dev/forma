@@ -1,15 +1,18 @@
 // N8's threshold, parse and measurement logic, with no Rust toolchain: stand-in servers are Node scripts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   N8_MAX_ADDED_BYTES, N8_MAX_ADDED_START_MS, N8_TEMPLATES, n8Name, parseListening, median, evaluateN8, assertN8, describeN8,
-  requireN8Observations, summarizeN8, measureStartOnce, measureStarts,
+  requireN8Observations, summarizeN8, measureStartOnce, measureStarts, buildBaseline, N8_RUNS,
 } from './n8-size-start.mjs';
 
-const base = { template: 'minimal', formaBytes: 5_000_000, baselineBytes: 2_000_000, formaStartMs: [12, 11, 13], baselineStartMs: [8, 9, 10] };
+// The recorded rows carry the full N8_RUNS timed starts; the pure threshold cases below use fewer where it reads better.
+const full = pattern => Array.from({ length: N8_RUNS }, (_, i) => pattern[i % pattern.length]);
+const base = { template: 'minimal', formaBytes: 5_000_000, baselineBytes: 2_000_000, formaStartMs: full([12, 11, 13]), baselineStartMs: full([8, 9, 10]) };
 const observation = (template, patch = {}) => ({ name: n8Name(template), ...evaluateN8({ ...base, template, ...patch }) });
 
 test('the ceilings are N8\'s: 3 MB and 100 ms', () => {
@@ -85,8 +88,11 @@ test('the report must carry one re-derived N8 row per template on Linux and noth
   // A stored passed flag is never trusted: an over-ceiling row that claims to pass is re-derived and refused.
   const forged = { ...observation('minimal', { formaBytes: 9_000_000 }), passed: true, sizeOk: true };
   assert.throws(() => requireN8Observations([forged, observation('dashboard')], 'linux'), /size: Forma adds 7,000,000 bytes/);
-  const slow = { ...observation('dashboard', { formaStartMs: [300, 301, 302] }), passed: true, startOk: true };
+  const slow = { ...observation('dashboard', { formaStartMs: full([300, 301, 302]) }), passed: true, startOk: true };
   assert.throws(() => requireN8Observations([observation('minimal'), slow], 'linux'), /start: Forma adds/);
+  // A row with too few timed starts is not a median: one lucky sample per side is refused.
+  assert.throws(() => requireN8Observations([observation('minimal', { formaStartMs: [12], baselineStartMs: [9] }), observation('dashboard')], 'linux'), /formaStartMs holds 1 timed starts, N8 needs at least 15/);
+  assert.throws(() => requireN8Observations([observation('minimal'), observation('dashboard', { baselineStartMs: full([9]).slice(0, N8_RUNS - 1) })], 'linux'), /baselineStartMs holds 14 timed starts/);
   // A row without raw samples cannot be re-derived.
   const { formaStartMs, ...bare } = observation('minimal');
   assert.throws(() => requireN8Observations([bare, observation('dashboard')], 'linux'), /formaStartMs/);
@@ -102,6 +108,7 @@ test('the job summary lists each template with its verdict', () => {
 
 // Stand-in servers: real processes that print the readiness line after a delay, like a bound listener would.
 const dir = mkdtempSync(join(tmpdir(), 'n8-start-'));
+const here = dirname(fileURLToPath(import.meta.url));
 const server = (name, delayMs, body = '') => {
   const file = join(dir, name);
   writeFileSync(file, `${body}setTimeout(() => { console.log('FORMA_LISTENING http://127.0.0.1:' + (process.env.FORMA_PORT === '0' ? 41000 : 0)); setInterval(() => {}, 1000); }, ${delayMs});\n`);
@@ -135,4 +142,31 @@ test('an artificially slow startup is caught end to end: alternating starts, dif
   const slowRow = evaluateN8({ ...base, ...await sample('slow-template.mjs') });
   assert.equal(slowRow.startOk, false, describeN8(slowRow));
   assert.throws(() => assertN8(slowRow), /start: Forma adds/);
+});
+
+test('no script that create-app\'s vitest helpers import starts with a shebang (a CRLF `#!` line breaks Vite on Windows)', () => {
+  const tests = join(here, '../packages/create-app/tests');
+  const imported = new Set(['n8-size-start.mjs']);
+  for (const file of ['helpers.ts', 'scaffold.test.ts', 'templates.test.ts', 'scaffold-lib.test.ts', 'server-profile.test.ts', 'template-islands.test.ts', 'docs-truth.test.ts']) {
+    for (const [, specifier] of readFileSync(join(tests, file), 'utf8').matchAll(/from '(\.\.\/\.\.\/\.\.\/scripts\/[^']+\.mjs)'/g)) imported.add(resolve(tests, specifier));
+  }
+  assert(imported.size >= 4, `expected the helpers' script imports, found ${[...imported]}`);
+  for (const file of imported) {
+    const path = file.includes('/') ? file : join(here, file);
+    assert(!readFileSync(path, 'utf8').startsWith('#!'), `${path} starts with a shebang; vitest cannot transform it when a Windows checkout makes the line CRLF`);
+  }
+  // The same file with CRLF endings, as a Windows checkout writes it, is still a module whose first line is not a shebang.
+  assert(!readFileSync(join(here, 'n8-size-start.mjs'), 'utf8').replace(/\n/g, '\r\n').startsWith('#!'));
+});
+
+test('a failed baseline build leaves no directory behind, so the next template meets the real error and not "must be fresh"', { skip: process.platform === 'win32' }, () => {
+  const bin = join(dir, 'fake-bin'); mkdirSync(bin, { recursive: true });
+  writeFileSync(join(bin, 'cargo'), '#!/bin/sh\necho "error: could not compile n8-baseline" >&2\nexit 101\n'); chmodSync(join(bin, 'cargo'), 0o755);
+  const lock = join(dir, 'Cargo.lock'); writeFileSync(lock, '# lock\n');
+  const work = join(dir, 'baseline-work');
+  const env = { PATH: `${bin}:${process.env.PATH}` };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    assert.throws(() => buildBaseline({ dir: work, lockFile: lock, targetDir: join(dir, 'target'), env }), /N8 baseline build failed \(status 101\):\nerror: could not compile n8-baseline/);
+    assert.equal(existsSync(work), false);
+  }
 });

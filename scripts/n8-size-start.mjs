@@ -1,4 +1,7 @@
-#!/usr/bin/env node
+// Run as `node scripts/n8-size-start.mjs ...`. No shebang on purpose: vitest imports this file through
+// create-app's test helpers, and a CRLF-terminated `#!` line is a syntax error to Vite's transform on a
+// Windows checkout (n8-size-start.test.mjs guards every script those helpers import).
+//
 // N8 (FORMA-164; DR-34): Forma adds at most 3 MB to a release binary and at most 100 ms to server start.
 //
 // The check compares each scaffolded template's release binary, as the template ships it, with a
@@ -27,7 +30,7 @@
 // n8-size-start.test.mjs without a toolchain.
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -109,6 +112,10 @@ export function requireN8Observations(observations, platform, templates = N8_TEM
     const found = observations.filter(observation => observation.name === n8Name(template));
     assert.equal(found.length, 1, `${n8Name(template)}: expected exactly one observation, found ${found.length}`);
     const { formaBytes, baselineBytes, formaStartMs, baselineStartMs } = found[0];
+    // A row is a measurement only with its full set of timed starts; one lucky sample is not a median.
+    for (const [side, samples] of [['formaStartMs', formaStartMs], ['baselineStartMs', baselineStartMs]]) {
+      assert(Array.isArray(samples) && samples.length >= N8_RUNS, `${n8Name(template)}: ${side} holds ${Array.isArray(samples) ? samples.length : 0} timed starts, N8 needs at least ${N8_RUNS}`);
+    }
     const row = evaluateN8({ template, formaBytes, baselineBytes, formaStartMs, baselineStartMs });
     assert.equal(found[0].template, template);
     return assertN8(row);
@@ -167,6 +174,9 @@ export async function measureStarts({ forma, baseline }, { runs = N8_RUNS, warmu
   return { formaStartMs, baselineStartMs };
 }
 
+/** A cold baseline compile on a slow runner; generous so only a hang trips it. */
+const BASELINE_BUILD_TIMEOUT_MS = 20 * 60_000;
+
 const BASELINE_CARGO = `[package]
 name = "n8-baseline"
 version = "0.0.0"
@@ -222,13 +232,20 @@ export function buildBaseline({ dir, lockFile, targetDir, env = {} }) {
   copyFileSync(lockFile, join(dir, 'Cargo.lock'));
   // Not --locked: the template's lock names packages the baseline does not use, and cargo prunes them.
   // --offline: every crate is already in the registry cache from the template's own build.
-  const result = spawnSync('cargo', ['build', '--release', '--offline'], {
-    cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, ...(targetDir ? { CARGO_TARGET_DIR: resolve(targetDir) } : {}), CARGO_INCREMENTAL: '0', ...env },
-  });
-  assert.equal(result.status, 0, `N8 baseline build failed:\n${result.stderr}`);
-  const binary = join(targetDir ? resolve(targetDir) : join(dir, 'target'), 'release', process.platform === 'win32' ? 'n8-baseline.exe' : 'n8-baseline');
-  assert(existsSync(binary), `N8 baseline binary missing: ${binary}`);
+  let binary;
+  try {
+    const result = spawnSync('cargo', ['build', '--release', '--offline'], {
+      cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: BASELINE_BUILD_TIMEOUT_MS,
+      env: { ...process.env, ...(targetDir ? { CARGO_TARGET_DIR: resolve(targetDir) } : {}), CARGO_INCREMENTAL: '0', ...env },
+    });
+    assert.equal(result.status, 0, `N8 baseline build failed (${result.error ?? `status ${result.status}`}):\n${result.stderr}`);
+    binary = join(targetDir ? resolve(targetDir) : join(dir, 'target'), 'release', process.platform === 'win32' ? 'n8-baseline.exe' : 'n8-baseline');
+    assert(existsSync(binary), `N8 baseline binary missing: ${binary}`);
+  } catch (error) {
+    // Leave no half-built directory behind: a retry (the next template) must meet the real error, not "must be fresh".
+    rmSync(dir, { recursive: true, force: true });
+    throw error;
+  }
   return binary;
 }
 
