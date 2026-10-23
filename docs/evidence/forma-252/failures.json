@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "source": "GitHub Actions artifacts (vitest.json, scaffold report) and job logs, read 2026-10-23",
+ "source": "GitHub Actions artifacts (vitest.json, scaffold report) and job logs, read 2026-10-23; commit is the checked-out tree the job built (for pull requests GitHub's merge ref, see commitIs)",
  "failures": [
   {
    "what": "PR152 head dd886ad5 (FORMA-245): scaffold CLI spawnSync ETIMEDOUT",
@@ -81,7 +81,8 @@
       "Error: EPERM, Permission denied: 'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\forma-template-props-5Z5H0v'\n    at Proxy.rmSync (node:fs:1282:18)\n    at rmrf (D:/a/forma/forma/packages/create-app/tests/helpers.ts:66:6)\n    at D:/a/forma/forma/packages/create-app/tests/templates.test.ts:520:17\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///D:/a/forma/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)"
      ]
     }
-   ]
+   ],
+   "commitIs": "pull-request merge ref refs/pull/152/merge: 226950be merges PR head dd886ad5 into main b4faca0a"
   },
   {
    "what": "main merge 50740c21 (PR154): page.goto Timeout 15000ms in verifyMinimalIsland",
@@ -120,7 +121,8 @@
       "page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"http://127.0.0.1:50652/\", waiting until \"commit\"\n\n    at verifyMinimalIsland (D:/a/forma/forma/scripts/release-template-islands.mjs:84:33)\n    at profile (D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:522:26)\n    at withOwnedServer (D:/a/forma/forma/scripts/owned-server.mjs:25:16)\n    at D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:515:5\n    at D:\\a\\forma\\forma\\node_modules\\@vitest\\runner\\dist\\chunk-artifact.js:1903:20"
      ]
     }
-   ]
+   ],
+   "commitIs": "main push: merge commit 50740c21 of PR154 (head e34cb9aa)"
   },
   {
    "what": "FORMA-236 control (PR147 head ae2eb36f, attempt 2): locator.boundingBox Timeout 15000ms in the dashboard tooltip check",
@@ -159,7 +161,9 @@
       "locator.boundingBox: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('svg[viewBox=\"0 0 600 200\"]')\n    - locator resolved to visible <svg viewBox=\"0 0 600 200\" class=\"w-full h-auto\">\u2026</svg>\n\n    at hover (D:/a/forma/forma/scripts/release-template-islands.mjs:185:29)\n    at interactDashboard (D:/a/forma/forma/scripts/release-template-islands.mjs:199:43)\n    at verifyDashboardTemplate (D:/a/forma/forma/scripts/release-template-islands.mjs:222:21)\n    at profile (D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:591:31)\n    at withOwnedServer (D:/a/forma/forma/scripts/owned-server.mjs:25:16)\n    at D:/a/forma/forma/packages/create-app/tests/scaffold.test.ts:586:5\n    at D:\\a\\forma\\forma\\node_modules\\@vitest\\runner\\dist\\chunk-artifact.js:1903:20"
      ]
     }
-   ]
+   ],
+   "commitIs": "pull-request merge ref refs/pull/147/merge: 7ee70a17 merges PR head ae2eb36f into main 4d521384"
   }
- ]
+ ],
+ "note": "jobTimings are this job's own; percentiles in README.md are over 89 unique Windows jobs (re-run attempts that carried a job over are counted once)"
 }

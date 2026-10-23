@@ -82,6 +82,8 @@ test('a navigation that never commits keeps its error message and carries the pa
     await assert.rejects(verifyMinimalIsland(browser,origin,manifest,7,{timeout:1000}),error=>{
       assert.match(error.message,/page\.goto: Timeout 1000ms exceeded/);
       assert.doesNotMatch(error.message,/\+\d+ms /,'the timeline stays out of the message');
+      assert.equal(Object.getOwnPropertyDescriptor(error,'formaTimeline')?.enumerable,false,'the timeline stays out of enumerations and serialisation');
+      assert.equal(Object.keys(error).includes('formaTimeline'),false);
       const timeline=error.formaTimeline.join('\n');
       assert.match(timeline,/^\+\d+ms goto http:\/\/127\.0\.0\.1:\d+ \(waitUntil commit, timeout 1000 ms\)\n\+\d+ms request GET document http:\/\/127\.0\.0\.1:\d+\/$/m,timeline);
       assert.doesNotMatch(timeline,/response|navigated/,'the server never answered the document');

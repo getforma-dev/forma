@@ -12,19 +12,35 @@ export const TIMING_ID = 'TIMING';
 /**
  * Append `text` to an error's message and to the copy of the message in its stack, keeping the
  * error object (its type, `cause`, assertion `actual`/`expected`). A non-Error becomes an Error.
+ *
+ * The message is redefined rather than assigned: a `DOMException` (what `fetch` rejects with on
+ * `AbortSignal.timeout`) has only a prototype getter for it, and assigning throws in strict mode.
+ * V8 formats a stack nobody has read yet from the current message, so the stack is rewritten only
+ * when it was formatted before. An error that cannot take the new message (frozen) is wrapped,
+ * with the original as `cause`; callers throw what this returns.
  */
 export function appendDiagnostics(error, text) {
   if (!text) return error;
   const target = error instanceof Error ? error : new Error(String(error));
-  const before = target.message, after = before ? `${before}\n${text}` : text;
-  target.message = after;
-  if (typeof target.stack === 'string') {
-    const at = before ? target.stack.indexOf(before) : -1;
-    if (at >= 0) target.stack = target.stack.slice(0, at) + after + target.stack.slice(at + before.length);
-    else {
-      const newline = target.stack.indexOf('\n');
-      target.stack = newline < 0 ? `${target.stack}\n${text}` : `${target.stack.slice(0, newline)}\n${text}${target.stack.slice(newline)}`;
+  const before = String(target.message ?? ''), after = before ? `${before}\n${text}` : text;
+  try {
+    Object.defineProperty(target, 'message', { value: after, writable: true, configurable: true, enumerable: false });
+  } catch {
+    return new Error(after, { cause: target });
+  }
+  try {
+    const stack = target.stack;
+    // The header is everything before the first frame; a lazily formatted one already holds `after`.
+    if (typeof stack === 'string' && !stack.split(/\n\s+at /)[0].includes(after)) {
+      const at = before ? stack.indexOf(before) : -1;
+      if (at >= 0) target.stack = stack.slice(0, at) + after + stack.slice(at + before.length);
+      else {
+        const newline = stack.indexOf('\n');
+        target.stack = newline < 0 ? `${stack}\n${text}` : `${stack.slice(0, newline)}\n${text}${stack.slice(newline)}`;
+      }
     }
+  } catch {
+    // A stack that cannot be rewritten keeps its first form; the message carries the text.
   }
   return target;
 }
@@ -97,6 +113,16 @@ function listProcesses(platform, run, timeout) {
 }
 
 /**
+ * How long a snapshot may take. A healthy Windows runner lists its processes through PowerShell CIM
+ * in about 4.4 s (CI job 120614907022); the PR152 runner ran its setup and suite-start phases 1.5x
+ * to 6x slower than their medians, which puts the same listing near 27 s at worst. The bound only
+ * limits how long a call that has
+ * already failed waits for its evidence: every caller throws afterwards, and vitest keeps a hook's
+ * or test's own thrown error even when it ends past the timeout.
+ */
+export const SNAPSHOT_TIMEOUT_MS = 30_000;
+
+/**
  * A bounded, best-effort look at the host when a step timed out: the busiest processes (Windows: by
  * CPU seconds since start; elsewhere: by %CPU) and any processes whose parent is `parentPid`, i.e.
  * children a killed process left running. Windows keeps a dead parent's id on its children; POSIX
@@ -104,7 +130,7 @@ function listProcesses(platform, run, timeout) {
  * throws; `timeout` bounds the listing, so a caller can keep it inside its own budget; `run` is
  * replaceable for tests.
  */
-export function processSnapshot({ parentPid, limit = 8, platform = process.platform, timeout = 10_000, run = spawnSync } = {}) {
+export function processSnapshot({ parentPid, limit = 8, platform = process.platform, timeout = SNAPSHOT_TIMEOUT_MS, run = spawnSync } = {}) {
   try {
     const rows = listProcesses(platform, run, timeout);
     const unit = platform === 'win32' ? 's CPU' : '% CPU';

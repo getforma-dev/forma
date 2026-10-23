@@ -5,9 +5,12 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { once } from 'node:events';
-import { TIMING_ID, appendDiagnostics, describeScaffoldDir, formatMs, processSnapshot, summarizeTimings, tail, timingRow } from './scaffold-diagnostics.mjs';
+import { createServer } from 'node:http';
+import { SNAPSHOT_TIMEOUT_MS, TIMING_ID, appendDiagnostics, describeScaffoldDir, formatMs, processSnapshot, summarizeTimings, tail, timingRow } from './scaffold-diagnostics.mjs';
 
-test('appended diagnostics keep the error object, its type and fields, and reach message and stack', () => {
+const occurrences = (text, part) => text.split(part).length - 1;
+
+test('appended diagnostics keep the error object, its type and fields, and reach message and stack once', () => {
   class TimeoutError extends Error { constructor(message) { super(message); this.name = 'TimeoutError'; } }
   const original = new TimeoutError('page.goto: Timeout 15000ms exceeded.');
   original.actual = 1;
@@ -16,20 +19,66 @@ test('appended diagnostics keep the error object, its type and fields, and reach
   assert(result instanceof TimeoutError);
   assert.equal(result.actual, 1);
   assert.equal(result.message, 'page.goto: Timeout 15000ms exceeded.\n[owned server] still running');
-  assert(result.stack.startsWith('TimeoutError: page.goto: Timeout 15000ms exceeded.\n[owned server] still running\n'));
-  assert.match(result.stack, /\n\s+at /, 'the frames survive');
+  const lines = result.stack.split('\n');
+  assert.deepEqual(lines.slice(0, 2), ['TimeoutError: page.goto: Timeout 15000ms exceeded.', '[owned server] still running']);
+  assert.match(lines[2], /^\s+at /, 'the frames follow the text');
+  assert.equal(occurrences(result.stack, '[owned server]'), 1, 'a stack nobody had read is not given the text twice');
+});
+
+test('a stack read before the append is rewritten to carry the text once', () => {
+  const error = new Error('server check failed');
+  assert.equal(error.stack.split('\n')[0], 'Error: server check failed', 'formatted before the append');
+  appendDiagnostics(error, '[owned server] probe failed');
+  assert.deepEqual(error.stack.split('\n').slice(0, 2), ['Error: server check failed', '[owned server] probe failed']);
+  assert.equal(occurrences(error.stack, '[owned server]'), 1);
+});
+
+test('a DOMException timeout, whose message is a getter, keeps its identity and takes the text (FORMA-252 review B1)', async () => {
+  const made = new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+  assert.equal(appendDiagnostics(made, '[owned server] readiness GET / failed'), made);
+  assert.equal(made.name, 'TimeoutError');
+  assert.equal(made.message, 'The operation was aborted due to timeout\n[owned server] readiness GET / failed');
+  assert.equal(occurrences(made.stack, '[owned server]'), 1, made.stack);
+  // The real rejection: fetch against a server that never answers.
+  const server = createServer(() => {});
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  try {
+    const failure = await fetch(`http://127.0.0.1:${server.address().port}/`, { signal: AbortSignal.timeout(200) }).then(() => assert.fail('answered'), error => error);
+    assert.equal(failure.name, 'TimeoutError');
+    assert.equal(Object.hasOwn(failure, 'message'), false, 'the message is inherited, as in Node 24');
+    const stackBefore = failure.stack;
+    assert.equal(appendDiagnostics(failure, 'probe detail'), failure);
+    assert.equal(failure.message, 'The operation was aborted due to timeout\nprobe detail');
+    assert.equal(occurrences(failure.stack, 'probe detail'), 1);
+    assert(failure.stack.startsWith(stackBefore.split('\n')[0]), failure.stack);
+  } finally { server.closeAllConnections(); server.close(); }
+});
+
+test('an error that cannot take a new message is wrapped, with the original as its cause', () => {
+  const frozen = Object.freeze(new RangeError('frozen failure'));
+  const result = appendDiagnostics(frozen, 'detail');
+  assert.notEqual(result, frozen);
+  assert.equal(result.message, 'frozen failure\ndetail');
+  assert.equal(result.cause, frozen);
 });
 
 test('appended diagnostics follow a multi-line message, as Playwright call logs are, in the stack too', () => {
-  const error = new Error('page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to "http://127.0.0.1:1/", waiting until "commit"\n');
+  const message = 'page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to "http://127.0.0.1:1/", waiting until "commit"\n';
+  const error = new Error(message);
+  error.stack;
   appendDiagnostics(error, '[browser] firefox 157.0');
-  assert(error.stack.startsWith('Error: page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to "http://127.0.0.1:1/", waiting until "commit"\n\n[browser] firefox 157.0\n'), error.stack);
+  assert(error.stack.startsWith(`Error: ${message}\n[browser] firefox 157.0\n    at `), error.stack);
+  assert.equal(occurrences(error.stack, '[browser]'), 1);
 });
 
 test('appended diagnostics handle empty messages, non-Errors and empty text', () => {
   const empty = appendDiagnostics(new Error(''), 'detail');
   assert.equal(empty.message, 'detail');
-  assert(empty.stack.split('\n')[1] === 'detail', 'inserted after the header line');
+  assert.equal(empty.stack.split('\n')[0], 'Error: detail', 'an unread stack is formatted from the new message');
+  const emptyRead = new Error('');
+  assert.equal(emptyRead.stack.split('\n')[0], 'Error');
+  appendDiagnostics(emptyRead, 'detail');
+  assert.deepEqual(emptyRead.stack.split('\n').slice(0, 2), ['Error', 'detail'], 'inserted after the header line');
   const wrapped = appendDiagnostics('thrown text', 'detail');
   assert(wrapped instanceof Error);
   assert.equal(wrapped.message, 'thrown text\ndetail');
@@ -81,7 +130,8 @@ test('a POSIX snapshot ranks by %CPU and reports no survivors when none remain',
   const stdout = '    1     0  0.0  1024 /sbin/launchd\n  501     1 87.5 204800 /usr/bin/cargo\n  777   501  3.0  2048 rustc\n';
   let timeout;
   const snapshot = processSnapshot({ platform: 'linux', parentPid: 42, limit: 2, run: (command, args, options) => { timeout = options.timeout; return fakeRun(stdout)(); } });
-  assert.equal(timeout, 10_000, 'bounded by default');
+  assert.equal(timeout, SNAPSHOT_TIMEOUT_MS, 'bounded by default');
+  assert.equal(SNAPSHOT_TIMEOUT_MS, 30_000);
   assert.equal(snapshot, 'processes on linux: 3 listed; busiest: cargo pid 501 (87.5% CPU, 200 MB); rustc pid 777 (3% CPU, 2 MB)\nstill running under pid 42: none');
 });
 
@@ -91,11 +141,13 @@ test('a snapshot never throws: a missing tool, a failing exit or a throwing runn
   assert.match(processSnapshot({ platform: 'darwin', run: () => { throw new Error('boom'); } }), /^process snapshot unavailable: boom$/);
 });
 
-test('this host\'s snapshot lists a running child under its parent', async () => {
-  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60_000)'], { stdio: 'ignore', windowsHide: true });
+// The real listing took 4.4 s on a healthy Windows runner; a generous bound keeps this control from
+// flaking on a slow one without changing what it asserts.
+test('this host\'s snapshot lists a running child under its parent', { timeout: 180_000 }, async () => {
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 170_000)'], { stdio: 'ignore', windowsHide: true });
   await once(child, 'spawn');
   try {
-    const snapshot = processSnapshot({ parentPid: process.pid });
+    const snapshot = processSnapshot({ parentPid: process.pid, timeout: 120_000 });
     assert.doesNotMatch(snapshot, /unavailable/, snapshot);
     assert.match(snapshot, new RegExp(`still running under pid ${process.pid}: .*pid ${child.pid} \\(`), snapshot);
   } finally { child.kill(); await once(child, 'exit'); }

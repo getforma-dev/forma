@@ -20,7 +20,13 @@ function policy(response) {
 // the browser from a request the server never answered.
 function pageTimeline(page) {
   const started = performance.now(), timeline = [];
-  const note = text => { if (timeline.length < 150) timeline.push(`+${Math.round(performance.now() - started)}ms ${String(text).slice(0, 300)}`); };
+  // `entry` may be a function, so callers build text only when a timeline is kept; a note never throws.
+  const note = entry => {
+    if (timeline.length >= 150) return;
+    let text;
+    try { text = typeof entry === 'function' ? entry() : entry; } catch (error) { text = `(note failed: ${error?.message ?? error})`; }
+    timeline.push(`+${Math.round(performance.now() - started)}ms ${String(text).slice(0, 300)}`);
+  };
   page.on('request', request => note(`request ${request.method()} ${request.resourceType()} ${request.url()}`));
   page.on('response', response => note(`response ${response.status()} ${response.url()}`));
   page.on('requestfailed', request => note(`requestfailed ${request.failure()?.errorText ?? ''} ${request.url()}`));
@@ -209,7 +215,7 @@ export async function interactDashboard(page, { violationKey = '__formaTemplateV
   assert(points.length >= 2, 'dashboard chart needs its actual request-volume points');
   const hover = async (point, last = false) => {
     const chart = page.locator('svg[viewBox="0 0 600 200"]');
-    note(`hover ${last ? 'last' : 'first'} point ${JSON.stringify(point.hour).slice(0, 60)}: waiting for the chart`);
+    note(() => `hover ${last ? 'last' : 'first'} point ${String(JSON.stringify(point?.hour)).slice(0, 60)}: waiting for the chart`);
     await chart.waitFor({ state: 'visible' });
     note('chart visible; measuring its box');
     const box = await chart.boundingBox(); assert(box);

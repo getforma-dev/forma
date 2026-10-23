@@ -73,10 +73,10 @@ export function rmrf(dir: string) {
 
 /**
  * Each child runCli starts (the CLI, then candidate staging) is bounded by this. Two of them fit the
- * CLI-backed tests' 60s budget. FORMA-252 kept it: in 92 Windows scaffold jobs the 642 CLI-backed
- * tests took p50 0.9s, p90 1.7s, p99 6.5s; all six over 10s came from two jobs whose runner was
- * already slow before the suite started, and the one failing job's calls were cut at the limit,
- * so no measured duration supports another figure. The timing rows now measure the calls alone.
+ * CLI-backed tests' 60s budget. FORMA-252 kept it: in 89 Windows scaffold jobs the 621 CLI-backed
+ * tests took p50 0.9s, p90 1.7s, p99 6.8s; all six over 10s came from two jobs whose vitest start was
+ * slow, and the one failing job's calls were cut at the limit, so no measured duration supports
+ * another figure. The timing rows now measure the calls alone.
  */
 export const CLI_TIMEOUT_MS = 25_000;
 
@@ -93,14 +93,17 @@ function recordTiming({ name, ...row }: TimingRow) {
 
 /**
  * A timed-out or unspawnable child: how long it ran, how far a scaffold got, what the host was doing.
- * The snapshot is bounded so that both children plus it stay inside the callers' 60s hook budget
- * (25 + 25 + 5); otherwise a hook timeout would replace this evidence.
+ * The process snapshot is bounded by SNAPSHOT_TIMEOUT_MS (scripts/scaffold-diagnostics.mjs), sized
+ * for a runner as slow as PR152's. Running past a hook's 60s budget does not hide this text: runCli
+ * is synchronous, every caller asserts on the result and throws, and vitest 4 keeps a hook's or
+ * test's own thrown error even when it ends past its timeout (the elapsed check applies only when
+ * it resolves).
  */
-function explainChildFailure(phase: string, result: SpawnSyncReturns<string>, ms: number, { dest, snapshotMs }: { dest?: string; snapshotMs: number }): string {
+function explainChildFailure(phase: string, result: SpawnSyncReturns<string>, ms: number, dest?: string): string {
   const code = (result.error as NodeJS.ErrnoException | undefined)?.code;
   const lines = [`[${phase}] ${code ?? result.error} after ${ms} ms of its ${CLI_TIMEOUT_MS} ms budget (pid ${result.pid}, signal ${result.signal ?? 'none'})`];
   if (dest) lines.push(`[${phase}] destination ${describeScaffoldDir(dest)}`);
-  if (code === 'ETIMEDOUT') lines.push(`[${phase}] ${processSnapshot({ parentPid: result.pid, timeout: snapshotMs })}`);
+  if (code === 'ETIMEDOUT') lines.push(`[${phase}] ${processSnapshot({ parentPid: result.pid })}`);
   return lines.join('\n');
 }
 
@@ -127,14 +130,14 @@ export function runCli(args: string[], cwd: string, env: Record<string, string> 
     env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
   const cliMs = Math.round(performance.now() - started);
-  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, explainChildFailure('scaffold CLI', result, cliMs, { dest, snapshotMs: 10_000 }), result.stdout].filter(Boolean).join('\n');
+  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, explainChildFailure('scaffold CLI', result, cliMs, dest), result.stdout].filter(Boolean).join('\n');
   const phases: Record<string, number> = { cli: cliMs };
   let outcome = result;
   if (CANDIDATE_CONTEXT && result.status === 0 && args[0] && !args[0].startsWith('-') && !args.includes('--dry-run')) {
     const stagingStarted = performance.now();
     const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', timeout:CLI_TIMEOUT_MS, maxBuffer:64*1024*1024, env:process.env});
     phases.staging = Math.round(performance.now() - stagingStarted);
-    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, explainChildFailure('candidate project staging', staged, phases.staging, { snapshotMs: 5_000 }), staged.stdout].filter(Boolean).join('\n');
+    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, explainChildFailure('candidate project staging', staged, phases.staging), staged.stdout].filter(Boolean).join('\n');
     if (staged.status !== 0) outcome = staged;
   }
   recordTiming(timingRow('scaffold CLI', { label, phases, budgets: { cli: CLI_TIMEOUT_MS, staging: CLI_TIMEOUT_MS }, ok: !outcome.error, status: outcome.status }));

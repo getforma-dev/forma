@@ -72,3 +72,33 @@ test('a server that exits during the visit is reported as exited, with its last 
 test('a server that never announces readiness is refused with the budget it had',async()=>{
   await assert.rejects(withOwnedServer(process.execPath,['-e','setTimeout(()=>{},10_000)'],process.cwd(),()=>assert.fail('unexpected visit'),{timeout:300}),/never reported its bound address within 300 ms/);
 });
+
+// FORMA-252 review B1: fetch's AbortSignal.timeout rejects with a DOMException whose message is a
+// getter. Both paths that annotate it must keep that error, not replace it with a TypeError.
+const listensButNeverAnswers = `
+ const http=require('node:http');
+ const server=http.createServer(()=>{});
+ server.listen(Number(process.env.FORMA_PORT),'127.0.0.1',()=>console.log('FORMA_LISTENING http://127.0.0.1:'+server.address().port));
+`;
+const answersOnlyReadiness = `
+ const http=require('node:http');let served=0;
+ const server=http.createServer((req,res)=>{if(++served===1)res.end('ready');});
+ server.listen(Number(process.env.FORMA_PORT),'127.0.0.1',()=>console.log('FORMA_LISTENING http://127.0.0.1:'+server.address().port));
+`;
+test('a readiness GET / that times out after FORMA_LISTENING keeps its TimeoutError and says so',async()=>{
+  await assert.rejects(withOwnedServer(process.execPath,['-e',listensButNeverAnswers],process.cwd(),()=>assert.fail('unexpected visit')),error=>{
+    assert.equal(error.name,'TimeoutError',`${error.name}: ${error.message}`);
+    assert.match(error.message,/^The operation was aborted due to timeout\n\[owned server\] pid \d+: readiness GET \/ failed \d+ ms after spawn \(FORMA_LISTENING after \d+ ms\); output FORMA_LISTENING http:\/\/127\.0\.0\.1:\d+/);
+    assert.match(error.stack,/\[owned server\] pid \d+: readiness GET/);
+    return true;
+  });
+});
+test('a visit failing on its own fetch timeout keeps that TimeoutError and gains the server side',async()=>{
+  await assert.rejects(withOwnedServer(process.execPath,['-e',answersOnlyReadiness],process.cwd(),async(_response,origin)=>{
+    await fetch(origin+'/route',{signal:AbortSignal.timeout(300)});
+  }),error=>{
+    assert.equal(error.name,'TimeoutError',`${error.name}: ${error.message}`);
+    assert.match(error.message,/^The operation was aborted due to timeout\n\[owned server\] pid \d+ at http:\/\/127\.0\.0\.1:\d+: .*the server was still running; probe after the failure: GET \/ failed after \d+ ms \(TimeoutError: /);
+    return true;
+  });
+});

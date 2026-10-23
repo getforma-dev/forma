@@ -1,4 +1,5 @@
 export const TIMING_ID: 'TIMING';
+export const SNAPSHOT_TIMEOUT_MS: number;
 export type TimingRow = {
   name: string; id: 'TIMING'; kind: string; label?: string; phases: Record<string, number>;
   budgets?: Record<string, number>; ok: boolean; [detail: string]: unknown;
