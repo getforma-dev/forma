@@ -19,7 +19,8 @@
  * character bounds (SECURITY.md, "Termination and budgets"); O, the ordinary
  * search over 9,000 records, per script; F, bindings that wait for the next
  * task while each weighs most of the budget, and 400 that each weigh about
- * the cap after one waits (FORMA-173).
+ * the cap after one waits (FORMA-173); G, bindings each too heavy for any
+ * task, 20 and 40 of them (FORMA-178).
  *
  * Wall-clock time depends on the machine and its load: the machine's model and
  * load average are printed, and a comparison is meaningful only between
@@ -99,6 +100,12 @@ const CASES = [
   // the 10,000-unit cap, or a little under it. The allowance bounds them together.
   { name: 'F4 a wait, then 400 of 10,400 (over the cap)', data: '({ a: Array.from({length: 1250}, (_, i) => i % 10), b: Array.from({length: 62000}, (_, i) => i % 10), c: Array.from({length: 2600}, (_, i) => i % 10) })', html: t('v.a') + t('v.b') + many(400, () => t('v.c')) },
   { name: 'F5 a wait, then 400 of 9,600 (under the cap)', data: '({ a: Array.from({length: 1250}, (_, i) => i % 10), b: Array.from({length: 62000}, (_, i) => i % 10), c: Array.from({length: 2400}, (_, i) => i % 10) })', html: t('v.a') + t('v.b') + many(400, () => t('v.c')) },
+  // FORMA-178, from FORMA-173's final review: bindings each converting a value
+  // too heavy for any task (75,000 numbers, 300,000 units), nothing spent
+  // before them. Each is reported once; they used to be weighed to the whole
+  // budget in one task (20: about 53 ms at 4x, 40: about 99 ms).
+  { name: 'G1 twenty data-text of a 300,000-unit list', data: 'Array.from({length: 75000}, (_, i) => i % 10)', html: many(20, () => t('v')) },
+  { name: 'G2 forty data-text of a 300,000-unit list', data: 'Array.from({length: 75000}, (_, i) => i % 10)', html: many(40, () => t('v')) },
   // The ordinary search at 9,000 records, the largest ordinary evaluation.
   { name: 'O1 search 9,000 ASCII', data: `${words('alpha beta gamma delta epsilon zeta theta iota kappa lambda mu nu xi omicron pi rho ', 'needle', 9000)}`, html: t(SEARCH('needle')) },
   { name: 'O2 search 9,000 punctuation', data: `${words('the fox’s jump — over the dog… €12 ™ said “quote” and ‘single’ ', 'needle', 9000)}`, html: t(SEARCH('needle')) },
