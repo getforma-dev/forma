@@ -45,6 +45,7 @@ import {
   compileHandler,
   evaluateExpression,
   GROW,
+  ROW,
   hostFn,
   hostObject,
   isExprError,
@@ -665,7 +666,7 @@ interface HandlerBuildResult {
 // memoised per scope — one entry per (scope, expression) instead of one per
 // (scope, expression, evaluation).
 /** A compiled expression bound to a scope; `text` prices what the caller will convert. */
-type Evaluate = (text?: TextCost) => unknown;
+type Evaluate = (text?: TextCost, what?: string) => unknown;
 const scopeExpressionCache = new WeakMap<Scope, Map<string, Evaluate>>();
 const scopeHandlerCache = new WeakMap<Scope, Map<string, HandlerBuildResult>>();
 
@@ -1535,9 +1536,9 @@ function buildEvaluator(expr: string, scope: Scope, el: Element | null): Evaluat
     reportExprFailure(el, cleaned, err, scope.mount);
     return null;
   }
-  const run: Evaluate = (text) => {
+  const run: Evaluate = (text, what) => {
     spend();
-    return evaluateExpression(compiled, scope, meter, text);
+    return evaluateExpression(compiled, scope, meter, text, what);
   };
   cache.set(cleaned, run);
   return run;
@@ -1776,12 +1777,12 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   // A refusal marked `defer` (the task's budget was spent before this binding
   // started) is not reported: the binding re-runs in the next task.
   // `text` prices the conversion the directive makes of the result (FORMA-025).
-  const evaluator = (expression: string, text?: TextCost): (() => unknown) => {
+  const evaluator = (expression: string, text?: TextCost, what?: string): (() => unknown) => {
     const fn = buildEvaluator(expression, scope, el);
     if (!fn) return () => EXPR_FAILED;
     return () => {
       try {
-        return fn(text);
+        return fn(text, what);
       } catch (err) {
         if (!isExprError(err)) throw err;
         if (err.defer) later();
@@ -2155,9 +2156,30 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       // Verified by: src/__tests__/runtime-text-cost.test.ts > "every other conversion of a result to text is refused before it runs"
       const fields = [...template.outerHTML.matchAll(/\{item\.?(\w*)\}/g)].map((m) => m[1]!);
       if (keyProp) fields.push(keyProp);
+      // A row is priced as well (FORMA-172): `ROW` units for it and for each
+      // element and attribute of its template (the contents of a <template> in
+      // it too, which are cloned with the row), once for every row of every
+      // pass, as a pass builds the rows it lacks and rebinds the rest. It is
+      // charged with the list's evaluation, so the list is refused, or waits for
+      // a task of its own, as a binding of that weight is; and it is read from
+      // the list's length, before any item, so a list longer than the room left
+      // is refused without being read.
+      // Verified by: src/__tests__/runtime-list-rows.test.ts > "a list of 250,000 numbers from state is refused before its items are read"
+      // Verified by: src/__tests__/runtime-list-rows.test.ts > "the price of a row follows its template: elements and attributes"
+      // Verified by: src/__tests__/runtime-list-rows.test.ts > "the price of a row counts what a template in it holds"
+      let weight = 1;
+      const held: ParentNode[] = [template];
+      for (const root of held) {
+        for (const node of [root, ...root.querySelectorAll('*')] as Element[]) {
+          weight += 1 + (node.attributes?.length ?? 0);
+          if (node.localName === 'template') held.push((node as HTMLTemplateElement).content);
+        }
+      }
       const evaluate = evaluator(listExpr, (items, room) => {
         let n = 0;
         if (Array.isArray(items)) {
+          n = items.length * ROW * weight;
+          if (n > room) return n;
           for (const item of items) {
             for (const f of fields) {
               if (n > room) return n;
@@ -2166,7 +2188,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           }
         }
         return n;
-      });
+      }, 'building the rows of a data-list');
 
       // Parse transition spec from the list container element
       const listTransition = parseTransitionSpec(el);

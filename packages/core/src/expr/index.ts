@@ -26,7 +26,7 @@ export { exprError, isExprError, type FormaExprError, type ExprErrorCode } from 
 export { hostFn, hostObject, isHost, type Bound, type ExprGrant, type Host } from './host';
 export { isLocalSelector } from './selector';
 export { allowlistSnapshot, SAFE_GLOBALS } from './allowlist';
-export { GROW, weigh } from './cost';
+export { GROW, ROW, weigh } from './cost';
 export { running, safeKey, safeRead, setStepBudget, getStepBudget, WAITING_CAP, type Meter, type ScopeLike } from './interp';
 
 const CACHE_MAX = 2048;
@@ -107,15 +107,16 @@ export type TextCost = (value: unknown, room: number) => number;
  * adds what it spends (FORMA-028). With `text`, the result is charged, inside
  * the same budget and before it is returned, for the conversion the runtime
  * is about to make of it (FORMA-025): `data-text` of a list that would build
- * 300 million characters is refused before `String()` runs.
+ * 300 million characters is refused before `String()` runs. `what` names the
+ * charge in the refusal: a `data-list` charges its rows here (FORMA-172).
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "data-text of a value heavier than the budget is refused before it is converted"
  */
-export function evaluateExpression(node: Expr, scope: ScopeLike, meter?: Meter | null, text?: TextCost): unknown {
+export function evaluateExpression(node: Expr, scope: ScopeLike, meter?: Meter | null, text?: TextCost, what = 'converting the result to text'): unknown {
   const ctx = makeCtx(scope, meter);
   const outer = enter(ctx);
   try {
     const value = evalExpr(node, ctx);
-    if (text) charge(ctx, text(value, room(ctx)), 'converting the result to text', -1);
+    if (text) charge(ctx, text(value, room(ctx)), what, -1);
     return value;
   } finally {
     leave(ctx, outer, meter);

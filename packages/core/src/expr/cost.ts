@@ -76,6 +76,21 @@ export const GROW = 1 / 128;
 /** Per character two strings are compared: 0.2 to 1.3 ns measured. */
 export const READ = 1 / 128;
 
+/**
+ * Per unit of a `data-list` row's weight (FORMA-172): 1 for the row, and 1 for
+ * each element and attribute its template holds, a nested `<template>`'s
+ * contents included. A pass builds the rows it lacks and rebinds the rest, and
+ * both measured 4 to 7 microseconds for each such unit at 4x CPU throttling
+ * (a row of `<li>{item}</li>`, weight 2, 11.5;
+ * a table row of six cells with five bindings, weight 14, 82; a row of 22
+ * elements, weight 23, 146), where an `Array.from` slot measures about 0.1 and
+ * the slowest evaluation the budget admits about 0.19. At 50 units a weight
+ * the budget holds 5,000 of them: 2,500 rows of `<li>`, 357 table rows, 217 of
+ * 22 elements, which measured 23 to 25, 33 to 36 and 31 ms in one task at 4x
+ * (p50, 31 to 41 runs).
+ */
+export const ROW = 50;
+
 /** The fixed part of copying a rope an operand just built (plus a 32nd a character, to 512). */
 export const FLAT = 8;
 

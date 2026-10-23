@@ -112,10 +112,12 @@ describe('the runtime charges its own conversions to text (FORMA-025)', () => {
     // wait does, so the three of `v`, which the capped weighing finds past the
     // budget in one string, are reported in the update, but the three of
     // `rows` are counted only to the cap, wait, and are reported one to a
-    // task, each weighed in full once.
+    // task, each weighed in full once. A list is charged its rows first
+    // (FORMA-172: 80,000 units for 1,000 rows of `<li>`, past the cap), so the
+    // second of them no longer finds the long string in the capped weighing and
+    // waits with the others: none is reported in the update.
     expect(runtime.getDiagnostics().map((d) => [d.code, d.expr, d.count])).toEqual([
       ['FORMA_E_BUDGET', 'v', 3],
-      ['FORMA_E_BUDGET', 'rows', 1],
     ]);
     for (let i = 0; i < 10; i++) await tick();
     // Each keeps what the last value it converted wrote.

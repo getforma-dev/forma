@@ -110,7 +110,13 @@ Four properties, each mechanical:
   budget, and the 100,000 steps, are **one per task**: the bindings evaluated
   in one task share them, and a binding that finds them spent by the bindings
   before it renders in the next task instead (SECURITY.md, "Termination and
-  budgets").
+  budgets"). A `data-list` row is charged to the same budget, 50 units for the
+  row and for each element and attribute of its template, on every pass: a list
+  of more than 2,500 `<li>` rows (357 rows of a six-cell table row) is refused
+  with `FORMA_E_BUDGET` and keeps the rows it had, and one that does not fit
+  what its task has left renders in the next task. Show a page of the data:
+  ask for it where it is produced, or slice it in the expression
+  (`items.slice(start, start + 200)`, charged the length of the array it reads).
 
 **Value expressions** — `data-text`, `data-show`, `data-if`, `data-list`,
 `data-bind:*`, `data-class:*`, and the right-hand side of `data-computed` —

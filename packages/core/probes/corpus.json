@@ -1331,8 +1331,8 @@
   "tags": [
    "security"
   ],
-  "find": "    return evaluateExpression(compiled, scope, meter, text);",
-  "replace": "    return evaluateExpression(compiled, scope, null, text);",
+  "find": "    return evaluateExpression(compiled, scope, meter, text, what);",
+  "replace": "    return evaluateExpression(compiled, scope, null, text, what);",
   "note": "bindings do not count on from the task's meter: ten bindings at the cap in one widget ran 382 ms in one task at 4x (FORMA-028). Verified by: src/__tests__/runtime-task-budget.test.ts > \"ten bindings at the cap spend one budget per task and all of them render\""
  },
  {
@@ -1500,6 +1500,62 @@
   "find": "  if (err.defer === false) armCap();",
   "replace": "  armCap();",
   "note": "a reported refusal that weighed nothing (repeat() past its cap, flat() too deep, a string past 1 MiB: no `defer` set) arms the task's cap like an allocation refusal, so a binding that fits waits a task after one (FORMA-249, from FORMA-178's review). Verified by: src/__tests__/runtime-task-budget.test.ts > \"a cheap refusal that weighed nothing does not delay a binding that fits\""
+ },
+ {
+  "id": "runtime/list-rows-free",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "          n = items.length * ROW * weight;",
+  "replace": "          n = 0;",
+  "note": "a data-list row is not priced against the task's budget: one cheap expression, `Array.from({length: 249990})`, makes the runtime clone and bind its template 249,990 times in one task, 3.5 s at 4x CPU throttling (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"a list of 249,990 items made by one cheap expression builds no row\""
+ },
+ {
+  "id": "runtime/list-rows-read-before-refusal",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "          if (n > room) return n;\n          for (const item of items) {",
+  "replace": "          for (const item of items) {",
+  "note": "a list longer than the room left is no longer refused on its length: the weighing of what its rows place in text reads the items first, 250,000 of them before the first charge (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"a list of 250,000 numbers from state is refused before its items are read\""
+ },
+ {
+  "id": "runtime/list-row-price-ignores-attributes",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "weight += 1 + (node.attributes?.length ?? 0);",
+  "replace": "weight += 1;",
+  "note": "a row's price counts the elements of its template but not their attributes, so a row of directives and bindings costs the browser several times what it is charged (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"the price of a row follows its template: elements and attributes\""
+ },
+ {
+  "id": "runtime/list-row-price-ignores-descendants",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "for (const node of [root, ...root.querySelectorAll('*')] as Element[]) {",
+  "replace": "for (const node of [root] as Element[]) {",
+  "note": "a row's price counts the template's root element and not the elements inside it, so a table row of six cells is charged as a list item (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"the price of a row follows its template: elements and attributes\""
+ },
+ {
+  "id": "runtime/list-row-price-skips-template-contents",
+  "file": "src/runtime.ts",
+  "tags": [],
+  "find": "          if (node.localName === 'template') held.push((node as HTMLTemplateElement).content);",
+  "replace": "",
+  "note": "a row's price does not count what a `<template>` in it holds, which is cloned with the row: a thousand elements in a template in each row measured 258 \u00b5s a row at 4x, charged as a row of three elements (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"the price of a row counts what a template in it holds\""
+ },
+ {
+  "id": "expr/charge-label-dropped",
+  "file": "src/expr/index.ts",
+  "tags": [],
+  "find": "if (text) charge(ctx, text(value, room(ctx)), what, -1);",
+  "replace": "if (text) charge(ctx, text(value, room(ctx)), 'converting the result to text', -1);",
+  "note": "a refused data-list says it is converting a result to text instead of naming the rows it would build (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"a list that would build 20,000 rows in one task builds none, and is reported once, naming the list\""
+ },
+ {
+  "id": "expr/row-price-free",
+  "file": "src/expr/cost.ts",
+  "tags": [],
+  "find": "export const ROW = 50;",
+  "replace": "export const ROW = 0;",
+  "note": "a data-list row costs nothing per unit of weight, whatever its template holds (FORMA-172). Verified by: src/__tests__/runtime-list-rows.test.ts > \"the largest list one task holds is the budget over the price of its row\""
  },
  {
   "id": "expr/final-refusal-not-counted",

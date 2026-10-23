@@ -20,7 +20,8 @@
  * search over 9,000 records, per script; F, bindings that wait for the next
  * task while each weighs most of the budget, and 400 that each weigh about
  * the cap after one waits (FORMA-173); G, bindings each too heavy for any
- * task, 20 and 40 of them (FORMA-178).
+ * task, 20 and 40 of them (FORMA-178); L, `data-list` rows, from 1,000 to
+ * 250,000 items (FORMA-172).
  *
  * Wall-clock time depends on the machine and its load: the machine's model and
  * load average are printed, and a comparison is meaningful only between
@@ -49,6 +50,12 @@ const AT_CAP = 'Array.from({length: 249990}).length';
 const STEPS = 'Array.from({length: 16000}).map((x, i) => i).filter(i => i % 2).length';
 const words = (w, needle, n) => `Array.from({length: ${n}}, (_, i) => ({ title: (i + ' ' + ${JSON.stringify(w)}).repeat(2).slice(0, 60), body: ((i % 10 === 0 ? ${JSON.stringify(needle)} + ' ' : '') + ${JSON.stringify(w)}).repeat(4).slice(0, 200) }))`;
 const SEARCH = (needle) => `v.filter(r => (r.title + ' ' + r.body).toLowerCase().includes(${JSON.stringify(needle).replace(/"/g, "'")})).length`;
+
+const ITEMS = (n) => `Array.from({length: ${n}}, (_, i) => i % 10)`;
+const ROWS = (n) => `Array.from({length: ${n}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
+const LIST = '<ul data-out data-list="{v === null ? [] : v}"><li>{item}</li></ul>';
+const DEEP = '<div data-out data-list="{v === null ? [] : v}"><div><ul>' + '<li>{item}</li>'.repeat(20) + '</ul></div></div>';
+const TABLE = '<table><tbody data-out data-list="{v === null ? [] : v}"><tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr></tbody></table>';
 
 const CASES = [
   // The round-2 review's cases (formajs#14), self-contained.
@@ -106,6 +113,25 @@ const CASES = [
   // budget in one task (20: about 53 ms at 4x, 40: about 99 ms).
   { name: 'G1 twenty data-text of a 300,000-unit list', data: 'Array.from({length: 75000}, (_, i) => i % 10)', html: many(20, () => t('v')) },
   { name: 'G2 forty data-text of a 300,000-unit list', data: 'Array.from({length: 75000}, (_, i) => i % 10)', html: many(40, () => t('v')) },
+  // FORMA-172: a `data-list` builds a row of DOM for every item, whatever the
+  // expression that produced the items cost. L1 to L4 hand the list its items
+  // through state (numbers, which the text pricing weighs at nothing); L5 builds
+  // 249,990 items in the list's own expression, the cheap hostile case; L6 and
+  // L7 are lists of 1,000 and 3,000 rows whose rows hold more than one element.
+  { name: 'L1 data-list of 250,000 items from state', data: ITEMS(250000), html: LIST },
+  { name: 'L2 data-list of 50,000 items from state', data: ITEMS(50000), html: LIST },
+  { name: 'L3 data-list of 10,000 items from state', data: ITEMS(10000), html: LIST },
+  { name: 'L4 data-list of 1,000 items (ordinary)', data: ITEMS(1000), html: LIST },
+  { name: 'L5 data-list of Array.from({length: 249990})', html: `<ul data-out data-list="{Array.from({length: 249990})}"><li>{item}</li></ul>` },
+  { name: 'L6 1,000 rows of 6 cells, bindings in each', data: ROWS(1000), html: TABLE },
+  { name: 'L7 3,000 rows of 6 cells, bindings in each', data: ROWS(3000), html: TABLE },
+  { name: 'L8 data-list of 3,000 items from state', data: ITEMS(3000), html: LIST },
+  // The largest list one task holds, for three row shapes: 50 units for the
+  // row and for each element and attribute of its template.
+  { name: 'L9 2,500 rows of <li> (the most one task holds)', data: ITEMS(2500), html: LIST },
+  { name: 'L10 357 rows of 6 cells, bindings (the most)', data: ROWS(357), html: TABLE },
+  { name: 'L11 217 rows of 22 elements (the most)', data: ITEMS(217), html: DEEP },
+  { name: 'L12 4 lists of 1,000 <li> rows, one widget', data: '({ a: ' + ITEMS(1000) + ', b: ' + ITEMS(1000) + ', c: ' + ITEMS(1000) + ', d: ' + ITEMS(1000) + ' })', html: many(4, (i) => `<ul data-out data-list="{v === null ? [] : v.${'abcd'[i]}}"><li>{item}</li></ul>`) },
   // The ordinary search at 9,000 records, the largest ordinary evaluation.
   { name: 'O1 search 9,000 ASCII', data: `${words('alpha beta gamma delta epsilon zeta theta iota kappa lambda mu nu xi omicron pi rho ', 'needle', 9000)}`, html: t(SEARCH('needle')) },
   { name: 'O2 search 9,000 punctuation', data: `${words('the fox’s jump — over the dog… €12 ™ said “quote” and ‘single’ ', 'needle', 9000)}`, html: t(SEARCH('needle')) },

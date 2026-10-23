@@ -154,3 +154,49 @@ test('FORMA-025: data-text of a value heavier than the budget is refused before 
   expect(await page.evaluate(() => (window as unknown as { __joined: number }).__joined)).toBe(0);
   expect(Math.min(...mounts.map((m) => m.mountMs)), `mounts: ${mounts.map((m) => m.mountMs.toFixed(1)).join(', ')} ms`).toBeLessThan(50);
 });
+
+/**
+ * FORMA-172 in a real browser: a `data-list` row is priced against the task's
+ * budget. Before, a list built a row of DOM for every item, however cheap the
+ * expression that produced them: `Array.from({length: 249990})` was 249,990
+ * template clones, about 0.9 s unthrottled and 3.5 s at 4x. Now the list is
+ * refused with the budget's code before a row is built (the cost left is the
+ * expression's own `Array.from`), and so is a list of 250,000 numbers from
+ * state; a list of 1,000 rows renders in the mount task as before, and four
+ * lists of 1,000 rows in one widget render over more than one task. Unthrottled
+ * here, as the cases above are; scripts/measure-task-budget.mjs (group L)
+ * measures the same cases at 4x.
+ */
+test('FORMA-172: a data-list over 250,000 items is refused with no long task, and 1,000 rows render', async ({ page }) => {
+  await page.addInitScript(timeTasks);
+  await page.goto('/runtime-bare.html');
+  const list = (expr: string): string => `<ul data-out data-list="{${expr}}"><li>{item}</li></ul>`;
+  const rows = (): Promise<number> => page.locator('li').count();
+
+  const made = await mountWidget(page, list('Array.from({length: 249990})'));
+  expect(made.codes).toEqual(['FORMA_E_BUDGET']);
+  expect(await rows()).toBe(0);
+  expect(made.mountMs, `a ${made.mountMs.toFixed(1)} ms task`).toBeLessThan(50);
+
+  const fromState = await mountWidget(page, list('rows'), JSON.stringify({ rows: Array.from({ length: 250_000 }, (_, i) => i % 10) }));
+  expect(fromState.codes).toEqual(['FORMA_E_BUDGET']);
+  expect(await rows()).toBe(0);
+  expect(fromState.mountMs, `a ${fromState.mountMs.toFixed(1)} ms task`).toBeLessThan(50);
+
+  const ordinary = await mountWidget(page, list('rows'), JSON.stringify({ rows: Array.from({ length: 1000 }, (_, i) => i % 10) }));
+  expect(ordinary.codes).toEqual([]);
+  expect(await rows()).toBe(1000);
+  expect(ordinary.mountMs, `a ${ordinary.mountMs.toFixed(1)} ms task`).toBeLessThan(50);
+
+  // Four lists of 1,000 rows are 400,000 units: two to a task, never reported.
+  const four = ['a', 'b', 'c', 'd'].map((k) => list(`rows.${k}`)).join('');
+  const state = Object.fromEntries(['a', 'b', 'c', 'd'].map((k) => [k, Array.from({ length: 1000 }, (_, i) => i % 10)]));
+  const shared = await mountWidget(page, four, JSON.stringify({ rows: state }));
+  expect(shared.texts.map((t) => t.length)).toEqual([1000, 1000, 0, 0]);
+  await expect.poll(rows).toBe(4000);
+  expect(await page.evaluate(() => ((window as unknown as { FormaRuntime: any }).FormaRuntime.getDiagnostics() as unknown[]).length)).toBe(0);
+  expect(shared.mountMs).toBeLessThan(50);
+
+  const longTasks = await page.evaluate(() => (window as unknown as { __longTasks: number[] }).__longTasks);
+  expect(longTasks.filter((ms) => ms >= 50), `long tasks: ${longTasks.join(', ')} ms`).toEqual([]);
+});
