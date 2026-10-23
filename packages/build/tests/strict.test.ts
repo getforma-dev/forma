@@ -8,12 +8,12 @@
  * BUILD-610 refusals always fail while preserving reports and prior output.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { build } from './helpers/named-build';
-import { resolveDiagnosticOptions } from '../src/diagnostics';
+import { isInsideOutputDir, resolveDiagnosticOptions, writeDiagnosticsJson } from '../src/diagnostics';
 import type { BuildConfig, BuildDiagnostic } from '../src/types';
 
 let tmpRoot: string;
@@ -192,6 +192,92 @@ describe('the JSON report', () => {
     expect(existsSync(join(tmpRoot, 'dist-diagnostics.json'))).toBe(true);
   }, 60_000);
 
+  // FORMA-245 (FORMA-119 round 3). A report path outside outputDir may still
+  // share an inode with a file inside it; writing through the path would
+  // rewrite that served file.
+  it('replaces a hard-linked report path instead of writing through it: the file inside outputDir keeps its bytes', async (ctx) => {
+    await build(config({ ready: page('ready', [`mount(() => h('main', null, 'previous'), '#app');`]) }));
+    const served = join(outDir, 'manifest.json');
+    const before = readFileSync(served, 'utf8');
+    const report = join(tmpRoot, 'reports', 'diagnostics.json');
+    mkdirSync(join(tmpRoot, 'reports'));
+    try {
+      linkSync(served, report);
+    } catch (error) {
+      // A filesystem or account that cannot make hard links: nothing to test.
+      if (['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) ctx.skip();
+      throw error;
+    }
+    expect(statSync(served).ino).toBe(statSync(report).ino);
+
+    await expect(build(config(twoBrokenPages(), { strict: true, diagnosticsJson: report }))).rejects.toThrow(/SSR diagnostics are errors/);
+
+    expect(readFileSync(served, 'utf8')).toBe(before);
+    expect(JSON.parse(readFileSync(report, 'utf8')).diagnostics.map((d: BuildDiagnostic) => d.code)).toEqual(['BUILD-206', 'BUILD-207']);
+    expect(statSync(report).ino).not.toBe(statSync(served).ino);
+    expect(readdirSync(join(tmpRoot, 'reports'))).toEqual(['diagnostics.json']);
+  }, 60_000);
+
+  it('leaves no temporary file beside the report, and replaces an existing report whole', () => {
+    const report = join(tmpRoot, 'reports', 'diagnostics.json');
+    mkdirSync(join(tmpRoot, 'reports'));
+    writeFileSync(report, 'x'.repeat(10_000));
+    writeDiagnosticsJson(report, true, []);
+    expect(JSON.parse(readFileSync(report, 'utf8'))).toEqual({ version: 1, strict: true, diagnostics: [] });
+    expect(readdirSync(join(tmpRoot, 'reports'))).toEqual(['diagnostics.json']);
+  });
+
+  it('follows a report path that is a link to a file: the link stays a link, its target is replaced', (ctx) => {
+    const real = join(tmpRoot, 'real.json');
+    writeFileSync(real, 'old');
+    const link = join(tmpRoot, 'report-link.json');
+    try {
+      symlinkSync(real, link, 'file');
+    } catch (error) {
+      // A Windows account without the symlink privilege: nothing to test.
+      if (['EPERM', 'ENOTSUP', 'EOPNOTSUPP'].includes((error as NodeJS.ErrnoException).code ?? '')) ctx.skip();
+      throw error;
+    }
+    writeDiagnosticsJson(link, true, []);
+    expect(lstatSync(link).isSymbolicLink()).toBe(true);
+    expect(JSON.parse(readFileSync(real, 'utf8')).strict).toBe(true);
+    expect(readdirSync(tmpRoot).sort()).toEqual(['real.json', 'report-link.json', 'src']);
+  });
+
+  it('refuses a report whose parent is a link to nothing, naming the link and where it points, before creating anything', async () => {
+    const link = join(tmpRoot, 'reports');
+    const gone = join(tmpRoot, 'gone');
+    mkdirSync(gone);
+    symlinkSync(gone, link, process.platform === 'win32' ? 'junction' : 'dir');
+    rmSync(gone, { recursive: true });
+    const report = join(link, 'nested', 'diagnostics.json');
+    const beside = readdirSync(tmpRoot).sort();
+    const named = /diagnosticsJson '.*diagnostics\.json' needs the directory '.*reports', a symbolic link to '.*gone', which does not exist/;
+
+    // The build refuses with the other config problems, before staging or compiling.
+    const error = await build(config(twoBrokenPages(), { diagnosticsJson: report })).then(() => undefined, (e: unknown) => e as Error);
+    expect(error?.message).toMatch(/invalid config[\s\S]*diagnosticsJson/);
+    expect(error?.message).toMatch(named);
+    expect(error?.message).not.toMatch(/ENOENT/);
+    expect(existsSync(outDir)).toBe(false);
+
+    // The writer itself says the same when called directly.
+    expect(() => writeDiagnosticsJson(report, true, [])).toThrow(named);
+
+    expect(lstatSync(link).isSymbolicLink()).toBe(true);
+    expect(existsSync(gone)).toBe(false);
+    expect(readdirSync(tmpRoot).sort()).toEqual(beside);
+  }, 30_000);
+
+  it('still writes a report beneath a link that points at a directory, creating what is missing there', () => {
+    const real = join(tmpRoot, 'real');
+    mkdirSync(real);
+    const link = join(tmpRoot, 'reports');
+    symlinkSync(real, link, process.platform === 'win32' ? 'junction' : 'dir');
+    writeDiagnosticsJson(join(link, 'nested', 'diagnostics.json'), true, []);
+    expect(existsSync(join(real, 'nested', 'diagnostics.json'))).toBe(true);
+  });
+
   it('is written on request, also when --strict fails the build', async () => {
     const entries = twoBrokenPages();
     const report = join(tmpRoot, 'reports', 'ssr-diagnostics.json');
@@ -208,6 +294,39 @@ describe('the JSON report', () => {
       expect(d.column).toBeGreaterThan(0);
     }
   }, 30_000);
+});
+
+describe('isInsideOutputDir and Unicode normalization (FORMA-245)', () => {
+  // macOS APFS treats canonically equivalent names (NFC `é` and NFD `e` plus a
+  // combining accent) as one directory. The comparison is exercised with explicit
+  // spellings so it runs on every platform; neither directory needs to exist.
+  const nfc = 'caf\u00e9'.normalize('NFC');
+  const nfd = 'caf\u00e9'.normalize('NFD');
+
+  it('spells the two forms differently', () => {
+    expect(nfc).not.toBe(nfd);
+  });
+
+  it('counts an NFD report inside an NFC outputDir that does not exist yet, and the reverse', () => {
+    const root = mkdtempSync(join(tmpdir(), 'forma-build-nfc-'));
+    try {
+      expect(isInsideOutputDir(join(root, nfd, 'diag.json'), join(root, nfc))).toBe(true);
+      expect(isInsideOutputDir(join(root, nfc, 'diag.json'), join(root, nfd))).toBe(true);
+      expect(isInsideOutputDir(join(root, nfd), join(root, nfc))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('still tells a sibling or a longer name apart', () => {
+    const root = mkdtempSync(join(tmpdir(), 'forma-build-nfc-'));
+    try {
+      expect(isInsideOutputDir(join(root, `${nfd}-reports`, 'diag.json'), join(root, nfc))).toBe(false);
+      expect(isInsideOutputDir(join(root, 'reports', nfd), join(root, nfc))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('where strict comes from', () => {

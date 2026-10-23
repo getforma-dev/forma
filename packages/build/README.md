@@ -546,7 +546,12 @@ the page's last good product, then publishes normally after the source is fixed.
 `diagnosticsJson: "<path>"` writes `{ version, strict: true, diagnostics }`, including
 on failure. Each diagnostic carries `code`, `severity`, `page`, `file`, `line`,
 `column`, `message`, `why` and `fix`. Its path must be outside `outputDir`, including
-through symlinks. Additive report fields do not change the schema version;
+through symlinks, hard links to files in `outputDir` included: the report is written to a
+new file beside the path and renamed over it, so an existing file (a hard-linked one too)
+is replaced and never written through. An NFC and an NFD spelling of the same name
+(macOS) count as the same directory when checking that, and a report directory that is a
+symbolic link to nothing is refused up front, naming the link and its missing target.
+Additive report fields do not change the schema version;
 renaming, removing or changing a field's meaning does.
 
 Use a registered `browserOnly()` component for an explicitly browser-rendered
