@@ -1,0 +1,45 @@
+<!--
+  FORMA-172 fixture: the vector-studio todo-list row, data-list="filteredTasks".
+  The module as vector-studio SERVES it: its load_module recompiles every stored module
+  (src/server/module_store.rs), and compile_module stamps data-fm on every element
+  (src/server/compiler.rs). Read, read-only, from the app's module store,
+  static/test-modules/.module-state-file.db (head revision 1; vector-studio checkout
+  131771d), and the row of the list copied verbatim.
+  21 elements and 122 attributes: row weight 144, 1,111 rows under the
+  160,000 cap. Three of its handlers use object spread and a comma expression,
+  which the 3.0 expression grammar refuses (each reported as handler-unsupported);
+  the rows render all the same. Used by src/__tests__/runtime-list-cap.test.ts,
+  e2e/expr-cost.spec.ts and scripts/measure-task-budget.mjs.
+-->
+<article data-forma-id="7cd6a438838db137" class="bg-slate-800 border border-slate-700 flex gap-3 items-center mb-2 px-4 py-3 rounded-xl task-enter task-row transition" data-class:completed-row="item.done" data-fm="todo-list" data-key="{item.id}" role="listitem">
+        <button data-forma-id="3a92969359e89607" class="border-2 checkbox-btn flex flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 h-5 items-center justify-center rounded-full transition-colors w-5" aria-label="Toggle task completion" data-class:bg-indigo-500="item.done" data-class:border-indigo-500="item.done" data-class:border-slate-500="!item.done" data-fm="todo-list" data-on:click="tasks = tasks.map(t =&gt; t.id === item.id ? {...t, done: !t.done} : t)" type="button">
+          <svg data-forma-id="0989b3e8b9f9cfd1" class="h-3 text-white w-3" aria-hidden="true" data-fm="todo-list" data-show="item.done" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path data-forma-id="525860c0e42aed84" d="M5 13l4 4L19 7" data-fm="todo-list" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+          </svg>
+        </button>
+        <div data-forma-id="18abd507c70e2f78" class="flex-1 min-w-0" data-fm="todo-list">
+          <div data-forma-id="7fafaa6aa2d7c67e" class="flex flex-wrap gap-2 items-center" data-fm="todo-list">
+            <span data-forma-id="10d58a8ba4fdec04" class="cursor-pointer font-medium text-slate-100 text-sm truncate" data-class:line-through="item.done" data-class:text-slate-500="item.done" data-fm="todo-list" data-on:click="editingId = item.id; editingText = item.title" data-show="editingId !== item.id" data-text="item.title">Task title</span>
+            <input data-forma-id="aa8452862fe2b99c" class="bg-[transparent] border-[none] border-[rgba(99,102,241,0.6)] border-b edit-input font-medium text-slate-200 text-sm" aria-label="Edit task title" data-fm="todo-list" data-model="editingText" data-on:keydown="$event.key === 'Enter' &amp;&amp; (tasks = tasks.map(t =&gt; t.id === item.id ? {...t, title: editingText} : t), editingId = null); $event.key === 'Escape' &amp;&amp; (editingId = null)" data-show="editingId === item.id" type="text" />
+            <span data-forma-id="5d5f71168ea41b18" class="bg-[rgba(239,68,68,0.15)] border border-[rgba(239,68,68,0.3)] flex-shrink-0 font-bold priority-badge priority-high px-[7px] py-0.5 rounded-full text-[#f87171] text-[0.65rem] tracking-wide" data-fm="todo-list" data-show="item.priority === 'high'">HIGH</span>
+            <span data-forma-id="498efa37887949f3" class="bg-[rgba(245,158,11,0.15)] border border-[rgba(245,158,11,0.3)] flex-shrink-0 font-bold priority-badge priority-medium px-[7px] py-0.5 rounded-full text-[#fbbf24] text-[0.65rem] tracking-wide" data-fm="todo-list" data-show="item.priority === 'medium'">MED</span>
+            <span data-forma-id="1e1850b1e9048124" class="bg-[rgba(52,211,153,0.15)] border border-[rgba(52,211,153,0.3)] flex-shrink-0 font-bold priority-badge priority-low px-[7px] py-0.5 rounded-full text-[#34d399] text-[0.65rem] tracking-wide" data-fm="todo-list" data-show="item.priority === 'low'">LOW</span>
+          </div>
+          <p data-forma-id="fafd34b05363603c" class="mt-0.5 text-slate-500 text-xs" data-fm="todo-list" data-show="item.due">
+            <svg data-forma-id="c50cb8f03a8e2f8e" class="-mt-0.5 h-3 inline mr-0.5 w-3" aria-hidden="true" data-fm="todo-list" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path data-forma-id="989942dbe939ac6f" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" data-fm="todo-list" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <span data-forma-id="0315ff187005f2cf" data-fm="todo-list" data-text="item.due">2025-07-10</span>
+          </p>
+        </div>
+        <button data-forma-id="64e1c185c7ee7d0a" class="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 hover:text-indigo-300 p-1 rounded-lg text-indigo-400 transition" aria-label="Save task" data-fm="todo-list" data-on:click="tasks = tasks.map(t =&gt; t.id === item.id ? {...t, title: editingText} : t); editingId = null" data-show="editingId === item.id" type="button">
+          <svg data-forma-id="14d91fef1516ce30" class="h-4 w-4" data-fm="todo-list" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path data-forma-id="47474369e47e9432" d="M5 13l4 4L19 7" data-fm="todo-list" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </button>
+        <button data-forma-id="197fb31d3c59b1f7" class="delete-btn flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-red-400 p-1 rounded-lg text-slate-500 transition-colors" aria-label="Delete task" data-fm="todo-list" data-on:click="tasks = tasks.filter(t =&gt; t.id !== item.id)" data-show="editingId !== item.id" type="button">
+          <svg data-forma-id="a6c423ef145a83a6" class="h-4 w-4" aria-hidden="true" data-fm="todo-list" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path data-forma-id="351fb80e8232ade0" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" data-fm="todo-list" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </button>
+      </article>

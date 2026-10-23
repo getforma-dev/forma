@@ -66,8 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     # MEASURED with strict serial assertion evidence (FORMA-197, run
     # 38971432837): 96 probes plus clean/restored baselines took 42m44s;
-    # mutation subprocesses averaged 24.2s. The same mix projects ~106 min
-    # for all 255, not a measured full-run duration. Allow 150 min including
+    # mutation subprocesses averaged 24.2s. The same mix projects ~109 min
+    # for all 261, not a measured full-run duration. Allow 150 min including
     # setup/recovery baselines; retain each child's 15 min bound and all floors.
     timeout-minutes: 150
     steps:
