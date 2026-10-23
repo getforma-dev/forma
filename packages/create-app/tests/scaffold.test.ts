@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
 import { TEMPLATES, validateProjectName } from '../src/scaffold';
-import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, auditSignatures, recordObservation, checkN8 } from './helpers';
+import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -517,12 +517,11 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(body.replace(/<!--[\s\S]*?-->/g, '')).toMatch(/Count:\s*<span[^>]*>7<\/span>/);
       const origin = new URL(response.url).origin;
       for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
-        const browser = await launcher.launch();
-        try {
+        await withEngine(engine, launcher, async (browser) => {
           const island = await verifyMinimalIsland(browser, origin, manifest);
           const staticRoute = await verifyStaticTemplate(browser, origin, manifest);
           recordObservation(`minimal: ${engine} actual native island and static route`, {engine, profile: 'release', island, staticRoute});
-        } finally { await browser.close(); }
+        });
       }
     }, { profile: 'release' });
   }, 900_000);
@@ -588,11 +587,10 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     await withServer(dest, name, async (_body, response) => {
       expect(response.headers.get('content-security-policy-report-only')).toBeNull();
       for (const [engine, launcher] of Object.entries({ chromium, firefox, webkit })) {
-        const browser = await launcher.launch();
-        try {
+        await withEngine(engine, launcher, async (browser) => {
           const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin);
           recordObservation(`dashboard: ${engine} tooltip text and policy`, { engine, profile: 'release', ...observation });
-        } finally { await browser.close(); }
+        });
       }
     }, { profile: 'release' });
   }, 900_000);

@@ -2,9 +2,13 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { performance } from 'node:perf_hooks';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
+import { expect } from 'vitest';
+import type { Browser } from '@playwright/test';
 import { commandInvocation } from '../../../scripts/portable-command.mjs';
 import { withOwnedServer } from '../../../scripts/owned-server.mjs';
+import { appendDiagnostics, describeScaffoldDir, formatMs, processSnapshot, timingRow, type TimingRow } from '../../../scripts/scaffold-diagnostics.mjs';
 import { assertN8, buildBaseline, describeN8, measureTemplate, n8Name } from '../../../scripts/n8-size-start.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -68,31 +72,72 @@ export function rmrf(dir: string) {
 }
 
 /**
+ * Each child runCli starts (the CLI, then candidate staging) is bounded by this. Two of them fit the
+ * CLI-backed tests' 60s budget. FORMA-252 kept it: in 92 Windows scaffold jobs the 642 CLI-backed
+ * tests took p50 0.9s, p90 1.7s, p99 6.5s; all six over 10s came from two jobs whose runner was
+ * already slow before the suite started, and the one failing job's calls were cut at the limit,
+ * so no measured duration supports another figure. The timing rows now measure the calls alone.
+ */
+export const CLI_TIMEOUT_MS = 25_000;
+
+/** Calls that take this share of their budget are reported even when they pass. */
+const SLOW_SHARE = 0.4;
+
+function currentTest(): string | undefined {
+  try { return expect.getState().currentTestName; } catch { return undefined; }
+}
+
+function recordTiming({ name, ...row }: TimingRow) {
+  recordObservation(name, row);
+}
+
+/** A timed-out or unspawnable child: how long it ran, how far a scaffold got, what the host was doing. */
+function explainChildFailure(phase: string, result: SpawnSyncReturns<string>, ms: number, dest?: string): string {
+  const code = (result.error as NodeJS.ErrnoException | undefined)?.code;
+  const lines = [`[${phase}] ${code ?? result.error} after ${ms} ms of its ${CLI_TIMEOUT_MS} ms budget (pid ${result.pid}, signal ${result.signal ?? 'none'})`];
+  if (dest) lines.push(`[${phase}] destination ${describeScaffoldDir(dest)}`);
+  if (code === 'ETIMEDOUT') lines.push(`[${phase}] ${processSnapshot({ parentPid: result.pid })}`);
+  return lines.join('\n');
+}
+
+/**
  * Run the built CLI. Never inherits stdio, so a prompt cannot hang the suite.
  * `env` overrides variables, e.g. the user agent the CLI reads to pick a
- * package manager.
+ * package manager. Every call is timed into the scaffold report (FORMA-252);
+ * a timeout says how long each child ran and how far the scaffold got.
  */
 export function runCli(args: string[], cwd: string, env: Record<string, string> = {}): SpawnSyncReturns<string> {
   if (!fs.existsSync(CLI)) {
     throw new Error(`${CLI} is missing — run \`npm run build\` first (the test script does this explicitly; install hooks stay disabled).`);
   }
+  const label = `${currentTest() ?? 'hook'}: create-app ${args.join(' ')}`;
+  const dest = args[0] && !args[0].startsWith('-') ? path.resolve(cwd, args[0]) : undefined;
+  const started = performance.now();
   const result = spawnSync(process.execPath, [CLI, ...args], {
     cwd,
     encoding: 'utf8',
-    // Two bounded child processes fit the CLI-backed tests' 60s budget.
-    timeout: 25_000,
+    timeout: CLI_TIMEOUT_MS,
     // An empty stdin makes `prompts` give up instead of waiting forever if a
     // future change ever makes one of these paths interactive.
     input: '',
     env: { ...process.env, FORCE_COLOR: '0', ...env },
   });
-  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, result.stdout].filter(Boolean).join('\n');
+  const cliMs = Math.round(performance.now() - started);
+  if (result.error) result.stderr = [result.stderr, `scaffold CLI: ${result.error}`, explainChildFailure('scaffold CLI', result, cliMs, dest), result.stdout].filter(Boolean).join('\n');
+  const phases: Record<string, number> = { cli: cliMs };
+  let outcome = result;
   if (CANDIDATE_CONTEXT && result.status === 0 && args[0] && !args[0].startsWith('-') && !args.includes('--dry-run')) {
-    const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', timeout:25_000, maxBuffer:64*1024*1024, env:process.env});
-    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, staged.stdout].filter(Boolean).join('\n');
-    if (staged.status !== 0) return staged;
+    const stagingStarted = performance.now();
+    const staged = spawnSync(process.execPath, [candidateScript, 'project', CANDIDATE_CONTEXT, path.resolve(cwd, args[0])], {encoding:'utf8', timeout:CLI_TIMEOUT_MS, maxBuffer:64*1024*1024, env:process.env});
+    phases.staging = Math.round(performance.now() - stagingStarted);
+    if (staged.error) staged.stderr = [staged.stderr, `candidate project staging: ${staged.error}`, explainChildFailure('candidate project staging', staged, phases.staging), staged.stdout].filter(Boolean).join('\n');
+    if (staged.status !== 0) outcome = staged;
   }
-  return result;
+  recordTiming(timingRow('scaffold CLI', { label, phases, budgets: { cli: CLI_TIMEOUT_MS, staging: CLI_TIMEOUT_MS }, ok: !outcome.error, status: outcome.status }));
+  if (Object.values(phases).some(ms => ms >= CLI_TIMEOUT_MS * SLOW_SHARE)) {
+    console.warn(`[scaffold timing] ${label}: ${Object.entries(phases).map(([phase, ms]) => `${phase} ${formatMs(ms)}`).join(', ')} of ${formatMs(CLI_TIMEOUT_MS)} each`);
+  }
+  return outcome;
 }
 
 export function auditSignatures(admin: string) {
@@ -156,7 +201,10 @@ function serverBinary(projectDir: string, binaryName: string, profile: 'debug' |
   return exe;
 }
 
-/** An owned OS-assigned listener; another server can never satisfy readiness. */
+/**
+ * An owned OS-assigned listener; another server can never satisfy readiness. Its start is timed
+ * into the scaffold report: spawn to FORMA_LISTENING, and to the answered readiness GET /.
+ */
 export async function withServer<T>(
   projectDir: string,
   binaryName: string,
@@ -164,8 +212,63 @@ export async function withServer<T>(
   { profile = 'debug' }: { profile?: 'debug' | 'release' } = {},
 ): Promise<T> {
   return withOwnedServer(serverBinary(projectDir, binaryName, profile), [], projectDir,
-    async (res: Response, origin: string, output: () => string) =>
-      visit(await res.text(), res, route => fetch(origin + route, { signal: AbortSignal.timeout(5_000) }), output));
+    async (res: Response, origin: string, output: () => string, timings) => {
+      const { listeningMs, readyMs } = timings();
+      recordTiming(timingRow('owned server', { label: `${currentTest() ?? 'server'}: ${binaryName} (${profile})`, phases: { listening: listeningMs ?? NaN, ready: readyMs ?? NaN }, budgets: { listening: 30_000 } }));
+      return visit(await res.text(), res, route => fetch(origin + route, { signal: AbortSignal.timeout(5_000) }), output);
+    });
+}
+
+/**
+ * One engine's packed-template browser checks. A failure names the engine and its version, how long
+ * the launch and the checks took, and the page timeline release-template-islands.mjs attaches
+ * (FORMA-252: the Windows timeouts so far named neither, and the engine had to be inferred from
+ * which observations were recorded). Each engine's timing goes to the scaffold report.
+ */
+export async function withEngine<T>(engine: string, launcher: { launch(): Promise<Browser> }, check: (browser: Browser) => Promise<T>): Promise<T> {
+  const label = `${currentTest() ?? 'browser'}: ${engine}`;
+  const started = performance.now(), since = () => Math.round(performance.now() - started);
+  let browser: Browser;
+  try {
+    browser = await launcher.launch();
+  } catch (error) {
+    recordTiming(timingRow(`browser ${engine}`, { label, phases: { launch: since() }, ok: false }));
+    throw appendDiagnostics(error, `[browser] ${engine} failed to launch after ${since()} ms`);
+  }
+  const launchMs = since(), version = browser.version();
+  try {
+    const result = await check(browser);
+    recordTiming(timingRow(`browser ${engine}`, { label, version, phases: { launch: launchMs, checks: since() - launchMs } }));
+    return result;
+  } catch (error) {
+    const checksMs = since() - launchMs;
+    recordTiming(timingRow(`browser ${engine}`, { label, version, phases: { launch: launchMs, checks: checksMs }, ok: false }));
+    const timeline = (error as { formaTimeline?: string[] } | null)?.formaTimeline;
+    throw appendDiagnostics(error, [
+      `[browser] ${engine} ${version}: launched in ${launchMs} ms; the check failed ${checksMs} ms after launch`,
+      timeline?.length ? `[browser] page timeline (ms after the page opened):\n${timeline.join('\n')}` : '[browser] no page timeline attached',
+    ].join('\n'));
+  } finally {
+    await browser.close();
+  }
+}
+
+/**
+ * Run `body` in a fresh temp dir, then remove it. A failed removal never hides the body's own
+ * failure: the PR152 ETIMEDOUT in templates.test.ts surfaced only as the EPERM its cleanup hit.
+ */
+export function inTmpDir<T>(prefix: string, body: (dir: string) => T): T {
+  const dir = mkTmpDir(prefix);
+  let result: T;
+  try {
+    result = body(dir);
+  } catch (error) {
+    let failure = error;
+    try { rmrf(dir); } catch (cleanup) { failure = appendDiagnostics(error, `[cleanup] removing ${dir} also failed: ${cleanup}`); }
+    throw failure;
+  }
+  rmrf(dir);
+  return result;
 }
 
 /** Refused startup must exit without announcing a successfully bound listener. */

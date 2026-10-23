@@ -50,7 +50,12 @@ the scaffold report, and fails when Forma adds more than 3 MB (3,000,000 bytes) 
 [`scripts/n8-size-start.mjs`](scripts/n8-size-start.mjs) holds the method and
 [`scripts/n8-size-start.test.mjs`](scripts/n8-size-start.test.mjs) its thresholds,
 which need no Rust (`node --test scripts/n8-size-start.test.mjs`); to look at it
-locally, set `FORMA_N8=1` with `FORMA_SCAFFOLD_E2E=1`. Two
+locally, set `FORMA_N8=1` with `FORMA_SCAFFOLD_E2E=1`. Every scaffold run
+also prints one line of timings (each scaffold CLI call, each owned server's
+start, each browser engine) and keeps the rows in the scaffold report; a timeout
+in those steps reports how long it ran, how far the scaffold got, whether the
+server still answered and the page's own timeline (FORMA-252,
+[`scripts/scaffold-diagnostics.mjs`](scripts/scaffold-diagnostics.mjs)). Two
 workflows run on their own schedule: core's suite in all three engines
 (`e2e-engines.yml`, before a release) and the nightly mutation probes
 (`nightly-probes.yml`).

@@ -14,6 +14,10 @@
 - Measure N8 in CI (FORMA-164): the scaffold gate builds each template's release binary on Linux, compares its
   size and its start with a minimal Axum baseline from the same lock, reports both differences, and fails when
   Forma adds more than 3 MB or 100 ms. Tests and CI only; no shipped package changes.
+- Explain scaffold-gate timeouts (FORMA-252): time every scaffold CLI call, owned-server start and browser
+  engine into the scaffold report with a one-line summary per run; on a timeout, report the elapsed time
+  against its budget, how far the scaffold got, a host process snapshot, the engine and its page timeline,
+  and a fresh probe of the owned server with its output. No budget or assertion changed; tests and CI only.
 - Exclude historical dependency snapshots under `docs/archive/**` from Dependabot
   update PRs without suppressing their alerts or changing active-project updates.
 

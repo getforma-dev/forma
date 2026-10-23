@@ -633,7 +633,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
       - name: Portable commands and owned listener controls
-        run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs
+        run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/scaffold-diagnostics.test.mjs
       - name: Resolve Linux scaffold system-package cache
         if: runner.os == 'Linux'
         id: scaffold-pw
