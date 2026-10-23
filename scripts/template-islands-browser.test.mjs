@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { chromium } from '@playwright/test';
-import { verifyMinimalIsland, verifyStaticTemplate } from './release-template-islands.mjs';
+import { interactDashboard, verifyMinimalIsland, verifyStaticTemplate } from './release-template-islands.mjs';
 
 const csp = "default-src 'self'; script-src 'self' 'nonce-template-test'; style-src 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime";
 const state = value => `<script type="application/json" data-island-state>${JSON.stringify({v:1,s:[],i:value})}</script>`;
@@ -94,4 +94,17 @@ test('a navigation that never commits keeps its error message and carries the pa
 test('a completed observation records its timeline without exposing it in the result',async()=>{
   const result=await fixture({},(browser,origin)=>verifyMinimalIsland(browser,origin,manifest));
   assert.equal(Object.hasOwn(result,'timeline'),false);
+});
+test('a dashboard hover note is built only when a timeline keeps it (FORMA-252 N1, FORMA-265)',async()=>{
+  let reads=0;
+  const point={get hour(){reads++;return 'h'.repeat(100);},success:1,error:0};
+  const page={url:()=>'http://127.0.0.1:1/',request:{get:async()=>({status:()=>200,json:async()=>[point,point]})},
+    locator:()=>({waitFor:async()=>{throw new Error('chart never appeared');}})};
+  await assert.rejects(interactDashboard(page),/chart never appeared/);
+  assert.equal(reads,0,'the default note builds no hover text');
+  const notes=[];
+  await assert.rejects(interactDashboard(page,{note:entry=>notes.push(entry)}),/chart never appeared/);
+  assert.equal(notes.length,1);assert.equal(typeof notes[0],'function','the hover note is passed unbuilt');assert.equal(reads,0);
+  assert.equal(notes[0](),`hover first point ${JSON.stringify('h'.repeat(100)).slice(0,60)}: waiting for the chart`);
+  assert.equal(reads,1);
 });

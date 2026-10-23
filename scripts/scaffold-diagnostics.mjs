@@ -30,8 +30,12 @@ export function appendDiagnostics(error, text) {
   }
   try {
     const stack = target.stack;
-    // The header is everything before the first frame; a lazily formatted one already holds `after`.
-    if (typeof stack === 'string' && !stack.split(/\n\s+at /)[0].includes(after)) {
+    // A lazily formatted stack already holds `after` in its header: found, with no frame line before
+    // it. Only the text before `after` is searched for a frame, since the message and the text may
+    // hold frame-like lines of their own (a Rust or Node backtrace in a server's output, FORMA-265);
+    // a match that only the frames hold is not the header, so that stack still takes the text.
+    const found = typeof stack === 'string' ? stack.indexOf(after) : -1;
+    if (typeof stack === 'string' && (found < 0 || /\n\s+at /.test(stack.slice(0, found)))) {
       const at = before ? stack.indexOf(before) : -1;
       if (at >= 0) target.stack = stack.slice(0, at) + after + stack.slice(at + before.length);
       else {
