@@ -15,8 +15,6 @@ import { verifyPostReleaseSoak } from './release-soak-completion.mjs';
 import { verifyPostReleaseSoakV2 } from './release-soak-completion-v2.mjs';
 import { API, verifyRun } from './release-burn-in-inputs.mjs';
 import { CONTRACT, FUZZ_TARGETS, ENGINES, SKEW_CHECKS } from './release-burn-in-report.mjs';
-import { cases, profiles } from '../packages/core/e2e/hostile-widgets/catalogue.mjs';
-import { capabilityCases } from '../packages/core/e2e/hostile-widgets/capabilities.mjs';
 import { FINAL_COMMIT, RC_COMMIT, RC_TAG, WORKFLOW, sourceStatus, requirePayload, workerContext, donorDiff, validateDonorReview } from './release-soak-context-v2.mjs';
 const encode = value => JSON.stringify(value, null, 2) + '\n';
 const sha = value => createHash('sha256').update(value).digest('hex');
@@ -47,7 +45,10 @@ async function completionFixture(t, f) {
   const fixtureIds = fixtureCheckIds(join(f.payloadRoot, 'e2e/fixtures/apps'));
   // The RC raw validators compare the report with the pinned RC checkout's harness, so the synthetic report takes its hashes from there, not from the live tree.
   const { securityHarnessHashes } = await import(pathToFileURL(join(f.payloadRoot, 'scripts/release-security.mjs')).href);
-  const evidence =mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
+  // Its cases, capability controls and profiles too: the RC validator compares them with the RC catalogue.
+  const { cases, profiles } = await import(pathToFileURL(join(f.payloadRoot, 'packages/core/e2e/hostile-widgets/catalogue.mjs')).href);
+  const { capabilityCases } = await import(pathToFileURL(join(f.payloadRoot, 'packages/core/e2e/hostile-widgets/capabilities.mjs')).href);
+  const evidence = mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
   t.after(() => rmSync(evidence, { recursive: true, force: true }));
   const archiveRoot = join(evidence, 'archive'), raw = join(evidence, 'raw');
   mkdirSync(join(archiveRoot, 'package/dist'), { recursive: true }); mkdirSync(raw);
@@ -188,6 +189,15 @@ test('v2 authenticates donor API/archive provenance then unchanged RC raw valida
     const original = object[key]; object[key] = value; await f.pack();
     await assert.rejects(verifyPostReleaseSoakV2(f.args())); object[key] = original;
   }
+  // A hostile proof whose harness differs from the pinned RC's by one flipped hash is rejected, then restored.
+  const hostileRaw = join(f.raw, 'round-001/hostile.json'), hostileBytes = readFileSync(hostileRaw), changed = json(hostileRaw);
+  const [harnessFile, harnessHash] = Object.entries(changed.harnessSources)[0];
+  changed.harnessSources[harnessFile] = (harnessHash[0] === '0' ? '1' : '0') + harnessHash.slice(1);
+  writeFileSync(hostileRaw, encode(changed)); f.report.rounds[0].tasks[4].reportSha256 = sha(encode(changed));
+  writeFileSync(join(f.raw, 'round-001/round.json'), encode(f.report.rounds[0]));
+  await f.pack(); await assert.rejects(verifyPostReleaseSoakV2(f.args()), /hostile harness differs from current source/);
+  writeFileSync(hostileRaw, hostileBytes); f.report.rounds[0].tasks[4].reportSha256 = sha(hostileBytes);
+  writeFileSync(join(f.raw, 'round-001/round.json'), encode(f.report.rounds[0]));
   const raw = join(f.raw, 'round-001/hostile.json'), proof = json(raw); proof.sourceClean = false;
   writeFileSync(raw, encode(proof)); f.report.rounds[0].tasks[4].reportSha256 = sha(encode(proof));
   writeFileSync(join(f.raw, 'round-001/round.json'), encode(f.report.rounds[0]));

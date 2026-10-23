@@ -1409,11 +1409,16 @@ function armCap(): void {
 
 /**
  * A budget refusal that is reported, not retried: it arms the cap as a wait
- * does (`armCap`). Only one the budget meter made, with `defer` set false,
- * has done any weighing; the refusals that check a length or a count first
- * (`repeat()` past 10,000, `flat()` too deep, a string past 1 MiB) do none,
- * set no `defer`, and arm nothing, so a binding after one that fits is not
- * delayed (FORMA-249, from FORMA-178's review).
+ * does (`armCap`) if the budget meter made it (an allocation charge or the
+ * step count, with `defer` set false). A refusal that checks a length or a
+ * count (`repeat()` past 10,000, `flat()` too deep, a string past 1 MiB) sets
+ * no `defer` and arms nothing itself, so a binding after it that fits is not
+ * delayed (FORMA-249, from FORMA-178's review). What the evaluation charged
+ * before that check stays on the meter: `repeat()` and `flat()` are charged
+ * their cost-table row first, and a charge before the check that does not fit
+ * is refused by the meter, so `'x'.repeat(300000)` (its row) and
+ * `Array.from({length: 300000}).flat(99)` (`Array.from`'s) are allocation
+ * refusals and do arm the cap (FORMA-250).
  * Verified by: src/__tests__/runtime-task-budget.test.ts > "a cheap refusal that weighed nothing does not delay a binding that fits"
  */
 function reported(err: FormaExprError): void {
@@ -2179,9 +2184,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       if (keyProp) fields.push(keyProp);
       // A pass over more than `LIST_WEIGHT_CAP` of rows times weight is refused
       // on the list's length, before any item is read (FORMA-172). The refusal
-      // weighs nothing and charges the task's meter nothing, so, like the other
-      // refusals that check a length first, it is reported with no `defer` and
-      // arms no cap (FORMA-249): nothing after it waits for it.
+      // itself weighs nothing and charges the meter nothing, so, like the other
+      // refusals that check a length, it is reported with no `defer` and arms
+      // no cap (FORMA-249): nothing after it waits for it. What the list's
+      // expression charged before it stays on the meter.
       // Verified by: src/__tests__/runtime-list-cap.test.ts > "a refused list delays no binding and no list after it"
       let weight = 1;
       const held: ParentNode[] = [template];
