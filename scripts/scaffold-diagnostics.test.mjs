@@ -81,6 +81,26 @@ test('a read stack takes the text after its message even when the error name con
   }
 });
 
+test('a read stack with no frames takes the text after its message even when the name contains that message (FORMA-267)', () => {
+  // A stack with no frames is its header alone, with no newline; the real fetch AbortSignal.timeout
+  // rejection has that shape in Node 24 (pinned in the DOMException test below).
+  class TimeoutError extends Error { constructor(message) { super(message); this.name = 'TimeoutError'; } }
+  const limit = Error.stackTraceLimit;
+  let errors;
+  try {
+    Error.stackTraceLimit = 0;
+    errors = [new Error('Error'), new TimeoutError('Timeout'), new DOMException('Timeout', 'TimeoutError')];
+    for (const error of errors) error.stack;
+  } finally { Error.stackTraceLimit = limit; }
+  for (const error of errors) {
+    const header = error.stack, message = error.message;
+    assert(!header.includes('\n'), `no frames: ${header}`);
+    appendDiagnostics(error, '[diag] detail');
+    assert.equal(error.message, `${message}\n[diag] detail`);
+    assert.equal(error.stack, `${header}\n[diag] detail`);
+  }
+});
+
 test('a DOMException timeout, whose message is a getter, keeps its identity and takes the text (FORMA-252 review B1)', async () => {
   const made = new DOMException('The operation was aborted due to timeout', 'TimeoutError');
   assert.equal(appendDiagnostics(made, '[owned server] readiness GET / failed'), made);
@@ -99,6 +119,9 @@ test('a DOMException timeout, whose message is a getter, keeps its identity and 
     assert.equal(failure.message, 'The operation was aborted due to timeout\nprobe detail');
     assert.equal(occurrences(failure.stack, 'probe detail'), 1);
     assert(failure.stack.startsWith(stackBefore.split('\n')[0]), failure.stack);
+    // Node 24 gives this rejection no frames; whatever frames there are follow the text.
+    const [header, ...frames] = stackBefore.split('\n');
+    assert.equal(failure.stack, [header, 'probe detail', ...frames].join('\n'));
   } finally { server.closeAllConnections(); server.close(); }
 });
 
@@ -132,6 +155,18 @@ test('appended diagnostics handle empty messages, non-Errors and empty text', ()
   assert.equal(wrapped.message, 'thrown text\ndetail');
   const untouched = new Error('same');
   assert.equal(appendDiagnostics(untouched, '').message, 'same');
+});
+
+test('a second append to an empty-message error whose stack was read follows the first (FORMA-267)', () => {
+  const error = new Error('');
+  assert.equal(error.stack.split('\n')[0], 'Error', 'formatted before the appends');
+  appendDiagnostics(error, '[first] detail');
+  appendDiagnostics(error, '[second] detail');
+  assert.equal(error.message, '[first] detail\n[second] detail');
+  const lines = error.stack.split('\n');
+  assert.deepEqual(lines.slice(0, 3), ['Error', '[first] detail', '[second] detail'], error.stack);
+  assert.match(lines[3], /^\s+at /, 'the frames follow both texts');
+  for (const text of ['[first] detail', '[second] detail']) assert.equal(occurrences(error.stack, text), 1, error.stack);
 });
 
 test('tail and formatMs report what they cut and the scale', () => {
