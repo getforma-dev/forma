@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const run = (command, args, cwd, env = {}) => spawnSync(command, args, { cwd, env: { ...process.env, ...env }, encoding: 'utf8' });
@@ -68,9 +68,10 @@ for (const [name, mutate] of [
   assert.notEqual(run('ruby', [join(root, 'scripts/check-supply-chain.rb'), dir], root).status, 0);
 });
 
-// FORMA-117: every SHA-pinned third-party action ends with `# v<major>[.<minor>[.<patch>]]`
-// (Dependabot keeps that comment current with the SHA). release.yml is included even
-// though check-supply-chain.rb leaves its pin shape to check-release-workflow.rb.
+// FORMA-117: every SHA-pinned third-party action ends with `# v<major>.<minor>.<patch>`
+// (a Dependabot bump keeps a matching comment current with the SHA; FORMA-256 requires
+// all three parts). release.yml is included even though check-supply-chain.rb leaves its pin
+// shape to check-release-workflow.rb.
 const PIN = '11d5960a326750d5838078e36cf38b85af677262';
 const lint = (dir) => run('ruby', [join(root, 'scripts/check-supply-chain.rb'), dir], root);
 const steps = (body) => `jobs:\n  build:\n    steps:\n${body}\n`;
@@ -81,8 +82,7 @@ const commentFixture = (t, name, yaml) => {
 };
 for (const [name, body] of [
   ['a patch version', `      - uses: actions/checkout@${PIN} # v4.2.2`],
-  ['a minor version', `      - uses: actions/checkout@${PIN} # v4.2`],
-  ['a major version', `      - uses: actions/checkout@${PIN} # v4`],
+  ['a zero patch version', `      - uses: actions/checkout@${PIN} # v10.0.0`],
   ['a step that names itself first', `      - name: Checkout\n        uses: actions/checkout@${PIN} # v4.2.2`],
   ['a quoted action', `      - uses: "actions/checkout@${PIN}" # v4.2.2`],
   ['extra spaces before the comment', `      - uses: actions/checkout@${PIN}    # v4.2.2`],
@@ -126,6 +126,24 @@ for (const [name, body, found] of [
   assert.notEqual(r.status, 0);
   assert.match(r.stderr, /extra\.yml:\d+: build: [\w.\/-]+@[a-f0-9]{40} needs a trailing/);
   assert.match(r.stderr.trim(), found); assert.equal(r.stderr.trim().split('\n').length, 1, r.stderr);
+  assert.doesNotMatch(r.stderr, /major or minor line/);
+});
+
+// FORMA-256: a one- or two-part comment names a major or minor line (a floating tag
+// such as v4 moves to each new release), not the release the SHA is. A Dependabot bump
+// writes the new SHA's most specific tag into a comment that names a version tagged at
+// the old SHA, so its bumps carry three parts (merged PR #34 rewrote `# v4` to `# v7.0.1`).
+for (const [name, yaml, line, found] of [
+  ['a major version', steps(`      - uses: actions/checkout@${PIN} # v4`), 4, /found: # v4\)$/],
+  ['a minor version', steps(`      - uses: actions/checkout@${PIN} # v4.2`), 4, /found: # v4\.2\)$/],
+  ['a major version on a remote reusable workflow job', `jobs:\n  build:\n    uses: org/repo/.github/workflows/x.yml@${PIN} # v1\n`, 3, /found: # v1\)$/],
+]) test(`version comment lint rejects ${name}, saying why`, (t) => {
+  const r = lint(commentFixture(t, 'extra.yml', yaml));
+  assert.notEqual(r.status, 0);
+  const lines = r.stderr.trim().split('\n'); assert.equal(lines.length, 1, r.stderr);
+  assert.match(lines[0], new RegExp(`extra\\.yml:${line}: build: [\\w.\\/-]+@[a-f0-9]{40} needs a trailing \`# v<major>\\.<minor>\\.<patch>\` comment naming its release`));
+  assert.match(lines[0], /a one- or two-part version names a major or minor line, not the release/);
+  assert.match(lines[0], found);
 });
 
 for (const [name, body] of [
@@ -152,7 +170,7 @@ test('version comment lint covers .yaml workflow files as well as .yml', (t) => 
 });
 
 test('version comment lint reports every offending pin with its file, line and job', (t) => {
-  const dir = commentFixture(t, 'extra.yml', `jobs:\n  one:\n    steps:\n      - uses: actions/checkout@${PIN}\n      - uses: actions/setup-node@${PIN} # v4\n  two:\n    steps:\n      - uses: actions/cache@${PIN}\n`);
+  const dir = commentFixture(t, 'extra.yml', `jobs:\n  one:\n    steps:\n      - uses: actions/checkout@${PIN}\n      - uses: actions/setup-node@${PIN} # v4.1.0\n  two:\n    steps:\n      - uses: actions/cache@${PIN}\n`);
   const r = lint(dir); assert.notEqual(r.status, 0);
   const lines = r.stderr.trim().split('\n'); assert.equal(lines.length, 2, r.stderr);
   assert.match(lines[0], /extra\.yml:4: one: actions\/checkout@/); assert.match(lines[1], /extra\.yml:8: two: actions\/cache@/);
@@ -202,7 +220,7 @@ const liveWorkflows = () => {
 };
 const pinLine = /^\s*(?:-\s+)?uses:\s+(\S+)@([a-f0-9]{40})(.*)$/;
 
-// An independent, offline reading of the pins: each needs its comment, only the
+// An independent, offline reading of the pins: each needs its three-part comment, only the
 // branch-published toolchain action may say `# master`, and (FORMA-251) the mapping
 // is one-to-one per action: a SHA carries one comment and a comment names one SHA,
 // so a comment cannot outlive a partial pin move or a partial Dependabot bump.
@@ -211,8 +229,8 @@ const pinErrors = (workflows) => {
   for (const { name, text } of workflows) text.split(/\r?\n/).forEach((line, index) => {
     const m = pinLine.exec(line); if (!m) return;
     pins += 1; const [, action, sha, rest] = m, here = `${name}:${index + 1}`;
-    const comment = /^\s+(# (?:v\d+(?:\.\d+){0,2}|master))\s*$/.exec(rest)?.[1];
-    if (!comment) return errors.push(`${here}: ${action}@${sha} has no version comment`);
+    const comment = /^\s+(# (?:v\d+\.\d+\.\d+|master))\s*$/.exec(rest)?.[1];
+    if (!comment) return errors.push(`${here}: ${action}@${sha} has no three-part version comment`);
     if (comment === '# master' && action !== 'dtolnay/rust-toolchain') errors.push(`${here}: only the branch-published toolchain action may name a branch`);
     const pin = `${action}@${sha}`, named = `${action} ${comment}`;
     if ((commentOf.get(pin) ?? comment) !== comment) errors.push(`${here}: ${pin} carries two comments: ${commentOf.get(pin)} and ${comment}`);
@@ -238,7 +256,9 @@ test('the offline pin reading catches a second SHA under one comment and a secon
     [[`      - uses: actions/checkout@${PIN} # v4.2.2`, `        uses: actions/checkout@${PIN} # v4.2.3`], /^x\.yml:2: actions\/checkout@[a-f0-9]{40} carries two comments/],
     [[`      - uses: dtolnay/rust-toolchain@${PIN} # master`, `      - uses: dtolnay/rust-toolchain@${other} # master`], /^x\.yml:2: dtolnay\/rust-toolchain # master names two SHAs/],
     [[`      - uses: actions/checkout@${PIN} # master`], /^x\.yml:1: only the branch-published toolchain action/],
-    [[`      - uses: dtolnay/rust-toolchain@${PIN} # stable`], /^x\.yml:1: dtolnay\/rust-toolchain@[a-f0-9]{40} has no version comment/],
+    [[`      - uses: dtolnay/rust-toolchain@${PIN} # stable`], /^x\.yml:1: dtolnay\/rust-toolchain@[a-f0-9]{40} has no three-part version comment/],
+    [[`      - uses: actions/checkout@${PIN} # v4`], /^x\.yml:1: actions\/checkout@[a-f0-9]{40} has no three-part version comment/],
+    [[`      - uses: actions/checkout@${PIN} # v4.2`], /^x\.yml:1: actions\/checkout@[a-f0-9]{40} has no three-part version comment/],
   ]) {
     const { errors } = pinErrors(file(...lines));
     assert.equal(errors.length, 1, errors.join('\n')); assert.match(errors[0], error);
@@ -261,6 +281,87 @@ test('removing the comment from one pin of any live workflow is rejected, releas
     assert.notEqual(r.status, 0, name); assert.match(r.stderr, new RegExp(`${name.replace('.', '\\.')}:\\d+: `));
     assert.equal(r.stderr.trim().split('\n').length, 1, r.stderr);
   }
+});
+
+// FORMA-251 moved the supply-chain lint ahead of cargo-deny in ci.yml's deny job, so an
+// advisory-source outage cannot hide a lint failure; FORMA-256 pins that order. The
+// workflow is parsed the way the other workflow tests parse theirs.
+const ciWorkflow = () => JSON.parse(execFileSync('ruby', ['-rjson', '-ryaml', '-e', 'puts JSON.generate(YAML.load(STDIN.read))'],
+  { input: readFileSync(join(root, '.github/workflows/ci.yml')), encoding: 'utf8' }));
+const SUPPLY_CHAIN_STEP = 'Supply-chain regression tests';
+// A step the lint must precede, read from its `uses`, `with` and `run`: one that
+// installs or runs cargo-deny or fetches advisory data, or installs the Rust
+// toolchain. Swatinem/rust-cache counts: its default `cache-bin: true` restores
+// ~/.cargo/bin, which is where a warm run's cargo-deny comes from. So does
+// dtolnay/rust-toolchain: a rustup outage, or a broken or garbage-collected pin,
+// would end the job before the lint reports.
+const mustFollowLint = (step) => /^(?:Swatinem\/rust-cache|dtolnay\/rust-toolchain)@/.test(step.uses ?? '')
+  || /cargo[ -]deny|check-advisories|\b(?:npm|cargo)[ -]audit\b|advisory-db|rustsec/i.test([step.uses, JSON.stringify(step.with ?? {}), step.run].join('\n'));
+const checkDenyOrder = (workflow) => {
+  const job = workflow.jobs?.deny, steps = job?.steps ?? [];
+  assert.ok(job?.if === undefined && job?.['continue-on-error'] === undefined, 'the deny job is conditional or may fail');
+  const named = steps.flatMap((step, index) => (step.name === SUPPLY_CHAIN_STEP ? [index] : []));
+  assert.equal(named.length, 1, `the deny job has ${named.length} "${SUPPLY_CHAIN_STEP}" steps`);
+  const [at] = named, lint = steps[at];
+  assert.ok(lint.if === undefined && lint['continue-on-error'] === undefined, 'the supply-chain step is conditional or may fail');
+  // The default shell runs with -e, so a lint failure stops the step before the tests
+  // run; a `shell: bash {0}` (no -e) would let passing tests hide it.
+  assert.ok(lint.shell === undefined && job.defaults?.run?.shell === undefined && workflow.defaults?.run?.shell === undefined,
+    'the supply-chain step does not run in the default shell');
+  assert.match(lint.run ?? '', /^ruby scripts\/check-supply-chain\.rb$/m);
+  assert.match(lint.run ?? '', /^node --test scripts\/tests\/supply-chain\.test\.mjs$/m);
+  const node = steps.findIndex(step => step.uses?.startsWith('actions/setup-node@'));
+  assert.ok(node >= 0 && node < at, `the supply-chain step (${at}) runs before setup-node (${node}) selects Node`);
+  assert.ok(steps.some(step => /\bcargo install cargo-deny\b/.test(step.run ?? '')) && steps.some(step => /check-advisories\.sh/.test(step.run ?? '')),
+    'the deny job no longer installs cargo-deny or fetches advisories; update this check');
+  const first = steps.findIndex(mustFollowLint);
+  assert.ok(at < first, `the supply-chain step (${at}) runs after step ${first} (${steps[first]?.name ?? steps[first]?.uses}), which installs the Rust toolchain, installs or runs cargo-deny, or fetches advisories`);
+};
+
+test('the deny job runs the supply-chain lint and its tests before the Rust toolchain, cargo-deny or an advisory fetch', () => {
+  checkDenyOrder(ciWorkflow());
+});
+
+test('the deny-job order check rejects the lint moved after Rust, cargo-deny or advisory work, ahead of setup-node, made optional, or run without -e', () => {
+  const ci = ciWorkflow(), steps = ci.jobs.deny.steps, from = steps.findIndex(step => step.name === SUPPLY_CHAIN_STEP);
+  const others = steps.filter((_, index) => index !== from);
+  const node = others.findIndex(step => step.uses?.startsWith('actions/setup-node@')), first = others.findIndex(mustFollowLint);
+  const withSteps = (list) => { const copy = structuredClone(ci); copy.jobs.deny.steps = list; return copy; };
+  // Every position: allowed only after setup-node and before the first step the lint must precede.
+  assert.ok(node >= 0 && first > node, `setup-node at ${node}, first step the lint must precede at ${first}`);
+  let rejected = 0;
+  for (let to = 0; to <= others.length; to += 1) {
+    const moved = withSteps([...others.slice(0, to), steps[from], ...others.slice(to)]);
+    if (to > node && to <= first) assert.doesNotThrow(() => checkDenyOrder(moved), `position ${to}`);
+    else { assert.throws(() => checkDenyOrder(moved), `position ${to}`); rejected += 1; }
+  }
+  assert.ok(rejected >= 3, `rejected only ${rejected} positions`);
+  const lint = steps[from], before = (step) => withSteps([...steps.slice(0, from), step, ...steps.slice(from)]);
+  // The window need not be adjacent: a harmless step between setup-node and the lint is allowed.
+  assert.doesNotThrow(() => checkDenyOrder(before({ name: 'Show Node', run: 'node --version' })));
+  const sha = 'a'.repeat(40);
+  const setDeny = (edit) => { const copy = structuredClone(ci); edit(copy.jobs.deny, copy); return copy; };
+  for (const [name, mutated] of [
+    ['the toolchain step before it', before({ uses: `dtolnay/rust-toolchain@${sha}`, with: { toolchain: 'stable' } })],
+    ['a shell without -e on the lint', withSteps(steps.map(step => (step === lint ? { ...step, shell: 'bash {0}' } : step)))],
+    ['a deny-job default shell', setDeny(job => { job.defaults = { run: { shell: 'bash {0}' } }; })],
+    ['a workflow default shell', setDeny((_, workflow) => { workflow.defaults = { run: { shell: 'bash {0}' } }; })],
+    ['continue-on-error on the deny job', setDeny(job => { job['continue-on-error'] = true; })],
+    ['an if on the deny job', setDeny(job => { job.if = "github.event_name == 'push'"; })],
+    ['a cargo deny fetch before it', before({ run: 'cargo deny --locked fetch db' })],
+    ['the advisory script before it', before({ run: 'bash scripts/check-advisories.sh' })],
+    ['an npm audit before it', before({ run: 'npm audit --omit=dev' })],
+    ['the cargo-deny action before it', before({ uses: `EmbarkStudios/cargo-deny-action@${sha}` })],
+    ['an installer action given cargo-deny before it', before({ uses: `taiki-e/install-action@${sha}`, with: { tool: 'cargo-deny' } })],
+    ['the cache that restores cargo-deny before it', before({ uses: `Swatinem/rust-cache@${sha}` })],
+    ['an if on the lint', withSteps(steps.map(step => (step === lint ? { ...step, if: "github.event_name == 'push'" } : step)))],
+    ['continue-on-error on the lint', withSteps(steps.map(step => (step === lint ? { ...step, 'continue-on-error': true } : step)))],
+    ['the lint without its tests', withSteps(steps.map(step => (step === lint ? { ...step, run: 'ruby scripts/check-supply-chain.rb\n' } : step)))],
+    ['the tests without the lint', withSteps(steps.map(step => (step === lint ? { ...step, run: 'node --test scripts/tests/supply-chain.test.mjs\n' } : step)))],
+    ['the step renamed', withSteps(steps.map(step => (step === lint ? { ...step, name: 'Supply chain' } : step)))],
+    ['the step removed', withSteps(others)],
+    ['the step twice', withSteps([...steps, lint])],
+  ]) assert.throws(() => checkDenyOrder(mutated), name);
 });
 
 test('published-crate polling bounds curl and sleep by one wall-clock deadline', (t) => {
