@@ -548,7 +548,7 @@ on failure. Each diagnostic carries `code`, `severity`, `page`, `file`, `line`,
 `column`, `message`, `why` and `fix`. Its path must be outside `outputDir`, including
 through symlinks, hard links to files in `outputDir` included: the report is written to a
 new file beside the path and renamed over it, so an existing file (a hard-linked one too)
-is replaced and never written through. An NFC and an NFD spelling of the same name
+is replaced and never written through (a report path that is a symbolic link to a file keeps the link and replaces its target; one that is a symbolic link to nothing is replaced by the report; a FIFO or device such as `/dev/null` is written in place; a report in a directory the build cannot write to fails with `EACCES`). An NFC and an NFD spelling of the same name
 (macOS) count as the same directory when checking that, and a report directory that is a
 symbolic link to nothing is refused up front, naming the link and its missing target.
 Additive report fields do not change the schema version;

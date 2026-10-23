@@ -8,7 +8,8 @@
  * BUILD-610 refusals always fail while preserving reports and prior output.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -242,6 +243,78 @@ describe('the JSON report', () => {
     expect(lstatSync(link).isSymbolicLink()).toBe(true);
     expect(JSON.parse(readFileSync(real, 'utf8')).strict).toBe(true);
     expect(readdirSync(tmpRoot).sort()).toEqual(['real.json', 'report-link.json', 'src']);
+  });
+
+  const posix = process.platform === 'win32' ? it.skip : it;
+
+  posix('writes a device in place and does not replace it: /dev/null is still a character device, with no temporary file beside it', () => {
+    const before = readdirSync('/dev').filter((name) => name.endsWith('.tmp'));
+    writeDiagnosticsJson('/dev/null', true, []);
+    expect(statSync('/dev/null').isCharacterDevice()).toBe(true);
+    expect(readdirSync('/dev').filter((name) => name.endsWith('.tmp'))).toEqual(before);
+  });
+
+  posix('writes a FIFO in place: the reader gets the report and the FIFO stays a FIFO', async (ctx) => {
+    const fifo = join(tmpRoot, 'report.fifo');
+    try {
+      execFileSync('mkfifo', [fifo]);
+    } catch {
+      ctx.skip();
+    }
+    const reader = spawn('cat', [fifo], { stdio: ['ignore', 'pipe', 'ignore'] });
+    let out = '';
+    reader.stdout.on('data', (chunk: Buffer) => { out += chunk.toString(); });
+    const done = new Promise<boolean>((resolveDone) => {
+      reader.on('close', () => resolveDone(true));
+      setTimeout(() => resolveDone(false), 5_000);
+    });
+    try {
+      writeDiagnosticsJson(fifo, true, []);
+      expect(await done).toBe(true);
+      expect(JSON.parse(out).strict).toBe(true);
+      expect(statSync(fifo).isFIFO()).toBe(true);
+    } finally {
+      reader.kill();
+    }
+  }, 20_000);
+
+  posix('keeps the permission bits of the report it replaces', () => {
+    const report = join(tmpRoot, 'diagnostics.json');
+    writeFileSync(report, 'old');
+    chmodSync(report, 0o640);
+    writeDiagnosticsJson(report, true, []);
+    expect(statSync(report).mode & 0o777).toBe(0o640);
+    expect(JSON.parse(readFileSync(report, 'utf8')).version).toBe(1);
+  });
+
+  it('leaves nothing behind when the report path is a directory', () => {
+    const report = join(tmpRoot, 'reports');
+    mkdirSync(report);
+    const beside = readdirSync(tmpRoot).sort();
+    expect(() => writeDiagnosticsJson(report, true, [])).toThrow(/EISDIR|EPERM|illegal operation/);
+    expect(readdirSync(tmpRoot).sort()).toEqual(beside);
+    expect(readdirSync(report)).toEqual([]);
+  });
+
+  it('replaces a report path that is a link to nothing (it used to be created through the link)', (ctx) => {
+    const missing = join(tmpRoot, 'missing.json');
+    const link = join(tmpRoot, 'report-link.json');
+    try {
+      symlinkSync(missing, link, 'file');
+    } catch (error) {
+      if (['EPERM', 'ENOTSUP', 'EOPNOTSUPP'].includes((error as NodeJS.ErrnoException).code ?? '')) ctx.skip();
+      throw error;
+    }
+    writeDiagnosticsJson(link, true, []);
+    expect(lstatSync(link).isSymbolicLink()).toBe(false);
+    expect(JSON.parse(readFileSync(link, 'utf8')).strict).toBe(true);
+    expect(existsSync(missing)).toBe(false);
+  });
+
+  posix('says a link that loops back on itself loops, rather than that it does not exist', () => {
+    const link = join(tmpRoot, 'loop');
+    symlinkSync(link, link);
+    expect(() => writeDiagnosticsJson(join(link, 'd.json'), true, [])).toThrow(/needs the directory '.*loop', a symbolic link to '.*loop', which loops back on itself/);
   });
 
   it('refuses a report whose parent is a link to nothing, naming the link and where it points, before creating anything', async () => {

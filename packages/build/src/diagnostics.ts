@@ -15,6 +15,7 @@ import { randomBytes } from 'node:crypto';
 import {
   chmodSync, existsSync, lstatSync, mkdirSync, readlinkSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync,
 } from 'node:fs';
+import type { Stats } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 import type { BuildConfig, BuildDiagnostic } from './types.js';
@@ -206,6 +207,12 @@ export function danglingReportParent(report: string): string | undefined {
     }
     if (isLink) {
       if (existsSync(current)) return undefined;
+      let loop = false;
+      try {
+        statSync(current);
+      } catch (error) {
+        loop = (error as NodeJS.ErrnoException).code === 'ELOOP';
+      }
       let target = '(unreadable)';
       try {
         target = resolve(dirname(current), readlinkSync(current));
@@ -213,8 +220,9 @@ export function danglingReportParent(report: string): string | undefined {
         // Reported as unreadable.
       }
       return (
-        `diagnosticsJson '${report}' needs the directory '${current}', a symbolic link to '${target}', which does not exist: ` +
-        'create that directory, remove the link, or write the report somewhere else'
+        `diagnosticsJson '${report}' needs the directory '${current}', a symbolic link to '${target}', ` +
+        (loop ? 'which loops back on itself' : 'which does not exist') +
+        ': ' + (loop ? 'remove the link' : 'create that directory, remove the link') + ', or write the report somewhere else'
       );
     }
     if (existsSync(current)) return undefined;
@@ -256,19 +264,30 @@ export function writeDiagnosticsJson(path: string, strict: boolean, diagnostics:
   } catch {
     // Does not exist yet, or a link to nothing: the path itself is replaced.
   }
-  let mode: number | undefined;
+  let existing: Stats | undefined;
   try {
-    mode = statSync(destination).mode & 0o777;
+    existing = statSync(destination);
   } catch {
-    // New file: the default mode.
+    // New file, or a link to nothing (replaced, not created through).
+  }
+
+  const json = JSON.stringify({ version: DIAGNOSTICS_JSON_VERSION, strict, diagnostics }, null, 2) + '\n';
+
+  // A destination that exists and is not a regular file (a FIFO, a character
+  // device such as /dev/null or /dev/stdout, a directory) cannot be replaced by
+  // a new file: that would swap the device for a file, or fail in a directory
+  // that cannot hold a temporary file. It is written as before, in place.
+  if (existing !== undefined && !existing.isFile()) {
+    writeFileSync(destination, json);
+    return target;
   }
 
   const temporary = join(dirname(destination), `.${basename(destination)}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`);
   try {
-    writeFileSync(temporary, JSON.stringify({ version: DIAGNOSTICS_JSON_VERSION, strict, diagnostics }, null, 2) + '\n', { flag: 'wx' });
-    if (mode !== undefined) {
+    writeFileSync(temporary, json, { flag: 'wx' });
+    if (existing !== undefined) {
       try {
-        chmodSync(temporary, mode);
+        chmodSync(temporary, existing.mode & 0o777);
       } catch {
         // A filesystem without permission bits keeps what it has.
       }
