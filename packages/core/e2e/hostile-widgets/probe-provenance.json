@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "ddc98034a58fa0dfaf19eb010fc0c65be6cd4825025d023f0dc6abb99e36b768",
-    "total": 255,
+    "sha256": "29814ae748d6bd6ee72cc1fdea0c91d686a62987d13a1c19a0d1bc7266a581a2",
+    "total": 261,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -1755,6 +1755,51 @@
         "disposition": {
           "kind": "separate-structural-regression",
           "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a data-list writes each row's {item.x} values and key into text unpriced: a thousand rows placing one long string (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
+        }
+      },
+      {
+        "id": "runtime/list-cap-dropped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a data-list builds a row of DOM for every item however cheap the expression that made them: `Array.from({length: 249990})` was 249,990 template clones in one task, 3.3 s at 4x CPU throttling (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+        }
+      },
+      {
+        "id": "runtime/list-cap-counts-rows-only",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: the data-list cap counts rows and not what each costs to build, so 140,000 rows of a 140-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+        }
+      },
+      {
+        "id": "runtime/list-cap-weight-ignores-attributes",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a row's weight counts the elements of its template and not their attributes, so a row of many attributes and directives passes the data-list cap at several times its cost (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+        }
+      },
+      {
+        "id": "runtime/list-cap-weight-ignores-descendants",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a row's weight counts the template's root element and not the elements inside it, so a deep row template passes the data-list cap as a one-element row (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"the contents of a <template> in a row count toward its weight\""
+        }
+      },
+      {
+        "id": "runtime/list-cap-weight-skips-template-contents",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite; not counted as a browser payload. Original note: a row's weight does not count what a <template> in it holds, which is cloned with every row: a thousand elements in a template in each row measured 258 us a row at 4x and were weighed as three (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"the contents of a <template> in a row count toward its weight\""
         }
       },
       {

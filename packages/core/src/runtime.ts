@@ -1469,6 +1469,25 @@ const NOTHING = compileExpression('0');
 /** A value a `data-list` row template places in text, once per row it appears in. */
 const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room));
 
+/**
+ * The most a `data-list` pass may build or rebind, as rows times the weight of
+ * a row: 1, and 1 for each element and attribute of the row template (a nested
+ * `<template>`'s contents included, which are cloned with the row). A pass
+ * builds the rows it lacks and rebinds the rest, at about the same cost a row,
+ * so the product bounds the pass whatever its expression cost (FORMA-172).
+ * `Array.from({length: 249990})` made 249,990 rows in one task, 3.3 s at 4x
+ * CPU throttling. A list over the cap is refused on its length, before any
+ * item is read or any row built; one under it renders as before, in one task.
+ * Sized from data: the heaviest of 195 real row templates surveyed weighs
+ * 123, so 1,000 of its rows fit with room for templates up to 140; and the
+ * slowest row shape that binds measured 7 microseconds a unit of weight at 4x,
+ * so the largest list the cap admits builds in about 1 s, where 249,990 rows
+ * took 3.3 s.
+ * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list of 250,000 items is refused before any item is read"
+ * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list exactly at the cap renders, and one row more is refused"
+ */
+const LIST_WEIGHT_CAP = 140_000;
+
 /** Strip one balanced `{ … }` wrapper, honouring string and template literals. */
 function stripBraces(raw: string): string {
   const trimmed = raw.trim();
@@ -2155,9 +2174,26 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       // Verified by: src/__tests__/runtime-text-cost.test.ts > "every other conversion of a result to text is refused before it runs"
       const fields = [...template.outerHTML.matchAll(/\{item\.?(\w*)\}/g)].map((m) => m[1]!);
       if (keyProp) fields.push(keyProp);
+      // A pass over more than `LIST_WEIGHT_CAP` of rows times weight is refused
+      // on the list's length, before any item is read (FORMA-172). The refusal
+      // weighs nothing and charges the task's meter nothing, so, like the other
+      // refusals that check a length first, it is reported with no `defer` and
+      // arms no cap (FORMA-249): nothing after it waits for it.
+      // Verified by: src/__tests__/runtime-list-cap.test.ts > "a refused list delays no binding and no list after it"
+      let weight = 1;
+      const held: ParentNode[] = [template];
+      for (const root of held) {
+        for (const node of [root, ...root.querySelectorAll('*')] as Element[]) {
+          weight += 1 + (node.attributes?.length ?? 0);
+          if (node.localName === 'template') held.push((node as HTMLTemplateElement).content);
+        }
+      }
       const evaluate = evaluator(listExpr, (items, room) => {
         let n = 0;
         if (Array.isArray(items)) {
+          if (items.length * weight > LIST_WEIGHT_CAP) {
+            throw exprError('FORMA_E_BUDGET', `a data-list of rows weighing ${weight} is refused past ${Math.floor(LIST_WEIGHT_CAP / weight)} rows (${LIST_WEIGHT_CAP} rows times weight)`);
+          }
           for (const item of items) {
             for (const f of fields) {
               if (n > room) return n;

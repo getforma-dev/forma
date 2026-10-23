@@ -20,7 +20,9 @@
  * search over 9,000 records, per script; F, bindings that wait for the next
  * task while each weighs most of the budget, and 400 that each weigh about
  * the cap after one waits (FORMA-173); G, bindings each too heavy for any
- * task, 20 and 40 of them (FORMA-178).
+ * task, 20 and 40 of them (FORMA-178); L, `data-list` passes from 1,000 to
+ * 250,000 items, the largest each row shape may have under the absolute cap,
+ * and the heaviest real row template (FORMA-172).
  *
  * Wall-clock time depends on the machine and its load: the machine's model and
  * load average are printed, and a comparison is meaningful only between
@@ -30,6 +32,7 @@
  *   npm run build && node scripts/measure-task-budget.mjs [--runtime=a.js,b.js] [--runs=41] [--rate=4] [--only=R,O3]
  */
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
@@ -49,6 +52,16 @@ const AT_CAP = 'Array.from({length: 249990}).length';
 const STEPS = 'Array.from({length: 16000}).map((x, i) => i).filter(i => i % 2).length';
 const words = (w, needle, n) => `Array.from({length: ${n}}, (_, i) => ({ title: (i + ' ' + ${JSON.stringify(w)}).repeat(2).slice(0, 60), body: ((i % 10 === 0 ? ${JSON.stringify(needle)} + ' ' : '') + ${JSON.stringify(w)}).repeat(4).slice(0, 200) }))`;
 const SEARCH = (needle) => `v.filter(r => (r.title + ' ' + r.body).toLowerCase().includes(${JSON.stringify(needle).replace(/"/g, "'")})).length`;
+
+const ITEMS = (n) => `Array.from({length: ${n}}, (_, i) => i % 10)`;
+const ROWS = (n) => `Array.from({length: ${n}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
+const TODOS = (n) => `({ rows: Array.from({length: ${n}}, (_, i) => ({ id: i, title: 'Task ' + i, done: i % 3 === 0, priority: ['high', 'medium', 'low'][i % 3], due: i % 2 ? '2025-07-10' : '' })) })`;
+const LIST = '<ul data-out data-list="{v === null ? [] : v}"><li>{item}</li></ul>';
+const TABLE = '<table><tbody data-out data-list="{v === null ? [] : v}"><tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr></tbody></table>';
+const DEEP = '<div data-out data-list="{v === null ? [] : v}"><div><ul>' + '<li>{item}</li>'.repeat(20) + '</ul></div></div>';
+// The heaviest real row template surveyed (weight 123): vector-studio's todo list.
+const HEAVIEST = readFileSync(fileURLToPath(new URL('../e2e/fixtures/vector-studio-todo-row.html', import.meta.url)), 'utf8').replace(/<!--[\s\S]*?-->/, '');
+const TODO = `<div data-out data-list="{v === null ? [] : v.rows}">${HEAVIEST}</div>`;
 
 const CASES = [
   // The round-2 review's cases (formajs#14), self-contained.
@@ -106,6 +119,21 @@ const CASES = [
   // budget in one task (20: about 53 ms at 4x, 40: about 99 ms).
   { name: 'G1 twenty data-text of a 300,000-unit list', data: 'Array.from({length: 75000}, (_, i) => i % 10)', html: many(20, () => t('v')) },
   { name: 'G2 forty data-text of a 300,000-unit list', data: 'Array.from({length: 75000}, (_, i) => i % 10)', html: many(40, () => t('v')) },
+  // FORMA-172: a `data-list` builds a row of DOM for every item, whatever the
+  // expression that produced them cost. A pass over more than 140,000 of rows
+  // times row weight (1, and 1 for each element and attribute of the row
+  // template) is refused. L1 to L5 are over the cap, L9 to L11 the largest list
+  // each row shape may have, L12 the heaviest real template at 1,000 rows.
+  { name: 'L1 data-list of 250,000 items from state', data: ITEMS(250000), html: LIST },
+  { name: 'L2 data-list of 100,000 items from state', data: ITEMS(100000), html: LIST },
+  { name: 'L3 data-list of 70,001 items (cap + 1 row)', data: ITEMS(70001), html: LIST },
+  { name: 'L5 data-list of Array.from({length: 249990})', html: '<ul data-out data-list="{Array.from({length: 249990})}"><li>{item}</li></ul>' },
+  { name: 'L4 data-list of 1,000 items (ordinary)', data: ITEMS(1000), html: LIST },
+  { name: 'L6 1,000 table rows, 6 cells, 5 directives', data: ROWS(1000), html: TABLE },
+  { name: 'L9 70,000 <li> rows (weight 2, at the cap)', data: ITEMS(70000), html: LIST },
+  { name: 'L10 10,000 table rows (weight 14, at the cap)', data: ROWS(10000), html: TABLE },
+  { name: 'L11 6,086 rows of 22 elements (weight 23)', data: ITEMS(6086), html: DEEP },
+  { name: 'L12 1,000 rows of the heaviest real template', data: TODOS(1000), html: TODO, state: { tasks: [], editingId: null, editingText: '' } },
   // The ordinary search at 9,000 records, the largest ordinary evaluation.
   { name: 'O1 search 9,000 ASCII', data: `${words('alpha beta gamma delta epsilon zeta theta iota kappa lambda mu nu xi omicron pi rho ', 'needle', 9000)}`, html: t(SEARCH('needle')) },
   { name: 'O2 search 9,000 punctuation', data: `${words('the fox’s jump — over the dog… €12 ™ said “quote” and ‘single’ ', 'needle', 9000)}`, html: t(SEARCH('needle')) },
