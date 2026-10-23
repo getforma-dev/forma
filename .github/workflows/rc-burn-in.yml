@@ -22,11 +22,11 @@ jobs:
       CARGO_TERM_COLOR: never
       CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
           package-manager-cache: false
@@ -37,7 +37,7 @@ jobs:
           test "$GITHUB_REF" = "refs/tags/$RC_TAG"
           test "$(git rev-parse "$RC_TAG^{commit}")" = "$GITHUB_SHA"
           python3 scripts/release-owned-linux.test.py
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: '1.93.1'
       - name: Install the committed tools and pinned sanitizer harness
@@ -56,14 +56,14 @@ jobs:
       - name: Authenticate results and cleanup before recording success
         id: result
         run: node scripts/release-burn-in.mjs finalize "$RUNNER_TEMP/burn-in-evidence" "$RUNNER_TEMP/burn-in-owned" "$RUNNER_TEMP/burn-in-work"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rc-burn-in
           path: ${{ runner.temp }}/burn-in-evidence/
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rc-burn-in-ownership
