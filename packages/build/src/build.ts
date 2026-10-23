@@ -42,6 +42,7 @@ import { REPORT_CEILINGS, formatSizeReport, frameSize, routeSizeFailure, routeSi
 import { assertNoServerFunctions, serverDirectiveGuard } from './server-directives.js';
 import {
   DiagnosticsCollector,
+  danglingReportParent,
   isInsideOutputDir,
   resolveDiagnosticOptions,
   strictFailure,
@@ -426,6 +427,11 @@ function validateConfig(config: BuildConfig): void {
         `diagnosticsJson '${config.diagnosticsJson}' is inside outputDir '${config.outputDir}': the build replaces outputDir whole, and its files are served; write the report outside it`,
       );
     }
+    // A parent that is a link to nothing would fail the write with a bare
+    // ENOENT after the whole build ran (FORMA-245).
+    // Verified by: packages/build/tests/strict.test.ts > "refuses a report whose parent is a link to nothing, naming the link and where it points, before creating anything"
+    const dangling = danglingReportParent(config.diagnosticsJson);
+    if (dangling) problems.push(dangling);
   }
 
   // A production build swaps a real directory over outputDir, and watch mode
