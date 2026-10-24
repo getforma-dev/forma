@@ -183,7 +183,8 @@ What core writes of its own passes such a policy:
   the internal `forma-runtime` parser. Reconciliation writes no `on*` attribute
   or script `src`: a changed one is removed, as h() and adoption write no `on*`
   name either, and since FORMA-276 neither a changed URL attribute with a
-  script scheme ([SECURITY.md](./SECURITY.md#url-and-handler-attributes-in-each-sink)).
+  script scheme, nor since FORMA-277 an SVG animation value with one
+  ([SECURITY.md](./SECURITY.md#url-and-handler-attributes-in-each-sink)).
   Raw strings are refused before parsing or a cached-markup shortcut.
 
 Raw APIs accept only named trusted markup. Runtime `data-bind:srcdoc` and

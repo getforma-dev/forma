@@ -41,13 +41,16 @@ export const expressionPayloads = [
   ['arrow-block', 'items.map(x => { return x; })', 'FORMA_E_UNSUPPORTED'],
 ];
 
-export const valueContexts = ['state', 'computed', 'text', 'show', 'if', 'model', 'class', 'attribute', 'event', 'list-text', 'list-attribute', 'list-property', 'persist', 'ref', 'srcdoc', 'url', 'form-action', 'image-src', 'svg-xlink', 'url-static', 'form-action-static', 'image-src-static', 'svg-xlink-static'];
+export const valueContexts = ['state', 'computed', 'text', 'show', 'if', 'model', 'class', 'attribute', 'event', 'list-text', 'list-attribute', 'list-property', 'persist', 'ref', 'srcdoc', 'url', 'form-action', 'image-src', 'svg-xlink', 'url-static', 'form-action-static', 'image-src-static', 'svg-xlink-static', 'svg-animate', 'svg-animate-static'];
 // The four URL sinks again as static attributes, written by an update(): the
 // mount renders the attribute with a benign URL, then the reconciler patches
 // the payload into the element it keeps (FORMA-276). The parser has replaced
 // a NUL in the markup with U+FFFD by then, so there is no NUL left to refuse:
 // that value is written as the parser made it, a relative URL.
-export const staticUrlContexts = new Set(['url-static', 'form-action-static', 'image-src-static', 'svg-xlink-static']);
+// An SVG animation value is judged as a URL too (FORMA-277): a bound `to` on
+// a <set>, and a static `values` list on an <animate>, the payload its second
+// item, patched in by an update. Both target `href`.
+export const staticUrlContexts = new Set(['url-static', 'form-action-static', 'image-src-static', 'svg-xlink-static', 'svg-animate-static']);
 // data-model/data-persist accept assignable state/member paths, not arbitrary
 // expression programs. Every literal payload still runs through their live
 // value path; inventing an expression position there would create inert tests.

@@ -11,7 +11,14 @@ const errorRecord = error => ({
 export default class ProbeReporter {
   ready = new Set();
   finished = new Set();
-  hooks = new Set();
+  // Open hooks by key, counted: +1 on start, -1 on end. Vitest reports each
+  // update batch from the worker as it arrives and does not wait for the
+  // previous batch, so one batch's events can be reported in between another's
+  // and a hook's end can reach the reporter before its start (observed with
+  // a start that ended one batch and its end that began the next). Pairing
+  // by count is order-independent. A key still above zero when the run ends
+  // started and never ended.
+  hooks = new Map();
   processTimeout = false;
   cancellations = [];
   context;
@@ -27,13 +34,17 @@ export default class ProbeReporter {
   }
   onTestCaseReady(test) { this.ready.add(test.id); }
   onTestCaseResult(test) { this.finished.add(test.id); }
-  onHookStart(hook) { this.hooks.add(`${hook.entity.id}:${hook.name}`); }
-  onHookEnd(hook) { this.hooks.delete(`${hook.entity.id}:${hook.name}`); }
+  onHookStart(hook) { this.#tally(hook, 1); }
+  onHookEnd(hook) { this.#tally(hook, -1); }
+  #tally(hook, delta) {
+    const key = `${hook.entity.id}:${hook.name}`, open = (this.hooks.get(key) ?? 0) + delta;
+    if (open === 0) this.hooks.delete(key); else this.hooks.set(key, open);
+  }
   onProcessTimeout() { this.processTimeout = true; }
   onTestRunEnd(modules, unhandledErrors, reason) {
     const report = {
       schema: 1, reason, cancellations: this.cancellations, processTimeout: this.processTimeout,
-      incompleteHooks: [...this.hooks],
+      incompleteHooks: [...this.hooks].filter(([, open]) => open > 0).map(([key]) => key),
       unhandledErrors: unhandledErrors.map(errorRecord),
       modules: modules.map(module => ({
         file: module.moduleId, state: module.state(),
