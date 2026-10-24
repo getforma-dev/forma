@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { packedCargoGraph, run, digest } from './release-set.mjs';
+import { ROOT, packedCargoGraph, run, digest, stageCargoLock } from './release-set.mjs';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
 
 const registry = 'registry+https://github.com/rust-lang/crates.io-index';
@@ -40,6 +40,72 @@ test('recorded Cargo runtime closure adds derive and a second exact external ver
   assert.match(ir, /dependencies = \[\n "forma-ir-derive",\n\]/);
   assert(!ir.includes(' "forma-ir",'), 'dev-only self edge is excluded using packed metadata');
   assert.equal(mergeRecordedCargoLock(staged, candidates, recorded), staged, 'staging is deterministic and idempotent');
+});
+
+test('default consumers keep default-enabled optional dependencies and omit opt-in compression closure', () => {
+  const { original, recorded } = fixture();
+  recorded.lock = recorded.lock.replace(' "forma-ir-derive",', ' "forma-ir-derive",\n "tracing",\n "brotli",')
+    + block('tracing', '0.1.41', [], '2') + block('brotli', '8.0.4', ['alloc-stdlib'], '3')
+    + block('alloc-stdlib', '0.2.4', [], '4');
+  recorded.packages[0].dependencies.push(
+    { ...dependency('tracing'), optional: true },
+    { ...dependency('brotli'), optional: true },
+  );
+  recorded.packages[0].features = {
+    default: ['observability', 'brotli?/std'], observability: ['dep:tracing'], compression: ['dep:brotli'],
+  };
+  const staged = mergeRecordedCargoLock(original, candidates, recorded);
+  assert(staged.includes('name = "tracing"'), 'default feature dependency remains pinned');
+  assert(!staged.includes('brotli'), 'unrequested optional dependency is absent');
+  assert(!staged.includes('alloc-stdlib'), 'its transitive closure is absent too');
+  assert.equal(mergeRecordedCargoLock(staged, candidates, recorded), staged);
+  recorded.packages[0].features.default.push('compression');
+  assert(mergeRecordedCargoLock(original, candidates, recorded).includes('name = "alloc-stdlib"'),
+    'enabling the feature in defaults selects the recorded optional closure');
+});
+
+test('a future internal feature override refuses staging until its unification is supported', () => {
+  const { original, recorded } = fixture();
+  recorded.packages[0].dependencies[0].uses_default_features = false;
+  assert.throws(() => mergeRecordedCargoLock(original, candidates, recorded), /internal Cargo feature override/);
+  recorded.packages[0].dependencies[0].uses_default_features = true;
+  recorded.packages[0].dependencies[0].features = ['extra'];
+  assert.throws(() => mergeRecordedCargoLock(original, candidates, recorded), /internal Cargo feature override/);
+  recorded.packages[0].dependencies[0].features = [];
+  recorded.packages[0].features = { default: ['forma-ir-derive/extra'] };
+  assert.throws(() => mergeRecordedCargoLock(original, candidates, recorded), /internal Cargo feature override/);
+});
+
+test('both real default template consumers accept the staged graph with locked Cargo and no rewrite', async () => {
+  const { placeCargoLockRoot } = await import('../packages/create-app/src/scaffold.ts');
+  const graph = JSON.parse(run('cargo', ['metadata', '--no-deps', '--locked', '--offline', '--format-version', '1']));
+  const crates = graph.packages.filter(p => ['forma-ir', 'forma-ir-derive', 'forma-server'].includes(p.name));
+  const candidates = crates.map(p => ({ name: p.name, version: p.version, registry: 'crates', sha256: checksum('0') }));
+  const recorded = { lock: readFileSync(join(ROOT, 'Cargo.lock'), 'utf8'), packages: crates };
+  const scratch = mkdtempSync(join(tmpdir(), 'forma-default-cargo-closure-'));
+  try {
+    for (const template of ['minimal', 'dashboard']) {
+      const name = `${template}-default-lock-proof`, dir = join(scratch, name);
+      mkdirSync(join(dir, 'src'), { recursive: true });
+      const source = join(ROOT, 'packages/create-app/templates', template);
+      // Exercise the same registry sealing, local candidate substitution and
+      // root rename as the packed scaffold gate. No archive checksum is used
+      // to resolve a dependency: all three candidates are explicit local paths.
+      let lock = stageCargoLock(readFileSync(join(source, 'Cargo.lock'), 'utf8'), candidates, false, undefined, recorded);
+      lock = stageCargoLock(lock, candidates, true).replaceAll('{{PROJECT_NAME}}', name).replaceAll('{{project-name}}', name);
+      writeFileSync(join(dir, 'Cargo.lock'), lock);
+      placeCargoLockRoot(join(dir, 'Cargo.lock'), name);
+      const manifest = readFileSync(join(source, 'Cargo.toml'), 'utf8').replaceAll('{{PROJECT_NAME}}', name).replaceAll('{{project-name}}', name);
+      writeFileSync(join(dir, 'Cargo.toml'), manifest + '\n[patch.crates-io]\n' + crates.map(p => `${p.name} = { path = ${JSON.stringify(join(ROOT, 'crates', p.name))} }\n`).join(''));
+      writeFileSync(join(dir, 'src/main.rs'), 'fn main() {}\n');
+      const before = readFileSync(join(dir, 'Cargo.lock'), 'utf8');
+      // A cold CI cache may fetch these already-pinned registry archives; the
+      // lock is still immutable. The second pass must work offline unchanged.
+      run('cargo', ['metadata', '--locked', '--format-version', '1'], dir);
+      run('cargo', ['metadata', '--offline', '--format-version', '1'], dir);
+      assert.equal(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), before, `${template}: plain Cargo must not repair the sealed graph`);
+    }
+  } finally { rmSync(scratch, { recursive: true, force: true }); }
 });
 
 test('new runtime records use Cargo order and preserve original package bytes', () => {
