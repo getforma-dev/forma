@@ -1,0 +1,26 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx build.ts",
+    "build:ssr": "tsx build.ts"
+  },
+  "dependencies": {
+    "@getforma/core": "^3.0.0"
+  },
+  "devDependencies": {
+    "@getforma/build": "^3.0.0",
+    "@getforma/compiler": "^3.0.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false,
+    "@parcel/watcher": false
+  }
+}

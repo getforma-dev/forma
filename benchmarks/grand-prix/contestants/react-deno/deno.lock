@@ -1,0 +1,28 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:react-dom@19.3.1": "19.3.1_react@19.3.1",
+    "npm:react@19.3.1": "19.3.1"
+  },
+  "npm": {
+    "react-dom@19.3.1_react@19.3.1": {
+      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
+      "dependencies": [
+        "react",
+        "scheduler"
+      ]
+    },
+    "react@19.3.1": {
+      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw=="
+    },
+    "scheduler@0.28.0": {
+      "integrity": "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:react-dom@19.3.1",
+      "npm:react@19.3.1"
+    ]
+  }
+}
