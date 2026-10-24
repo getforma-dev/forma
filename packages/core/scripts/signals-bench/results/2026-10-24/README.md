@@ -1,5 +1,37 @@
 # FORMA-259 / 260 / 263 development qualification
 
+## Historical candidate and Linux rollback decision
+
+The measurements below describe the original combined candidate, subsequently
+integrated as `54a836c06eeba99c345cf294d47e7118b5ad7924`. They are retained unchanged.
+[Qualified Linux run 40116672499](https://github.com/getforma-dev/forma/actions/runs/40116672499)
+tested that candidate against published 3.0.0 using harness `03d0b87a`, one
+`gha-4-v1` host/job campaign, five samples and two warmups. Create 1,000 rows was
+**31.74 ±9.60ms** versus vanilla **21.66 ±2.71ms**; published Forma was
+25.66 ±3.63ms. Swap rose 1.72 ±0.22 to 2.24 ±0.18ms, remove 1.40 ±0.26 to
+2.14 ±0.30ms, and clear 2.82 ±0.16 to 4.26 ±1.18ms. These results do not meet
+FORMA-260's row target or support its no-regression acceptance.
+
+The successor restores the earlier AbortController listeners, eager row indexes
+and ordinary internalEffect wrappers. Public createEffect and the bundle audit
+changes remain. This rollback does not establish which change caused the Linux
+regressions; a new campaign must compare published, original and rollback source
+on one host. Original raw evidence and source remain valid historical records.
+
+The Linux bundle was 8,490 B Brotli versus published 8,652 B. The scored signals
+reference was alien-signals 3.2.1, whereas Forma uses 3.1.2, so that campaign cannot
+qualify the exact-own-engine target. Harness `6eb26eb9` adds the existing 3.1.2
+adapter as a separate unscored control for the next campaign.
+
+The original artifact is `grand-prix-client-40116672499-1`, ID `12569600778`,
+92,618 bytes, with authenticated GitHub/download SHA256
+`91cca014d297dd4749f71deaa641258b5ce0c3044b9c09fc83b63056181194fe`.
+The retained archive, raw files, all-operation comparisons and independent
+verification are under the programme's local evidence directory
+`work/codex-benchmark/evidence/qualified-client-40116672499/`.
+
+## Original local measurements
+
 Measured 2026-10-24 on an Apple M1 Pro (10 cores), macOS 26.1 arm64.
 Candidate: `34f1d6ef` (functional source `5002b7aa`; the final commit only corrects
 an element listener comment). All three development agents held CPU-heavy work

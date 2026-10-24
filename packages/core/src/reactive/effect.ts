@@ -9,6 +9,7 @@
 
 import { effect as rawEffect, getActiveSub } from 'alien-signals';
 import {
+  hasActiveRoot,
   registerDisposer,
   getOwner,
   type Owner,
@@ -16,7 +17,7 @@ import {
 import { setExecutionContext } from './cleanup.js';
 import { reportError } from './dev.js';
 import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
-import { deferAdoptionEffect, getAdoptionCallbacks, runAdoptionCallback } from './adoption-hooks.js';
+import { deferAdoptionEffect, getAdoptionCallbacks, bindAdoptionCallback, runAdoptionCallback } from './adoption-hooks.js';
 
 declare const __FORMA_FRAME_BUILD__: boolean | undefined;
 
@@ -107,21 +108,24 @@ export function internalEffect(fn: () => void): () => void {
   // Verified by: src/reactive/__tests__/frame-effect.test.ts > "keeps the frame reader reactive and disposable without linking the unused adoption effect graph"
   if (!(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) && adoptionInternalEffect) return adoptionInternalEffect(fn);
   const events = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionEvents();
-  const callbacks = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionCallbacks();
+  const callback = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : bindAdoptionCallback(fn, getAdoptionCallbacks());
+  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, callback);
   let firstRun = true;
   const dispose = rawEffect(() => {
-    const initial = firstRun;
-    firstRun = false;
+    if (firstRun) {
+      firstRun = false;
+      run();
+      return;
+    }
     try {
-      if ((typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__)
-        || !(events || callbacks || getAdoptionEvents() || getAdoptionCallbacks())) fn();
-      else withAdoptionEvents(events, () => runAdoptionCallback(fn, callbacks));
-    } catch (error) {
-      if (initial) throw error;
-      reportError(error, 'binding');
+      run();
+    } catch (e) {
+      reportError(e, 'binding');
     }
   });
-  registerDisposer(dispose);
+  if (hasActiveRoot()) {
+    registerDisposer(dispose);
+  }
   return dispose;
 }
 

@@ -221,27 +221,36 @@ function eventName(key: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Element-local listener storage. Native AbortSignal registration adds an
-// abort subscription for every listener; ordinary h() cleanup needs only the
-// event name and the exact listener (including any adoption wrapper).
+// Symbol-based AbortController storage (avoids WeakMap overhead)
 // ---------------------------------------------------------------------------
 
-const LISTENERS_SYM = Symbol.for('forma-listeners');
-type ListenerEntries = (string | EventListenerOrEventListenerObject)[];
+const ABORT_SYM = Symbol.for('forma-abort');
+
+/**
+ * @internal Get or lazily create the AbortController an element's listeners
+ * are attached with, the one {@link cleanup} aborts for ordinary h() elements.
+ */
+export function getAbortController(el: Element): AbortController {
+  let controller = (el as any)[ABORT_SYM] as AbortController | undefined;
+  if (!controller) {
+    controller = new AbortController();
+    (el as any)[ABORT_SYM] = controller;
+  }
+  return controller;
+}
 
 /**
  * Remove all event listeners previously attached via `h()` on the given element.
  *
- * Removes only Forma's listeners, leaving independently attached listeners
- * intact. The bookkeeping is deleted so the element can be bound again.
+ * Calls `AbortController.abort()` for the element, which automatically removes
+ * every listener that was registered with its signal. The controller is then
+ * deleted so a fresh one is created if the element is reused.
  */
 export function cleanup(el: Element): void {
-  const entries = (el as any)[LISTENERS_SYM] as ListenerEntries | undefined;
-  if (entries) {
-    delete (el as any)[LISTENERS_SYM];
-    for (let i = 0; i < entries.length; i += 2) {
-      el.removeEventListener(entries[i] as string, entries[i + 1] as EventListenerOrEventListenerObject);
-    }
+  const controller = (el as any)[ABORT_SYM] as AbortController | undefined;
+  if (controller) {
+    controller.abort();
+    delete (el as any)[ABORT_SYM];
   }
 }
 
@@ -419,11 +428,12 @@ function handleEvent(el: Element, key: string, value: unknown): void {
     if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
-  const name = eventName(key), listener = adoptionListener(value as EventListenerOrEventListenerObject);
-  el.addEventListener(name, listener);
-  const entries = (el as any)[LISTENERS_SYM] as ListenerEntries | undefined;
-  if (entries) entries.push(name, listener);
-  else (el as any)[LISTENERS_SYM] = [name, listener];
+  const controller = getAbortController(el);
+  el.addEventListener(
+    eventName(key),
+    adoptionListener(value as EventListenerOrEventListenerObject),
+    { signal: controller.signal },
+  );
 }
 
 /**
@@ -936,7 +946,7 @@ function appendChild(parent: Node, child: unknown): void {
  * and created with the correct SVG namespace. Inside a `foreignObject`,
  * children switch back to the HTML namespace.
  *
- * Event listeners are retained in an element-local registry so they can
+ * Event listeners are attached with an AbortController signal so they can
  * be removed in bulk via `cleanup(el)`.
  *
  * Hyperscript-style API:
