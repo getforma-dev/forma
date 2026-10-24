@@ -36,10 +36,11 @@ describe('supplied nodes on the pinned shared engine graph', () => {
     expect(anchor).not.toBe(owner!);
     expect(anchor.disposed).toBe(true);
     expect(anchor.flags).toBe(2 | 4);
+    expect(anchor.fn).toBe((owner! as unknown as {run: unknown}).run);
     for (const field of ['deps', 'depsTail', 'subs', 'subsTail', 'callbacks', 'events', 'failure', 'reader', 'ownerOverride', 'children', 'cleanup', 'nextCleanup']) {
       expect(anchor[field]).toBeUndefined();
     }
-    expect(Object.keys(anchor).sort()).toEqual(['callback', 'deps', 'depsTail', 'disposed', 'flags', 'subs', 'subsTail']);
+    expect(Object.keys(anchor).sort()).toEqual(['callback', 'deps', 'depsTail', 'disposed', 'flags', 'fn', 'subs', 'subsTail']);
     expect((anchor.callback as () => unknown)()).toBeUndefined();
     let second: ReturnType<typeof getOwner>;
     const stopSecond = createEffect(() => { second = getOwner(); });

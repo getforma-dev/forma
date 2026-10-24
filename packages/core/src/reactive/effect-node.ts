@@ -15,7 +15,9 @@ const enum Flag { Mutable = 1, Watching = 2, RecursedCheck = 4, Dirty = 16 }
 
 // link/unlink only use the unwatched callback. These traps deliberately refuse
 // any accidental use of this local system for scheduling or value updates.
-const { link, unlink } = createReactiveSystem({
+// Pinned createReactiveSystem only allocates/returns local closures. No hook is
+// invoked until graph operations run, so unused ordinary-only entries may erase it.
+const { link, unlink } = /* @__PURE__ */ createReactiveSystem({
   update() { throw new Error('Effect node adapter cannot update values'); },
   notify() { throw new Error('Effect node adapter cannot schedule effects'); },
   unwatched(node) {

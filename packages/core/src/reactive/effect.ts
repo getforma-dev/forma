@@ -145,18 +145,19 @@ export function createEffect(fn: () => void | (() => void)): () => void {
   if (deferred != null) return deferred;
   const owner = getOwner();
   if (owner) return createParentedEffect(fn, owner);
-  return new EffectState(fn, adoptionFailure, false).start();
+  return new EffectState(fn, adoptionFailure, false, runPlainEffect).start();
 }
 
 function createParentedEffect(fn: () => void | (() => void), owner: Owner): () => void {
-  const dispose = new EffectState(fn, adoptionFailure, false).start();
+  const dispose = new EffectState(fn, adoptionFailure, false, runPlainEffect).start();
   owner.disposers.push(dispose);
   return dispose;
 }
 
 // One record is both the engine subscriber and its Forma generation owner.
 // Children and cleanup are allocated only when used; the ordinary record keeps
-// the same six-field shape as a raw effect, with its callback on the prototype.
+// a stable function-valued own slot for the native callback. Slow-only imports
+// do not retain the public factory's plain runner.
 type Cleanup = (() => void)[] | undefined;
 // A single inert instance keeps this constructor's graph-node map reachable
 // across GC. It never enters the graph or captures caller authority. The
@@ -170,6 +171,7 @@ class EffectState implements Owner, EffectNode {
       return anchor;
     }));
 
+  fn: () => void;
   flags = 2 | 4;
   deps: EffectNode['deps'] = undefined;
   depsTail: EffectNode['depsTail'] = undefined;
@@ -197,7 +199,9 @@ class EffectState implements Owner, EffectNode {
     public callback: () => void | (() => void),
     failure: ((error: unknown) => void) | undefined,
     initialThrow: boolean | undefined,
+    run?: (this: EffectState) => void,
   ) {
+    this.fn = run ?? this.run;
     const callbacks = getAdoptionCallbacks(), events = getAdoptionEvents();
     if (callbacks || events || failure || initialThrow) this.slow = true;
     if (callbacks) this.callbacks = callbacks;
@@ -302,34 +306,36 @@ class EffectState implements Owner, EffectNode {
     if (this.initialError) { this.dispose(); throw this.initialError.error; }
     return this.dispose.bind(this);
   }
-  fn(): void {
-    if (this.slow || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
-    // alien-signals 3.1.2 esm/index.mjs: effect() and run() enter callbacks
-    // with Watching | Recursed (Pending clear), checked by effect-engine-contract.
-    // Reentrant executions go through run(), which clears it each turn.
-    const previous = setExecutionContext(this), node = this;
-    try {
-      const fn = this.callback, cleanup = fn();
-      if (typeof cleanup === 'function') this.addCleanup(cleanup);
-      if (this.nextCleanup) this.cleanup = this.nextCleanup;
-    } catch (error) {
-      if (this.nextCleanup) this.cleanup = this.nextCleanup;
-      this.owner = previous.owner;
-      try { reportError(error, 'effect'); } finally {
-        this.owner = this;
-        this.cleanup = this.nextCleanup;
-      }
-    } finally {
-      setExecutionContext(previous);
-      if (this.disposed) this.clean();
-    }
-    if (!this.disposed && (node.flags & ReactiveFlag.Pending)) this.run(1);
-  }
+
 }
 
-function createOwnedEffect(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow?: boolean, State: typeof EffectState = EffectState): () => void {
+function runPlainEffect(this: EffectState): void {
+  if (this.slow || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
+  // alien-signals 3.1.2 esm/index.mjs: effect() and run() enter callbacks
+  // with Watching | Recursed (Pending clear), checked by effect-engine-contract.
+  // Reentrant executions go through run(), which clears it each turn.
+  const previous = setExecutionContext(this), node = this;
+  try {
+    const fn = this.callback, cleanup = fn();
+    if (typeof cleanup === 'function') this.addCleanup(cleanup);
+    if (this.nextCleanup) this.cleanup = this.nextCleanup;
+  } catch (error) {
+    if (this.nextCleanup) this.cleanup = this.nextCleanup;
+    this.owner = previous.owner;
+    try { reportError(error, 'effect'); } finally {
+      this.owner = this;
+      this.cleanup = this.nextCleanup;
+    }
+  } finally {
+    setExecutionContext(previous);
+    if (this.disposed) this.clean();
+  }
+  if (!this.disposed && (node.flags & ReactiveFlag.Pending)) this.run(1);
+}
+
+function createOwnedEffect(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow?: boolean): () => void {
   const owner = getOwner();
-  const dispose = new State(fn, failure, initialThrow).start();
+  const dispose = new EffectState(fn, failure, initialThrow).start();
   if (owner) owner.disposers.push(dispose);
   return dispose;
 }
