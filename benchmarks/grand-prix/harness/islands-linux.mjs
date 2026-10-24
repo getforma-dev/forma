@@ -1,3 +1,4 @@
+import { createCampaign } from './campaign.mjs';
 // Sequential native Linux island qualification. Every Docker resource is run-owned.
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
@@ -77,6 +78,8 @@ export async function main(argv = process.argv.slice(2)) {
   mkdirSync(results, { recursive: true });
   assert(!existsSync(output) && !existsSync(join(results, `${id}-ownership.json`)), 'fresh run ID required');
   mkdirSync(output);
+  const campaignFile = join(output, 'campaign.json');
+  const campaign = createCampaign(campaignFile);
   const ownershipPath = join(results, `${id}-ownership.json`);
   const ownership = { id, builder, builderCreated: false };
   const free = () => { const stat = statfsSync(root); return stat.bavail * stat.bsize; };
@@ -88,7 +91,7 @@ export async function main(argv = process.argv.slice(2)) {
     cpuPressure: existsSync('/proc/pressure/cpu') ? readFileSync('/proc/pressure/cpu', 'utf8') : null });
   const engine = JSON.parse(docker('info', '--format', '{{json .}}'));
   validateEngineProfile(resourceProfile, engine);
-  const report = { schema: 1, protocol: 'forma-264-island-v1', id, diagnostic, qualifiedProfile: !diagnostic,
+  const report = { schema: 1, protocol: 'forma-264-island-v1', id, campaign, diagnostic, qualifiedProfile: !diagnostic,
     sourceCommit, cars, resourceProfile, browser: lock, engine: { version: engine.ServerVersion, os: engine.OperatingSystem,
       kernel: engine.KernelVersion, cpus: engine.NCPU, memoryBytes: engine.MemTotal },
     before: machine(), steps: [], failures: [], passed: false };
@@ -150,13 +153,14 @@ export async function main(argv = process.argv.slice(2)) {
         assert(ready && !stopping, 'server did not become healthy');
         const raw = join(output, `${car}.json`);
         const args = ['island-race/run.mjs', '--car', car, '--url', url, '--chrome', chrome,
-          '--chrome-sha256', lock.executableSha256, '--container-id', containerId, '--commit', sourceCommit, '--out', raw, '--resource-profile', profileFile];
+          '--chrome-sha256', lock.executableSha256, '--container-id', containerId, '--commit', sourceCommit, '--out', raw, '--resource-profile', profileFile, '--campaign', campaignFile];
         if (diagnostic) args.push('--diagnostic');
         if (resourceProfile.browser.cpuset) await run('taskset', ['--cpu-list', resourceProfile.browser.cpuset, process.execPath, ...args]);
         else await run(process.execPath, args);
         const measured = JSON.parse(readFileSync(raw, 'utf8'));
         assert.equal(measured.verified, true); assert.equal(measured.qualifiedProfile, !diagnostic);
         assert.deepEqual(measured.resourceProfile, resourceProfile);
+        assert.deepEqual(measured.campaign, campaign);
         assert.equal(measured.sourceCommit, sourceCommit); assert.equal(measured.browser.sha256, lock.executableSha256);
         step.passed = true;
       } catch (error) { step.error = String(error); console.error(step.error); report.failures.push({ car, error: step.error }); }

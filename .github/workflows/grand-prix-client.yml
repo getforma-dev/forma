@@ -56,7 +56,7 @@ jobs:
         working-directory: benchmarks/grand-prix/island-race
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check browser profile path restrictions
-        run: node --test benchmarks/grand-prix/harness/browser-sandbox.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
+        run: node --test benchmarks/grand-prix/harness/browser-sandbox.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
       - name: Install and verify frozen Chromium
         id: browser
         run: sudo --preserve-env=GITHUB_OUTPUT "$(command -v node)" benchmarks/grand-prix/harness/install-linux-browser.mjs "$RUNNER_TEMP/gp264-chromium" --install-deps --install-apparmor-profile

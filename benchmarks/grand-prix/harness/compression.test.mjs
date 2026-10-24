@@ -38,7 +38,7 @@ test('all three representations decode exactly; false headers and corrupt bodies
 function sample(name = 'native-8-v1') {
   const resourceProfile = profileConfiguration({ name, githubActions: true, availableCpus: name === 'gha-4-v1' ? 4 : 8, affinity: name === 'gha-4-v1' ? [4, 5, 6, 7] : [0, 1, 2, 3, 4, 5, 6, 7] });
   return Object.fromEntries(['identity', 'br', 'gzip'].map(encoding => {
-    const base = event => ({ event, car: 'forma', image: { id: 'sha256:' + 'a'.repeat(64) }, config: {
+    const base = event => ({ event, car: 'forma', campaign: { schema: 1, id: '01234567-89ab-4def-8123-456789abcdef', createdAt: '2026-10-24T12:00:00.000Z', kind: 'github-actions', hostSha256: 'a'.repeat(64), machineIdSha256: 'b'.repeat(64), runnerTrackingSha256: 'c'.repeat(64), github: { runId: '123', runAttempt: '1', job: 'comparison', repository: 'getforma-dev/forma' } }, image: { id: 'sha256:' + 'a'.repeat(64) }, config: {
       acceptEncoding: encoding, forced: false, duration: 10, warmup: 5, runs: 3, concurrency: 64, resourceProfile: structuredClone(resourceProfile), loadgenCpus: resourceProfile.loadgen.cpus, loadgenCpuset: resourceProfile.loadgen.cpuset,
       classA: structuredClone(resourceProfile.classA), classB: structuredClone(resourceProfile.classB) } });
     const load = event => ({ ...base(event), rows: 100, durationS: 10, warmupS: 5, concurrency: event === 'reaction' ? 1 : 64,
@@ -90,6 +90,9 @@ test('GHA four-CPU compression is a distinct qualified profile with disjoint act
   assert.equal(report.resourceProfile.loadgen.cpuset, '6,7');
 });
 for (const [name, mutate] of [
+  ['missing campaign', records => { delete records.br.sprint.campaign; }],
+  ['different machine', records => { records.br.sprint.campaign.hostSha256 = 'd'.repeat(64); }],
+  ['different job', records => { records.gzip.reaction.campaign.github.job = 'another'; }],
   ['missing profile', records => { for (const events of Object.values(records)) for (const record of Object.values(events)) delete record.config.resourceProfile; }],
   ['mixed profiles', records => { records.br.sprint.config.resourceProfile = sample('native-8-v1').br.sprint.config.resourceProfile; }],
   ['overlapping affinity', records => { records.identity.sprint.config.resourceProfile.loadgen.cpuset = '4,5'; }],

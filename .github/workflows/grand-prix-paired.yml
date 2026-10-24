@@ -47,7 +47,7 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Check candidate and ownership restrictions
-        run: node --test benchmarks/grand-prix/harness/paired-server.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
+        run: node --test benchmarks/grand-prix/harness/paired-server.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
       - name: Run the baseline then each candidate sequentially
         if: github.event_name == 'workflow_dispatch'
         working-directory: benchmarks/grand-prix

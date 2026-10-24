@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { expected } from '../shared/dataset.mjs';
 import assert from 'node:assert/strict';
 import { hostProfile, parseCpuList } from './resource-profile.mjs';
+import { createCampaign, readCampaign } from './campaign.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const RAW = process.env.GP_RAW_DIR ? path.resolve(process.env.GP_RAW_DIR) : path.join(ROOT, 'results', 'raw');
@@ -31,7 +32,9 @@ export const CFG = {
   ...(REQUEST_ENCODING ? { acceptEncoding: REQUEST_ENCODING } : {}),
 };
 
+export let CAMPAIGN;
 export function configureResources() {
+  CAMPAIGN = process.env.GP_CAMPAIGN_FILE ? readCampaign() : createCampaign(path.join(ROOT, 'results', `${RUN_ID}-campaign.json`));
   const profile = hostProfile();
   Object.assign(CFG, { resourceProfile: profile, classA: profile.classA, classB: profile.classB,
     loadgenCpus: profile.loadgen.cpus, loadgenCpuset: profile.loadgen.cpuset,
@@ -252,7 +255,7 @@ export function freeDisk() { try { return execFileSync('df', ['-h', os.homedir()
 // ---------- output ----------
 export function writeRaw(event, car, obj) {
   const dir = path.join(RAW, event); fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, car + '.json'), JSON.stringify({ event, car, ...obj }, null, 2));
+  fs.writeFileSync(path.join(dir, car + '.json'), JSON.stringify({ event, car, ...obj, campaign: CAMPAIGN }, null, 2));
 }
 export function readRaw(event, car) { try { return JSON.parse(fs.readFileSync(path.join(RAW, event, car + '.json'), 'utf8')); } catch { return null; } }
 

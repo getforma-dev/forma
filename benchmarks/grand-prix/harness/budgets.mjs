@@ -3,15 +3,20 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateProfile } from './resource-profile.mjs';
+import { validateCampaign } from './campaign.mjs';
 
 export const BUDGETS = Object.freeze({ peakMiB: 8, appBootMs: 50, imageBytes: 150_000_000 });
 const positive = (n, label) => assert(Number.isFinite(n) && n > 0, `missing/invalid ${label}`);
 const mean = values => values.reduce((a, b) => a + b, 0) / values.length;
 
 export function evaluateBudgets({ sprint, fuel, grid, weight }) {
+  const campaign = sprint.campaign;
+  if (campaign) validateCampaign(campaign);
   const resourceProfile = sprint.config?.resourceProfile;
+  if (resourceProfile?.qualified) assert(campaign, 'qualified budgets require one host campaign');
   if (resourceProfile) validateProfile(resourceProfile);
   for (const [event, record] of Object.entries({ sprint, fuel, grid, weight })) {
+    assert.deepEqual(record?.campaign, campaign, 'mixed host campaigns');
     assert.equal(record?.car, 'forma', `${event}: expected Forma`);
     assert.equal(record?.event, event, `${event}: unexpected event`);
     assert(/^sha256:[a-f0-9]{64}$/.test(record.image?.id ?? ''), `${event}: missing/full image identity required`);
@@ -69,7 +74,7 @@ export function evaluateBudgets({ sprint, fuel, grid, weight }) {
   const checks = Object.entries(BUDGETS).map(([metric, limit]) => ({
     metric, limit, measured: measured[metric], passed: measured[metric] <= limit,
   }));
-  return { schema: 1, image: sprint.image.id, resourceProfile: resourceProfile ?? null, diagnostic: resourceProfile?.diagnostic ?? true, measured, limits: BUDGETS,
+  return { schema: 1, image: sprint.image.id, campaign: campaign ?? null, resourceProfile: resourceProfile ?? null, diagnostic: resourceProfile?.diagnostic ?? true, measured, limits: BUDGETS,
     samples: { memoryPeaks: fuel.values, bootRemainders: boots },
     checks, passed: checks.every(check => check.passed) };
 }

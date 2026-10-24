@@ -39,7 +39,8 @@ checksum drift fails preparation instead of changing the comparison.
 
 One server image is built. Identity, Brotli and gzip then run sequentially in
 fresh directories beneath `results/<run>-compression/`, with the original
-five-second warmup, three ten-second samples, and CPU/memory limits. Events
+five-second warmup and three ten-second samples, with the selected profile's
+CPU/memory limits. Events
 1/5 record one-CPU throughput, p95/p99 latency, memory peaks and sampled CPU;
 event 3 repeats throughput and tails with the selected profile's Class B CPUs; event 4 measures
 single-client p99; event 7 records actual encoded bytes. The machine settles

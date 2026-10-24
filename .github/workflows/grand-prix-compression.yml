@@ -49,7 +49,7 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Check codec, encoding and qualification refusals
-        run: node --test benchmarks/grand-prix/harness/compression.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
+        run: node --test benchmarks/grand-prix/harness/compression.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
       - name: Run identity, Brotli and gzip sequentially from one binary
         if: github.event_name == 'workflow_dispatch'
         working-directory: benchmarks/grand-prix

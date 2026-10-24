@@ -52,6 +52,7 @@ function profiledSample() {
   for (const record of Object.values(records)) record.config = { forced: false, duration: 10, warmup: 5, runs: 3, concurrency: 64, starts: 5, resourceProfile: structuredClone(profile),
     classA: structuredClone(profile.classA), classB: structuredClone(profile.classB),
     loadgenCpus: profile.loadgen.cpus, loadgenCpuset: profile.loadgen.cpuset };
+  for (const record of Object.values(records)) record.campaign = { schema: 1, id: '01234567-89ab-4def-8123-456789abcdef', createdAt: '2026-10-24T12:00:00.000Z', kind: 'github-actions', hostSha256: 'a'.repeat(64), machineIdSha256: 'b'.repeat(64), runnerTrackingSha256: 'c'.repeat(64), github: { runId: '123', runAttempt: '1', job: 'comparison', repository: 'getforma-dev/forma' } };
   Object.assign(records.sprint, { durationS: 10, warmupS: 5, container: structuredClone(profile.classA) });
   return records;
 }
@@ -61,6 +62,8 @@ test('budget values stay unchanged and retain the four-CPU profile identity', ()
   assert.equal(evaluateBudgets(sample()).diagnostic, true, 'old records must not become qualified');
 });
 for (const [label, mutate] of [
+  ['mixed campaign', r => { r.fuel.campaign.id = '11111111-89ab-4def-8123-456789abcdef'; }],
+  ['missing campaign', r => { delete r.grid.campaign; }],
   ['mixed profile', r => { delete r.fuel.config.resourceProfile; }],
   ['overlapping allocation', r => { r.sprint.config.resourceProfile.loadgen.cpuset = '4,5'; }],
   ['wrong server affinity', r => { r.grid.config.classA.cpuset = '6'; }],

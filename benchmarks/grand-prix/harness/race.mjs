@@ -10,7 +10,7 @@ import os from 'node:os';
 import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import {
-  ROOT, RAW, REQUEST_ENCODING, CFG, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
+  ROOT, RAW, REQUEST_ENCODING, CFG, CAMPAIGN, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
   startCar, hostPort, removeContainer, startLoadgen, waitReady, get, checkBody, smokeCar, imageInfo, oha,
   startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName, cpusetArgs, assertContainerResources, configureResources,
 } from './lib.mjs';
@@ -88,7 +88,7 @@ async function withStack(car, cls, { loadgen = true, rows = 100 } = {}, fn) {
     return records;
   } finally { await removeContainer(lg); await removeContainer(c); await removeNetwork(net); }
 }
-const meta = (car, extra) => ({ at: new Date().toISOString(), runId: RUN_ID, config: { ...CFG, forced }, image: imageInfo(car), ...extra });
+const meta = (car, extra) => ({ at: new Date().toISOString(), runId: RUN_ID, campaign: CAMPAIGN, config: { ...CFG, forced }, image: imageInfo(car), ...extra });
 
 // ---------- events ----------
 async function throughput(car, evId, cls, rows, alsoFuel) {
@@ -246,14 +246,16 @@ async function external(evId, script, extraArgs = []) {
   const before = machineState();
   const signals = evId === 'signals';
   const program = signals ? 'docker' : process.execPath;
-  const args = signals ? ['run', '--rm', '--label', LABEL, '--label', RUN_LABEL, '--cpus=1', '--memory=1g', '-v', `${path.join(ROOT, 'results/raw/signals')}:/out`, imageName('signals'), ...extraArgs] : [file, ...extraArgs];
+  const args = signals ? ['run', '--rm', '--label', LABEL, '--label', RUN_LABEL, '--cpus=1', '--memory=1g', '-e', `GP_CAMPAIGN_JSON=${JSON.stringify(CAMPAIGN)}`,
+    '-v', `${path.join(ROOT, 'harness/campaign.mjs')}:/gp/harness/campaign.mjs:ro`,
+    '-v', `${path.join(ROOT, 'results/raw/signals')}:/out`, imageName('signals'), ...extraArgs] : [file, ...extraArgs];
   fs.mkdirSync(path.join(ROOT, 'results/raw', evId), { recursive: true });
   const code = await new Promise(res => {
     const p = spawn(program, args, { cwd: ROOT, stdio: ['ignore', out, out] });
     p.on('error', () => res(-1)); p.on('close', res);
   });
   const dir = path.join(ROOT, 'results', 'raw', evId); fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, '_machine.json'), JSON.stringify({ event: evId, runner: script, exitCode: code, log: path.relative(ROOT, logf), before, after: machineState(), config: { forced } }, null, 2));
+  fs.writeFileSync(path.join(dir, '_machine.json'), JSON.stringify({ event: evId, campaign: CAMPAIGN, runner: script, exitCode: code, log: path.relative(ROOT, logf), before, after: machineState(), config: { forced } }, null, 2));
   log(`  ${script} exit ${code}, log ${path.relative(ROOT, logf)}`);
   return { ok: code === 0 };
 }
@@ -296,7 +298,7 @@ async function main() {
     const r = await external(ext[n][0], ext[n][1]);
     if (!r.ok) failures.push({ event: n, error: r.why || 'runner exited non-zero' });
   }
-  fs.writeFileSync(path.join(RAW, '_run-' + RUN_ID + '.json'), JSON.stringify({ runId: RUN_ID, cars, events, config: CFG, forced, failures, finished: new Date().toISOString() }, null, 2));
+  fs.writeFileSync(path.join(RAW, '_run-' + RUN_ID + '.json'), JSON.stringify({ runId: RUN_ID, campaign: CAMPAIGN, cars, events, config: CFG, forced, failures, finished: new Date().toISOString() }, null, 2));
   const left = dockerSync('ps', '-aq', '--filter', 'label=' + RUN_LABEL);
   log(failures.length ? `done with ${failures.length} failure(s): ${JSON.stringify(failures)}` : 'done, no failures');
   if (left) log('WARNING containers still present, cleaning: ' + left);

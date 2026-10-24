@@ -3,11 +3,15 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateProfile } from './resource-profile.mjs';
+import { validateCampaign } from './campaign.mjs';
 
 const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
 const positive = n => assert(Number.isFinite(n) && n > 0, 'invalid numeric measurement');
 export function summarizeCompression(records, { diagnostic = false } = {}) {
   const variants = {};
+  const campaign = records.identity?.sprint?.campaign;
+  if (campaign) validateCampaign(campaign);
+  if (!diagnostic) assert(campaign, 'qualified comparison requires one host campaign');
   const resourceProfile = records.identity?.sprint?.config?.resourceProfile;
   if (resourceProfile) validateProfile(resourceProfile);
   if (!diagnostic) assert(resourceProfile?.qualified, 'qualified comparison needs an explicit qualified resource profile');
@@ -18,6 +22,7 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
       const record = events[event];
       assert.equal(record?.event, event);
       assert.equal(record.car, 'forma');
+      assert.deepEqual(record.campaign, campaign, 'mixed host campaigns');
       assert.equal(record.config?.acceptEncoding, encoding);
       assert.deepEqual(record.config.resourceProfile, resourceProfile, 'mixed resource profiles');
       if (!diagnostic) {
@@ -80,7 +85,7 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
     variant.sprintRpsRatioToIdentity = variant.sprintRps / variants.identity.sprintRps;
     variant.sprintP99RatioToIdentity = variant.sprintP99Ms / variants.identity.sprintP99Ms;
   }
-  return { schema: 1, image, diagnostic, resourceProfile: resourceProfile ?? null, variants, passed: true,
+  return { schema: 1, image, diagnostic, campaign: campaign ?? null, resourceProfile: resourceProfile ?? null, variants, passed: true,
     protocol: { durationS: records.identity.sprint.durationS, warmupS: records.identity.sprint.warmupS,
       samples: records.identity.sprint.runs.length, concurrency: records.identity.sprint.concurrency,
       classA: records.identity.sprint.config.classA, classB: records.identity.sprint.config.classB },

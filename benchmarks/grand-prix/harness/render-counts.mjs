@@ -1,3 +1,4 @@
+import { createCampaign } from './campaign.mjs';
 // Separate diagnostic binary. Never replace the executable in a raced image.
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -27,9 +28,10 @@ const inspect = (kind, id) => JSON.parse(docker([kind, 'inspect', id]))[0];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const labels = ['--label', 'grandprix=forma-264', '--label', `gp264run=${runId}`];
 const containers = new Set();
+const campaign = createCampaign(join(out, 'campaign.json'));
 const machine = () => ({ at: new Date().toISOString(), host: `${process.platform}/${process.arch}`, kernel: os.release(),
   cpu: os.cpus()[0]?.model, cpus: os.availableParallelism(), load: os.loadavg() });
-const report = { schema: 1, kind: 'instrumented-render-counts', instrumentation: true, diagnostic, resourceProfile, sourceCommit: commit,
+const report = { schema: 1, kind: 'instrumented-render-counts', campaign, instrumentation: true, diagnostic, resourceProfile, sourceCommit: commit,
   runtimeImage: runtime, buildImage: build, before: machine(), samples: [], passed: false,
   protocol: { warmups: 20, samples: 101, rows: [100, 1000], concurrency: 1, cpus: 1, cpuset: resourceProfile.classA.cpuset, memoryBytes: 1024 ** 3 },
   meaning: 'PageResponse.counts().walk_time excludes props conversion, document assembly, header instrumentation and HTTP transfer. This is not a throughput race.' };

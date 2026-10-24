@@ -1,3 +1,4 @@
+import { readCampaign } from '../harness/campaign.mjs';
 // Event 9: keyed-table DOM race in headless Chrome.
 // Usage: node run.mjs [--cars vanilla,react,...] [--runs 5] [--warmups 2] [--out ../results/raw/dom]
 //                     [--chrome "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
@@ -16,6 +17,8 @@ const args = parseArgs(process.argv.slice(2), {
 });
 const RUNS = +args.runs, WARM = +args.warmups;
 const resourceProfile = args['resource-profile'] ? validateProfile(JSON.parse(readFileSync(args['resource-profile'], 'utf8'))) : null;
+const campaign = args.campaign ? readCampaign(args.campaign) : process.env.GP_CAMPAIGN_FILE ? readCampaign() : null;
+if (resourceProfile?.qualified && !campaign) throw new Error('qualified run requires a campaign identity');
 const processAffinity = resourceProfile ? verifyRoleAffinity(resourceProfile, 'browser') : null;
 if (resourceProfile?.qualified && (RUNS !== 5 || WARM !== 2)) throw new Error('qualified DOM race requires five runs and two warmups');
 const { have, missing } = builtCars(args.cars);
@@ -109,14 +112,14 @@ for (const car of have) {
   const geomean = Math.exp(ops.reduce((a, o) => a + Math.log(result[o.name].mean), 0) / ops.length);
   console.log(`${car.padEnd(8)} geometric mean ${geomean.toFixed(2)} ms${errors.length ? '  PAGE ERRORS: ' + errors.length : ''}`);
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify({
-    event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean, resourceProfile, processAffinity, browserProcessAffinity,
+    event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean, resourceProfile, campaign, processAffinity, browserProcessAffinity,
     ops: result, pageErrors: errors, verified: errors.length === 0,
     machine: { cpu: os.cpus()[0].model, cores: os.cpus().length, loadavg: os.loadavg(), chrome: chromeVersion, node: process.version },
   }, null, 2) + '\n');
   if (errors.length) throw new Error(`${car}: browser errors invalidate the race: ${errors.join('; ')}`);
   } catch (error) {
     await writeFile(path.join(args.out, `${car}.failed.json`), JSON.stringify({
-      event: 9, car, measuredAt: new Date().toISOString(), verified: false, error: String(error), resourceProfile, processAffinity, browserProcessAffinity,
+      event: 9, car, measuredAt: new Date().toISOString(), verified: false, error: String(error), resourceProfile, campaign, processAffinity, browserProcessAffinity,
       ops: result, pageErrors: errors, chrome: chromeVersion,
     }, null, 2) + '\n');
     throw error;

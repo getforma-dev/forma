@@ -1,3 +1,4 @@
+import { readCampaign } from '../harness/campaign.mjs';
 // One production car per invocation; the portable driver owns its container.
 import puppeteer from 'puppeteer-core';
 import { createHash } from 'node:crypto';
@@ -20,6 +21,8 @@ if (!cars.includes(args.car) || !args.url || !args.chrome || !args.out) throw ne
 const sourceUrl=new URL('/island',args.url).href;
 const diagnostic=args.diagnostic===true;
 const resourceProfile=args['resource-profile'] ? validateProfile(JSON.parse(readFileSync(args['resource-profile'], 'utf8'))) : null;
+const campaign = args.campaign ? readCampaign(args.campaign) : process.env.GP_CAMPAIGN_FILE ? readCampaign() : null;
+if (!diagnostic && !campaign) throw new Error('qualified run requires a campaign identity');
 if (!diagnostic && !resourceProfile) throw new Error('qualified run requires an explicit resource profile');
 if (resourceProfile && resourceProfile.diagnostic !== diagnostic) throw new Error('resource profile diagnostic status differs');
 const processAffinity=resourceProfile ? verifyRoleAffinity(resourceProfile, 'browser') : null;
@@ -43,7 +46,7 @@ const sums=summary(rows(100));
 const expectedSummary=[String(sums.count),String(sums.open),money(sums.total),money(sums.average)];
 const output=path.resolve(args.out);
 await mkdir(path.dirname(output),{recursive:true});
-const result={protocol:'forma-264-island-v1',car:args.car,url:sourceUrl,sourceCommit:args.commit??null,qualifiedProfile:!diagnostic,resourceProfile,processAffinity,container,runs,warmups,
+const result={protocol:'forma-264-island-v1',car:args.car,url:sourceUrl,sourceCommit:args.commit??null,qualifiedProfile:!diagnostic,resourceProfile,campaign,processAffinity,container,runs,warmups,
   measuredAt:new Date().toISOString(),machine:{platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0]?.model,cpus:os.cpus().length,loadBefore:os.loadavg(),node:process.version},
   browser:{executable:args.chrome,sha256:chromeSha256},samples:[],warmupSamples:[],verified:false};
 const persist=()=>writeFile(output,JSON.stringify(result,null,2)+'\n');

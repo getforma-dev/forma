@@ -1,3 +1,4 @@
+import { createCampaign } from './campaign.mjs';
 // Sequential baseline/candidate client and signals races on one Linux host.
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -32,7 +33,9 @@ mkdirSync(results, { recursive: true });
 const work = join(results, `${id}-client`);
 assert(!existsSync(work), 'fresh evidence directory required');
 mkdirSync(work);
-const report = { schema: 1, id, diagnostic, qualifiedProfile: !diagnostic, resourceProfile, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+const campaignFile = join(work, 'campaign.json');
+const campaign = createCampaign(campaignFile);
+const report = { schema: 1, id, campaign, diagnostic, qualifiedProfile: !diagnostic, resourceProfile, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   chromeHash, cpu: os.cpus()[0]?.model, cpus: os.availableParallelism(), kernel: os.release(), memoryBytes: os.totalmem(),
   before: new Date().toISOString(), trials: [], passed: false };
 const save = () => writeFileSync(join(work, 'run.json'), JSON.stringify(report, null, 2) + '\n');
@@ -77,13 +80,15 @@ try {
     const trialDir = join(work, ref); mkdirSync(trialDir);
     mkdirSync(join(trialDir, 'harness'));
     cpSync(join(root, 'harness/resource-profile.mjs'), join(trialDir, 'harness/resource-profile.mjs'));
+    cpSync(join(root, 'harness/campaign.mjs'), join(trialDir, 'harness/campaign.mjs'));
     const client = join(trialDir, 'client-race'), signals = join(trialDir, 'signals-race');
     for (const [source, dest] of [['client-race', client], ['signals-race', signals]]) {
       cpSync(join(root, source), dest, { recursive: true, filter: path => !/(?:^|\/)(?:node_modules|dist|results)(?:\/|$)/.test(path.slice(join(root, source).length)) });
     }
     cpSync(join(root, 'harness/resource-profile.mjs'), join(signals, 'resource-profile.mjs'));
+    cpSync(join(root, 'harness/campaign.mjs'), join(signals, 'campaign.mjs'));
     const signalDockerfile = join(signals, 'Dockerfile');
-    writeFileSync(signalDockerfile, readFileSync(signalDockerfile, 'utf8') + '\nCOPY resource-profile.mjs /gp/harness/resource-profile.mjs\n');
+    writeFileSync(signalDockerfile, readFileSync(signalDockerfile, 'utf8') + '\nCOPY resource-profile.mjs /gp/harness/resource-profile.mjs\nCOPY campaign.mjs /gp/harness/campaign.mjs\n');
     await run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], client);
     let core;
     if (ref !== 'published') {
@@ -111,7 +116,7 @@ try {
     for (const car of cars) await run(process.execPath, ['node_modules/vite/bin/vite.js', 'build', `apps/${car}`, '--config', `apps/${car}/vite.config.js`], client);
     const signalImage = `gp264/${id}/signals-${ref}`;
     await run('docker', ['buildx', 'build', '--builder', builder, '--load', '--label', 'grandprix=forma-264', '--label', label, '-t', signalImage, signals]);
-    const trial = { ref, cars, resourceProfile, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
+    const trial = { ref, cars, resourceProfile, campaign, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
       coreBundle: sha(join(client, 'node_modules/@getforma/core/dist/index.js')),
       signalsImage: JSON.parse(execFileSync('docker', ['image', 'inspect', signalImage], { encoding: 'utf8' }))[0].Id,
       before: machine(), passed: false };
@@ -119,15 +124,15 @@ try {
     await quiet();
     assert.equal(sha(chrome), chromeHash);
     const raw = join(trialDir, 'raw'); mkdirSync(raw);
-    const browserArgs = ['run.mjs', '--cars', cars.join(','), '--chrome', chrome, '--runs', '5', '--warmups', '2', '--out', join(raw, 'dom'), '--resource-profile', profileFile];
+    const browserArgs = ['run.mjs', '--cars', cars.join(','), '--chrome', chrome, '--runs', '5', '--warmups', '2', '--out', join(raw, 'dom'), '--resource-profile', profileFile, '--campaign', campaignFile];
     if (resourceProfile.browser.cpuset) await run('taskset', ['--cpu-list', resourceProfile.browser.cpuset, process.execPath, ...browserArgs], client);
     else await run(process.execPath, browserArgs, client);
-    await run(process.execPath, ['bundle.mjs', '--cars', cars.join(','), '--out', join(raw, 'bundle'), '--resource-profile', profileFile], client);
+    await run(process.execPath, ['bundle.mjs', '--cars', cars.join(','), '--out', join(raw, 'bundle'), '--resource-profile', profileFile, '--campaign', campaignFile], client);
     await quiet();
     const signalOut = join(raw, 'signals'); mkdirSync(signalOut);
     const signalContainer = execFileSync('docker', ['create', '--label', 'grandprix=forma-264', '--label', label, '--cpus=1', '--memory=1g',
       ...(resourceProfile.signals.cpuset ? [`--cpuset-cpus=${resourceProfile.signals.cpuset}`] : []),
-      '-e', `GP_RESOURCE_PROFILE=${JSON.stringify(resourceProfile)}`, '-v', `${signalOut}:/out`, signalImage], { encoding: 'utf8' }).trim();
+      '-e', `GP_RESOURCE_PROFILE=${JSON.stringify(resourceProfile)}`, '-e', `GP_CAMPAIGN_JSON=${JSON.stringify(campaign)}`, '-v', `${signalOut}:/out`, signalImage], { encoding: 'utf8' }).trim();
     try {
       const inspected = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
       validateContainerResources(inspected, resourceProfile.signals);

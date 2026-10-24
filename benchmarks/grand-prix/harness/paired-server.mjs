@@ -1,3 +1,4 @@
+import { createCampaign } from './campaign.mjs';
 // Re-race the frozen published car and exact framework commits on one VM.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -43,7 +44,8 @@ async function main() {
   assert(!existsSync(out) && !existsSync(join(results, 'raw')), 'fresh comparison evidence required');
   mkdirSync(out, { recursive: true });
   const diagnostic = process.env.GP_DIAGNOSTIC !== 'false';
-  const report = { schema: 1, id, diagnostic, resourceProfile: hostProfile({ diagnostic }),
+  const campaign = createCampaign(join(out, 'campaign.json'));
+  const report = { schema: 1, id, campaign, diagnostic, resourceProfile: hostProfile({ diagnostic }),
     before: new Date().toISOString(), events: '1-7', trials, passed: false };
   const save = () => writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n');
   save();

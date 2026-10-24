@@ -1,3 +1,4 @@
+import { createCampaign } from './campaign.mjs';
 // One owned, sequential Linux run. No resource outside this run is pruned.
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -46,7 +47,8 @@ assert(!existsSync(join(results, 'raw')), 'fresh raw directory required; archive
 const ownershipPath = join(results, `${id}-ownership.json`);
 assert(!existsSync(ownershipPath), 'run ID already used');
 const ownership = { id, builder, builderCreated: false };
-const report = { schema: 1, id, diagnostic, resourceProfile, dockerEngine, cars, events, platform: process.platform, arch: process.arch,
+const campaign = createCampaign(join(results, `${id}-campaign.json`));
+const report = { schema: 1, id, campaign, diagnostic, resourceProfile, dockerEngine, cars, events, platform: process.platform, arch: process.arch,
   carSource: baseline ? BASELINE_SOURCE : 'current checkout', formaRef: formaRef ?? 'published 3.0.0', compression,
   cpus: os.availableParallelism(), cpu: os.cpus()[0]?.model, kernel: os.release(), memoryBytes: os.totalmem(),
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),

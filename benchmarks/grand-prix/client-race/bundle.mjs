@@ -1,3 +1,4 @@
+import { readCampaign } from '../harness/campaign.mjs';
 // Event 10: Brotli and gzip size of all JavaScript the built index.html loads (static import graph).
 // Usage: node bundle.mjs [--cars vanilla,react] [--out ../results/raw/bundle]
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -8,6 +9,8 @@ import { validateProfile } from '../harness/resource-profile.mjs';
 
 const args = parseArgs(process.argv.slice(2), { out: path.join(rawDir, 'bundle') });
 const resourceProfile = args['resource-profile'] ? validateProfile(JSON.parse(await readFile(args['resource-profile'], 'utf8'))) : null;
+const campaign = args.campaign ? readCampaign(args.campaign) : process.env.GP_CAMPAIGN_FILE ? readCampaign() : null;
+if (resourceProfile?.qualified && !campaign) throw new Error('qualified run requires a campaign identity');
 const { have, missing } = builtCars(args.cars);
 if (missing.length || !have.length) throw new Error('requested bundle cars missing built output: ' + missing.join(', '));
 
@@ -55,7 +58,7 @@ for (const car of have) {
   for (const s of inlineSources) { const b = Buffer.from(s); parts.push({ file: '(inline)', bytes: b.length, gzip: gzipSync(b, { level: 9 }).length, brotli: br(b) }); }
   if (!parts.length) throw new Error(`${car}: no measured JavaScript files`);
   const sum = (k) => parts.reduce((a, p) => a + p[k], 0);
-  const result = { event: 10, car, measuredAt: new Date().toISOString(), resourceProfile, files: parts, bytes: sum('bytes'), gzip: sum('gzip'), brotli: sum('brotli') };
+  const result = { event: 10, car, measuredAt: new Date().toISOString(), resourceProfile, campaign, files: parts, bytes: sum('bytes'), gzip: sum('gzip'), brotli: sum('brotli') };
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify(result, null, 2) + '\n');
   console.log(`${car.padEnd(8)} raw ${result.bytes}  gzip ${result.gzip}  brotli ${result.brotli}  (${parts.length} file${parts.length === 1 ? '' : 's'})`);
 }

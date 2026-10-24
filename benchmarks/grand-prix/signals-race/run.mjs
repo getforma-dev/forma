@@ -14,12 +14,17 @@ const arg = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] 
 const out = arg('out', process.env.GP_OUT || (existsSync('/.dockerenv') ? '/out' : path.join(here, '..', 'results', 'raw', 'signals')));
 const cars = arg('cars', CARS.join(',')).split(',');
 const runs = arg('runs', '5'), warm = arg('warmups', '2');
-let resourceProfile = null, processAffinity = null;
+let resourceProfile = null, processAffinity = null, campaign = null;
+if (process.env.GP_CAMPAIGN_JSON) {
+  const { validateCampaign } = await import('../harness/campaign.mjs');
+  campaign = validateCampaign(JSON.parse(process.env.GP_CAMPAIGN_JSON));
+}
 if (process.env.GP_RESOURCE_PROFILE) {
   const { validateProfile, verifyRoleAffinity } = await import('../harness/resource-profile.mjs');
   resourceProfile = validateProfile(JSON.parse(process.env.GP_RESOURCE_PROFILE));
   processAffinity = verifyRoleAffinity(resourceProfile, 'signals');
 }
+if (resourceProfile?.qualified && !campaign) throw new Error('qualified run requires a campaign identity');
 mkdirSync(out, { recursive: true });
 
 let cgroupCpu = null;
@@ -32,7 +37,7 @@ for (const car of cars) {
   if (r.status !== 0) { console.error(`${car}: worker failed\n${r.stderr}`); failed++; continue; }
   const res = JSON.parse(r.stdout.trim().split('\n').pop());
   res.event = 11; res.runs = +runs; res.warmups = +warm; res.measuredAt = new Date().toISOString(); res.machine = machine;
-  res.resourceProfile = resourceProfile; res.runnerProcessAffinity = processAffinity;
+  res.campaign = campaign; res.resourceProfile = resourceProfile; res.runnerProcessAffinity = processAffinity;
   writeFileSync(path.join(out, `${car}.json`), JSON.stringify(res, null, 2) + '\n');
   console.log(`${car.padEnd(15)} ${res.version.padEnd(8)} correct=${res.correct}  geomean ${res.geomeanOpsPerSec ? (res.geomeanOpsPerSec / 1e6).toFixed(3) + ' Mops/s' : 'n/a'}`);
   if (!res.correct) failed++;

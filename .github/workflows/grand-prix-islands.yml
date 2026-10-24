@@ -49,9 +49,9 @@ jobs:
         working-directory: benchmarks/grand-prix/island-race
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify container ownership controls
-        run: node --test benchmarks/grand-prix/harness/islands-linux.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
+        run: node --test benchmarks/grand-prix/harness/islands-linux.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
       - name: Check browser profile path restrictions
-        run: node --test benchmarks/grand-prix/harness/browser-sandbox.test.mjs
+        run: node --test benchmarks/grand-prix/harness/browser-sandbox.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
       - name: Install and authenticate the frozen Linux browser
         id: browser
         working-directory: benchmarks/grand-prix

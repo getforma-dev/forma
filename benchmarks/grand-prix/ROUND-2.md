@@ -128,3 +128,25 @@ All new containers, networks, images and builders carry round-2 ownership. Clean
 may remove only resources owned by this run. Never prune unrelated Docker caches
 or reuse FORMA-254's cleanup labels. Record available disk before and after; stop
 if fewer than 4 GiB remain. Cleanup runs on success, failure and interruption.
+
+
+### Campaign identity (2026-10-24)
+
+A resource profile specifies allocations; it does not identify a machine. Each
+host driver now writes an immutable campaign JSON before starting measurements.
+The record has a fresh UUID, timestamp, a host fingerprint, and hashed machine
+and runner identities. GitHub Actions records also retain the run ID, attempt,
+job and repository. Raw machine IDs, hostnames and runner tracking IDs are never
+written into the evidence. A child driver refuses an inherited campaign from a
+different host or job. A native invocation gets a unique UUID and host hash.
+
+One paired server campaign spans the published car and every exact candidate;
+one full-grid server campaign spans all cars. A client campaign spans all client
+and signal cars and all before/after trials. Island cars likewise share one
+campaign. The exact record accompanies every raw measurement and the separate
+RenderCounts instrumented run. Browser subprocesses verify the host-bound file;
+the signals container receives only the validated record containing hashes.
+Resource-profile equality cannot substitute for campaign equality. Prior raw
+artifacts remain unchanged and cannot acquire a new qualified campaign merely
+by being rescored. Server and client jobs may contribute normalized points to
+the same overall view, but raw speed comparisons require the same campaign.
