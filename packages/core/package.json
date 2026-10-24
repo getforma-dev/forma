@@ -221,6 +221,7 @@
     "esbuild": "^0.28.1",
     "fake-indexeddb": "^6.2.3",
     "happy-dom": "^21.0.4",
+    "jest-extended": "6.0.0",
     "publint": "^0.3.23",
     "serve": "^14.2.6",
     "tsup": "^8.5.1",
