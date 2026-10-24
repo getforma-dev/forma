@@ -1,0 +1,174 @@
+{
+  "sourceCommit": "03d0b87a3eed1fa4625d37f6a9add3b77a626d3b",
+  "archiveSha256": "a7dec91b82d5d8a4c54b714cd2a74cae6857effd0f5fed2fad2737e6bc96156c",
+  "files": [
+    {
+      "path": "benchmarks/grand-prix/PROTOCOL.md",
+      "sha256": "b1da68034e634858972cc31b91264f72558ca8e647f624c2903e3b3f58f04b17"
+    },
+    {
+      "path": "benchmarks/grand-prix/ROUND-2.md",
+      "sha256": "93b3affb30b357d431f25d0b721ca4e51f618997c2aba6bdc5928f551ec75ec0"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/browser-sandbox.mjs",
+      "sha256": "63f0e733c78a02898f9cc9eeab6e9d1b0d2f91f4c8c591224573216ffec58c63"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/browser-sandbox.test.mjs",
+      "sha256": "5f8b8dccd334e0b6e2bfba3d86a29b627e6efbde03064e2199d336f696aefbb7"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/budgets.mjs",
+      "sha256": "6e38f2eb7e2e686d6a41eb564daafcf3a0e559302340bec7c9d1a4d031f39fff"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/budgets.test.mjs",
+      "sha256": "452891236c6fcca40476162fb85a6441c89cad160efaa3d51d2b4a3535df1b4a"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/campaign.mjs",
+      "sha256": "47f4bd50d073779c99e8f7b578bb779b446f49cd91612082a09bc0e7ea470a43"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/campaign.test.mjs",
+      "sha256": "71d095c655dada3790d7bd4f30d2b97b4a9906fdaab7661931f9b9307a052ba1"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/candidate-lock.mjs",
+      "sha256": "f24d3f64e074c763848e8bd1e1bfc4cc1834a2dc24f626471f7204f7b913badf"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/chromium-linux-lock.json",
+      "sha256": "c02b0ed176536d38c9758d5c808a1fb95700ebbe8b69cc41e59ce5726c7e7235"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/ci-run.mjs",
+      "sha256": "213dfbdf6aa2fe942492d1bccdbe639bf028a5c04070b90af3d5490c1818826f"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/cleanup.mjs",
+      "sha256": "c072fbd17685c29583163bba02c17e784495839fe61cdf53d376bc975cd46ef5"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/cleanup.sh",
+      "sha256": "01ebb07cbbaed109f12c35c6280433f728e7d093ddde7ec2ec44850759944410"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/client-linux.mjs",
+      "sha256": "aa2a8aca29ec9b28e360d7fc8dacad9e5849b42d3bf13743b5082ebdda5203d2"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compare-runtime.mjs",
+      "sha256": "e5f09ae38f3afacaeef99cfe61c13cd9199b432ca17265442c8b27af574edbee"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression-codecs.json",
+      "sha256": "4fcbaa40be3a2bd610d75956dc5beaa417fa31121f2111c1494bc012a0725593"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression-report.mjs",
+      "sha256": "a266c616adb40b73249ca0412d9151d5bcd095d84314292da378721ab788f014"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression-response.mjs",
+      "sha256": "eccfe990e4f2a1c3d30cf4cc5b2d3e867a643adea46628471063307281274147"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression.test.mjs",
+      "sha256": "33548c6f0d7c28c3bb16711e8fa943c8abe51d7316f3950d68e1f620cb0f9400"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/install-linux-browser.mjs",
+      "sha256": "b9bffd072d429abd89baf05674edad2de4d11042eed052171406ebfdc255c2b5"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/islands-linux.mjs",
+      "sha256": "2a0db33c1b6aa1664d7e8e4b08e760166b74f3d960ebbe513088e6ba7d27eb94"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/islands-linux.test.mjs",
+      "sha256": "697a9d4eaf426251d080b0a482d887a1afd925f684c6dd30dc679e48c8d9be30"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/lib.mjs",
+      "sha256": "0fedf30697d2027fb295d67291d557891fa1eff27e1c046c06c3f4503aaf9b13"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/linux-run.mjs",
+      "sha256": "66018f0b0bf373a3a3d4db0239ce1a56f16ed8e9632d91bcf3a84edb18882e78"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/loadgen/Dockerfile",
+      "sha256": "ce39db627a9aa9712a61891b41bf0658cdb25c3819a03df65ab42de52ca19332"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/paired-server.mjs",
+      "sha256": "dcbf7b0e8835fe54796404d8a879710486a9f616b499f427ee080bd07a2abee0"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/paired-server.test.mjs",
+      "sha256": "bb9542602e50f0ed5d5990bd683670ac9bf9c3fb59e66442039c111c55fd5063"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/prepare-car.mjs",
+      "sha256": "5151215a59b6a44f512431c44c8a202d0736a085faf77e91e14e81d49bc4e54d"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/race.mjs",
+      "sha256": "44bee09627c49d634eca1fc153230270d2157d843d97236be8f30e71e6d38d86"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/render-counts-source.mjs",
+      "sha256": "f89ce3602112a82440898691c01e6990f23517533edb64cc946c84b04fea2426"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/render-counts.mjs",
+      "sha256": "e7707666aa5552ba4ae1f9db7f3025c892a962946614d3ab6ff5fb475397aea6"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/render-counts.test.mjs",
+      "sha256": "da55edb84fb108958cc7f2e5ca0bf99a0ef3f83af3dd67f9a975e86999e7bcdf"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/report-views.js",
+      "sha256": "6425310ea572acfe0ea0157171aafa6950411fb3de2ed63268a8d789dce2b58b"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/report.mjs",
+      "sha256": "46ea55c46f557501744c260f446d61f273345f32ba31bcf1985b9a4ee1e0e697"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/resource-profile.mjs",
+      "sha256": "fa881e09cab0718772454572ae071f9b72dc2d8ca90628e963b1bc46949786e2"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/resource-profile.test.mjs",
+      "sha256": "39dcdfdbd45c09e42c564ea1f4c48844aeb376138cad5a0cf8242e5914bf0a8b"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/score-profile.mjs",
+      "sha256": "4136da5b0d91a34ebae08a122dea10435b042040ded6af3e57a939edb366f28e"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/score-profile.test.mjs",
+      "sha256": "3cefe863e30a6312a5670709cfa893f08e54426dce0de0efc742ec1fca70a4c2"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/score.mjs",
+      "sha256": "eced8780cb4040ca93382c660e246814b467bf4bd3fbdcccf11ec56042e3a8d6"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/smoke.mjs",
+      "sha256": "6827e75f4166a16be33965947686146ab6afd13a839982420854cf15dda5cab0"
+    },
+    {
+      "path": "benchmarks/grand-prix/shared/PAGE-SPEC.md",
+      "sha256": "70ff863152035125e009bf448b3b2f93194e648bd97842247957a7d76915dac2"
+    },
+    {
+      "path": "benchmarks/grand-prix/shared/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    }
+  ]
+}

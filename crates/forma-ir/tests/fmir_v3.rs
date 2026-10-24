@@ -18,7 +18,17 @@ fn reviewed_v3_fixture_codes_are_exact() {
             Ok(_) => "PASS",
             Err(e) => e.code(),
         };
-        let expected = fields[1];
+        // The frozen table describes the 3.0 reader. A later native minor can
+        // admit this otherwise-valid future-minor example; all payload faults
+        // and cross-major refusals keep their independently recorded outcomes.
+        let expected = if fields[0] == "LOAD-108-writer-3.1.0.ir"
+            && reader_version()[0] == 3
+            && reader_version()[1] >= 1
+        {
+            "PASS"
+        } else {
+            fields[1]
+        };
         assert_eq!(code, expected, "{}: {result:?}", fields[0]);
         if let Ok(module) = result {
             assert_eq!(module.raw_bytes(), bytes);

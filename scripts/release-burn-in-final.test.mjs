@@ -62,28 +62,29 @@ import { dirname, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { ROOT, versionFiles } from './release-set.mjs';
-import { finalDiffBinding } from './release-burn-in-final.mjs';
+import { finalDiffBinding, readBurnInReference } from './release-burn-in-final.mjs';
 import { checkReleaseQualification } from './check-release-qualification.mjs';
+import { releaseLine, rcLine } from './release-line.mjs';
 const sha = value => createHash('sha256').update(value).digest('hex');
-function versionFixture(t, documents = {}) {
+function versionFixture(t, documents = {}, version = '3.0.0') {
   const root = mkdtempSync(join(tmpdir(), 'burn-in-final-git-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   git('init', '--quiet'); git('config', 'core.autocrlf', 'false');
   git('config', 'user.name', 'Finite control'); git('config', 'user.email', 'control@example.invalid');
   const write = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text); };
-  for (const [path, text] of versionFiles(ROOT, '3.0.0-rc.1')) write(path, text);
+  for (const [path, text] of versionFiles(ROOT, `${version}-rc.1`)) write(path, text);
   write('runtime.js', 'original product bytes\n');
   for (const [path, text] of Object.entries(documents)) write(path, text);
-  write('scripts/release-contracts.json', JSON.stringify({ milestones: { final: { gates: { 'FORMA-145': { status: 'pending', scope: 'burn-in' } } } } }));
+  write('scripts/release-contracts.json', JSON.stringify({ version, milestones: { final: { gates: { 'FORMA-145': { status: 'pending', scope: 'burn-in' } } } } }));
   git('add', '.'); git('commit', '--quiet', '-m', 'synthetic audited RC');
   const rcCommit = git('rev-parse', 'HEAD');
-  for (const [path, text] of versionFiles(root, '3.0.0')) write(path, text);
-  write('scripts/release-contracts.json', JSON.stringify({ milestones: { final: { gates: { 'FORMA-145': { status: 'done', scope: 'burn-in' } } } } }));
+  for (const [path, text] of versionFiles(root, version)) write(path, text);
+  write('scripts/release-contracts.json', JSON.stringify({ version, milestones: { final: { gates: { 'FORMA-145': { status: 'done', scope: 'burn-in' } } } } }));
   git('add', '.'); git('commit', '--quiet', '-m', 'synthetic final versions and gate');
   const finalCommit = git('rev-parse', 'HEAD');
   const reviewedChanges = commit => git('diff', '--name-only', rcCommit, commit).split('\n').sort().map(path => ({ path, before: git('rev-parse', `${rcCommit}:${path}`), afterSha256: sha(execFileSync('git', ['show', `${commit}:${path}`], { cwd: root })) }));
   const content = 'synthetic independent exact diff review';
-  const reference = { contract: 'rc-burn-in-reference-v1', rcTag: 'v3.0.0-rc.1', rcCommit, finalVersion: '3.0.0', reviewedChanges: reviewedChanges(finalCommit), reviewEvidence: { content, sha256: sha(content) }, runId: 123, runAttempt: 1, manifestSha256: 'a'.repeat(64) };
+  const reference = { contract: 'rc-burn-in-reference-v1', rcTag: `v${version}-rc.1`, rcCommit, finalVersion: version, reviewedChanges: reviewedChanges(finalCommit), reviewEvidence: { content, sha256: sha(content) }, runId: 123, runAttempt: 1, manifestSha256: 'a'.repeat(64) };
   return { root, git, write, reference, finalCommit, reviewedChanges };
 }
 
@@ -145,4 +146,31 @@ test('pre-publication final dispatch requires the actual pointer and propagates 
   assert.equal(calls, 1);
   await assert.rejects(checkReleaseQualification({ tag: 'v3.0.0-rc.0', commit, root: f.root }), /unknown/);
   await assert.rejects(checkReleaseQualification({ tag: 'v3.0.0-rc.1', commit, root: f.root }), /ENOENT/);
+});
+
+test('release line parsing refuses noncanonical tags and cross-line RC evidence', () => {
+  for (const tag of ['v2.9.0-rc.1', 'v3.01.0-rc.1', 'v3.1.00-rc.1', 'v3.1.0-rc.0', 'v3.1.0-rc.01', 'v3.1.0-dev', 'v3.1.0+metadata', '3.1.0', 'v3.1.0-rc.1\n']) assert.throws(() => releaseLine(tag));
+  assert.equal(rcLine('v3.1.0-rc.1', '3.1.0').milestone, 'rc');
+  for (const final of ['3.0.0', '3.1.1', '4.0.0', '3.1.0-rc.1']) assert.throws(() => rcLine('v3.1.0-rc.1', final));
+  assert.throws(() => rcLine('v3.1.0-beta.1', '3.1.0'));
+});
+
+test('3.1 final requires same-line committed evidence, canonical version projection and real hosted authentication', async t => {
+  const f = versionFixture(t, {}, '3.1.0');
+  assert.deepEqual(finalDiffBinding(f.reference, f.finalCommit, f.root), f.reference.reviewedChanges);
+  assert.throws(() => finalDiffBinding({ ...f.reference, rcTag: 'v3.0.0-rc.5' }, f.finalCommit, f.root), /lines differ/);
+  await assert.rejects(checkReleaseQualification({ tag: 'v3.1.0', commit: f.finalCommit, root: f.root }), /ENOENT/);
+  await assert.rejects(checkReleaseQualification({ tag: 'v3.0.0', commit: f.finalCommit, root: f.root }), /another version line/);
+  await assert.rejects(checkReleaseQualification({ tag: 'v3.1.0-rc.1', commit: f.finalCommit, root: f.root }), /ENOENT/);
+  assert.equal((await checkReleaseQualification({ tag: 'v3.1.0-beta.1', commit: f.finalCommit, root: f.root })).burnIn, 'required before final');
+  f.write('docs/release/rc-burn-in.json', JSON.stringify(f.reference)); f.git('add', '.'); f.git('commit', '--quiet', '-m', 'synthetic 3.1 immutable pointer');
+  const commit = f.git('rev-parse', 'HEAD'); let calls = 0;
+  assert.deepEqual(readBurnInReference(f.root, '3.1.0').reference, f.reference);
+  assert.throws(() => readBurnInReference(f.root, '3.0.0'), /another final version/);
+  await assert.rejects(checkReleaseQualification({ tag: 'v3.1.0', commit, root: f.root, finalReader: async args => {
+    calls++; assert.deepEqual(args.reference, f.reference); throw Error('3.1 hosted authentication failed');
+  } }), /hosted authentication failed/);
+  assert.equal(calls, 1);
+  f.write('runtime.js', 'post-RC product drift\n'); f.git('add', '.'); f.git('commit', '--quiet', '-m', 'forbidden 3.1 product edit');
+  assert.throws(() => finalDiffBinding(f.reference, f.git('rev-parse', 'HEAD'), f.root), /product\/harness drift/);
 });

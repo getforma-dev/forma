@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publishedStatus } from './published-scaffold.mjs';
+import { publishedStatus, publishedStaticHtml } from './published-scaffold.mjs';
+
+test('the published static contract is explicit for historical 3.0.0 and newer releases', () => {
+  for (const version of ['3.0.0', '3.0.0-rc.5']) assert.equal(publishedStaticHtml(version), 'legacy-v1');
+  for (const version of ['3.0.1', '3.1.0-rc.1', '4.0.0']) assert.equal(publishedStaticHtml(version), 'plain-v1');
+  for (const version of [undefined, 'latest', '2.0.0']) assert.throws(() => publishedStaticHtml(version));
+});
 
 function controls() {
   const delays = [], warnings = [];

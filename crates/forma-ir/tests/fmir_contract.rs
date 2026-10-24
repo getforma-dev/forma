@@ -13,12 +13,18 @@ fn frozen_header_layout_matches_document_and_package_version() {
     assert_eq!(HEADER_SIZE, 24);
     assert_eq!(SIGNATURE, [0x89, 0x46, 0x4d, 0x49, 0x0d, 0x0a, 0x1a, 0x0a]);
     assert_eq!(&bytes[..8], &SIGNATURE);
-    for (i, expected) in reader_version().iter().enumerate() {
+    // The independent byte oracle retains its original writer on every release.
+    for (i, expected) in [3_u16, 0, 0].iter().enumerate() {
         assert_eq!(
             u16::from_le_bytes([bytes[8 + i * 2], bytes[9 + i * 2]]),
             *expected
         );
     }
+    let current = build_minimal_ir(&[], &[], &[], &[]);
+    assert_eq!(
+        IrModule::parse(&current).unwrap().header.writer,
+        reader_version()
+    );
     assert_eq!(m.header.body_len as usize, bytes.len() - HEADER_SIZE);
     assert_eq!(m.header.crc, crc32(&[&bytes[..18], &bytes[22..]]));
     assert_eq!(&bytes[22..24], &[0, 0]);
@@ -83,10 +89,16 @@ fn legacy_and_newer_minor_are_rebuild_errors() {
     assert!(err.to_string().contains("header version 2"));
     assert!(err.to_string().contains("rebuild"));
     let mut bytes = build_minimal_ir(&[], &[], &[], &[]);
-    bytes[10] = 1;
+    let reader = reader_version();
+    let mut future = reader;
+    future[1] = future[1].checked_add(1).unwrap();
+    bytes[10..12].copy_from_slice(&future[1].to_le_bytes());
     restamp(&mut bytes);
     let err = IrModule::parse(&bytes).unwrap_err();
     assert_eq!(err.code(), "LOAD-108");
-    assert!(err.to_string().contains("3.1.0"));
-    assert!(err.to_string().contains("3.0.0"));
+    for version in [future, reader] {
+        assert!(err
+            .to_string()
+            .contains(&format!("{}.{}.{}", version[0], version[1], version[2])));
+    }
 }

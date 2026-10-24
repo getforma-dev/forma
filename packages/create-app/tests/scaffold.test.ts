@@ -15,6 +15,8 @@ import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, r
  */
 
 const TEXT_EXTS = new Set(['.toml', '.lock', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
+const STATIC_HTML = process.env.FORMA_SCAFFOLD_STATIC_HTML ?? 'plain-v1';
+if (STATIC_HTML !== 'plain-v1' && STATIC_HTML !== 'legacy-v1') throw new Error('unknown static HTML contract');
 
 function textFilesWithPlaceholders(dir: string): string[] {
   return listFiles(dir).filter((rel) => {
@@ -522,7 +524,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
         await withEngine(engine, launcher, async (browser) => {
           const island = await verifyMinimalIsland(browser, origin, manifest);
-          const staticRoute = await verifyStaticTemplate(browser, origin, manifest);
+          const staticRoute = await verifyStaticTemplate(browser, origin, manifest, '/about', { staticHtml: STATIC_HTML });
           recordObservation(`minimal: ${engine} actual native island and static route`, {engine, profile: 'release', island, staticRoute});
         });
       }
@@ -740,11 +742,17 @@ globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
         expect(build.status, build.stdout + build.stderr).toBe(0);
         const cargo = run('cargo', ['build', '--locked'], dest);
         expect(cargo.status, cargo.stderr).toBe(0);
-        // Every root names its build (FORMA-186): the server-rendered form and the empty shell alike.
-        const root = script === 'build:ssr' ? /<div id="app" data-forma-build="[^"]+" data-forma-ssr>/ : /<div id="app" data-forma-build="[^"]+"><\/div>/;
+        const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist', 'manifest.json'), 'utf8'));
 
         await withServer(dest, name, async (_body, _res, get) => {
           for (const route of pages) {
+            const staticRoute = script === 'build:ssr' && manifest.routes[route]?.mode === 'ssr' && manifest.routes[route]?.js?.length === 0;
+            const plainStatic = staticRoute && STATIC_HTML === 'plain-v1';
+            // The authenticated release contract selects one exact shape:
+            // plain static roots have no adoption metadata; legacy SSR does.
+            const root = plainStatic ? /<div id="app">/
+              : script === 'build:ssr' ? /<div id="app" data-forma-build="[^"]+" data-forma-ssr>/
+                : /<div id="app" data-forma-build="[^"]+"><\/div>/;
             for (let fetchNo = 1; fetchNo <= 2; fetchNo++) {
               const res = await get(route);
               const where = `${script}: ${route}, fetch ${fetchNo}`;
@@ -755,7 +763,8 @@ globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
               const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
               expect(nonce, `${where}: no nonce in CSP: ${csp}`).toBeTruthy();
               const html = await res.text();
-              if (script !== 'build:ssr' || route !== '/about') expect(html, `${where}: the HTML does not carry its own nonce`).toContain(`nonce="${nonce}"`);
+              if (!staticRoute) expect(html, `${where}: the HTML does not carry its own nonce`).toContain(`nonce="${nonce}"`);
+              else if (plainStatic) expect(html, `${where}: plain static route emitted script or adoption metadata`).not.toMatch(/<script[\s>]|\bdata-forma-(?:build|ssr|island|key)\b/);
               else expect(html, `${where}: static route emitted executable code`).not.toMatch(/<script(?![^>]*type="application\/json")[\s>]/);
               expect(html, `${where}: rendered by the wrong path`).toMatch(root);
               // DR-25: the worker is off, so no page registers one.

@@ -1001,6 +1001,22 @@ pub struct IslandEntry {
 mod compatibility_tests {
     use super::*;
     #[test]
+    fn frozen_examples_keep_their_explicit_historical_reader_results() {
+        for bytes in [
+            include_bytes!("../tests/fixtures/fmir-v3/LOAD-108-writer-3.1.0.ir").as_slice(),
+            include_bytes!("../tests/fixtures/fmir-v3/LOAD-108-writer-2.9.0.ir").as_slice(),
+        ] {
+            let error = IrHeader::parse_for_reader(bytes, [3, 0, 0]).unwrap_err();
+            assert_eq!(error.code(), "LOAD-108");
+            assert!(error.to_string().contains("reader 3.0.0"));
+        }
+        let patch = include_bytes!("../tests/fixtures/fmir-v3/LOAD-108-writer-3.0.1.ir");
+        assert_eq!(
+            IrHeader::parse_for_reader(patch, [3, 0, 0]).unwrap().writer,
+            [3, 0, 1]
+        );
+    }
+    #[test]
     fn shared_version_pairs_pass_through_the_actual_header_reader() {
         let pairs: serde_json::Value = serde_json::from_str(include_str!(
             "../tests/fixtures/compatibility/version-pairs.json"

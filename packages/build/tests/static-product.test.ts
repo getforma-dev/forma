@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { build } from './helpers/named-build';
@@ -68,17 +68,26 @@ for (const codeSplitting of [false, true]) {
   });
   it(`keeps accepted metadata and old referenced bytes through static→island→refusal→static watch (split=${codeSplitting})`, async () => {
     const { src, dist, config } = fixture(codeSplitting);
+    // Keep every source edit coherent: writeFileSync can expose a truncated module
+    // to the child watcher before it writes the replacement contents.
+    const replacePage = (source: string) => {
+      const page = join(src, 'home-page.ts'), pending = `${page}.next`;
+      writeFileSync(pending, source); renameSync(pending, page);
+    };
     await watching(config, async watcher => {
       await watcher.ready();
       await vi.waitFor(() => expect(watcher.manifest().routes['/'].js).toEqual([]));
-      await watcher.change(() => writeFileSync(join(src, 'home-page.ts'), islandPage));
+      await watcher.change(() => replacePage(islandPage));
       const live = await vi.waitFor(() => { const value = watcher.manifest(); expect(value.routes['/'].js).toHaveLength(1); return value; });
       const held = [...live.routes['/'].js, live.routes['/'].ir].map(file => ({ file, bytes: readFileSync(join(dist, file)) }));
       const accepted = readFileSync(join(dist, 'manifest.json'));
-      await watcher.change(() => writeFileSync(join(src, 'home-page.ts'), islandPage.replace("Badge({value:'LIVE_NATIVE'})", 'unknownRuntime()')));
-      await vi.waitFor(() => expect(watcher.output()).toContain('BUILD-610'));
+      const refusalStart = watcher.output().length;
+      await watcher.change(() => replacePage(islandPage.replace("Badge({value:'LIVE_NATIVE'})", 'unknownRuntime()')));
+      // A prior cycle can finish first. Require this edit's specific refusal and
+      // its completed watch snapshot before restoring the accepted static page.
+      await vi.waitFor(() => expect(watcher.output().slice(refusalStart)).toMatch(/BUILD-610[^\n]*unknownRuntime[^\n]*\n[\s\S]*\[watch\] build finished/), { timeout: 10_000 });
       expect(readFileSync(join(dist, 'manifest.json'))).toEqual(accepted);
-      await watcher.change(() => writeFileSync(join(src, 'home-page.ts'), staticPage));
+      await watcher.change(() => replacePage(staticPage));
       const final = await vi.waitFor(() => { const value = watcher.manifest(); expect(value.routes['/'].js, watcher.output()).toEqual([]); expect(value.routes['/'].mode, watcher.output()).toBe('ssr'); return value; }, { timeout: 10_000 });
       expect(final.routes['/'].ir).toBeDefined(); expect(final.routes['/'].modulepreload).toBeUndefined(); expect(final.aliases['home.js']).toBeUndefined();
       for (const old of held) expect(readFileSync(join(dist, old.file))).toEqual(old.bytes);

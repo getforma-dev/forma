@@ -580,11 +580,11 @@ fn render(
     root: Root<'_>,
 ) -> Result<PageResponse, RenderError> {
     let route = || config.route_pattern.to_string();
-    if config
+    let static_route = config
         .manifest
         .route(config.route_pattern)
-        .is_some_and(crate::RouteAssets::is_static_ssr)
-    {
+        .is_some_and(crate::RouteAssets::is_static_ssr);
+    if static_route {
         let message = if config.config_json.is_some() {
             Some("static SSR cannot execute config_json; publish a JavaScript entry for client configuration")
         } else if !ctx.module_preloads(config.route_pattern).is_empty()
@@ -632,12 +632,17 @@ fn render(
                 return Err(RenderError::MissingModule { route: route() });
             };
             let started = Instant::now();
-            let walked = forma_ir::walk_to_html_counted(module, slots, limits);
+            let mode = if static_route {
+                forma_ir::RenderMode::Static
+            } else {
+                forma_ir::RenderMode::Adoptable
+            };
+            let walked = forma_ir::walk_to_html_counted_with_mode(module, slots, limits, mode);
             let walk_time = started.elapsed();
             match walked {
                 Ok(out) => (
                     Some(out.html),
-                    Some(out.island_state),
+                    (!static_route).then_some(out.island_state),
                     RenderCounts::from_walk(out.counts, walk_time),
                 ),
                 Err(failure) => {

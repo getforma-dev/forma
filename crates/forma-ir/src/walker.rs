@@ -66,6 +66,20 @@ impl Default for WalkLimits {
     }
 }
 
+/// Whether the HTML is intended for client adoption.
+///
+/// Existing walker entry points always use [`RenderMode::Adoptable`]. The server
+/// selects [`RenderMode::Static`] only for a route with no client JavaScript and
+/// no declared islands. Both modes retain the same value rules and refusals.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RenderMode {
+    /// Write the complete marker vocabulary consumed by strict adoption.
+    Adoptable,
+    /// Omit adoption markers, empty-text holders and injected row keys.
+    /// Modules containing islands are refused with [`IrError::InvalidSection`].
+    Static,
+}
+
 /// One row of a keyed LIST while its body is walked (FORMA-181, DR-8).
 ///
 /// The row-owned guard for `data-forma-key`: the key is attached to the
@@ -111,6 +125,8 @@ impl KeyedRow {
 /// This avoids adding extra parameters every time we need new walker state
 /// (e.g., list depth, output budget).
 struct WalkState {
+    /// Whether to write the adoption vocabulary outside text-only elements.
+    mode: RenderMode,
     /// Current nesting depth for LIST opcodes.
     list_depth: u8,
     /// Pending island info to inject on the next OPEN_TAG/VOID_TAG.
@@ -199,6 +215,7 @@ struct WalkState {
 impl WalkState {
     fn new(limits: WalkLimits) -> Self {
         WalkState {
+            mode: RenderMode::Adoptable,
             list_depth: 0,
             pending_island: None,
             element_depth: 0,
@@ -453,10 +470,33 @@ pub fn walk_to_html_counted(
     slots: &SlotData,
     limits: WalkLimits,
 ) -> Result<WalkOutput, WalkFailure> {
+    walk_to_html_counted_with_mode(module, slots, limits, RenderMode::Adoptable)
+}
+
+/// A counted walk with an explicit output mode.
+///
+/// [`RenderMode::Static`] is only for pages that will not be adopted by client
+/// code; modules with declared islands are refused before producing output.
+/// Key identity/shape checks, value rules, budgets and panic handling remain
+/// identical to [`walk_to_html_counted`].
+pub fn walk_to_html_counted_with_mode(
+    module: &IrModule,
+    slots: &SlotData,
+    limits: WalkLimits,
+    mode: RenderMode,
+) -> Result<WalkOutput, WalkFailure> {
+    if mode == RenderMode::Static && !module.islands.is_empty() {
+        return Err(WalkFailure {
+            error: IrError::InvalidSection,
+            component_path: Vec::new(),
+            counts: WalkCounts::default(),
+        });
+    }
     let ops = &module.opcodes;
     let len = ops.len();
     let mut out = String::with_capacity(initial_capacity(len));
     let mut state = WalkState::new(limits);
+    state.mode = mode;
     #[cfg(any(test, feature = "__fault-injection"))]
     {
         state.fault_armed = true;
@@ -888,6 +928,18 @@ fn walk_range_impl(
                     if !parent.value_bound {
                         write_text_only(out, parent, &value, limit)?;
                     }
+                } else if state.mode == RenderMode::Static {
+                    // Without the opening marker a dynamic value can be the
+                    // first token of pre/listing: preserve the parser's LF rule.
+                    if state.pre_boundary == Some(out.len())
+                        && normalized_chars(&value).next() == Some('\n')
+                    {
+                        push_checked(out, "\n", limit)?;
+                    }
+                    push_escaped_html(out, &value, limit)?;
+                    if let Some(option) = state.option_by_text.as_mut() {
+                        option.text.extend(normalized_chars(&value));
+                    }
                 } else {
                     push_checked(out, "<!--f:t", limit)?;
                     push_u16(out, marker_id, limit)?;
@@ -974,6 +1026,10 @@ fn walk_range_impl(
             }
 
             Opcode::IslandStart => {
+                // Also defend callers that constructed a module without validation.
+                if state.mode == RenderMode::Static {
+                    return Err(IrError::InvalidSection);
+                }
                 // island_id(u16)
                 let island_id = read_u16(ops, pos)?;
                 pos += 2;
@@ -1104,7 +1160,7 @@ fn walk_range_impl(
 
                 // Emit conditional marker — none inside a text-only element,
                 // where it is text. Decided once, so the pair always matches.
-                let markers = state.text_only.is_none();
+                let markers = state.mode == RenderMode::Adoptable && state.text_only.is_none();
                 if markers {
                     push_checked(out, "<!--f:s", limit)?;
                     push_u16(out, slot_id, limit)?;
@@ -1200,7 +1256,7 @@ fn walk_range_impl(
                 // Emit list markers — none inside a text-only element, where
                 // they are text. Decided once, so the pair always matches.
                 let list_marker_id = slot_id;
-                let markers = state.text_only.is_none();
+                let markers = state.mode == RenderMode::Adoptable && state.text_only.is_none();
                 if markers {
                     push_checked(out, "<!--f:l", limit)?;
                     push_u16(out, list_marker_id, limit)?;
@@ -1879,7 +1935,7 @@ fn emit_open_tag(
     // text is already normalized (value rule 1); `push_escaped_attr` applies
     // the same rule again, which is idempotent, and escapes for the
     // attribute, so the browser decodes exactly the canonical text.
-    if let Some(key) = row_key {
+    if let Some(key) = row_key.filter(|_| state.mode == RenderMode::Adoptable) {
         push_checked(out, " data-forma-key=\"", limit)?;
         push_escaped_attr(out, &key, limit)?;
         push_checked(out, "\"", limit)?;
@@ -5469,6 +5525,146 @@ mod tests {
         }
     }
 
+    mod static_routes {
+        use super::*;
+
+        fn render(page: &Page, limits: WalkLimits) -> Result<WalkOutput, WalkFailure> {
+            let (module, slots) = page.module_and_slots();
+            walk_to_html_counted_with_mode(&module, &slots, limits, RenderMode::Static)
+        }
+
+        #[test]
+        fn static_vectors_omit_markers_and_holders_but_keep_value_rules() {
+            let cases: serde_json::Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/static-routes.json"))
+                    .unwrap();
+            for case in cases["text"].as_array().unwrap() {
+                let mut page = Page::new();
+                let value = page.slot(crate::json_to_slot_value(&case["value"]));
+                page.open("p", &[]).dyn_text(value).close("p");
+                let output = render(&page, WalkLimits::default()).unwrap();
+                assert_eq!(
+                    output.html,
+                    format!("<p>{}</p>", case["html"].as_str().unwrap())
+                );
+                assert_eq!(output.counts.bytes, output.html.len());
+                // The existing entry point still writes the adoption vocabulary.
+                assert!(page.render().contains("<!--f:t0-->"));
+            }
+        }
+
+        #[test]
+        fn static_dynamic_text_preserves_initial_line_feeds_across_empty_ranges() {
+            let cases: serde_json::Value =
+                serde_json::from_str(include_str!("../tests/fixtures/parity/static-routes.json"))
+                    .unwrap();
+            for tag in ["pre", "listing"] {
+                for case in cases["pre"].as_array().unwrap() {
+                    let mut page = Page::new();
+                    let empty = page.slot(SlotValue::Null);
+                    let yes = page.slot(SlotValue::Bool(true));
+                    let value = page.slot(crate::json_to_slot_value(&case["value"]));
+                    page.open(tag, &[])
+                        .dyn_text(empty)
+                        .show_if(
+                            yes,
+                            |p| {
+                                p.dyn_text(value);
+                            },
+                            |_| {},
+                        )
+                        .close(tag);
+                    assert_eq!(
+                        render(&page, WalkLimits::default()).unwrap().html,
+                        format!("<{tag}>{}</{tag}>", case["html"].as_str().unwrap())
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn static_conditionals_lists_and_text_only_parents_keep_visible_values() {
+            let mut page = Page::new();
+            let yes = page.slot(SlotValue::Bool(true));
+            let list = page.slot(SlotValue::array(vec![text("<a>"), text(""), text("b")]));
+            let item = page.slot(SlotValue::Null);
+            page.open("ul", &[])
+                .show_if(
+                    yes,
+                    |p| {
+                        p.list(list, item, |p| {
+                            p.open("li", &[]).dyn_text(item).close("li");
+                        });
+                    },
+                    |p| {
+                        p.text("wrong");
+                    },
+                )
+                .close("ul");
+            assert_eq!(
+                render(&page, WalkLimits::default()).unwrap().html,
+                "<ul><li>&lt;a&gt;</li><li></li><li>b</li></ul>"
+            );
+            for tag in ["textarea", "title", "style", "script"] {
+                let mut page = Page::new();
+                let value = page.slot(text("\nx&y"));
+                page.open(tag, &[]).dyn_text(value).close(tag);
+                assert_eq!(
+                    render(&page, WalkLimits::default()).unwrap().html,
+                    page.render()
+                );
+            }
+        }
+
+        #[test]
+        fn static_limits_charge_actual_bytes_and_list_iterations() {
+            let mut page = Page::new();
+            let list = page.slot(SlotValue::array(vec![text("<&"), text("b")]));
+            let item = page.slot(SlotValue::Null);
+            page.list(list, item, |p| {
+                p.open("p", &[]).dyn_text(item).close("p");
+            });
+            let html = "<p>&lt;&amp;</p><p>b</p>";
+            let exact = WalkLimits {
+                max_output_bytes: html.len(),
+                max_list_iterations: 2,
+            };
+            assert_eq!(render(&page, exact).unwrap().html, html);
+            assert!(matches!(
+                render(
+                    &page,
+                    WalkLimits {
+                        max_output_bytes: html.len() - 1,
+                        ..exact
+                    }
+                )
+                .unwrap_err()
+                .error,
+                IrError::OutputLimitExceeded { .. }
+            ));
+            assert!(render(
+                &page,
+                WalkLimits {
+                    max_list_iterations: 1,
+                    ..exact
+                }
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn static_mode_refuses_declared_islands_before_any_output() {
+            let mut page = Page::new();
+            page.island(0, |p| {
+                p.open("div", &[]).close("div");
+            });
+            let failure = render(&page, WalkLimits::default()).unwrap_err();
+            assert_eq!(failure.error, IrError::InvalidSection);
+            assert_eq!(failure.counts, WalkCounts::default());
+            assert!(page.render().contains("data-forma-island"));
+        }
+    }
+
     fn text(s: &str) -> SlotValue {
         SlotValue::Text(s.to_string())
     }
@@ -7495,6 +7691,56 @@ mod tests {
         fn keyed(opcodes: &[u8], paths: &[(u32, &[u32])]) -> IrModule {
             let base = build_declared_fixture(STRINGS, SLOTS, opcodes, &[]);
             IrModule::parse(&with_key_paths(&base, paths)).unwrap()
+        }
+
+        #[test]
+        fn static_mode_omits_row_keys_but_keeps_key_and_shape_refusals() {
+            let body = [
+                encode_open_tag(LI, &[]),
+                encode_dyn_text(4, 4),
+                encode_close_tag(LI),
+            ]
+            .concat();
+            let module = keyed(&encode_list(0, 1, &body), &[(0, &[ID])]);
+            let data = rows(vec![id(num(1.0)), id(text("two"))]);
+            let output = walk_to_html_counted_with_mode(
+                &module,
+                &data,
+                WalkLimits::default(),
+                RenderMode::Static,
+            )
+            .unwrap();
+            assert_eq!(output.html, "<li>x</li><li>x</li>");
+            for data in [
+                rows(vec![id(num(1.0)), id(text("1"))]),
+                rows(vec![id(SlotValue::Null)]),
+            ] {
+                let expected = walk_to_html_counted(&module, &data, WalkLimits::default())
+                    .unwrap_err()
+                    .error;
+                let actual = walk_to_html_counted_with_mode(
+                    &module,
+                    &data,
+                    WalkLimits::default(),
+                    RenderMode::Static,
+                )
+                .unwrap_err()
+                .error;
+                assert_eq!(actual, expected);
+            }
+            let invalid = keyed(&encode_list(0, 1, &encode_dyn_text(4, 4)), &[(0, &[ID])]);
+            let expected = walk_to_html_counted(&invalid, &data, WalkLimits::default())
+                .unwrap_err()
+                .error;
+            let actual = walk_to_html_counted_with_mode(
+                &invalid,
+                &data,
+                WalkLimits::default(),
+                RenderMode::Static,
+            )
+            .unwrap_err()
+            .error;
+            assert_eq!(actual, expected);
         }
 
         /// With an island table the module's typed flow is checked, and the fixture

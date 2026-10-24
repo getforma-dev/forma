@@ -1,4 +1,4 @@
-import { readFmirContainer } from '../../compiler/src/fmir';
+import { COMPILER_WRITER_VERSION, readFmirContainer } from '../../compiler/src/fmir';
 import { SECTION_ISLANDS } from '../../compiler/src/fmir-constants';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { build } from './helpers/named-build';
@@ -951,7 +951,7 @@ describe('@getforma/build — SSR output', () => {
     expect(manifest.routes['/']!.ir).toBe(irName);
     const ir = readFileSync(join(outDir, irName!));
     const container = readFmirContainer(ir);
-    expect(container.writer).toEqual([3, 0, 0]);
+    expect(container.writer).toEqual(COMPILER_WRITER_VERSION);
     expect(ir.length).toBeGreaterThan(200);
     // Island table entry count (u16 at the islands section offset) is 1.
     const islands = container.sections.find(section => section.id === SECTION_ISLANDS)!;

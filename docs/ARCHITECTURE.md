@@ -494,6 +494,10 @@ Two disjoint namespaces share the prefix. Do not confuse them.
 
 **A. The compiled/hydration set — shared, byte-for-byte:**
 
+No-JavaScript native routes omit this set and hydration comments (FORMA-257);
+see [Static routes: no marker vocabulary](parity-rules.md#static-routes-no-marker-vocabulary).
+Routes with JavaScript retain it.
+
 | Attribute | Written by | Read by | Values |
 |---|---|---|---|
 | `data-forma-ssr` | `forma-server` on `<div id="app">` | `mount()`, to refuse: it throws `FORMA_E_MOUNT_SSR` on a server-marked root (`mount.ts`); `activateIslands` is the only activation path. A Browser-shell route has no such root | present/absent |

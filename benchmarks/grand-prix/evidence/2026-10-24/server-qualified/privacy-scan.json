@@ -1,0 +1,4023 @@
+{
+  "uniqueDecodedProbeBodiesScanned": 30,
+  "textFilesScanned": 454,
+  "patterns": [
+    "github-credential",
+    "aws-access-key",
+    "private-key",
+    "slack-credential",
+    "url-userinfo",
+    "signed-download-url"
+  ],
+  "findings": [],
+  "binaryFiles": [
+    {
+      "file": "ci-40123441558-1-render-counts/build-binary",
+      "bytes": 3319752,
+      "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/instrumented-binary",
+      "bytes": 3324128,
+      "sha256": "0b11eb6db0c1d042d928a0dc883c352c85d78442071842b1d576a7e6297c46d3"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/original-binary",
+      "bytes": 3319752,
+      "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+    },
+    {
+      "file": "ci-40123441558-1-runtime/context/grandprix",
+      "bytes": 3319752,
+      "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+    },
+    {
+      "file": "ci-40123441558-1-runtime/distroless-binary",
+      "bytes": 3319752,
+      "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+    }
+  ],
+  "ephemeralRunnerMetadataLocations": [
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/dockerEngine/RegistryConfig/IndexConfigs/docker.io/Name"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/dockerEngine/DockerRootDir"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/dockerEngine/Name"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/dockerEngine/ClientInfo/Platform/Name"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/dockerEngine/ClientInfo/Plugins/0/Name"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/dockerEngine/ClientInfo/Plugins/1/Name"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/cpu"
+    },
+    {
+      "file": "ci-40123441558-1-linux.json",
+      "key": "/kernel"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/build-image.json",
+      "key": "/GraphDriver/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/instrumented-container.json",
+      "key": "/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/instrumented-container.json",
+      "key": "/HostConfig/RestartPolicy/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/instrumented-container.json",
+      "key": "/GraphDriver/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/before/kernel"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/before/cpu"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/dockerEngine/RegistryConfig/IndexConfigs/docker.io/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/dockerEngine/DockerRootDir"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/dockerEngine/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/dockerEngine/ClientInfo/Platform/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/dockerEngine/ClientInfo/Plugins/0/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/dockerEngine/ClientInfo/Plugins/1/Name"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/measurementStarted/kernel"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/measurementStarted/cpu"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/after/kernel"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/render-counts.json",
+      "key": "/after/cpu"
+    },
+    {
+      "file": "ci-40123441558-1-render-counts/runtime-image.json",
+      "key": "/GraphDriver/Name"
+    },
+    {
+      "file": "ci-40123441558-1-runtime/distroless-image.json",
+      "key": "/GraphDriver/Name"
+    },
+    {
+      "file": "ci-40123441558-1-runtime/runtime.json",
+      "key": "/kernel"
+    },
+    {
+      "file": "ci-40123441558-1-runtime/source-image.json",
+      "key": "/GraphDriver/Name"
+    },
+    {
+      "file": "raw/endurance/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/endurance/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/endurance/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/endurance/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/endurance/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/forma.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/next.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/astro.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/preact-node.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/react-bun.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/react-deno.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/react-node.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/react-router.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/solid-node.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/svelte-node.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-bun.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-deno.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/vanilla-node.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/0/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/1/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/2/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/3/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/4/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/5/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/6/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/7/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/8/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/9/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/10/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/11/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/12/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/13/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/14/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/15/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/16/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/17/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/18/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/19/cpu"
+    },
+    {
+      "file": "raw/fuel/vue-node.json",
+      "key": "/samples/20/cpu"
+    },
+    {
+      "file": "raw/grid/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/grid/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/grid/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/grid/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/grid/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/multicore/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/multicore/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/multicore/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/multicore/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/pitstop/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/pitstop/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/pitstop/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/pitstop/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/reaction/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/reaction/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/reaction/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/reaction/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/sprint/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/sprint/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/sprint/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/sprint/vue-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/astro.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/astro.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/astro.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/astro.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/astro.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/astro.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/forma.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/forma.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/forma.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/forma.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/forma.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/forma.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/next.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/next.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/next.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/next.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/next.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/next.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/preact-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/preact-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/preact-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/preact-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/preact-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/preact-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/react-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/react-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/react-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/react-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/react-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/react-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/solid-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/solid-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/solid-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/solid-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/solid-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/solid-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/react-router.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-router.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-router.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/react-router.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/react-router.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/react-router.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/svelte-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/svelte-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/svelte-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/svelte-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/svelte-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/svelte-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/vanilla-bun.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vanilla-bun.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vanilla-bun.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/vanilla-bun.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vanilla-bun.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vanilla-bun.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/vanilla-deno.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vanilla-deno.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vanilla-deno.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/vanilla-deno.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vanilla-deno.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vanilla-deno.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/vanilla-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vanilla-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vanilla-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/vanilla-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vanilla-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vanilla-node.json",
+      "key": "/machine/after/kernel"
+    },
+    {
+      "file": "raw/weight/vue-node.json",
+      "key": "/machine/before/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vue-node.json",
+      "key": "/machine/before/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vue-node.json",
+      "key": "/machine/before/kernel"
+    },
+    {
+      "file": "raw/weight/vue-node.json",
+      "key": "/machine/after/hostCpuModel"
+    },
+    {
+      "file": "raw/weight/vue-node.json",
+      "key": "/machine/after/hostFreeDisk"
+    },
+    {
+      "file": "raw/weight/vue-node.json",
+      "key": "/machine/after/kernel"
+    }
+  ],
+  "limitations": [
+    "Pattern and key scan plus independent source review; it cannot prove that arbitrary binary contents contain no secret.",
+    "CPU/kernel, container/image IDs, disk figures, ephemeral runner hostnames and filesystem paths are expected benchmark provenance, not credentials.",
+    "Campaign machine and runner-tracking identities are SHA-256 hashes; temporary signed download URLs are excluded from publication manifests."
+  ]
+}

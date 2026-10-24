@@ -257,3 +257,6 @@ docs/evidence/dashboard-tooltip-2026-10-16/** -text
 docs/archive/forma-196-native-raw-boundary/** -text
 docs/evidence/forma-196-native-raw-boundary/** -text
 docs/release-evidence/forma-199/** -text
+
+# Historical release-policy fixture is authenticated byte-for-byte on every OS.
+scripts/fixtures/release-contracts-3.0.0.json -text

@@ -1,0 +1,11 @@
+{
+  "artifactId": 12569878695,
+  "runId": 40118323052,
+  "head": "e50cec7fe9221aba25740b366c4430ef6544f556",
+  "conclusion": "success",
+  "archiveBytes": 138689,
+  "githubDigest": "sha256:3804fef947001400a3ae5de76ffadcacad366595029c8d1c3769e410bbe34d08",
+  "downloadedDigest": "sha256:3804fef947001400a3ae5de76ffadcacad366595029c8d1c3769e410bbe34d08",
+  "matched": true,
+  "verifiedAt": "2026-10-24T18:02:42.757153+00:00"
+}

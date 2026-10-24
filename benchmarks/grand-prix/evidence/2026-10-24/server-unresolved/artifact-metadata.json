@@ -1,0 +1,19 @@
+{
+  "id": 12570952874,
+  "name": "grand-prix-40116667052-1",
+  "size_in_bytes": 6564375,
+  "url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12570952874",
+  "archive_download_url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12570952874/zip",
+  "expired": false,
+  "created_at": "2026-10-24T18:33:45Z",
+  "expires_at": "2026-11-23T18:33:44Z",
+  "updated_at": "2026-10-24T18:33:45Z",
+  "digest": "sha256:16f3908e42f35b4d645237272b624ef5423536f8b69de6589be03b6d7c72baf7",
+  "workflow_run": {
+    "id": 40116667052,
+    "repository_id": 1181126362,
+    "head_repository_id": 1181126362,
+    "head_branch": "codex/forma-264-grand-prix",
+    "head_sha": "03d0b87a3eed1fa4625d37f6a9add3b77a626d3b"
+  }
+}

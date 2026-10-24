@@ -1,0 +1,9 @@
+results/
+harness/logs/
+**/node_modules/
+**/dist/
+**/target/
+**/.astro/
+**/.next/
+**/.react-router/
+**/*.log

@@ -22,6 +22,7 @@ export function validateCandidate(dir, expectedHash, expectedCommit) {
   const set = json(join(dir, 'release-set.json'));
   assert.equal(set.schema, 1); assert.equal(set.commit, expectedCommit, 'DS11 source is not this checkout');
   assert(['declared-v1', 'islands-v1'].includes(set.contracts?.sourceTemplates), 'candidate must carry a supported source template contract');
+  assert([undefined, null, 'plain-v1'].includes(set.contracts.staticHtml), 'candidate must carry a supported static HTML contract');
   if (set.contracts.sourceTemplates === 'islands-v1') assert.equal(set.contracts.stateBlock, 'declared-v1', 'islands candidate requires declared state');
   const expected = [...CRATES.map(name => ({name, registry:'crates', path:`crates/${name}`})), ...NPM.map(name => ({name:`@getforma/${name}`, registry:'npm', path:`packages/${name}`}))];
   assert(Array.isArray(set.packages)); assert.equal(set.packages.length, expected.length);
@@ -70,7 +71,7 @@ export function prepareCandidate(dir, expectedHash, expectedCommit, work) {
   run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, {stdio:'inherit'});
   assert.equal(digest(join(cli, 'package-lock.json')), before, 'packed CLI lock changed during installation');
   const signatures = auditCandidateSignatures(cli, set.packages, dir);
-  const context = {schema:1, dir, recordSha256:expectedHash, commit:expectedCommit, work, cli:join(cli,'dist/index.js'), target:join(work,'target')};
+  const context = {schema:1, dir, recordSha256:expectedHash, commit:expectedCommit, staticHtml:set.contracts.staticHtml ?? 'legacy-v1', work, cli:join(cli,'dist/index.js'), target:join(work,'target')};
   save(join(work, 'context.json'), context);
   save(join(work, 'preparation.json'), {schema:1, passed:true, commit:expectedCommit, recordSha256:expectedHash, packages:set.packages, sourceEquality, signatures});
   return context;
@@ -140,12 +141,13 @@ function readObservations(context) {
 }
 
 export function runCandidate(context, reportPath) {
+  assert(['plain-v1', 'legacy-v1'].includes(context.staticHtml), 'scaffold run requires an explicit static HTML contract');
   const rawReport = join(context.work, 'vitest.json');
   const require = createRequire(join(ROOT,'packages/create-app/package.json'));
   const runner = join(dirname(require.resolve('vitest/package.json')), 'vitest.mjs');
   const result = spawnSync(process.execPath, [runner,'run','--reporter=default','--reporter=json',`--outputFile.json=${rawReport}`], {
     cwd:join(ROOT,'packages/create-app'), stdio:'inherit', windowsHide:true,
-    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_PUBLISHED_TEMPLATES:context.mode === 'published' ? join(dirname(context.cli),'..','templates') : '', FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
+    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_STATIC_HTML:context.staticHtml, FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_PUBLISHED_TEMPLATES:context.mode === 'published' ? join(dirname(context.cli),'..','templates') : '', FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
   });
   const report = {schema:1, passed:false, mode:context.mode ?? 'candidate', commit:context.commit, recordSha256:context.recordSha256, platform:process.platform};
   try {

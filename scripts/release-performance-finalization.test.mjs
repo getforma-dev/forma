@@ -8,9 +8,10 @@ import {createPerformanceJournal,readPerformanceJournal,writePerformanceRecord,c
 import {completePerformance,validateMobile,finalizeMobileAttribution} from './release-performance-contract.mjs';
 import {native,mobile,decoder,comparison,controlObservations} from './release-performance-test-fixtures.mjs';
 import {traceFixture,traceMeasurement} from './release-performance-trace-fixtures.mjs';
+import {recordVerificationCheck} from './verify-release-set.mjs';
 
 test('actual performance producer retains attempt and writes no complete marker when final metadata fails',async()=>{
- const parent=mkdtempSync(join(tmpdir(),'forma-metadata-failure-')),report={},targetDir='/controlled-target';
+ const parent=mkdtempSync(join(tmpdir(),'forma-metadata-failure-')),report={passed:false,tests:[]},targetDir='/controlled-target';
  const expectedExecutable=join(targetDir,'release','fixture-measure'+(process.platform==='win32'?'.exe':''));
  try{
   const source=readFileSync(new URL('./release-performance.mjs',import.meta.url),'utf8');
@@ -22,17 +23,21 @@ test('actual performance producer retains attempt and writes no complete marker 
    withOwnedServer:async(_binary,_args,_project,fn)=>fn(null,'http://fixture.invalid/'),measureMobileRoute:async({id})=>({id,runs:[]}),
    mobileControls:async()=>({controls:{},observations:{}}),machineProfile:()=>({}),completePerformance:()=>({passed:true})};
   const verify=new Function(...Object.keys(dependencies),`return (${body.trim()});`)(...Object.values(dependencies));
-  await assert.rejects(verify({staged:{project:'/controlled-project',targetDir},set:{commit:'a'.repeat(40)},test:async(_name,fn)=>fn(),target:{tag:'v3.0.0-beta.1',rehearsal:true},before:'2026-10-16T00:00:00Z',report,evidenceDirectory:parent}),/final native digest failed/);
+  await assert.rejects(verify({staged:{project:'/controlled-project',targetDir},set:{commit:'a'.repeat(40)},test:(name,fn)=>recordVerificationCheck(report,name,fn),target:{tag:'v3.0.0-beta.1',rehearsal:true},before:'2026-10-16T00:00:00Z',report,evidenceDirectory:parent}),/final native digest failed/);
+  assert.equal(report.tests.at(-1).passed,false);
+  assert.equal(report.tests.at(-1).error.message,'final native digest failed');
   assert(report.performanceAttempt,'failed result assembly must keep its attempt');
   const [name]=readdirSync(parent),state=readPerformanceJournal(join(parent,name));
   assert(!state.entries.some(entry=>entry.kind==='complete'),'failed metadata must not mark completion');
  }finally{rmSync(parent,{recursive:true,force:true});}
 });
 
-test('actual N3 refusal retains the unchanged client stage before final failure, without a complete marker',async()=>{
- const parent=mkdtempSync(join(tmpdir(),'forma-mobile-failure-')),report={},rows=mobile(),client=comparison();let clientCalls=0;
- const {lhr,trace}=traceFixture({duration:69,startTime:100,scriptAt:100});
- rows[1].runs[9].lighthouse=traceMeasurement(lhr,trace);
+for(const kind of ['Lighthouse task','activation task'])test(`actual N3 ${kind} refusal retains client evidence and a failed check, without a complete marker`,async()=>{
+ const parent=mkdtempSync(join(tmpdir(),'forma-mobile-failure-')),report={passed:false,tests:[]},rows=mobile(),client=comparison();let clientCalls=0;
+ if(kind==='Lighthouse task'){
+  const {lhr,trace}=traceFixture({duration:69,startTime:100,scriptAt:100});
+  rows[1].runs[9].lighthouse=traceMeasurement(lhr,trace);
+ }else rows[0].runs[9].activation.longTasks=[{startTime:1339.5,duration:53}];
  try{
   const source=readFileSync(new URL('./release-performance.mjs',import.meta.url),'utf8');
   const body=source.slice(source.indexOf('export async function verifyPackedPerformance')).replace('export ','');
@@ -45,10 +50,13 @@ test('actual N3 refusal retains the unchanged client stage before final failure,
    mobileControls:async()=>({controls:{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true},observations:controlObservations()}),
    machineProfile:()=>({node:'test',cpuModel:'test'}),completePerformance};
   const verify=new Function(...Object.keys(dependencies),`return (${body.trim()});`)(...Object.values(dependencies));
-  await assert.rejects(verify({staged:{project:'/controlled-project',targetDir:'/controlled-target'},set:{commit:'a'.repeat(40)},test:async(_name,fn)=>fn(),target:{tag:'v3.0.0-beta.3',rehearsal:true},before:'2026-10-17T00:00:00Z',report,evidenceDirectory:parent}),/application\/unattributed task over50ms/);
+  await assert.rejects(verify({staged:{project:'/controlled-project',targetDir:'/controlled-target'},set:{commit:'a'.repeat(40)},test:(name,fn)=>recordVerificationCheck(report,name,fn),target:{tag:'v3.0.0-beta.3',rehearsal:true},before:'2026-10-17T00:00:00Z',report,evidenceDirectory:parent}),/task over50ms/);
   assert.equal(clientCalls,1,'mobile refusal must not discard the final independent measurement');
   assert.equal(report.performanceAttempt.client,client);
   assert.equal(report.performanceAttempt.mobile[1].runs.length,20);
+  assert.equal(report.passed,false);
+  assert.equal(report.tests.at(-1).passed,false);
+  assert.match(report.tests.at(-1).error.message,/task over50ms/);
   const [name]=readdirSync(parent),state=readPerformanceJournal(join(parent,name));
   assert(!state.entries.some(entry=>entry.kind==='complete'),'N3 refusal still forbids completion');
  }finally{rmSync(parent,{recursive:true,force:true});}

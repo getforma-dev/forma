@@ -48,6 +48,36 @@ client text `""` or U+200B and counts every holder it compares as
 should write a U+200B value distinguishably from the holder is open, for rule
 5's owner (FORMA-182).
 
+## Static routes: no marker vocabulary
+
+A native route whose accepted manifest has `js: []` and whose module declares
+no islands renders plain HTML. `forma-server` chooses `RenderMode::Static` for
+that route; the existing `forma-ir` walker entry points remain adoptable by
+default. Static mode writes dynamic text without `f:t` comments or a U+200B
+holder for an empty value, conditionals and lists without `f:s`/`f:l` comments,
+and row roots without injected `data-forma-key`. It omits the empty island-state
+script and the `#app` build/SSR attributes. CSS, fonts, fresh CSP nonce, response
+headers and `no-store` policy are unchanged. Static mode refuses modules with
+islands; existing server startup/request checks also refuse no-JS routes with
+islands, executable configuration or module preloads.
+
+All seven value rules still apply, including escaping, text-only elements,
+control values and leading-line-feed protection. A static dynamic value can
+be the first token in `pre`/`listing`, so it receives the same leading-LF
+protection as ordinary text. Key-domain, duplicate-key and row-shape refusals
+remain enforced even though static HTML does not carry row identity attributes.
+Output limits charge the bytes actually emitted; list iteration limits remain
+unchanged. Vectors: `crates/forma-ir/tests/fixtures/parity/static-routes.json`;
+Rust tests: `walker.rs` → `static_routes` and
+`static_mode_omits_row_keys_but_keeps_key_and_shape_refusals`; server integration:
+`crates/forma-server/tests/static_routes.rs`; browser static route:
+`e2e/ssr/regressions.spec.ts` (`root-fragment`).
+
+Routes with JavaScript retain the complete existing vocabulary, including
+outside island hosts. Public hydration can consume a caller-supplied host, so
+this change does not infer that an island's siblings can lose their markers.
+Existing adoption vectors are unchanged.
+
 ## Rule 1: line endings and NUL
 
 **Statement.** Define `N(s)` on a string: replace each CRLF pair with one LF,

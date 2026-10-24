@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "passed": true,
+  "run": 40108274094,
+  "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40108274094",
+  "prHead": "823c600356b13ccffa18d2d635dba268eeeda71d",
+  "checkoutCommit": "0ebba44822dd51b4b00a92172790ec5a8b47b9eb",
+  "publishedVersion": "3.0.0",
+  "independentHostedRunners": 4,
+  "samplesPerPhase": 1,
+  "sourceFilesIdenticalAtHeadAndCheckout": true,
+  "rows": [
+    {
+      "template": "dashboard",
+      "phase": "cold",
+      "frontendMs": 1047.987144,
+      "releaseMs": 38704.761138,
+      "cacheHit": "false",
+      "dependencyRebuilds": 113,
+      "registryPackages": 89,
+      "applicationArtifacts": 1,
+      "jobId": 120914418165,
+      "runnerId": 1000014848,
+      "artifactId": 12565092824,
+      "archiveSha256": "ae46753e4e26c39ed958c542cc91c1fc496197f03bdc602ff0aab4d46470ab42"
+    },
+    {
+      "template": "dashboard",
+      "phase": "warm",
+      "frontendMs": 1134.5555630000001,
+      "releaseMs": 4111.582749,
+      "cacheHit": "true",
+      "dependencyRebuilds": 0,
+      "registryPackages": 0,
+      "applicationArtifacts": 1,
+      "jobId": 120914819059,
+      "runnerId": 1000014873,
+      "artifactId": 12565677535,
+      "archiveSha256": "f3316dd4b77025b0d707a6894f801dd45ef1cbdc90194ba1dfdca4d0c8ccfe66"
+    },
+    {
+      "template": "minimal",
+      "phase": "cold",
+      "frontendMs": 958.5379959999998,
+      "releaseMs": 35840.602024,
+      "cacheHit": "false",
+      "dependencyRebuilds": 113,
+      "registryPackages": 89,
+      "applicationArtifacts": 1,
+      "jobId": 120914418016,
+      "runnerId": 1000014849,
+      "artifactId": 12565827278,
+      "archiveSha256": "8e346a296f5fa8149f38290ac47c8fb5e9b1726fe605a2267bb287018c46097f"
+    },
+    {
+      "template": "minimal",
+      "phase": "warm",
+      "frontendMs": 788.3654260000001,
+      "releaseMs": 2867.963116,
+      "cacheHit": "true",
+      "dependencyRebuilds": 0,
+      "registryPackages": 0,
+      "applicationArtifacts": 1,
+      "jobId": 120914819030,
+      "runnerId": 1000014872,
+      "artifactId": 12565157943,
+      "archiveSha256": "1eae15024eab19539fc9bde76063849a2f81a8df35a2a50c011d761916f2def1"
+    }
+  ],
+  "limits": [
+    "Single cold/warm pair per starter; no variance or universal time claim.",
+    "Cold dependencyRebuilds counts compiler-artifact events, not unique packages.",
+    "This cache experiment is separate from Grand Prix resource-profile timings."
+  ]
+}

@@ -1,0 +1,1240 @@
+{
+  "complete": true,
+  "passed": true,
+  "sourceHarnessQualified": true,
+  "bodyEquality": {
+    "passed": true,
+    "matchingSamples": 168,
+    "totalSamples": 168,
+    "findings": []
+  },
+  "harness": "be858597a42c3fbcbd0146d111c2f3bc7bc8d67a",
+  "run": "40123441558",
+  "artifact": {
+    "passed": true,
+    "artifactId": 12573154988,
+    "runId": 40123441558,
+    "runAttempt": 1,
+    "sourceCommit": "be858597a42c3fbcbd0146d111c2f3bc7bc8d67a",
+    "sha256": "40b5692f0b9773d3797f7eb33f66a828e31c112d9e753a34f832587714211b41",
+    "githubDigest": "sha256:40b5692f0b9773d3797f7eb33f66a828e31c112d9e753a34f832587714211b41",
+    "bytes": 12859901,
+    "files": 459
+  },
+  "campaign": {
+    "schema": 1,
+    "id": "c7fd2a3c-3286-44b5-bffe-eb22a1dfba3c",
+    "createdAt": "2026-10-24T19:03:17.394Z",
+    "kind": "github-actions",
+    "hostSha256": "3b53850013842a4fcbfe45d0d33768425f9961f939a57ca95cb848ce91c0a2a2",
+    "machineIdSha256": "399794935aded36b418e3630a41ef1d23f027811adf388b70d95a72238bc049b",
+    "runnerTrackingSha256": "488ab567d18b1fc1c7d48daff936c89d729d844123ea8961c3e0f82274c67c40",
+    "github": {
+      "runId": "40123441558",
+      "runAttempt": "1",
+      "job": "budgets",
+      "repository": "getforma-dev/forma"
+    }
+  },
+  "resourceProfile": {
+    "name": "gha-4-v1",
+    "diagnostic": false,
+    "qualified": true,
+    "minimumCpus": 4,
+    "platform": "linux",
+    "githubActions": true,
+    "availableCpus": 4,
+    "affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "selectedCpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "classA": {
+      "cpus": "1",
+      "memory": "1g",
+      "workers": 1,
+      "cpuset": "0"
+    },
+    "classB": {
+      "cpus": "2",
+      "memory": "2g",
+      "workers": 2,
+      "cpuset": "0,1"
+    },
+    "loadgen": {
+      "cpus": "2",
+      "cpuset": "2,3"
+    },
+    "build": {
+      "cpus": "4",
+      "cpuset": "0,1,2,3"
+    },
+    "signals": {
+      "cpus": "1",
+      "memory": "1g",
+      "cpuset": "0"
+    },
+    "browser": {
+      "cpuset": "1,2,3"
+    }
+  },
+  "source": {
+    "carSource": "3d9de62d0709e8158cadd62be387ff1481ca9e66",
+    "formaRef": "published 3.0.0"
+  },
+  "qualification": {
+    "resourceProfile": {
+      "name": "gha-4-v1",
+      "diagnostic": false,
+      "qualified": true,
+      "minimumCpus": 4,
+      "platform": "linux",
+      "githubActions": true,
+      "availableCpus": 4,
+      "affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "selectedCpus": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "classA": {
+        "cpus": "1",
+        "memory": "1g",
+        "workers": 1,
+        "cpuset": "0"
+      },
+      "classB": {
+        "cpus": "2",
+        "memory": "2g",
+        "workers": 2,
+        "cpuset": "0,1"
+      },
+      "loadgen": {
+        "cpus": "2",
+        "cpuset": "2,3"
+      },
+      "build": {
+        "cpus": "4",
+        "cpuset": "0,1,2,3"
+      },
+      "signals": {
+        "cpus": "1",
+        "memory": "1g",
+        "cpuset": "0"
+      },
+      "browser": {
+        "cpuset": "1,2,3"
+      }
+    },
+    "diagnostic": false,
+    "campaigns": {
+      "server": {
+        "schema": 1,
+        "id": "c7fd2a3c-3286-44b5-bffe-eb22a1dfba3c",
+        "createdAt": "2026-10-24T19:03:17.394Z",
+        "kind": "github-actions",
+        "hostSha256": "3b53850013842a4fcbfe45d0d33768425f9961f939a57ca95cb848ce91c0a2a2",
+        "machineIdSha256": "399794935aded36b418e3630a41ef1d23f027811adf388b70d95a72238bc049b",
+        "runnerTrackingSha256": "488ab567d18b1fc1c7d48daff936c89d729d844123ea8961c3e0f82274c67c40",
+        "github": {
+          "runId": "40123441558",
+          "runAttempt": "1",
+          "job": "budgets",
+          "repository": "getforma-dev/forma"
+        }
+      }
+    },
+    "measurementsSha256": "0588973de9ded2618bfc3d584cdff2020d54eab8cf93d2ec02808670dfdb13df",
+    "profileLabel": "gha-4-v1: 2-CPU multicore server, 2-CPU load generator; separate CPU sets"
+  },
+  "coverage": {
+    "cars": 14,
+    "scoredRecords": 112,
+    "smokeRecords": 14,
+    "loadSamples": 168,
+    "warmupSamples": 56,
+    "verifiedSmokeBodies": 42,
+    "verifiedEventBodies": 70,
+    "retainedTransportRecords": 294,
+    "memorySamples": 294,
+    "bootSamples": 70,
+    "buildSamples": 42,
+    "retainedResourceEntriesVerified": 224
+  },
+  "intervals": [
+    {
+      "car": "forma",
+      "at": "2026-10-24T19:04:54.744Z",
+      "load": [
+        1.77,
+        0.7,
+        0.26
+      ],
+      "freeBytes": 86875185152,
+      "finished": "2026-10-24T19:09:07.481Z",
+      "loadAfter": [
+        2.61,
+        1.32,
+        0.59
+      ]
+    },
+    {
+      "car": "vanilla-node",
+      "at": "2026-10-24T19:10:03.347Z",
+      "load": [
+        1.97,
+        1.37,
+        0.65
+      ],
+      "freeBytes": 90252255232,
+      "finished": "2026-10-24T19:13:30.517Z",
+      "loadAfter": [
+        0.96,
+        1.25,
+        0.75
+      ]
+    },
+    {
+      "car": "react-node",
+      "at": "2026-10-24T19:13:46.026Z",
+      "load": [
+        1.49,
+        1.35,
+        0.8
+      ],
+      "freeBytes": 89939705856,
+      "finished": "2026-10-24T19:17:14.969Z",
+      "loadAfter": [
+        1.12,
+        1.38,
+        0.93
+      ]
+    },
+    {
+      "car": "preact-node",
+      "at": "2026-10-24T19:17:31.592Z",
+      "load": [
+        1.16,
+        1.38,
+        0.94
+      ],
+      "freeBytes": 89936523264,
+      "finished": "2026-10-24T19:21:00.524Z",
+      "loadAfter": [
+        1.15,
+        1.31,
+        1.01
+      ]
+    },
+    {
+      "car": "solid-node",
+      "at": "2026-10-24T19:21:16.790Z",
+      "load": [
+        1.12,
+        1.3,
+        1.01
+      ],
+      "freeBytes": 89937399808,
+      "finished": "2026-10-24T19:24:45.972Z",
+      "loadAfter": [
+        1.54,
+        1.42,
+        1.11
+      ]
+    },
+    {
+      "car": "svelte-node",
+      "at": "2026-10-24T19:25:01.199Z",
+      "load": [
+        1.35,
+        1.38,
+        1.1
+      ],
+      "freeBytes": 89970647040,
+      "finished": "2026-10-24T19:28:30.416Z",
+      "loadAfter": [
+        0.91,
+        1.17,
+        1.07
+      ]
+    },
+    {
+      "car": "vue-node",
+      "at": "2026-10-24T19:28:45.377Z",
+      "load": [
+        1.73,
+        1.34,
+        1.13
+      ],
+      "freeBytes": 89937993728,
+      "finished": "2026-10-24T19:32:15.213Z",
+      "loadAfter": [
+        1.31,
+        1.33,
+        1.17
+      ]
+    },
+    {
+      "car": "react-bun",
+      "at": "2026-10-24T19:32:23.192Z",
+      "load": [
+        1.28,
+        1.33,
+        1.17
+      ],
+      "freeBytes": 90217914368,
+      "finished": "2026-10-24T19:35:49.422Z",
+      "loadAfter": [
+        1.1,
+        1.21,
+        1.15
+      ]
+    },
+    {
+      "car": "vanilla-bun",
+      "at": "2026-10-24T19:36:06.086Z",
+      "load": [
+        1.74,
+        1.36,
+        1.2
+      ],
+      "freeBytes": 90233118720,
+      "finished": "2026-10-24T19:39:32.055Z",
+      "loadAfter": [
+        0.95,
+        1.14,
+        1.14
+      ]
+    },
+    {
+      "car": "react-deno",
+      "at": "2026-10-24T19:39:39.516Z",
+      "load": [
+        0.8,
+        1.1,
+        1.13
+      ],
+      "freeBytes": 90217877504,
+      "finished": "2026-10-24T19:43:07.693Z",
+      "loadAfter": [
+        0.99,
+        1.13,
+        1.14
+      ]
+    },
+    {
+      "car": "vanilla-deno",
+      "at": "2026-10-24T19:43:14.502Z",
+      "load": [
+        0.99,
+        1.13,
+        1.14
+      ],
+      "freeBytes": 90234163200,
+      "finished": "2026-10-24T19:46:41.084Z",
+      "loadAfter": [
+        0.81,
+        1.01,
+        1.08
+      ]
+    },
+    {
+      "car": "next",
+      "at": "2026-10-24T19:48:03.078Z",
+      "load": [
+        1.69,
+        1.22,
+        1.15
+      ],
+      "freeBytes": 88063873024,
+      "finished": "2026-10-24T19:52:43.977Z",
+      "loadAfter": [
+        1.87,
+        1.65,
+        1.36
+      ]
+    },
+    {
+      "car": "react-router",
+      "at": "2026-10-24T19:53:16.660Z",
+      "load": [
+        1.94,
+        1.7,
+        1.38
+      ],
+      "freeBytes": 89882169344,
+      "finished": "2026-10-24T19:56:59.492Z",
+      "loadAfter": [
+        1.37,
+        1.53,
+        1.38
+      ]
+    },
+    {
+      "car": "astro",
+      "at": "2026-10-24T19:57:39.564Z",
+      "load": [
+        1.28,
+        1.49,
+        1.37
+      ],
+      "freeBytes": 89159794688,
+      "finished": "2026-10-24T20:01:15.179Z",
+      "loadAfter": [
+        1.43,
+        1.42,
+        1.36
+      ]
+    }
+  ],
+  "sequentialIntervalsVerified": true,
+  "nonOverlappingCpuSetsVerified": true,
+  "cleanup": {
+    "passed": true,
+    "finalActions": [],
+    "ownership": {
+      "id": "ci-40123441558-1",
+      "builder": "gp264-ci-40123441558-1",
+      "builderCreated": false
+    }
+  },
+  "budgets": {
+    "schema": 1,
+    "image": "sha256:e01f68a89dc3cb76f247c25e678aad3949f0e934418369dabf65b5a5beb50b43",
+    "campaign": {
+      "schema": 1,
+      "id": "c7fd2a3c-3286-44b5-bffe-eb22a1dfba3c",
+      "createdAt": "2026-10-24T19:03:17.394Z",
+      "kind": "github-actions",
+      "hostSha256": "3b53850013842a4fcbfe45d0d33768425f9961f939a57ca95cb848ce91c0a2a2",
+      "machineIdSha256": "399794935aded36b418e3630a41ef1d23f027811adf388b70d95a72238bc049b",
+      "runnerTrackingSha256": "488ab567d18b1fc1c7d48daff936c89d729d844123ea8961c3e0f82274c67c40",
+      "github": {
+        "runId": "40123441558",
+        "runAttempt": "1",
+        "job": "budgets",
+        "repository": "getforma-dev/forma"
+      }
+    },
+    "resourceProfile": {
+      "name": "gha-4-v1",
+      "diagnostic": false,
+      "qualified": true,
+      "minimumCpus": 4,
+      "platform": "linux",
+      "githubActions": true,
+      "availableCpus": 4,
+      "affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "selectedCpus": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "classA": {
+        "cpus": "1",
+        "memory": "1g",
+        "workers": 1,
+        "cpuset": "0"
+      },
+      "classB": {
+        "cpus": "2",
+        "memory": "2g",
+        "workers": 2,
+        "cpuset": "0,1"
+      },
+      "loadgen": {
+        "cpus": "2",
+        "cpuset": "2,3"
+      },
+      "build": {
+        "cpus": "4",
+        "cpuset": "0,1,2,3"
+      },
+      "signals": {
+        "cpus": "1",
+        "memory": "1g",
+        "cpuset": "0"
+      },
+      "browser": {
+        "cpuset": "1,2,3"
+      }
+    },
+    "diagnostic": false,
+    "measured": {
+      "peakMiB": 4.033333333333334,
+      "appBootMs": 18.144030399998883,
+      "imageBytes": 78187609
+    },
+    "limits": {
+      "peakMiB": 8,
+      "appBootMs": 50,
+      "imageBytes": 150000000
+    },
+    "samples": {
+      "memoryPeaks": [
+        3.98,
+        4,
+        4.12
+      ],
+      "bootRemainders": [
+        17.377383999992162,
+        19.076107000000775,
+        18.098462000023574,
+        18.359490000002552,
+        17.80870899997535
+      ]
+    },
+    "checks": [
+      {
+        "metric": "peakMiB",
+        "limit": 8,
+        "measured": 4.033333333333334,
+        "passed": true
+      },
+      {
+        "metric": "appBootMs",
+        "limit": 50,
+        "measured": 18.144030399998883,
+        "passed": true
+      },
+      {
+        "metric": "imageBytes",
+        "limit": 150000000,
+        "measured": 78187609,
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "details": {
+    "forma": {
+      "image": "sha256:e01f68a89dc3cb76f247c25e678aad3949f0e934418369dabf65b5a5beb50b43",
+      "sprint": [
+        1400.6694648372106,
+        1408.2198796303574,
+        1406.5655611878294
+      ],
+      "endurance": [
+        163.64670612636672,
+        162.15348427854684,
+        160.35229706774422
+      ],
+      "multicore": [
+        1723.7464084984322,
+        1728.6415853409949,
+        1728.121664038918
+      ],
+      "reaction": [
+        0.79691,
+        0.798172,
+        0.81297
+      ],
+      "memory": [
+        3.98,
+        4,
+        4.12
+      ],
+      "boot": [
+        179.78048199997284,
+        179.56208600001992,
+        171.49684100001468,
+        182.76284800001304,
+        176.47079199997825
+      ],
+      "bootRemainders": [
+        17.377383999992162,
+        19.076107000000775,
+        18.098462000023574,
+        18.359490000002552,
+        17.80870899997535
+      ],
+      "imageBytes": 78187609,
+      "rawBytes": 33193,
+      "gzipBytes": 2611,
+      "build": [
+        3677,
+        4404,
+        3767
+      ]
+    },
+    "vanilla-node": {
+      "image": "sha256:85344c61eac344954c03e36592c2fb738f1e57749b3ff58193075c5011e43586",
+      "sprint": [
+        4418.105489540374,
+        4433.139895277191,
+        4519.907595701715
+      ],
+      "endurance": [
+        416.4693398246088,
+        429.97603330885346,
+        434.0557596683994
+      ],
+      "multicore": [
+        5512.11029839108,
+        5544.510831508116,
+        5567.354362099649
+      ],
+      "reaction": [
+        0.391131,
+        0.392223,
+        0.388025
+      ],
+      "memory": [
+        34.09,
+        34.62,
+        34.82
+      ],
+      "boot": [
+        247.06711400000495,
+        233.28541700000642,
+        251.69273500001873,
+        232.5435920000018,
+        232.6689539999934
+      ],
+      "bootRemainders": [
+        88.4903420000046,
+        84.92870700001367,
+        91.0681480000203,
+        80.96913000001223,
+        82.301026000001
+      ],
+      "imageBytes": 227044245,
+      "rawBytes": 17060,
+      "gzipBytes": 1966,
+      "build": [
+        2,
+        2,
+        2
+      ]
+    },
+    "react-node": {
+      "image": "sha256:89336ae8633e364144f7cdc0a3bb319793f88c3dcb7f66eb0e40825a51a5e3ac",
+      "sprint": [
+        2217.0527277455653,
+        2255.2243134577425,
+        2235.236786692923
+      ],
+      "endurance": [
+        117.26509728680263,
+        113.26746135055568,
+        122.76622040794311
+      ],
+      "multicore": [
+        2534.893422311103,
+        2586.0463725558775,
+        2565.0458177900205
+      ],
+      "reaction": [
+        0.676684,
+        0.597275,
+        0.594259
+      ],
+      "memory": [
+        35.16,
+        39.64,
+        39.95
+      ],
+      "boot": [
+        279.91710599997896,
+        260.11386400001356,
+        258.0062130000151,
+        263.4880310000153,
+        262.91619999997783
+      ],
+      "bootRemainders": [
+        119.77624099998502,
+        109.46977399999741,
+        111.84559700000682,
+        109.38169100001687,
+        115.44701299999724
+      ],
+      "imageBytes": 227544514,
+      "rawBytes": 17046,
+      "gzipBytes": 1951,
+      "build": [
+        546,
+        541,
+        559
+      ]
+    },
+    "preact-node": {
+      "image": "sha256:c58f0be74ea45e227964a4332c278292befbbd7964c3e6d888a314c9f95a233f",
+      "sprint": [
+        2822.1935664819953,
+        2845.567945293559,
+        2857.33407490793
+      ],
+      "endurance": [
+        146.15765833100224,
+        141.5605108036801,
+        149.95061418507987
+      ],
+      "multicore": [
+        3300.8030927206896,
+        3325.871132015548,
+        3347.199473732264
+      ],
+      "reaction": [
+        0.61759,
+        0.48922600000000005,
+        0.487122
+      ],
+      "memory": [
+        31.9,
+        35.33,
+        36.07
+      ],
+      "boot": [
+        238.5461559999967,
+        238.8329510000185,
+        253.77095199999167,
+        241.08667400002014,
+        234.81567400001222
+      ],
+      "bootRemainders": [
+        83.05749000000651,
+        83.64779499999713,
+        102.44542500001262,
+        84.52063300000736,
+        81.9254700000165
+      ],
+      "imageBytes": 227068004,
+      "rawBytes": 17046,
+      "gzipBytes": 1950,
+      "build": [
+        662,
+        657,
+        653
+      ]
+    },
+    "solid-node": {
+      "image": "sha256:d18e502713e9101be8cafecaea2496ab591e542a40fcaefe218449ce251f1a65",
+      "sprint": [
+        4800.327351850936,
+        4807.754997708284,
+        4795.809379595457
+      ],
+      "endurance": [
+        578.221926670087,
+        593.9142812225189,
+        594.601210100868
+      ],
+      "multicore": [
+        6119.997230579789,
+        6180.929548733216,
+        6127.2382629563
+      ],
+      "reaction": [
+        0.742899,
+        0.744503,
+        0.754662
+      ],
+      "memory": [
+        41.04,
+        41.18,
+        41.34
+      ],
+      "boot": [
+        241.7601330000034,
+        232.2988989999867,
+        227.49934499998926,
+        233.04527999999118,
+        248.20251999999164
+      ],
+      "bootRemainders": [
+        81.14389899998787,
+        79.98215500000515,
+        82.3062959999952,
+        84.19547000000603,
+        99.84463000000687
+      ],
+      "imageBytes": 227137258,
+      "rawBytes": 17045,
+      "gzipBytes": 1949,
+      "build": [
+        764,
+        758,
+        775
+      ]
+    },
+    "svelte-node": {
+      "image": "sha256:8ffc5f6aa79f97a90c96eb66e810d742edc9831c873fb9ca4dfe6a5bca9fec2e",
+      "sprint": [
+        5596.838661477195,
+        5613.758968123047,
+        5634.226979451542
+      ],
+      "endurance": [
+        644.4211907122758,
+        658.3330841231855,
+        651.6354755964297
+      ],
+      "multicore": [
+        6694.278626499703,
+        6735.096612612932,
+        6722.183739347906
+      ],
+      "reaction": [
+        0.34779,
+        0.34730900000000003,
+        0.35859
+      ],
+      "memory": [
+        36.73,
+        37.91,
+        37.99
+      ],
+      "boot": [
+        242.557289999997,
+        236.30887300000177,
+        232.09653300000355,
+        235.5359129999997,
+        234.38418899997487
+      ],
+      "bootRemainders": [
+        81.77009800000815,
+        84.03829999998561,
+        81.90925299999071,
+        81.02143200000864,
+        87.33522799998173
+      ],
+      "imageBytes": 227103678,
+      "rawBytes": 17082,
+      "gzipBytes": 1972,
+      "build": [
+        798,
+        781,
+        787
+      ]
+    },
+    "vue-node": {
+      "image": "sha256:caaa481441315818d85d3333730a744b7affb27e7c56d7d208b8747e2f51a261",
+      "sprint": [
+        2450.3406783758,
+        2509.0116918792064,
+        2487.8526276578436
+      ],
+      "endurance": [
+        294.3201944023513,
+        303.0206963020604,
+        306.3144854499422
+      ],
+      "multicore": [
+        2841.7437038383887,
+        2880.497982546793,
+        2896.9555574439987
+      ],
+      "reaction": [
+        1.079466,
+        1.080267,
+        1.057625
+      ],
+      "memory": [
+        52.38,
+        52.47,
+        52.41
+      ],
+      "boot": [
+        319.0712850000127,
+        318.78853900000104,
+        310.61177200000384,
+        308.6534169999941,
+        317.22856700001284
+      ],
+      "bootRemainders": [
+        161.730475999997,
+        163.3770300000033,
+        155.93515199999092,
+        164.0772129999823,
+        166.53295700001763
+      ],
+      "imageBytes": 228213752,
+      "rawBytes": 17061,
+      "gzipBytes": 1965,
+      "build": [
+        693,
+        697,
+        700
+      ]
+    },
+    "react-bun": {
+      "image": "sha256:64e0c680b589323a1107d711f1afe3f78c1a1569723fada403410be8e84ef0a7",
+      "sprint": [
+        2637.645296863721,
+        2727.9605523478785,
+        2651.1715123578297
+      ],
+      "endurance": [
+        193.5469876542738,
+        194.34704600772312,
+        206.54767891174046
+      ],
+      "multicore": [
+        2970.4141386212855,
+        3069.553339653578,
+        3075.744316106354
+      ],
+      "reaction": [
+        1.0716890000000001,
+        0.9821319999999999,
+        0.943438
+      ],
+      "memory": [
+        30.49,
+        28.97,
+        28.98
+      ],
+      "boot": [
+        212.74208500000532,
+        207.538069000002,
+        193.55217899999116,
+        208.08651699998882,
+        183.23773699998856
+      ],
+      "bootRemainders": [
+        43.22947399999248,
+        51.548240000003716,
+        38.92170299999998,
+        56.60960399999749,
+        33.211699999985285
+      ],
+      "imageBytes": 189898755,
+      "rawBytes": 17046,
+      "gzipBytes": 1951,
+      "build": [
+        18,
+        23,
+        21
+      ]
+    },
+    "vanilla-bun": {
+      "image": "sha256:e20956deb90f03d43852da4fa1c3ee0b0e45b4a572a41e3d58d4d06d32c37c21",
+      "sprint": [
+        8762.822736830765,
+        8705.444410148733,
+        8689.275499418989
+      ],
+      "endurance": [
+        967.759314097219,
+        944.7255899036384,
+        937.9793796522729
+      ],
+      "multicore": [
+        9637.672800764278,
+        9760.791783000632,
+        9730.430775722018
+      ],
+      "reaction": [
+        0.315189,
+        0.31482899999999997,
+        0.284151
+      ],
+      "memory": [
+        16.15,
+        18.73,
+        18.26
+      ],
+      "boot": [
+        181.68806700001005,
+        175.73604899999918,
+        180.4885849999846,
+        170.91067000001203,
+        166.25697899999795
+      ],
+      "bootRemainders": [
+        19.44411000001128,
+        23.02394000001368,
+        19.286017000005813,
+        22.081426999997348,
+        21.227290000009816
+      ],
+      "imageBytes": 189680041,
+      "rawBytes": 17060,
+      "gzipBytes": 1966,
+      "build": [
+        8,
+        8,
+        6
+      ]
+    },
+    "react-deno": {
+      "image": "sha256:b250b12154cdc2b022e99dda9aae2909f70deb1e61292f056e16ed8abbe59fb2",
+      "sprint": [
+        2685.078144762431,
+        2832.055357206325,
+        2841.7198896350374
+      ],
+      "endurance": [
+        243.31369064841022,
+        243.42857345574805,
+        239.8328496800838
+      ],
+      "multicore": [
+        2970.7110612095107,
+        3027.64897873658,
+        3058.376245626011
+      ],
+      "reaction": [
+        0.5022190000000001,
+        0.467664,
+        0.462244
+      ],
+      "memory": [
+        66.2,
+        66.33,
+        66.34
+      ],
+      "boot": [
+        347.6084629999823,
+        340.8475439999893,
+        367.2308239999984,
+        335.73351200000616,
+        326.7765139999974
+      ],
+      "bootRemainders": [
+        197.17329199999222,
+        178.4165980000107,
+        204.97858299998916,
+        189.0655100000149,
+        183.6277800000098
+      ],
+      "imageBytes": 175144891,
+      "rawBytes": 17046,
+      "gzipBytes": 1951,
+      "build": [
+        123,
+        130,
+        134
+      ]
+    },
+    "vanilla-deno": {
+      "image": "sha256:96b9030cd6ce0a4b4894b813d9d1903b8fa75943c6425bafbd229e64d8ba9b66",
+      "sprint": [
+        6574.538918572007,
+        6597.3514135987125,
+        6626.44004272648
+      ],
+      "endurance": [
+        785.9638340587203,
+        778.1775296274939,
+        786.9686885755762
+      ],
+      "multicore": [
+        7697.613365447933,
+        7708.220550169191,
+        7711.89176044944
+      ],
+      "reaction": [
+        0.24475799999999998,
+        0.24271399999999999,
+        0.248093
+      ],
+      "memory": [
+        36.34,
+        36.42,
+        36.24
+      ],
+      "boot": [
+        211.79810700000962,
+        200.54145099999732,
+        214.32415699999547,
+        206.57169499999145,
+        209.68955799998366
+      ],
+      "bootRemainders": [
+        56.05962900002487,
+        50.08676700000069,
+        60.457090999989305,
+        50.71956899997895,
+        51.03116899999441
+      ],
+      "imageBytes": 174909868,
+      "rawBytes": 17060,
+      "gzipBytes": 1966,
+      "build": [
+        34,
+        31,
+        28
+      ]
+    },
+    "next": {
+      "image": "sha256:f013795888810ac20ff1a5beaf4add691e6c75e40955c64ea44018f5c238c9d6",
+      "sprint": [
+        53.989115432601714,
+        57.5867492083857,
+        58.483525190953706
+      ],
+      "endurance": [
+        2.5993757227491088,
+        2.1996214805571017,
+        2.1994534109735495
+      ],
+      "multicore": [
+        65.08317107348145,
+        67.28689839979533,
+        69.28326437114308
+      ],
+      "reaction": [
+        45.143828,
+        40.233371,
+        37.838332
+      ],
+      "memory": [
+        100.1,
+        107.3,
+        107.6
+      ],
+      "boot": [
+        742.4635640000051,
+        748.2457829999912,
+        728.043783000001,
+        748.392176000023,
+        721.1260550000006
+      ],
+      "bootRemainders": [
+        575.4225720000104,
+        593.3430359999766,
+        577.2466819999972,
+        582.6779540000134,
+        566.4576179999858
+      ],
+      "imageBytes": 296770234,
+      "rawBytes": 66701,
+      "gzipBytes": 6462,
+      "build": [
+        22313,
+        22002,
+        22147
+      ]
+    },
+    "react-router": {
+      "image": "sha256:d605ed3e157e1c6cdffabd83f11c9ffb333b296426b8e8ec81f607654bd2df1a",
+      "sprint": [
+        342.51503308352756,
+        377.1212085184497,
+        396.0158656373136
+      ],
+      "endurance": [
+        58.58407035856154,
+        57.784578763656285,
+        59.68558059639506
+      ],
+      "multicore": [
+        435.81002392630927,
+        464.8608184396273,
+        475.16435701675846
+      ],
+      "reaction": [
+        16.64597,
+        15.811939,
+        10.291962999999999
+      ],
+      "memory": [
+        88.11,
+        90.91,
+        89.87
+      ],
+      "boot": [
+        1019.7950569999812,
+        1031.9507920000178,
+        1015.6743290000013,
+        1021.7700110000151,
+        1035.0868279999995
+      ],
+      "bootRemainders": [
+        864.3813989999762,
+        874.0914290000219,
+        868.7374900000286,
+        869.2596659999981,
+        876.4030900000071
+      ],
+      "imageBytes": 244660552,
+      "rawBytes": 30473,
+      "gzipBytes": 5317,
+      "build": [
+        2470,
+        2463,
+        2483
+      ]
+    },
+    "astro": {
+      "image": "sha256:f515d04443cc6dea0316fbc935cb651f0bdcce6044423f80f3b55be649738bad",
+      "sprint": [
+        1007.1411808857625,
+        1068.6360383494393,
+        1067.8695502270914
+      ],
+      "endurance": [
+        91.87570139437541,
+        91.07596176584778,
+        91.77684944574796
+      ],
+      "multicore": [
+        1017.2407014796781,
+        1080.8795191692172,
+        1083.5805067210256
+      ],
+      "reaction": [
+        2.975611,
+        2.186137,
+        1.181358
+      ],
+      "memory": [
+        54.95,
+        54.3,
+        54.42
+      ],
+      "boot": [
+        432.2201969999878,
+        440.3489319999935,
+        432.7055720000062,
+        453.2968249999976,
+        461.08917200000724
+      ],
+      "bootRemainders": [
+        272.80542600000626,
+        281.3909639999911,
+        274.95257200000924,
+        286.0527299999958,
+        290.3899640000018
+      ],
+      "imageBytes": 381418779,
+      "rawBytes": 17161,
+      "gzipBytes": 1951,
+      "build": [
+        2248,
+        2272,
+        2266
+      ]
+    }
+  },
+  "scoring": {
+    "file": "reproduced-summary.json",
+    "sha256": "523e23d9eb6d98ab99a8d8082b6d03278276679e11755225f6d236b75c48d4c5",
+    "measurementsSha256": "0588973de9ded2618bfc3d584cdff2020d54eab8cf93d2ec02808670dfdb13df"
+  },
+  "limitations": [
+    "Every smoke and event probe body is retained and semantically checked; all warmups and timed samples retain complete oha output, explicit request headers, arguments, exact aggregate body bytes and completed-request denominators. Individual timed bodies are not retained; this proves representation size consistency alongside sampled semantic correctness, not byte-for-byte identity of every timed body.",
+    "Build CPU affinity is bound by the exact driver command and recorded profile; short-lived --rm build containers have no retained Docker inspect record.",
+    "No comparison with the earlier diagnostic run or another campaign is made. This is a frozen published-3.0.0 baseline, not an integrated-candidate race."
+  ]
+}

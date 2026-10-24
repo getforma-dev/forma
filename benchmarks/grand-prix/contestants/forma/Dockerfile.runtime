@@ -1,0 +1,7 @@
+# A separate runtime comparison: COPY the exact binary exported from the
+# original Debian-slim car. This does not rebuild or replace that car.
+FROM gcr.io/distroless/cc-debian13:nonroot@sha256:3ee00291cf386ec52a552e6a858d555debd74776eb4bfa53fa3df2cd6677515e AS distroless
+COPY --chmod=0755 grandprix /usr/local/bin/grandprix
+ENV RUST_LOG=warn
+EXPOSE 3000
+ENTRYPOINT ["/usr/local/bin/grandprix"]

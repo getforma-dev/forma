@@ -51,7 +51,7 @@ export async function recordPackedDecoder({corePath,compilerPath,evidenceDirecto
 export async function verifyPackedPerformance({staged,set,test,target,before,report,evidenceDirectory}){
  const {project,targetDir}=staged;
  const output=createPerformanceJournal(evidenceDirectory,{contract:PERFORMANCE_CONTRACT,commit:set.commit,targetTag:target.tag,rehearsal:target.rehearsal,
-  producers:Object.fromEntries(['scripts/release-performance.mjs','scripts/release-performance-mobile.mjs','scripts/release-performance-attribution.mjs','scripts/release-performance-contract.mjs','scripts/release-performance-spec.mjs','scripts/release-performance-journal.mjs','e2e/performance/client/run.mjs','e2e/fixtures/apps/src/bin/measure.rs','e2e/fixtures/apps/src/performance_evidence.rs'].map(file=>[file,digest(join(ROOT,file))]))});
+  producers:Object.fromEntries(['scripts/release-performance.mjs','scripts/release-performance-mobile.mjs','scripts/release-activation-observer.mjs','scripts/release-performance-attribution.mjs','scripts/release-performance-contract.mjs','scripts/release-performance-spec.mjs','scripts/release-performance-journal.mjs','e2e/performance/client/run.mjs','e2e/fixtures/apps/src/bin/measure.rs','e2e/fixtures/apps/src/performance_evidence.rs'].map(file=>[file,digest(join(ROOT,file))]))});
  const record=(kind,value)=>writePerformanceRecord(output,kind,value);
  const nativePath=join(output,'native-report.json'),clientPath=join(output,'client-report.json');
  const attempt=report.performanceAttempt={contract:PERFORMANCE_CONTRACT,targetTag:target.tag,rehearsal:target.rehearsal,mobile:[]};
@@ -86,19 +86,22 @@ export async function verifyPackedPerformance({staged,set,test,target,before,rep
     });
    });
   }
-  finalizeMobileAttribution(mobile);
   // Collect the last independent measurement before final N3 acceptance. The
-  // unchanged completePerformance validator still refuses any blocking task;
+  // unchanged attribution and performance validators still refuse blocking tasks;
   // a refusal retains client evidence without writing a completion marker.
   let client;
   await test('performance: founder client comparison completes in all three engines over packed core',async()=>{
    run(process.execPath,[join(ROOT,'e2e/performance/client/run.mjs'),'--browser','all'],ROOT,{stdio:'inherit',timeout:600000,env:{...process.env,FORMA_BENCH_CORE:join(project,'node_modules/@getforma/core'),FORMA_BENCH_OUTPUT:clientPath,FORMA_PERFORMANCE_EVIDENCE:output}});
    client=json(clientPath);attempt.client=client;
   });
-  const machine={...machineProfile({rustc:set.toolchain,npm:set.npm}),profile:'packed npm and crates; ordinary cargo release; N1 prepared typed inputs; Lighthouse13.5.0 applied mobile; serial Chromium/Firefox/WebKit comparison'};
-  const result=completePerformance({native,mobile,client,decoder,baseline,machine,controls:controls.controls,controlObservations:controls.observations});
-  const measured={...result,rehearsal:target.rehearsal,targetTag:target.tag,controlObservations:controls.observations,toolingLockSha256:digest(join(ROOT,'package-lock.json')),nativeExecutableSha256:digest(executable('fixture-measure'))};
-  const evidence=completePerformanceJournal(output,{passed:true,resultSha256:createHash('sha256').update(JSON.stringify(measured)).digest('hex')});
+  let measured,evidence;
+  await test('performance: final attribution, acceptance and complete evidence',async()=>{
+   finalizeMobileAttribution(mobile);
+   const machine={...machineProfile({rustc:set.toolchain,npm:set.npm}),profile:'packed npm and crates; ordinary cargo release; N1 prepared typed inputs; Lighthouse13.5.0 applied mobile; serial Chromium/Firefox/WebKit comparison'};
+   const result=completePerformance({native,mobile,client,decoder,baseline,machine,controls:controls.controls,controlObservations:controls.observations});
+   measured={...result,rehearsal:target.rehearsal,targetTag:target.tag,controlObservations:controls.observations,toolingLockSha256:digest(join(ROOT,'package-lock.json')),nativeExecutableSha256:digest(executable('fixture-measure'))};
+   evidence=completePerformanceJournal(output,{passed:true,resultSha256:createHash('sha256').update(JSON.stringify(measured)).digest('hex')});
+  });
   delete report.performanceAttempt;
   return {...measured,evidence};
 }

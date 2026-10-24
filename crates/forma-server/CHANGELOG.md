@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- FORMA-257: plain HTML for no-JavaScript routes without islands. The additive
+  counted `RenderMode::Static` walk omits adoption markers, empty-text holders
+  and injected row keys while retaining value, key and resource checks. The
+  server also omits unused root attributes and the empty island-state envelope.
+  Existing walker entry points and JavaScript route output remain unchanged.
 - Add optional `compression` support for rendered pages through explicit
   `PageResponse::with_compression` opt-in. Negotiate Brotli/gzip/identity with
   quality refusals, preserve the document policy and no-store headers, and keep
