@@ -398,10 +398,23 @@ const tieredRoots = new WeakMap<Node, MountCtx>();
 let tieredCount = 0;
 let mountSeq = 0;
 
-/** The tiered mount whose root is `node` or its nearest such ancestor, across shadow roots; null for none. */
+/**
+ * Each element a `data-if` holds out of the tree, mapped to the comment that
+ * stands in its place. Walking up through that comment, a node in a hidden
+ * branch is still under its scope and its mount, as it is while the branch shows.
+ * Verified by: src/__tests__/runtime-if-branch.test.ts > "a scope nested in a data-if that starts false mounts, as one in a branch that starts true does"
+ */
+const ifHeld = new WeakMap<Node, Node>();
+
+/** `n`'s parent, or for an element a data-if holds out of the tree, the comment in its place. */
+function up(n: Node): Node | null {
+  return n.parentNode ?? ifHeld.get(n) ?? null;
+}
+
+/** The tiered mount whose root is `node` or its nearest such ancestor, across shadow roots and hidden data-if branches; null for none. */
 function ownerOf(node: Node | null): MountCtx | null {
   if (tieredCount === 0) return null;
-  for (let n = node; n; n = n.parentNode ?? (n.nodeType === 11 ? (n as ShadowRoot).host ?? null : null)) {
+  for (let n = node; n; n = up(n) ?? (n.nodeType === 11 ? (n as ShadowRoot).host ?? null : null)) {
     const ctx = tieredRoots.get(n);
     if (ctx) return ctx;
   }
@@ -1989,6 +2002,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // Cancel any in-flight leave
         clearTransitionState(el as HTMLElement);
         el.removeAttribute('data-forma-leaving');
+        ifHeld.delete(el);
         if (initialized && transition) {
           transitionInsert(el as HTMLElement, parent!, placeholder, transition);
         } else {
@@ -2001,11 +2015,13 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
             if (el.parentNode) {
               parent?.insertBefore(placeholder, el);
               el.remove();
+              ifHeld.set(el, placeholder);
             }
           });
         } else {
           parent?.insertBefore(placeholder, el);
           el.remove();
+          ifHeld.set(el, placeholder);
         }
         inserted = false;
       }
@@ -2643,10 +2659,20 @@ function mountScope(root: Element, mount: MountCtx): void {
     // A scope may itself be detached or inside a shadow root: document-level
     // isConnected would incorrectly skip those legitimate descendants.
     // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
+    // A `data-if` that is false removes its element the same way, and that
+    // branch is still this scope's: walking up through the comment in its
+    // place, it binds now, as a branch that is true at mount does. Skipping it
+    // left everything in it unbound for good (FORMA-279).
+    // Verified by: src/__tests__/runtime-if-branch.test.ts > "binds %s in its branch: it renders and updates once the branch shows"
+    // Verified by: src/__tests__/runtime-if-branch.test.ts > "a data-list row template inside a data-if that starts false is still bound only in its rows"
     const targets = root.querySelectorAll('*');
     for (let i = 0; i < targets.length; i++) {
       const el = targets[i]!;
-      if (!root.contains(el)) continue;
+      if (!root.contains(el)) {
+        let n: Node | null = el;
+        while (n && n !== root) n = up(n);
+        if (!n) continue;
+      }
       if (!hasDirective(el)) continue;
       if (ownedBelow(el, root)) continue;
       bindElement(el, scope, disposers);

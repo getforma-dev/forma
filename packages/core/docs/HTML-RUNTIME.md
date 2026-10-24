@@ -366,6 +366,23 @@ write. Neighboring bindings continue. For a reviewed document, use `h()` and
 Verified by `src/__tests__/runtime-srcdoc.test.ts` > "data-bind:srcdoc is refused with its binding code while neighboring attributes work"
 Verified by `src/__tests__/runtime-srcdoc.test.ts` > "a list row's srcdoc is refused with its binding code"
 
+**A `data-if` binds its branch when its scope mounts, shown or not.**
+Everything in the branch is bound once, at mount, like the rest of the scope.
+Hiding the branch keeps those bindings and showing it puts the same nodes back,
+so toggling never binds twice; unmounting disposes them, hidden or shown. What
+a branch that is hidden at mount binds therefore runs at mount: a `data-fetch`
+in it requests, a `data-persist` restores, and a `data-computed` in it is read
+by the elements after it. Its bindings run outside the document while it is
+hidden, so an element one reaches through `$el` (`$el.firstElementChild`) is
+outside the mount root then and is refused with `FORMA_E_GRANT_DOM` without the
+`dom` grant, and `$el.closest()` answers null.
+
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "binds %s in its branch: it renders and updates once the branch shows"
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "makes the bindings a branch that starts true makes, and toggling it 50 times adds none"
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "unmounting while the branch is hidden disposes every binding in it"
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "a data-fetch in a data-if that starts false requests when its scope mounts, as one in a branch that starts true does"
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "a binding in a branch hidden at mount that reaches another element through $el runs while the branch is out of the document"
+
 **A `data-computed` may be named like a state key, and may not read itself.**
 `data-computed="name = expr"` binds `name` for its scope. Elements bind in
 document order, and a reader is evaluated when it binds. If the state also
