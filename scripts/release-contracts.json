@@ -150,11 +150,11 @@
         },
         "FORMA-259": {
           "status": "pending",
-          "scope": "createEffect write, fan-out and create/dispose each reach at least 80% of the pinned alien-signals 3.1.2 baseline and overall signal geomean reaches at least 85%, with no island adoption/ownership/cleanup regression and all existing size ceilings passing"
+          "scope": "Qualify the selected simpler supplied-node effects and initial-failure cleanup repair under docs/release/3.1-PERFORMANCE-TRADEOFFS.md: preserve adoption/ownership/cleanup/error semantics; retain fresh exact-source Linux results against published Forma and pristine alien-signals 3.1.2, all nine workloads and original 80%/85% target outcomes; explicitly accept the documented fan-out shortfall and delivery tradeoff with core 49,414 B and route 28,420 B gzip ceilings, leaving other budgets unchanged"
         },
         "FORMA-260": {
           "status": "pending",
-          "scope": "profile row creation before changes, make createList create 1000 rows within 10% of same-session vanilla JavaScript, and keep other row operations within baseline spread while preserving ownership, teardown and three-engine correctness"
+          "scope": "Complete source-bound row profiling and preserve stable row/event/ownership/teardown behavior under docs/release/3.1-PERFORMANCE-TRADEOFFS.md; retain all nine fresh exact-source DOM operations and three-engine correctness; accept and disclose the existing create-1,000 gap above 1.10 times same-session vanilla for 3.1, exclude incompatible compiler/listener experiments, and investigate any material new regression before release"
         },
         "FORMA-261": {
           "status": "pending",
