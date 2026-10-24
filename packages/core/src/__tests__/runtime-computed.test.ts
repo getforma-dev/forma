@@ -1,33 +1,15 @@
 import { mountFixture, unmountFixture } from './runtime-fixture';
 /**
- * FORMA-268: a `data-computed` that reads its own value, and one named like a
- * state key.
- *
- * `data-computed="visitCount = visitCount"` shadows a `visitCount` state key. The
- * interpreter resolves a name when it is read, not when the expression is
- * compiled, so the computed read its own getter while it was being evaluated;
- * alien-signals answers that re-entrant read with the computed's current value,
- * `undefined` before its first evaluation, and `mountMarkup` threw
- * `TypeError: Cannot read properties of undefined (reading 'ok')` out of the
- * first binding that read the name. Nothing after it was bound.
- *
- * Now a computed whose expression reads its own name is refused on its element
- * at bind time and binds nothing, so the name keeps what it had. At run time a
- * read of a computed while it is being evaluated (through another computed, or
- * a handler a `$dispatch` in it runs) is refused on its element, and the reader
- * reports it. Every case is a coded diagnostic, and the rest of the module
- * binds. The limits of both checks are pinned here as well.
- *
- * A computed may still be named like a state key, and the readers bound after
- * it read the computed (docs/HTML-RUNTIME.md). This is a name-resolution rule;
- * only a self-read is refused, not shadowing itself.
+ * Computed self-reference and state-name collisions are refused before binding.
+ * Readers retain state identity independent of document order. Existing runtime
+ * cycle-detection limits remain explicit regression cases below (FORMA-272).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as runtime from '../runtime';
 
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
-describe('a data-computed that reads itself, or shadows a state key (FORMA-268)', () => {
+describe('data-computed names and cycle limits (FORMA-268, FORMA-272)', () => {
   let container: HTMLDivElement;
   let errors: string[];
 
@@ -53,8 +35,6 @@ describe('a data-computed that reads itself, or shadows a state key (FORMA-268)'
     runtime.getDiagnostics().map((d) => [d.code, d.expr, d.reason]);
 
   it('a computed that reads its own name is refused on its element, and the state key of that name keeps rendering', async () => {
-    // The computed's name is a state key and its whole
-    // expression is that name.
     container.innerHTML = `<div data-forma-state='{"n": 5, "other": 1}'>
       <i id="computed" data-computed="n = n"></i>
       <p id="reader" data-text="{n}">ssr</p>
@@ -154,33 +134,28 @@ describe('a data-computed that reads itself, or shadows a state key (FORMA-268)'
     expect(text('reader')).toBe('ssr');
   });
 
-  it('a computed may be named like a state key: a reader bound after it reads the computed, and follows what it reads', async () => {
-    // A computed shadows a state placeholder without reading it; later readers
-    // track the computed's dependencies, not writes to the shadowed state key.
+  it('a computed colliding with state is refused and state reads and writes keep their identity', async () => {
     container.innerHTML = `<div data-forma-state='{"count": 1, "other": 3}'>
-      <i data-computed="count = other * 2"></i>
+      <i id="computed" data-computed="count = other * 2"></i>
       <p id="reader" data-text="{count}">ssr</p>
       <button id="more" data-on:click="{other = 4}">more</button>
       <button id="write" data-on:click="{count = 100}">write</button>
     </div>`;
     mountFixture(container);
     await tick();
-    expect(text('reader')).toBe('6');
+    expect(diagnostics()).toEqual([['FORMA_E_UNSUPPORTED', 'count = other * 2', 'computed "count" conflicts with a state key']]);
+    expect(marked('computed')).toBe('unsupported');
+    expect(marked('reader')).toBeNull();
+    expect(text('reader')).toBe('1');
     (container.querySelector('#more') as HTMLElement).click();
     await tick();
-    expect(text('reader')).toBe('8');
-    // A write to the name writes the state value the computed hides.
+    expect(text('reader')).toBe('1');
     (container.querySelector('#write') as HTMLElement).click();
     await tick();
-    expect(text('reader')).toBe('8');
-    expect(diagnostics()).toEqual([]);
+    expect(text('reader')).toBe('100');
   });
 
-  it('a reader before the computed in document order reads the state placeholder until the key is next written', async () => {
-    // Elements bind in document order and a reader is evaluated when it binds,
-    // so one bound before the computed reads the state key and follows only
-    // it. When the key is written it is evaluated again and finds the computed.
-    // The same on 5c5a7796 (FORMA-268 review).
+  it('refusing a state-name collision preserves readers before, on and after the declaration', async () => {
     container.innerHTML = `<div data-forma-state='{"count": 1, "other": 3}'>
       <p id="before" data-text="{count}">ssr</p>
       <i id="same" data-computed="count = other * 2" data-text="{count}">ssr</i>
@@ -190,13 +165,49 @@ describe('a data-computed that reads itself, or shadows a state key (FORMA-268)'
     </div>`;
     mountFixture(container);
     await tick();
-    expect([text('before'), text('same'), text('after')]).toEqual(['1', '6', '6']);
+    expect(diagnostics()).toEqual([['FORMA_E_UNSUPPORTED', 'count = other * 2', 'computed "count" conflicts with a state key']]);
+    expect([text('before'), text('same'), text('after')]).toEqual(['1', '1', '1']);
     (container.querySelector('#more') as HTMLElement).click();
     await tick();
-    expect([text('before'), text('same'), text('after')]).toEqual(['1', '8', '8']);
+    expect([text('before'), text('same'), text('after')]).toEqual(['1', '1', '1']);
     (container.querySelector('#write') as HTMLElement).click();
     await tick();
-    expect([text('before'), text('same'), text('after')]).toEqual(['8', '8', '8']);
+    expect([text('before'), text('same'), text('after')]).toEqual(['100', '100', '100']);
+  });
+
+  it('a refused collision never evaluates its expression and does not block a distinct derived name', async () => {
+    container.innerHTML = `<div data-forma-state='{"count": 2, "events": 0}' data-on:probe="{events++}">
+      <i data-computed="count = $dispatch('probe'); doubled = count * 2"></i>
+      <p id="reader" data-text="{doubled}">ssr</p>
+      <p id="events" data-text="{events}">ssr</p>
+      <button id="inc" data-on:click="{count++}">+</button>
+    </div>`;
+    mountFixture(container);
+    await tick();
+    expect(diagnostics()).toEqual([['FORMA_E_UNSUPPORTED', "count = $dispatch('probe')", 'computed "count" conflicts with a state key']]);
+    expect([text('reader'), text('events')]).toEqual(['4', '0']);
+    (container.querySelector('#inc') as HTMLElement).click();
+    await tick();
+    expect([text('reader'), text('events')]).toEqual(['6', '0']);
+  });
+
+  it('a state key and a computed may use the same name in distinct lexical scopes', async () => {
+    container.innerHTML = `<div data-forma-state='{"count": 1}'>
+      <p id="outer" data-text="{count}">ssr</p>
+      <section data-forma-state='{"base": 3}'>
+        <i data-computed="count = base * 2"></i>
+        <p id="inner" data-text="{count}">ssr</p>
+        <button id="inner-inc" data-on:click="{base++}">+</button>
+      </section>
+      <button id="outer-inc" data-on:click="{count++}">+</button>
+    </div>`;
+    mountFixture(container);
+    await tick();
+    expect([text('outer'), text('inner')]).toEqual(['1', '6']);
+    (container.querySelector('#inner-inc') as HTMLElement).click();
+    (container.querySelector('#outer-inc') as HTMLElement).click();
+    await tick();
+    expect([text('outer'), text('inner')]).toEqual(['2', '8']);
     expect(diagnostics()).toEqual([]);
   });
 

@@ -525,7 +525,7 @@ describe('reconciler', () => {
 
       const connectedHtml = `
         <article data-forma-id="root" data-module="joke-card"
-                 data-forma-state='{"joke":null,"category":"dev","__api":null}'
+                 data-forma-state='{"category":"dev","__api":null}'
                  data-fetch="GET /api/data/proxy?url=x -> __api"
                  data-fetch-id="connect"
                  data-computed="joke = __api.value">
