@@ -7,7 +7,7 @@ import { appsDir, rawDir, parseArgs, builtCars } from './lib.mjs';
 
 const args = parseArgs(process.argv.slice(2), { out: path.join(rawDir, 'bundle') });
 const { have, missing } = builtCars(args.cars);
-if (missing.length) console.log('skipped (no dist/):', missing.join(', '));
+if (missing.length || !have.length) throw new Error('requested bundle cars missing built output: ' + missing.join(', '));
 
 const br = (b) => brotliCompressSync(b, { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_SIZE_HINT]: b.length } }).length;
 
@@ -28,12 +28,12 @@ async function collect(dist) {
   const base = (from, spec) => path.normalize(path.join(path.dirname(from), spec));
   const seen = new Set();
   const walk = async (rel, from) => {
-    if (/^https?:/.test(rel)) return;
+    if (/^https?:/.test(rel)) throw new Error('unmeasured remote JavaScript: ' + rel);
     const file = from === null ? path.join(dist, rel.replace(/^\//, '')) : base(from, rel);
     if (seen.has(file)) return;
     seen.add(file);
     let text;
-    try { text = await readFile(file, 'utf8'); } catch { return; }
+    text = await readFile(file, 'utf8');
     files.add(file);
     for (const m of text.matchAll(/(?:^|[;}\s])(?:import|export)\s*(?:[^'"()]*?\sfrom\s*)?["'](\.{1,2}\/[^"']+\.m?js)["']/g)) await walk(m[1], file);
   };
@@ -51,6 +51,7 @@ for (const car of have) {
     parts.push({ file: path.relative(dist, f), bytes: b.length, gzip: gzipSync(b, { level: 9 }).length, brotli: br(b) });
   }
   for (const s of inlineSources) { const b = Buffer.from(s); parts.push({ file: '(inline)', bytes: b.length, gzip: gzipSync(b, { level: 9 }).length, brotli: br(b) }); }
+  if (!parts.length) throw new Error(`${car}: no measured JavaScript files`);
   const sum = (k) => parts.reduce((a, p) => a + p[k], 0);
   const result = { event: 10, car, measuredAt: new Date().toISOString(), files: parts, bytes: sum('bytes'), gzip: sum('gzip'), brotli: sum('brotli') };
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify(result, null, 2) + '\n');

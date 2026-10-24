@@ -1,7 +1,7 @@
 // Event 9: keyed-table DOM race in headless Chrome.
 // Usage: node run.mjs [--cars vanilla,react,...] [--runs 5] [--warmups 2] [--out ../results/raw/dom]
 //                     [--chrome "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
-// Cars without apps/<car>/dist/index.html are skipped (forma is picked up when its dist/ exists).
+// Every requested car must have a built index.html; missing cars and browser errors fail the run.
 import puppeteer from 'puppeteer-core';
 import { writeFile, mkdir } from 'node:fs/promises';
 import os from 'node:os';
@@ -14,7 +14,7 @@ const args = parseArgs(process.argv.slice(2), {
 });
 const RUNS = +args.runs, WARM = +args.warmups;
 const { have, missing } = builtCars(args.cars);
-if (missing.length) console.log('skipped (no dist/):', missing.join(', '));
+if (missing.length || !have.length) throw new Error('requested client cars missing built output: ' + missing.join(', '));
 
 // Each op: prep (untimed) puts the page in the state it needs; click is what is timed; check verifies the result.
 const ops = [
@@ -66,28 +66,32 @@ const prepSel = { clear: '#clear', run: '#run' };
 
 await mkdir(args.out, { recursive: true });
 const browser = await puppeteer.launch({
-  executablePath: args.chrome, headless: true,
+  executablePath: args.chrome, headless: true, protocolTimeout: 60_000,
   args: ['--window-size=1280,800', '--no-first-run', '--disable-extensions', '--disable-background-timer-throttling', '--disable-renderer-backgrounding'],
   defaultViewport: { width: 1280, height: 800 },
 });
 const chromeVersion = await browser.version();
 
+try {
 for (const car of have) {
   const server = await serveDist(path.join(appsDir, car, 'dist'));
-  const page = await browser.newPage();
-  const errors = [];
+  let page;
+  const errors = [], result = {};
+  try {
+  page = await browser.newPage();
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' });
   await page.evaluate(pageFns);
   await page.waitForSelector('#run');
-  const result = {};
   for (const op of ops) {
     const runs = [];
+    result[op.name] = { runs };
     for (let i = 0; i < WARM + RUNS; i++) {
       for (const p of op.prep) await page.evaluate((s) => window.__prep(s), prepSel[p]);
       const before = op.before ? await page.evaluate(() => window.__state()) : null;
       const ms = await page.evaluate((s) => window.__measure(s), op.click);
+      if (!Number.isFinite(ms) || ms <= 0) throw new Error(`${car} ${op.name}: invalid timing ${ms}`);
       const state = await page.evaluate(() => window.__state());
       if (!op.check(state, before)) throw new Error(`${car} ${op.name}: result check failed (rows=${state.rows})`);
       if (i >= WARM) runs.push(ms);
@@ -99,10 +103,20 @@ for (const car of have) {
   console.log(`${car.padEnd(8)} geometric mean ${geomean.toFixed(2)} ms${errors.length ? '  PAGE ERRORS: ' + errors.length : ''}`);
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify({
     event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean,
-    ops: result, pageErrors: errors, verified: true,
+    ops: result, pageErrors: errors, verified: errors.length === 0,
     machine: { cpu: os.cpus()[0].model, cores: os.cpus().length, loadavg: os.loadavg(), chrome: chromeVersion, node: process.version },
   }, null, 2) + '\n');
-  await page.close();
-  server.close();
+  if (errors.length) throw new Error(`${car}: browser errors invalidate the race: ${errors.join('; ')}`);
+  } catch (error) {
+    await writeFile(path.join(args.out, `${car}.failed.json`), JSON.stringify({
+      event: 9, car, measuredAt: new Date().toISOString(), verified: false, error: String(error),
+      ops: result, pageErrors: errors, chrome: chromeVersion,
+    }, null, 2) + '\n');
+    throw error;
+  } finally {
+    await page?.close().catch(() => {});
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  }
 }
-await browser.close();
+} finally { await browser.close(); }

@@ -20,7 +20,13 @@ export function evaluateBudgets({ sprint, fuel, grid, weight }) {
     assert.equal(run.nonOk, 0, 'failed Sprint requests');
     assert.equal(run.successRate, 1, 'failed Sprint transports');
     assert(run.errorDistribution && typeof run.errorDistribution === 'object' && !Array.isArray(run.errorDistribution), 'missing Sprint transport evidence');
-    assert(Object.values(run.errorDistribution).every(count => count === 0), 'Sprint transport errors');
+    // oha cancels at most one in-flight request per worker when -z expires.
+    // Its success_rate explicitly excludes only this deadline cancellation:
+    // https://github.com/hatoo/oha/blob/v1.16.0/src/result_data.rs#L77-L87
+    const deadline = Object.hasOwn(run.errorDistribution, 'aborted due to deadline') ? run.errorDistribution['aborted due to deadline'] : 0;
+    assert(Number.isInteger(sprint.concurrency) && sprint.concurrency > 0);
+    assert(Number.isInteger(deadline) && deadline >= 0 && deadline <= sprint.concurrency, 'invalid deadline cancellations');
+    assert(Object.entries(run.errorDistribution).every(([error, count]) => error === 'aborted due to deadline' || count === 0), 'Sprint transport errors');
     positive(run.okRps, 'Sprint throughput');
   }
   assert.equal(fuel.metric?.unit, 'MiB');

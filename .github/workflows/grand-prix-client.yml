@@ -1,0 +1,86 @@
+name: Grand Prix client and signals
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner label; qualified full baseline needs eight CPUs'
+        default: 'ubuntu-latest'
+        type: string
+      diagnostic:
+        description: 'Allow a smaller Linux VM for diagnostics'
+        default: true
+        type: boolean
+      forma_refs:
+        description: 'Comma-separated exact source commits after the published baseline; empty uses this checkout'
+        default: ''
+        type: string
+  pull_request:
+    paths:
+      - 'benchmarks/grand-prix/client-race/**'
+      - 'benchmarks/grand-prix/signals-race/**'
+      - 'benchmarks/grand-prix/harness/client-linux.mjs'
+      - 'benchmarks/grand-prix/harness/install-linux-browser.mjs'
+      - 'benchmarks/grand-prix/harness/chromium-linux-lock.json'
+      - '.github/workflows/grand-prix-client.yml'
+
+concurrency:
+  group: grand-prix-client-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client:
+    permissions:
+      contents: read
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install locked browser tooling
+        working-directory: benchmarks/grand-prix/island-race
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install and verify frozen Chromium
+        id: browser
+        run: sudo --preserve-env=GITHUB_OUTPUT "$(command -v node)" benchmarks/grand-prix/harness/install-linux-browser.mjs "$RUNNER_TEMP/gp264-chromium" --install-deps
+      - name: Run baseline and candidates sequentially
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: client-${{ github.run_id }}-${{ github.run_attempt }}
+          GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
+          GP_CLIENT_REFS: ${{ inputs.forma_refs || github.sha }}
+          CHROME_PATH: ${{ steps.browser.outputs.path }}
+        run: |
+          node --input-type=module <<'JS'
+          import {spawnSync} from 'node:child_process';
+          import {readFileSync} from 'node:fs';
+          const lock=JSON.parse(readFileSync('harness/chromium-linux-lock.json'));
+          const args=['harness/client-linux.mjs','--chrome',process.env.CHROME_PATH,'--chrome-sha256',lock.executableSha256,'--forma-refs',process.env.GP_CLIENT_REFS];
+          if(process.env.GP_DIAGNOSTIC==='true')args.push('--diagnostic');
+          const result=spawnSync(process.execPath,args,{stdio:'inherit'});
+          process.exit(result.status??1);
+          JS
+      - name: Remove only this run's Docker resources
+        if: always()
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: client-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node harness/cleanup.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: grand-prix-client-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            benchmarks/grand-prix/results/*-client/run.json
+            benchmarks/grand-prix/results/*-client/*/raw/
+            benchmarks/grand-prix/results/*-client/*/client-race/package-lock.json
+            benchmarks/grand-prix/results/*-client/*/signals-race/package-lock.json
+            benchmarks/grand-prix/results/*-cleanup.json
+          if-no-files-found: error
+          retention-days: 30
