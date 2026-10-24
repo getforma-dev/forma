@@ -96,3 +96,22 @@ test('an update that changes the outer scope mounts the nested scope again, once
   expect([await n(page, '#i'), await n(page, '#o')]).toEqual([1, 100]);
   expect(await diagnostics(page)).toEqual([]);
 });
+
+for (const mode of ['reset', 'replace', 'remove']) {
+  test(`${mode} disposes a nested scope after its branch becomes hidden`, async ({ page }) => {
+    await mount(page, `<section id="o" data-forma-state='{"msg":"outer","n":100,"on":true}'><div data-if="{on}">${INNER}</div></section>`);
+    const next = mode === 'remove' ? '<p>removed</p>'
+      : `<section id="o" ${mode === 'replace' ? 'data-module="new"' : ''} data-forma-state='{"msg":"outer","n":100,"on":true${mode === 'reset' ? ',"extra":1' : ''}}'>${INNER}</section>`;
+    const result = await page.evaluate((html) => {
+      const w = window as unknown as { FormaRuntime: any; handle: { update(h: unknown): void } };
+      const button = document.getElementById('b')!;
+      const inner = (document.getElementById('i') as any).__formaScope;
+      (document.getElementById('o') as any).__formaScope.setters.on(false);
+      w.handle.update(w.FormaRuntime.trustedHtml(html));
+      button.click();
+      return inner.getters.n();
+    }, next);
+    expect(result).toBe(0);
+    expect(await diagnostics(page)).toEqual([]);
+  });
+}

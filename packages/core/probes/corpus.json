@@ -2919,7 +2919,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "            for (const s of scopesIn(liveMatch)) config.unmountScope(s);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
+  "find": "            unmountTree(liveMatch, config);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
   "replace": "            config.unmountScope(liveMatch);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
   "note": "a RESET disposes the scope only, not the scopes nested in it: their effects and listeners stay live on the replaced nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
  },
@@ -2939,7 +2939,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "            for (const s of scopesIn(liveMatch)) config.unmountScope(s);\n            const replacement",
+  "find": "            unmountTree(liveMatch, config);\n            const replacement",
   "replace": "            config.unmountScope(liveMatch);\n            const replacement",
   "note": "a REPLACE disposes the replaced scope only, not the scopes nested in it: their effects and listeners stay live on the removed nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
  },
@@ -2959,8 +2959,18 @@
   "tags": [
    "correctness"
   ],
-  "find": "      for (const s of scopesIn(child)) config.unmountScope(s);\n",
+  "find": "      unmountTree(child, config);\n",
   "replace": "      if (child.hasAttribute('data-forma-state')) config.unmountScope(child);\n",
   "note": "an update that removes an element disposes a scope on that element only, not the scopes nested in it: their effects and listeners stay live on the removed nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"an update that removes the nested scope disposes it, and one that adds it back binds it once\""
+ },
+ {
+  "id": "runtime/dispose-hidden-scope-ancestry",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        while (node && node !== el) node = up(node);",
+  "replace": "        while (node && node !== el) node = node.parentNode;",
+  "note": "A hidden branch is absent from DOM ancestry. Replacing or removing its containing subtree must dispose its registered nested scope and listeners. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s disposes a nested scope held in a hidden branch before the old subtree is discarded\""
  }
 ]

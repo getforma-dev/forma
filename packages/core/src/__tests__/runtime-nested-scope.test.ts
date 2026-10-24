@@ -339,4 +339,26 @@ describe('bindings, counted', () => {
     expect(count()).toEqual([0, 0]);
     expect(codes()).toEqual([]);
   });
+
+  it.each(['reset', 'replace', 'remove'])(
+    '%s disposes a nested scope held in a hidden branch before the old subtree is discarded', (mode) => {
+      const state = '"msg":"outer","n":100,"on":true';
+      const markup = outer(`<div class="wrap"><div data-if="{on}">${INNER}</div></div>`, '', state);
+      const next = mode === 'reset' ? outer(INNER, '', `${state},"extra":1`)
+        : mode === 'replace' ? outer(INNER, ' data-module="new"', state)
+        : '<p>removed</p>';
+      const expected = alone(next);
+      const count = meter();
+      const { handle } = mount(markup);
+      const oldButton = $('#b');
+      const oldScope = scope('article');
+      scope('#o').setters.on(false);
+      update(handle, next);
+      expect(count()).toEqual(expected);
+      oldButton.click();
+      expect(oldScope.getters.n()).toBe(0);
+      handle.unmount();
+      expect(count()).toEqual([0, 0]);
+    },
+  );
 });

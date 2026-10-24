@@ -23,6 +23,8 @@ import { runtimeParser, type RuntimeParser } from './runtime-parser.js';
 export interface ReconcilerConfig {
   mountScope: (el: Element) => void;
   unmountScope: (el: Element) => void;
+  /** Dispose registered scopes under a subtree, including held data-if branches. */
+  unmountTree?: (el: Element) => void;
   disconnectObserver: () => void;
   reconnectObserver: () => void;
   batch: (fn: () => void) => void;
@@ -74,6 +76,11 @@ function scopesIn(el: Element): Element[] {
   const scopes = Array.from(el.querySelectorAll('[data-forma-state]'));
   if (el.hasAttribute('data-forma-state')) scopes.unshift(el);
   return scopes;
+}
+
+function unmountTree(el: Element, config: ReconcilerConfig): void {
+  if (config.unmountTree) config.unmountTree(el);
+  else for (const scope of scopesIn(el)) config.unmountScope(scope);
 }
 
 // ── State shape comparison ────────────────────────────────────────────
@@ -372,7 +379,7 @@ function diffChildren(
 
           case 'RESET':
             // Unmount old scope, patch DOM, mount fresh
-            for (const s of scopesIn(liveMatch)) config.unmountScope(s);
+            unmountTree(liveMatch, config);
             patchAttributes(liveMatch, newChild, trusted, parser);
             // Replace inner content
             replaceInnerContent(liveMatch, newChild);
@@ -381,7 +388,7 @@ function diffChildren(
 
           case 'REPLACE': {
             // Full element swap
-            for (const s of scopesIn(liveMatch)) config.unmountScope(s);
+            unmountTree(liveMatch, config);
             const replacement = newChild.cloneNode(true) as Element;
             liveParent.replaceChild(replacement, liveMatch);
             for (const s of scopesIn(replacement)) config.mountScope(s);
@@ -421,7 +428,7 @@ function diffChildren(
       // Guard: element is mid-leave transition — its transition will remove it
       if (child.hasAttribute('data-forma-leaving')) continue;
       // Unmount any scopes
-      for (const s of scopesIn(child)) config.unmountScope(s);
+      unmountTree(child, config);
       liveParent.removeChild(child);
     }
   }

@@ -1969,10 +1969,9 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // Cancel any in-flight leave
         clearTransitionState(el as HTMLElement);
         el.removeAttribute('data-forma-leaving');
-        // Hygiene, as is the set on the transition path below: up() reads
-        // ifHeld only while a scope mounts, and a scope mounted later is
-        // reached from its mount's root, where parentNode answers first.
-        // Nothing walks a held element's ancestry after mount (FORMA-287).
+        // Drop the held ancestry when the branch rejoins the DOM. up()
+        // follows it while mounting and when disposing a hidden subtree;
+        // its ordinary parent takes precedence once inserted (FORMA-287).
         ifHeld.delete(el);
         if (initialized && transition) {
           transitionInsert(el as HTMLElement, parent!, placeholder, transition);
@@ -2907,6 +2906,16 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
   const reconcileInto = createReconciler({
     mountScope: (el) => mountScope(el, ctx),
     unmountScope: (el) => unmountScope(el, ctx),
+    // A hidden branch is absent from querySelectorAll. Follow its held
+    // ancestry before replacement detaches the old subtree, and dispose
+    // only scopes registered to this mount (FORMA-283).
+    unmountTree: (el) => {
+      for (const scope of Array.from(ctx.scopes)) {
+        let node: Node | null = scope;
+        while (node && node !== el) node = up(node);
+        if (node) unmountScope(scope, ctx);
+      }
+    },
     // Shared reconciler hooks: the explicit runtime has no body observer.
     disconnectObserver: () => {},
     reconnectObserver: () => {},

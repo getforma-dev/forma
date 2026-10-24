@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-283 review follow-up: subtree reset, replacement, and removal dispose nested scopes held outside the DOM by a hidden `data-if`. Disposal follows the registered scope ancestry before detaching the old subtree, so old listeners cannot fire afterward. Unit and browser regressions cover all three paths.
+
+
 Changes after the prepared 3.0.0 set will be recorded here.
 
 - FORMA-178: bound the long task from several bindings that are each too heavy for any task. A reported allocation-budget refusal now arms the task's cap as a wait does, and counts the cap (10,000 units) toward the per-task allowance (50,000), so the bindings after it are counted only to the cap. A binding too heavy for any task that follows one waits, is weighed in full once in a task where it runs first, and is reported there: each is still reported exactly once and weighed in full once, but several are reported one to a task, not all at once. Twenty such bindings made a 53 ms task at 4x and forty a 99 ms task; now the worst task is at most 19 ms and 6 ms (Chromium 156, 21 runs). Two tested behaviours change, deliberately: after a reported refusal a heavy binding that would have fitted the room left waits a task if it is past the 10,000-unit cap, and light bindings (a case mapping, fifty names joined) still render in the same task only while at most five bindings too heavy for any task come before them (the next entry gives the measured delays). No public API, wire-format or version change.
