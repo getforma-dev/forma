@@ -387,7 +387,7 @@
   "tags": [
    "security"
   ],
-  "find": "      if (Array.isArray(out)) charge(ctx, out.length, 'flatMap', at);\n",
+  "find": "      else if (Array.isArray(out)) charge(ctx, out.length, 'flatMap', at);\n",
   "replace": "",
   "note": "the arrays a flatMap callback returns are copied uncharged. Verified by: src/expr/__tests__/native-cost.test.ts > \"flatMap charges each array its callback returns\""
  },
@@ -467,7 +467,7 @@
   "tags": [
    "security"
   ],
-  "find": "    for (const a of args) charge(ctx, weigh(a, room(ctx)), name, at);",
+  "find": "    for (const a of args) charge(ctx, weigh(a, room(ctx), name === 'JSON.stringify' || (name === '$dispatch' && a !== args[0]) ? AS_DATA : -2), name, at);",
   "replace": "    for (const a of args) weigh(a, room(ctx));",
   "note": "a native's arguments are not charged as text, so String(list) can build hundreds of MB before any check (DR-16). Verified by: src/expr/__tests__/native-cost.test.ts > \"every allowlisted native refuses an argument heavier than the budget before it runs\""
  },
@@ -1371,7 +1371,7 @@
   "tags": [
    "security"
   ],
-  "find": "              n += placed(f ? (item as Record<string, unknown> | null)?.[f] : item, room);",
+  "find": "              n += f ? placed((item as Record<string, unknown> | null)?.[f], room) : placed(item, room, AS_DATA);",
   "replace": "              n += 0;",
   "note": "a data-list writes each row's {item.x} values and key into text unpriced: a thousand rows placing one long string (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
  },
@@ -1393,7 +1393,7 @@
   ],
   "find": "          if (items.length * weight > LIST_WEIGHT_CAP) {",
   "replace": "          if (items.length > LIST_WEIGHT_CAP) {",
-  "note": "the data-list cap counts rows and not what each costs to build, so 160,000 rows of a 160-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+  "note": "the data-list cap counts rows and not what each costs to build, so rows are admitted without accounting for their template weight (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
  },
  {
   "id": "runtime/list-cap-weight-ignores-attributes",
@@ -1441,7 +1441,7 @@
   "tags": [
    "security"
   ],
-  "find": "        if (!converts(el, scope, prop, value)) return;\n",
+  "find": "        if (!converts(el, scope, prop, value, AS_DATA)) return;\n",
   "replace": "\n",
   "note": "data-persist JSON-stringifies a state value heavier than the budget (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
  },
@@ -2539,9 +2539,9 @@
   "tags": [
    "correctness"
   ],
-  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');\n        else if (evaluate) {",
-  "replace": "        if (evaluate) {",
-  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: retro-homepage's `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
+  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');",
+  "replace": "        if (false) cycle('reads its own name');",
+  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
  },
  {
   "id": "runtime/computed-cycle-undetected",
@@ -2569,8 +2569,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "        const prevGetter = scope.getters[name];",
-  "replace": "        const prevGetter = scope.getters[name];\n        delete scope.getters[name];",
+  "find": "        const expr = match[2]!;",
+  "replace": "        const expr = match[2]!;\n        delete scope.getters[name];",
   "note": "a refused computed deletes the getter of the state key it is named like, so every reader of a declared key reports it undeclared (the binding before FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that cannot compile binds nothing either: a state key of its name keeps rendering\""
  },
  {
@@ -2579,7 +2579,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    throw exprError('FORMA_E_CALL_FAILED', `${what}() threw ${String(e).slice(0, 200)}`, at);",
+  "find": "    throw exprError('FORMA_E_CALL_FAILED', `${what}${how} threw ${said(e)}`, at);",
   "replace": "    throw e;",
   "note": "an allowlisted native that throws on its arguments (`JSON.parse('{')`, `(1).toFixed(500)`) escapes mountMarkup as a raw exception and the whole module stays unbound (FORMA-271, from FORMA-268's review). Verified by: src/__tests__/runtime-native-throw.test.ts > \"one native that throws costs one binding: every directive reports on its own element and the rest of the module works\""
  },
@@ -2589,8 +2589,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;",
-  "replace": "    if (host && SAFE_GLOBALS[what] !== host) throw e;",
+  "find": "    if ((host && SAFE_GLOBALS[host.label] !== host) || ctx.steps !== steps) throw e;",
+  "replace": "    if (host && SAFE_GLOBALS[host.label] !== host) throw e;",
   "note": "what Forma's own code throws while a native runs it (a real bug in an arrow callback, a handler a click() dispatches, an expression error with its own code) is filed as the native failing, FORMA_E_CALL_FAILED, hiding the bug (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"a real bug in an arrow callback passes through as it is\""
  },
  {
@@ -2599,7 +2599,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;",
+  "find": "    if ((host && SAFE_GLOBALS[host.label] !== host) || ctx.steps !== steps) throw e;",
   "replace": "    if (ctx.steps !== steps) throw e;",
   "note": "a runtime magic ($dispatch, $refetch) is treated as a native, so a bug in Forma's own code inside it is filed as FORMA_E_CALL_FAILED instead of surfacing (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"a runtime magic is Forma code, not a native: what it throws passes through as it is\""
  },
@@ -2609,8 +2609,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "`${what}() threw ${String(e).slice(0, 200)}`",
-  "replace": "`${what}() threw ${String(e)}`",
+  "find": "    return String(e).slice(0, 200);",
+  "replace": "    return String(e);",
   "note": "the FORMA_E_CALL_FAILED message carries the native's whole message, which can quote a megabyte argument (a selector) into the console and the diagnostics ledger (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"the message names the method and the error, and is bounded\""
  },
  {
@@ -2631,7 +2631,7 @@
   ],
   "find": "      return checkResultSize(native(ctx, target.label, at, target.target as Native, undefined, args, target), at);",
   "replace": "      return checkResultSize(Reflect.apply(target.target as Native, undefined, args), at);",
-  "note": "a call of an allowlisted global function (`String(v)`, `Number(v)`, `parseInt(v)`) is made bare, so what it throws (a stack overflow converting deeply nested data, an application's toString) escapes the binding (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"%s is refused with FORMA_E_CALL_FAILED naming %s and its %s\""
+  "note": "a call of an allowlisted global function (`String(v)`, `Number(v)`, `parseInt(v)`) is made bare, so what it throws (an application's toString) escapes the binding (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"code an application put in reach and a native runs is converted: a toString of a value in state, an override of an element method\""
  },
  {
   "id": "runtime/event-modifier-unchecked",
@@ -2641,7 +2641,7 @@
   ],
   "find": "      if (EVENT_MODIFIER.test(event)) {",
   "replace": "      if (EVENT_MODIFIER.test('')) {",
-  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269 (vector-studio's folder-picker replay). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
+  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269. Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
  },
  {
   "id": "runtime/event-modifier-reported-still-bound",
@@ -2774,6 +2774,206 @@
   "note": "the live check after each write no longer looks at attributes: a script URL or handler attribute that reaches the root by a path the strip did not see stays in the document and the render stands. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused\""
  },
  {
+  "id": "runtime/empty-directive-name-bound",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (name === 'data-class:' || name === 'data-bind:') {",
+  "replace": "    if (name === 'data-class:-' || name === 'data-bind:-') {",
+  "note": "a data-bind: or data-class: with nothing after the colon binds, so the runtime writes the empty name: setAttribute('') throws InvalidCharacterError out of mountMarkup, and a browser's classList.toggle('') a SyntaxError (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a data-bind: or data-class: with no name is refused at bind time with FORMA_E_UNSUPPORTED, and the rest of the module mounts\""
+ },
+ {
+  "id": "runtime/dom-write-unwrapped",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  try {\n    f();\n  } catch (e) {\n    reportExprFailure(el, stripBraces(expr), exprError('FORMA_E_CALL_FAILED', `${what} write threw ${said(e)}`), mount);\n  }",
+  "replace": "  f();",
+  "note": "the runtime's own DOM write of a binding's value is made bare: data-model on a file input, a <progress> or a <meter> throws out of mountMarkup, and on a later run reaches onError() only (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a write the browser refuses is reported on its element, at mount and on a later run: %s\""
+ },
+ {
+  "id": "expr/weigh-depth-unrefused",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (d < -201 && v && typeof v === 'object') {",
+  "replace": "    if (d < -1e9 && v && typeof v === 'object') {",
+  "note": "a value nested 10,000 deep is weighed and converted: data-text, an operator, Forma's argument checks and a sort comparator's result overflow the stack out of mountMarkup (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element\""
+ },
+ {
+  "id": "expr/weigh-depth-off-by-one",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (d < -201 && v && typeof v === 'object') {",
+  "replace": "    if (d < -199 && v && typeof v === 'object') {",
+  "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; a nested dictionary still serializes\""
+ },
+ {
+  "id": "expr/weigh-tostring-unrefused",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "replace": "    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString === 'symbol') {",
+  "note": "an object whose own toString is not a function, which JSON can send ({\"toString\": 1}), is converted: an operator, data-text, data-bind:, an argument check and a key throw a TypeError out of mountMarkup or a handler (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler\""
+ },
+ {
+  "id": "expr/sort-comparator-unpriced",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      if (method === 'sort') coerce(ctx, out, at);\n",
+  "replace": "      if (method === 'sort') {}\n",
+  "note": "a sort comparator's result is converted by the native after the comparator stepped, unpriced, so a value nested too deep overflows the stack and the step rule files the RangeError as Forma's own (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element\""
+ },
+ {
+  "id": "expr/host-write-unwrapped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    native(ctx, `${host.label}.${key}`, at, Reflect.set as Native, undefined, [host.target, key, v], undefined, ' = \u2026');",
+  "replace": "    Reflect.set(host.target as object, key, v);",
+  "note": "an event-time property write is made bare: a file input's value, a <progress> or <meter> value, $el.dataset['a-b'] raise an uncaught page error (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s is reported on its element as FORMA_E_CALL_FAILED, not thrown to the event\""
+ },
+ {
+  "id": "expr/rejection-dropped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    result.catch((e: unknown) => ctx.scope.fail?.(what, exprError('FORMA_E_CALL_FAILED', `${what}() rejected ${said(e)}`, at)));",
+  "replace": "    result.catch(() => {});",
+  "note": "a DOM method's promise that rejects (Chromium 156's scrollIntoView({behavior: 'bad'})) is caught and dropped, with no diagnostic (FORMA-274). Verified by: src/expr/__tests__/native-throw.test.ts > \"a DOM method that answers a promise has its rejection reported to the scope, never left unhandled\""
+ },
+ {
+  "id": "runtime/rejection-not-reported-on-element",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  scope.fail = (what, err) => reportExprFailure(el, what, err, scope.mount);\n",
+  "replace": "",
+  "note": "a value binding's rejected DOM promise has no element to be reported on: it is caught and dropped (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the rejection is reported on the element, not left unhandled\""
+ },
+ {
+  "id": "runtime/rejection-not-reported-on-handler",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  eventScope.fail = (_, err) => reportHandlerFailure(el, cleaned, err, scope.mount);\n",
+  "replace": "",
+  "note": "a handler's rejected DOM promise (scrollIntoView({behavior: 'bad'}) on a click) is caught and dropped instead of reported on the handler's element (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the rejection is reported on the element, not left unhandled\""
+ },
+ {
+  "id": "expr/native-said-unguarded",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  try {\n    return String(e).slice(0, 200);\n  } catch {\n    return 'an unprintable value';\n  }",
+  "replace": "  return String(e).slice(0, 200);",
+  "note": "what application code throws through a native and that cannot be converted to text (Object.create(null), a toString that throws) makes the wrapper's own String(e) throw in place of the report (FORMA-274). Verified by: src/expr/__tests__/native-throw.test.ts > \"what a native throws that cannot be converted to text is still reported, named as unprintable\""
+ },
+ {
+  "id": "expr/namespace-member-host-dropped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args, host), at);",
+  "replace": "    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args), at);",
+  "note": "a namespace member's call passes no host, so a member that is Forma's own function would have its real bug filed as FORMA_E_CALL_FAILED (FORMA-274, from FORMA-271's review). Verified by: src/expr/__tests__/native-throw.test.ts > \"a namespace member is a native only if the namespace is the allowlist's own: a runtime magic's member passes what it throws through\""
+ },
+ {
+  "id": "expr/evaluation-nesting-uncapped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', NESTED);",
+  "replace": "  if (nest > 1e9) throw exprError('FORMA_E_BUDGET', NESTED);",
+  "note": "evaluations nest without a bound: a chain of 1,000 computeds overflows the stack out of mountMarkup, and a handler that dispatches its own event recurses into an uncaught page error (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow\""
+ },
+ {
+  "id": "expr/evaluation-nesting-off-by-one",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', NESTED);",
+  "replace": "  if (nest > 31) throw exprError('FORMA_E_BUDGET', NESTED);",
+  "note": "the 32nd nested evaluation is refused, one short of the documented cap (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow\""
+ },
+ {
+  "id": "expr/kept-args-converted",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "name === 'JSON.stringify' || (name === '$dispatch' && a !== args[0]) ? AS_DATA : -2",
+  "replace": "false ? AS_DATA : -2",
+  "note": "JSON.stringify's value and $dispatch's detail are weighed as if converted, so a dictionary with a \"toString\" key can no longer be serialized or dispatched (FORMA-274 review, F1). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail\""
+ },
+ {
+  "id": "runtime/serialized-values-converted",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "weigh(v, room, depth) : 0);",
+  "replace": "weigh(v, room) : 0);",
+  "note": "data-persist's value and a row's whole {item}, which are serialized with JSON.stringify, are weighed as if converted: a dictionary with a \"toString\" key stops persisting and its row stops rendering (FORMA-274 review, F1). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail\""
+ },
+ {
+  "id": "expr/weigh-members-converted",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      const next = d >= 0 ? d - 1 : kids === v || d & 1 ? d - 2 : d - 3;",
+  "replace": "      const next = d >= 0 ? d - 1 : d - 2;",
+  "note": "an object's members are checked as if converted with it, so '' + {inner: d} and '' + [Math] are refused though converting them never calls a member's toString (FORMA-274 review, F1 and the host-table nit). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the same dictionary is refused where it would be converted, at any depth of an array, never as an object member\""
+ },
+ {
+  "id": "expr/weigh-arrays-unchecked",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "replace": "    if (kids !== NONE && d < 0 && !(d & 1) && !isArray(v) && typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "note": "an array is converted without checking its own toString, so a handler's list.toString = 1 makes '' + list, a template literal, setAttribute, a key and a style write throw a TypeError (FORMA-274 review, F2). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"an array a handler gave its own toString is refused wherever it is converted\""
+ },
+ {
+  "id": "runtime/nest-refused-computed-cached",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "              } else if (err.message === NESTED) {",
+  "replace": "              } else if (err.message === '') {",
+  "note": "a computed refused for nesting before it read anything caches the refusal with no dependency, so it and its readers stay failed after the data changes, silently (FORMA-274 review, F3). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a computed refused for nesting is computed again on its next read, not cached as failed: %s\""
+ },
+ {
+  "id": "expr/count-conversion-escapes",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  try {\n    return max(0, toNumber(v) || 0);\n  } catch {\n    return 0;\n  }",
+  "replace": "  return max(0, toNumber(v) || 0);",
+  "note": "a cost row converts an array-like's length outside the call wrapper, so Array.from({length: d}) with a \"toString\" key in d throws a TypeError out of mountMarkup (FORMA-274 review, F1). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the same dictionary is refused where it would be converted, at any depth of an array, never as an object member\""
+ },
+ {
   "id": "runtime/if-branch-skipped",
   "file": "src/runtime.ts",
   "tags": [
@@ -2882,5 +3082,105 @@
   "find": "/^(to|from|by|values) (set|animate\\w*)$/i",
   "replace": "/^(to|from|by|values) (set|animate)$/i",
   "note": "only <animate> and <set> have their values judged as URLs, so <animateTransform>, <animateMotion> and <animateColor> write a script URL in to, from, by or values (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: src/security/__tests__/url-safety.test.ts > \"rejects a script URL in each item of an SVG animation value, whatever the case of tag and name\""
+ },
+ {
+  "id": "runtime/nested-scope-bound-by-outer",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (tieredRoots.has(n) || (n as Element).hasAttribute('data-forma-state')) return true;\n",
+  "replace": "    if (tieredRoots.has(n)) return true;\n",
+  "note": "ownedBelow stops only at a nested mountMarkup root, so a scope also binds every element of a data-forma-state scope nested in it, against its own state: an outer write overwrites the inner scope's text, a click runs the inner handler and the outer one, and a name only the inner scope declares is reported FORMA_E_UNRESOLVED (every release from 0.1.0 until FORMA-283). Verified by: src/__tests__/runtime-nested-scope.test.ts > \"the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them\""
+ },
+ {
+  "id": "runtime/nested-scope-root-bound-by-outer",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (tieredRoots.has(n) || (n as Element).hasAttribute('data-forma-state')) return true;\n",
+  "replace": "    if (tieredRoots.has(n) || (n !== el && (n as Element).hasAttribute('data-forma-state'))) return true;\n",
+  "note": "the outer scope binds a nested scope root's own directives as well as the nested scope does: its data-bind:, data-class: and data-text follow the outer state too, and its handler runs twice. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"a nested scope root's own directives are its scope's, bound once\""
+ },
+ {
+  "id": "reconcile/reset-skips-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            replaceInnerContent(liveMatch, newChild);\n            for (const s of scopesIn(liveMatch)) config.mountScope(s);\n",
+  "replace": "            replaceInnerContent(liveMatch, newChild);\n            config.mountScope(liveMatch);\n",
+  "note": "an update that changes a scope's state shape (RESET) mounts that scope only, not the scopes nested in its new content, so their elements stay as the markup wrote them and their handlers do nothing. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/reset-leaks-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            unmountTree(liveMatch, config);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
+  "replace": "            config.unmountScope(liveMatch);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
+  "note": "a RESET disposes the scope only, not the scopes nested in it: their effects and listeners stay live on the replaced nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/replace-skips-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            for (const s of scopesIn(replacement)) config.mountScope(s);\n",
+  "replace": "            config.mountScope(replacement);\n",
+  "note": "an update that changes a scope's data-module (REPLACE) mounts the replacement only, not the scopes nested in it, so their elements stay as the markup wrote them and their handlers do nothing. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/replace-leaks-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            unmountTree(liveMatch, config);\n            const replacement",
+  "replace": "            config.unmountScope(liveMatch);\n            const replacement",
+  "note": "a REPLACE disposes the replaced scope only, not the scopes nested in it: their effects and listeners stay live on the removed nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/insert-misses-hidden-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      for (const s of scopesIn(clone)) config.mountScope(s);\n",
+  "replace": "      if (clone.hasAttribute('data-forma-state')) config.mountScope(clone);\n      for (const s of Array.from(clone.querySelectorAll('[data-forma-state]'))) config.mountScope(s);\n",
+  "note": "an update that adds a scope looks for the scopes nested in it only after that scope mounted, when a data-if that is false has taken its branch out of the tree, so a scope in that branch is never mounted (the order before FORMA-283). Verified by: src/__tests__/runtime-nested-scope.test.ts > \"an update that adds a scope whose data-if starts false mounts the scope in that branch once\""
+ },
+ {
+  "id": "reconcile/remove-leaks-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      unmountTree(child, config);\n",
+  "replace": "      if (child.hasAttribute('data-forma-state')) config.unmountScope(child);\n",
+  "note": "an update that removes an element disposes a scope on that element only, not the scopes nested in it: their effects and listeners stay live on the removed nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"an update that removes the nested scope disposes it, and one that adds it back binds it once\""
+ },
+ {
+  "id": "runtime/dispose-hidden-scope-ancestry",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        while (node && node !== el) node = up(node);",
+  "replace": "        while (node && node !== el) node = node.parentNode;",
+  "note": "A hidden branch is absent from DOM ancestry. Replacing or removing its containing subtree must dispose its registered nested scope and listeners. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s disposes a nested scope held in a hidden branch before the old subtree is discarded\""
+ },
+ {
+  "id": "runtime/computed-shadows-writable-state",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        else if (evaluate && scope.setters[name]) cycle('conflicts with a state key');\n",
+  "replace": "",
+  "note": "A computed replaces a writable state getter while retaining its setter, hiding writes and making readers depend on bind order (FORMA-272). Verified by: src/__tests__/runtime-computed.test.ts > \"refusing a state-name collision preserves readers before, on and after the declaration\""
  }
 ]

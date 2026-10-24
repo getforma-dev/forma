@@ -145,7 +145,7 @@ export function runCandidate(context, reportPath) {
   const runner = join(dirname(require.resolve('vitest/package.json')), 'vitest.mjs');
   const result = spawnSync(process.execPath, [runner,'run','--reporter=default','--reporter=json',`--outputFile.json=${rawReport}`], {
     cwd:join(ROOT,'packages/create-app'), stdio:'inherit', windowsHide:true,
-    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
+    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_PUBLISHED_TEMPLATES:context.mode === 'published' ? join(dirname(context.cli),'..','templates') : '', FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
   });
   const report = {schema:1, passed:false, mode:context.mode ?? 'candidate', commit:context.commit, recordSha256:context.recordSha256, platform:process.platform};
   try {

@@ -101,6 +101,42 @@ function writeDependencies(raw, refs) {
   return raw.trimEnd() + newline + replacement + newline + newline;
 }
 
+// Source template seeds declare Forma dependencies as plain version strings:
+// they enable defaults, not every workspace feature. Follow the packed default
+// feature graph so an opt-in runtime does not enter their sealed Cargo lock.
+function defaultRuntimeDependencies(metadata, candidates) {
+  const runtime = metadata.dependencies.filter(dep => dep.kind !== 'dev');
+  // This seed contract has no internal feature overrides. Refuse a future
+  // change that needs cross-crate feature unification instead of guessing.
+  for (const dep of runtime.filter(dep => candidates.has(dep.name))) {
+    assert(dep.uses_default_features !== false && !(dep.features?.length),
+      `${metadata.name}: internal Cargo feature override needs reviewed closure support`);
+  }
+  const optional = new Set();
+  const visited = new Set();
+  const pending = ['default'];
+  while (pending.length) {
+    const feature = pending.pop();
+    if (visited.has(feature)) continue;
+    visited.add(feature);
+    const entries = metadata.features?.[feature];
+    if (!entries && feature === 'default') continue;
+    assert(Array.isArray(entries), `${metadata.name}: unknown packed Cargo feature ${feature}`);
+    for (const entry of entries) {
+      if (entry.startsWith('dep:')) optional.add(entry.slice(4));
+      else if (entry.includes('/')) {
+        const dependency = entry.split('/')[0];
+        const forwarded = runtime.find(dep => (dep.rename ?? dep.name) === dependency.replace(/\?$/, ''));
+        assert(!forwarded || !candidates.has(forwarded.name),
+          `${metadata.name}: internal Cargo feature override needs reviewed closure support`);
+        // A weak dependency feature never activates an otherwise unused crate.
+        if (!dependency.endsWith('?')) optional.add(dependency);
+      } else pending.push(entry);
+    }
+  }
+  return runtime.filter(dep => !dep.optional || optional.has(dep.rename ?? dep.name));
+}
+
 /**
  * Merge the candidate runtime closure from its reviewed lock, using packed
  * Cargo metadata to exclude dev-only roots/edges. Existing external records keep
@@ -134,10 +170,10 @@ export function mergeRecordedCargoLock(text, packages, recorded) {
       next.raw = src.raw.replace(/^version = "[^"\r\n]+"\r?$/m,
         `version = "${candidate.version}"\nsource = "${REGISTRY}"\nchecksum = "${candidate.sha256}"`);
       candidateByName.set(record.name, next); selected.set(identity(next), next);
-      const runtime = metadata.dependencies.filter(dep => dep.kind !== 'dev');
+      const runtime = defaultRuntimeDependencies(metadata, candidates);
       const allowed = new Set(runtime.map(dep => dep.name));
       const dependencies = src.dependencies.map(ref => resolveEdge(ref, source.records, `candidate ${src.name}`)).filter(dep => allowed.has(dep.name));
-      for (const dep of runtime.filter(dep => !dep.optional)) assert(dependencies.some(p => p.name === dep.name), `${src.name}: recorded lock omits packed runtime dependency ${dep.name}`);
+      for (const dep of runtime) assert(dependencies.some(p => p.name === dep.name), `${src.name}: recorded lock omits packed runtime dependency ${dep.name}`);
       const previous = original.records.find(p => p.name === candidate.name);
       const previousEdges = previous ? oldEdges.get(previous) : [];
       edges.set(next, dependencies.map(dep => {

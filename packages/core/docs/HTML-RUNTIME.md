@@ -112,16 +112,17 @@ Four properties, each mechanical:
   before it renders in the next task instead (SECURITY.md, "Termination and
   budgets"). A `data-list` is not charged to that budget; a pass over it is
   refused, on the list's length and before any row is built, when its rows
-  times the weight of a row pass 160,000. A row weighs 1, and 1 more for each
+  times the weight of a row pass 24,000. A row weighs 1, and 1 more for each
   element and attribute of the row template (a nested `<template>`'s contents
-  included), so the cap admits 80,000 rows of `<li>{item}</li>` (weight 2) and
-  1,066 rows of the heaviest served row template found (vector-studio's team
-  roster with `data-fm` on every element, weight 150). The cap is per pass: the
+  included), so the cap admits 12,000 rows of `<li>{item}</li>` (weight 2),
+  1,714 six-cell directive table rows (weight 14), or 1,000 rows of weight 24.
+  The cap follows a measured one-second target for the framework's ordinary
+  fixtures on Linux Chromium at 4x CPU throttling. It is not a time guarantee
+  for expensive native elements or arbitrary templates. The cap is per pass: the
   lists an outer list's rows hold are made in one task and not bounded together
   (FORMA-255). A refused list reports `FORMA_E_BUDGET` and keeps the rows it
   had. Under the cap a list renders as before, in one task however long it is.
-  Show a long list a page
-  at a time: ask for the page where the data comes from, or slice it in the
+  Paginate or virtualize long lists. To show a page at a time: ask for the page where the data comes from, or slice it in the
   expression (`items.slice(start, start + 200)`, charged the length of the
   array it reads, so for arrays of up to about 250,000 items).
 
@@ -258,14 +259,57 @@ and the error: `{JSON.parse(payload)}` of a payload that is not JSON reports
 costs that binding only: the rest of the markup binds and keeps working. Before
 FORMA-271 the exception escaped `mountMarkup` and left the whole module
 unbound. A real bug in Forma's own code is still not filed as an expression
-failure. Some markup can still throw out of `mountMarkup`, for example a
-`data-bind:` or `data-class:` with no name, or a value nested about 10,000 deep
-that Forma's own code converts. SECURITY.md, *Known gaps*, lists the paths
-found.
+failure.
 
 Verified by `src/__tests__/runtime-native-throw.test.ts` > "one native that throws costs one binding: every directive reports on its own element and the rest of the module works"
 Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a native runs is rethrown, not filed as the native failing"
-Verified by `src/__tests__/runtime-native-throw.test.ts` > "what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text"
+
+**So is what else threw** (FORMA-274), on the element that met it:
+
+- a `data-bind:` or `data-class:` with nothing after the colon is refused when
+  it is bound: `FORMA_E_UNSUPPORTED`, `data-bind: has no name`;
+- a write of the runtime's that the browser refuses, such as `data-model` on a
+  file input, or a value that is not a number on a `<progress>` or `<meter>`,
+  or, under a Trusted Types policy, `data-bind:src` or `data-text` on a
+  `<script>`: `FORMA_E_CALL_FAILED`, `data-model write threw InvalidStateError: …`;
+- the same at event time, `$el.dataset['a-b'] = 1` or `$el.value = 'x'` on a
+  file input: `$el.value = … threw InvalidStateError: …`;
+- a DOM method's promise that rejects, Chromium's
+  `$el.scrollIntoView({behavior: 'bad'})`: `$el.scrollIntoView() rejected TypeError: …`;
+- a value nested more than 100 arrays or objects deep, whatever made it (state,
+  a response, a handler, `reduce`): `FORMA_E_BUDGET`, `a value nested over 100
+  deep`, before anything converts it. The cap leaves more than sixfold
+  headroom below the lowest measured engine overflow depth (Firefox: 622
+  with 2,000 caller frames); engine stack sizes are not a universal bound;
+- a value converted to text or a number whose `toString` is not a function,
+  an object JSON shadowed (`{"toString": 1}`) or an array a handler gave one
+  (`list.toString = 1`), arrays at any depth included: `FORMA_E_CALL_FAILED`,
+  `a value whose toString is not a function`. Only a conversion refuses it,
+  never an object's members and never a value serialized or handed on as data:
+  a dictionary with a `toString` key still works with `JSON.stringify`,
+  `data-persist`, a row's `{item}`, `$dispatch`'s detail and `Array.from`;
+- more than 32 evaluations nested inside one another, a chain of computeds or
+  a handler that `$dispatch`es to itself: `FORMA_E_BUDGET`, `evaluations nested
+  over 32 deep`. A computed refused this way is computed again on its next
+  read. Boundary tests cover 31 computeds plus their binding, and 31 relayed
+  handlers converting a value 100 deep in the browser engines.
+
+A test mounts every directive with 48 hostile values each and finds nothing
+that throws. Markup nested a few hundred levels deep can still overflow the
+stack (a `data-list` in a row of a `data-list`, hundreds of times), so "markup
+cannot throw out of `mountMarkup`" is not a stated guarantee: SECURITY.md,
+*Known gaps*.
+
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a data-bind: or data-class: with no name is refused at bind time with FORMA_E_UNSUPPORTED, and the rest of the module mounts"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a write the browser refuses is reported on its element, at mount and on a later run: %s"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "%s is reported on its element as FORMA_E_CALL_FAILED, not thrown to the event"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "the rejection is reported on the element, not left unhandled"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "an array a handler gave its own toString is refused wherever it is converted"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "every directive given %s: nothing throws out of mountMarkup, an event or a later run, and every failure is coded"
 
 The hardened build is the same runtime under a second, tree-shaken bundling. It
 is no longer a stronger guarantee — every build is equally eval-free:
@@ -295,7 +339,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
 | `data-on:event` | Event handler; no modifiers: `data-on:click.stop` is refused (see *Handler statements* above) | `data-on:click="{count++}"` |
 | `data-class:name` | Conditional CSS class | `data-class:active="{isActive}"` |
 | `data-bind:attr` | Dynamic attribute | `data-bind:href="{url}"` |
-| `data-list` | List rendering (keyed reconciliation); a pass of more than 160,000 rows × row weight is refused with `FORMA_E_BUDGET` | `data-list="{items}"` |
+| `data-list` | List rendering (keyed reconciliation); a pass of more than 24,000 rows × row weight is refused with `FORMA_E_BUDGET` | `data-list="{items}"` |
 | `data-computed` | Computed value | `data-computed="doubled = count * 2"` |
 | `data-persist` | Persist state to localStorage | `data-persist="{count}"` |
 | `data-fetch` | Fetch data from URL into a new state key | `data-fetch="GET /api/items → items"` |
@@ -332,24 +376,58 @@ a branch that is hidden at mount binds therefore runs at mount: a `data-fetch`
 in it requests, a `data-persist` restores, and a `data-computed` in it is read
 by the elements after it. Its bindings run outside the document while it is
 hidden, so an element one reaches through `$el` (`$el.firstElementChild`) is
-outside the mount root then and is refused with `FORMA_E_GRANT_DOM` without the
-`dom` grant, and `$el.closest()` answers null.
+outside the mount root then. Without the `dom` grant that hop is refused with
+`FORMA_E_GRANT_DOM` and `$el.closest()` answers null. With the grant,
+`closest()` reaches the elements of the hidden branch, up to the element the
+`data-if` holds, and the development grant report records `dom` from mount.
 
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "binds %s in its branch: it renders and updates once the branch shows"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "makes the bindings a branch that starts true makes, and toggling it 50 times adds none"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "unmounting while the branch is hidden disposes every binding in it"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "a data-fetch in a data-if that starts false requests when its scope mounts, as one in a branch that starts true does"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "a binding in a branch hidden at mount that reaches another element through $el runs while the branch is out of the document"
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "with the dom grant, closest() in a branch hidden at mount reaches the held element, and the grant report records dom from mount"
 
-**A `data-computed` may be named like a state key, and may not read itself.**
-`data-computed="name = expr"` binds `name` for its scope. Elements bind in
-document order, and a reader is evaluated when it binds. If the state also
-declares `name`, a reader bound after the computed (on a later element, or
-on the computed's own element) reads the computed, and the state's value is
-only a placeholder. A reader on an element before the computed's reads the
-state value instead, and follows only it: it reads the computed once the key
-is next written. A handler that writes `name` writes the state value, which
-the readers bound after the computed never see.
+**A `data-forma-state` nested in another is a scope of its own.** It binds
+its own elements once, its root's own directives included, against its own
+state. The scope around it binds none of them, and binds its own elements
+before and after it. Scopes do not inherit: an expression in the inner scope
+reads only the inner state, so a name that only the outer state declares is
+reported `FORMA_E_UNRESOLVED` there, and a scope's `$refs` lists only its own
+`data-ref` elements. This holds at any depth and in a `data-if` branch, shown
+or hidden at mount. `update()` disposes each scope it removes or remounts and
+mounts each scope it adds or remounts, nested ones included. One gap
+remains: a `data-forma-state` in a `data-list` row is not yet mounted as a
+scope, so the row binds its elements against the row's scope (the list's
+state, `item` and `index`), and a name only that nested state declares is
+reported `FORMA_E_UNRESOLVED`.
+
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "the outer scope binds its own elements before and after a nested scope, and they follow its state only"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "scopes do not inherit: a name only the outer state declares is unresolved in the inner scope, and the outer scope does not render it there"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "a nested scope root's own directives are its scope's, bound once"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "$refs: each scope's names are its own elements, and the outer scope does not reach the inner scope's"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "three levels: each scope binds its own elements, around the scope nested in it, and only those"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "%s leaves exactly the bindings a fresh mount makes, each bound once"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "a scope nested in a data-list row is bound by the row, as before: rows do not mount a nested scope (unchanged here)"
+
+**A `data-computed` must use a name distinct from writable state in its scope.**
+`data-computed="name = expr"` binds a derived value for its scope. If state
+already declares `name`, the declaration is refused before its expression runs,
+with `FORMA_E_UNSUPPORTED` (`computed "name" conflicts with a state key`). The
+original state getter and setter remain intact: readers before, on and after
+the declaration all follow the state, and handler writes remain visible. Other
+computed declarations and bindings continue. Separate `data-forma-state` lexical
+scopes may reuse names; they do not share state or computed declarations.
+
+When migrating markup that used a state placeholder for a computed, remove the
+placeholder if it was never writable, or give the derived value a distinct name.
+For example, retain state `count`, declare `data-computed="doubled = count * 2"`,
+render `data-text="{doubled}"`, and update `count` in handlers. Do not write a
+derived name to override its value. Earlier releases allowed a computed to hide
+a state getter while retaining the setter; that made writes invisible to some
+readers and made results depend on element order. This refusal applies to the
+explicit HTML runtime; the JavaScript `createComputed` API is unchanged.
 
 A computed whose expression reads its own name (`visitCount = visitCount`,
 `x = x + 1`, `n = items.map(i => i + n)`) is refused when it is bound, with
@@ -375,8 +453,10 @@ before reading anything that can change keeps it after the cycle breaks,
 until the markup is mounted again. None of these throws out of `mountMarkup`;
 the rest of the markup binds.
 
-Verified by `src/__tests__/runtime-computed.test.ts` > "a computed may be named like a state key: a reader bound after it reads the computed, and follows what it reads"
-Verified by `src/__tests__/runtime-computed.test.ts` > "a reader before the computed in document order reads the state placeholder until the key is next written"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a computed colliding with state is refused and state reads and writes keep their identity"
+Verified by `src/__tests__/runtime-computed.test.ts` > "refusing a state-name collision preserves readers before, on and after the declaration"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a refused collision never evaluates its expression and does not block a distinct derived name"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a state key and a computed may use the same name in distinct lexical scopes"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that reads its own name is refused on its element, and the state key of that name keeps rendering"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that reads its own name and is no state key is refused, and each reader reports the name unresolved"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed reads its own value only as a free name: an arrow parameter, a property or a string of that name is not a self-reference"

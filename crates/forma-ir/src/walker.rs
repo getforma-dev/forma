@@ -870,7 +870,8 @@ fn walk_range_impl(
 
                 check_slot_source(module, slot_id, slots.get(slot_id));
                 state.note_row_level_content();
-                let value = slots.get(slot_id).to_text();
+                let mut number = ryu_js::Buffer::new();
+                let value = slots.get(slot_id).text_ref(&mut number);
 
                 // SR44's stand-in for a component that panics: this crate's
                 // tests and the internal `__fault-injection` feature only, and
@@ -899,7 +900,7 @@ fn walk_range_impl(
                     let written = if value.is_empty() {
                         "\u{200B}"
                     } else {
-                        value.as_str()
+                        value.as_ref()
                     };
                     push_escaped_html(out, written, limit)?;
                     push_checked(out, "<!--/f:t", limit)?;
@@ -938,6 +939,7 @@ fn walk_range_impl(
                     // `text` outlives the borrow only for the Valued case; it
                     // is declared here so the &str can point into it.
                     let text;
+                    let mut number = ryu_js::Buffer::new();
                     let value = match slots.get(slot_id) {
                         // An HTML boolean attribute is ON whenever it is
                         // present, so the old `disabled="false"` meant
@@ -951,12 +953,12 @@ fn walk_range_impl(
                         }
                         SlotValue::Bool(true) => Some(AttrValue::Valued("true")),
                         other => {
-                            text = other.to_text();
+                            text = other.text_ref(&mut number);
                             // An empty string is a value, not an absence:
                             // `renderAttr` emits `value=""`, and dropping the
                             // attribute instead is a hydration mismatch on the
                             // common `value=""` / `alt=""` case.
-                            Some(AttrValue::Valued(text.as_str()))
+                            Some(AttrValue::Valued(text.as_ref()))
                         }
                     };
                     if let Some(value) = value {
@@ -2459,14 +2461,7 @@ fn push_escaped_html(out: &mut String, text: &str, limit: usize) -> Result<(), I
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in normalized_chars(text) {
-            match ch {
-                '&' => out.push_str("&amp;"),
-                '<' => out.push_str("&lt;"),
-                '>' => out.push_str("&gt;"),
-                _ => out.push(ch),
-            }
-        }
+        push_escaped_runs::<false>(out, text);
         return Ok(());
     }
     for ch in normalized_chars(text) {
@@ -2490,15 +2485,7 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
         .saturating_add(text.len().saturating_mul(MAX_ESCAPE_EXPANSION))
         <= limit
     {
-        for ch in normalized_chars(text) {
-            match ch {
-                '&' => out.push_str("&amp;"),
-                '"' => out.push_str("&quot;"),
-                '<' => out.push_str("&lt;"),
-                '>' => out.push_str("&gt;"),
-                _ => out.push(ch),
-            }
-        }
+        push_escaped_runs::<true>(out, text);
         return Ok(());
     }
     for ch in normalized_chars(text) {
@@ -2513,6 +2500,38 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
     Ok(())
 }
 
+/// Copy unchanged UTF-8 runs at once after the caller proves the entire
+/// worst-case expansion fits. Every split byte is ASCII, hence a UTF-8 boundary.
+/// Keep the checked character loop near the limit: its partially written byte
+/// count is part of `WalkFailure`, even when the complete value does not fit.
+fn push_escaped_runs<const ATTRIBUTE: bool>(out: &mut String, text: &str) {
+    let bytes = text.as_bytes();
+    let mut start = 0;
+    let mut i = 0;
+    while i < bytes.len() {
+        let replacement = match bytes[i] {
+            b'&' => "&amp;",
+            b'<' => "&lt;",
+            b'>' => "&gt;",
+            b'"' if ATTRIBUTE => "&quot;",
+            b'\r' => "\n",
+            0 => "\u{FFFD}",
+            _ => {
+                i += 1;
+                continue;
+            }
+        };
+        out.push_str(&text[start..i]);
+        out.push_str(replacement);
+        if bytes[i] == b'\r' && bytes.get(i + 1) == Some(&b'\n') {
+            i += 1;
+        }
+        i += 1;
+        start = i;
+    }
+    out.push_str(&text[start..]);
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -2520,6 +2539,66 @@ fn push_escaped_attr(out: &mut String, text: &str, limit: usize) -> Result<(), I
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bulk_escaping_matches_character_reference_at_every_output_boundary() {
+        fn reference(
+            out: &mut String,
+            text: &str,
+            limit: usize,
+            attr: bool,
+        ) -> Result<(), IrError> {
+            for ch in normalized_chars(text) {
+                match ch {
+                    '&' => push_checked(out, "&amp;", limit)?,
+                    '<' => push_checked(out, "&lt;", limit)?,
+                    '>' => push_checked(out, "&gt;", limit)?,
+                    '"' if attr => push_checked(out, "&quot;", limit)?,
+                    _ => push_char_checked(out, ch, limit)?,
+                }
+            }
+            Ok(())
+        }
+        let mut cases = vec![
+            String::new(),
+            "plain UTF-8 é 🦀 text".into(),
+            "\r\n\r\0<&>\"\r\r\n🦀\0".into(),
+            "\r".into(),
+            "\n".into(),
+        ];
+        // Reproducible mixed strings exercise ASCII split points next to
+        // multibyte scalars, CRLF, lone CR and every escaping expansion.
+        let alphabet = ['a', 'é', '🦀', '\0', '\r', '\n', '&', '<', '>', '"'];
+        let mut seed = 258_u64;
+        for length in 0..128 {
+            let mut text = String::new();
+            for _ in 0..length {
+                seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+                text.push(alphabet[(seed >> 32) as usize % alphabet.len()]);
+            }
+            cases.push(text);
+        }
+        for text in cases {
+            for attr in [false, true] {
+                for limit in 0..=text.len() * MAX_ESCAPE_EXPANSION + 4 {
+                    let mut expected = String::from("é");
+                    let mut actual = expected.clone();
+                    let expected_result = reference(&mut expected, &text, limit, attr);
+                    let actual_result = if attr {
+                        push_escaped_attr(&mut actual, &text, limit)
+                    } else {
+                        push_escaped_html(&mut actual, &text, limit)
+                    };
+                    assert_eq!(
+                        actual_result.is_ok(),
+                        expected_result.is_ok(),
+                        "{text:?}, {limit}, {attr}"
+                    );
+                    assert_eq!(actual, expected, "partial bytes: {text:?}, {limit}, {attr}");
+                }
+            }
+        }
+    }
     use crate::parser::test_helpers::{
         build_declared_fixture, encode_close_tag, encode_list, encode_open_tag, encode_show_if,
         encode_text, encode_void_tag,

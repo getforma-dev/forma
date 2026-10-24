@@ -1,8 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 /**
- * FORMA-269 in a real engine, on the shape it was found in: forma-vector-studio's
- * folder-picker puts `data-on:click.stop=""` on a modal box inside a backdrop
+ * FORMA-269 in a real engine: `data-on:click.stop=""` on a modal box inside a backdrop
  * that closes on click. `.stop` is Vue/Alpine syntax. The runtime listened for
  * an event named `click.stop`, so the box stopped nothing, and nothing said so.
  * Now the name is refused with a coded diagnostic, and the rewrite the message

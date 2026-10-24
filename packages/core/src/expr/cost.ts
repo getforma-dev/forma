@@ -24,6 +24,7 @@
  */
 
 import { LIMITS } from './ast';
+import { exprError } from './errors';
 
 // Captured once, like the allowlist's intrinsics, so a page script that later
 // replaces one of them cannot make a cost read low.
@@ -106,8 +107,19 @@ const alike = (r: unknown, v: unknown, room: number): number => {
   return n;
 };
 
-/** A count argument as the native reads it, never negative. */
-const count = (v: unknown): number => max(0, toNumber(v) || 0);
+/**
+ * A count argument as the native reads it, never negative. One the native
+ * cannot convert (an array-like's `length` with a `toString` that is not a
+ * function) counts 0: the native's own conversion throws, inside the call
+ * wrapper (FORMA-274).
+ */
+const count = (v: unknown): number => {
+  try {
+    return max(0, toNumber(v) || 0);
+  } catch {
+    return 0;
+  }
+};
 
 /**
  * An argument read as data, not text: a string's or array's length, an
@@ -142,9 +154,50 @@ const size = (v: unknown, room: number): number => {
  * Iterative, and every expansion adds to the total before its children are
  * queued, so a cyclic or ten-thousand-deep value stops at `room` instead of
  * looping or overflowing the stack.
+ *
+ * With `depth` -2 (the default) the value is about to be converted to text
+ * or a number; with `AS_DATA` it is read as data instead (`JSON.stringify`,
+ * `$dispatch`'s detail, `data-persist`, a row's whole `{item}`,
+ * `Array.from`'s array-like) and weighs the same, but is not converted.
+ *
+ * A conversion calls `toString` on the value, and on each element of an
+ * array it converts (`join`), never on an object's members. JSON can shadow
+ * that method with a value that is not a function (`{"toString": 1}`), and a
+ * handler can write one onto an array (`list.toString = 1`); converting such
+ * a value threw a TypeError. Each value the conversion would reach (the
+ * value, and the elements of the arrays among them) is checked, arrays
+ * included, and one whose `toString` is not a function is refused with
+ * `FORMA_E_CALL_FAILED` (FORMA-274). A value read as data is never refused
+ * for it. The walk keeps which values a conversion reaches in the parity of
+ * their depth, two a level: even for those, odd for the members of an object
+ * and what is under them.
+ *
+ * As text, a value nested more than 100 arrays or objects deep is refused
+ * with `FORMA_E_BUDGET` where the walk reaches its 101st level (FORMA-274).
+ * Converting a value recurses through its nesting (`join`, `String()`, a
+ * default `sort`, `JSON.stringify`, an operator), and past a few thousand
+ * levels the engine's stack overflows in place of the call: a `RangeError`
+ * out of `mountMarkup`, or an uncaught page error. Measured on a fresh stack
+ * (and under 2,000 frames of a caller), `String()` of nested arrays
+ * overflowed past 785 levels in Firefox 157 (622), 2,822 in Node 24 (2,185),
+ * 4,112 in Chromium 156 (3,178) and 4,990 in WebKit 27.2 (4,771). The cap of
+ * 100 leaves more than sixfold headroom below the lowest measured overflow
+ * depth, Firefox's 622 under caller load. The combined boundary is also
+ * tested with 31 relayed handlers converting a value 100 deep. Engine stack
+ * sizes vary; this is a conservative policy, not a universal stack bound.
+ * Every conversion of a value is priced here before it runs, so
+ * this one check covers each source a value comes from: state, a response,
+ * storage, a handler's write, and an expression that built it (`reduce`
+ * makes 10,000 levels inside every budget). It is final and arms nothing,
+ * like a refusal that checks a length (FORMA-249).
  * Verified by: src/expr/__tests__/native-cost.test.ts > "weighing stops at the budget on a cyclic or deeply nested value"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value an expression builds itself is refused the same way: no entry point sees it"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value 100 deep renders and one 101 deep is refused; a nested dictionary still serializes"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "an array a handler gave its own toString is refused wherever it is converted"
  */
-export function weigh(root: unknown, room: number, depth = -1): number {
+export function weigh(root: unknown, room: number, depth = -2): number {
   if (typeof root !== 'object' || root === null) {
     return depth >= 0 ? 0 : typeof root === 'string' ? root.length : typeof root === 'number' ? 3 : 1;
   }
@@ -154,6 +207,9 @@ export function weigh(root: unknown, room: number, depth = -1): number {
   while (todo.length > 0 && total <= room) {
     const v = todo.pop();
     const d = depths.pop()!;
+    if (d < -201 && v && typeof v === 'object') {
+      throw exprError('FORMA_E_BUDGET', 'a value nested over 100 deep');
+    }
     let kids = NONE;
     if (isArray(v)) {
       if (d) {
@@ -170,11 +226,16 @@ export function weigh(root: unknown, room: number, depth = -1): number {
     } else {
       total += typeof v === 'number' ? 3 : 1;
     }
-    if (total <= room) {
+    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString !== 'function') {
+      throw exprError('FORMA_E_CALL_FAILED', 'a value whose toString is not a function');
+    }
+    if (total <= room && kids.length) {
+      // An object's members are not converted with it: an odd depth marks them.
+      const next = d >= 0 ? d - 1 : kids === v || d & 1 ? d - 2 : d - 3;
       for (const k of kids) {
         if (d < 0 || (d > 1 && isArray(k))) {
           todo.push(k);
-          depths.push(d - 1);
+          depths.push(next);
         }
       }
     }
@@ -209,6 +270,10 @@ export const DATA_ARGS: ReadonlySet<string> = new Set([
   'Array.from', 'Object.entries', 'Object.keys', 'Object.values',
   'array.concat', 'array.includes', 'array.indexOf', 'array.lastIndexOf',
 ]);
+
+/** `weigh`'s depth for a value read as data, never converted (FORMA-274). */
+export const AS_DATA = -3;
+
 
 /**
  * One row per native whose cost grows with its receiver or with a size or
@@ -335,7 +400,7 @@ rows((r, a) => {
 rows((_, a, room) => {
   const x = a[0];
   if (typeof x === 'string' || isArray(x)) return len(x);
-  const text = weigh(x, room);
+  const text = weigh(x, room, AS_DATA);
   return text > room ? text : text + count((x as { length?: unknown } | null)?.length);
 }, 'Array.from');
 Object.freeze(COSTS);

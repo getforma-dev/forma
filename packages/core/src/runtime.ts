@@ -52,6 +52,7 @@ import {
   LIMITS,
   runHandler,
   running,
+  said,
   weigh,
   type Bound,
   type ExprGrant,
@@ -59,6 +60,8 @@ import {
   type Meter,
   type TextCost,
   WAITING_CAP,
+  AS_DATA,
+  NESTED,
 } from './expr';
 import { sourceIsDev, warnDeprecated } from './deprecated';
 
@@ -107,6 +110,8 @@ interface Scope {
   mount: MountCtx;
   /** The mount's step budget, read by the interpreter (`ScopeLike.budget`). */
   budget: number;
+  /** Reports a DOM method's rejected promise on the scope's element (`ScopeLike.fail`). */
+  fail?: (what: string, err: FormaExprError) => void;
 }
 
 // ── $refetch registry ──
@@ -418,11 +423,16 @@ function ownerOf(node: Node | null): MountCtx | null {
   return null;
 }
 
-/** Whether a tiered root lies between `el` (inclusive) and `top` (exclusive): `el` belongs to a mount nested inside. */
+/**
+ * Whether a tiered root or a `data-forma-state` element lies between `el`
+ * (inclusive) and `top` (exclusive): `el` belongs to a mount or a scope nested
+ * inside, which binds it. Scopes do not inherit, so a nested scope's root and
+ * the elements under it are that scope's alone (FORMA-283).
+ * Verified by: src/__tests__/runtime-nested-scope.test.ts > "the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them"
+ */
 function ownedBelow(el: Element, top: Element): boolean {
-  if (tieredCount === 0) return false;
   for (let n: Node | null = el; n && n !== top; n = n.parentNode) {
-    if (tieredRoots.has(n)) return true;
+    if (tieredRoots.has(n) || (n as Element).hasAttribute('data-forma-state')) return true;
   }
   return false;
 }
@@ -881,7 +891,7 @@ function cloneWithTemplateData(template: Element, item: unknown, mount: MountCtx
  * Update an existing cloned element's text and safe attributes with new item data.
  * Uses the cached original template patterns from the WeakMap.
  */
-function updateTemplateData(el: Element, item: unknown): void {
+function updateTemplateData(el: Element, item: unknown, mount: MountCtx): void {
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
     const node = walker.currentNode;
@@ -892,7 +902,7 @@ function updateTemplateData(el: Element, item: unknown): void {
   }
   for (const node of [el, ...Array.from(el.querySelectorAll('*'))]) {
     for (const { attr, compiled } of templateAttrs.get(node) ?? []) {
-      applyTemplateAttribute(node, attr, compiled, item);
+      applyTemplateAttribute(node, attr, compiled, item, mount);
     }
   }
 }
@@ -1259,12 +1269,12 @@ function applyShowVisibility(
   );
 }
 
-function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown): void {
+function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown, mount?: MountCtx): void {
   const value = evaluateCompiledTemplate(compiled, item);
   if (isUnsafeAttrBinding(attr, value, node.localName)) {
     node.removeAttribute(attr);
   } else {
-    node.setAttribute(attr, value);
+    write(node, `row ${attr}`, mount, attr, () => node.setAttribute(attr, value));
   }
 }
 
@@ -1284,7 +1294,7 @@ function cloneAttributeTemplates(el: Element, item: unknown, mount?: MountCtx): 
         }
         const compiled = compileTemplate(attr.value);
         entries.push({ attr: attr.name, compiled });
-        applyTemplateAttribute(node, attr.name, compiled, item);
+        applyTemplateAttribute(node, attr.name, compiled, item, mount);
       }
     }
     if (entries.length > 0) {
@@ -1442,9 +1452,11 @@ function later(): void {
  * `String()` of an array or object joins every element, so a list of a
  * thousand references to one long string is three hundred million
  * characters. A string is written as it is; a host value renders as a label.
+ * `depth` is `AS_DATA` for a value serialized, not converted (`data-persist`,
+ * a row's whole `{item}`): weighed the same, never refused for its `toString`.
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "data-text of a value heavier than the budget is refused before it is converted"
  */
-const asText: TextCost = (v, room) => (typeof v === 'object' && v !== null && !isHost(v) ? weigh(v, room) : 0);
+const asText = (v: unknown, room: number, depth?: number): number => (typeof v === 'object' && v !== null && !isHost(v) ? weigh(v, room, depth) : 0);
 
 /**
  * Charge a conversion of a value no expression returned (a `data-model` or
@@ -1452,10 +1464,10 @@ const asText: TextCost = (v, room) => (typeof v === 'object' && v !== null && !i
  * False when refused: reported, or retried in the next task.
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "every other conversion of a result to text is refused before it runs"
  */
-function converts(el: Element, scope: Scope, what: string, value: unknown): boolean {
+function converts(el: Element, scope: Scope, what: string, value: unknown, depth?: number): boolean {
   try {
     spend();
-    evaluateExpression(NOTHING, scope, meter, (_, room) => asText(value, room));
+    evaluateExpression(NOTHING, scope, meter, (_, room) => asText(value, room, depth));
     return true;
   } catch (err) {
     if (!isExprError(err)) throw err;
@@ -1472,7 +1484,7 @@ function converts(el: Element, scope: Scope, what: string, value: unknown): bool
 const NOTHING = compileExpression('0');
 
 /** A value a `data-list` row template places in text, once per row it appears in. */
-const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room));
+const placed = (v: unknown, room: number, depth?: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room, depth));
 
 /**
  * The most a `data-list` pass may build or rebind, as rows times the weight of
@@ -1482,20 +1494,21 @@ const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.
  * so the product bounds one pass of one list, however long its items (FORMA-172).
  * It does not bound the lists an outer list's rows hold, which one pass of the
  * outer list makes together (SECURITY.md; FORMA-255).
- * `Array.from({length: 249990})` made 249,990 rows in one task, 3.2 to 4.0 s at
- * 4x CPU throttling on an M1 Pro. A list over the cap is refused on its
- * length, before any item is read or any row built; one under it renders as
- * before, in one task. Sized from the templates actually served: vector-studio
- * stamps `data-fm` on every element of a module it loads, so its team-roster
- * row weighs 150 and its todo-list row 144, and 1,000 rows of either fit. The
- * largest lists the cap admits take about 1.1 to 1.4 s at 4x on an M1 Pro and
- * 2.2 to 4.6 s on a CI runner across runs 40032265860, 40034377741,
- * 40040340320 and 40042343018 (SECURITY.md has the measurements).
+ * The 24,000-unit cap is sized from the framework's ordinary row fixtures:
+ * CI run 40032265860 measured 4.6 s for 159,992 units of table rows at 4x
+ * Chromium throttling (28.75 us/unit). 24,000 predicts 690 ms, leaving about
+ * 31% below a one-second target. CI run 40108798933 then measured at-cap maxima
+ * of 219.8/245.3/83 ms for ordinary list/table/attribute rows at 4x. The guard in
+ * e2e/expr-cost.spec.ts refuses a regression above one second on Linux Chromium. This is a
+ * measured ordinary-row budget, not a universal time bound: expensive native
+ * elements, repeated text placeholders and nested lists can cost more
+ * (SECURITY.md; FORMA-255). One thousand rows fit at weight 24 or below;
+ * the framework's six-cell directive table weighs 14.
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list of 250,000 items is refused before any item is read"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list exactly at the cap renders, and one row more is refused"
- * Verified by: src/__tests__/runtime-list-cap.test.ts > "the heaviest served row template renders up to the cap and is refused one row past it"
+ * Verified by: src/__tests__/runtime-list-cap.test.ts > "a directive row at the cap retains its rows when one more is refused"
  */
-const LIST_WEIGHT_CAP = 160_000;
+const LIST_WEIGHT_CAP = 24_000;
 
 /** Strip one balanced `{ … }` wrapper, honouring string and template literals. */
 function stripBraces(raw: string): string {
@@ -1530,6 +1543,28 @@ function reportHandlerFailure(el: Element | null, expr: string, err: FormaExprEr
   logExprFailure(el, expr, err, 'handler');
   reportFailure('handler-unsupported', expr, err, mount);
   el?.setAttribute('data-forma-handler-error', 'unsupported');
+}
+
+/**
+ * The runtime's own DOM write of a binding's value, which the browser can
+ * refuse by throwing (FORMA-274): `data-model` writing a file input's
+ * `value`, or a value that is not a number to a `<progress>` or `<meter>`; a
+ * Trusted Types sink under a policy that enforces them (`data-bind:src` or
+ * `data-text` on a `<script>`, a `src` in a `data-list` row). It is reported
+ * on the element as `FORMA_E_CALL_FAILED`, at mount and on every later run;
+ * it used to escape `mountMarkup`, and on a later run reached `onError()`
+ * only. The value is evaluated, checked and charged before `write` is
+ * called, so a bug in that is not caught here: only the conversion of the
+ * priced value and the DOM call itself are.
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a write the browser refuses is reported on its element, at mount and on a later run: %s"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "what a write is handed is checked and charged before it is written, so the write itself is all the wrapper catches"
+ */
+function write(el: Element, expr: string, mount: MountCtx | undefined, what: string, f: () => void): void {
+  try {
+    f();
+  } catch (e) {
+    reportExprFailure(el, stripBraces(expr), exprError('FORMA_E_CALL_FAILED', `${what} write threw ${said(e)}`), mount);
+  }
 }
 
 /** The diagnostic for a failure: a denied grant is `grant-denied`, with its grant, whatever directive met it. */
@@ -1616,6 +1651,7 @@ function buildHandler(expr: string, scope: Scope, el: Element | null): HandlerBu
 
   const eventLocals: Record<string, unknown> = { $event: undefined, event: undefined };
   const eventScope = createChildScope(scope, eventLocals);
+  eventScope.fail = (_, err) => reportHandlerFailure(el, cleaned, err, scope.mount);
 
   const handler = (e: Event) => {
     const outer = eventLocals.$event;
@@ -1792,6 +1828,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
     }, 2),
   };
   scope = createChildScope(scope, elMagics);
+  // A DOM method's promise that rejects is reported on this element (FORMA-274).
+  scope.fail = (what, err) => reportExprFailure(el, what, err, scope.mount);
 
   // A marker left by an EARLIER bind of this element (reconcile re-binds in
   // place) is cleared here, up front, and never again. It used to be cleared in
@@ -1849,14 +1887,13 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       if (match) {
         const name = match[1]!;
         const expr = match[2]!;
-        const prevGetter = scope.getters[name];
         // The raw evaluator is used here, not the reporting one: a computed
         // that cannot evaluate must make its READERS fail loudly (each with its
         // own element and diagnostic) rather than caching a sentinel that would
         // then be rendered as text.
-        // A computed that is refused, by `buildEvaluator` (which has reported
-        // it and marked the element) or because it reads its own name, binds
-        // nothing: the name keeps what it had, so a state key of that name
+        // A computed refused by `buildEvaluator` (which reports and marks it),
+        // its own-name check, or a state-key collision binds nothing. The name
+        // keeps what it had, so a state key of that name
         // keeps its value, and a name that had nothing makes every reader of
         // it fail loudly with its own diagnostic.
         // The interpreter resolves a name when it is read, so a computed that
@@ -1877,6 +1914,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           return err;
         };
         if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');
+        // State owns both a getter and a setter. Replacing just its getter
+        // would make handler writes invisible and readers depend on bind order.
+        // Verified by: src/__tests__/runtime-computed.test.ts > "a computed colliding with state is refused and state reads and writes keep their identity"
+        else if (evaluate && scope.setters[name]) cycle('conflicts with a state key');
         else if (evaluate) {
           // Read inside a binding, a computed spends that binding's budget. If
           // it is refused for what was spent before it, it is evaluated again
@@ -1892,6 +1933,14 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
               if (err.defer) {
                 later();
                 staleCells.add(cell);
+              } else if (err.message === NESTED) {
+                // Refused for nesting before it read anything, so nothing
+                // it depends on would recompute it: it reads `retries`, which
+                // the next task bumps, and its next read recomputes it (FORMA-274).
+                // The refused evaluation armed the task's timer (`buildEvaluator`).
+                // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a computed refused for nesting is computed again on its next read, not cached as failed: %s"
+                retries();
+                deferred = true;
               }
               return { ok: false, e: err };
             } finally {
@@ -1905,11 +1954,6 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
             return r.v;
           };
         }
-        // Keep the original setter so manual overrides still work
-        if (!prevGetter) {
-          // If there was no initial state entry, remove the setter too
-          delete scope.setters[name];
-        }
       }
     }
   }
@@ -1921,7 +1965,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
     const dispose = internalEffect(() => {
       const value = evaluate();
       if (value === EXPR_FAILED) return;
-      setElementTextFast(el, toTextValue(value));
+      write(el, textExpr, scope.mount, 'data-text', () => setElementTextFast(el, toTextValue(value)));
     });
     disposers.push(dispose);
   }
@@ -1964,6 +2008,9 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // Cancel any in-flight leave
         clearTransitionState(el as HTMLElement);
         el.removeAttribute('data-forma-leaving');
+        // Drop the held ancestry when the branch rejoins the DOM. up()
+        // follows it while mounting and when disposing a hidden subtree;
+        // its ordinary parent takes precedence once inserted (FORMA-287).
         ifHeld.delete(el);
         if (initialized && transition) {
           transitionInsert(el as HTMLElement, parent!, placeholder, transition);
@@ -2041,7 +2088,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           const arr = Array.isArray(val) ? val.map(String) : [];
           for (const opt of Array.from(sel.options)) opt.selected = arr.includes(opt.value);
         } else {
-          input.value = String(val ?? '');
+          // A file input, a <progress> or a <meter> refuses some values by throwing.
+          write(el, prop, scope.mount, 'data-model', () => { input.value = String(val ?? ''); });
         }
       });
       disposers.push(dispose);
@@ -2084,6 +2132,16 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   for (let i = 0; i < attrs.length; i++) {
     const attr = attrs[i]!;
     const name = attr.name;
+
+    // A data-class: or data-bind: with nothing after the colon names no class
+    // or attribute: refused before it binds, so the runtime never writes the
+    // empty name (`setAttribute('')` threw InvalidCharacterError out of
+    // `mountMarkup`, `classList.toggle('')` a SyntaxError in browsers) (FORMA-274).
+    // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a data-bind: or data-class: with no name is refused at bind time with FORMA_E_UNSUPPORTED, and the rest of the module mounts"
+    if (name === 'data-class:' || name === 'data-bind:') {
+      reportExprFailure(el, `${name}="${attr.value}"`, exprError('FORMA_E_UNSUPPORTED', `${name} has no name`), scope.mount);
+      continue;
+    }
 
     if (name.startsWith('data-on:')) {
       const event = name.slice(8); // 'data-on:'.length === 8
@@ -2158,7 +2216,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         if (isUnsafeAttrBinding(attrName, str, el.localName)) {
           el.removeAttribute(attrName);
         } else {
-          el.setAttribute(attrName, str);
+          write(el, attr.value, scope.mount, name, () => el.setAttribute(attrName, str));
         }
       });
       disposers.push(dispose);
@@ -2179,7 +2237,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       } catch { /* ignore parse errors */ }
       const dispose = internalEffect(() => {
         const value = getter();
-        if (!converts(el, scope, prop, value)) return;
+        if (!converts(el, scope, prop, value, AS_DATA)) return;
         try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
       });
       disposers.push(dispose);
@@ -2231,7 +2289,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           for (const item of items) {
             for (const f of fields) {
               if (n > room) return n;
-              n += placed(f ? (item as Record<string, unknown> | null)?.[f] : item, room);
+              // A whole `{item}` is serialized with JSON.stringify, not converted.
+              n += f ? placed((item as Record<string, unknown> | null)?.[f], room) : placed(item, room, AS_DATA);
             }
           }
         }
@@ -2291,7 +2350,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       /** Dispose old bindings and rebind with fresh data */
       function updateBoundClone(node: Node, item: unknown, index: number): void {
         disposeCloneBindings(node);
-        updateTemplateData(node as Element, item);
+        updateTemplateData(node as Element, item, scope.mount);
         const childScope = createChildScope(scope, { item, index });
         const dispose = ownBindings(itemDisposers => {
           bindElement(node as Element, childScope, itemDisposers);
@@ -2563,9 +2622,12 @@ function hasDirective(el: Element): boolean {
 /**
  * Bind one `data-forma-state` element and the directive-bearing elements under
  * it. The mount context is required. A scope owned by a different nested
- * mount is left alone, as are that mount's directive descendants.
+ * mount is left alone, as are that mount's directive descendants. So is a
+ * `data-forma-state` scope nested in this one, its root included: the
+ * reconciler mounts it, and it binds its own elements (FORMA-283).
  * Verified by: src/__tests__/runtime-explicit-mount.test.ts > "import, DOMContentLoaded, injected nodes and state-attribute changes never bind without a handed root"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a mount nested in another binds with its own grants, and the outer one never binds its markup"
+ * Verified by: src/__tests__/runtime-nested-scope.test.ts > "a nested scope root's own directives are its scope's, bound once"
  */
 function mountScope(root: Element, mount: MountCtx): void {
   if (ownerOf(root) !== mount) return;
@@ -2895,6 +2957,16 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
   const reconcileInto = createReconciler({
     mountScope: (el) => mountScope(el, ctx),
     unmountScope: (el) => unmountScope(el, ctx),
+    // A hidden branch is absent from querySelectorAll. Follow its held
+    // ancestry before replacement detaches the old subtree, and dispose
+    // only scopes registered to this mount (FORMA-283).
+    unmountTree: (el) => {
+      for (const scope of Array.from(ctx.scopes)) {
+        let node: Node | null = scope;
+        while (node && node !== el) node = up(node);
+        if (node) unmountScope(scope, ctx);
+      }
+    },
     // Shared reconciler hooks: the explicit runtime has no body observer.
     disconnectObserver: () => {},
     reconnectObserver: () => {},

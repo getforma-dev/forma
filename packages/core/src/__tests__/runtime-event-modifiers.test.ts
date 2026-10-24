@@ -6,8 +6,7 @@ import { mountFixture, unmountFixture } from './runtime-fixture';
  * model-generated markup carries that syntax over to `data-on:`. The runtime
  * took the whole suffix as the event's name and listened for an event called
  * `click.stop`, which no browser dispatches, and said nothing: the handler was
- * silently dead (forma-vector-studio's folder-picker replay has
- * `data-on:click.stop`). Forma has no modifiers, so such a name is refused with
+ * silently dead. Forma has no modifiers, so such a name is refused with
  * a coded diagnostic and binds nothing. A dotted name that is not modifier
  * syntax is a custom event (Bootstrap's `shown.bs.modal`, a
  * `$dispatch('item.selected')`) and binds as before.

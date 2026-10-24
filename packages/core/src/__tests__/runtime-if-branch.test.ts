@@ -282,6 +282,16 @@ it('a binding in a branch hidden at mount that reaches another element through $
   expect([m.q('#kid')!.innerHTML, m.q('#near')!.textContent]).toEqual(['<b></b>', 'none']);
 });
 
+it('with the dom grant, closest() in a branch hidden at mount reaches the held element, and the grant report records dom from mount', () => {
+  // FORMA-287: the null above holds only without the grant.
+  const m = mount({ on: false },
+    `<div id="p" data-if="{on}"><i id="near" data-text="{$el.closest('div')?.id ?? 'none'}">stale</i></div>`, { dom: true });
+  expect(m.codes()).toEqual([]);
+  expect(m.handle.grantsUsed()).toEqual({ dom: true });
+  m.scope.setters.on(true);
+  expect(m.q('#near')!.textContent).toBe('p');
+});
+
 describe('binding a branch that starts false once', () => {
   /** Live internal effects, and live listeners on elements under `root`. */
   function meter() {
