@@ -3,8 +3,7 @@ import { mountFixture, unmountFixture } from './runtime-fixture';
  * FORMA-268: a `data-computed` that reads its own value, and one named like a
  * state key.
  *
- * forma-vector-studio's generated `retro-homepage` declares
- * `data-computed="visitCount = visitCount"` over a `visitCount` state key. The
+ * `data-computed="visitCount = visitCount"` shadows a `visitCount` state key. The
  * interpreter resolves a name when it is read, not when the expression is
  * compiled, so the computed read its own getter while it was being evaluated;
  * alien-signals answers that re-entrant read with the computed's current value,
@@ -20,10 +19,8 @@ import { mountFixture, unmountFixture } from './runtime-fixture';
  * binds. The limits of both checks are pinned here as well.
  *
  * A computed may still be named like a state key, and the readers bound after
- * it read the computed (docs/HTML-RUNTIME.md). Refusing that would break real
- * modules: of the 179 computeds found in the local app corpora on 2026-10-23,
- * 53 are named like a state key and 51 of them do not read themselves
- * (CHANGELOG, FORMA-268).
+ * it read the computed (docs/HTML-RUNTIME.md). This is a name-resolution rule;
+ * only a self-read is refused, not shadowing itself.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as runtime from '../runtime';
@@ -56,7 +53,7 @@ describe('a data-computed that reads itself, or shadows a state key (FORMA-268)'
     runtime.getDiagnostics().map((d) => [d.code, d.expr, d.reason]);
 
   it('a computed that reads its own name is refused on its element, and the state key of that name keeps rendering', async () => {
-    // retro-homepage's shape: the computed's name is a state key and its whole
+    // The computed's name is a state key and its whole
     // expression is that name.
     container.innerHTML = `<div data-forma-state='{"n": 5, "other": 1}'>
       <i id="computed" data-computed="n = n"></i>
@@ -158,9 +155,8 @@ describe('a data-computed that reads itself, or shadows a state key (FORMA-268)'
   });
 
   it('a computed may be named like a state key: a reader bound after it reads the computed, and follows what it reads', async () => {
-    // 51 computeds in the app corpora shadow a state key without reading it,
-    // the state value a placeholder (forma-generative-ui's focus-timer-card,
-    // vector-studio's joke-card, forma-builder's pulse-saas pricing).
+    // A computed shadows a state placeholder without reading it; later readers
+    // track the computed's dependencies, not writes to the shadowed state key.
     container.innerHTML = `<div data-forma-state='{"count": 1, "other": 3}'>
       <i data-computed="count = other * 2"></i>
       <p id="reader" data-text="{count}">ssr</p>

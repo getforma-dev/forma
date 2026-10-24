@@ -76,6 +76,61 @@ The [3.0 migration guide](../../docs/UPGRADING-3.0.md) covers startup, request m
 Asset serving, opt-in checked service-worker configuration and the named preview frame retain their existing APIs. See their module documentation and [release runbook](../../docs/RELEASING.md).
 
 
+## Rendered-page compression
+
+HTML compression is opt-in at both build time and the response boundary. Enable
+the `compression` feature on `forma-server`, then return
+`page.with_compression(&request_headers)` from selected handlers. The argument is
+Axum's request `HeaderMap`; the returned `CompressedPageResponse` implements
+`IntoResponse` and retains `counts()`. An ordinary `PageResponse` is unchanged.
+
+Only enable this on responses that cannot mix secrets with attacker-controlled
+text. CSRF tokens, private account data and session-derived secrets need the same
+exclusions at a reverse proxy. Read the [BREACH decision](../../SECURITY.md#opt-in-page-compression-forma-261).
+A fresh CSP nonce does not protect another secret in the document.
+
+The server negotiates Brotli and gzip by quality, preferring Brotli on ties.
+Explicit zero qualities override wildcards. Explicit identity preference is
+honored; missing `Accept-Encoding` uses identity. Multiple header lines are
+combined, and duplicate tokens use their lowest quality. If no supported encoding
+or identity is acceptable, the response is an empty 406. Bodies below 1 KiB and
+results that would grow stay uncompressed when identity is acceptable. The
+response always carries `Vary: Accept-Encoding`, the original CSP and `no-store`.
+Axum's GET routing preserves these representation headers for HEAD and strips
+its body.
+
+Compression runs once per response, synchronously, at Brotli quality 4 (1 MiB
+window) or gzip level 4. Budget that CPU work alongside rendering; large responses
+may belong in the application's blocking pool. Compression does not cache a
+nonce-bearing document or make it public-cacheable. A proxy should pass an
+already encoded body through. If the proxy owns compression instead, omit this
+method and apply the same exclusions there. Roll back by removing the call or
+disabling the Cargo feature.
+
+Level selection used the Grand Prix 100-row HTML fragment (32,851 bytes), before
+the document shell, on an Apple M1 Pro with Rust 1.93.1 in release mode. Each
+encoding had 20 warmups and 101 timed calls; other desktop work remained active.
+These are encoding costs, not HTTP throughput or a cross-machine guarantee.
+
+| Encoding | Encoded bytes | Median duration per call | p95 |
+| --- | ---: | ---: | ---: |
+| Brotli 4 | 2,292 | 135 µs | 226 µs |
+| Brotli 5 | 1,872 | 207 µs | 325 µs |
+| gzip 4 | 2,539 | 87 µs | 110 µs |
+| gzip 5 | 2,520 | 91 µs | 144 µs |
+| gzip 6 | 2,504 | 128 µs | 153 µs |
+
+Repeat with a representative uncompressed HTML response saved to a file:
+
+```sh
+FORMA_COMPRESSION_SAMPLE=/absolute/path/to/page.html CARGO_BUILD_JOBS=1 \
+  cargo test --locked -p forma-server --features compression --release --lib \
+  response::compression::tests::compression_levels -- --ignored --nocapture
+```
+
+Measure complete request throughput and tail latency with the load generator's
+`Accept-Encoding` header enabled before choosing where to opt in.
+
 ## The deployment identity
 
 Every page's root carries `data-forma-build="<the manifest's build>"`, on a

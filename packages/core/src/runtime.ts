@@ -1494,20 +1494,21 @@ const placed = (v: unknown, room: number, depth?: number): number => (typeof v =
  * so the product bounds one pass of one list, however long its items (FORMA-172).
  * It does not bound the lists an outer list's rows hold, which one pass of the
  * outer list makes together (SECURITY.md; FORMA-255).
- * `Array.from({length: 249990})` made 249,990 rows in one task, 3.2 to 4.0 s at
- * 4x CPU throttling on an M1 Pro. A list over the cap is refused on its
- * length, before any item is read or any row built; one under it renders as
- * before, in one task. Sized from the templates actually served: vector-studio
- * stamps `data-fm` on every element of a module it loads, so its team-roster
- * row weighs 150 and its todo-list row 144, and 1,000 rows of either fit. The
- * largest lists the cap admits take about 1.1 to 1.4 s at 4x on an M1 Pro and
- * 2.2 to 4.6 s on a CI runner across runs 40032265860, 40034377741,
- * 40040340320 and 40042343018 (SECURITY.md has the measurements).
+ * The 24,000-unit cap is sized from the framework's ordinary row fixtures:
+ * CI run 40032265860 measured 4.6 s for 159,992 units of table rows at 4x
+ * Chromium throttling (28.75 us/unit). 24,000 predicts 690 ms, leaving about
+ * 31% below a one-second target. CI run 40108798933 then measured at-cap maxima
+ * of 219.8/245.3/83 ms for ordinary list/table/attribute rows at 4x. The guard in
+ * e2e/expr-cost.spec.ts refuses a regression above one second on Linux Chromium. This is a
+ * measured ordinary-row budget, not a universal time bound: expensive native
+ * elements, repeated text placeholders and nested lists can cost more
+ * (SECURITY.md; FORMA-255). One thousand rows fit at weight 24 or below;
+ * the framework's six-cell directive table weighs 14.
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list of 250,000 items is refused before any item is read"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list exactly at the cap renders, and one row more is refused"
- * Verified by: src/__tests__/runtime-list-cap.test.ts > "the heaviest served row template renders up to the cap and is refused one row past it"
+ * Verified by: src/__tests__/runtime-list-cap.test.ts > "a directive row at the cap retains its rows when one more is refused"
  */
-const LIST_WEIGHT_CAP = 160_000;
+const LIST_WEIGHT_CAP = 24_000;
 
 /** Strip one balanced `{ … }` wrapper, honouring string and template literals. */
 function stripBraces(raw: string): string {

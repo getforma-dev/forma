@@ -1393,7 +1393,7 @@
   ],
   "find": "          if (items.length * weight > LIST_WEIGHT_CAP) {",
   "replace": "          if (items.length > LIST_WEIGHT_CAP) {",
-  "note": "the data-list cap counts rows and not what each costs to build, so 160,000 rows of a 160-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+  "note": "the data-list cap counts rows and not what each costs to build, so rows are admitted without accounting for their template weight (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
  },
  {
   "id": "runtime/list-cap-weight-ignores-attributes",
@@ -2541,7 +2541,7 @@
   ],
   "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');\n        else if (evaluate) {",
   "replace": "        if (evaluate) {",
-  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: retro-homepage's `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
+  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
  },
  {
   "id": "runtime/computed-cycle-undetected",
@@ -2641,7 +2641,7 @@
   ],
   "find": "      if (EVENT_MODIFIER.test(event)) {",
   "replace": "      if (EVENT_MODIFIER.test('')) {",
-  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269 (vector-studio's folder-picker replay). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
+  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269. Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
  },
  {
   "id": "runtime/event-modifier-reported-still-bound",
@@ -2811,7 +2811,7 @@
   ],
   "find": "    if (d < -201 && v && typeof v === 'object') {",
   "replace": "    if (d < -199 && v && typeof v === 'object') {",
-  "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render\""
+  "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; a nested dictionary still serializes\""
  },
  {
   "id": "expr/weigh-tostring-unrefused",

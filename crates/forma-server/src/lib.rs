@@ -95,6 +95,8 @@ pub use ir::{load_ir_modules, IrLoadError};
 pub use pages::{PageHandle, Pages};
 pub use raw::RawHtml;
 pub use render::{render_browser_shell, RenderCtx, RenderError};
+#[cfg(feature = "compression")]
+pub use response::CompressedPageResponse;
 pub use response::{PageParts, PageResponse, RenderCounts};
 pub use types::*;
 
