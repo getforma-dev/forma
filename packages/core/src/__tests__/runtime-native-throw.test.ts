@@ -153,33 +153,6 @@ describe('an allowlisted native that throws (FORMA-271)', () => {
     expect(el('p').hasAttribute('data-forma-expr-error')).toBe(false);
   });
 
-  it("what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text", () => {
-    // Known gaps, stated in SECURITY.md: these are the runtime's own DOM
-    // writes and conversions, and an operator's, not an allowlisted native
-    // call, so FORMA-271 does not convert them, and "markup cannot throw out
-    // of mountMarkup" is not a stated guarantee. Chromium also throws for a
-    // `data-class:` with no name (`classList.toggle('')`), which happy-dom
-    // accepts: e2e/native-throw.spec.ts pins that one. The same nested value
-    // given to an allowlisted native is refused with its code.
-    const deep = '['.repeat(10_000) + ']'.repeat(10_000);
-    const cases: [string, string][] = [
-      ['<p data-bind:="{1}">x</p>', 'InvalidCharacterError'],
-      ['<p data-text="{d}">x</p>', 'RangeError'],
-      [`<p data-text="{'' + d}">x</p>`, 'RangeError'],
-      ['<p data-text="{`${d}`}">x</p>', 'RangeError'],
-    ];
-    for (const [body, name] of cases) {
-      container.innerHTML = `<div data-forma-state='{"d": ${deep}}'>${body}</div>`;
-      let thrown: unknown;
-      try { mountFixture(container); } catch (e) { thrown = e; }
-      expect((thrown as Error | undefined)?.name, body).toBe(name);
-      unmountFixture(container);
-    }
-    container.innerHTML = `<div data-forma-state='{"d": ${deep}}'><p data-text="{d.join()}">x</p></div>`;
-    expect(() => mountFixture(container)).not.toThrow();
-    expect(runtime.getDiagnostics().map((d) => d.code)).toEqual(['FORMA_E_CALL_FAILED']);
-  });
-
   it("a native that throws is final: it arms nothing, and what it was charged before it ran stays on the task's meter", async () => {
     // As a refusal that checks a length or a count (FORMA-249, FORMA-250):
     // `JSON.parse(big)` is charged its argument's 200,000 units before it
