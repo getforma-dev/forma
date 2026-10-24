@@ -92,8 +92,9 @@ test('RC cannot record without a real audit, nor with changed production after r
   await assert.rejects(qualificationEvidence({ ...f, set: { ...f.set, commit }, env: { ...f.env, GITHUB_SHA: commit, P17_MANIFEST_SHA256: manifestSha256 } }), /production\/harness changed/);
 });
 
+// Historical 3.0 release-note/waiver behavior is independent of today's contract status.
 for (const deferredInput of [false, true]) test(`the GitHub Release names the milestone, channel and later gates (deferred input: ${deferredInput})`, () => {
-  const contracts = json(join(ROOT, 'scripts/release-contracts.json'));
+  const contracts = json(join(ROOT, 'scripts/fixtures/release-contracts-3.0.0.json'));
   if (deferredInput) {
     const soak = contracts.milestones.final.gates['FORMA-145 soak'];
     soak.status = 'deferred';
