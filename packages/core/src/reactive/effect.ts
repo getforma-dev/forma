@@ -238,7 +238,12 @@ class EffectState implements Owner {
           if (initialThrow) { this.initialError = {error}; failed = true; }
           else if (this.failure) { this.failure(error); failed = true; }
           else reportError(error, 'effect');
-        } finally { this.owner = this; }
+        } finally {
+          this.owner = this;
+          // A reporter can allocate the first collector or dispose this effect.
+          // Commit its cleanup before the outer finally drains a stopped run.
+          this.cleanup = this.nextCleanup;
+        }
       } finally {
         setExecutionContext(previousContext);
         if (boundary) { adoptionFailure = previousFailure; adoptionInternalEffect = previousReader; }
@@ -286,7 +291,10 @@ function runPlain(this: EffectState): void {
   } catch (error) {
     if (this.nextCleanup) this.cleanup = this.nextCleanup;
     this.owner = previous.owner;
-    try { reportError(error, 'effect'); } finally { this.owner = this; }
+    try { reportError(error, 'effect'); } finally {
+      this.owner = this;
+      this.cleanup = this.nextCleanup;
+    }
   } finally {
     setExecutionContext(previous);
     if (this.disposed) this.clean();
