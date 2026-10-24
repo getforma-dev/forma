@@ -1,9 +1,10 @@
 // Test evidence only: deterministic complete samples, never release measurements.
 import {createHash} from 'node:crypto';
 import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderPayload} from './release-performance-decoder.mjs';
-import {MOBILE_PROFILE} from './release-performance-spec.mjs';
+import {MOBILE_PROFILE,MOBILE_STARTUP_ACCEPTANCE} from './release-performance-spec.mjs';
 import {traceFixture,traceMeasurement} from './release-performance-trace-fixtures.mjs';
 import {summarizeMobileStartup} from './release-performance-attribution.mjs';
+import {summarizeStartupAcceptance} from './release-performance-startup.mjs';
 const hash='a'.repeat(64);
 export function native(){return {schema:1,pilot:false,profile:'cargo build --release --locked',n1:[300,1500,10000,15000,20000].map(n=>{const time=n===300?200000:n*500;return {nominalNodes:n,nodes:n,walks:20000,samplesNanoseconds:Array(20000).fill(time),p50Nanoseconds:time,p99Nanoseconds:time,p50NodesPerSecond:n*1e9/time,p99NodesPerSecond:n*1e9/time,moduleSha256:hash,inputSha256:hash,outputSha256:hash}}),n5:{points:[100,200,400,800,1600,3200].map(rows=>({rows,allocations:rows*12,allocatedBytes:rows*400,samplesNanoseconds:Array(41).fill(rows*500),medianNanoseconds:rows*500,moduleSha256:hash,inputSha256:hash})),pairedRounds:41,pairedTimeRatios:Array(41).fill(32),medianTimeRatio:32},boundaries:{exactPass:true,partialHtmlReturned:false,exactIterations:400,exactBytes:50000,onePastIteration:{code:'RENDER-302',limit:399},onePastOutput:{code:'RENDER-301',limit:49999}}};}
 
@@ -21,10 +22,10 @@ export function mobile(){
    const count=id==='islands-100'?100:2;
    return {run:i+1,lighthouse:traceMeasurement(lhr,trace),activation:{expected:count,active:count,responded:count,firstPaintMs:100,lastResponseMs:200,longTasks:[],errors:[]}};
   });
-  return {id,pilot:false,profile:MOBILE_PROFILE,p95TbtMs:0,runs,startup:summarizeMobileStartup(runs)};
+  return {id,pilot:false,profile:MOBILE_PROFILE,p95TbtMs:0,runs,startup:summarizeMobileStartup(runs),startupAcceptance:summarizeStartupAcceptance(runs)};
  });
 }
-export function performanceRecord(){const n=native();return {contract:'measured-v1',inputProtocol:'separate-input-tasks-v1',passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true},controlObservations:controlObservations(),n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:mobile(),client:comparison(),decoder:decoder()};}
+export function performanceRecord({historical=false}={}){const n=native(),rows=mobile();if(historical)for(const row of rows)delete row.startupAcceptance;return {contract:'measured-v1',inputProtocol:'separate-input-tasks-v1',...historical?{}:{startupPolicy:MOBILE_STARTUP_ACCEPTANCE.id},passed:true,machine:{profile:'packed',cpuModel:'test',node:'v24.22.0'},nativeProfile:n.profile,controls:{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true},controlObservations:controlObservations(),n1:n.n1,n5:n.n5,boundaries:n.boundaries,mobile:rows,client:comparison(),decoder:decoder()};}
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 // Synthetic finite validator inputs only. These figures are never used as

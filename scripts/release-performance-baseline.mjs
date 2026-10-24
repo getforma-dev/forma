@@ -7,7 +7,7 @@ import {RELEASE_RECORD_MAX_BYTES,readBoundedBody} from './release-record-limits.
 
 import {PERFORMANCE_CONTRACT} from './release-performance-spec.mjs';
 export {PERFORMANCE_CONTRACT,N1_SHAPES} from './release-performance-spec.mjs';
-import {validatePerformanceRecord} from './release-performance-contract.mjs';
+import {validatePerformanceRecord,validateHistorical30BaselinePerformance} from './release-performance-contract.mjs';
 const API = 'https://api.github.com/repos/getforma-dev/forma';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -58,7 +58,8 @@ export function validateBaselineRecord(record, {tag, currentTag, publishedAt, be
   assert.equal(performance?.contract, PERFORMANCE_CONTRACT, 'DS12: declared performance record missing');
   // Published predecessor records retain their original input protocol and
   // controls. This compatibility path is never used for current qualification.
-  validatePerformanceRecord(performance,{allowLegacyInputProtocol:true});
+  if(/^v3\.0\.\d+(?:-(?:alpha|beta|rc)\.[1-9]\d*)?$/.test(tag))validateHistorical30BaselinePerformance(performance,tag);
+  else validatePerformanceRecord(performance);
   return {...provenance, status:'comparable', n1:performance.n1.map(({nominalNodes,p99NodesPerSecond})=>({nominalNodes,p99NodesPerSecond}))};
 }
 

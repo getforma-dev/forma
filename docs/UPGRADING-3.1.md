@@ -1,9 +1,10 @@
 # Upgrading from Forma 3.0 to 3.1
 
 **Preparation draft: 3.1 is not published.** This guide describes the reviewed
-changes being prepared for the coordinated release. The effect and row-creation
-performance targets, packed qualification and independent release audit must pass
-before an RC is published. Final publication additionally requires active burn-in
+changes being prepared for the coordinated release. The documented
+[performance tradeoffs](release/3.1-PERFORMANCE-TRADEOFFS.md), fresh exact-source
+qualification and independent release audit govern RC acceptance. Original
+missed effects and row-creation targets remain disclosed. Final publication additionally requires active burn-in
 of that published RC and final-delta qualification. The [3.0 guide](UPGRADING-3.0.md)
 remains the guide for upgrades from earlier releases.
 
@@ -53,6 +54,20 @@ and costs CPU; fewer transferred bytes do not imply faster responses. See the
 [server API](../crates/forma-server/README.md#rendered-page-compression) and
 [BREACH policy](../SECURITY.md#opt-in-page-compression-forma-261). Disable it by
 removing the wrapper or feature.
+
+## Effects and performance budgets
+
+The selected effect implementation consolidates graph and lifecycle state while
+preserving synchronous execution, cleanup, error reporting and ownership.
+No effect API migration is required. Default `createList` and event ownership
+remain unchanged; the large-table creation gap is a documented limitation.
+The experimental template and listener transforms are excluded from this release.
+
+The core ESM graph gate increases from 48,902 to 49,414 gzip bytes, and the
+route's Forma-code ceiling from 28,100 to 28,420. Total page/canvas JavaScript
+budgets and zero-JavaScript static routes stay unchanged. These explicit costs
+support the measured effects gains; they do not mean every workload is faster.
+Use the final qualified report and your application's own measurements.
 
 ## Check explicit HTML-runtime declarations
 

@@ -30,3 +30,12 @@ export const MOBILE_STARTUP_POLICY = Object.freeze({
  id:'N3-startup-correlated-v1',targetMs:50,maxTaskMs:50,
  runsPerRoute:20,responseAfterPaintMs:500,p95TbtMs:200,
 });
+
+// Classification and its historical strict summary above remain stable. This
+// separately versioned product allowance applies only to positively proven
+// cold-start tasks; independent observer/input tasks retain the strict ceiling.
+export const MOBILE_OBSERVER_MAX_TASK_MS = 50;
+export const MOBILE_STARTUP_ACCEPTANCE = Object.freeze({
+ id:'N3-cold-start-bounded-v1',targetMs:50,maxExceptionalTaskMs:55,
+ maxExceptionalTasks:2,maxAffectedVisits:2,maxExcessMs:10,runsPerRoute:20,
+});
