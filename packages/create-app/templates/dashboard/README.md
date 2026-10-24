@@ -255,3 +255,17 @@ npm test
 - [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) — FMIR compiler (used by the `minimal` template's SSR build)
 - [forma-server](https://crates.io/crates/forma-server) — Rust page rendering, assets, CSP
 - [forma-ir](https://crates.io/crates/forma-ir) — FMIR parser and HTML walker
+
+## CI and release builds
+
+The included `.github/workflows/build.yml` builds the frontend before the release
+server. It caches npm downloads and Rust dependencies in `target/`, keyed by the
+lockfile and compiler. A page-only change still recompiles the app crate because
+release builds embed the page assets; the dependency cache avoids compiling the
+whole Rust dependency graph again. Cache writes are restricted to the default
+branch. A cache miss is valid and builds from the committed locks.
+
+Keep `admin/dist` and the release binary from the same build. Build assets before
+`cargo build --release --locked`; then deploy the resulting binary atomically.
+Do not restore a server binary as the completed output of a different page build.
+See the [deployment guide](https://github.com/getforma-dev/forma/blob/main/docs/DEPLOYMENT.md).
