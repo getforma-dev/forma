@@ -2682,5 +2682,25 @@
   "find": "/^key(?:down|up|press)\\.|^[^.]*\\.(?:",
   "replace": "/^[^.]*\\.(?:",
   "note": "a key event with a key-name suffix (`keydown.enter`, `keydown.arrow-down`, `keypress.a`) is not refused, so its handler listens for that literal name and never runs, with no diagnostic (FORMA-269). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:%s is refused and binds nothing\""
+ },
+ {
+  "id": "runtime/event-modifier-word-unbounded",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "|left|right|middle)(?:\\.|$)/;",
+  "replace": "|left|right|middle)/;",
+  "note": "a modifier word is matched as a prefix, so a custom event whose first suffix only begins with one (`timer.stopped`, `item.selfie`, `panel.leftover`, `tab.once-more`) is refused (FORMA-269 review, R3). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"plain event names and dotted custom events bind as before, with no diagnostic\""
+ },
+ {
+  "id": "runtime/event-modifier-suffix-unanchored",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "|^[^.]*\\.(?:stop|",
+  "replace": "|\\.(?:stop|",
+  "note": "a modifier word is matched in any suffix, not only the first, so a custom event with one later in its name (`carousel.slide.left`, `menu.item.stop`) is refused (FORMA-269 review, R3). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"plain event names and dotted custom events bind as before, with no diagnostic\""
  }
 ]

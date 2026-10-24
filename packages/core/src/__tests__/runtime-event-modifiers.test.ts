@@ -94,6 +94,10 @@ describe('data-on: event modifiers', () => {
     const names = [
       'click', 'keydown', 'submit', 'forma:interval', 'cart-updated',
       'item.selected', 'shown.bs.modal', 'close.bs.alert', 'todo.delete', 'menu.up', 'stop.now',
+      // A modifier word is matched whole: a longer suffix is not that word.
+      'timer.stopped', 'item.selfie', 'panel.leftover', 'tab.once-more',
+      // Only the first suffix is checked: a modifier word after it is a name.
+      'carousel.slide.left', 'menu.item.stop',
     ];
     mount(names.map((name, i) => `<button id="b${i}" data-on:${name}="{n++}">x</button>`).join('')
       + `<div data-on:item.selected="{n = n + 100}"><button id="send" data-on:click="{$dispatch('item.selected')}">send</button></div>`);
@@ -119,18 +123,36 @@ describe('data-on: event modifiers', () => {
     expect(out()).toBe('1');
   });
 
-  it('modifier syntax without a dot is not detected: it listens for its literal name, with no diagnostic', () => {
-    // Datastar's `data-on:click__prevent` is still a dead handler. A known gap,
-    // stated in docs/HTML-RUNTIME.md and SECURITY.md.
-    mount('<button id="b" data-on:click__prevent="{n++}">x</button><button id="c" data-on:keydown__window="{n = n + 10}">y</button>');
+  it('modifier syntax the check does not recognise is not detected: it listens for its literal name, with no diagnostic', () => {
+    // Still dead handlers, a known gap stated in docs/HTML-RUNTIME.md and
+    // SECURITY.md: a first suffix not in the list, an empty one, Alpine's
+    // `.camel` and `.dot`, and Datastar's `__` syntax. (Svelte's `|` is
+    // e2e/event-modifiers.spec.ts's, in Chromium.)
+    const names = [
+      'click.foo', 'click.foo.stop', 'click.', 'click..stop',
+      'custom-event.camel', 'custom-event.dot', 'click__prevent', 'keydown__window',
+    ];
+    mount(names.map((name, i) => `<button id="b${i}" data-on:${name}="{n++}">x</button>`).join(''));
 
-    fire('#b', 'click');
-    fire('#c', 'keydown');
+    names.forEach((name, i) => fire(`#b${i}`, name.split(/\.|__/)[0]!));
     expect(out()).toBe('0');
-    fire('#b', 'click__prevent');
-    fire('#c', 'keydown__window');
-    expect(out()).toBe('11');
+    names.forEach((name, i) => fire(`#b${i}`, name));
+    expect(out()).toBe(String(names.length));
     expect(getDiagnostics()).toEqual([]);
+  });
+
+  it('a refused .prevent prevents nothing: the default still happens, as before FORMA-269', () => {
+    // Refusing the name does not perform the modifier. What is new is the
+    // diagnostic. e2e/event-modifiers.spec.ts shows the form submitting in Chromium.
+    mount('<form id="f" data-on:submit.prevent="{n++}"><button>go</button></form><a id="a" href="#x" data-on:click.prevent="{n++}">a</a>');
+
+    const submit = new Event('submit', { bubbles: true, cancelable: true });
+    root.querySelector('#f')!.dispatchEvent(submit);
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    root.querySelector('#a')!.dispatchEvent(click);
+    expect([submit.defaultPrevented, click.defaultPrevented]).toEqual([false, false]);
+    expect(out()).toBe('0');
+    expect(getDiagnostics().map(d => d.code)).toEqual(['FORMA_E_UNSUPPORTED', 'FORMA_E_UNSUPPORTED']);
   });
 
   it("the refusal costs that handler only: the element's other directives bind", () => {

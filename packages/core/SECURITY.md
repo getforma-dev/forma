@@ -211,10 +211,11 @@ An expression that cannot be compiled or cannot be evaluated is **not evaluated,
 Verified by: `src/__tests__/failure-semantics.test.ts` > "a denied expression leaves the previous text in place and never renders undefined"
 Verified by: `src/__tests__/failure-semantics.test.ts` > "a genuine runtime bug is not swallowed as an expression denial"
 
-**A `data-on:` name in Vue or Alpine modifier syntax is reported the same way** (FORMA-269). `data-on:click.stop` listened for an event named `click.stop`, which no browser dispatches, so the handler never ran and nothing said so. A key event with anything after a dot, or an event whose first suffix is one of their modifiers (`stop`, `prevent`, `once`, `self`, …; docs/HTML-RUNTIME.md lists them), is now refused as `FORMA_E_UNSUPPORTED` on its element and binds no listener. Any other dotted name is a custom event and binds as before.
+**A `data-on:` name in Vue or Alpine modifier syntax is reported the same way** (FORMA-269). `data-on:click.stop` listened for an event named `click.stop`, which no browser dispatches, so the handler never ran and nothing said so. A key event with anything after a dot, or an event whose first suffix is one of their modifiers (`stop`, `prevent`, `once`, `self`, …; docs/HTML-RUNTIME.md lists them), is now refused as `FORMA_E_UNSUPPORTED` on its element and binds no listener. Refusing a modifier does not perform it: under a refused `data-on:submit.prevent` the form still submits, as before FORMA-269. Any other dotted name is a custom event and binds as before.
 
 Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener"
 Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "plain event names and dotted custom events bind as before, with no diagnostic"
+Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "a refused .prevent prevents nothing: the default still happens, as before FORMA-269"
 
 **An allowlisted native that throws is reported the same way** (FORMA-271). `JSON.parse('{')`, `(1).toFixed(500)`, `(1).toString(1)`, `Object.keys(null)`, `Array.from(null)`, `[].reduce(f)`, a higher-order method called with no callback, a selector the DOM cannot parse (`$el.matches('#1')`) and `classList.add('')` throw on their arguments. Each is now refused as `FORMA_E_CALL_FAILED` on the binding that made the call, with a message that names the method and the native's error, its text cut at 200 characters (`number.toFixed() threw RangeError: toFixed() digits argument must be between 0 and 100`). The rest of the markup binds. Before, the exception escaped `mountMarkup` from any binding and left the whole module unbound. From a handler it was an uncaught page error with no diagnostic.
 
@@ -322,9 +323,17 @@ Stated here rather than left for a reader to discover:
   Verified by: `src/__tests__/runtime-native-throw.test.ts` > "what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text"
 
   In Chromium, `e2e/native-throw.spec.ts` checks the `data-class:` and `data-bind:` cases.
-- **Modifier syntax without a dot still binds a dead handler.** FORMA-269 refuses the dotted Vue and Alpine syntax only. Datastar's `data-on:click__prevent` listens for an event named `click__prevent`, which never fires, with no diagnostic.
+- **Modifier syntax the FORMA-269 check does not recognise still binds a dead handler, with no diagnostic.** The check refuses only a key event with a dotted suffix and an event whose first suffix is one of the Vue and Alpine modifiers docs/HTML-RUNTIME.md lists. These still listen for their literal name, which never fires:
+  - a first suffix that is not in the list: `click.foo`, `click.foo.stop`;
+  - an empty first suffix: `click.`, `click..stop`;
+  - Alpine's `.camel` and `.dot` (`data-on:custom-event.camel`);
+  - Datastar's `__` syntax (`data-on:click__prevent`).
 
-  Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "modifier syntax without a dot is not detected: it listens for its literal name, with no diagnostic"
+  Svelte's `data-on:click|preventDefault` stays one attribute in Chromium, `data-on:click|preventdefault`, and its handler never runs on a click.
+
+  Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "modifier syntax the check does not recognise is not detected: it listens for its literal name, with no diagnostic"
+
+  In Chromium, `e2e/event-modifiers.spec.ts` checks the Svelte form.
 
 ## Supported Versions
 
