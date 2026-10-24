@@ -39,7 +39,16 @@ Changes after the prepared 3.0.0 set will be recorded here.
   - what Forma's own code throws while a native runs it passes through as it is, a real bug or an expression error with its own code and `defer`: an arrow callback, a handler a `click()` dispatches, the runtime magics `$dispatch` and `$refetch`. Code an application put in reach and a native runs (a `toString` of a value in state, its own override of an element method) is converted, because the native call is what threw;
   - budgets (DR-16) are unchanged. The refusal is final and arms no cap, like the refusals that check a length or a count (FORMA-249), and what the call was charged before it ran stays on the task's meter: `JSON.parse` of a 200,000-character string that is not JSON leaves its 200,000 units spent.
 
-  "Markup cannot throw out of `mountMarkup`" is not adopted as a guarantee, because other paths still throw. A `data-bind:` with no name throws InvalidCharacterError, and a `data-class:` with no name throws SyntaxError in Chromium. A value nested about 10,000 deep overflows the stack when the runtime's `data-text`, or an operator (`'' + v`, a template literal), converts it to text. At event time, a DOM write the browser refuses (`$el.dataset['a-b'] = 1`) is still an uncaught page error, and Chromium 156's `scrollIntoView({behavior: 'bad'})` returns a rejected promise. SECURITY.md lists them under *Known gaps*, and tests pin the ones at mount time. The probes stay `correctness`. CDN runtime +142 B gzipped, hardened +144 B, preview frame +135 B (39,909 of 40,000 B, 91 B left); the ESM entries are unchanged. Probes: 6 added (correctness), 2 re-anchored; corpus 271. No public API or wire-format change; a diagnostic's `code` can now be `FORMA_E_CALL_FAILED`. Rollback: revert.
+  The message can quote part of the argument, which may be T2 data, up to the 200-character cut. SECURITY.md says where the message goes.
+
+  "Markup cannot throw out of `mountMarkup`" is not adopted as a guarantee, because other paths still throw. Among them:
+  - a `data-bind:` with no name throws InvalidCharacterError;
+  - a `data-class:` with no name throws SyntaxError in Chromium;
+  - a `data-model` on a file input with a non-empty value throws InvalidStateError;
+  - a value nested about 10,000 deep overflows the stack wherever something other than the native call converts it: the runtime's `data-text`, an operator, Forma's own checks before a call (a selector, an attribute or style property name, a `repeat` count), or a sort comparator's result;
+  - an application-thrown value that cannot be converted to text.
+
+  At event time, a DOM property write the browser refuses (`$el.dataset['a-b'] = 1`, `$el.value` on a file input or a `<progress>`) is still an uncaught page error, and Chromium 156's `scrollIntoView({behavior: 'bad'})` returns a rejected promise. SECURITY.md lists them under *Known gaps*; tests pin the empty-name cases and the runtime's and an operator's conversion of a nested value. The probes stay `correctness`. CDN runtime +142 B gzipped, hardened +144 B, preview frame +135 B (39,909 of 40,000 B, 91 B left); the ESM entries are unchanged. Probes: 6 added (correctness), 2 re-anchored; corpus 271. No public API or wire-format change; a diagnostic's `code` can now be `FORMA_E_CALL_FAILED`. Rollback: revert.
 
 ## [3.0.0] - Prepared; publication pending
 

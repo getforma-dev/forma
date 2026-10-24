@@ -184,9 +184,10 @@ and the error: `{JSON.parse(payload)}` of a payload that is not JSON reports
 costs that binding only: the rest of the markup binds and keeps working. Before
 FORMA-271 the exception escaped `mountMarkup` and left the whole module
 unbound. A real bug in Forma's own code is still not filed as an expression
-failure. Some markup can still throw out of `mountMarkup`: a `data-bind:` or
-`data-class:` with no name, and a value nested about 10,000 deep converted to
-text (SECURITY.md, *Known gaps*).
+failure. Some markup can still throw out of `mountMarkup`, for example a
+`data-bind:` or `data-class:` with no name, or a value nested about 10,000 deep
+that Forma's own code converts. SECURITY.md, *Known gaps*, lists the paths
+found.
 
 Verified by `src/__tests__/runtime-native-throw.test.ts` > "one native that throws costs one binding: every directive reports on its own element and the rest of the module works"
 Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a native runs is rethrown, not filed as the native failing"
