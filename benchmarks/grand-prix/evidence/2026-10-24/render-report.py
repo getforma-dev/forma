@@ -47,7 +47,7 @@ html = '''<!doctype html>
 <h1>Grand Prix: Round 2 evidence</h1></header>
 '''
 html += f'<p class="status">{text(data["status"])}</p><p>{text(data["method"])}</p>'
-html += '<p class="note">This public view contains the curated Round 2 tables. Historical October 23 standings and original machine records remain in their separate report. All Round 2 source archives, including failed trials, accompany this file.</p>'
+html += '<p class="note">This public view contains the curated Round 2 tables. Historical October 23 standings and original machine records remain in their separate report. Source archives for the measurements shown here, including failed trials, accompany this file.</p>'
 html += '<details><summary>Jump to a result</summary><nav aria-label="Results">' + ''.join(links) + '</nav></details>'
 html += ''.join(parts)
 html += '<footer class="note">Reproduce these tables with assemble-report.py and render-report.py. Verify every snapshot file with verify.py. No package release or deployment is established by this evidence.</footer></main></body></html>\n'

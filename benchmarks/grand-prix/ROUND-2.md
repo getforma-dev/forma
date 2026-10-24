@@ -114,8 +114,8 @@ Chromium executable hash and checks the server container's one-CPU/1-GiB limits.
 
 ## Strength budgets and resource ownership
 
-The Forma check fails above 8 MiB peak under Sprint load, 50 ms application boot,
-or 150,000,000 bytes for the runtime image. Memory uses the original Docker-stats
+The Forma check fails above 8 MiB peak under Sprint load, a 50 ms readiness
+remainder after `docker run` returns, or 150,000,000 bytes for the runtime image. Memory uses the original Docker-stats
 sampling definition; image size uses Docker's uncompressed image size. Boot is
 the mean of five first-200 times minus their corresponding `docker run` return
 times, exactly as in the original telemetry. It includes the host probe and

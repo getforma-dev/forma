@@ -1,0 +1,115 @@
+{
+  "passed": true,
+  "runtime": {
+    "sourceCommit": "3d9de62d0709e8158cadd62be387ff1481ca9e66",
+    "sourceImage": "sha256:e01f68a89dc3cb76f247c25e678aad3949f0e934418369dabf65b5a5beb50b43",
+    "performanceQualified": false,
+    "binary": {
+      "bytes": 3319752,
+      "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+    },
+    "original": {
+      "id": "sha256:e01f68a89dc3cb76f247c25e678aad3949f0e934418369dabf65b5a5beb50b43",
+      "bytes": 78187609,
+      "architecture": "amd64",
+      "user": ""
+    },
+    "distroless": {
+      "id": "sha256:ae4589443a000c5a018c0e341d7f543973e8ac58de2e2a3ec7de23333d2e94f8",
+      "bytes": 31030953,
+      "architecture": "amd64",
+      "user": "65532"
+    },
+    "imageBytesSaved": 47156656,
+    "cleanupErrors": []
+  },
+  "renderCounts": {
+    "sameCampaign": true,
+    "source": {
+      "originalSha256": "cfa6ecd360e98522d670792a4c0d489865ee37588785514bb35169daedb62526",
+      "instrumentedSha256": "97e8e676090f4af8d5b191a50af42efa1490f2a6f979cd768395fb6882993d0e"
+    },
+    "originalBinarySha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a",
+    "instrumentedBinarySha256": "0b11eb6db0c1d042d928a0dc883c352c85d78442071842b1d576a7e6297c46d3",
+    "protocol": {
+      "warmups": 20,
+      "samples": 101,
+      "rows": [
+        100,
+        1000
+      ],
+      "concurrency": 1,
+      "cpus": 1,
+      "cpuset": "0",
+      "memoryBytes": 1073741824
+    },
+    "samples": [
+      {
+        "rows": 100,
+        "documentBytes": 33193,
+        "documentSha256": "2b3179c74569c1d4b301bb2188a6bafa16211e723ab0ea0e79b55bed11bf3d5d",
+        "sameBody": true,
+        "walkBytes": 32851,
+        "nodes": 1440,
+        "listIterations": 100,
+        "walkNs": {
+          "mean": 235654.9504950495,
+          "median": 220592,
+          "p95": 273221,
+          "p99": 392092,
+          "min": 208740,
+          "max": 426687
+        },
+        "nsPerByte": {
+          "mean": 7.173448311925042,
+          "median": 6.714924964232443,
+          "p95": 8.316976652156708,
+          "p99": 11.935466195854007,
+          "min": 6.35414447048796,
+          "max": 12.988554381906182
+        }
+      },
+      {
+        "rows": 1000,
+        "documentBytes": 326726,
+        "documentSha256": "a176c7d95178243edc08c9da54e9eba14f3d82bd9c519d4d6947e5c0347a7022",
+        "sameBody": true,
+        "walkBytes": 326384,
+        "nodes": 14040,
+        "listIterations": 1000,
+        "walkNs": {
+          "mean": 2245871.782178218,
+          "median": 2216993,
+          "p95": 2477349,
+          "p99": 3044258,
+          "min": 2026546,
+          "max": 3450487
+        },
+        "nsPerByte": {
+          "mean": 6.881071934219259,
+          "median": 6.792590935830188,
+          "p95": 7.590289352419236,
+          "p99": 9.327228050394627,
+          "min": 6.209085004166871,
+          "max": 10.571863204078632
+        }
+      }
+    ],
+    "cleanupErrors": []
+  },
+  "privacy": {
+    "imageEnvKeysReviewed": [
+      "CARGO_HOME",
+      "NODE_ENV",
+      "PATH",
+      "RUSTUP_HOME",
+      "RUST_LOG",
+      "RUST_VERSION",
+      "SSL_CERT_FILE"
+    ],
+    "proxyAndLabelsEmpty": true,
+    "ephemeralDockerHostNameRetained": true,
+    "rawCampaignMachineAndTrackingIdsAbsent": true,
+    "limitation": "Pattern scan plus source/provenance review; not a general proof of arbitrary binary secrecy."
+  }
+}

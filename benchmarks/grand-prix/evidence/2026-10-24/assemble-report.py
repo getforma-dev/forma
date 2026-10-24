@@ -85,9 +85,9 @@ sections[1:1]=[{
 },{
  'title':'FORMA-264 — server budgets and runtime image experiment',
  'description':'All four trials pass unchanged memory ≤8 MiB, application boot ≤50 ms and image ≤150,000,000 B budgets. Every individual memory/boot observation also passes.',
- 'columns':['Source','Peak MiB ± SD','App boot ms ± SD','Total startup ms','Debian image, B','Distroless image, B'],
+ 'columns':['Source','Peak MiB ± SD','Readiness remainder, ms','Total startup ms','Debian image, B','Distroless image, B'],
  'rows':[[t['label'],stat(t['budgets']['memory']),stat(t['budgets']['boot']),f"{t['budgets']['totalContainerBoot']['mean']:.2f}",f"{t['runtime']['debianBytes']:,}",f"{t['runtime']['distrolessBytes']:,}"] for t in pt],
- 'note':'Memory is the mean of observed per-run peaks. Application boot excludes Docker-command startup. The pinned distroless image saves 47,156,656 B using the identical executable, runs as UID 65532 and passes 10/100/1,000-row body/policy parity. This is a size/correctness experiment; no distroless throughput, memory or boot claim, and no default image change.',
+ 'note':'Memory is the mean of observed per-run peaks. The readiness remainder runs from the Docker command returning until the first HTTP 200; it is not pure process startup. The pinned distroless image saves 47,156,656 B using the identical executable, runs as UID 65532 and passes 10/100/1,000-row body/policy parity. This is a size/correctness experiment; no distroless throughput, memory or boot claim, and no default image change.',
  'sources':[src('Budgets and same-binary image evidence',run(40116668819))]
 }]
 sections[-1]['rows'][1]=['Paired static routes and walker','Audited; byte, mean-based tail and strength budgets pass']
@@ -137,6 +137,37 @@ sections.insert(-1,{
  'note':'The isolated change saves 237 B Brotli (2.74%). A separate source-map build shows activation code (666 mapped bytes) and state-encoder setup (16) disappear from this client-only app. Compression savings are not additive by module. All 4,164 unit tests, 42 three-engine checks and existing package/route size limits pass. These are local static byte measurements, not new Linux timings or the earlier combined candidate’s 8,424 B result.',
  'sources':[src('Independent bundle extraction','https://github.com/getforma-dev/forma/pull/187')]
 })
-j={'status':'Round 2 is in progress. Paired server, compression, island and client evidence are audited; failed client targets remain open. Release is blocked until both effect and row-creation performance targets pass.','method':'Fresh Linux campaigns use separately recorded VM identities and the dated gha-4-v1 allocation. Compare paired trials only within a campaign. Historical October 23 standings remain in the separate historical report.','sections':sections}
+server=json.loads((E/'server-qualified/publication-summary.json').read_text())
+assert server['outcome']['passed'] and server['outcome']['matchingByteSamples']==168
+scored=server['scores']
+standings=scored['championship']
+by_event={c['id']:{r['car']:r for r in c['standings']} for c in scored['contests']}
+def server_stat(car,event,scale=1):
+ r=by_event[event][car]
+ return f"{r['mean']/scale:,.2f} ± {r['sd']/scale:,.2f}"
+sections[1:1]=[{
+ 'title':'FORMA-264 — qualified fourteen-server championship',
+ 'description':'The corrected full Linux campaign independently passes source, resource, transport and score replay checks. It measures published Forma 3.0.0 and thirteen other server entrants on one VM, under the frozen gha-4-v1 profile. This is a server-only baseline.',
+ 'columns':['Rank','Server','Points','Events'],
+ 'rows':[[str(r['rank']),r['car'],f"{r['points']:.3f}",str(r['events'])] for r in standings],
+ 'note':'The unchanged points schedule is 25,18,15,12,10,8,6,4,2,1; ties share occupied positions. Event 7 splits its points equally between image and gzip-response weight. Forma ranks 7 of 14 with 59.5 points, first in memory and image size and second in Grid start. No client or overall-combined ranking is inferred. Earlier unresolved server results remain archived separately.',
+ 'sources':[src('Qualified full server campaign',run(40123441558)),src('Exact harness source','https://github.com/getforma-dev/forma/tree/be858597a42c3fbcbd0146d111c2f3bc7bc8d67a/benchmarks/grand-prix')]
+},{
+ 'title':'FORMA-264 — all server HTTP measurements',
+ 'description':'Three ten-second samples per event follow five-second warmups. Values are mean ± sample SD. Single-core events use one server CPU; multicore uses two; the two-CPU driver has disjoint affinity.',
+ 'columns':['Server','Sprint, req/s','Endurance, req/s','Two-CPU, req/s','Reaction p99, ms'],
+ 'rows':[[r['car']]+[server_stat(r['car'],e) for e in ['sprint','endurance','multicore','reaction']] for r in standings],
+ 'note':'All 168 timed loads, 56 warmups, 112 probe bodies and 294 transport records are retained. Probes and loads share explicit headers. Each identity aggregate equals the verified probe length multiplied by completed responses, including React Router. This validates aggregate representation length with sampled semantic checks; it does not prove every individual timed response. Compare absolute timings only within this campaign.',
+ 'sources':[src('Full raw HTTP and transport evidence',run(40123441558))]
+},{
+ 'title':'FORMA-264 — all server resource and build measurements',
+ 'description':'Memory, Grid start and build cells show mean ± sample SD. Image and gzip-response sizes are byte measurements. Grid start includes the Docker command; builds are warm page-only release builds under the recorded four-CPU build allocation.',
+ 'columns':['Server','Peak memory, MiB','Grid start, ms','Image, MB','gzip HTML, B','Build, ms'],
+ 'rows':[[r['car'],server_stat(r['car'],'fuel'),server_stat(r['car'],'grid'),f"{by_event['weight-image'][r['car']]['mean']/1e6:,.2f}",f"{by_event['weight-gzip'][r['car']]['mean']:,.0f}",server_stat(r['car'],'pitstop')] for r in standings],
+ 'note':'Forma passes the separate strength budgets: mean memory peak 4.033333 MiB ≤8, readiness remainder after docker run returns 18.144030 ms ≤50, and image 78,187,609 B ≤150,000,000. The boot remainder is not pure process startup; the scored Grid event is 178.014610 ms. A separate same-executable distroless check saves 47,156,656 B with body/policy parity; it establishes image size and correctness only.',
+ 'sources':[src('Resource, build and separate runtime evidence',run(40123441558))]
+}]
+sections[-1]['rows'][0]=['Full 14-stack server championship','Corrected full campaign independently passes; prior unresolved run retained']
+j={'status':'Round 2 is in progress. Full and paired server, compression, island and client evidence are audited; failed client targets remain open. Release is blocked until both effect and row-creation performance targets pass.','method':'Fresh Linux campaigns use separately recorded VM identities and the dated gha-4-v1 allocation. Compare paired trials only within a campaign. Historical October 23 standings remain in the separate historical report.','sections':sections}
 out.write_text(json.dumps(j,ensure_ascii=False,indent=2)+'\n')
 print(out)

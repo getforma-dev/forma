@@ -1,18 +1,18 @@
 [
   {
     "path": "README.md",
-    "bytes": 5845,
-    "sha256": "b924d72dfc61ff984a179546ef8353eafe55a0f4ca485b168b13262b7a84a587"
+    "bytes": 6684,
+    "sha256": "9723942bfd446d7af1bbf4097f030742338021c7c932ba8e001585ec97ecb38e"
   },
   {
     "path": "archives.json",
-    "bytes": 8583,
-    "sha256": "75b93bc0eb3968ed28d5eba43771b5256d477b8a9bdd2e8245dd19a58fe3613a"
+    "bytes": 9806,
+    "sha256": "8cffc774121e171f5de84d8cb20003b65c2d9133abf3cb24e5484ac3466a622f"
   },
   {
     "path": "assemble-report.py",
-    "bytes": 19089,
-    "sha256": "44135a9a393772c9ab3faa1ca61462b5bc13c6e12784ddd201fde443c2f0f5ee"
+    "bytes": 22994,
+    "sha256": "6484121619a62f63de3dd19a41fd9fe089d2ba331a2828dba6a28b75aad0c7b0"
   },
   {
     "path": "cache-dashboard-cold/artifact.zip",
@@ -131,8 +131,8 @@
   },
   {
     "path": "index.html",
-    "bytes": 34604,
-    "sha256": "35ffb1a75dfc1083675bc94325b651bdaf162c68f364452f920b78fe54f43353"
+    "bytes": 43794,
+    "sha256": "c401401b9fb5ed51c2b1a121673e87fa3db1f703c62f19030ef311c49d6669bf"
   },
   {
     "path": "islands/artifact.zip",
@@ -246,13 +246,308 @@
   },
   {
     "path": "render-report.py",
-    "bytes": 4480,
-    "sha256": "f9b52876537e00805d51612be4557ed747eefeac88cc7f9e024a566b7e363b1e"
+    "bytes": 4500,
+    "sha256": "7b5bfb794e08b2a2a6a71e3ec45619e7519848826f7cd427cbddfb8aa2c3476e"
   },
   {
     "path": "round-2.json",
-    "bytes": 30915,
-    "sha256": "17a285796db30f74c1ad94ba00e19778c510c75b9368a07d07bb30515940d9dc"
+    "bytes": 40379,
+    "sha256": "4696ada83a8d7b3d65afdab8aa5d0cbb7937a81c03b647a147ced491f40c08eb"
+  },
+  {
+    "path": "server-qualified/ANALYSIS.md",
+    "bytes": 7160,
+    "sha256": "031255092efd75defb395ad074763c1d8bcb62428c40cc09d03d482587b3cad3"
+  },
+  {
+    "path": "server-qualified/artifact-file-manifest.json",
+    "bytes": 69717,
+    "sha256": "0749ce7a9f8d8992e14887f8fdb9fbcb58ff19ed35d7ff2578c73ede08f42dd2"
+  },
+  {
+    "path": "server-qualified/artifact-metadata.json",
+    "bytes": 746,
+    "sha256": "80f72748e647f606ba8d03aa13c0ea7c07f3d626f52965bc055d1e5139ac77cd"
+  },
+  {
+    "path": "server-qualified/artifact-verification.json",
+    "bytes": 365,
+    "sha256": "295c2f95b05ae68fa6c12ea28698a2b9ad1530d9c4d2409a575b6e220f1e6468"
+  },
+  {
+    "path": "server-qualified/artifact.zip",
+    "bytes": 12859901,
+    "sha256": "40b5692f0b9773d3797f7eb33f66a828e31c112d9e753a34f832587714211b41"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/PROTOCOL.md",
+    "bytes": 8519,
+    "sha256": "b1da68034e634858972cc31b91264f72558ca8e647f624c2903e3b3f58f04b17"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/ROUND-2.md",
+    "bytes": 10042,
+    "sha256": "93b3affb30b357d431f25d0b721ca4e51f618997c2aba6bdc5928f551ec75ec0"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/browser-sandbox.mjs",
+    "bytes": 2400,
+    "sha256": "63f0e733c78a02898f9cc9eeab6e9d1b0d2f91f4c8c591224573216ffec58c63"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/browser-sandbox.test.mjs",
+    "bytes": 1046,
+    "sha256": "5f8b8dccd334e0b6e2bfba3d86a29b627e6efbde03064e2199d336f696aefbb7"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/budgets.mjs",
+    "bytes": 5626,
+    "sha256": "6e38f2eb7e2e686d6a41eb564daafcf3a0e559302340bec7c9d1a4d031f39fff"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/budgets.test.mjs",
+    "bytes": 5262,
+    "sha256": "452891236c6fcca40476162fb85a6441c89cad160efaa3d51d2b4a3535df1b4a"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/campaign.mjs",
+    "bytes": 4324,
+    "sha256": "47f4bd50d073779c99e8f7b578bb779b446f49cd91612082a09bc0e7ea470a43"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/campaign.test.mjs",
+    "bytes": 2438,
+    "sha256": "71d095c655dada3790d7bd4f30d2b97b4a9906fdaab7661931f9b9307a052ba1"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/candidate-lock.mjs",
+    "bytes": 1575,
+    "sha256": "f24d3f64e074c763848e8bd1e1bfc4cc1834a2dc24f626471f7204f7b913badf"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/chromium-linux-lock.json",
+    "bytes": 403,
+    "sha256": "c02b0ed176536d38c9758d5c808a1fb95700ebbe8b69cc41e59ce5726c7e7235"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/ci-run.mjs",
+    "bytes": 1318,
+    "sha256": "213dfbdf6aa2fe942492d1bccdbe639bf028a5c04070b90af3d5490c1818826f"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/cleanup.mjs",
+    "bytes": 1909,
+    "sha256": "c072fbd17685c29583163bba02c17e784495839fe61cdf53d376bc975cd46ef5"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/cleanup.sh",
+    "bytes": 77,
+    "sha256": "01ebb07cbbaed109f12c35c6280433f728e7d093ddde7ec2ec44850759944410"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/client-linux.mjs",
+    "bytes": 12281,
+    "sha256": "4e882d0c7bd2835d75ffbd526293fbeaa7aac7f4250222f89666457c15ab2391"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/client-signals-control.mjs",
+    "bytes": 2710,
+    "sha256": "372ff727e35170c4f296781b4de3bb03d64c130560960f770f1e1e7a7d09d37c"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/client-signals-control.test.mjs",
+    "bytes": 4611,
+    "sha256": "fdb18e1d92eb8a8657f07af5be122c6d9c29e4cca2ec21c0c196182307c9be31"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/compare-runtime.mjs",
+    "bytes": 8730,
+    "sha256": "e5f09ae38f3afacaeef99cfe61c13cd9199b432ca17265442c8b27af574edbee"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/compression-codecs.json",
+    "bytes": 2141,
+    "sha256": "4fcbaa40be3a2bd610d75956dc5beaa417fa31121f2111c1494bc012a0725593"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/compression-report.mjs",
+    "bytes": 8375,
+    "sha256": "c35d3a61f7155aa0c0ecf412886bc22bf049327d9a13075dc8ef59fb7c107355"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/compression-response.mjs",
+    "bytes": 892,
+    "sha256": "eccfe990e4f2a1c3d30cf4cc5b2d3e867a643adea46628471063307281274147"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/compression.test.mjs",
+    "bytes": 12497,
+    "sha256": "dd06a2b5a2bb65b52a173cae2ed8b956cfa54fe432684c0d9d1765a4b0b73e4b"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/install-linux-browser.mjs",
+    "bytes": 2627,
+    "sha256": "b9bffd072d429abd89baf05674edad2de4d11042eed052171406ebfdc255c2b5"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/islands-linux.mjs",
+    "bytes": 12807,
+    "sha256": "2a0db33c1b6aa1664d7e8e4b08e760166b74f3d960ebbe513088e6ba7d27eb94"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/islands-linux.test.mjs",
+    "bytes": 3292,
+    "sha256": "697a9d4eaf426251d080b0a482d887a1afd925f684c6dd30dc679e48c8d9be30"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/lib.mjs",
+    "bytes": 15992,
+    "sha256": "ab688b083ef27a3202f108ac7f1812d4fd307234094bd0ee4db14c3ffa0b5a7f"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/linux-run.mjs",
+    "bytes": 9233,
+    "sha256": "66018f0b0bf373a3a3d4db0239ce1a56f16ed8e9632d91bcf3a84edb18882e78"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/loadgen/Dockerfile",
+    "bytes": 711,
+    "sha256": "ce39db627a9aa9712a61891b41bf0658cdb25c3819a03df65ab42de52ca19332"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/paired-server.mjs",
+    "bytes": 3780,
+    "sha256": "dcbf7b0e8835fe54796404d8a879710486a9f616b499f427ee080bd07a2abee0"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/paired-server.test.mjs",
+    "bytes": 787,
+    "sha256": "bb9542602e50f0ed5d5990bd683670ac9bf9c3fb59e66442039c111c55fd5063"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/prepare-car.mjs",
+    "bytes": 4805,
+    "sha256": "5151215a59b6a44f512431c44c8a202d0736a085faf77e91e14e81d49bc4e54d"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/race.mjs",
+    "bytes": 20076,
+    "sha256": "8511c85cadea94bbc5ec041fe5804eb12f2560ed93586aaec0273c4714c556f5"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/render-counts-source.mjs",
+    "bytes": 1469,
+    "sha256": "f89ce3602112a82440898691c01e6990f23517533edb64cc946c84b04fea2426"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/render-counts.mjs",
+    "bytes": 10945,
+    "sha256": "e7707666aa5552ba4ae1f9db7f3025c892a962946614d3ab6ff5fb475397aea6"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/render-counts.test.mjs",
+    "bytes": 1164,
+    "sha256": "da55edb84fb108958cc7f2e5ca0bf99a0ef3f83af3dd67f9a975e86999e7bcdf"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/report-views.js",
+    "bytes": 19848,
+    "sha256": "6425310ea572acfe0ea0157171aafa6950411fb3de2ed63268a8d789dce2b58b"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/report.mjs",
+    "bytes": 26377,
+    "sha256": "46ea55c46f557501744c260f446d61f273345f32ba31bcf1985b9a4ee1e0e697"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/resource-profile.mjs",
+    "bytes": 5768,
+    "sha256": "fa881e09cab0718772454572ae071f9b72dc2d8ca90628e963b1bc46949786e2"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/resource-profile.test.mjs",
+    "bytes": 4578,
+    "sha256": "39dcdfdbd45c09e42c564ea1f4c48844aeb376138cad5a0cf8242e5914bf0a8b"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/score-profile.mjs",
+    "bytes": 7713,
+    "sha256": "fcefe6a4c90c0f7270bf05d185b4c6e8a15392a1cfa5eaa739a33d6804697a16"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/score-profile.test.mjs",
+    "bytes": 9637,
+    "sha256": "e1adf1614efa34ae5d8b426702b7da6dafc4f1ae18639eeb77c3fac19080fbb6"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/score.mjs",
+    "bytes": 14238,
+    "sha256": "eced8780cb4040ca93382c660e246814b467bf4bd3fbdcccf11ec56042e3a8d6"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/smoke.mjs",
+    "bytes": 782,
+    "sha256": "6827e75f4166a16be33965947686146ab6afd13a839982420854cf15dda5cab0"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/transport.mjs",
+    "bytes": 7624,
+    "sha256": "b5abd2c158b65c4698a27cbda15a0f230cf8519efd21b61e25a964afb445db37"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/harness/transport.test.mjs",
+    "bytes": 10597,
+    "sha256": "fd978227445e9b0ca03237feddc8f7c2e7c399ba866bc500966534f6d7e07e79"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/shared/PAGE-SPEC.md",
+    "bytes": 1716,
+    "sha256": "70ff863152035125e009bf448b3b2f93194e648bd97842247957a7d76915dac2"
+  },
+  {
+    "path": "server-qualified/harness-source/benchmarks/grand-prix/shared/dataset.mjs",
+    "bytes": 2368,
+    "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+  },
+  {
+    "path": "server-qualified/harness-source-manifest.json",
+    "bytes": 7557,
+    "sha256": "668b18662a41a59c535e7f26fab3052d64f33ab010ae62b6c66e96b00c42b741"
+  },
+  {
+    "path": "server-qualified/independent-verification.json",
+    "bytes": 27405,
+    "sha256": "e125d834abf787420bdb4ebca84724f376f3ccfc56073ed1437b300dfa6aeebe"
+  },
+  {
+    "path": "server-qualified/privacy-scan.json",
+    "bytes": 95926,
+    "sha256": "871eaddb6bcc870c80d39342debec5254560aeefda00e6359ccd35b6aec6c4fe"
+  },
+  {
+    "path": "server-qualified/privacy_scan.py",
+    "bytes": 3914,
+    "sha256": "391fd09487f8c5429ac2cdbf3918b178f67a0d36444ad281f5757ccae7661cd3"
+  },
+  {
+    "path": "server-qualified/publication-summary.json",
+    "bytes": 101054,
+    "sha256": "b29a927485a140891c1d1ce356a20300cd87f05605d440cb677aaef847dd7d74"
+  },
+  {
+    "path": "server-qualified/supplementary-verification.json",
+    "bytes": 3400,
+    "sha256": "044939a1c40e6c0479c2ec2b53559226064717f5d446d16f514289ecf878cf77"
+  },
+  {
+    "path": "server-qualified/verify-supplementary.py",
+    "bytes": 5011,
+    "sha256": "75818e49279776899dd4219e5ecc227c494779e15ad2b49aa5e60ceb6dd092eb"
+  },
+  {
+    "path": "server-qualified/verify.mjs",
+    "bytes": 16889,
+    "sha256": "93124c1e01be99e016ba753077164d9d88deddf7ea07a13868155c0c5ca7a9b7"
   },
   {
     "path": "server-unresolved/ANALYSIS.md",

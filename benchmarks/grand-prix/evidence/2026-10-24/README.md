@@ -19,6 +19,7 @@ records that separate authentication step.
 
 | Archive | Interpretation |
 | --- | --- |
+| `server-qualified` | Corrected full fourteen-server campaign with identical request headers and retained transport evidence. All identity probes and timed aggregate transfer arithmetic agree; exact score replay and Forma's strength budgets pass. |
 | `paired-server` | Published, walker-only, static-only and combined source on one VM. Byte, mean-based tail and strength budgets pass. Estimated throughput gains did not materialize. |
 | `islands` | Eleven published native island implementations. Correctness passes. Activation spans differ by framework API; row content is checked, not row-node identity. |
 | `compression` | Same executable, identity/Brotli/gzip. Compression reduces transfer bytes and costs CPU/tail latency; it remains opt-in. |
@@ -40,7 +41,8 @@ Router can select different streaming behavior for bot agents, but no timed
 bodies were retained, so this cannot retroactively prove equivalence. The
 corrected full rerun uses explicit identical request headers and retains probe
 bodies and complete load-generator output. It does not normalize bytes or splice
-results between VMs. Its result will be archived separately.
+results between VMs. Its independently audited result is preserved separately in
+`server-qualified`; the unresolved original remains unchanged.
 
 Use the harness source commit recorded in each archive when reproducing its
 derived summaries. Historical archives predate new transport evidence fields and
@@ -55,6 +57,14 @@ and `python3 verify-supplementary.py` from the copied directory. The first comma
 intentionally exits 1 and records all 12 unresolved byte comparisons; the second
 checks the independent renderer/image evidence. Use Node 24. Replays write derived
 JSON into the scratch copy, leaving this authenticated snapshot unchanged.
+
+The corrected audit has its own frozen 46-file harness under
+`server-qualified/harness-source`. Replay it with the same scratch-copy and ZIP
+extraction procedure, then `node verify.mjs` and
+`python3 verify-supplementary.py`. Both commands must pass. It checks all 168
+timed samples, 56 warmups, 112 retained probe bodies and 294 transport records,
+plus resource limits and exact score reproduction. Retained probes and aggregate
+byte equality do not prove the contents of every individual timed response.
 
 `local-bundle` separately preserves the original production JavaScript for the
 independent FORMA-263 extraction, source/exclusion hashes, module tables and byte
