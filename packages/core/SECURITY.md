@@ -217,7 +217,7 @@ Only the native call is converted. The interpreter makes every allowlisted call 
 
 The refusal is final and arms no cap, like the refusals that check a length or a count (FORMA-249): the same call would throw again in a later task. What the call was charged before it ran stays on the task's meter.
 
-The message can quote part of the call's argument, which may be T2 data, up to the 200-character cut. In Chromium 156, `JSON.parse` quotes the first characters of the text it refused, and a DOM method quotes the selector it could not parse. The message reaches the console, `getDiagnostics()` and the `formajs:diagnostic` event, and so any telemetry that hooks them; the last two are skipped only when the mount turns diagnostics off. The preview frame forwards it to the host as untrusted text, as it forwarded the exception's own message before this change (then as `FRAME_E_RENDER`). Markup cannot read it.
+The message can quote part of the call's argument, which may be T2 data, up to the 200-character cut. In Chromium 156, `JSON.parse` quotes the first characters of the text it refused, and a DOM method quotes the selector it could not parse. The message reaches the console, `getDiagnostics()` and the `formajs:diagnostic` event, and so any telemetry that hooks them; the last two are skipped only when the mount turns diagnostics off. The preview frame forwards it to the host as untrusted text. A throw during a render reached the host before this change too, as `FRAME_E_RENDER`; a throw at event time was an uncaught error in the frame and did not reach the host at all, and now reaches it the same way. Markup cannot read it.
 
 This is not a guarantee that markup cannot throw out of `mountMarkup`: *Known gaps* names the paths that still can.
 
@@ -306,11 +306,11 @@ Stated here rather than left for a reader to discover:
   - a value nested about 10,000 deep (T2: a `data-forma-state` of about 20 KB). The engine's stack overflows (`RangeError`) wherever something other than the native call converts it:
     - the runtime's `data-text`, converting it to text;
     - an operator (`'' + v`, a template literal);
-    - Forma's own checks before a call, converting an argument: a selector (`$el.matches(v)`, with or without `dom`), an attribute name (`$el.setAttribute(v, …)`), a style property name (`$el.style.setProperty(v, …)`), a `repeat` count (`'x'.repeat(v)`);
+    - Forma's own checks before a call, converting an argument: a selector (`$el.matches(v)`, with or without `dom`), an attribute name or value (`$el.setAttribute(v, …)`, `$el.setAttribute('title', v)`, `$el.toggleAttribute(v)`), a style property name (`$el.style.setProperty(v, …)`), a `repeat` count (`'x'.repeat(v)`), a `flat` depth (`[1].flat(v)`);
     - a sort comparator's result (`[1, 2].sort((a, b) => v)`). The native converts it, but only after the comparator ran, so the wrapper's step rule takes the error for Forma's own. This is unchanged from before FORMA-271.
 
     Only a conversion the native makes of its own argument (`v.join()`, `String(v)`) is refused with `FORMA_E_CALL_FAILED`;
-  - a value that application code throws through a native and that cannot be converted to text, such as `Object.create(null)` or an object whose `toString` throws: the wrapper's own conversion throws `TypeError`, which escapes in place of it.
+  - a value that application code throws through a native and that cannot be converted to text, such as `Object.create(null)` or an object whose `toString` throws: the wrapper's own conversion throws instead (a `TypeError`, or whatever that `toString` throws), and that escapes in place of it.
 
   At event time a handler can still fail without a diagnostic, though not out of `mountMarkup`. A DOM property write the browser refuses is an uncaught page error: `$el.dataset['a-b'] = 1`, `$el.value = 'x'` on a file input, `$el.value = 'abc'` on a `<progress>`. A DOM method that rejects instead of throwing is an unhandled rejection: Chromium 156's `scrollIntoView({behavior: 'bad'})` returns a rejected promise.
 
