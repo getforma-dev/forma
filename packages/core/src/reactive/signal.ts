@@ -24,11 +24,14 @@ declare const __FORMA_DEV_BUILD__: boolean | undefined;
 // Debug names live in a side table rather than on the getter's `.name`, so
 // alien-signals' isSignal() (which keys off the bound function name) still
 // recognizes named signals.
-const signalNames = new WeakMap<object, string>();
+const signalNames = /* @__PURE__ */ new WeakMap<object, string>();
 
 /** Debug name of a signal getter, if one was provided (dev-only). */
 export function getSignalName(fn: unknown): string | undefined {
-  return typeof fn === 'function' ? signalNames.get(fn as object) : undefined;
+  if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) {
+    return typeof fn === 'function' ? signalNames.get(fn as object) : undefined;
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
