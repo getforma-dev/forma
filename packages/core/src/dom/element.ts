@@ -18,7 +18,6 @@ import {
   isEventHandlerAttr,
   isRawHtmlAttr,
   isSafeAttrName,
-  isUnsafeAttrWrite,
 } from '../security/url-safety.js';
 import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
 // Rule 1 (FORMA-182, docs/parity-rules.md): every ordinary text child and
@@ -553,7 +552,7 @@ function handleXLink(el: Element, key: string, value: unknown): void {
     // The guard classifies the raw string (a NUL anywhere refuses); the
     // normalized string is what is written.
     const raw = String(v), strVal = normalizeDomText(raw);
-    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+    if (isDangerousUrlAttr(el.localName, key, raw)) {
       if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       el.removeAttributeNS(XLINK_NS, localName);
       return;
@@ -764,7 +763,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   // xlink: namespace
   if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
     const raw = String(value), strVal = normalizeDomText(raw);
-    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+    if (isDangerousUrlAttr(el.localName, key, raw)) {
       if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       return;
     }

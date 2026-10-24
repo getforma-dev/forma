@@ -127,9 +127,9 @@
   "tags": [
    "security"
   ],
-  "find": "    if (isUnsafeAttrWrite(el.localName, key, raw)) {\n      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
+  "find": "    if (isDangerousUrlAttr(el.localName, key, raw)) {\n      if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');\n      el.removeAttributeNS(XLINK_NS, localName);\n      return;\n    }",
   "replace": "",
-  "note": "reactive xlink:href writes javascript: URLs"
+  "note": "reactive xlink:href writes javascript: URLs. Re-anchored for FORMA-277"
  },
  {
   "id": "element/function-child-outside-namespace",
@@ -2779,8 +2779,8 @@
   "tags": [
    "security"
   ],
-  "find": "  return ANIMATION_TAG_RE.test(tag) && ANIMATION_VALUE_ATTR_RE.test(name)\n    && value.split(';').some((item) => isDangerousUrl(item));",
-  "replace": "  return false;",
+  "find": "    : /^(animate|set) (to|from|by|values)$/i.test(tag + ' ' + name) && value.split(';').some((item) => isDangerousUrl(item));",
+  "replace": "    : false;",
   "note": "no sink judges an SVG animation value (to, from, by, values on <animate> and <set>) as a URL, so each writes a script URL that the animation then writes into the href attributeName names (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: crates/forma-ir/src/walker.rs > \"walk_drops_a_script_url_in_an_svg_animation_value\""
  },
  {
@@ -2789,8 +2789,8 @@
   "tags": [
    "security"
   ],
-  "find": "    && value.split(';').some((item) => isDangerousUrl(item));",
-  "replace": "    && isDangerousUrl(value);",
+  "find": "value.split(';').some((item) => isDangerousUrl(item));",
+  "replace": "isDangerousUrl(value);",
   "note": "an animation value is judged as one URL, so a script URL as a later item of a values list is written (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
  },
  {
@@ -2799,8 +2799,8 @@
   "tags": [
    "security"
   ],
-  "find": "    && value.split(';').some((item) => isDangerousUrl(item));",
-  "replace": "    && value.split(';').some((item) => isDangerousUrl(item, 'img'));",
+  "find": "value.split(';').some((item) => isDangerousUrl(item));",
+  "replace": "value.split(';').some((item) => isDangerousUrl(item, 'img'));",
   "note": "an animation value is judged as an image's, so a data:image/svg+xml document is written although the animation's target is not known (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
  },
  {
@@ -2809,8 +2809,8 @@
   "tags": [
    "security"
   ],
-  "find": "const ANIMATION_TAG_RE = /^(?:animate|set)$/i;",
-  "replace": "const ANIMATION_TAG_RE = /^(?:animate)$/i;",
+  "find": "/^(animate|set) (to|from|by|values)$/i",
+  "replace": "/^(animate) (to|from|by|values)$/i",
   "note": "<set>'s values are not judged as URLs, so <set attributeName=\"href\" to=\"javascript:\u2026\"> is written (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
  },
  {
@@ -2819,8 +2819,8 @@
   "tags": [
    "security"
   ],
-  "find": "const ANIMATION_VALUE_ATTR_RE = /^(?:to|from|by|values)$/i;",
-  "replace": "const ANIMATION_VALUE_ATTR_RE = /^(?:to|from|by)$/i;",
+  "find": "/^(animate|set) (to|from|by|values)$/i",
+  "replace": "/^(animate|set) (to|from|by)$/i",
   "note": "an animation's values list is not judged as URLs (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
  },
  {
@@ -2832,5 +2832,15 @@
   "find": "      const templateContainer = (_inertDoc ||= document.implementation.createHTMLDocument('')).createElement('div');",
   "replace": "      const templateContainer = document.createElement('div');",
   "note": "an update holds its parsed copy of the new markup in the page's document, where a copy the diff only reads loads its resources and runs its own handlers, even for an attribute the diff refuses to write (FORMA-277). Verified by: src/__tests__/reconcile.test.ts > \"no node an update copies from belongs to the page: a new element, a RESET scope and a REPLACE scope\"; Verified by: src/__tests__/reconcile.test.ts > \"a kept element's parsed copy, parsed in the container's context, is moved out of the page before the diff reads it\""
+ },
+ {
+  "id": "adoption/url-guard-off",
+  "file": "src/dom/adoption-attributes.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "    return isDangerousUrlAttr(element.localName,qualified,raw)?null:result;",
+  "replace": "    return result;",
+  "note": "hydration adoption expects and writes a URL attribute or SVG animation value with a script scheme, which the SSR walker refuses to emit (sink parity, FORMA-277). Verified by: src/dom/__tests__/inv1-vectors.test.ts > \"$id: raw URL value policy on every writer\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\""
  }
 ]

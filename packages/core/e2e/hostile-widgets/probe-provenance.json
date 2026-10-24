@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "40ebfe4493630983da12e7c2a63be42975e01ef3b72199f771a3d3ac0641e162",
-    "total": 291,
+    "sha256": "5e61df0517440420512130b58dd0f73110650fe4b7084af15f551156e4841c4e",
+    "total": 292,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -1038,7 +1038,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: reactive xlink:href writes javascript: URLs"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: reactive xlink:href writes javascript: URLs. Re-anchored for FORMA-277"
         }
       },
       {
@@ -2693,6 +2693,15 @@
         "disposition": {
           "kind": "separate-structural-regression",
           "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite (src/__tests__/reconcile.test.ts) and in Chromium (e2e/update-diff.spec.ts); not counted as a browser payload. Original note: an update holds its parsed copy of the new markup in the page's document, where a copy the diff only reads loads its resources and runs its own handlers, even for an attribute the diff refuses to write (FORMA-277). Verified by: src/__tests__/reconcile.test.ts > \"no node an update copies from belongs to the page: a new element, a RESET scope and a REPLACE scope\"; Verified by: src/__tests__/reconcile.test.ts > \"a kept element's parsed copy, parsed in the container's context, is moved out of the page before the diff reads it\""
+        }
+      },
+      {
+        "id": "adoption/url-guard-off",
+        "source": "src/dom/adoption-attributes.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: hydration adoption expects and writes a URL attribute or SVG animation value with a script scheme, which the SSR walker refuses to emit (sink parity, FORMA-277). Verified by: src/dom/__tests__/inv1-vectors.test.ts > \"$id: raw URL value policy on every writer\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\""
         }
       }
     ]

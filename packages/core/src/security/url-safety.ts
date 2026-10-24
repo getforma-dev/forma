@@ -100,7 +100,7 @@ export function isUrlAttr(name: string): boolean {
  * Verified by: src/security/__tests__/url-safety.test.ts > "refuses a NUL anywhere in the value, not only in the scheme"
  */
 export function isDangerousUrl(value: string, tag?: string): boolean {
-  if (value.indexOf('\0') !== -1) return true;
+  if (value.includes('\0')) return true;
   const normalized = value.replace(URL_IGNORED_CHARS_RE, '');
   if (DANGEROUS_SCHEME_RE.test(normalized)) return true;
   if (SVG_DATA_URL_RE.test(normalized)) {
@@ -115,47 +115,45 @@ export function isEventHandlerAttr(name: string): boolean {
 }
 
 /**
- * The SVG animation value attributes (FORMA-277): `to`, `from`, `by` and
+ * True if `value` written to attribute `name` on a `<tag>` element would be a
+ * URL with a script scheme: a URL attribute (judged against `tag`), or an SVG
+ * animation value attribute any `;`-separated item of which is one (`values`
+ * is a list; a split of the other three can only refuse more).
+ *
+ * The animation value attributes (FORMA-277) are `to`, `from`, `by` and
  * `values` on `<animate>` and `<set>`, the two animation elements that write
  * their values into the attribute `attributeName` names, which can be a URL
  * attribute (`href`, `xlink:href`). `animateTransform` and `animateMotion`
  * animate only a transform or a motion path, and `discard` carries no value
- * (Chromium 156), so none of them is here.
+ * (Chromium 156), so none of them is judged. An animation value is judged
+ * whatever `attributeName` says, so the order the two are written in, or a
+ * later change of `attributeName` by a binding or an update, cannot let a
+ * value through. It is judged with no image context, since the target is not
+ * known, so `data:image/svg+xml` is refused there too. No animation of a
+ * non-URL attribute takes a script-scheme value, so those keep working.
  *
- * Verified by: src/__tests__/renderer-contract.test.ts > "judges only the value attributes of <animate> and <set>: other tags and attributes keep the text"
- */
-const ANIMATION_TAG_RE = /^(?:animate|set)$/i;
-const ANIMATION_VALUE_ATTR_RE = /^(?:to|from|by|values)$/i;
-
-/**
- * True if `value` written to attribute `name` on a `<tag>` element would be a
- * URL with a script scheme: a URL attribute (judged against `tag`), or an SVG
- * animation value attribute any `;`-separated item of which is one (`values`
- * is a list; a split of the other three can only refuse more). An animation
- * value is judged whatever `attributeName` says, so the order the two are
- * written in, or a later change of `attributeName` by a binding or an update,
- * cannot let a value through. It is judged with no image context, since the
- * target is not known, so `data:image/svg+xml` is refused there too. No
- * animation of a non-URL attribute takes a script-scheme value, so those keep
- * working.
+ * This is `isUnsafeAttrWrite`'s URL half, called on its own by the sinks that
+ * refuse an `on*` name themselves first: h(), hydration adoption,
+ * `data-bind:`, row attributes and the preview frame's strip.
  *
  * Verified by: src/__tests__/renderer-contract.test.ts > "drops every script scheme written to <%s %s>"
  * Verified by: src/__tests__/renderer-contract.test.ts > "keeps ordinary animation values on <%s %s>"
+ * Verified by: src/__tests__/renderer-contract.test.ts > "judges only the value attributes of <animate> and <set>: other tags and attributes keep the text"
  */
 export function isDangerousUrlAttr(tag: string, name: string, value: string): boolean {
-  if (isUrlAttr(name)) return isDangerousUrl(value, tag);
-  return ANIMATION_TAG_RE.test(tag) && ANIMATION_VALUE_ATTR_RE.test(name)
-    && value.split(';').some((item) => isDangerousUrl(item));
+  return isUrlAttr(name)
+    ? isDangerousUrl(value, tag)
+    : /^(animate|set) (to|from|by|values)$/i.test(tag + ' ' + name) && value.split(';').some((item) => isDangerousUrl(item));
 }
 
 /**
  * True when writing `value` to attribute `name` on a `<tag>` element would
  * create an XSS sink, so the write must be skipped. Shared by every client-side
- * attribute write (h()'s static and reactive paths, xlink attributes, hydration
- * adoption, `data-bind:`, row attributes, the expression interpreter's `$el`
- * attribute writes, the reconciler's update and the preview frame's strip) so
- * those paths drop exactly what the SSR walker drops — otherwise a payload the
- * server refused to emit is re-added on the client at hydration.
+ * attribute write: the expression interpreter's `$el` attribute writes and the
+ * reconciler's update call it whole, and the sinks that refuse an `on*` name
+ * themselves call its URL half, `isDangerousUrlAttr`. So those paths drop
+ * exactly what the SSR walker drops — otherwise a payload the server refused
+ * to emit is re-added on the client at hydration.
  *
  * Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops a javascript: href written through h()"
  */
