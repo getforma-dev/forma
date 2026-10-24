@@ -87,6 +87,22 @@ function more(id) {
 }
 views.__explain = explain; views.__more = more;
 function times(c, f) { if (c.better === 'higher') return c.standings[0].mean / f.mean; return f.mean / c.standings[0].mean }
+function round2Report() {
+  var r = D.round2;
+  if (!r) return '';
+  var h = '<h2>Round 2: measured changes</h2><div class="panel"><p>' + esc(r.status) + '</p><p class="note">' + esc(r.method) + '</p></div>';
+  (r.sections || []).forEach(function (section) {
+    h += '<div class="panel"><h3>' + esc(section.title) + '</h3><p>' + esc(section.description) + '</p>';
+    if (section.columns && section.rows) h += table(section.columns.map(function (column, i) { return [column, i === 0 ? 1 : 0] }),
+      section.rows.map(function (row) { return ['', row.map(esc)] }), esc(section.note || ''));
+    (section.sources || []).forEach(function (source) {
+      // Only recorded HTTPS sources become links; data cannot inject a scheme.
+      h += '<p class="note">' + (/^https:\/\//.test(source.url) ? '<a href="' + esc(source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(source.label) + '</a>' : esc(source.label)) + '</p>';
+    });
+    h += '</div>';
+  });
+  return h;
+}
 views.forma = function () {
   if (!FR) return '<p class="note">results/forma-report.json missing.</p>';
   var rows = S.contests.map(function (c) {
@@ -98,7 +114,7 @@ views.forma = function () {
   var sc = table([['Event', 1], ['Place'], ['Forma'], ['Winner', 1], ['Gap'], ['Best framework', 1], ['Gap'], ['Pts']], rows, 'Best framework leaves out the vanilla cars and alien-signals, which are references, not frameworks. Gap: how many times better the other car is on that event\'s measure (1.60x: 60% better); "ahead" when Forma leads.');
   var st = FR.strengths.map(function (s) { return '<div class="panel sw good-b"><h3>' + esc(s.title) + '</h3><p>' + mdInline(s.evidence) + '</p><p class="note"><b>Keep it:</b> ' + mdInline(s.keep) + '</p></div>' }).join('');
   var wk = FR.weaknesses.map(function (w, i) { return '<div class="panel sw"><h3><span class="pri p' + w.priority.slice(1) + '">' + esc(w.priority) + '</span> ' + (i + 1) + '. ' + esc(w.title) + '</h3><p class="note">Events: ' + esc(w.events) + (w.tickets ? ' · Tickets: <b>' + esc(w.tickets.join(', ')) + '</b> (~/dev/Forma/Tickets/0-backlog/)' : '') + '</p><dl class="wk">' + [['Evidence', w.evidence], ['Cause', w.cause], ['Change', w.change], ['Expected effect', w.estimate], ['How to verify', w.verify]].map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + mdInline(x[1]) + '</dd>' }).join('') + '</dl></div>' }).join('');
-  return '<h2>Forma report: where it is strong, where it is weak, what to change first</h2><div class="panel">' + md(FR.summary) + '</div><h2>Scorecard</h2><div class="panel">' + sc + '</div><h2>Weaknesses, in the order to fix them</h2>' + wk + '<h2>Strengths to keep</h2>' + st +
+  return round2Report() + '<h2>Original Forma 3.0.0 report</h2><div class="panel">' + md(FR.summary) + '</div><h2>Original scorecard</h2><div class="panel">' + sc + '</div><h2>Weaknesses, in the order to fix them</h2>' + wk + '<h2>Strengths to keep</h2>' + st +
     '<div class="cols"><div class="panel"><h3>What this race did not test</h3>' + md(FR.notTested) + '</div><div class="panel"><h3>The next race</h3>' + md(FR.nextRace) + (FR.nextRaceTickets ? '<p class="note">Ticket: <b>' + esc(FR.nextRaceTickets.join(', ')) + '</b></p>' : '') + '</div></div>'
 };
 views.telemetry = function () {

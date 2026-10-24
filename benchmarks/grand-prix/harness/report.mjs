@@ -4,7 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, EVENTS } from './lib.mjs';
 
-const rd = (p, fallback = null) => { try { return fs.readFileSync(path.join(ROOT, p), 'utf8'); } catch { return fallback; } };
+const argv = process.argv.slice(2);
+const option = (name, fallback) => argv.includes(name) ? argv[argv.indexOf(name) + 1] : fallback;
+const results = path.resolve(option('--baseline-results', path.join(ROOT, 'results')));
+const output = path.resolve(option('--out', path.join(ROOT, 'report', 'index.html')));
+const rd = (p, fallback = null) => { try { return fs.readFileSync(p.startsWith('results/') ? path.join(results, p.slice(8)) : path.join(ROOT, p), 'utf8'); } catch { return fallback; } };
 const rj = (p, fb = null) => { const t = rd(p); if (t == null) return fb; try { return JSON.parse(t); } catch { return fb; } };
 
 const summary = rj('results/summary.json');
@@ -12,7 +16,7 @@ if (!summary) { console.error('results/summary.json missing: run node harness/sc
 
 // raw runs for the expandable sections
 const raw = {};
-const base = path.join(ROOT, 'results', 'raw');
+const base = path.join(results, 'raw');
 for (const ev of fs.readdirSync(base)) {
   const dir = path.join(base, ev);
   if (!fs.statSync(dir).isDirectory()) continue;
@@ -33,6 +37,7 @@ const data = {
   commentary: rj('results/commentary.json'),
   cleanup: rj('results/cleanup.json'),
   guide: rj('results/guide.json'), cars: rj('results/cars.json'), formaReport: rj('results/forma-report.json'),
+  round2: argv.includes('--round2') ? JSON.parse(fs.readFileSync(path.resolve(option('--round2')), 'utf8')) : rj('results/round-2.json'),
   dockerBefore: rd('results/docker-before.md'),
   events: EVENTS,
   generated: new Date().toISOString(),
@@ -42,7 +47,7 @@ const readerViews = rd('harness/report-views.js', '').replace(/<\/script/gi, '<\
 
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FORMA-254 Framework Grand Prix</title>
+<title>${data.round2 ? 'Framework Grand Prix: rounds 1 and 2' : 'FORMA-254 Framework Grand Prix'}</title>
 <style>
 :root{--bg:#f6f5f1;--panel:#fff;--ink:#16181d;--mute:#5d6470;--line:#d9d6cc;--accent:#d6361f;--forma:#0b6e5f;--bar:#7a8aa3;--g1:#c9971c;--g2:#8d949e;--g3:#a8683a;--chip:#eceae2;--warn:#fff3cd;--warnink:#5a4300;--grid:#ebe8dd}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--panel:#181b21;--ink:#ecebe6;--mute:#9aa1ad;--line:#2b303a;--accent:#ff6a4d;--forma:#3ed1b4;--bar:#6f819c;--g1:#e2b73e;--g2:#aeb4bd;--g3:#c98650;--chip:#222732;--warn:#3a3112;--warnink:#f2dd9a;--grid:#20242c}}
@@ -77,7 +82,7 @@ tr.fr td{background:color-mix(in srgb,var(--forma) 12%,transparent);font-weight:
 .pri{display:inline-block;border-radius:4px;padding:0 6px;font-size:12px;color:#fff;background:var(--accent)}.pri.p2{background:#b4690e}.pri.p3{background:var(--mute)}
 @media (max-width:600px){.cards{grid-template-columns:1fr}.wk,.carcard dl{grid-template-columns:1fr}h1{font-size:22px}.pod .blk{font-size:20px}}
 </style></head><body>
-<header><h1>FORMA-254 Framework Grand Prix<small id="sub"></small></h1></header>
+<header><h1>${data.round2 ? 'Framework Grand Prix: rounds 1 and 2' : 'FORMA-254 Framework Grand Prix'}<small id="sub"></small></h1></header>
 <nav><div class="in" role="tablist" id="tabs"></div></nav>
 <main id="main"></main>
 <script id="data" type="application/json">${json}</script>
@@ -163,6 +168,6 @@ document.getElementById('sub').textContent='Forma 3.0.0 against the stacks peopl
 var h=location.hash.slice(1);show(tabs.some(function(t){return t[0]===h})?h:'intro');
 })();
 </script></body></html>`;
-fs.mkdirSync(path.join(ROOT, 'report'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, 'report', 'index.html'), html);
-console.log('wrote report/index.html', (html.length / 1024).toFixed(0) + ' kB');
+fs.mkdirSync(path.dirname(output), { recursive: true });
+fs.writeFileSync(output, html);
+console.log('wrote', output, (html.length / 1024).toFixed(0) + ' kB');
