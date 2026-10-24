@@ -445,8 +445,9 @@ widget.unmount(); // every binding disposed, the root emptied
   parser decodes), is removed instead of written, with no diagnostic, as the
   other sinks drop it (FORMA-276). An SVG animation value counts as a URL
   attribute here, in every sink (FORMA-277): `to`, `from`, `by` and each
-  `;`-separated item of `values` on `<animate>` and `<set>`, judged whatever
-  their `attributeName` says. An element the update adds is written as the
+  `;`-separated item of `values` on `<set>` and on every `<animate…>` element
+  (`animate`, `animateTransform`, `animateMotion`, `animateColor`), judged
+  whatever their `attributeName` says. An element the update adds is written as the
   markup has it, like the first render. The update parses and holds the new
   markup in a document with no browsing context, so the copy of an element it
   keeps loads nothing and runs no handler; only what the diff writes is adopted

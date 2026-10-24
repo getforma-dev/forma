@@ -108,16 +108,22 @@ const SVG_DATA_URL =
   'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>';
 
 /**
- * SVG animation value attributes (FORMA-277). `<animate>` and `<set>` write
- * `to`, `from`, `by` and each `;`-separated item of `values` into the
- * attribute their `attributeName` names, which can be a URL attribute
- * (`href`, `xlink:href`), so every sink judges these values as URLs. They are
- * judged whatever `attributeName` says, so the order the two are written in,
- * or a later change of `attributeName`, cannot matter.
+ * SVG animation value attributes (FORMA-277): `to`, `from`, `by` and each
+ * `;`-separated item of `values` on `<set>` and on every `<animate…>`
+ * element. An animation's `attributeName` can name a URL attribute (`href`,
+ * `xlink:href`), so every sink judges these values as URLs. They are judged
+ * whatever `attributeName` says, so the order the two are written in, or a
+ * later change of `attributeName`, cannot matter.
  */
-const ANIMATION_TAGS = ['animate', 'set'] as const;
+const ANIMATION_TAGS = ['animate', 'set', 'animateTransform', 'animateMotion', 'animateColor'] as const;
 const ANIMATION_VALUE_ATTRS = ['to', 'from', 'by', 'values'] as const;
 const ANIMATION_CASES = ANIMATION_TAGS.flatMap((tag) => ANIMATION_VALUE_ATTRS.map((attr) => [tag, attr] as const));
+/**
+ * h() takes an element's namespace from its SVG tag list, which has no
+ * `animateColor`, so through h() that one is an element of that name in the
+ * HTML namespace. Its values are judged by its name all the same.
+ */
+const H_HTML_NAMESPACE_TAGS: ReadonlySet<string> = new Set(['animateColor']);
 /** A script URL as one item of a `values` list, first or later. */
 const DANGEROUS_VALUE_LISTS = [
   '#a;javascript:alert(1)',
@@ -126,10 +132,16 @@ const DANGEROUS_VALUE_LISTS = [
   '#a;vbscript:msgbox(1)',
   '0;data:text/html,<script>alert(1)</script>',
 ] as const;
-/** Ordinary animation values, a `data:image/png` list item with its own `;` included. */
+/**
+ * Ordinary animation values, a `data:image/png` list item with its own `;`
+ * included, and the values real transform, motion and colour animations use.
+ */
 const SAFE_ANIMATION_VALUES = [
   '0;10;20',
   'red',
+  '0 50 50;360 50 50',
+  '0,0;10,10',
+  'red;blue',
   '#a; #b',
   '/relative/javascript-guide',
   'data:image/png;base64,iVBORw0KGgo=',
@@ -253,7 +265,7 @@ function probeMarkup(tag: string, attrs: string, inner = ''): string {
  * The SVG elements the animation rows write to (FORMA-277). Every sink creates
  * them in the SVG namespace, inside an `<svg>` where it parses markup.
  */
-const ANIMATION_ROW_TAGS = /^(?:animate|set|animateTransform|animateMotion|g)$/;
+const ANIMATION_ROW_TAGS = /^(?:animate|set|animateTransform|animateMotion|animateColor|g)$/;
 
 /**
  * The reconcile sink: a reviewed mount renders `<tag>` first, then its
@@ -666,7 +678,8 @@ describe.each(SINKS)('renderer contract [$name]: SVG animation values', (sink) =
   it.each(ANIMATION_CASES)('drops every script scheme written to <%s %s>', (tag, attr) => {
     for (const url of [...DANGEROUS_URLS, ...DANGEROUS_VALUE_LISTS, SVG_DATA_URL]) {
       const el = sink.write(tag, attr, url);
-      expect(el.namespaceURI, `<${tag}> is an SVG element`).toBe('http://www.w3.org/2000/svg');
+      const html = sink.name.startsWith('h-') && H_HTML_NAMESPACE_TAGS.has(tag);
+      expect(el.namespaceURI, `<${tag}>'s namespace`).toBe(html ? 'http://www.w3.org/1999/xhtml' : 'http://www.w3.org/2000/svg');
       expect(readAttr(el, attr), `[${url}] on <${tag} ${attr}>`).toBeNull();
       expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
     }
@@ -680,10 +693,11 @@ describe.each(SINKS)('renderer contract [$name]: SVG animation values', (sink) =
     }
   });
 
-  it('judges only the value attributes of <animate> and <set>: other tags and attributes keep the text', () => {
-    // animateTransform and animateMotion cannot target a URL attribute
-    // (Chromium 156), and begin or fill is not a value the animation writes.
-    for (const [tag, attr] of [['animateTransform', 'to'], ['animateMotion', 'values'], ['animate', 'begin'], ['set', 'fill'], ['g', 'to']] as const) {
+  it('judges only the value attributes of <set> and every <animate*> element: other tags and attributes keep the text', () => {
+    // Only to, from, by and values, and only on those tags: another
+    // attribute of an animation element, the same names on another element,
+    // and a tag that only starts with "animate" keep their text.
+    for (const [tag, attr] of [['animate', 'begin'], ['set', 'fill'], ['animateTransform', 'type'], ['animateMotion', 'path'], ['g', 'to'], ['animate-x', 'to']] as const) {
       const el = sink.write(tag, attr, 'javascript:alert(1)');
       expect(readAttr(el, attr), `<${tag} ${attr}>`).toBe('javascript:alert(1)');
     }

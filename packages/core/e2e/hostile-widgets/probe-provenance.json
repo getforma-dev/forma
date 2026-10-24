@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "5e61df0517440420512130b58dd0f73110650fe4b7084af15f551156e4841c4e",
-    "total": 292,
+    "sha256": "91a05d9c013c8b5bcb350daea0ab59da8fc9791bbab550018a4a928ce63bee76",
+    "total": 293,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -2635,7 +2635,7 @@
           "families": [
             "value"
           ],
-          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: no sink judges an SVG animation value (to, from, by, values on <animate> and <set>) as a URL, so each writes a script URL that the animation then writes into the href attributeName names (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: crates/forma-ir/src/walker.rs > \"walk_drops_a_script_url_in_an_svg_animation_value\""
+          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: no sink judges an SVG animation value (to, from, by, values on <set> and every <animate*> element) as a URL, so each writes a script URL into an animation whose attributeName can name href (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: crates/forma-ir/src/walker.rs > \"walk_drops_a_script_url_in_an_svg_animation_value\""
         }
       },
       {
@@ -2702,6 +2702,15 @@
         "disposition": {
           "kind": "separate-api-regression",
           "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: hydration adoption expects and writes a URL attribute or SVG animation value with a script scheme, which the SSR walker refuses to emit (sink parity, FORMA-277). Verified by: src/dom/__tests__/inv1-vectors.test.ts > \"$id: raw URL value policy on every writer\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\""
+        }
+      },
+      {
+        "id": "sec/animation-tags-drop-animate-family",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact witness stays in the existing per-merge suite (the renderer contract's animation rows on all six sinks, the shared INV1 vectors and src/security/__tests__/url-safety.test.ts); the hostile matrix's two animation contexts are a <set> and an <animate>, so it is not counted as a browser payload. Original note: only <animate> and <set> have their values judged as URLs, so <animateTransform>, <animateMotion> and <animateColor> write a script URL in to, from, by or values (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: src/security/__tests__/url-safety.test.ts > \"rejects a script URL in each item of an SVG animation value, whatever the case of tag and name\""
         }
       }
     ]

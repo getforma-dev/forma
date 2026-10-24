@@ -1171,9 +1171,9 @@ describe('tiers and configuration', () => {
   });
 
   it('an unreviewed mount renders no script URL in an SVG animation value: each is removed and reported, on the first render and on update', async () => {
-    // FORMA-277: <animate> and <set> write to, from, by and each item of
-    // values into the attribute attributeName names, which can be href. The
-    // strip judges them as URLs whatever attributeName says.
+    // FORMA-277: to, from, by and each item of values on <set> and on every
+    // <animate…> element are judged as URLs (attributeName can name href).
+    // The strip judges them whatever attributeName says.
     vi.stubGlobal('origin', 'null');
     const root = page();
     const markup =
@@ -1182,9 +1182,15 @@ describe('tiers and configuration', () => {
       `<set id="m2" attributeName="href" to="&#106;avascript&colon;alert(1)"></set>` +
       `<animate id="m3" attributeName="href" from="java&Tab;script:alert(1)" to="#b" by="vbscript:x"></animate>` +
       `<set id="m4" to="data:text/html,&lt;p&gt;doc"></set>` +
+      `<animateTransform id="m6" attributeName="href" to="javascript:alert(1)"></animateTransform>` +
+      `<animateMotion id="m7" values="0,0;javascript:alert(1)"></animateMotion>` +
+      `<animateColor id="m8" attributeName="fill" from="vbscript:x" to="blue"></animateColor>` +
       `<animate id="ok1" attributeName="x" values="0;10;20" dur="1s"></animate>` +
       `<set id="ok2" attributeName="href" to="#safe"></set>` +
       `<animateTransform id="ok3" attributeName="transform" type="rotate" from="0" to="90"></animateTransform>` +
+      `<animateTransform id="ok4" attributeName="transform" type="rotate" values="0 50 50;360 50 50"></animateTransform>` +
+      `<animateMotion id="ok5" values="0,0;10,10" dur="1s"></animateMotion>` +
+      `<animateColor id="ok6" attributeName="fill" values="red;blue" dur="1s"></animateColor>` +
       `</a></svg><template><svg><set id="n1" attributeName="href" to="javascript:alert(1)"></set></svg></template>` +
       `<p id="kept">first</p>`;
     const handle = mountSuccessfully(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
@@ -1198,19 +1204,25 @@ describe('tiers and configuration', () => {
     expect(attrs('m2')).toEqual({ id: 'm2', attributeName: 'href' });
     expect(attrs('m3')).toEqual({ id: 'm3', attributeName: 'href', to: '#b' });
     expect(attrs('m4')).toEqual({ id: 'm4' });
+    expect(attrs('m6')).toEqual({ id: 'm6', attributeName: 'href' });
+    expect(attrs('m7')).toEqual({ id: 'm7' });
+    expect(attrs('m8')).toEqual({ id: 'm8', attributeName: 'fill', to: 'blue' });
     // Animations of other attributes, and ordinary URLs, are untouched.
     expect(attrs('ok1')).toEqual({ id: 'ok1', attributeName: 'x', values: '0;10;20', dur: '1s' });
     expect(attrs('ok2')).toEqual({ id: 'ok2', attributeName: 'href', to: '#safe' });
     expect(attrs('ok3')).toEqual({ id: 'ok3', attributeName: 'transform', type: 'rotate', from: '0', to: '90' });
+    expect(attrs('ok4')).toEqual({ id: 'ok4', attributeName: 'transform', type: 'rotate', values: '0 50 50;360 50 50' });
+    expect(attrs('ok5')).toEqual({ id: 'ok5', values: '0,0;10,10', dur: '1s' });
+    expect(attrs('ok6')).toEqual({ id: 'ok6', attributeName: 'fill', values: 'red;blue', dur: '1s' });
     const nested = (root.querySelector('template') as HTMLTemplateElement).content.querySelector('#n1')!;
     expect(nested.getAttribute('to')).toBeNull();
     const reported = (): string[] => runtime.getDiagnostics().filter((d) => d.code === 'FORMA_E_UNREVIEWED_URL').map((d) => d.reason);
-    // m1 values, m2 to, m3 from and by, m4 to, n1 to.
+    // m1 values, m2 to, m3 from and by, m4 to, m6 to, m7 values, m8 from, n1 to.
     expect(reported().sort()).toEqual([
       ...Array(1).fill('unreviewed markup renders no script URL in by: removed'),
-      ...Array(1).fill('unreviewed markup renders no script URL in from: removed'),
-      ...Array(3).fill('unreviewed markup renders no script URL in to: removed'),
-      ...Array(1).fill('unreviewed markup renders no script URL in values: removed'),
+      ...Array(2).fill('unreviewed markup renders no script URL in from: removed'),
+      ...Array(4).fill('unreviewed markup renders no script URL in to: removed'),
+      ...Array(2).fill('unreviewed markup renders no script URL in values: removed'),
     ]);
 
     // An update: a kept element whose value changes, and an element it adds.

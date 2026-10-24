@@ -121,16 +121,17 @@ export function isEventHandlerAttr(name: string): boolean {
  * is a list; a split of the other three can only refuse more).
  *
  * The animation value attributes (FORMA-277) are `to`, `from`, `by` and
- * `values` on `<animate>` and `<set>`, the two animation elements that write
- * their values into the attribute `attributeName` names, which can be a URL
- * attribute (`href`, `xlink:href`). `animateTransform` and `animateMotion`
- * animate only a transform or a motion path, and `discard` carries no value
- * (Chromium 156), so none of them is judged. An animation value is judged
- * whatever `attributeName` says, so the order the two are written in, or a
- * later change of `attributeName` by a binding or an update, cannot let a
- * value through. It is judged with no image context, since the target is not
- * known, so `data:image/svg+xml` is refused there too. No animation of a
- * non-URL attribute takes a script-scheme value, so those keep working.
+ * `values` on `<set>` and on every `<animate…>` element (`animate`,
+ * `animateTransform`, `animateMotion`, `animateColor`: a tag that is
+ * `animate` followed by letters, digits or `_` only), tag and name in any
+ * case. An animation element's `attributeName` can name a URL attribute
+ * (`href`, `xlink:href`), so its values are judged as URLs, item by item.
+ * They are judged whatever `attributeName` says, so the order the two are
+ * written in, or a later change of `attributeName` by a binding or an
+ * update, cannot let a value through. Each item is judged with no image
+ * context, since the target is not known, so `data:image/svg+xml` is refused
+ * there too. Numbers, coordinates, transforms and colours are never script
+ * URLs, so animations of other attributes keep their values.
  *
  * This is `isUnsafeAttrWrite`'s URL half, called on its own by the sinks that
  * refuse an `on*` name themselves first: h(), hydration adoption,
@@ -138,12 +139,13 @@ export function isEventHandlerAttr(name: string): boolean {
  *
  * Verified by: src/__tests__/renderer-contract.test.ts > "drops every script scheme written to <%s %s>"
  * Verified by: src/__tests__/renderer-contract.test.ts > "keeps ordinary animation values on <%s %s>"
- * Verified by: src/__tests__/renderer-contract.test.ts > "judges only the value attributes of <animate> and <set>: other tags and attributes keep the text"
+ * Verified by: src/__tests__/renderer-contract.test.ts > "judges only the value attributes of <set> and every <animate*> element: other tags and attributes keep the text"
+ * Verified by: src/security/__tests__/url-safety.test.ts > "keeps the values real animations use on every animation element"
  */
 export function isDangerousUrlAttr(tag: string, name: string, value: string): boolean {
   return isUrlAttr(name)
     ? isDangerousUrl(value, tag)
-    : /^(animate|set) (to|from|by|values)$/i.test(tag + ' ' + name) && value.split(';').some((item) => isDangerousUrl(item));
+    : /^(to|from|by|values) (set|animate\w*)$/i.test(name + ' ' + tag) && value.split(';').some((item) => isDangerousUrl(item));
 }
 
 /**

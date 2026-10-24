@@ -1611,21 +1611,30 @@ fn is_url_attr(name: &str) -> bool {
     URL_ATTRS.iter().any(|a| name.eq_ignore_ascii_case(a))
 }
 
-/// The SVG animation elements that write their value attributes into the
-/// attribute `attributeName` names, which can be a URL attribute (`href`).
-/// `animateTransform` and `animateMotion` animate only a transform or a motion
-/// path, and `discard` carries no value. Mirrors core's `isDangerousUrlAttr`
-/// (FORMA-277).
-const ANIMATION_TAGS: [&str; 2] = ["animate", "set"];
+/// True for `<set>` and every `<animate…>` element (FORMA-277): `set`, or
+/// `animate` followed by ASCII letters, digits or `_` only (`animate`,
+/// `animateTransform`, `animateMotion`, `animateColor`), in any ASCII case.
+/// An animation element's `attributeName` can name a URL attribute (`href`),
+/// so its [`ANIMATION_VALUE_ATTRS`] are judged as URLs. Mirrors the tag half
+/// of core's `isDangerousUrlAttr` test, `/^(to|from|by|values) (set|animate\w*)$/i`.
+fn is_animation_tag(tag: &str) -> bool {
+    let bytes = tag.as_bytes();
+    tag.eq_ignore_ascii_case("set")
+        || (bytes.len() >= 7
+            && bytes[..7].eq_ignore_ascii_case(b"animate")
+            && bytes[7..]
+                .iter()
+                .all(|b| b.is_ascii_alphanumeric() || *b == b'_'))
+}
 
-/// The value attributes of [`ANIMATION_TAGS`]; `values` is a `;`-separated
-/// list.
+/// The value attributes of an animation element ([`is_animation_tag`]);
+/// `values` is a `;`-separated list.
 const ANIMATION_VALUE_ATTRS: [&str; 4] = ["to", "from", "by", "values"];
 
 /// True if writing `value` to `key` on `<tag>` would write a URL with a
-/// script scheme: a URL attribute, judged against `tag`, or an SVG animation
-/// value attribute any `;`-separated item of which is one, judged with no
-/// image context.
+/// script scheme: a URL attribute, judged against `tag`, or `to`, `from`,
+/// `by` or `values` on `<set>` or an `<animate…>` element, any
+/// `;`-separated item of which is one, judged with no image context.
 ///
 /// An animation value is judged whatever `attributeName` says, so neither the
 /// order of the two attributes nor a later change of `attributeName` matters.
@@ -1638,7 +1647,7 @@ fn is_dangerous_url_attr(tag: &str, key: &str, value: &str) -> bool {
     if is_url_attr(key) {
         return is_dangerous_url(value, tag);
     }
-    ANIMATION_TAGS.iter().any(|t| tag.eq_ignore_ascii_case(t))
+    is_animation_tag(tag)
         && ANIMATION_VALUE_ATTRS
             .iter()
             .any(|a| key.eq_ignore_ascii_case(a))
@@ -5137,12 +5146,20 @@ mod tests {
 
     #[test]
     fn walk_drops_a_script_url_in_an_svg_animation_value() {
-        // FORMA-277: `<animate>` and `<set>` write `to`, `from`, `by` and
-        // each `;`-separated item of `values` into the attribute their
-        // `attributeName` names, which can be `href`. The walker judges each
-        // value as a URL whatever `attributeName` says, static and dynamic,
-        // as core's sinks do (the shared INV1 vectors run the same table).
-        for tag in ["animate", "set"] {
+        // FORMA-277: `to`, `from`, `by` and each `;`-separated item of
+        // `values` on `<set>` and on every `<animate…>` element are judged as
+        // URLs, whatever `attributeName` says, static and dynamic, as core's
+        // sinks judge them (the shared INV1 vectors run the same rule). The
+        // values real animations use (numbers, transforms, coordinates,
+        // colours) are written as they are.
+        for tag in [
+            "animate",
+            "set",
+            "animateTransform",
+            "animateMotion",
+            "animateColor",
+            "ANIMATEMOTION",
+        ] {
             for name in ["to", "from", "by", "values"] {
                 for (value, written) in [
                     ("javascript:alert(1)", false),
@@ -5151,6 +5168,9 @@ mod tests {
                     ("data:image/svg+xml,<svg onload=alert(1)>", false),
                     ("#a; #b", true),
                     ("0;10;20", true),
+                    ("0 50 50;360 50 50", true),
+                    ("0,0;10,10", true),
+                    ("red;blue", true),
                     ("data:image/png;base64,aA==", true),
                 ] {
                     let mut static_page = Page::new();
@@ -5181,13 +5201,16 @@ mod tests {
                 }
             }
         }
-        // Only those two: `animateTransform` and `animateMotion` cannot
-        // target a URL attribute, and `begin` is not a value the animation
-        // writes, so their text is written as it is.
+        // Only those four attributes, and only on those tags: another
+        // attribute of an animation element, the same names on another
+        // element, and a tag that only starts with `animate` keep their text.
         for (tag, name) in [
-            ("animateTransform", "to"),
-            ("animateMotion", "values"),
             ("animate", "begin"),
+            ("set", "fill"),
+            ("animateTransform", "type"),
+            ("animateMotion", "path"),
+            ("g", "to"),
+            ("animate-x", "to"),
         ] {
             let mut page = Page::new();
             page.open(tag, &[(name, "javascript:alert(1)")]).close(tag);

@@ -2779,9 +2779,9 @@
   "tags": [
    "security"
   ],
-  "find": "    : /^(animate|set) (to|from|by|values)$/i.test(tag + ' ' + name) && value.split(';').some((item) => isDangerousUrl(item));",
+  "find": "    : /^(to|from|by|values) (set|animate\\w*)$/i.test(name + ' ' + tag) && value.split(';').some((item) => isDangerousUrl(item));",
   "replace": "    : false;",
-  "note": "no sink judges an SVG animation value (to, from, by, values on <animate> and <set>) as a URL, so each writes a script URL that the animation then writes into the href attributeName names (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: crates/forma-ir/src/walker.rs > \"walk_drops_a_script_url_in_an_svg_animation_value\""
+  "note": "no sink judges an SVG animation value (to, from, by, values on <set> and every <animate*> element) as a URL, so each writes a script URL into an animation whose attributeName can name href (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: crates/forma-ir/src/walker.rs > \"walk_drops_a_script_url_in_an_svg_animation_value\""
  },
  {
   "id": "sec/animation-values-first-item-only",
@@ -2809,8 +2809,8 @@
   "tags": [
    "security"
   ],
-  "find": "/^(animate|set) (to|from|by|values)$/i",
-  "replace": "/^(animate) (to|from|by|values)$/i",
+  "find": "/^(to|from|by|values) (set|animate\\w*)$/i",
+  "replace": "/^(to|from|by|values) (animate\\w*)$/i",
   "note": "<set>'s values are not judged as URLs, so <set attributeName=\"href\" to=\"javascript:\u2026\"> is written (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
  },
  {
@@ -2819,8 +2819,8 @@
   "tags": [
    "security"
   ],
-  "find": "/^(animate|set) (to|from|by|values)$/i",
-  "replace": "/^(animate|set) (to|from|by)$/i",
+  "find": "/^(to|from|by|values) (set|animate\\w*)$/i",
+  "replace": "/^(to|from|by) (set|animate\\w*)$/i",
   "note": "an animation's values list is not judged as URLs (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
  },
  {
@@ -2842,5 +2842,15 @@
   "find": "    return isDangerousUrlAttr(element.localName,qualified,raw)?null:result;",
   "replace": "    return result;",
   "note": "hydration adoption expects and writes a URL attribute or SVG animation value with a script scheme, which the SSR walker refuses to emit (sink parity, FORMA-277). Verified by: src/dom/__tests__/inv1-vectors.test.ts > \"$id: raw URL value policy on every writer\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\""
+ },
+ {
+  "id": "sec/animation-tags-drop-animate-family",
+  "file": "src/security/url-safety.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "/^(to|from|by|values) (set|animate\\w*)$/i",
+  "replace": "/^(to|from|by|values) (set|animate)$/i",
+  "note": "only <animate> and <set> have their values judged as URLs, so <animateTransform>, <animateMotion> and <animateColor> write a script URL in to, from, by or values (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: src/security/__tests__/url-safety.test.ts > \"rejects a script URL in each item of an SVG animation value, whatever the case of tag and name\""
  }
 ]

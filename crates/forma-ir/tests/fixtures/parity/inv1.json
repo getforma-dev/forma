@@ -2588,16 +2588,58 @@
       "written": true
     },
     {
-      "id": "animate-transform-not-url-target",
+      "id": "animate-transform-to-script",
       "tag": "animateTransform",
       "name": "to",
       "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-transform-values-rotate",
+      "tag": "animateTransform",
+      "name": "values",
+      "value": "0 50 50;360 50 50",
       "written": true
     },
     {
-      "id": "animate-motion-not-url-target",
+      "id": "animate-motion-values-script",
       "tag": "animateMotion",
       "name": "values",
+      "value": "0,0;java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-motion-values-points",
+      "tag": "animateMotion",
+      "name": "values",
+      "value": "0,0;10,10",
+      "written": true
+    },
+    {
+      "id": "animate-color-from-script",
+      "tag": "animateColor",
+      "name": "from",
+      "value": "data:text/html,<p>doc",
+      "written": false
+    },
+    {
+      "id": "animate-color-values-colors",
+      "tag": "animateColor",
+      "name": "values",
+      "value": "red;blue",
+      "written": true
+    },
+    {
+      "id": "uppercase-animate-family",
+      "tag": "AnimateTransform",
+      "name": "BY",
+      "value": "data:image/svg+xml,<svg onload=alert(1)>",
+      "written": false
+    },
+    {
+      "id": "animate-prefix-not-animation",
+      "tag": "animate-x",
+      "name": "to",
       "value": "javascript:alert(1)",
       "written": true
     },

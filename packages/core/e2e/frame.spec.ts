@@ -419,9 +419,9 @@ test("a module's script URL and handler attributes never reach the frame documen
 });
 
 test("a module's SVG animation values with a script URL never reach the frame document, after render and after update()", async ({ page }) => {
-  // FORMA-277: <animate> and <set> write to, from, by and each item of
-  // values into the attribute attributeName names, which can be href. The
-  // strip judges them as URLs, so the frame does not depend on its policy
+  // FORMA-277: to, from, by and each item of values on <set> and on every
+  // <animate…> element are judged as URLs (attributeName can name href). The
+  // strip removes such a value, so the frame does not depend on its policy
   // alone for them either.
   await host(page);
   // Every animation value attribute in the frame document with a script URL
@@ -430,7 +430,7 @@ test("a module's SVG animation values with a script URL never reach the frame do
   const animated = (): Promise<string[]> => frameOf(page).evaluate(() => {
     const found: string[] = [];
     const walk = (node: ParentNode): void => {
-      for (const el of Array.from(node.querySelectorAll('animate, set'))) {
+      for (const el of Array.from(node.querySelectorAll('animate, animateTransform, animateMotion, animateColor, set'))) {
         for (const name of ['to', 'from', 'by', 'values']) {
           const items = (el.getAttribute(name) ?? '').split(';').map((v) => v.replace(/[\u0000- \u007f-\u009f]/g, '').toLowerCase());
           if (items.some((v) => /^(?:javascript:|vbscript:|data:text\/html|data:image\/svg\+xml)/.test(v))) found.push(`${el.localName}#${el.id}[${name}]`);
@@ -453,6 +453,12 @@ test("a module's SVG animation values with a script URL never reach the frame do
       `<animate id="m3" attributeName="href" from="java&Tab;script:alert(1)" to="#b" dur="10s"></animate>` +
       `<set id="ok" attributeName="href" to="#safe"></set>` +
       `<animate id="ok2" attributeName="x" values="0;10" dur="1s"></animate></a></svg>` +
+      `<svg><animateTransform id="m5" attributeName="href" to="javascript:alert(1)" dur="10s"></animateTransform>` +
+      `<animateMotion id="m6" values="0,0;javascript:alert(1)" dur="10s"></animateMotion>` +
+      `<animateColor id="m7" attributeName="fill" from="vbscript:x" to="blue" dur="10s"></animateColor>` +
+      `<animateTransform id="ok3" attributeName="transform" type="rotate" values="0 50 50;360 50 50" dur="1s"></animateTransform>` +
+      `<animateMotion id="ok4" values="0,0;10,10" dur="1s"></animateMotion>` +
+      `<animateColor id="ok5" attributeName="fill" values="red;blue" dur="1s"></animateColor></svg>` +
       `<template><svg><set id="n1" attributeName="href" to="javascript:alert(1)"></set></svg></template>` +
       `<div data-forma-state='{"u":"javascript:alert(1)"}'><svg><a><set id="b1" attributeName="href" data-bind:to="{u}"></set></a></svg></div>` +
       `<p id="p">first</p>`,
@@ -465,10 +471,16 @@ test("a module's SVG animation values with a script URL never reach the frame do
   expect(await attrs('m3')).toEqual({ id: 'm3', attributeName: 'href', to: '#b', dur: '10s' });
   expect(await attrs('ok')).toEqual({ id: 'ok', attributeName: 'href', to: '#safe' });
   expect(await attrs('ok2')).toEqual({ id: 'ok2', attributeName: 'x', values: '0;10', dur: '1s' });
+  expect(await attrs('m5')).toEqual({ id: 'm5', attributeName: 'href', dur: '10s' });
+  expect(await attrs('m6')).toEqual({ id: 'm6', dur: '10s' });
+  expect(await attrs('m7')).toEqual({ id: 'm7', attributeName: 'fill', to: 'blue', dur: '10s' });
+  expect(await attrs('ok3')).toEqual({ id: 'ok3', attributeName: 'transform', type: 'rotate', values: '0 50 50;360 50 50', dur: '1s' });
+  expect(await attrs('ok4')).toEqual({ id: 'ok4', values: '0,0;10,10', dur: '1s' });
+  expect(await attrs('ok5')).toEqual({ id: 'ok5', attributeName: 'fill', values: 'red;blue', dur: '1s' });
   // The binding is refused by data-bind:'s own check, which reports nothing.
   expect(await attrs('b1')).toEqual({ id: 'b1', attributeName: 'href', 'data-bind:to': '{u}' });
   const codes = async () => (await received(page)).filter((m) => m.code === 'FORMA_E_UNREVIEWED_URL');
-  await expect.poll(async () => (await codes()).length).toBe(4);
+  await expect.poll(async () => (await codes()).length).toBe(7);
   expect(await frameOf(page).evaluate(() => (document.getElementById('l') as unknown as SVGAElement).href.animVal)).toBe('#safe');
 
   // An update: a kept element whose value changes, and an element it adds.
@@ -482,7 +494,7 @@ test("a module's SVG animation values with a script URL never reach the frame do
   expect(await animated()).toEqual([]);
   expect(await attrs('m2')).toEqual({ id: 'm2', attributeName: 'href' });
   expect(await attrs('m4')).toEqual({ id: 'm4', attributeName: 'href' });
-  await expect.poll(async () => (await codes()).length).toBe(6);
+  await expect.poll(async () => (await codes()).length).toBe(9);
   const errors = (await received(page)).filter((m) => m.type === 'error');
   expect(new Set(errors.map((m) => m.code))).toEqual(new Set(['FORMA_E_UNREVIEWED_URL']));
   expect(errors.some((m) => /reached the document/.test(m.message ?? ''))).toBe(false);
