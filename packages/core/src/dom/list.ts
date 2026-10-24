@@ -706,7 +706,16 @@ function createArrayList<T>(
       // disposed when the item is removed from the list.
       (item) => {
         const key = keyFn(item);
-        const [getIndex, setIndex] = createSignal(0);
+        // Many keyed rows never read their position. Keep the number until a
+        // reader actually needs a reactive index, including a first read long
+        // after the row was created or moved.
+        let index = 0;
+        let indexSignal: ReturnType<typeof createSignal<number>> | undefined;
+        const getIndex = () => (indexSignal ??= createSignal(index))[0]();
+        const setIndex = (value: number) => {
+          index = value;
+          indexSignal?.[1](value);
+        };
         const rendered = renderOwned(item, getIndex);
         cache.set(key, { ...rendered, item, getIndex, setIndex });
         return rendered.element;
