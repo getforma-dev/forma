@@ -215,9 +215,9 @@ describe('the paths FORMA-271 left (FORMA-274)', () => {
     ["'' + deep"],
     ['[1, 2].sort((a, b) => deep)'],
     ['Array.from({length: 10000}).reduce(a => [a], 0) + 1'],
-  ])('%s: a value nested more than 100 deep is refused with FORMA_E_BUDGET before anything converts it', (src) => {
+  ])('%s: a value nested over 100 deep with FORMA_E_BUDGET before anything converts it', (src) => {
     const err = failure(src);
-    expect([err.code, err.message]).toEqual(['FORMA_E_BUDGET', 'a value nested more than 100 deep is refused']);
+    expect([err.code, err.message]).toEqual(['FORMA_E_BUDGET', 'a value nested over 100 deep']);
     expect(err.defer, 'final, like a refusal that checks a length: it arms nothing').toBeUndefined();
   });
 

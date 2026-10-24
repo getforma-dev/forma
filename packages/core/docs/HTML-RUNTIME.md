@@ -276,18 +276,23 @@ Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a
 - a DOM method's promise that rejects, Chromium's
   `$el.scrollIntoView({behavior: 'bad'})`: `$el.scrollIntoView() rejected TypeError: …`;
 - a value nested more than 100 arrays or objects deep, whatever made it (state,
-  a response, a handler, `reduce`): `FORMA_E_BUDGET`, `a value nested more than
-  100 deep is refused`, before anything converts it. The deepest values found
-  in the founder's applications nest 5 levels in state and 23 in any JSON file;
-- an object whose own `toString` is not a function, which JSON can send
-  (`{"toString": 1}`): `FORMA_E_CALL_FAILED`, `an object whose toString is not
-  a function cannot be converted`;
+  a response, a handler, `reduce`): `FORMA_E_BUDGET`, `a value nested over 100
+  deep`, before anything converts it. The deepest values found in the
+  founder's applications nest 5 levels in state and 23 in any JSON file;
+- a value converted to text or a number whose `toString` is not a function,
+  an object JSON shadowed (`{"toString": 1}`) or an array a handler gave one
+  (`list.toString = 1`), arrays at any depth included: `FORMA_E_CALL_FAILED`,
+  `a value whose toString is not a function`. Only a conversion refuses it,
+  never an object's members and never a value serialized or handed on as data:
+  a dictionary with a `toString` key still works with `JSON.stringify`,
+  `data-persist`, a row's `{item}`, `$dispatch`'s detail and `Array.from`;
 - more than 32 evaluations nested inside one another, a chain of computeds or
   a handler that `$dispatch`es to itself: `FORMA_E_BUDGET`, `evaluations nested
-  more than 32 deep are refused`. The longest chain of computeds found in the
-  founder's applications is 4.
+  over 32 deep`. A computed refused this way is computed again on its next
+  read. The longest chain of computeds found in the founder's applications
+  is 4.
 
-A test mounts every directive with 46 hostile values each and finds nothing
+A test mounts every directive with 48 hostile values each and finds nothing
 that throws. Markup nested a few hundred levels deep can still overflow the
 stack (a `data-list` in a row of a `data-list`, hundreds of times), so "markup
 cannot throw out of `mountMarkup`" is not a stated guarantee: SECURITY.md,
@@ -299,6 +304,8 @@ Verified by `src/__tests__/runtime-throw-paths.test.ts` > "%s is reported on its
 Verified by `src/__tests__/runtime-throw-paths.test.ts` > "the rejection is reported on the element, not left unhandled"
 Verified by `src/__tests__/runtime-throw-paths.test.ts` > "%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element"
 Verified by `src/__tests__/runtime-throw-paths.test.ts` > "is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "an array a handler gave its own toString is refused wherever it is converted"
 Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow"
 Verified by `src/__tests__/runtime-throw-paths.test.ts` > "every directive given %s: nothing throws out of mountMarkup, an event or a later run, and every failure is coded"
 

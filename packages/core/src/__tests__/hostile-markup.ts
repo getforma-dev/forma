@@ -9,7 +9,8 @@
  * A T2 value is JSON (SECURITY.md, *Threat model*): a `data-forma-state`
  * attribute, a `data-fetch` response or a `data-persist` entry. JSON cannot
  * hold a cycle, a function, a symbol or an object without a prototype; a
- * handler can still make a cycle (`o.self = o`), and the matrix's handlers
+ * handler can still make a cycle (`o.self = o`), or give an array its own
+ * `toString` (`list[v] = 1` for `v` "toString"), and the matrix's handlers
  * do.
  */
 
@@ -60,6 +61,8 @@ export const HOSTILE_VALUES: Readonly<Record<string, string>> = {
   'an array of an empty array': '[[]]',
   'a __proto__ key': '{"__proto__": {"polluted": 1}}',
   'own toString, valueOf, constructor and then keys': '{"toString": 1, "valueOf": 2, "constructor": 3, "then": 4}',
+  'a dictionary with toString and valueOf keys': '{"toString": "to string", "valueOf": "value of", "the": 10}',
+  'the key toString': '"toString"',
   'a length of a billion': '{"length": 1000000000}',
   'a negative length': '{"length": -1}',
   'mixed types': '[1, "a", null, {}, [], true]',
@@ -159,12 +162,14 @@ export const HOSTILE_BODIES: readonly string[] = [
   `<p data-on:go="{$el.setAttribute(v, 'x'); $el.scrollIntoView(v); $el.focus(v)}">h</p>`,
   '<p data-on:go="{x = v; x += v; n++}">h</p>',
   '<p data-on:go="{o.self = o; o.v = v; n++}">h</p>',
+  `<p data-on:go="{list[v] = 1; x = '' + list; n++}">h</p>`,
+  `<p data-text="{n + '' + list}">h</p>`,
   '<p data-on:go="{$dispatch(v, v)}">h</p>',
 ];
 
 /** One scope holding every body, the value `json` as `v`, and a counter beside them (`#inc` on `ping`, shown in `#count`). */
 export function hostileModule(json: string): string {
-  const state = `{"v": ${json}, "items": {"a": 1}, "x": 0, "n": 0, "c": 0, "o": {"a": 1}}`.replace(/&/g, '&amp;').replace(/'/g, '&#39;');
+  const state = `{"v": ${json}, "items": {"a": 1}, "x": 0, "n": 0, "c": 0, "o": {"a": 1}, "list": [1, 2]}`.replace(/&/g, '&amp;').replace(/'/g, '&#39;');
   const bodies = HOSTILE_BODIES.map((body, i) => `<div id="b${i}">${body}</div>`).join('');
   return `<div data-forma-state='${state}'><div data-fetch="/api/hostile → f"><p data-text="{f}">f</p></div>${bodies}<button id="inc" data-on:ping="{c++}"></button><p id="count" data-text="{c}">count</p></div>`;
 }

@@ -578,17 +578,17 @@ describe('the allocation budget (DR-16)', () => {
     // weighs more than the room left before that stops at the room.
     const cyclic: unknown[] = [1];
     cyclic.push(cyclic);
-    expect(() => weigh(cyclic, 1000)).toThrow('a value nested more than 100 deep is refused');
+    expect(() => weigh(cyclic, 1000)).toThrow('a value nested over 100 deep');
     expect(weigh(cyclic, 100)).toBeGreaterThan(100);
     expect(weigh(cyclic, 100)).toBeLessThan(110);
     // Ten thousand levels deep, each an array of one: one unit per level.
     let deep: unknown[] = [];
     for (let i = 0; i < 10_000; i++) deep = [deep];
-    expect(() => weigh(deep, BUDGET)).toThrow('a value nested more than 100 deep is refused');
+    expect(() => weigh(deep, BUDGET)).toThrow('a value nested over 100 deep');
     let hundred: unknown[] = [];
     for (let i = 1; i < 100; i++) hundred = [hundred];
     expect(weigh(hundred, BUDGET)).toBe(99);
-    expect(() => weigh([hundred], BUDGET)).toThrow('a value nested more than 100 deep is refused');
+    expect(() => weigh([hundred], BUDGET)).toThrow('a value nested over 100 deep');
     // Counting slots for flat(1): the receiver's own slots and its children's.
     expect(weigh([[1, 2], [3], 4], BUDGET, 2)).toBe(6);
     expect(weigh([[1, 2], [3], 4], BUDGET, 1)).toBe(3);

@@ -467,7 +467,7 @@
   "tags": [
    "security"
   ],
-  "find": "    for (const a of args) charge(ctx, weigh(a, room(ctx)), name, at);",
+  "find": "    for (const a of args) charge(ctx, weigh(a, room(ctx), name === 'JSON.stringify' || (name === '$dispatch' && a !== args[0]) ? AS_DATA : -2), name, at);",
   "replace": "    for (const a of args) weigh(a, room(ctx));",
   "note": "a native's arguments are not charged as text, so String(list) can build hundreds of MB before any check (DR-16). Verified by: src/expr/__tests__/native-cost.test.ts > \"every allowlisted native refuses an argument heavier than the budget before it runs\""
  },
@@ -1371,7 +1371,7 @@
   "tags": [
    "security"
   ],
-  "find": "              n += placed(f ? (item as Record<string, unknown> | null)?.[f] : item, room);",
+  "find": "              n += f ? placed((item as Record<string, unknown> | null)?.[f], room) : placed(item, room, AS_DATA);",
   "replace": "              n += 0;",
   "note": "a data-list writes each row's {item.x} values and key into text unpriced: a thousand rows placing one long string (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
  },
@@ -1441,7 +1441,7 @@
   "tags": [
    "security"
   ],
-  "find": "        if (!converts(el, scope, prop, value)) return;\n",
+  "find": "        if (!converts(el, scope, prop, value, AS_DATA)) return;\n",
   "replace": "\n",
   "note": "data-persist JSON-stringifies a state value heavier than the budget (FORMA-025). Verified by: src/__tests__/runtime-text-cost.test.ts > \"every other conversion of a result to text is refused before it runs\""
  },
@@ -2799,7 +2799,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if (d < -100 && v && typeof v === 'object') {",
+  "find": "    if (d < -201 && v && typeof v === 'object') {",
   "replace": "    if (d < -1e9 && v && typeof v === 'object') {",
   "note": "a value nested 10,000 deep is weighed and converted: data-text, an operator, Forma's argument checks and a sort comparator's result overflow the stack out of mountMarkup (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element\""
  },
@@ -2809,8 +2809,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if (d < -100 && v && typeof v === 'object') {",
-  "replace": "    if (d < -99 && v && typeof v === 'object') {",
+  "find": "    if (d < -201 && v && typeof v === 'object') {",
+  "replace": "    if (d < -199 && v && typeof v === 'object') {",
   "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render\""
  },
  {
@@ -2819,8 +2819,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "      if (typeof (v as { toString?: unknown }).toString !== 'function') {",
-  "replace": "      if (typeof (v as { toString?: unknown }).toString === 'symbol') {",
+  "find": "    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "replace": "    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString === 'symbol') {",
   "note": "an object whose own toString is not a function, which JSON can send ({\"toString\": 1}), is converted: an operator, data-text, data-bind:, an argument check and a key throw a TypeError out of mountMarkup or a handler (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler\""
  },
  {
@@ -2899,8 +2899,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
-  "replace": "  if (nest > 1e9) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
+  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', NESTED);",
+  "replace": "  if (nest > 1e9) throw exprError('FORMA_E_BUDGET', NESTED);",
   "note": "evaluations nest without a bound: a chain of 1,000 computeds overflows the stack out of mountMarkup, and a handler that dispatches its own event recurses into an uncaught page error (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow\""
  },
  {
@@ -2909,8 +2909,68 @@
   "tags": [
    "correctness"
   ],
-  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
-  "replace": "  if (nest > 31) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
+  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', NESTED);",
+  "replace": "  if (nest > 31) throw exprError('FORMA_E_BUDGET', NESTED);",
   "note": "the 32nd nested evaluation is refused, one short of the documented cap (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow\""
+ },
+ {
+  "id": "expr/kept-args-converted",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "name === 'JSON.stringify' || (name === '$dispatch' && a !== args[0]) ? AS_DATA : -2",
+  "replace": "false ? AS_DATA : -2",
+  "note": "JSON.stringify's value and $dispatch's detail are weighed as if converted, so a dictionary with a \"toString\" key can no longer be serialized or dispatched (FORMA-274 review, F1). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail\""
+ },
+ {
+  "id": "runtime/serialized-values-converted",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "weigh(v, room, depth) : 0);",
+  "replace": "weigh(v, room) : 0);",
+  "note": "data-persist's value and a row's whole {item}, which are serialized with JSON.stringify, are weighed as if converted: a dictionary with a \"toString\" key stops persisting and its row stops rendering (FORMA-274 review, F1). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail\""
+ },
+ {
+  "id": "expr/weigh-members-converted",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      const next = d >= 0 ? d - 1 : kids === v || d & 1 ? d - 2 : d - 3;",
+  "replace": "      const next = d >= 0 ? d - 1 : d - 2;",
+  "note": "an object's members are checked as if converted with it, so '' + {inner: d} and '' + [Math] are refused though converting them never calls a member's toString (FORMA-274 review, F1 and the host-table nit). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the same dictionary is refused where it would be converted, at any depth of an array, never as an object member\""
+ },
+ {
+  "id": "expr/weigh-arrays-unchecked",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (kids !== NONE && d < 0 && !(d & 1) && typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "replace": "    if (kids !== NONE && d < 0 && !(d & 1) && !isArray(v) && typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "note": "an array is converted without checking its own toString, so a handler's list.toString = 1 makes '' + list, a template literal, setAttribute, a key and a style write throw a TypeError (FORMA-274 review, F2). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"an array a handler gave its own toString is refused wherever it is converted\""
+ },
+ {
+  "id": "runtime/nest-refused-computed-cached",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "              } else if (err.message === NESTED) {",
+  "replace": "              } else if (err.message === '') {",
+  "note": "a computed refused for nesting before it read anything caches the refusal with no dependency, so it and its readers stay failed after the data changes, silently (FORMA-274 review, F3). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a computed refused for nesting is computed again on its next read, not cached as failed\""
+ },
+ {
+  "id": "expr/count-conversion-escapes",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  try {\n    return max(0, toNumber(v) || 0);\n  } catch {\n    return 0;\n  }",
+  "replace": "  return max(0, toNumber(v) || 0);",
+  "note": "a cost row converts an array-like's length outside the call wrapper, so Array.from({length: d}) with a \"toString\" key in d throws a TypeError out of mountMarkup (FORMA-274 review, F1). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the same dictionary is refused where it would be converted, at any depth of an array, never as an object member\""
  }
 ]

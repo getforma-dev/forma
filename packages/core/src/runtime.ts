@@ -60,6 +60,8 @@ import {
   type Meter,
   type TextCost,
   WAITING_CAP,
+  AS_DATA,
+  NESTED,
 } from './expr';
 import { sourceIsDev, warnDeprecated } from './deprecated';
 
@@ -1430,9 +1432,11 @@ function later(): void {
  * `String()` of an array or object joins every element, so a list of a
  * thousand references to one long string is three hundred million
  * characters. A string is written as it is; a host value renders as a label.
+ * `depth` is `AS_DATA` for a value serialized, not converted (`data-persist`,
+ * a row's whole `{item}`): weighed the same, never refused for its `toString`.
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "data-text of a value heavier than the budget is refused before it is converted"
  */
-const asText: TextCost = (v, room) => (typeof v === 'object' && v !== null && !isHost(v) ? weigh(v, room) : 0);
+const asText = (v: unknown, room: number, depth?: number): number => (typeof v === 'object' && v !== null && !isHost(v) ? weigh(v, room, depth) : 0);
 
 /**
  * Charge a conversion of a value no expression returned (a `data-model` or
@@ -1440,10 +1444,10 @@ const asText: TextCost = (v, room) => (typeof v === 'object' && v !== null && !i
  * False when refused: reported, or retried in the next task.
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "every other conversion of a result to text is refused before it runs"
  */
-function converts(el: Element, scope: Scope, what: string, value: unknown): boolean {
+function converts(el: Element, scope: Scope, what: string, value: unknown, depth?: number): boolean {
   try {
     spend();
-    evaluateExpression(NOTHING, scope, meter, (_, room) => asText(value, room));
+    evaluateExpression(NOTHING, scope, meter, (_, room) => asText(value, room, depth));
     return true;
   } catch (err) {
     if (!isExprError(err)) throw err;
@@ -1460,7 +1464,7 @@ function converts(el: Element, scope: Scope, what: string, value: unknown): bool
 const NOTHING = compileExpression('0');
 
 /** A value a `data-list` row template places in text, once per row it appears in. */
-const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room));
+const placed = (v: unknown, room: number, depth?: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room, depth));
 
 /**
  * The most a `data-list` pass may build or rebind, as rows times the weight of
@@ -1905,6 +1909,14 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
               if (err.defer) {
                 later();
                 staleCells.add(cell);
+              } else if (err.message === NESTED) {
+                // Refused for nesting before it read anything, so nothing
+                // it depends on would recompute it: it reads `retries`, which
+                // the next task bumps, and its next read recomputes it (FORMA-274).
+                // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a computed refused for nesting is computed again on its next read, not cached as failed"
+                retries();
+                deferred = true;
+                spend();
               }
               return { ok: false, e: err };
             } finally {
@@ -2200,7 +2212,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       } catch { /* ignore parse errors */ }
       const dispose = internalEffect(() => {
         const value = getter();
-        if (!converts(el, scope, prop, value)) return;
+        if (!converts(el, scope, prop, value, AS_DATA)) return;
         try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
       });
       disposers.push(dispose);
@@ -2252,7 +2264,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           for (const item of items) {
             for (const f of fields) {
               if (n > room) return n;
-              n += placed(f ? (item as Record<string, unknown> | null)?.[f] : item, room);
+              // A whole `{item}` is serialized with JSON.stringify, not converted.
+              n += f ? placed((item as Record<string, unknown> | null)?.[f], room) : placed(item, room, AS_DATA);
             }
           }
         }

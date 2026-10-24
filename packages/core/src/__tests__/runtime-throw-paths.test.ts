@@ -117,7 +117,7 @@ describe("the runtime's own DOM writes (FORMA-274, item 1)", () => {
 
 describe('values nested too deep are refused before anything converts them (FORMA-274, item 2)', () => {
   const DEEP = nested(10_000);
-  const refused = 'a value nested more than 100 deep is refused';
+  const refused = 'a value nested over 100 deep';
 
   it.each([
     ['data-text', '<p id="t" data-text="{d}">kept</p>'],
@@ -207,7 +207,7 @@ describe("an object whose own toString is not a function, which JSON can send (F
     // data-text and data-bind: report the same expression once, counted twice.
     expect(runtime.getDiagnostics().map((d) => [d.code, d.expr, d.count, d.reason])).toEqual(
       ["'' + t", 't', "$el.setAttribute(t, 'x')", 'o[t]', '[{id: t}]', '$el.style.color = t'].map((expr) =>
-        ['FORMA_E_CALL_FAILED', expr, expr === 't' ? 2 : 1, 'an object whose toString is not a function cannot be converted']),
+        ['FORMA_E_CALL_FAILED', expr, expr === 't' ? 2 : 1, 'a value whose toString is not a function']),
     );
     for (const id of ['a', 'b', 'c', 'd', 'e', 'f']) expect(el(id).getAttribute('data-forma-expr-error'), id).toBe('unsupported');
     expect(el('g').getAttribute('data-forma-handler-error')).toBe('unsupported');
@@ -220,6 +220,77 @@ describe("an object whose own toString is not a function, which JSON can send (F
     runtime.setScopeValue(container.firstElementChild!, 'w', { toString: () => 'Ada' });
     expect(el('b').textContent).toBe('Ada');
     expect(runtime.getDiagnostics().map((d) => [d.code, d.reason])).toEqual([['FORMA_E_CALL_FAILED', 'String() threw TypeError: app']]);
+  });
+});
+
+describe('a toString that is not a function is refused only where a value is converted (FORMA-274 review, F1 and F2)', () => {
+  // A dictionary keyed by user input: one key is named "toString".
+  const D = '{"toString": "to string", "valueOf": "value of", "the": 10}';
+
+  it('a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail', async () => {
+    const details: unknown[] = [];
+    container.addEventListener('pick', (e) => details.push((e as CustomEvent).detail));
+    expect(mount(`
+      <p id="json" data-text="{JSON.stringify(d)}">j</p>
+      <ul id="rows" data-list="{[d]}"><li>{item}</li></ul>
+      <p id="pick" data-on:go="{$dispatch('pick', d)}">p</p>
+      <p id="persist" data-persist="{d}">s</p>
+      <p id="from" data-text="{Array.from(d).length + [d].length}">f</p>
+      <p id="the" data-text="{d.the}">t</p>`, `{"d": ${D}}`)).toBeNull();
+    el('pick').dispatchEvent(new Event('go'));
+    await tick();
+    const text = JSON.stringify(JSON.parse(D));
+    expect(el('json').textContent).toBe(text);
+    expect(el('rows').textContent).toBe(text);
+    expect(details).toEqual([JSON.parse(D)]);
+    expect(localStorage.getItem('forma:d')).toBe(text);
+    expect(el('from').textContent).toBe('1');
+    expect(el('the').textContent).toBe('10');
+    expect(runtime.getDiagnostics()).toEqual([]);
+  });
+
+  it('the same dictionary is refused where it would be converted, at any depth of an array, never as an object member', () => {
+    expect(mount(`
+      <p id="a" data-text="{'' + d}">a</p>
+      <p id="b" data-text="{[[d]].join()}">b</p>
+      <p id="c" data-text="{'' + {inner: d}}">c</p>
+      <p id="e" data-text="{'' + [Math, Number]}">e</p>
+      <p id="f" data-text="{Array.from({length: d})}">f</p>`, `{"d": ${D}}`)).toBeNull();
+    expect(runtime.getDiagnostics().map((x) => [x.expr, x.code, x.reason])).toEqual([
+      ["'' + d", 'FORMA_E_CALL_FAILED', 'a value whose toString is not a function'],
+      ['[[d]].join()', 'FORMA_E_CALL_FAILED', 'a value whose toString is not a function'],
+      // The native converts an array-like's length itself, inside the call wrapper.
+      ['Array.from({length: d})', 'FORMA_E_CALL_FAILED', 'Array.from() threw TypeError: Cannot convert object to primitive value'],
+    ]);
+    // An object's members are not converted with it, and the tables of the
+    // allowlist's own namespaces convert as they did before.
+    expect(el('c').textContent).toBe('[object Object]');
+    expect(el('e').textContent).toBe('[object Object],[object Object]');
+  });
+
+  it('an array a handler gave its own toString is refused wherever it is converted', async () => {
+    expect(mount(`
+      <p id="h1" data-on:go="{list.toString = 1; x = '' + list}">h</p>
+      <p id="h2" data-on:go="{x = \`\${list}\`}">h</p>
+      <p id="h3" data-on:go="{$el.setAttribute('title', list)}">h</p>
+      <p id="h4" data-on:go="{x = o[list]}">h</p>
+      <p id="h5" data-on:go="{$el.style.color = list; $el.dataset.x = list}">h</p>
+      <button id="inc" data-on:go="{n++}"></button>
+      <p id="later" data-text="{n + '' + list}">l</p>
+      <p id="bind" data-bind:title="{n > 0 ? list : ''}">b</p>`, '{"list": [1, 2], "x": 0, "n": 0, "o": {}}')).toBeNull();
+    for (const id of ['h1', 'h2', 'h3', 'h4', 'h5', 'inc']) expect(() => el(id).dispatchEvent(new Event('go')), id).not.toThrow();
+    await tick();
+    const refused = 'a value whose toString is not a function';
+    expect(runtime.getDiagnostics().filter((d) => d.reason === refused).map((d) => [d.kind, d.expr])).toEqual([
+      ['handler-unsupported', "list.toString = 1; x = '' + list"],
+      ['handler-unsupported', 'x = `${list}`'],
+      ['handler-unsupported', "$el.setAttribute('title', list)"],
+      ['handler-unsupported', 'x = o[list]'],
+      ['handler-unsupported', '$el.style.color = list; $el.dataset.x = list'],
+      ['expression-unsupported', "n + '' + list"],
+      ['expression-unsupported', "n > 0 ? list : ''"],
+    ]);
+    expect(swallowed).toEqual([]);
   });
 });
 
@@ -288,7 +359,7 @@ describe('evaluations nested inside one another are capped (FORMA-274)', () => {
     unmountFixture(container);
     expect(mount(chain(32))).toBeNull();
     expect(el('t').textContent).toBe('kept');
-    expect(runtime.getDiagnostics().map((d) => [d.code, d.reason])).toContainEqual(['FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused']);
+    expect(runtime.getDiagnostics().map((d) => [d.code, d.reason])).toContainEqual(['FORMA_E_BUDGET', 'evaluations nested over 32 deep']);
     // A chain long enough to overflow the stack of every engine is refused the same way.
     unmountFixture(container);
     runtime.clearDiagnostics();
@@ -299,9 +370,35 @@ describe('evaluations nested inside one another are capped (FORMA-274)', () => {
   it('a handler that dispatches its own event to itself stops at the cap, with one diagnostic', () => {
     expect(mount(`<div id="t" data-on:ping="{n++; $dispatch('ping')}"><p id="go" data-text="{$dispatch('ping')}">x</p></div><p id="n" data-text="{n}"></p>`, '{"n": 0}')).toBeNull();
     expect(runtime.getDiagnostics().map((d) => [d.kind, d.code, d.reason])).toEqual([
-      ['handler-unsupported', 'FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused'],
+      ['handler-unsupported', 'FORMA_E_BUDGET', 'evaluations nested over 32 deep'],
     ]);
     expect(el('n').textContent).toBe('31');
+  });
+});
+
+describe('a computed refused for nesting (FORMA-274 review, F3)', () => {
+  it('a computed refused for nesting is computed again on its next read, not cached as failed', async () => {
+    // A relay of 30 handlers; the last reads `top` first, which reads `mid`,
+    // which reads `sub`: the 33rd evaluation, refused before it reads
+    // anything. (A computed already computed is recomputed from its
+    // dependencies up, not nested, so these are read here for the first time.)
+    let relay = '<p id="go">go</p>';
+    for (let i = 0; i < 30; i++) {
+      relay = `<div data-on:e${i}="{${i === 29 ? 'items = [5, 6]; x = top' : `$dispatch('e${i + 1}')`}}">${relay}</div>`;
+    }
+    expect(mount(`<i data-computed="sub = items.length; mid = sub + 1; top = mid + 1"></i>
+      <p id="s" data-text="{shown ? sub : '-'}"></p><p id="m" data-text="{shown ? mid : '-'}"></p><p id="t" data-text="{shown ? top : '-'}"></p>
+      ${relay}<button id="reset" data-on:go="{shown = true; items = [1, 2, 3]}"></button>`, '{"items": [1], "x": 0, "shown": false}')).toBeNull();
+    const shown = (): string[] => ['s', 'm', 't'].map((id) => el(id).textContent ?? '');
+    el('go').dispatchEvent(new Event('e0', { bubbles: true }));
+    expect(runtime.getDiagnostics().map((d) => [d.kind, d.code, d.reason])).toEqual([
+      ['handler-unsupported', 'FORMA_E_BUDGET', 'evaluations nested over 32 deep'],
+    ]);
+    await tick();
+    el('reset').dispatchEvent(new Event('go'));
+    expect(shown()).toEqual(['3', '4', '5']);
+    expect(runtime.getDiagnostics()).toHaveLength(1);
+    expect(swallowed).toEqual([]);
   });
 });
 

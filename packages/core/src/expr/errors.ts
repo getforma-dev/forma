@@ -38,8 +38,8 @@ export type ExprErrorCode =
    * Since FORMA-274 also: a DOM write the browser refused, the runtime's own
    * (`data-model write threw …`) or a handler's (`$el.value = … threw …`); a
    * DOM method's promise that rejected (`… rejected …`, reported after the
-   * evaluation); and an object whose own `toString` is not a function,
-   * refused before it is converted.
+   * evaluation); and a value whose `toString` is not a function, refused
+   * before it is converted to text or a number.
    */
   | 'FORMA_E_CALL_FAILED'
   /** The assignment target is unknown or not writable. */

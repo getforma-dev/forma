@@ -57,7 +57,7 @@ import {
 } from './allowlist';
 import { hostObject, isHost, type Bound, type Host } from './host';
 import { isLocalSelector } from './selector';
-import { COSTS, DATA_ARGS, FLAT, GROW, PARSE, READ, weigh } from './cost';
+import { AS_DATA, COSTS, DATA_ARGS, FLAT, GROW, PARSE, READ, weigh } from './cost';
 
 export interface ScopeLike {
   getters: Record<string, () => unknown>;
@@ -162,6 +162,9 @@ export function getStepBudget(): number {
 /** The evaluation running now, if any: one started inside it shares its budget. */
 let cur: EvalCtx | null = null;
 
+/** The refusal of a 33rd nested evaluation (`makeCtx`). */
+export const NESTED = 'evaluations nested over 32 deep';
+
 /**
  * A context counts on from what was spent before it: the running evaluation's
  * when one is nested in another (a `data-computed` read by a binding, a
@@ -179,7 +182,9 @@ let cur: EvalCtx | null = null;
  * own event to itself recursed into an uncaught page error in every engine.
  * The longest chain of computeds in the founder's applications is 4. The
  * 33rd is refused with `FORMA_E_BUDGET` before it starts: final, arming
- * nothing, like a refusal that checks a count.
+ * nothing, like a refusal that checks a count. A computed refused this way
+ * read nothing, so the runtime has it computed again on its next read after
+ * the task, instead of keeping the refusal as its value.
  * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow"
  * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a handler that dispatches its own event to itself stops at the cap, with one diagnostic"
  */
@@ -188,7 +193,7 @@ export function makeCtx(scope: ScopeLike, meter?: Meter | null): EvalCtx {
   const steps = base ? base.steps : 0;
   const cost = base ? base.cost : 0;
   const nest = (cur?.nest ?? 0) + 1;
-  if (nest > 32) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');
+  if (nest > 32) throw exprError('FORMA_E_BUDGET', NESTED);
   return { scope, frame: null, steps, budget: scope.budget ?? stepBudget, cost, stepsBefore: steps > 0, unitsBefore: cost > 0, meter: meter ?? cur?.meter ?? null, nest };
 }
 
@@ -305,7 +310,9 @@ function preflight(ctx: EvalCtx, name: string, recv: unknown, args: unknown[], a
     // Verified by: src/expr/__tests__/string-growth.test.ts > "a string method reads a string argument for a thirty-second of a unit a character"
     for (const a of args) charge(ctx, typeof a === 'string' ? a.length / 32 : weigh(a, room(ctx)), name, at);
   } else if (!DATA_ARGS.has(name)) {
-    for (const a of args) charge(ctx, weigh(a, room(ctx)), name, at);
+    // `JSON.stringify` serializes its value and `$dispatch` hands its detail
+    // on: weighed as data, never converted (FORMA-274).
+    for (const a of args) charge(ctx, weigh(a, room(ctx), name === 'JSON.stringify' || (name === '$dispatch' && a !== args[0]) ? AS_DATA : -2), name, at);
   }
   const cost = Object.hasOwn(COSTS, name) ? COSTS[name]! : null;
   if (cost) charge(ctx, cost(recv, args, room(ctx)), name, at);

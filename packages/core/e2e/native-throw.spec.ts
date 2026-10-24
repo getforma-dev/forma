@@ -168,11 +168,48 @@ test('values nested too deep, an own toString that is not a function, and evalua
     }
     return out;
   }, { deep, chain });
-  const deepRefusal = 'FORMA_E_BUDGET: a value nested more than 100 deep is refused';
-  const toStringRefusal = 'FORMA_E_CALL_FAILED: an object whose toString is not a function cannot be converted';
-  const nestRefusal = 'FORMA_E_BUDGET: evaluations nested more than 32 deep are refused';
+  const deepRefusal = 'FORMA_E_BUDGET: a value nested over 100 deep';
+  const toStringRefusal = 'FORMA_E_CALL_FAILED: a value whose toString is not a function';
+  const nestRefusal = 'FORMA_E_BUDGET: evaluations nested over 32 deep';
   expect(result.map(([, mountError]) => mountError)).toEqual([null, null, null, null, null]);
   expect(result.map(([, , codes]) => [...new Set(codes)])).toEqual([[deepRefusal], [deepRefusal], [toStringRefusal], [nestRefusal], [nestRefusal]]);
+  expect(errors).toEqual([]);
+});
+
+test('a dictionary with a toString key still serializes, persists, renders as a row and travels as detail; an array given one is refused where converted', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (err) => errors.push(String(err)));
+  const r = await page.evaluate(async () => {
+    const rt = (window as unknown as { FormaRuntime: any }).FormaRuntime;
+    rt.clearDiagnostics();
+    try { localStorage.clear(); } catch { /* none */ }
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    const details: unknown[] = [];
+    root.addEventListener('pick', (e) => details.push((e as CustomEvent).detail));
+    rt.mountMarkup(root, rt.trustedHtml(`<div data-forma-state='{"d": {"toString": "to string", "valueOf": "value of", "the": 10}, "list": [1, 2], "x": 0}'>
+      <p id="json" data-text="{JSON.stringify(d)}">j</p>
+      <ul id="rows" data-list="{[d]}"><li>{item}</li></ul>
+      <p id="pick" data-on:custom="{$dispatch('pick', d)}">p</p>
+      <p data-persist="{d}"></p>
+      <p id="arr" data-on:custom="{list.toString = 1; x = '' + list}">a</p>
+    </div>`), { tier: 'reviewed' });
+    root.querySelector('#pick')!.dispatchEvent(new Event('custom'));
+    root.querySelector('#arr')!.dispatchEvent(new Event('custom'));
+    await new Promise((res) => setTimeout(res, 0));
+    return {
+      json: root.querySelector('#json')!.textContent,
+      rows: root.querySelector('#rows')!.textContent,
+      details,
+      persisted: localStorage.getItem('forma:d'),
+      codes: (rt.getDiagnostics() as Array<{ code: string; expr: string; reason: string }>).map((d) => [d.code, d.expr, d.reason]),
+    };
+  });
+  const text = '{"toString":"to string","valueOf":"value of","the":10}';
+  expect(r).toEqual({
+    json: text, rows: text, details: [JSON.parse(text)], persisted: text,
+    codes: [['FORMA_E_CALL_FAILED', "list.toString = 1; x = '' + list", 'a value whose toString is not a function']],
+  });
   expect(errors).toEqual([]);
 });
 
