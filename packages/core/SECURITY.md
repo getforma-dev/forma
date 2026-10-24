@@ -211,6 +211,11 @@ An expression that cannot be compiled or cannot be evaluated is **not evaluated,
 Verified by: `src/__tests__/failure-semantics.test.ts` > "a denied expression leaves the previous text in place and never renders undefined"
 Verified by: `src/__tests__/failure-semantics.test.ts` > "a genuine runtime bug is not swallowed as an expression denial"
 
+**A `data-on:` name in Vue or Alpine modifier syntax is reported the same way** (FORMA-269). `data-on:click.stop` listened for an event named `click.stop`, which no browser dispatches, so the handler never ran and nothing said so. A key event with anything after a dot, or an event whose first suffix is one of their modifiers (`stop`, `prevent`, `once`, `self`, …; docs/HTML-RUNTIME.md lists them), is now refused as `FORMA_E_UNSUPPORTED` on its element and binds no listener. Any other dotted name is a custom event and binds as before.
+
+Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener"
+Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "plain event names and dotted custom events bind as before, with no diagnostic"
+
 **An allowlisted native that throws is reported the same way** (FORMA-271). `JSON.parse('{')`, `(1).toFixed(500)`, `(1).toString(1)`, `Object.keys(null)`, `Array.from(null)`, `[].reduce(f)`, a higher-order method called with no callback, a selector the DOM cannot parse (`$el.matches('#1')`) and `classList.add('')` throw on their arguments. Each is now refused as `FORMA_E_CALL_FAILED` on the binding that made the call, with a message that names the method and the native's error, its text cut at 200 characters (`number.toFixed() threw RangeError: toFixed() digits argument must be between 0 and 100`). The rest of the markup binds. Before, the exception escaped `mountMarkup` from any binding and left the whole module unbound. From a handler it was an uncaught page error with no diagnostic.
 
 Only the native call is converted. The interpreter makes every allowlisted call through one wrapper. An error that Forma's own code throws while a native runs it passes through as it is, whether it is a real bug or an expression error with its own code: an arrow callback, a handler that `click()` dispatches, a computed that a callback reads, and the runtime magics `$dispatch` and `$refetch`. Code an application put in reach and a native runs is converted, because the native call is what threw: a `toString` or getter of a value the application put in state, or the application's own override of an element method.
@@ -317,6 +322,9 @@ Stated here rather than left for a reader to discover:
   Verified by: `src/__tests__/runtime-native-throw.test.ts` > "what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text"
 
   In Chromium, `e2e/native-throw.spec.ts` checks the `data-class:` and `data-bind:` cases.
+- **Modifier syntax without a dot still binds a dead handler.** FORMA-269 refuses the dotted Vue and Alpine syntax only. Datastar's `data-on:click__prevent` listens for an event named `click__prevent`, which never fires, with no diagnostic.
+
+  Verified by: `src/__tests__/runtime-event-modifiers.test.ts` > "modifier syntax without a dot is not detected: it listens for its literal name, with no diagnostic"
 
 ## Supported Versions
 

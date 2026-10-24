@@ -2632,5 +2632,55 @@
   "find": "      return checkResultSize(native(ctx, target.label, at, target.target as Native, undefined, args, target), at);",
   "replace": "      return checkResultSize(Reflect.apply(target.target as Native, undefined, args), at);",
   "note": "a call of an allowlisted global function (`String(v)`, `Number(v)`, `parseInt(v)`) is made bare, so what it throws (a stack overflow converting deeply nested data, an application's toString) escapes the binding (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"%s is refused with FORMA_E_CALL_FAILED naming %s and its %s\""
+ },
+ {
+  "id": "runtime/event-modifier-unchecked",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      if (EVENT_MODIFIER.test(event)) {",
+  "replace": "      if (EVENT_MODIFIER.test('')) {",
+  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269 (vector-studio's folder-picker replay). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
+ },
+ {
+  "id": "runtime/event-modifier-reported-still-bound",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        continue;\n      }\n      const built = buildHandler(attr.value, scope, el);",
+  "replace": "      }\n      const built = buildHandler(attr.value, scope, el);",
+  "note": "a refused modifier name is reported and then bound anyway, under its literal name, so the diagnostic and the listener disagree and a `$dispatch('click.stop')` runs a handler the runtime said it refused (FORMA-269). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:%s is refused and binds nothing\""
+ },
+ {
+  "id": "runtime/event-modifier-base-bound",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      const event = name.slice(8); // 'data-on:'.length === 8",
+  "replace": "      const event = name.slice(8).split('.')[0]!; // 'data-on:'.length === 8",
+  "note": "the suffix is dropped and the base event bound, so `data-on:submit.prevent` runs without preventDefault (the form submits), `.once` runs every time and `keydown.enter` on every key, with no diagnostic, and a dotted custom event listens for the wrong name (FORMA-269). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:%s is refused and binds nothing\""
+ },
+ {
+  "id": "runtime/event-modifier-any-dot",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "const EVENT_MODIFIER = /^key(?:down|up|press)\\.|^[^.]*\\.(?:stop|prevent|self|capture|once|passive|native|outside|away|window|document|debounce|throttle|exact|ctrl|alt|shift|meta|cmd|left|right|middle)(?:\\.|$)/;",
+  "replace": "const EVENT_MODIFIER = /\\./;",
+  "note": "every dotted name is refused, so a custom event (Bootstrap's `shown.bs.modal`, `data-on:item.selected` hearing a `$dispatch('item.selected')`) no longer binds (FORMA-269). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"plain event names and dotted custom events bind as before, with no diagnostic\""
+ },
+ {
+  "id": "runtime/event-modifier-key-names-missed",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "/^key(?:down|up|press)\\.|^[^.]*\\.(?:",
+  "replace": "/^[^.]*\\.(?:",
+  "note": "a key event with a key-name suffix (`keydown.enter`, `keydown.arrow-down`, `keypress.a`) is not refused, so its handler listens for that literal name and never runs, with no diagnostic (FORMA-269). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:%s is refused and binds nothing\""
  }
 ]

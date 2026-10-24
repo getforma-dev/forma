@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "1923f869e94725370f40416d02af3735adfca376490944324f8525278f6255d1",
-    "total": 271,
+    "sha256": "399ab1ce5f66faeafb4e48620ce2726638b38beb5aef7581bde3bc0198ed6058",
+    "total": 276,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
