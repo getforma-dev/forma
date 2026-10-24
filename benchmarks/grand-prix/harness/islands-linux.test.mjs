@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { inspectedIslandUrl } from './islands-linux.mjs';
+import { archiveContestants, CARS, inspectedIslandUrl } from './islands-linux.mjs';
 
 const expected = { runId: 'island-control', imageId: 'sha256:' + 'a'.repeat(64) };
 function container() {
@@ -29,4 +33,16 @@ for (const [name, mutate] of [
 test('truncated image identity cannot qualify the matching container', () => {
   const c = container(); c.Image = 'sha256:abc';
   assert.throws(() => inspectedIslandUrl(c, { ...expected, imageId: c.Image }));
+});
+
+test('a committed subtree archive contains every contestant even when the driver lives below the repository root', () => {
+  const work = mkdtempSync(join(os.tmpdir(), 'forma-264-island-archive-'));
+  try {
+    const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const contexts = join(work, 'contexts');
+    archiveContestants(contexts, commit);
+    for (const car of CARS) assert(existsSync(join(contexts, car, 'Dockerfile')), `${car} missing from archive`);
+    assert(existsSync(join(contexts, 'forma', 'Cargo.lock')));
+    assert(existsSync(join(contexts, 'next', 'package-lock.json')));
+  } finally { rmSync(work, { recursive: true, force: true }); }
 });

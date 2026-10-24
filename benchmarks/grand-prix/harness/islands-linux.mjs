@@ -13,6 +13,17 @@ export const CARS = ['forma', 'react-node', 'react-bun', 'react-deno', 'preact-n
 const lock = JSON.parse(readFileSync(new URL('./chromium-linux-lock.json', import.meta.url), 'utf8'));
 const validDigest = value => /^sha256:[a-f0-9]{64}$/.test(value ?? '');
 
+export function archiveContestants(directory, sourceCommit) {
+  assert(/^[a-f0-9]{40}$/.test(sourceCommit), 'exact source commit required');
+  const repository = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' }).trim();
+  mkdirSync(directory);
+  // git archive still applies the working directory prefix to an explicit tree.
+  // Run at the repository root so this subtree archive actually includes its cars.
+  const archive = execFileSync('git', ['archive', `${sourceCommit}:benchmarks/grand-prix/contestants`],
+    { cwd: repository, maxBuffer: 64 * 1024 * 1024 });
+  execFileSync('tar', ['-xf', '-', '-C', directory], { input: archive });
+}
+
 /** The URL is derived from this exact owned container, never supplied separately. */
 export function inspectedIslandUrl(container, { runId, imageId }) {
   assert.equal(container.State?.Running, true, 'island container is not running');
@@ -104,9 +115,7 @@ export async function main(argv = process.argv.slice(2)) {
   save();
   try {
     checkDisk();
-    const contexts = join(output, 'contexts'); mkdirSync(contexts);
-    const archive = execFileSync('git', ['archive', `${sourceCommit}:benchmarks/grand-prix/contestants`], { cwd: root, maxBuffer: 64 * 1024 * 1024 });
-    execFileSync('tar', ['-xf', '-', '-C', contexts], { input: archive });
+    const contexts = join(output, 'contexts'); archiveContestants(contexts, sourceCommit);
     await run('docker', ['buildx', 'create', '--name', builder, '--driver', 'docker-container']);
     ownership.builderCreated = true; writeFileSync(ownershipPath, JSON.stringify(ownership));
     docker('network', 'create', '--label', 'grandprix=forma-264', '--label', label, network);
@@ -145,7 +154,7 @@ export async function main(argv = process.argv.slice(2)) {
         assert.equal(measured.verified, true); assert.equal(measured.qualifiedProfile, !diagnostic);
         assert.equal(measured.sourceCommit, sourceCommit); assert.equal(measured.browser.sha256, lock.executableSha256);
         step.passed = true;
-      } catch (error) { step.error = String(error); report.failures.push({ car, error: step.error }); }
+      } catch (error) { step.error = String(error); console.error(step.error); report.failures.push({ car, error: step.error }); }
       finally {
         if (containerId) { step.serverLog = docker('logs', containerId); docker('rm', '-f', containerId); }
         step.after = machine(); save();
@@ -157,7 +166,7 @@ export async function main(argv = process.argv.slice(2)) {
     }
     assert(!stopping, 'run interrupted');
     report.passed = report.failures.length === 0 && report.steps.length === cars.length;
-  } catch (error) { report.error = String(error); report.passed = false; }
+  } catch (error) { report.error = String(error); console.error(report.error); report.passed = false; }
   finally {
     try { await run(process.execPath, ['harness/cleanup.mjs']); }
     catch (error) { report.cleanupError = String(error); report.passed = false; }
