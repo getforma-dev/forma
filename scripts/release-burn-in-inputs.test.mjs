@@ -1,9 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { boundedResponse, namedAsset, verifyAssetBytes, verifyRegistryArchive, verifyRun, releaseReader, API } from './release-burn-in-inputs.mjs';
+import { boundedResponse, namedAsset, verifyAssetBytes, verifyRegistryArchive, verifyRun, releaseReader, authenticateRc, API } from './release-burn-in-inputs.mjs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 const bytes = Buffer.from('actual original archive'), sha = createHash('sha256').update(bytes).digest('hex');
 const asset = {name:'release-record.json',url:'https://api.github.com/repos/getforma-dev/forma/releases/assets/123',digest:`sha256:${sha}`,size:bytes.length};
+test('3.1 RC authentication binds the real local tag and published contract before requiring P17 provenance', async t => {
+ const root=mkdtempSync(join(tmpdir(),'rc-line-control-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+ git('init','--quiet');git('config','user.name','Finite control');git('config','user.email','control@example.invalid');
+ writeFileSync(join(root,'source'),'synthetic RC source\n');git('add','.');git('commit','--quiet','-m','synthetic RC');
+ const commit=git('rev-parse','HEAD'),tag='v3.1.0-rc.1';git('tag',tag);
+ const packages=[...['forma-ir','forma-ir-derive','forma-server'].map(name=>({registry:'crates',name})),...['core','compiler','build','create-app'].map(name=>({registry:'npm',name:`@getforma/${name}`}))].map(p=>({...p,version:tag.slice(1),sha256:'a'.repeat(64)}));
+ const check=async(contractVersion,index)=>{
+  const record={schema:1,dryRun:false,tag,commit,packages,measurements:{passed:true,commit},milestone:{name:'rc'},contracts:{version:contractVersion},p17Evidence:{artifactName:'release-p17',runId:42,runAttempt:1,manifestSha256:'b'.repeat(64)}};
+  const data=Buffer.from(JSON.stringify(record)),metadata={tag_name:tag,draft:false,prerelease:true,published_at:'2026-10-24T00:00:00Z',assets:[{...asset,size:data.length,digest:`sha256:${createHash('sha256').update(data).digest('hex')}`}]};
+  let provenance=false;
+  const fetchImpl=async url=>{
+   if(url===`${API}/releases/tags/${tag}`)return Response.json(metadata);
+   if(url===asset.url)return new Response(data);
+   if(url.startsWith(`${API}/actions/runs/`)){provenance=true;throw Error('actual hosted P17 still required');}
+   throw Error(`unexpected URL ${url}`);
+  };
+  await assert.rejects(authenticateRc({tag,commit,root,directory:join(root,`evidence-${index}`),fetchImpl}),contractVersion==='3.1.0'?/actual hosted P17 still required/:/another version line/);
+  assert.equal(provenance,contractVersion==='3.1.0');
+ };
+ await check('3.0.0',0);await check('3.1.0',1);
+ await assert.rejects(authenticateRc({tag:'v3.1.0-rc.2',commit,root,directory:join(root,'not-created')}));
+});
 test('release asset identity and actual bytes both authenticate',()=>{
  assert.equal(namedAsset({assets:[asset]},asset.name),asset);assert.equal(verifyAssetBytes(asset,bytes),bytes);
  for(const patch of [{digest:'sha256:bad'},{size:0},{url:'https://example.com/123'}])assert.throws(()=>namedAsset({assets:[{...asset,...patch}]},asset.name));

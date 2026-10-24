@@ -4,6 +4,7 @@
   "manifest": 2,
   "props": "declared-v1",
   "stateBlock": "declared-v1",
+  "staticHtml": "plain-v1",
   "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
   "version": "3.0.0",
   "milestones": {

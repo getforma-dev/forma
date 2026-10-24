@@ -7,6 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import net from 'node:net';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
@@ -19,6 +20,7 @@ import { verifyPackedSkew } from './release-skew-drill.mjs';
 import { performanceTarget } from './release-performance.mjs';
 import { completeMeasurements, machineProfile } from './release-measurements.mjs';
 import { verifyPackedSecurity } from './release-security.mjs';
+import { assertCurrentCorpus, assertCurrentFmir, packageWriter, withStagedCorpus } from './fmir-corpus.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
 async function freePort() {
@@ -179,13 +181,43 @@ export function requireWorkerChecks(observation, names, app) {
   return portable;
 }
 
-export function verifyPackedPropsFixtures(compiler, serverCrate) {
+export function verifyPackedPropsFixtures(compiler, serverCrate, expectedVersion) {
   assert.equal(typeof compiler.generateRealIr, 'function', 'packed compiler lacks its IR emitter');
+  const directory = join(serverCrate, 'tests/fixtures/props-contract');
+  const manifestPath = join(directory, 'manifest.json');
+  const manifest = json(manifestPath), staged = [];
+  const oldWriter = packageWriter(manifest.writer);
+  assert(oldWriter[0] === expectedVersion[0] && oldWriter[1] <= expectedVersion[1], 'props manifest is outside the current reader window');
+  const integrity = bytes => `sha384-${createHash('sha384').update(bytes).digest('base64')}`;
   for (const [app, name] of [['app', 'home'], ['empty-app', 'empty'], ['empty-typed-app', 'empty-typed']]) {
     const entry = join(ROOT, 'packages/compiler/tests/fixtures/props-contract', `${app}.ts`);
     const emitted = compiler.generateRealIr(entry);
     assert(emitted?.binary, `${name}: declared props compiler fell back to placeholder`);
-    assert.deepEqual(Buffer.from(emitted.binary), readFileSync(join(serverCrate, 'tests/fixtures/props-contract', `${name}.ir`)), `${name}: emitted declared props differ from packed server fixture`);
+    const path = join(directory, `${name}.ir`), frozenBytes = readFileSync(path);
+    assert.equal(manifest.assets[`${name}.ir`]?.integrity, integrity(frozenBytes), `${name}: frozen props manifest integrity differs`);
+    assertCurrentFmir({ name, bytes: emitted.binary, frozenBytes, expectedVersion });
+    staged.push({ path, bytes: emitted.binary });
+    manifest.assets[`${name}.ir`].integrity = integrity(emitted.binary);
+  }
+  // Only the version and digests covering the actual emitted bytes change.
+  // Both historical and current native runs retain the same route topology.
+  manifest.writer = expectedVersion.join('.');
+  staged.push({ path: manifestPath, bytes: JSON.stringify(manifest, null, 2) + '\n' });
+  return staged;
+}
+
+export async function recordVerificationCheck(report, name, fn) {
+  console.log(`P17: ${name}`);
+  const at = Date.now();
+  try {
+    await fn();
+    report.tests.push({ name, passed: true, seconds: (Date.now() - at) / 1000 });
+  } catch (error) {
+    // Keep the failed assertion identity without copying child stdout, binary
+    // diffs, stacks or attached payloads into the portable verdict artifact.
+    report.tests.push({ name, passed: false, seconds: (Date.now() - at) / 1000,
+      error: { name: error?.name ?? 'Error', message: String(error?.message ?? error).split('\n')[0].slice(0, 512) } });
+    throw error;
   }
 }
 // Inspect the actual response's enforced policy, never a Report-Only fallback.
@@ -238,6 +270,7 @@ export async function verify(dir, reportPath) {
   assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
   assert([undefined, null, 'sha384-v1'].includes(set.contracts.assetIntegrity), 'P17 has no verifier for the recorded asset integrity contract');
   assert([undefined, null, 'declared-v1', 'islands-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
+  assert([undefined, null, 'plain-v1'].includes(set.contracts.staticHtml), 'P17 has no verifier for the recorded static HTML contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.stateBlock), 'P17 has no verifier for the recorded state block contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.fixtureApps), 'P17 has no verifier for the recorded fixture applications contract');
   assert([undefined, null, 'native-v1'].includes(set.contracts.deploymentSkew), 'P17 has no verifier for the recorded deployment skew contract');
@@ -258,7 +291,7 @@ export async function verify(dir, reportPath) {
   mkdirSync(scratch);
   const cli = mkdtempSync(join(tmpdir(), 'forma-packed-cli-'));
   const report = { schema: 1, commit: set.commit, passed: false, tests: [], milestone: set.milestone ?? null, signatures: 'registry dependencies via npm audit signatures; unpublished local artifacts via pinned DS11 SHA-256', templates: [] };
-  const test = async (name, fn) => { console.log(`P17: ${name}`); const at = Date.now(); await fn(); report.tests.push({ name, passed: true, seconds: (Date.now() - at) / 1000 }); };
+  const test = (name, fn) => recordVerificationCheck(report, name, fn);
   try {
     for (const p of set.packages) {
       unpack(join(dir, p.file), p.name === '@getforma/create-app' ? cli : join(scratch, p.path));
@@ -316,30 +349,42 @@ export async function verify(dir, reportPath) {
       const emitted = join(scratch, 'crates/forma-ir/tests/fixtures/js-emitter');
       const cases = readdirSync(corpus, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name);
       assert(cases.length >= 14, 'the conformance corpus shrank');
+      const manifest = join(scratch, 'crates/forma-ir/Cargo.toml');
+      // Exercise the unchanged historical corpus before staging this version's
+      // actual output; both runs retain the packed HTML goldens.
+      if (set.contracts.fmir === 3) verifyPackedCorpus(manifest, 3);
+      const currentCorpus = [];
       for (const name of cases) {
         const entry = ['app.ts', 'app.tsx'].map(f => join(corpus, name, f)).find(existsSync);
         const result = generateRealIr(entry);
         assert(result && !result.islands.some(i => i.name === 'createList' || /^island_\d+$/.test(i.name)), `${name}: compiler fell back to placeholder`);
         const bytes = result.binary;
         assert(bytes, `${name}: compiler result has no IR bytes`);
-        assert.deepEqual(Buffer.from(bytes), readFileSync(join(emitted, `${name}.ir`)), `${name}: emitted bytes differ from packed reader corpus`);
         if (set.contracts.fmir === 3) {
           assert.equal(typeof compiler.readFmirContainer, 'function', 'packed v3 compiler lacks its container reader');
           assert.equal(typeof compiler.dumpFmir, 'function', 'packed v3 compiler lacks its canonical dump');
           const reader = set.packages.find(p => p.name === 'forma-ir');
-          const expectedVersion = reader.version.split('-')[0].split('.').map(Number);
+          const expectedVersion = packageWriter(reader.version);
           assert.deepEqual(compiler.readFmirContainer(bytes).writer, expectedVersion, `${name}: writer does not match packed Rust reader`);
-          assert.equal(compiler.dumpFmir(bytes), readFileSync(join(emitted, `${name}.dump`), 'utf8'), `${name}: canonical dump differs from packed reader corpus`);
-        }
+          const dump = compiler.dumpFmir(bytes);
+          assertCurrentCorpus({ name, bytes, dump, expectedVersion,
+            frozenBytes: readFileSync(join(emitted, `${name}.ir`)),
+            frozenDump: readFileSync(join(emitted, `${name}.dump`), 'utf8') });
+          currentCorpus.push({ path: join(emitted, `${name}.ir`), bytes }, { path: join(emitted, `${name}.dump`), bytes: dump });
+        } else assert.deepEqual(Buffer.from(bytes), readFileSync(join(emitted, `${name}.ir`)), `${name}: emitted bytes differ from packed reader corpus`);
       }
-      verifyPackedCorpus(join(scratch, 'crates/forma-ir/Cargo.toml'), set.contracts.fmir);
+      if (set.contracts.fmir === 3) withStagedCorpus(currentCorpus, () => verifyPackedCorpus(manifest, 3));
+      else verifyPackedCorpus(manifest, 2);
     });
     if (set.contracts.props === 'declared-v1') {
       await test('packed compiler declared props bind and render through packed typed Pages', async () => {
         const compiler = await import(pathToFileURL(join(scratch, 'packages/compiler/dist/index.js')).href);
         const serverCrate = join(scratch, 'crates/forma-server');
-        verifyPackedPropsFixtures(compiler, serverCrate);
-        verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'), { boundRender: set.contracts.boundRender === 'finalized-v1' });
+        const expectedVersion = packageWriter(set.packages.find(p => p.name === 'forma-ir').version);
+        const current = verifyPackedPropsFixtures(compiler, serverCrate, expectedVersion);
+        const nativeChecks = () => verifyPackedPropsTests(join(serverCrate, 'Cargo.toml'), { boundRender: set.contracts.boundRender === 'finalized-v1' });
+        nativeChecks();
+        withStagedCorpus(current, nativeChecks);
       });
     }
     if (set.contracts.assetIntegrity === 'sha384-v1') await test('packed reader requires full digests on every public document path', async () => verifyPackedIntegrityTests(join(scratch, 'crates/forma-server/Cargo.toml')));
@@ -482,7 +527,7 @@ export async function verify(dir, reportPath) {
                   const actual = engine === 'chromium' ? browser : await launcher.launch();
                   try {
                     const island = await verifyMinimalIsland(actual, releaseOrigin, manifest);
-                    const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest);
+                    const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest, '/about', { staticHtml: set.contracts.staticHtml ?? 'legacy-v1' });
                     report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, profile: 'release', island, staticRoute });
                   } finally { if (actual !== browser) await actual.close(); }
                 }

@@ -94,7 +94,8 @@ test('publishing, source substitution, skipped verification, weakened time bound
 // fixtures. These controls do not pack, build, install, contact registries or run P17.
 const auth = step(actual, 'verify', authName).run.match(/^node --input-type=module <<'NODE'\n([\s\S]*)\nNODE\n?$/)?.[1];
 assert(auth, 'expected one inline Node authentication command');
-function authenticate(version, mutate = () => {}, source = JSON.parse(readFileSync(join(ROOT, 'scripts/release-contracts.json')))) {
+// Frozen 3.0 policy exercises historical authentication; it grants no current release credit.
+function authenticate(version, mutate = () => {}, source = JSON.parse(readFileSync(join(ROOT, 'scripts/fixtures/release-contracts-3.0.0.json')))) {
   const temporary = mkdtempSync(join(tmpdir(), 'forma-qualification-input-'));
   try {
     const dir = join(temporary, 'candidate artifacts'); mkdirSync(dir);
@@ -128,7 +129,7 @@ test('the real DS11 check permits beta and pending RC rehearsals without a publi
   }
 });
 test('rehearsal fixtures seeded from final contracts retain pending gates without inheriting the final-only deferral', () => {
-  const source = JSON.parse(readFileSync(join(ROOT, 'scripts/release-contracts.json')));
+  const source = JSON.parse(readFileSync(join(ROOT, 'scripts/fixtures/release-contracts-3.0.0.json')));
   for (const milestone of Object.values(source.milestones)) for (const gate of Object.values(milestone.gates)) gate.status = 'done';
   source.milestones.final.gates[SOAK_GATE] = { ...source.milestones.final.gates[SOAK_GATE], status: 'deferred', deferral: { ...SOAK_POLICY } };
   const original = structuredClone(source);

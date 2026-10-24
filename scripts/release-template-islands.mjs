@@ -171,7 +171,8 @@ export async function verifyMinimalIsland(browser, origin, manifest, expectedCou
 }
 
 /** A fresh context must obtain static markup and CSS without executing code. */
-export async function verifyStaticTemplate(browser, origin, manifest, route = '/about') {
+export async function verifyStaticTemplate(browser, origin, manifest, route = '/about', { staticHtml = 'plain-v1' } = {}) {
+  assert(['plain-v1', 'legacy-v1'].includes(staticHtml), 'unknown static HTML contract');
   const owner = manifest.routes[route];
   assert.equal(owner?.mode, 'ssr'); assert.deepEqual(owner.js, []);
   assert(owner.ir, 'static route lost its native module'); assert(owner.css.length > 0, 'static route lost its stylesheet');
@@ -186,8 +187,20 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
     assert.equal(await page.locator('link[rel="stylesheet"]').count(), owner.css.length);
     assert.equal(await page.locator('script[src],script:not([type="application/json"]),link[rel="modulepreload"]').count(), 0, 'static route contains executable or preloaded code');
     const blocks = page.locator('script[data-island-state][type="application/json"]');
-    assert.equal(await blocks.count(), 1, 'static route must retain its one inert state envelope');
-    assert.deepEqual(JSON.parse(await blocks.textContent()), { v: 1, s: [], i: [] });
+    // The authenticated release-set chooses the wire shape. Published 3.0
+    // retains its empty envelope; current candidates must omit all vocabulary.
+    const blockCount = await blocks.count();
+    assert.equal(blockCount, staticHtml === 'plain-v1' ? 0 : 1, `${staticHtml}: unexpected static state envelope count`);
+    if (staticHtml === 'legacy-v1') {
+      assert.deepEqual(JSON.parse(await blocks.textContent()), { v: 1, s: [], i: [] });
+    } else {
+      assert.equal(await page.locator('[data-forma-ssr], [data-forma-build], [data-forma-key], [data-forma-island]').count(), 0, 'plain static route carries adoption attributes');
+      assert.equal(await page.evaluate(() => {
+        const walker = document.createTreeWalker(document, NodeFilter.SHOW_COMMENT);
+        for (let comment; (comment = walker.nextNode());) if (/^\/?f:[tsli]\d+$/.test(comment.data)) return true;
+        return false;
+      }), false, 'plain static route carries adoption comments');
+    }
     const code = observed.requests.filter(request => ['script', 'worker', 'sharedworker', 'serviceworker'].includes(request.type));
     assert.deepEqual(code, [], 'static navigation requested executable code');
     assert.deepEqual(observed.workers, [], 'static navigation registered a worker');

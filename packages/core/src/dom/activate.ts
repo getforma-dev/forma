@@ -13,6 +13,7 @@ import { AdoptionScope } from '../reactive/adoption-scope.js';
 import { currentAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
 import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland } from './island-state.js';
 import { skewed } from './skew.js';
+import { setIslandDisposal } from './island-disposal.js';
 
 /**
  * Function that hydrates an island.
@@ -116,8 +117,8 @@ const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
  * have to tear down: a deferred trigger's IntersectionObserver, idle timer or
  * interaction listeners, or a hydrated island's reactive root.
  *
- * This exists so `deactivateIslandsIn` (src/dom/list.ts) can decide with an
- * integer compare whether a departing list row can possibly contain an island,
+ * This installs `deactivateIslandsIn`'s private disposal hook only while a
+ * departing list row can possibly contain an island,
  * instead of running `querySelectorAll('[data-forma-island]')` over every
  * removed row on every page. An island cannot acquire any of that state without
  * going through {@link activateIslands} — which is the only caller of
@@ -136,16 +137,22 @@ const FORBIDDEN_PROP_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
  */
 let scheduledOrActiveIslands = 0;
 
+function deactivateTree(node: Node): void {
+  if (!(node instanceof Element)) return;
+  if (node.hasAttribute('data-forma-island')) deactivateIsland(node as HTMLElement);
+  deactivateAllIslands(node);
+}
+
 function trackIsland(el: Element): void {
   if ((el as any).__formaTracked) return;
   (el as any).__formaTracked = true;
-  scheduledOrActiveIslands++;
+  if (scheduledOrActiveIslands++ === 0) setIslandDisposal(deactivateTree);
 }
 
 function untrackIsland(el: Element): void {
   if (!(el as any).__formaTracked) return;
   delete (el as any).__formaTracked;
-  scheduledOrActiveIslands--;
+  if (--scheduledOrActiveIslands === 0) setIslandDisposal();
 }
 
 /**
@@ -362,8 +369,7 @@ export function deactivateAllIslands(root: ParentNode = document): void {
   // interaction), whose observers/listeners would otherwise survive a content
   // swap and later zombie-hydrate. deactivateIsland is idempotent and a no-op
   // for islands with no scheduled/active work.
-  const islands = root.querySelectorAll<HTMLElement>('[data-forma-island]');
-  for (const island of islands) {
+  for (const island of root.querySelectorAll<HTMLElement>('[data-forma-island]')) {
     deactivateIsland(island);
   }
 }

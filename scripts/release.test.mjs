@@ -8,10 +8,12 @@ import { selectRun, checkJobs } from './check-release-ci.mjs';
 import { registryStatus, waitForPackage, npmPublishArgs, cargoPublishArgs } from './release-publish.mjs';
 import { ROOT, SEMVER, assertReleaseSet, stageCargoLock, stageNpmLock, stageTemplates, versionFiles, compatibilityPeer, templateRequirement, digest, run, json, packCargoWorkspace, milestoneOf, releaseMilestone, assertMilestoneReady, MILESTONES } from './release-set.mjs';
 
-const contracts = () => json(join(ROOT, 'scripts/release-contracts.json'));
-const seededContract = mutate => { const c = contracts(); mutate(c); return c; };
+// Historical policies must remain testable when the live contract moves to a new release.
+const historicalContractPath = join(ROOT, 'scripts/fixtures/release-contracts-3.0.0.json');
+const historicalContracts = () => json(historicalContractPath);
+const seededContract = mutate => { const c = historicalContracts(); mutate(c); return c; };
 const milestoneNames = ['alpha', 'beta', 'rc', 'final'];
-const seededMilestones = (statuses, source = contracts()) => {
+const seededMilestones = (statuses, source = historicalContracts()) => {
   const c = structuredClone(source);
   for (const milestone of milestoneNames) {
     assert(['done', 'pending'].includes(statuses[milestone]), `${milestone}: explicit seeded status required`);
@@ -22,8 +24,51 @@ const seededMilestones = (statuses, source = contracts()) => {
   }
   return c;
 };
+test('historical 3.0 release contract retains its original authenticated bytes', () => {
+  assert.equal(digest(historicalContractPath), 'bd4802df6d071b9847a136836b426dec1c4b4d88595215f4d8ecc6783c358510');
+  assert.equal(historicalContracts().version, '3.0.0');
+});
+test('the live contract has valid gates bound to the current package line without assuming readiness', () => {
+  const current = json(join(ROOT, 'scripts/release-contracts.json'));
+  const original = structuredClone(current);
+  const packageVersion = json(join(ROOT, 'packages/core/package.json')).version;
+  assert.equal(current.version, packageVersion.split('-')[0]);
+  const final = releaseMilestone(current, current.version);
+  assert.equal(final.name, 'final');
+  assert.equal(final.version, current.version);
+  assert.equal(final.ready, final.blocking.length === 0);
+  const [major, minor] = current.version.split('.').map(Number);
+  assert.throws(() => releaseMilestone(current, `${major}.${minor + 1}.0-rc.1`), /the contract gates/);
+  const pending = seededMilestones({ alpha: 'pending', beta: 'pending', rc: 'pending', final: 'pending' }, current);
+  for (const name of milestoneNames) {
+    const version = name === 'final' ? current.version : `${current.version}-${name}.1`;
+    assert.equal(releaseMilestone(pending, version).ready, false);
+    assert.throws(() => assertMilestoneReady(pending, version), /nothing may publish/);
+  }
+  assert.deepEqual(current, original, 'validation and synthetic pending states must not alter the live contract');
+});
+test('a synthetic pending 3.1 contract grants no inherited release credit or historical soak waiver', () => {
+  // Deliberately fictitious gates: these test inputs are not a release plan or evidence.
+  const pending = { version: '3.1.0', milestones: Object.fromEntries(milestoneNames.map((name, i) => [name, {
+    plan: `M${i + 2}`, gates: { [`FORMA-${900 + i}`]: { status: 'pending', scope: `synthetic ${name} control, no release credit` } },
+  }])) };
+  for (const [i, name] of milestoneNames.entries()) {
+    const version = name === 'final' ? '3.1.0' : `3.1.0-${name}.1`;
+    const result = releaseMilestone(pending, version);
+    assert.equal(result.ready, false);
+    assert.equal(result.blocking.length, i + 1);
+    assert.deepEqual(Object.keys(result.later), milestoneNames.slice(i + 1));
+    assert.throws(() => assertMilestoneReady(pending, version), /nothing may publish/);
+  }
+  for (const version of ['3.0.0', '3.0.0-rc.1', '3.1.1', '4.0.0-rc.1']) {
+    assert.throws(() => releaseMilestone(pending, version), /gates 3\.1\.0, not/);
+  }
+  const inheritedWaiver = structuredClone(pending);
+  inheritedWaiver.milestones.final.gates['FORMA-145 soak'] = historicalContracts().milestones.final.gates['FORMA-145 soak'];
+  assert.throws(() => releaseMilestone(inheritedWaiver, '3.1.0'), /only authorized for final 3\.0\.0/);
+});
 test('synthetic milestone states do not inherit a live final soak deferral', () => {
-  const source = contracts(), soak = source.milestones.final.gates['FORMA-145 soak'];
+  const source = historicalContracts(), soak = source.milestones.final.gates['FORMA-145 soak'];
   soak.status = 'deferred';
   soak.deferral = { decision: 'L-66-QUOTA', finalVersion: '3.0.0', reference: 'docs/release/post-release-soak.json' };
   for (const status of ['done', 'pending']) {
@@ -37,7 +82,7 @@ test('synthetic milestone states do not inherit a live final soak deferral', () 
   assert.throws(() => releaseMilestone(source, '3.0.0'), /completed\/pending gate cannot carry a deferral/);
 });
 test('L-60 defers live governance only; source probes and other release gates still block', () => {
-  const c = contracts();
+  const c = historicalContracts();
   const live = c.informational['FORMA-116 live rollout'];
   assert.equal(live?.status, 'deferred');
   assert.equal(live.decision, 'L-60 (2026-10-16)');
@@ -63,7 +108,7 @@ test('L-60 defers live governance only; source probes and other release gates st
   assert.throws(() => releaseMilestone(invalid, '3.0.0'), /done\/pending status/);
 });
 test('L-57 external application runs are informational while documentation and the required RC burn-in still block', () => {
-  const c = contracts();
+  const c = historicalContracts();
   for (const ticket of ['FORMA-192', 'FORMA-147']) {
     assert.equal(c.informational[ticket].status, 'not-run');
     for (const milestone of Object.values(c.milestones)) assert(!(ticket in milestone.gates));
@@ -94,12 +139,12 @@ test('milestone gate: explicit earned states publish while later seeded gates st
   const finalState = seededMilestones({ alpha: 'done', beta: 'done', rc: 'done', final: 'done' });
   const final = assertMilestoneReady(finalState, '3.0.0');
   assert.equal(final.name, 'final'); assert.equal(final.ready, true); assert.deepEqual(final.blocking, []); assert.deepEqual(final.later, {});
-  assert.throws(() => releaseMilestone(contracts(), '3.0.0-dev'), /development version/);
+  assert.throws(() => releaseMilestone(historicalContracts(), '3.0.0-dev'), /development version/);
   assert.equal(milestoneOf('3.0.0-dev'), null); assert.equal(milestoneOf('3.0.0-alpha.1'), 'alpha'); assert.equal(milestoneOf('3.0.0-rc.2'), 'rc'); assert.equal(milestoneOf('3.1.0'), 'final');
   assert.deepEqual(MILESTONES, ['alpha', 'beta', 'rc', 'final']);
-  // The contract is written for 3.0.0: a later version's pre-release cannot ride on its gates.
-  assert.equal(contracts().version, '3.0.0');
-  for (const version of ['3.1.0-alpha.1', '3.0.1-alpha.1', '4.0.0']) assert.throws(() => releaseMilestone(contracts(), version), /gates 3\.0\.0, not/);
+  // The historical contract is written for 3.0.0: a later version's pre-release cannot ride on its gates.
+  assert.equal(historicalContracts().version, '3.0.0');
+  for (const version of ['3.1.0-alpha.1', '3.0.1-alpha.1', '4.0.0']) assert.throws(() => releaseMilestone(historicalContracts(), version), /gates 3\.0\.0, not/);
   assert.throws(() => releaseMilestone(seededContract(c => { delete c.version; }), '3.0.0-alpha.1'), /names no release version/);
   assert.throws(() => releaseMilestone(seededContract(c => { c.version = '3.0.0-alpha.1'; }), '3.0.0-alpha.1'), /names no release version/);
   // Pre-release counters start at 1: -alpha.0 is not a version, so it names no milestone.

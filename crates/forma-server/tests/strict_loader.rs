@@ -87,12 +87,18 @@ fn good_module() -> Vec<u8> {
     ops.extend_from_slice(&encode_text(1));
     ops.extend_from_slice(&encode_close_tag(0));
     ops.extend_from_slice(&[0x0C, 0, 0]); // ISLAND_END 0
-    build_declared_fixture(
+    let mut bytes = build_declared_fixture(
         &["p", "hello", "Hello"],
         &[],
         &ops,
         &[(0, 0x01, 0x01, 2, 0, &[])],
-    )
+    );
+    // This generator authenticates retained 3.0 files, not the current release.
+    for (i, value) in [3_u16, 0, 0].iter().enumerate() {
+        bytes[8 + i * 2..10 + i * 2].copy_from_slice(&value.to_le_bytes());
+    }
+    forma_ir::parser::test_helpers::restamp(&mut bytes);
+    bytes
 }
 
 /// `bytes` with one byte XORed.
@@ -232,14 +238,14 @@ fn a_flipped_byte_fails_the_default_loader_naming_route_file_and_code() {
     let manifest = try_load_manifest::<Flipped>().expect("manifest");
     let errors = load_ir_modules::<Flipped>(&manifest).expect_err("bad modules refuse");
 
+    let reader = forma_ir::format::reader_version();
+    let incompatible = format!(
+        "writer 2.0.0 is incompatible with reader {}.{}.{}",
+        reader[0], reader[1], reader[2]
+    );
     for (route, file, code, cause) in [
         ("/magic", "magic.ir", "LOAD-102", "bad signature"),
-        (
-            "/version",
-            "version.ir",
-            "LOAD-108",
-            "writer 2.0.0 is incompatible with reader 3.0.0",
-        ),
+        ("/version", "version.ir", "LOAD-108", incompatible.as_str()),
         ("/section", "section.ir", "LOAD-104", "checksum mismatch"),
         ("/opcode", "opcode.ir", "LOAD-103", "invalid opcode: 0x81"),
         ("/hash", "hash.ir", "LOAD-104", "checksum mismatch"),
@@ -408,10 +414,16 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
     let index = include_str!("../../forma-ir/tests/fixtures/fmir-v3/state-expectations.tsv");
     let errors = load_ir_modules::<ReviewedV3>(&manifest).expect_err("fault fixtures");
     let mut refused = 0;
+    let reader = forma_ir::format::reader_version();
+    let admits_former_future_minor = reader[0] == 3 && reader[1] >= 1;
     for row in index.lines().skip(1) {
         let fields: Vec<_> = row.split('\t').collect();
         let route = format!("/{}", fields[0]);
-        if fields[1] == "PASS" {
+        // The original table remains the 3.0 oracle. Under a later native
+        // reader this valid 3.1 example joins the accepted historical modules.
+        if fields[1] == "PASS"
+            || (fields[0] == "LOAD-108-writer-3.1.0.ir" && admits_former_future_minor)
+        {
             assert!(errors.iter().all(|e| e.route != route), "{row}");
         } else {
             let error = error_for(&errors, &route);
@@ -420,7 +432,7 @@ fn every_reviewed_v3_refusal_happens_before_bind() {
             refused += 1;
         }
     }
-    assert_eq!(refused, 62);
+    assert_eq!(refused, if admits_former_future_minor { 61 } else { 62 });
     assert_eq!(errors.len(), refused);
     let (started, bound) = spawn::<ReviewedV3>(Loader::Default);
     match started.recv_timeout(Duration::from_secs(5)) {

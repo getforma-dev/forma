@@ -10,12 +10,13 @@ const root = resolve(__dirname, '../../..');
 const fixtures = resolve(root, 'crates/forma-ir/tests/fixtures/fmir-v3');
 const fixture = (name: string) => new Uint8Array(readFileSync(resolve(fixtures, name)));
 const enc = new TextEncoder();
+const HISTORICAL_READER = [3, 0, 0] as const;
 // Historical exact-stage examples remain byte oracles for their original five
 // sections. Current producers also write section10; this explicit test-only
 // reconstruction never claims the old island is accepted by the native reader.
 function historicalSections(bytes:Uint8Array):Uint8Array {
   const module=readFmirContainer(bytes);
-  return encodeFmirSections(module.sections.filter(section=>section.id!==C.SECTION_ISLAND_CONTRACTS),module.writer);
+  return encodeFmirSections(module.sections.filter(section=>section.id!==C.SECTION_ISLAND_CONTRACTS),HISTORICAL_READER);
 }
 
 function workedExample(): IrEmitContext {
@@ -60,8 +61,12 @@ describe('FMIR v3 wire contract', () => {
     expect(baseWriterVersion('3.2.7-alpha.1+build.6')).toEqual([3, 2, 7]);
     expect(() => baseWriterVersion('3.2')).toThrow();
     expect(() => baseWriterVersion('65536.0.0')).toThrow(/u16/);
-    expect(readFmirContainer(fixture('LOAD-108-writer-3.0.1.ir')).writer).toEqual([3, 0, 1]);
-    for (const version of ['3.1.0', '2.9.0']) expect(() => readFmirContainer(fixture(`LOAD-108-writer-${version}.ir`))).toThrow(/LOAD-108/);
+    expect(readFmirContainer(workedExample().toBinary()).writer).toEqual(COMPILER_WRITER_VERSION);
+    expect(readFmirContainer(fixture('LOAD-108-writer-3.0.1.ir'), HISTORICAL_READER).writer).toEqual([3, 0, 1]);
+    for (const version of ['3.1.0', '2.9.0']) expect(() => readFmirContainer(fixture(`LOAD-108-writer-${version}.ir`), HISTORICAL_READER)).toThrow(/LOAD-108/);
+    const [major, minor, patch] = COMPILER_WRITER_VERSION;
+    const future = encodeFmirSections(readFmirContainer(workedExample().toBinary()).sections, [major, minor + 1, patch]);
+    expect(() => readFmirContainer(future)).toThrow(/LOAD-108/);
   });
   it('runs the shared compatibility table through actual encoded headers', () => {
     const pairs = JSON.parse(readFileSync(resolve(root, 'crates/forma-ir/tests/fixtures/compatibility/version-pairs.json'), 'utf8')) as {reader: string; writer: string; accepted: boolean}[];
@@ -86,9 +91,9 @@ describe('FMIR v3 wire contract', () => {
       // production loader additionally validates each payload and opcode operand.
       if (name.startsWith('LOAD-108-') || expected === 'PASS') {
         if (expected === 'PASS') {
-          const bytes = fixture(name), module = readFmirContainer(bytes);
+          const bytes = fixture(name), module = readFmirContainer(bytes, HISTORICAL_READER);
           expect(encodeFmirSections(module.sections, module.writer), name).toEqual(bytes);
-        } else expect(() => readFmirContainer(fixture(name)), name).toThrow(expected);
+        } else expect(() => readFmirContainer(fixture(name), HISTORICAL_READER), name).toThrow(expected);
       }
     }
     expect(changes).toEqual(['PASS-good-b.ir','LOAD-108-writer-3.0.1.ir','PASS-positions-absent.ir']);
