@@ -36,3 +36,11 @@ release default and ship CI dependency caching now. There is no new disk-loading
 API or production behavior in this change. A future implementation requires its
 own design and qualification ticket; debug-mode loading is not a production
 integrity contract.
+
+The cold/warm workflow measures the immutable published 3.0.0 templates, downloaded
+and checked against the coordinated registry checksums by the existing published
+scaffold verifier. Source template locks are unsealed seeds and cannot be built
+with `--locked` directly. Candidate packaging and the shipped workflow inventory
+remain covered by their separate CI lanes. Each measurement records the baseline
+version and the commit containing the cache setup; this is cache evidence, not a
+claim about the performance of unpublished framework changes.

@@ -97,7 +97,7 @@ The included `.github/workflows/build.yml` builds the frontend before the releas
 server. It caches npm downloads and Rust dependencies in `target/`, keyed by the
 lockfile and compiler. A page-only change still recompiles the app crate because
 release builds embed the page assets; the dependency cache avoids compiling the
-whole Rust dependency graph again. Cache writes are restricted to the default
+whole Rust dependency graph again. Rust cache writes are restricted to the default
 branch. A cache miss is valid and builds from the committed locks.
 
 Keep `admin/dist` and the release binary from the same build. Build assets before

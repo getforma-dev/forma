@@ -37,7 +37,6 @@ jobs:
         with:
           toolchain: '1.93.1'
       - run: npm ci --ignore-scripts
-      - run: npm run build -w packages/create-app
       - run: node scripts/scaffold-cache-measure.mjs prepare ${{ matrix.template }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         id: rust-cache
@@ -83,7 +82,6 @@ jobs:
         with:
           toolchain: '1.93.1'
       - run: npm ci --ignore-scripts
-      - run: npm run build -w packages/create-app
       - run: node scripts/scaffold-cache-measure.mjs prepare ${{ matrix.template }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         id: rust-cache

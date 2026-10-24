@@ -81,8 +81,8 @@ export async function publishedStatus(version, request = fetch, { sleep = sleepF
   return {ready:missing.length === 0,version,missing,packages};
 }
 
-export async function preparePublished(work, request = fetch) {
-  const status = await publishedStatus(sourceVersion(),request); assert(status.ready,'coordinated release is not fully published');
+export async function preparePublished(work, request = fetch, version = sourceVersion()) {
+  const status = await publishedStatus(version,request); assert(status.ready,'coordinated release is not fully published');
   work=resolve(work); assert(!existsSync(work),'published scaffold work must be fresh'); mkdirSync(work,{recursive:true});
   const cliRecord=status.packages.find(p=>p.name==='@getforma/create-app');
   const response=await request(cliRecord.metadata.dist.tarball,{signal:AbortSignal.timeout(30_000)}); assert(response.ok);

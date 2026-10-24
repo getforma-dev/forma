@@ -5,6 +5,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
+import { preparePublished } from './published-scaffold.mjs';
+
+// Measure an immutable, authenticated release: source templates are intentionally
+// unsealed lock seeds until packaging. Packing correctness has its own CI lane.
+const baselineVersion = '3.0.0';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const [command, template, phase] = process.argv.slice(2);
@@ -20,8 +25,8 @@ function run(program, args, cwd, capture = false) {
 }
 if (command === 'prepare') {
   assert(!existsSync(project), 'measurement directory must be fresh');
-  run(process.execPath, [resolve(root, 'packages/create-app/dist/index.js'),
-    `cache-${template}`, '--template', template], dirname(root));
+  const context = await preparePublished(resolve(root, '..', `cache-cli-${template}`), fetch, baselineVersion);
+  run(process.execPath, [context.cli, `cache-${template}`, '--template', template], dirname(root));
 } else {
   assert.equal(command, 'build');
   assert(['cold', 'warm'].includes(phase), 'unknown phase');
@@ -43,7 +48,7 @@ if (command === 'prepare') {
   assert(rebuilt.some(message => message.package_id.startsWith('path+')), 'the page build must recompile the application');
   if (phase === 'warm') assert.equal(dependencies.length, 0, 'restored cache unexpectedly recompiled dependencies');
   else assert(dependencies.length > 0, 'cold control must compile dependencies');
-  const report = { template, phase, commit: process.env.GITHUB_SHA,
+  const report = { template, phase, baselineVersion, commit: process.env.GITHUB_SHA,
     run: process.env.GITHUB_RUN_ID, cacheHit: process.env.FORMA_CACHE_HIT,
     frontendMs: frontend.ms, releaseMs: cargo.ms,
     rebuilt: rebuilt.map(message => message.package_id),
