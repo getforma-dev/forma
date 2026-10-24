@@ -423,11 +423,16 @@ function ownerOf(node: Node | null): MountCtx | null {
   return null;
 }
 
-/** Whether a tiered root lies between `el` (inclusive) and `top` (exclusive): `el` belongs to a mount nested inside. */
+/**
+ * Whether a tiered root or a `data-forma-state` element lies between `el`
+ * (inclusive) and `top` (exclusive): `el` belongs to a mount or a scope nested
+ * inside, which binds it. Scopes do not inherit, so a nested scope's root and
+ * the elements under it are that scope's alone (FORMA-283).
+ * Verified by: src/__tests__/runtime-nested-scope.test.ts > "the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them"
+ */
 function ownedBelow(el: Element, top: Element): boolean {
-  if (tieredCount === 0) return false;
   for (let n: Node | null = el; n && n !== top; n = n.parentNode) {
-    if (tieredRoots.has(n)) return true;
+    if (tieredRoots.has(n) || (n as Element).hasAttribute('data-forma-state')) return true;
   }
   return false;
 }
@@ -2005,6 +2010,9 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // Cancel any in-flight leave
         clearTransitionState(el as HTMLElement);
         el.removeAttribute('data-forma-leaving');
+        // Drop the held ancestry when the branch rejoins the DOM. up()
+        // follows it while mounting and when disposing a hidden subtree;
+        // its ordinary parent takes precedence once inserted (FORMA-287).
         ifHeld.delete(el);
         if (initialized && transition) {
           transitionInsert(el as HTMLElement, parent!, placeholder, transition);
@@ -2616,9 +2624,12 @@ function hasDirective(el: Element): boolean {
 /**
  * Bind one `data-forma-state` element and the directive-bearing elements under
  * it. The mount context is required. A scope owned by a different nested
- * mount is left alone, as are that mount's directive descendants.
+ * mount is left alone, as are that mount's directive descendants. So is a
+ * `data-forma-state` scope nested in this one, its root included: the
+ * reconciler mounts it, and it binds its own elements (FORMA-283).
  * Verified by: src/__tests__/runtime-explicit-mount.test.ts > "import, DOMContentLoaded, injected nodes and state-attribute changes never bind without a handed root"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a mount nested in another binds with its own grants, and the outer one never binds its markup"
+ * Verified by: src/__tests__/runtime-nested-scope.test.ts > "a nested scope root's own directives are its scope's, bound once"
  */
 function mountScope(root: Element, mount: MountCtx): void {
   if (ownerOf(root) !== mount) return;
@@ -2948,6 +2959,16 @@ function mountMarkup(root: Element, markup: TrustedHtml, options: MountOptions):
   const reconcileInto = createReconciler({
     mountScope: (el) => mountScope(el, ctx),
     unmountScope: (el) => unmountScope(el, ctx),
+    // A hidden branch is absent from querySelectorAll. Follow its held
+    // ancestry before replacement detaches the old subtree, and dispose
+    // only scopes registered to this mount (FORMA-283).
+    unmountTree: (el) => {
+      for (const scope of Array.from(ctx.scopes)) {
+        let node: Node | null = scope;
+        while (node && node !== el) node = up(node);
+        if (node) unmountScope(scope, ctx);
+      }
+    },
     // Shared reconciler hooks: the explicit runtime has no body observer.
     disconnectObserver: () => {},
     reconnectObserver: () => {},

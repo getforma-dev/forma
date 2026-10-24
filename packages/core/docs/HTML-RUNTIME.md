@@ -376,14 +376,40 @@ a branch that is hidden at mount binds therefore runs at mount: a `data-fetch`
 in it requests, a `data-persist` restores, and a `data-computed` in it is read
 by the elements after it. Its bindings run outside the document while it is
 hidden, so an element one reaches through `$el` (`$el.firstElementChild`) is
-outside the mount root then and is refused with `FORMA_E_GRANT_DOM` without the
-`dom` grant, and `$el.closest()` answers null.
+outside the mount root then. Without the `dom` grant that hop is refused with
+`FORMA_E_GRANT_DOM` and `$el.closest()` answers null. With the grant,
+`closest()` reaches the elements of the hidden branch, up to the element the
+`data-if` holds, and the development grant report records `dom` from mount.
 
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "binds %s in its branch: it renders and updates once the branch shows"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "makes the bindings a branch that starts true makes, and toggling it 50 times adds none"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "unmounting while the branch is hidden disposes every binding in it"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "a data-fetch in a data-if that starts false requests when its scope mounts, as one in a branch that starts true does"
 Verified by `src/__tests__/runtime-if-branch.test.ts` > "a binding in a branch hidden at mount that reaches another element through $el runs while the branch is out of the document"
+Verified by `src/__tests__/runtime-if-branch.test.ts` > "with the dom grant, closest() in a branch hidden at mount reaches the held element, and the grant report records dom from mount"
+
+**A `data-forma-state` nested in another is a scope of its own.** It binds
+its own elements once, its root's own directives included, against its own
+state. The scope around it binds none of them, and binds its own elements
+before and after it. Scopes do not inherit: an expression in the inner scope
+reads only the inner state, so a name that only the outer state declares is
+reported `FORMA_E_UNRESOLVED` there, and a scope's `$refs` lists only its own
+`data-ref` elements. This holds at any depth and in a `data-if` branch, shown
+or hidden at mount. `update()` disposes each scope it removes or remounts and
+mounts each scope it adds or remounts, nested ones included. One gap
+remains: a `data-forma-state` in a `data-list` row is not yet mounted as a
+scope, so the row binds its elements against the row's scope (the list's
+state, `item` and `index`), and a name only that nested state declares is
+reported `FORMA_E_UNRESOLVED`.
+
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "the outer scope binds its own elements before and after a nested scope, and they follow its state only"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "scopes do not inherit: a name only the outer state declares is unresolved in the inner scope, and the outer scope does not render it there"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "a nested scope root's own directives are its scope's, bound once"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "$refs: each scope's names are its own elements, and the outer scope does not reach the inner scope's"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "three levels: each scope binds its own elements, around the scope nested in it, and only those"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "%s leaves exactly the bindings a fresh mount makes, each bound once"
+Verified by `src/__tests__/runtime-nested-scope.test.ts` > "a scope nested in a data-list row is bound by the row, as before: rows do not mount a nested scope (unchanged here)"
 
 **A `data-computed` may be named like a state key, and may not read itself.**
 `data-computed="name = expr"` binds `name` for its scope. Elements bind in
