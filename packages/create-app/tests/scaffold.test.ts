@@ -519,9 +519,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
         await withEngine(engine, launcher, async (browser) => {
           const island = await verifyMinimalIsland(browser, origin, manifest);
-          const staticRoute = await verifyStaticTemplate(browser, origin, manifest, '/about', {
-            staticHtml: process.env.FORMA_SCAFFOLD_STATIC_HTML ?? 'plain-v1',
-          });
+          const staticHtml = process.env.FORMA_SCAFFOLD_STATIC_HTML ?? 'plain-v1';
+          if (staticHtml !== 'plain-v1' && staticHtml !== 'legacy-v1') throw new Error('unknown static HTML contract');
+          const staticRoute = await verifyStaticTemplate(browser, origin, manifest, '/about', { staticHtml });
           recordObservation(`minimal: ${engine} actual native island and static route`, {engine, profile: 'release', island, staticRoute});
         });
       }
