@@ -1572,6 +1572,20 @@ function buildEvaluator(expr: string, scope: Scope, el: Element | null): Evaluat
   return run;
 }
 
+/**
+ * True if a compiled expression reads `name` as a free name: anywhere except
+ * inside an arrow with a parameter of that name. A string, a property name
+ * and an object-literal key are not reads of it (FORMA-268).
+ * Verified by: src/__tests__/runtime-computed.test.ts > "a computed reads its own value only as a free name: an arrow parameter, a property or a string of that name is not a self-reference"
+ */
+function readsName(node: unknown, name: string): boolean {
+  if (typeof node !== 'object' || node === null) return false;
+  const n = node as { k?: string; name?: string; params?: string[] };
+  if (n.k === 'Identifier') return n.name === name;
+  if (n.k === 'Arrow' && n.params!.includes(name)) return false;
+  return Object.values(node).some((v) => readsName(v, name));
+}
+
 // ── Handler compiler ──
 
 /**
@@ -1837,24 +1851,40 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       if (match) {
         const name = match[1]!;
         const expr = match[2]!;
-        // Remove the computed name from getters before building evaluator
-        // to prevent self-referential cycle (computed reading itself)
         const prevGetter = scope.getters[name];
-        delete scope.getters[name];
         // The raw evaluator is used here, not the reporting one: a computed
         // that cannot evaluate must make its READERS fail loudly (each with its
         // own element and diagnostic) rather than caching a sentinel that would
         // then be rendered as text.
-        // `buildEvaluator` has already reported the failure and marked the
-        // element, so there is nothing to do here but leave the name unbound —
-        // which makes every reader of it fail loudly with its own diagnostic.
+        // A computed that is refused, by `buildEvaluator` (which has reported
+        // it and marked the element) or because it reads its own name, binds
+        // nothing: the name keeps what it had, so a state key of that name
+        // keeps its value, and a name that had nothing makes every reader of
+        // it fail loudly with its own diagnostic.
+        // The interpreter resolves a name when it is read, so a computed that
+        // read its own name read its own getter while it was being evaluated,
+        // which alien-signals answers with the computed's current value,
+        // undefined before its first evaluation (FORMA-268: a TypeError out of
+        // mountMarkup). One that reads itself through another computed is
+        // refused when that read is made, on this element, and its readers
+        // report it.
+        // Verified by: src/__tests__/runtime-computed.test.ts > "a computed that reads its own name is refused on its element, and the state key of that name keeps rendering"
+        // Verified by: src/__tests__/runtime-computed.test.ts > "computeds that read each other report the cycle on their element and to each reader, never a TypeError"
         const evaluate = buildEvaluator(`{${expr}}`, scope, el);
-        if (evaluate) {
+        const cycle = (): FormaExprError => {
+          const err = exprError('FORMA_E_UNSUPPORTED', `computed "${name}" reads its own value`);
+          reportExprFailure(el, trimmed, err, scope.mount);
+          return err;
+        };
+        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle();
+        else if (evaluate) {
           // Read inside a binding, a computed spends that binding's budget. If
           // it is refused for what was spent before it, it is evaluated again
           // at the top of the next task, before the bindings that read it.
           // Verified by: src/__tests__/runtime-task-budget.test.ts > "a computed refused inside a heavy reader is evaluated again on its own"
+          let busy = false;
           const cell: () => { ok: true; v: unknown } | { ok: false; e: FormaExprError } = createComputed(() => {
+            busy = true;
             try {
               return { ok: true, v: evaluate() };
             } catch (err) {
@@ -1864,9 +1894,12 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
                 staleCells.add(cell);
               }
               return { ok: false, e: err };
+            } finally {
+              busy = false;
             }
           });
           scope.getters[name] = () => {
+            if (busy) throw cycle();
             const r = cell();
             if (!r.ok) throw r.e;
             return r.v;
