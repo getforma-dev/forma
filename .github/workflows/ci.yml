@@ -238,6 +238,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test --workspaces
+      - run: npm run test:engine --workspace packages/core
       - run: npx tsc --noEmit -p packages/create-app
       - run: node packages/build/scripts/test-raw-lint-bin.mjs
 

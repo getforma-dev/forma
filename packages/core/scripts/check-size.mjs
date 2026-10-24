@@ -48,7 +48,11 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * these package gates to measured +300 B: 48,902 and 49,136 B. They are
  * ratchets like the runtime gates below, not a budget: the budget is N2,
  * Forma's code per route, which @getforma/build measures and fails
- * (route-size.ts).
+ * (route-size.ts). The 3.1 performance decision explicitly adds 512 B to
+ * the core gate (49,414 B); selected flat effects plus the startup repair and
+ * retired-branch removal measure 49,212 B. The other four gates stay unchanged.
+ * See docs/release/3.1-PERFORMANCE-TRADEOFFS.md; this is an accepted delivery
+ * cost for effect throughput, not a pass against the previous 48,902 B gate.
  *
  * The two RUNTIME bundles are deliberately tighter (~7%). They just absorbed
  * the largest single size change this package has taken: replacing the regex
@@ -89,7 +93,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 48902,
+    limit: 49414,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {
