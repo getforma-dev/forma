@@ -261,8 +261,10 @@ describe('the task budget (FORMA-028)', () => {
     // FORMA_E_BUDGET, but only a refusal the budget meter itself makes (an
     // allocation charge or the step count, `over()`, which sets `defer`) has
     // done any weighing. `repeat()` past its cap of 10,000, `flat()` past its
-    // depth, and a string past 1 MiB are refused by a length check before any
-    // work, set no `defer`, and counted nothing toward the allowance. After one
+    // depth, and a string past 1 MiB are refused by a length or count check
+    // before the native runs (`repeat()` and `flat()` after their cost-table
+    // row is charged, which stays on the meter), set no `defer`, and count
+    // nothing toward the allowance. After one
     // of them a binding that fits the budget (200,000 of 250,000 units) was
     // past the 10,000-unit cap and rendered one task late; as before FORMA-178
     // it renders in the same task. Each is reported once.
@@ -287,6 +289,60 @@ describe('the task budget (FORMA-028)', () => {
       expect(runtime.getDiagnostics().map((d) => [d.code, d.count]), `${name}: reported once`).toEqual([['FORMA_E_BUDGET', 1]]);
       unmountFixture(container);
       runtime.clearDiagnostics();
+    }
+  });
+
+  it('a length or count refusal arms nothing, but the charges before it stay on the meter and one that does not fit arms the cap', async () => {
+    // FORMA-250, from FORMA-249's review: `repeat()` and `flat()` are charged
+    // their cost-table row before their count or depth is checked, and a
+    // refused evaluation's charges stay on the task's meter. A row that fits
+    // stays spent and the count refusal arms nothing; a charge before the
+    // check that does not fit is an allocation refusal and arms the 10,000-unit
+    // cap. After each case comes one binding of 200,000 or of 40,000 units;
+    // `late` is how many ticks after the update each renders:
+    // - `'x'.repeat(20000)` (its 20,000-unit row stays spent) and
+    //   `[[1]].flat(99)`: neither waits;
+    // - `'x'.repeat(300000)` and `'x'.repeat(1000).repeat(20000)` (their row),
+    //   and `Array.from({length: 300000}).flat(99)` (`Array.from`'s): refused
+    //   with about 1,000 units spent at most, so both wait for the cap alone;
+    // - 24 characters `.repeat(10001)`: its 240,024-unit row stays spent, so
+    //   both wait for the meter (under 10,000 units left, below the cap);
+    // - 20 characters `.repeat(10001)`: its 200,020-unit row stays spent, so
+    //   the 200,000-unit binding waits, but nothing is armed, so the 40,000-unit
+    //   one, past the cap, fits the nearly 50,000 units left and renders now.
+    // Only the refusal is reported: the binding after it waits, it is never refused.
+    const cases: [string, Record<number, number>][] = [
+      [`'x'.repeat(20000)`, { 200_000: 0, 40_000: 0 }],
+      ['[[1]].flat(99)', { 200_000: 0, 40_000: 0 }],
+      [`'x'.repeat(300000)`, { 200_000: 1, 40_000: 1 }],
+      [`'x'.repeat(1000).repeat(20000)`, { 200_000: 1, 40_000: 1 }],
+      ['Array.from({length: 300000}).flat(99)', { 200_000: 1, 40_000: 1 }],
+      [`'${'x'.repeat(24)}'.repeat(10001)`, { 200_000: 1, 40_000: 1 }],
+      [`'${'x'.repeat(20)}'.repeat(10001)`, { 200_000: 1, 40_000: 0 }],
+    ];
+    for (const [cheap, late] of cases) {
+      for (const [n, expected] of Object.entries(late)) {
+        const units = Number(n);
+        await tick();
+        container.innerHTML = `<div data-forma-state='{"s":""}'>
+          <p data-out data-text="{s.length === 0 ? 0 : ${cheap}}">server</p>
+          <p data-out data-text="{s.length === 0 ? 0 : ${spending(units)}}">server</p>
+        </div>`;
+        mountFixture(container);
+        runtime.clearDiagnostics();
+        runtime.setScopeValue(container.firstElementChild!, 's', 'x');
+        let ticks = 0;
+        while (texts()[1] !== String(units - 10) && ticks < 10) {
+          await tick();
+          ticks++;
+        }
+        expect(ticks, `${cheap} then ${units} units: ticks after the update before the binding renders`).toBe(expected);
+        expect(texts()[0], `${cheap}: refused, its previous text kept`).toBe('0');
+        await settle(3);
+        expect(runtime.getDiagnostics().map((d) => [d.code, d.count]), `${cheap} then ${units} units: only the refusal is reported`).toEqual([['FORMA_E_BUDGET', 1]]);
+        unmountFixture(container);
+        runtime.clearDiagnostics();
+      }
     }
   });
 

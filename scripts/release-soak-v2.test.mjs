@@ -14,7 +14,6 @@ import { soakDisposition } from './release-soak-deferral.mjs';
 import { verifyPostReleaseSoak } from './release-soak-completion.mjs';
 import { verifyPostReleaseSoakV2 } from './release-soak-completion-v2.mjs';
 import { API, verifyRun } from './release-burn-in-inputs.mjs';
-import { CONTRACT, FUZZ_TARGETS, ENGINES, SKEW_CHECKS } from './release-burn-in-report.mjs';
 import { FINAL_COMMIT, RC_COMMIT, RC_TAG, WORKFLOW, sourceStatus, requirePayload, workerContext, donorDiff, validateDonorReview } from './release-soak-context-v2.mjs';
 const encode = value => JSON.stringify(value, null, 2) + '\n';
 const sha = value => createHash('sha256').update(value).digest('hex');
@@ -48,6 +47,8 @@ async function completionFixture(t, f) {
   // Its cases, capability controls and profiles too: the RC validator compares them with the RC catalogue.
   const { cases, profiles } = await import(pathToFileURL(join(f.payloadRoot, 'packages/core/e2e/hostile-widgets/catalogue.mjs')).href);
   const { capabilityCases } = await import(pathToFileURL(join(f.payloadRoot, 'packages/core/e2e/hostile-widgets/capabilities.mjs')).href);
+  // And the report's contract, fuzz targets, engines and skew checks: the RC validator compares them with the RC's.
+  const { CONTRACT, FUZZ_TARGETS, ENGINES, SKEW_CHECKS } = await import(pathToFileURL(join(f.payloadRoot, 'scripts/release-burn-in-report.mjs')).href);
   const evidence = mkdtempSync(join(tmpdir(), 'soak-completion-api-'));
   t.after(() => rmSync(evidence, { recursive: true, force: true }));
   const archiveRoot = join(evidence, 'archive'), raw = join(evidence, 'raw');
@@ -201,7 +202,7 @@ test('v2 authenticates donor API/archive provenance then unchanged RC raw valida
   const raw = join(f.raw, 'round-001/hostile.json'), proof = json(raw); proof.sourceClean = false;
   writeFileSync(raw, encode(proof)); f.report.rounds[0].tasks[4].reportSha256 = sha(encode(proof));
   writeFileSync(join(f.raw, 'round-001/round.json'), encode(f.report.rounds[0]));
-  await f.pack(); await assert.rejects(verifyPostReleaseSoakV2(f.args()));
+  await f.pack(); await assert.rejects(verifyPostReleaseSoakV2(f.args()), /hostile source was modified/);
 });
 
 test('donor workflow suppresses bytecode before Python, pins RC checkout and retains status without rewriting Actions identity', () => {
