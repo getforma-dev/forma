@@ -1,7 +1,7 @@
 /** Private attribute policy shared by read-only validation and later writes.
  * Creating a binding only normalizes its initial value; write() is called by
  * the prepared owner after commit, never to repair the first render. */
-import { isEventHandlerAttr, isRawHtmlAttr, isSafeAttrName, isUnsafeAttrWrite } from '../security/url-safety.js';
+import { isDangerousUrlAttr, isEventHandlerAttr, isRawHtmlAttr, isSafeAttrName } from '../security/url-safety.js';
 import { AdoptionDomError } from './adoption-plan.js';
 import { rawHtml } from './trusted-html.js';
 import { normalizeDomText } from './normalize-text.js';
@@ -34,7 +34,7 @@ export function prepareAttribute(element:Element,key:string,value:unknown):Prepa
     // Rule 6's attribute table: `true` is bare only on an HTML boolean attribute.
     if(BOOLEAN_ATTRS.has(qualified))return next?'':null;
     const raw=String(next),result=normalizeDomText(raw);
-    return isUnsafeAttrWrite(element.localName,qualified,raw)?null:result;
+    return isDangerousUrlAttr(element.localName,qualified,raw)?null:result;
   };
   const initial=normalize(value);
   let previous=initial;

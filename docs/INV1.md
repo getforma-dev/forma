@@ -37,6 +37,18 @@ context check is case-insensitive. `srcset` retains its separate image-candidate
 semantics; it is not parsed as a single URL by this predicate. An ordinary
 `title` or `data-href` containing URL-like text remains ordinary data.
 
+An SVG animation value is classified as a URL too (FORMA-277): `to`, `from`,
+`by` and `values` on `<set>` and on every `<animate…>` element, that is a tag
+that is `animate` followed only by ASCII letters, digits or `_` (`animate`,
+`animateTransform`, `animateMotion`, `animateColor`), tag and name matched
+ASCII case-insensitively. An animation's `attributeName` can name `href`. The
+value is split on `;` and each item is classified as above with no image
+context, so `data:image/svg+xml` is refused there; a raw NUL anywhere refuses
+it. This holds whatever `attributeName` says. Other attributes of an animation
+element (`begin`, `attributeName`, `type`, `path`), these names on any other
+element, and a tag that only starts with `animate` (`animate-x`) remain
+ordinary data.
+
 Refusal means omission. Fresh core drops invalid names before reading their
 values; a reactive refused URL removes its prior accepted attribute. During
 strict adoption, the expected value for a rejected attribute is absence. If the

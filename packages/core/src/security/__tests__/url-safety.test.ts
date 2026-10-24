@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isDangerousUrl,
+  isDangerousUrlAttr,
   isEventHandlerAttr,
   isRawHtmlAttr,
   isSafeAttrName,
@@ -159,6 +160,58 @@ describe('isUnsafeAttrWrite', () => {
     expect(isUnsafeAttrWrite('a', 'href', 'https://example.com')).toBe(false);
     expect(isUnsafeAttrWrite('div', 'title', 'javascript:alert(1)')).toBe(false); // not a URL attr
     expect(isUnsafeAttrWrite('div', 'data-once', '1')).toBe(false);
+  });
+
+  it('rejects a script URL in each item of an SVG animation value, whatever the case of tag and name', () => {
+    // FORMA-277: to, from, by and values on <set> and on every <animate…>
+    // element are judged as URLs, item by item: attributeName can name href.
+    for (const tag of ['animate', 'set', 'SET', 'animateTransform', 'animateMotion', 'animateColor', 'ANIMATEMOTION']) {
+      for (const name of ['to', 'from', 'by', 'values', 'VALUES']) {
+        expect(isUnsafeAttrWrite(tag, name, 'javascript:alert(1)'), `${tag} ${name}`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, `#a; java${TAB}script:alert(1) ;#c`), `${tag} ${name} list`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, '0;data:text/html,x'), `${tag} ${name} html`).toBe(true);
+        // No image context: the target is not known.
+        expect(isUnsafeAttrWrite(tag, name, 'data:image/svg+xml,<svg/>'), `${tag} ${name} svg`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, `1${NUL}2`), `${tag} ${name} NUL`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, '0;10;20'), `${tag} ${name} numbers`).toBe(false);
+        expect(isUnsafeAttrWrite(tag, name, 'data:image/png;base64,aA==;#b'), `${tag} ${name} png`).toBe(false);
+      }
+    }
+    // Only those four names, and only on those tags: other attributes of an
+    // animation element, the same names elsewhere, and a tag that only
+    // starts with "animate" keep their text.
+    expect(isUnsafeAttrWrite('animate', 'begin', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('animateTransform', 'type', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('animateMotion', 'path', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('g', 'to', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('animate-x', 'to', 'javascript:alert(1)')).toBe(false);
+  });
+
+  it('keeps the values real animations use on every animation element', () => {
+    // Numbers, transforms, coordinates, colours, times and fragment
+    // references: none is a script URL, so no animation loses its values.
+    const real: ReadonlyArray<readonly [string, string, string]> = [
+      ['animateTransform', 'values', '0 50 50;360 50 50'],
+      ['animateTransform', 'from', '0 50 50'],
+      ['animateTransform', 'to', 'scale(2)'],
+      ['animateTransform', 'by', '1.5,1.5'],
+      ['animateMotion', 'values', '0,0;10,10'],
+      ['animateMotion', 'from', '0,0'],
+      ['animateMotion', 'to', '100 -20'],
+      ['animateMotion', 'by', '10,10'],
+      ['animateColor', 'values', 'red;blue'],
+      ['animateColor', 'from', '#ff0000'],
+      ['animateColor', 'to', 'rgb(0, 0, 255)'],
+      ['animateColor', 'by', 'hsl(120 50% 50%)'],
+      ['animate', 'values', '0;1;0'],
+      ['animate', 'values', '#first;#second'],
+      ['set', 'to', 'visible'],
+      ['set', 'to', '#target'],
+    ];
+    for (const [tag, name, value] of real) {
+      expect(isDangerousUrlAttr(tag, name, value), `<${tag} ${name}="${value}">`).toBe(false);
+      expect(isUnsafeAttrWrite(tag, name, value), `<${tag} ${name}="${value}">`).toBe(false);
+    }
   });
 });
 

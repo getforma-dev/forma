@@ -67,8 +67,11 @@
 //! runtime, so every frame has it. Since FORMA-276 the same strip and live
 //! check also remove every `on*` handler attribute and every URL attribute
 //! whose value has a script scheme (`FORMA_E_UNREVIEWED_HANDLER`,
-//! `FORMA_E_UNREVIEWED_URL`), which this policy refuses too, so the frame
-//! does not depend on the policy alone for them.
+//! `FORMA_E_UNREVIEWED_URL`), and since FORMA-277 every SVG animation value
+//! with one: `to`, `from`, `by` or any `;`-separated item of `values` on
+//! `<set>` or an `<animate…>` element (also `FORMA_E_UNREVIEWED_URL`). This
+//! policy refuses these too, so the frame does not depend on the policy alone
+//! for them.
 //!
 //! Checked in Chrome 155 (forma#22 and its review): markup alone (`<img>`, a
 //! stylesheet, a `url()` in a `style` attribute, a font) reached neither the

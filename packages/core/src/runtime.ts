@@ -38,7 +38,7 @@ import { createSignal, internalEffect, createComputed, createUnownedRoot, regist
 import { reconcileList, type ListTransitionHooks } from './dom/list';
 import { createReconciler } from './dom/reconcile';
 import { isTrustedHtml, trustedHtml, RUNTIME_SRCDOC_CODE, type TrustedHtml } from './dom/trusted-html';
-import { isDangerousUrl, isUrlAttr, isEventHandlerAttr, isRawHtmlAttr } from './security/url-safety';
+import { isDangerousUrlAttr, isEventHandlerAttr, isRawHtmlAttr } from './security/url-safety';
 import {
   compileExpression,
   exprError,
@@ -79,19 +79,21 @@ declare const __FORMA_DEV_BUILD__: boolean | undefined;
 /**
  * True if writing `value` to attribute `name` on a `<tag>` element via
  * setAttribute would create an XSS sink: an `on*` inline event handler, or a
- * URL attribute carrying a script-executing scheme. Shared by data-bind:*,
+ * URL attribute carrying a script-executing scheme, or an SVG animation value
+ * carrying one (`isDangerousUrlAttr`, FORMA-277). Shared by data-bind:*,
  * list-template binding and the unreviewed tier's strip (refuseUnreviewed).
  *
- * `tag` is the lower-case name of the element receiving the attribute and is
- * always passed: `isDangerousUrl` needs it to tell a `data:image/svg+xml` that
- * is inert on an `<img>` from the same value on an `<a href>`, where it is a
- * navigable document.
+ * `tag` is the `localName` of the element receiving the attribute, as every
+ * other sink passes it (a prefixed `svg:set` made by `createElementNS` is
+ * `set`), and is always passed: `isDangerousUrl` needs it to tell a
+ * `data:image/svg+xml` that is inert on an `<img>` from the same value on an
+ * `<a href>`, where it is a navigable document.
  * Verified by: src/__tests__/runtime-bind-security.test.ts > "does not set a javascript: URL from data-bind:href"
  * Verified by: src/__tests__/runtime-bind-security.test.ts > "forwards the element tag to the URL scheme check"
  */
 function isUnsafeAttrBinding(name: string, value: string, tag: string): boolean {
   if (isEventHandlerAttr(name)) return true;
-  if (isUrlAttr(name) && isDangerousUrl(value, tag)) return true;
+  if (isDangerousUrlAttr(tag, name, value)) return true;
   return false;
 }
 
@@ -1259,7 +1261,7 @@ function applyShowVisibility(
 
 function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown): void {
   const value = evaluateCompiledTemplate(compiled, item);
-  if (isUnsafeAttrBinding(attr, value, node.tagName.toLowerCase())) {
+  if (isUnsafeAttrBinding(attr, value, node.localName)) {
     node.removeAttribute(attr);
   } else {
     node.setAttribute(attr, value);
@@ -2153,7 +2155,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // be. Applies to standard and hardened builds alike.
         // Verified by: src/__tests__/runtime-bind-security.test.ts > "does not set an inline event-handler attribute via data-bind:onclick"
         // Verified by: src/__tests__/renderer-contract.test.ts > "refuses an on* name whatever the value type: %j"
-        if (isUnsafeAttrBinding(attrName, str, el.tagName.toLowerCase())) {
+        if (isUnsafeAttrBinding(attrName, str, el.localName)) {
           el.removeAttribute(attrName);
         } else {
           el.setAttribute(attrName, str);

@@ -14,12 +14,10 @@ import { describingAdoption, __adoptionChild } from './adoption-description.js';
 import { SVG_NS, MATHML_NS, contentNs, getNamespace, insertNs, withNamespace } from './namespace.js';
 import { isFormControlProperty, writeFormControlProperty, isReactiveTextOnly, childText } from './form-control.js';
 import {
-  isDangerousUrl,
+  isDangerousUrlAttr,
   isEventHandlerAttr,
   isRawHtmlAttr,
   isSafeAttrName,
-  isUnsafeAttrWrite,
-  isUrlAttr,
 } from '../security/url-safety.js';
 import { htmlOf, isTrustedHtml, rawHtml, warnInnerHtmlChildren, checkRawAttr, refuseScriptElement, type TrustedHtml } from './trusted-html.js';
 // Rule 1 (FORMA-182, docs/parity-rules.md): every ordinary text child and
@@ -554,7 +552,7 @@ function handleXLink(el: Element, key: string, value: unknown): void {
     // The guard classifies the raw string (a NUL anywhere refuses); the
     // normalized string is what is written.
     const raw = String(v), strVal = normalizeDomText(raw);
-    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+    if (isDangerousUrlAttr(el.localName, key, raw)) {
       if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       el.removeAttributeNS(XLINK_NS, localName);
       return;
@@ -607,7 +605,8 @@ function handleBooleanAttr(el: Element, key: string, value: unknown): void {
  *   reach setAttribute — which ASCII-lowercases qualified names on HTML
  *   elements and produces a live inline handler.
  * - a URL attribute carrying a script-executing scheme, checked against the
- *   element's tag so an image sink can still take `data:image/svg+xml`.
+ *   element's tag so an image sink can still take `data:image/svg+xml`, and
+ *   an SVG animation value with one (`isDangerousUrlAttr`, FORMA-277).
  *
  * A rejected reactive value removes the attribute instead of leaving the
  * previous (accepted) one in place, so the DOM never disagrees with the cache.
@@ -633,10 +632,6 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
     if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
     return;
   }
-  // `key` is fixed for this binding, so the (allocating) URL-attribute lookup
-  // happens once, not on every reactive re-run.
-  const urlAttr = isUrlAttr(key);
-
   const write = (v: unknown): void => {
     const cache = getCache(el);
     if (v != null && v !== false) {
@@ -648,7 +643,7 @@ function handleGenericAttr(el: Element, key: string, value: unknown): void {
       const raw = String(v), strVal = normalizeDomText(raw);
       // Already written, already guarded — see the note above the function.
       if (cache[key] === strVal) return;
-      if (!urlAttr || !isDangerousUrl(raw, el.localName)) {
+      if (!isDangerousUrlAttr(el.localName, key, raw)) {
         // The string the URL guard checked is the string written: an object
         // is converted once, above. Only trusted HTML for `srcdoc` is written
         // as itself, so a TrustedHTML reaches that sink typed (DR-19).
@@ -768,7 +763,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   // xlink: namespace
   if (key.charCodeAt(0) === 120 /* x */ && key.startsWith('xlink:')) {
     const raw = String(value), strVal = normalizeDomText(raw);
-    if (isUnsafeAttrWrite(el.localName, key, raw)) {
+    if (isDangerousUrlAttr(el.localName, key, raw)) {
       if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
       return;
     }
@@ -786,7 +781,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   // it refuses the same writes as handleGenericAttr (and as the SSR renderer):
   // any `on…`-named prop — including the `value === true` case, which would
   // otherwise emit a bare `ONCLICK` attribute — and script-scheme URLs, checked
-  // against the element's tag.
+  // against the element's tag, in a URL attribute or an SVG animation value.
   // Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops on* props in the value===true branch"
   if (isEventHandlerAttr(key)) {
     if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'inline-event-handler');
@@ -797,7 +792,7 @@ function applyStaticProp(el: Element, key: string, value: unknown): void {
   // `true` is the word "true" off the boolean set (rule 6's attribute table,
   // docs/parity-rules.md: the walker writes the same), else the value's string.
   const raw = String(value), strVal = normalizeDomText(raw);
-  if (isUrlAttr(key) && isDangerousUrl(raw, el.localName)) {
+  if (isDangerousUrlAttr(el.localName, key, raw)) {
     if ((typeof __FORMA_DEV_BUILD__ === 'boolean' && __FORMA_DEV_BUILD__) || (typeof __FORMA_DEV_BUILD__ !== 'boolean' && __DEV__)) warnDropped(el, key, 'unsafe-URL');
     return;
   }

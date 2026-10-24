@@ -42,6 +42,9 @@ export async function runBrowserCase(input) {
       case 'form-action-static': initial = '<form id="out" action="/benign"></form>'; markup = `<form id="out" action="${attr(input.payload)}"></form>`; break;
       case 'image-src-static': initial = '<img id="out" src="/benign.png">'; markup = `<img id="out" src="${attr(input.payload)}">`; break;
       case 'svg-xlink-static': initial = '<svg><a id="out" xlink:href="/benign">svg link</a></svg>'; markup = `<svg><a id="out" xlink:href="${attr(input.payload)}">svg link</a></svg>`; break;
+      // An SVG animation value (FORMA-277): bound, and static, patched in by the update.
+      case 'svg-animate': markup = '<svg><a><set id="out" attributeName="href" data-bind:to="{value}"></set><text>svg link</text></a></svg>'; break;
+      case 'svg-animate-static': initial = '<svg><a><animate id="out" attributeName="href" values="#benign" dur="10s"></animate><text>svg link</text></a></svg>'; markup = `<svg><a><animate id="out" attributeName="href" values="#benign;${attr(input.payload)}" dur="10s"></animate><text>svg link</text></a></svg>`; break;
       default: throw new Error('unknown value context');
     }
   } else if (input.kind === 'expression') {
@@ -100,10 +103,10 @@ export async function runBrowserCase(input) {
         eq(node().hasAttribute('srcdoc'), false, 'srcdoc refused');
         eq(root.querySelector('#proof').textContent, input.payload, 'same bytes inert text');
         if (!codes.includes('FORMA_E_RUNTIME_SRCDOC')) throw new Error(`missing srcdoc refusal: ${codes}`);
-      } else if (['url', 'form-action', 'image-src', 'svg-xlink'].includes(input.context.replace(/-static$/, ''))) {
-        const name = { url: 'href', 'form-action': 'action', 'image-src': 'src', 'svg-xlink': 'xlink:href' }[input.context.replace(/-static$/, '')];
+      } else if (['url', 'form-action', 'image-src', 'svg-xlink', 'svg-animate'].includes(input.context.replace(/-static$/, ''))) {
+        const name = input.context === 'svg-animate-static' ? 'values' : { url: 'href', 'form-action': 'action', 'image-src': 'src', 'svg-xlink': 'xlink:href', 'svg-animate': 'to' }[input.context.replace(/-static$/, '')];
         // Markup is parsed: the parser writes a NUL as U+FFFD.
-        const written = input.context.endsWith('-static') ? input.payload.replaceAll('\0', '\uFFFD') : input.payload;
+        const written = (input.context === 'svg-animate-static' ? '#benign;' : '') + (input.context.endsWith('-static') ? input.payload.replaceAll('\0', '\uFFFD') : input.payload);
         eq(node().getAttribute(name), input.dangerousUrl ? null : written, 'URL guard');
       } else {
         if (codes.length) throw new Error(`${input.id}: unexpected diagnostics ${JSON.stringify(runtime.getDiagnostics())}`);

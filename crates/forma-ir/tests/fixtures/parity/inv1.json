@@ -1916,6 +1916,762 @@
       "written": false
     },
     {
+      "id": "animate-to-script",
+      "tag": "animate",
+      "name": "to",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-to-tab",
+      "tag": "animate",
+      "name": "to",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-to-vb",
+      "tag": "animate",
+      "name": "to",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "animate-to-html",
+      "tag": "animate",
+      "name": "to",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "animate-to-svg",
+      "tag": "animate",
+      "name": "to",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "animate-to-list-script",
+      "tag": "animate",
+      "name": "to",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-to-list-tab",
+      "tag": "animate",
+      "name": "to",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "animate-to-raw-nul",
+      "tag": "animate",
+      "name": "to",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "animate-to-number",
+      "tag": "animate",
+      "name": "to",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "animate-to-list",
+      "tag": "animate",
+      "name": "to",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "animate-to-list-png",
+      "tag": "animate",
+      "name": "to",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "animate-to-nested",
+      "tag": "animate",
+      "name": "to",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "animate-from-script",
+      "tag": "animate",
+      "name": "from",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-from-tab",
+      "tag": "animate",
+      "name": "from",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-from-vb",
+      "tag": "animate",
+      "name": "from",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "animate-from-html",
+      "tag": "animate",
+      "name": "from",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "animate-from-svg",
+      "tag": "animate",
+      "name": "from",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "animate-from-list-script",
+      "tag": "animate",
+      "name": "from",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-from-list-tab",
+      "tag": "animate",
+      "name": "from",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "animate-from-raw-nul",
+      "tag": "animate",
+      "name": "from",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "animate-from-number",
+      "tag": "animate",
+      "name": "from",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "animate-from-list",
+      "tag": "animate",
+      "name": "from",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "animate-from-list-png",
+      "tag": "animate",
+      "name": "from",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "animate-from-nested",
+      "tag": "animate",
+      "name": "from",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "animate-by-script",
+      "tag": "animate",
+      "name": "by",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-by-tab",
+      "tag": "animate",
+      "name": "by",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-by-vb",
+      "tag": "animate",
+      "name": "by",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "animate-by-html",
+      "tag": "animate",
+      "name": "by",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "animate-by-svg",
+      "tag": "animate",
+      "name": "by",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "animate-by-list-script",
+      "tag": "animate",
+      "name": "by",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-by-list-tab",
+      "tag": "animate",
+      "name": "by",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "animate-by-raw-nul",
+      "tag": "animate",
+      "name": "by",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "animate-by-number",
+      "tag": "animate",
+      "name": "by",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "animate-by-list",
+      "tag": "animate",
+      "name": "by",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "animate-by-list-png",
+      "tag": "animate",
+      "name": "by",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "animate-by-nested",
+      "tag": "animate",
+      "name": "by",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "animate-values-script",
+      "tag": "animate",
+      "name": "values",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-values-tab",
+      "tag": "animate",
+      "name": "values",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-values-vb",
+      "tag": "animate",
+      "name": "values",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "animate-values-html",
+      "tag": "animate",
+      "name": "values",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "animate-values-svg",
+      "tag": "animate",
+      "name": "values",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "animate-values-list-script",
+      "tag": "animate",
+      "name": "values",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-values-list-tab",
+      "tag": "animate",
+      "name": "values",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "animate-values-raw-nul",
+      "tag": "animate",
+      "name": "values",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "animate-values-number",
+      "tag": "animate",
+      "name": "values",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "animate-values-list",
+      "tag": "animate",
+      "name": "values",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "animate-values-list-png",
+      "tag": "animate",
+      "name": "values",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "animate-values-nested",
+      "tag": "animate",
+      "name": "values",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "set-to-script",
+      "tag": "set",
+      "name": "to",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-to-tab",
+      "tag": "set",
+      "name": "to",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-to-vb",
+      "tag": "set",
+      "name": "to",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "set-to-html",
+      "tag": "set",
+      "name": "to",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "set-to-svg",
+      "tag": "set",
+      "name": "to",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "set-to-list-script",
+      "tag": "set",
+      "name": "to",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-to-list-tab",
+      "tag": "set",
+      "name": "to",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "set-to-raw-nul",
+      "tag": "set",
+      "name": "to",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "set-to-number",
+      "tag": "set",
+      "name": "to",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "set-to-list",
+      "tag": "set",
+      "name": "to",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "set-to-list-png",
+      "tag": "set",
+      "name": "to",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "set-to-nested",
+      "tag": "set",
+      "name": "to",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "set-from-script",
+      "tag": "set",
+      "name": "from",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-from-tab",
+      "tag": "set",
+      "name": "from",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-from-vb",
+      "tag": "set",
+      "name": "from",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "set-from-html",
+      "tag": "set",
+      "name": "from",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "set-from-svg",
+      "tag": "set",
+      "name": "from",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "set-from-list-script",
+      "tag": "set",
+      "name": "from",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-from-list-tab",
+      "tag": "set",
+      "name": "from",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "set-from-raw-nul",
+      "tag": "set",
+      "name": "from",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "set-from-number",
+      "tag": "set",
+      "name": "from",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "set-from-list",
+      "tag": "set",
+      "name": "from",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "set-from-list-png",
+      "tag": "set",
+      "name": "from",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "set-from-nested",
+      "tag": "set",
+      "name": "from",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "set-by-script",
+      "tag": "set",
+      "name": "by",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-by-tab",
+      "tag": "set",
+      "name": "by",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-by-vb",
+      "tag": "set",
+      "name": "by",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "set-by-html",
+      "tag": "set",
+      "name": "by",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "set-by-svg",
+      "tag": "set",
+      "name": "by",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "set-by-list-script",
+      "tag": "set",
+      "name": "by",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-by-list-tab",
+      "tag": "set",
+      "name": "by",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "set-by-raw-nul",
+      "tag": "set",
+      "name": "by",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "set-by-number",
+      "tag": "set",
+      "name": "by",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "set-by-list",
+      "tag": "set",
+      "name": "by",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "set-by-list-png",
+      "tag": "set",
+      "name": "by",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "set-by-nested",
+      "tag": "set",
+      "name": "by",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "set-values-script",
+      "tag": "set",
+      "name": "values",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-values-tab",
+      "tag": "set",
+      "name": "values",
+      "value": "java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-values-vb",
+      "tag": "set",
+      "name": "values",
+      "value": "vbscript:msgbox(1)",
+      "written": false
+    },
+    {
+      "id": "set-values-html",
+      "tag": "set",
+      "name": "values",
+      "value": "data:text/html,<script>alert(1)</script>",
+      "written": false
+    },
+    {
+      "id": "set-values-svg",
+      "tag": "set",
+      "name": "values",
+      "value": "DaTa:ImAgE/sVg+xMl,<svg onload=\"alert(1)\"></svg>",
+      "written": false
+    },
+    {
+      "id": "set-values-list-script",
+      "tag": "set",
+      "name": "values",
+      "value": "#a; javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "set-values-list-tab",
+      "tag": "set",
+      "name": "values",
+      "value": "0;\t java\tscript:alert(1) ;2",
+      "written": false
+    },
+    {
+      "id": "set-values-raw-nul",
+      "tag": "set",
+      "name": "values",
+      "value": "1\u00002",
+      "written": false
+    },
+    {
+      "id": "set-values-number",
+      "tag": "set",
+      "name": "values",
+      "value": "10",
+      "written": true
+    },
+    {
+      "id": "set-values-list",
+      "tag": "set",
+      "name": "values",
+      "value": "#a; #b",
+      "written": true
+    },
+    {
+      "id": "set-values-list-png",
+      "tag": "set",
+      "name": "values",
+      "value": "data:image/png;base64,aA==;#b",
+      "written": true
+    },
+    {
+      "id": "set-values-nested",
+      "tag": "set",
+      "name": "values",
+      "value": "0;https://example.test/javascript:hello",
+      "written": true
+    },
+    {
+      "id": "animate-transform-to-script",
+      "tag": "animateTransform",
+      "name": "to",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-transform-values-rotate",
+      "tag": "animateTransform",
+      "name": "values",
+      "value": "0 50 50;360 50 50",
+      "written": true
+    },
+    {
+      "id": "animate-motion-values-script",
+      "tag": "animateMotion",
+      "name": "values",
+      "value": "0,0;java\tscript:alert(1)",
+      "written": false
+    },
+    {
+      "id": "animate-motion-values-points",
+      "tag": "animateMotion",
+      "name": "values",
+      "value": "0,0;10,10",
+      "written": true
+    },
+    {
+      "id": "animate-color-from-script",
+      "tag": "animateColor",
+      "name": "from",
+      "value": "data:text/html,<p>doc",
+      "written": false
+    },
+    {
+      "id": "animate-color-values-colors",
+      "tag": "animateColor",
+      "name": "values",
+      "value": "red;blue",
+      "written": true
+    },
+    {
+      "id": "uppercase-animate-family",
+      "tag": "AnimateTransform",
+      "name": "BY",
+      "value": "data:image/svg+xml,<svg onload=alert(1)>",
+      "written": false
+    },
+    {
+      "id": "animate-prefix-not-animation",
+      "tag": "animate-x",
+      "name": "to",
+      "value": "javascript:alert(1)",
+      "written": true
+    },
+    {
+      "id": "animate-begin-not-a-value",
+      "tag": "animate",
+      "name": "begin",
+      "value": "javascript:alert(1)",
+      "written": true
+    },
+    {
+      "id": "animate-attribute-name",
+      "tag": "set",
+      "name": "attributeName",
+      "value": "href",
+      "written": true
+    },
+    {
+      "id": "animation-value-off-animation",
+      "tag": "g",
+      "name": "to",
+      "value": "javascript:alert(1)",
+      "written": true
+    },
+    {
+      "id": "uppercase-animation",
+      "tag": "SET",
+      "name": "TO",
+      "value": "javascript:alert(1)",
+      "written": false
+    },
+    {
       "id": "uppercase-name",
       "tag": "A",
       "name": "HREF",

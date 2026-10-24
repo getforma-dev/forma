@@ -100,7 +100,7 @@ export function isUrlAttr(name: string): boolean {
  * Verified by: src/security/__tests__/url-safety.test.ts > "refuses a NUL anywhere in the value, not only in the scheme"
  */
 export function isDangerousUrl(value: string, tag?: string): boolean {
-  if (value.indexOf('\0') !== -1) return true;
+  if (value.includes('\0')) return true;
   const normalized = value.replace(URL_IGNORED_CHARS_RE, '');
   if (DANGEROUS_SCHEME_RE.test(normalized)) return true;
   if (SVG_DATA_URL_RE.test(normalized)) {
@@ -115,18 +115,56 @@ export function isEventHandlerAttr(name: string): boolean {
 }
 
 /**
+ * True if `value` written to attribute `name` on a `<tag>` element would be a
+ * URL with a script scheme: a URL attribute (judged against `tag`), or an SVG
+ * animation value attribute any `;`-separated item of which is one (`values`
+ * is a list; a split of the other three can only refuse more).
+ *
+ * The animation value attributes (FORMA-277) are `to`, `from`, `by` and
+ * `values` on `<set>` and on every `<animate…>` element (`animate`,
+ * `animateTransform`, `animateMotion`, `animateColor`: a tag that is
+ * `animate` followed by ASCII letters, digits or `_` only), tag and name in
+ * any ASCII case. An animation element's `attributeName` can name a URL
+ * attribute (`href`, `xlink:href`), so its values are judged as URLs, item by
+ * item.
+ * They are judged whatever `attributeName` says, so the order the two are
+ * written in, or a later change of `attributeName` by a binding or an
+ * update, cannot let a value through. Each item is judged with no image
+ * context, since the target is not known, so `data:image/svg+xml` is refused
+ * there too. The test is `isDangerousUrl`'s conservative prefix rule, so an
+ * item that begins with `javascript` or `vbscript` (with or without a colon)
+ * or `data:text/html` is refused; numbers, coordinates, transforms and
+ * colours never begin with one of those, so animations of other attributes
+ * keep their values.
+ *
+ * This is `isUnsafeAttrWrite`'s URL half, called on its own by the sinks that
+ * refuse an `on*` name themselves first: h(), hydration adoption,
+ * `data-bind:`, row attributes and the preview frame's strip.
+ *
+ * Verified by: src/__tests__/renderer-contract.test.ts > "drops every script scheme written to <%s %s>"
+ * Verified by: src/__tests__/renderer-contract.test.ts > "keeps ordinary animation values on <%s %s>"
+ * Verified by: src/__tests__/renderer-contract.test.ts > "judges only the value attributes of <set> and every <animate*> element: other tags and attributes keep the text"
+ * Verified by: src/security/__tests__/url-safety.test.ts > "keeps the values real animations use on every animation element"
+ */
+export function isDangerousUrlAttr(tag: string, name: string, value: string): boolean {
+  return isUrlAttr(name)
+    ? isDangerousUrl(value, tag)
+    : /^(to|from|by|values) (set|animate\w*)$/i.test(name + ' ' + tag) && value.split(';').some((item) => isDangerousUrl(item));
+}
+
+/**
  * True when writing `value` to attribute `name` on a `<tag>` element would
  * create an XSS sink, so the write must be skipped. Shared by every client-side
- * attribute write (h()'s static and reactive paths, xlink attributes, hydration
- * adoption) so those paths drop exactly what the SSR renderer's `renderAttr`
- * drops — otherwise a payload the server refused to emit is re-added on the
- * client at hydration.
+ * attribute write: the expression interpreter's `$el` attribute writes and the
+ * reconciler's update call it whole, and the sinks that refuse an `on*` name
+ * themselves call its URL half, `isDangerousUrlAttr`. So those paths drop
+ * exactly what the SSR walker drops — otherwise a payload the server refused
+ * to emit is re-added on the client at hydration.
  *
  * Verified by: src/dom/__tests__/element-url-safety.test.ts > "drops a javascript: href written through h()"
  */
 export function isUnsafeAttrWrite(tag: string, name: string, value: string): boolean {
-  if (isEventHandlerAttr(name)) return true;
-  return isUrlAttr(name) && isDangerousUrl(value, tag);
+  return isEventHandlerAttr(name) || isDangerousUrlAttr(tag, name, value);
 }
 
 /**
