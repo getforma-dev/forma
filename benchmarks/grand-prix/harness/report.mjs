@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, EVENTS } from './lib.mjs';
+import { validateSummaryProfile } from './score-profile.mjs';
 
 const argv = process.argv.slice(2);
 const option = (name, fallback) => argv.includes(name) ? argv[argv.indexOf(name) + 1] : fallback;
@@ -24,6 +25,9 @@ for (const ev of fs.readdirSync(base)) {
   for (const f of fs.readdirSync(dir)) if (f.endsWith('.json')) { try { raw[ev][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch {} }
 }
 
+const qualification = validateSummaryProfile(summary, raw);
+Object.assign(summary, qualification);
+
 // the protocol's own sections, rendered from PROTOCOL.md so the report never paraphrases it
 function section(md, title) {
   const m = md.match(new RegExp('^## ' + title + '\\s*$([\\s\\S]*?)(?=^## |(?![\\s\\S]))', 'm'));
@@ -31,6 +35,7 @@ function section(md, title) {
 }
 const protocol = rd('PROTOCOL.md', '');
 const method = { intro: protocol.split(/^## /m)[0].replace(/^# .*\n/, '').trim(), grid: section(protocol, 'The grid'), fairness: section(protocol, 'Fairness'), events: section(protocol, 'Events and points'), runs: section(protocol, 'Runs and outputs'), hygiene: section(protocol, 'Docker hygiene'), amendments: [...protocol.matchAll(/^## (Amendment[^\n]*)\n([\s\S]*?)(?=^## |(?![\s\S]))/gm)].map(m => ({ title: m[1].trim(), body: m[2].trim() })) };
+if (qualification.resourceProfile) method.amendments.push({ title: 'Round 2: Linux qualification and resource profile amendments', body: rd('ROUND-2.md', '') });
 
 const data = {
   summary, raw, method,
@@ -136,6 +141,7 @@ function rawRuns(c){var ev=D.raw[c.event]||{};if(!c.standings.length)return '';v
  return h}
 function machineBlock(ev){var m=S.machine&&S.machine[ev];if(!m)return '';var b=m.before||m;if(!b||!b.at)return '';var a=m.after;
  return '<details><summary>Machine state for this event</summary><div class="chips" style="margin:8px 0">'+['Docker '+b.dockerCpus+' CPUs','Docker '+b.dockerMemGB+' GB','host load '+(b.hostLoadAvg||[]).join(' / ')+(a&&a.hostLoadAvg?' (before) to '+a.hostLoadAvg.join(' / ')+' (after)':''),b.hostCpuModel,'Docker '+b.dockerVersion,b.dockerKernel,'Node '+b.node,b.quiet?'machine quiet at start':'NOT quiet at start (load average above 2)'].map(function(x){return '<span class="chip">'+esc(x)+'</span>'}).join('')+'</div><pre>'+esc(JSON.stringify(m,null,1))+'</pre></details>'}
+function resourceBanner(){var groups=Object.keys(S.campaigns||{});return '<div class="banner">'+esc(S.profileLabel)+(S.resourceProfile?(S.diagnostic?'. Diagnostic measurements are unqualified and remain separate from the Linux baseline.':'. Each championship group uses one measured VM/job. Server and client points are normalized within their events; raw timings from different campaigns are not compared.'):'. Historical observations remain separate from the new Linux baseline.')+(groups.length?'<details><summary>Measurement campaigns</summary>'+groups.map(function(group){return '<p>'+esc(group)+': '+esc(S.campaigns[group].id)+'</p>'}).join('')+'</details>':'')+'</div>'}
 function cfgBanner(){var bad=[],defaults={duration:10,warmup:5,runs:3,starts:5,buildRuns:3,concurrency:64};Object.keys(S.configs||{}).forEach(function(k){var c=S.configs[k];if(!c)return;Object.keys(defaults).forEach(function(d){if(c[d]!=null&&c[d]!==defaults[d])bad.push(d+'='+c[d]+' (protocol '+defaults[d]+')')});if(c.forced)bad.push('some events ran on a loaded machine (forced)')});
  return bad.length?'<div class="banner"><b>Not a protocol run.</b> '+esc(bad.filter(function(x,i,a){return a.indexOf(x)===i}).join('; '))+'</div>':''}
 function champ(key,title){var l=S.championships[key];var st=l.map(function(e){return {car:e.car,rank:e.rank,mean:key==='overall'?e.mean:e.points,sd:0,n:1,valLabel:key==='overall'?e.mean.toFixed(1)+' pts per event':e.points+' pts',ptsLabel:e.events+' events entered'}});
@@ -156,14 +162,14 @@ function eventView(e){return function(){var cs=S.contests.filter(function(c){ret
  if(e.id==='pitstop'){var fr=(D.raw.pitstop||{}).forma;if(fr&&fr.rust)h+='<div class="panel"><b>Reported apart, not scored.</b> '+esc(fr.rust.note||'')+(fr.rust.buildMs!=null?' Forma Rust compile: '+fmt(fr.rust.buildMs,'ms')+'.':'')+'</div>'}
  h+=views.__more(e.id)+commentary([e.id,String(e.n)].concat(e.id==='weight'?['7a','7b']:[]))+machineBlock(e.id);return h}};
 views.method=function(){var m=D.method;var h='<h2>Method and fairness</h2><div class="panel">'+md(m.intro)+'<h3>The grid</h3>'+md(m.grid)+'<h3>Fairness</h3>'+md(m.fairness)+'<h3>Events and points</h3>'+md(m.events)+'<h3>Runs and outputs</h3>'+md(m.runs)+'</div>'+(m.amendments||[]).map(function(x){return '<div class="panel"><h3>'+esc(x.title)+'</h3>'+md(x.body)+'</div>'}).join('')+commentary(['deviations','method']);
- h+='<div class="panel"><h3>How this harness measures</h3><ul><li>Each car runs alone on its own Docker network with the <code>gp264/loadgen</code> container (oha, arm64, <code>--cpus=4</code>, compression off). Throughput is requests per second answered with 200; any non-200 is shown in the table.</li><li>Fuel is sampled with <code>docker stats</code> back to back through the Sprint warm-up and runs; the peak per run is the largest sample (the cgroup figure Docker reports, which counts page cache the container holds).</li><li>Grid start is timed on the host from just before <code>docker run -d</code> to the first 200 on <code>/ssr?rows=100</code> through a loopback-published port.</li><li>Gzip bytes are the body of <code>/ssr?rows=100</code> compressed at level 9 by the harness; the report also notes whether a car compresses by itself when asked.</li><li>Pit stop runs <code>/gp/build.sh</code> in <code>gp264/&lt;car&gt;-build</code> with <code>--cpus=4</code> and takes the <code>GP_BUILD_MS</code> it prints.</li><li>The numbers are means of the runs shown; the spread is the sample standard deviation. Nothing was tuned after a result was seen.</li></ul></div>';
+ h+='<div class="panel"><h3>How this harness measures</h3><ul><li>Each car runs alone on its own Docker network with the <code>gp264/loadgen</code> container (oha, recorded image architecture, <code>--cpus='+esc(S.resourceProfile?S.resourceProfile.loadgen.cpus:4)+'</code>, compression off). Throughput is requests per second answered with 200; any non-200 is shown in the table.</li><li>Fuel is sampled with <code>docker stats</code> back to back through the Sprint warm-up and runs; the peak per run is the largest sample (the cgroup figure Docker reports, which counts page cache the container holds).</li><li>Grid start is timed on the host from just before <code>docker run -d</code> to the first 200 on <code>/ssr?rows=100</code> through a loopback-published port.</li><li>Gzip bytes are the body of <code>/ssr?rows=100</code> compressed at level 9 by the harness; the report also notes whether a car compresses by itself when asked.</li><li>Pit stop runs <code>/gp/build.sh</code> in <code>gp264/&lt;car&gt;-build</code> with <code>--cpus=4</code> and takes the <code>GP_BUILD_MS</code> it prints.</li><li>The numbers are means of the runs shown; the spread is the sample standard deviation. Nothing was tuned after a result was seen.</li></ul></div>';
  var c=D.cleanup;h+='<div class="panel"><h3>Docker hygiene and disk</h3>'+md(m.hygiene)+(c?'<p>Host free disk before the race: <b>'+esc(c.diskBefore||'?')+'</b>, before cleanup: <b>'+esc(c.diskBeforeCleanup||'?')+'</b>, after cleanup: <b>'+esc(c.diskAfterCleanup||'?')+'</b>.</p>':'<p class="note">Cleanup has not run yet (results/cleanup.json missing).</p>')+(D.dockerBefore?'<details><summary>Docker state before the race</summary><pre>'+esc(D.dockerBefore)+'</pre></details>':'')+'</div>';return h};
 var tabs=[['intro','Start here'],['overall','Overall'],['forma','Forma report']].concat(D.events.map(function(e){return [e.id,e.n+' '+e.title]})).concat([['telemetry','Telemetry'],['method','Method'],['log','Race log']]);
 var tabsEl=document.getElementById('tabs'),main=document.getElementById('main');
 tabs.forEach(function(t){var b=document.createElement('button');b.textContent=t[1];b.setAttribute('role','tab');b.dataset.t=t[0];b.onclick=function(){show(t[0])};tabsEl.appendChild(b)});
 var sp=document.createElement('span');sp.className='sp';tabsEl.appendChild(sp);
 var tb=document.createElement('button');tb.textContent='Light/dark';tb.onclick=function(){var r=document.documentElement,cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',cur==='dark'?'light':'dark')};tabsEl.appendChild(tb);
-function show(id){[].forEach.call(tabsEl.querySelectorAll('button[data-t]'),function(b){b.setAttribute('aria-selected',b.dataset.t===id)});var e=D.events.filter(function(x){return x.id===id})[0];main.innerHTML=(views[id]||eventView(e))();try{history.replaceState(null,'','#'+id)}catch(_){}window.scrollTo(0,0)}
+function show(id){[].forEach.call(tabsEl.querySelectorAll('button[data-t]'),function(b){b.setAttribute('aria-selected',b.dataset.t===id)});var e=D.events.filter(function(x){return x.id===id})[0];main.innerHTML=resourceBanner()+(views[id]||eventView(e))();try{history.replaceState(null,'','#'+id)}catch(_){}window.scrollTo(0,0)}
 document.getElementById('sub').textContent='Forma 3.0.0 against the stacks people choose instead. Generated '+D.generated.slice(0,16).replace('T',' ')+' UTC. Every number is the mean of the runs shown, with its spread.';
 var h=location.hash.slice(1);show(tabs.some(function(t){return t[0]===h})?h:'intro');
 })();

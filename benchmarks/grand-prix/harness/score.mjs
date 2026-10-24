@@ -6,6 +6,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, EVENTS, stats } from './lib.mjs';
+import { scoringProfile } from './score-profile.mjs';
+
+const args = process.argv.slice(2);
+const option = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
+const rawRoot = path.resolve(option('--raw', path.join(ROOT, 'results', 'raw')));
+const output = path.resolve(option('--out', path.join(ROOT, 'results', 'summary.json')));
 
 export const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
@@ -57,7 +63,7 @@ const CONTESTS = [
 ];
 
 function loadRaw() {
-  const out = {}, base = path.join(ROOT, 'results', 'raw');
+  const out = {}, base = rawRoot;
   if (!fs.existsSync(base)) return out;
   for (const ev of fs.readdirSync(base)) {
     const dir = path.join(base, ev);
@@ -85,6 +91,7 @@ export function rankWithPoints(entries, better) {
 }
 
 const raw = loadRaw();
+const resourceQualification = scoringProfile(raw);
 const contests = [];
 for (const def of CONTESTS) {
   const entries = [];
@@ -149,7 +156,7 @@ const dnq = Object.entries(smoke).filter(([, s]) => !s.pass).map(([car]) => car)
 // machine states, one per event (from the first car's record or the runner's _machine.json)
 const machine = {};
 for (const e of EVENTS) {
-  const dir = path.join(ROOT, 'results', 'raw', e.id);
+  const dir = path.join(rawRoot, e.id);
   let m = null;
   try { m = JSON.parse(fs.readFileSync(path.join(dir, '_machine.json'), 'utf8')); } catch {}
   const first = Object.values(raw[e.id] || {})[0];
@@ -167,7 +174,7 @@ for (const car of Object.keys(raw.sprint || {})) {
   const load = (r, R) => r && { rps: R, p50: latency(r, 'p50'), p95: latency(r, 'p95'), p99: latency(r, 'p99'), max: latency(r, 'max'), mbPerS: R * r.bytesPerRequest / 1e6, bytes: r.bytesPerRequest };
   telemetry.server[car] = {
     sprint: load(sp, spR), endurance: load(en, enR), multicore: load(mc, mcR),
-    scaling4: mcR / spR, loss100to1000: spR / enR,
+    scaling: mcR / spR, multicoreCpus: Number(resourceQualification.resourceProfile?.classB.cpus ?? 4), scaling4: mcR / spR, loss100to1000: spR / enR,
     usPerPage100: 1e6 / spR, usPerPage1000: 1e6 / enR,
     nsPerByte: en && (1e9 / enR - 1e9 / spR) / (en.bytesPerRequest - sp.bytesPerRequest),
     reaction: re && { mean: latency(re, 'mean'), p50: latency(re, 'p50'), p99: avg(re.values), max: latency(re, 'max') },
@@ -182,14 +189,14 @@ for (const [car, r] of Object.entries(raw.signals || {})) if (r.benches) telemet
 for (const [car, r] of Object.entries(raw['signals-version-check'] || {})) if (r.benches) telemetry.signalsVersionCheck[car] = { version: r.version, geomean: r.geomeanOpsPerSec, measuredAt: r.measuredAt, benches: Object.fromEntries(Object.entries(r.benches).map(([b, o]) => [b, { mean: o.mean, sd: o.sd }])) };
 
 const summary = {
-  generated: new Date().toISOString(), points: POINTS,
+  generated: new Date().toISOString(), points: POINTS, ...resourceQualification,
   rule: 'Formula 1 points 25,18,15,12,10,8,6,4,2,1; ties share their positions\' points. Server = events 1-8 (event 7 has two parts, image size and gzip bytes, each scored apart at half weight), Client = 9-11, Overall = stacks (a server car with the client cars of the UI library it ships, Amendment 2), points per event entered.',
   contests, championships: { server: championship('server'), client: championship('client'), overall: overall() },
   smoke, dnq, machine, telemetry,
   configs: Object.fromEntries(EVENTS.map(e => [e.id, Object.values(raw[e.id] || {})[0]?.config || null])),
 };
-fs.mkdirSync(path.join(ROOT, 'results'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, 'results', 'summary.json'), JSON.stringify(summary, null, 2));
+fs.mkdirSync(path.dirname(output), { recursive: true });
+fs.writeFileSync(output, JSON.stringify(summary, null, 2));
 for (const c of contests) console.log(`${c.n.padEnd(3)} ${c.title.padEnd(24)} ${c.standings.map(s => `${s.rank}.${s.car} ${s.mean.toFixed(2)}±${s.sd.toFixed(2)} (${s.points}p)`).join('  ') || '(no entries)'}`);
 for (const g of ['server', 'client', 'overall']) console.log(g.toUpperCase().padEnd(8), summary.championships[g].map(e => `${e.rank}.${e.car} ${g === 'overall' ? e.mean.toFixed(1) + '/ev' : e.points}`).join('  ') || '(none)');
 if (dnq.length) console.log('DNQ (failed smoke):', dnq.join(', '));

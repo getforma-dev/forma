@@ -3,6 +3,7 @@
 // the Forma report and the race log. Data: results/guide.json, cars.json, forma-report.json and
 // summary.telemetry (score.mjs).
 var G = D.guide || {}, C = D.cars || { server: [], client: [], signals: [] }, FR = D.formaReport, T = S.telemetry || { server: {}, dom: {}, signals: {}, signalsVersionCheck: {} };
+var multicoreCpus = S.resourceProfile ? Number(S.resourceProfile.classB.cpus) : 4;
 function nf(v, d) { return v == null || isNaN(v) ? '-' : (+v).toLocaleString('en-US', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }) }
 function mops(v) { v = v / 1e6; return v >= 1 ? nf(v, 2) : nf(v, 3) }
 function mb(b) { return b == null ? '-' : (b / 1e6).toFixed(1) + ' MB' }
@@ -24,7 +25,7 @@ function explain(id) {
 }
 views.intro = function () {
   var ev = (D.events || []).map(function (e) { var x = (G.events || {})[e.id] || {}; var c = S.contests.filter(function (k) { return k.event === e.id })[0]; return [e.id, ['<b>' + e.n + '</b>', esc(e.title), mdInline(x.what || ''), c ? esc(c.unit + ', ' + c.better + ' is better') : '', c ? String(c.standings.length) : '']] });
-  var srv = C.server.map(function (c) { return card(c, [['runtime', 'Runtime'], ['framework', 'Framework'], ['httpServer', 'HTTP server'], ['render', 'How it renders'], ['multicore', 'With 4 CPUs'], ['pageExtras', 'Page carries'], ['build', 'Build'], ['startCommand', 'Start'], ['baseImage', 'Base image'], ['imageMB', 'Image', function (v) { return nf(v, 0) + ' MB' + (c.buildImageMB ? ' (build image ' + nf(c.buildImageMB, 0) + ' MB)' : '') }], ['compressesWhenAsked', 'Compresses when asked', function (v) { return v ? 'yes' : 'no' }], ['notes', 'Notes']]) }).join('');
+  var srv = C.server.map(function (c) { return card(c, [['runtime', 'Runtime'], ['framework', 'Framework'], ['httpServer', 'HTTP server'], ['render', 'How it renders'], ['multicore', 'With ' + multicoreCpus + ' CPUs'], ['pageExtras', 'Page carries'], ['build', 'Build'], ['startCommand', 'Start'], ['baseImage', 'Base image'], ['imageMB', 'Image', function (v) { return nf(v, 0) + ' MB' + (c.buildImageMB ? ' (build image ' + nf(c.buildImageMB, 0) + ' MB)' : '') }], ['compressesWhenAsked', 'Compresses when asked', function (v) { return v ? 'yes' : 'no' }], ['notes', 'Notes']]) }).join('');
   var cli = C.client.map(function (c) { return card(c, [['library', 'Library'], ['approach', 'How it updates the DOM'], ['build', 'Build'], ['bundleBrotli', 'Bundle', function (v) { return nf(v) + ' B Brotli (' + nf(c.bundleRaw) + ' B raw)' }], ['notes', 'Notes']]) }).join('');
   var sig = C.signals.map(function (c) { return card(c, [['package', 'Package'], ['role', 'Role'], ['notes', 'Adapter']]) }).join('');
   return '<h2>Start here</h2><div class="panel">' + md(G.intro) + '</div><div class="panel"><h3>Who is racing, and what "vanilla" means</h3>' + md(G.naming) + '</div><div class="panel"><h3>The track</h3>' + md(G.track) + '</div>' +
@@ -40,7 +41,7 @@ function loadRows(event) {
     var t = T.server[car] || {}, x = t[event] || {};
     var cells = ['<span class="l">' + esc(car) + '</span>', nf(x.rps, x.rps < 100 ? 1 : 0), nf(x.p50, 1), nf(x.p95, 1), nf(x.p99, 1), nf(x.max, 0), nf(x.mbPerS, 0), kb(x.bytes)];
     if (event === 'endurance') cells.push(nf((1e6 / t.endurance.rps - 1e6 / t.sprint.rps) / 900, 1), nf(t.nsPerByte, 1), nf(t.loss100to1000, 1) + 'x');
-    if (event === 'multicore') cells.push(nf(t.scaling4, 2) + 'x');
+    if (event === 'multicore') cells.push(nf(t.scaling == null ? t.scaling4 : t.scaling, 2) + 'x');
     if (event === 'sprint') cells.push(nf(t.usPerPage100, 0));
     return [car, cells];
   });
@@ -50,9 +51,9 @@ function more(id) {
   if (id === 'sprint' || id === 'endurance' || id === 'multicore') {
     cols = [['Car', 1], ['req/s'], ['p50 ms'], ['p95 ms'], ['p99 ms'], ['max ms'], ['MB/s'], ['page']];
     if (id === 'endurance') cols.push(['µs per row'], ['ns per byte'], ['loss 100 to 1,000']);
-    if (id === 'multicore') cols.push(['scaling 1 to 4 CPUs']);
+    if (id === 'multicore') cols.push(['scaling 1 to ' + multicoreCpus + ' CPUs']);
     if (id === 'sprint') cols.push(['µs per page']);
-    h = table(cols, loadRows(id), 'Latency is what the 64 waiting connections saw, mean of the runs. MB/s is req/s times the page size, so it compares cars that send different pages.' + (id === 'endurance' ? ' µs per row and ns per byte are the marginal cost from 100 to 1,000 rows on one CPU; loss is how many times throughput falls when the page has ten times the rows (10x is linear).' : id === 'multicore' ? ' Scaling is Multi-core req/s over Sprint req/s; 4.00x is perfect.' : ' µs per page is one CPU\'s time per 100-row page (1,000,000 / req/s).'));
+    h = table(cols, loadRows(id), 'Latency is what the 64 waiting connections saw, mean of the runs. MB/s is req/s times the page size, so it compares cars that send different pages.' + (id === 'endurance' ? ' µs per row and ns per byte are the marginal cost from 100 to 1,000 rows on one CPU; loss is how many times throughput falls when the page has ten times the rows (10x is linear).' : id === 'multicore' ? ' Scaling is Multi-core req/s over Sprint req/s; ' + nf(multicoreCpus, 2) + 'x is ideal linear scaling.' : ' µs per page is one CPU\'s time per 100-row page (1,000,000 / req/s).'));
   } else if (id === 'reaction') {
     h = table([['Car', 1], ['p99 ms'], ['mean ms'], ['p50 ms'], ['max ms'], ['µs per page under load']], order('reaction').map(function (car) { var t = T.server[car] || {}, r = t.reaction || {}; return [car, [esc(car), nf(r.p99, 2), nf(r.mean, 2), nf(r.p50, 2), nf(r.max, 1), nf(t.usPerPage100, 0)]] }), 'One request at a time. The last column is the Sprint\'s CPU time per page, for comparison.');
   } else if (id === 'fuel') {
@@ -119,11 +120,11 @@ views.forma = function () {
 };
 views.telemetry = function () {
   var cars = order('sprint'), t = T.server;
-  var r1 = cars.map(function (c) { var x = t[c]; return [c, [esc(c), nf(x.sprint.rps, 0), nf(x.endurance.rps, 0), nf(x.multicore.rps, 0), nf(x.scaling4, 2) + 'x', nf(x.loss100to1000, 1) + 'x', nf(x.usPerPage100, 0), nf(x.nsPerByte, 1), nf(x.sprint.mbPerS, 0), kb(x.sprint.bytes)]] });
+  var r1 = cars.map(function (c) { var x = t[c]; return [c, [esc(c), nf(x.sprint.rps, 0), nf(x.endurance.rps, 0), nf(x.multicore.rps, 0), nf(x.scaling == null ? x.scaling4 : x.scaling, 2) + 'x', nf(x.loss100to1000, 1) + 'x', nf(x.usPerPage100, 0), nf(x.nsPerByte, 1), nf(x.sprint.mbPerS, 0), kb(x.sprint.bytes)]] });
   var r2 = cars.map(function (c) { var x = t[c]; return [c, [esc(c), nf(x.sprint.p50, 1), nf(x.sprint.p99, 1), nf(x.sprint.max, 0), nf(x.endurance.p50, 0), nf(x.endurance.p99, 0), nf(x.endurance.p99 / x.endurance.p50, 2), nf(x.reaction.p50, 2), nf(x.reaction.p99, 2)]] });
   var r3 = cars.map(function (c) { var x = t[c]; return [c, [esc(c), nf(x.idleMiB, 1), nf(x.peakMiB, 1), nf(x.rpsPerMiB, 0), nf(x.grid.total, 0), nf(x.grid.appBoot, 0), mb(x.imageBytes), kb(x.gzipBytes), x.compressesWhenAsked ? esc(x.compressesWhenAsked) : 'no', nf(x.buildMs, 0)]] });
   return '<h2>Telemetry: every server car, every measurement</h2><p class="note">Derived from the recorded runs (results/summary.json, telemetry). Rows in Sprint order. Not scored: these explain the scores.</p>' +
-    '<div class="panel"><h3>Throughput and render cost</h3>' + table([['Car', 1], ['Sprint req/s'], ['Endurance req/s'], ['Multi-core req/s'], ['1 to 4 CPUs'], ['100 to 1,000 rows'], ['µs per page'], ['ns per byte'], ['MB/s'], ['page']], r1, 'µs per page: one CPU\'s time per 100-row page. ns per byte: marginal render cost per byte of HTML from 100 to 1,000 rows. 100 to 1,000 rows: how many times throughput falls (10x is linear).') + '</div>' +
+    '<div class="panel"><h3>Throughput and render cost</h3>' + table([['Car', 1], ['Sprint req/s'], ['Endurance req/s'], ['Multi-core req/s'], ['1 to ' + multicoreCpus + ' CPUs'], ['100 to 1,000 rows'], ['µs per page'], ['ns per byte'], ['MB/s'], ['page']], r1, 'µs per page: one CPU\'s time per 100-row page. ns per byte: marginal render cost per byte of HTML from 100 to 1,000 rows. 100 to 1,000 rows: how many times throughput falls (10x is linear).') + '</div>' +
     '<div class="panel"><h3>Latency</h3>' + table([['Car', 1], ['Sprint p50'], ['Sprint p99'], ['Sprint max'], ['Endurance p50'], ['Endurance p99'], ['Endurance p99/p50'], ['Reaction p50'], ['Reaction p99']], r2, 'Milliseconds. Sprint and Endurance hold 64 connections; Reaction sends one request at a time. p99/p50 near 1 is a steady tail; large values are pauses (often garbage collection).') + '</div>' +
     '<div class="panel"><h3>Memory, start, weight, build</h3>' + table([['Car', 1], ['idle MiB'], ['peak MiB'], ['req/s per MiB'], ['first 200 ms'], ['app boot ms'], ['image'], ['page gzip'], ['compresses'], ['build ms']], r3) + '</div>'
 };
