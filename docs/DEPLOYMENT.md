@@ -8,7 +8,7 @@ template, run `npm ci && npm run build:ssr` in `admin/`, then
 The scaffold's GitHub Actions workflow caches npm downloads and Rust dependency
 artifacts with `Swatinem/rust-cache`. Its cache key includes the Rust compiler,
 Cargo manifests and lockfile, but does not include page source. Only the default
-branch saves the cache; pull requests can read its existing cache. The frontend
+branch saves the Rust cache; pull requests can read its existing cache. The frontend
 build always runs, followed by Cargo's dependency validation and app-crate build.
 The cache accelerates a build; it is never the deployable artifact.
 
