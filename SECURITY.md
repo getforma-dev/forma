@@ -58,6 +58,26 @@ Known residual: an *under*-long control-flow length whose orphaned bytes still d
 - Startup loads and binds declared routes, then `Pages::finalize` refuses incomplete or incompatible contracts before the listener opens. `PageHandle::render` returns `PageResponse` or a coded `RenderError` for missing/refused modules, exceeded budgets, invalid policy, nonce failure or a panic caught in the native walk (`RenderError::Fault`). The fault path requires unwinding; `panic = "abort"` still ends the process. Explicit Browser routes use `render_browser_shell`; an SSR failure never silently substitutes that shell
 - `forma-ir` and `forma-server` deny Clippy's `unwrap_used`, `expect_used` and `panic` lints outside tests. Public asset/manifest loading and nonce generation return errors rather than retaining the old panic bridges; the `try_*` spellings remain compatible fallible aliases. The WASM reader/renderer is removed. Deliberate fault injection and fuzz support are confined to tests or the named internal harness features; those feature builds are not the ordinary published runtime configuration
 
+### Opt-in page compression (FORMA-261)
+
+Rendered pages remain uncompressed by default. The optional `compression` Cargo
+feature only makes `PageResponse::with_compression` available; a handler must
+explicitly opt each response in. The build cannot infer whether declared props
+contain a secret, so neither a static route nor an island-free route is opted in
+automatically.
+
+HTTP compression can disclose a response secret through length when the same
+body reflects attacker-controlled input ([BREACH](https://www.breachattack.com/)).
+Do not opt in pages mixing reflected text with CSRF tokens, session-derived
+secrets or private account data. The CSP nonce is freshly randomized per request,
+but it does not protect other secrets; TLS and `Cache-Control: no-store` do not
+remove this side channel. Apply the same route exclusions to a compressing proxy.
+
+Compression preserves the original CSP and all document policy headers, keeps
+`no-store`, adds `Vary: Accept-Encoding`, and compresses only that request's owned
+HTML. It never caches a compressed nonce-bearing response. Roll back by removing
+the per-response call or the Cargo feature. No global middleware is installed.
+
 ## Supported Versions
 
 <!-- forma-supported-lines:start -->

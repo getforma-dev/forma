@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0 set will be recorded here.
+- Add optional `compression` support for rendered pages through explicit
+  `PageResponse::with_compression` opt-in. Negotiate Brotli/gzip/identity with
+  quality refusals, preserve the document policy and no-store headers, and keep
+  ordinary responses unchanged. Document the BREACH exclusion and rollback.
 
 ## [3.0.0] - Prepared; publication pending
 
