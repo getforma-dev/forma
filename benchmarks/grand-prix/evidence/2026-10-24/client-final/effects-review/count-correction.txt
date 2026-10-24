@@ -1,0 +1,1 @@
+Initial independent script asserted the53-member count from task handoff and refused before statistics. The authenticated ZIP has50 members, all files, exactly matching AUTHENTICATED.json members. Fixed only the erroneous count expectation; no archive/data changed.

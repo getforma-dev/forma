@@ -1,0 +1,23 @@
+{
+  "artifacts": [
+    {
+      "id": 12579300297,
+      "name": "grand-prix-client-40140319634-1",
+      "size_in_bytes": 138657,
+      "url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12579300297",
+      "archive_download_url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12579300297/zip",
+      "expired": false,
+      "created_at": "2026-10-24T22:56:42Z",
+      "expires_at": "2026-11-23T22:56:41Z",
+      "updated_at": "2026-10-24T22:56:42Z",
+      "digest": "sha256:b1c5d2493248a7607dda7105a948a8b57158db41f6e367b233fe2b4268ce8a2c",
+      "workflow_run": {
+        "id": 40140319634,
+        "repository_id": 1181126362,
+        "head_repository_id": 1181126362,
+        "head_branch": "codex/forma-core-perf-combined",
+        "head_sha": "9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+      }
+    }
+  ]
+}

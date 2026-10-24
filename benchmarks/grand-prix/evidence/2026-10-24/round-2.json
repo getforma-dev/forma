@@ -1,6 +1,6 @@
 {
-  "status": "Round 2 is in progress. Full and paired server, compression, island and client evidence are audited; failed client targets remain open. Release is blocked until both effect and row-creation performance targets pass.",
-  "method": "Fresh Linux campaigns use separately recorded VM identities and the dated gha-4-v1 allocation. Compare paired trials only within a campaign. Historical October 23 standings remain in the separate historical report.",
+  "status": "The final client candidate is measured alongside published Forma and pre-effect main. Public effects improve substantially; the original fan-out and row-creation targets remain missed, with batching and DOM point regressions disclosed below. These limitations are accepted as prospective 3.1 product tradeoffs. Packed release qualification, publication and burn-in are not established by this report.",
+  "method": "Fresh Linux campaigns use separately recorded VM identities and the dated gha-4-v1 allocation. Compare trials only within a campaign; all samples, spreads and earlier failed outcomes are retained. Historical October 23 standings remain in the separate historical report.",
   "sections": [
     {
       "title": "FORMA-264 — Linux protocol and evidence boundaries",
@@ -37,6 +37,316 @@
         {
           "label": "Round 2 protocol",
           "url": "https://github.com/getforma-dev/forma/blob/e50cec7fe9221aba25740b366c4430ef6544f556/benchmarks/grand-prix/ROUND-2.md"
+        }
+      ]
+    },
+    {
+      "title": "Final client campaign — measured outcome and release decision",
+      "description": "Run 40140319634 measures published 3.0.0, pre-effect main f5be8647 and final integrated candidate 9ac07a44 sequentially on one Linux VM. Each workload retains two warmups and five measured samples. The full source IDs, original ZIP, own-engine controls and raw samples accompany this report. Row profiling was disabled.",
+      "columns": [
+        "Original criterion",
+        "Published 3.0.0",
+        "Main f5be8647",
+        "Final candidate 9ac07a44",
+        "Original target"
+      ],
+      "rows": [
+        [
+          "Write / own engine",
+          "54.80%",
+          "46.66%",
+          "86.03%",
+          "At least 80%"
+        ],
+        [
+          "Fan-out / own engine",
+          "33.77%",
+          "28.43%",
+          "71.64%",
+          "At least 80%"
+        ],
+        [
+          "Effect create/dispose / own engine",
+          "29.85%",
+          "28.82%",
+          "85.21%",
+          "At least 80%"
+        ],
+        [
+          "Nine-signal geometric mean / own engine",
+          "69.26%",
+          "67.26%",
+          "86.62%",
+          "At least 85%"
+        ],
+        [
+          "Create 1,000 / same-trial vanilla",
+          "1.689×",
+          "1.724×",
+          "1.705×",
+          "At most 1.100×"
+        ]
+      ],
+      "note": "The original fan-out and row-creation targets are still missed. Write, effect creation/disposal and the overall signal ratio meet their individual numerical targets in this campaign. The maintainer accepted the remaining misses as explicit 3.1 product tradeoffs while retaining default row and native listener semantics; no experimental compiler is included. This prospective decision does not turn failed historical targets into passes, establish packed qualification, publish an RC or satisfy burn-in.",
+      "sources": [
+        {
+          "label": "Final client campaign and original samples",
+          "url": "https://github.com/getforma-dev/forma/actions/runs/40140319634"
+        },
+        {
+          "label": "Exact measured candidate",
+          "url": "https://github.com/getforma-dev/forma/tree/9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+        },
+        {
+          "label": "Prospective 3.1 product decisions",
+          "url": "https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md"
+        }
+      ]
+    },
+    {
+      "title": "Final client campaign — all nine reactive-core workloads",
+      "description": "Values are millions of operations per second, mean ± sample SD; higher is better. The last column divides final Forma mean throughput by its contemporaneous pristine alien-signals 3.1.2 mean, which matches Forma’s own engine dependency. The separate official alien-signals race entry is 3.2.1.",
+      "columns": [
+        "Workload",
+        "Published 3.0.0",
+        "Main f5be8647",
+        "Final candidate 9ac07a44",
+        "Final / own 3.1.2"
+      ],
+      "rows": [
+        [
+          "signal create",
+          "55.933 ± 37.981",
+          "58.536 ± 35.479",
+          "57.301 ± 36.781",
+          "94.29%"
+        ],
+        [
+          "signal read",
+          "116.645 ± 10.476",
+          "117.552 ± 10.775",
+          "114.412 ± 23.171",
+          "95.25%"
+        ],
+        [
+          "write with one effect",
+          "5.308 ± 0.389",
+          "4.892 ± 0.347",
+          "9.062 ± 1.319",
+          "86.03%"
+        ],
+        [
+          "computed cache hit",
+          "67.100 ± 12.092",
+          "67.042 ± 13.264",
+          "66.420 ± 5.233",
+          "89.40%"
+        ],
+        [
+          "chain of 100",
+          "0.174 ± 0.017",
+          "0.178 ± 0.016",
+          "0.172 ± 0.019",
+          "89.85%"
+        ],
+        [
+          "diamond (500 middles)",
+          "0.027 ± 0.002",
+          "0.026 ± 0.001",
+          "0.027 ± 0.001",
+          "87.14%"
+        ],
+        [
+          "fan-out to 100 effects",
+          "0.067 ± 0.003",
+          "0.067 ± 0.004",
+          "0.165 ± 0.016",
+          "71.64%"
+        ],
+        [
+          "effect create and dispose",
+          "2.195 ± 0.249",
+          "2.153 ± 0.240",
+          "7.711 ± 2.009",
+          "85.21%"
+        ],
+        [
+          "batch of 100 writes",
+          "0.215 ± 0.048",
+          "0.199 ± 0.026",
+          "0.185 ± 0.023",
+          "83.15%"
+        ]
+      ],
+      "note": "Final writes improve 70.74%, fan-out 145.77% and effect creation/disposal 251.34% versus published Forma in this campaign. The batch-of-100-writes mean regresses 13.79% versus published and 6.93% versus pre-effect main. All five samples and their substantial spreads remain visible in the evidence; overlapping SDs do not prove equivalence. The 86.62% overall own-engine ratio does not erase that batching point regression or the 71.64% fan-out miss.",
+      "sources": [
+        {
+          "label": "Final client campaign and original samples",
+          "url": "https://github.com/getforma-dev/forma/actions/runs/40140319634"
+        },
+        {
+          "label": "Exact measured candidate",
+          "url": "https://github.com/getforma-dev/forma/tree/9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+        },
+        {
+          "label": "Prospective 3.1 product decisions",
+          "url": "https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md"
+        }
+      ]
+    },
+    {
+      "title": "Final client campaign — all nine DOM operations",
+      "description": "Milliseconds, mean ± sample SD; lower is better. Each source has its own same-trial vanilla control in the archive; the table shows the final candidate’s paired vanilla. Percentage changes compare the final candidate with published and pre-effect main in this same campaign.",
+      "columns": [
+        "Operation",
+        "Published 3.0.0",
+        "Main f5be8647",
+        "Final candidate 9ac07a44",
+        "Final-trial vanilla",
+        "Final vs published",
+        "Final vs main"
+      ],
+      "rows": [
+        [
+          "create1000",
+          "44.820 ± 3.896",
+          "43.480 ± 8.441",
+          "44.560 ± 4.108",
+          "26.140 ± 2.396",
+          "-0.58%",
+          "+2.48%"
+        ],
+        [
+          "replace1000",
+          "46.580 ± 3.069",
+          "44.440 ± 1.988",
+          "43.400 ± 2.108",
+          "29.000 ± 3.804",
+          "-6.83%",
+          "-2.34%"
+        ],
+        [
+          "update10th",
+          "7.900 ± 4.763",
+          "6.420 ± 3.172",
+          "7.340 ± 3.233",
+          "7.080 ± 4.018",
+          "-7.09%",
+          "+14.33%"
+        ],
+        [
+          "select",
+          "0.680 ± 0.130",
+          "1.580 ± 0.295",
+          "1.360 ± 0.434",
+          "0.240 ± 0.055",
+          "+100.00%",
+          "-13.92%"
+        ],
+        [
+          "swap",
+          "3.220 ± 0.683",
+          "2.960 ± 0.546",
+          "2.620 ± 0.259",
+          "2.000 ± 0.071",
+          "-18.63%",
+          "-11.49%"
+        ],
+        [
+          "remove",
+          "4.140 ± 1.756",
+          "2.580 ± 0.517",
+          "2.620 ± 0.415",
+          "2.020 ± 0.205",
+          "-36.71%",
+          "+1.55%"
+        ],
+        [
+          "create10000",
+          "480.520 ± 99.268",
+          "457.340 ± 93.967",
+          "464.160 ± 94.184",
+          "330.060 ± 33.132",
+          "-3.40%",
+          "+1.49%"
+        ],
+        [
+          "append1000",
+          "43.940 ± 7.724",
+          "40.500 ± 4.317",
+          "41.820 ± 7.800",
+          "27.260 ± 3.062",
+          "-4.82%",
+          "+3.26%"
+        ],
+        [
+          "clear",
+          "6.040 ± 1.770",
+          "4.600 ± 0.354",
+          "6.000 ± 1.796",
+          "3.560 ± 0.089",
+          "-0.66%",
+          "+30.43%"
+        ]
+      ],
+      "note": "Create-1,000 is 44.56 ± 4.11 ms versus vanilla 26.14 ± 2.40 ms: 1.705×, above the original 1.10× target. Selection is 1.36 ms versus published 0.68 ms, though pre-effect main is already 1.58 ms. Clear rises from main’s 4.60 ms to 6.00 ms (+30.43%), with published at 6.04 ms. These point regressions are disclosed, not hidden by a geometric mean. Five sequential samples and nonrandomized source order limit causal attribution; no blanket non-regression claim is made.",
+      "sources": [
+        {
+          "label": "Final client campaign and original samples",
+          "url": "https://github.com/getforma-dev/forma/actions/runs/40140319634"
+        },
+        {
+          "label": "Exact measured candidate",
+          "url": "https://github.com/getforma-dev/forma/tree/9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+        },
+        {
+          "label": "Prospective 3.1 product decisions",
+          "url": "https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md"
+        }
+      ]
+    },
+    {
+      "title": "Final client campaign — application bytes and evidence boundaries",
+      "description": "All statically loaded JavaScript for the unchanged client benchmark application. These bytes belong to each source in run 40140319634; they are separate from package import-graph and island-route budgets.",
+      "columns": [
+        "Source",
+        "Raw JavaScript, B",
+        "gzip 9, B",
+        "Brotli 11, B"
+      ],
+      "rows": [
+        [
+          "Published 3.0.0",
+          "25,821",
+          "9,525",
+          "8,652"
+        ],
+        [
+          "Main f5be8647",
+          "25,063",
+          "9,267",
+          "8,417"
+        ],
+        [
+          "Final candidate 9ac07a44",
+          "25,347",
+          "9,316",
+          "8,498"
+        ]
+      ],
+      "note": "The final application is 8,498 B Brotli: 154 B smaller than published Forma and 81 B larger than pre-effect main. The independent package/route size decisions, their old-limit misses and their new ceilings are documented separately. This campaign uses gha-4-v1: signal processes receive one CPU/1 GiB on CPU 0, and the browser/driver use CPUs 1–3 with the locked Chromium 156.0.8078.4. No cross-campaign timing gains, final server rerace, publication or deployment are inferred.",
+      "sources": [
+        {
+          "label": "Final client campaign and original samples",
+          "url": "https://github.com/getforma-dev/forma/actions/runs/40140319634"
+        },
+        {
+          "label": "Exact measured candidate",
+          "url": "https://github.com/getforma-dev/forma/tree/9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+        },
+        {
+          "label": "Prospective 3.1 product decisions",
+          "url": "https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md"
         }
       ]
     },
@@ -1254,8 +1564,8 @@
       ]
     },
     {
-      "title": "Qualification still being assembled",
-      "description": "Completed workflow status is followed by an independent audit of raw evidence before any performance claim or ticket completion.",
+      "title": "Qualification and disclosed limitations",
+      "description": "Each campaign keeps its source, VM, raw samples and outcome. Product acceptance decisions are separate from whether the original numerical target passed.",
       "columns": [
         "Campaign",
         "Status"
@@ -1270,18 +1580,22 @@
           "Audited; byte, mean-based tail and strength budgets pass"
         ],
         [
-          "Client rollback and own-engine signals",
-          "Audited; effect and row-creation targets failed"
+          "Final client 9ac07a44",
+          "Measured and audited; original fan-out and row-creation targets missed, batching point regression disclosed"
+        ],
+        [
+          "3.1 product decision",
+          "Stable row behavior and explicit remaining performance costs accepted prospectively"
+        ],
+        [
+          "Release qualification and publication",
+          "Packed checks, independent release audit, RC publication and active burn-in remain separate requirements"
         ]
       ],
-      "note": "The effect and row-creation acceptance targets remain open. No release or deployment is claimed by this report.",
+      "note": "The retained failed and rollback campaigns stay unchanged. No package release or deployment is established by this report.",
       "sources": [
         {
-          "label": "Retained unresolved server campaign",
-          "url": "https://github.com/getforma-dev/forma/actions/runs/40116667052"
-        },
-        {
-          "label": "Corrected full server rerun",
+          "label": "Qualified full server campaign",
           "url": "https://github.com/getforma-dev/forma/actions/runs/40123441558"
         },
         {
@@ -1289,8 +1603,16 @@
           "url": "https://github.com/getforma-dev/forma/actions/runs/40116668819"
         },
         {
-          "label": "Client campaign",
-          "url": "https://github.com/getforma-dev/forma/actions/runs/40118323052"
+          "label": "Final client campaign and original samples",
+          "url": "https://github.com/getforma-dev/forma/actions/runs/40140319634"
+        },
+        {
+          "label": "Exact measured candidate",
+          "url": "https://github.com/getforma-dev/forma/tree/9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+        },
+        {
+          "label": "Prospective 3.1 product decisions",
+          "url": "https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md"
         }
       ]
     }

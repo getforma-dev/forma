@@ -1,0 +1,86 @@
+{
+  "measuredSource": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+  "docsRepairHead": "90ff7f65ceee1641cbd89e3c7350738ed04a3672",
+  "changedPathsSinceMeasured": [
+    "packages/core/README.md"
+  ],
+  "allOtherTrackedGitBlobsIdentical": true,
+  "inputs": {
+    "packages/core/src/reactive/batch.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "f855906096c2dbdc8792d4c016a1fbbb4e86f655562f229f50d4ae14572b57c4",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "f855906096c2dbdc8792d4c016a1fbbb4e86f655562f229f50d4ae14572b57c4",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "f855906096c2dbdc8792d4c016a1fbbb4e86f655562f229f50d4ae14572b57c4"
+    },
+    "packages/core/src/reactive/signal.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "2753a7adab7c7439885e1bbaca0004d62fb02b18f32177c74703111c2cef29ad",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "2753a7adab7c7439885e1bbaca0004d62fb02b18f32177c74703111c2cef29ad",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "2753a7adab7c7439885e1bbaca0004d62fb02b18f32177c74703111c2cef29ad"
+    },
+    "packages/core/src/reactive/computed.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "9c3f927b6fb6a1c0de234f215416c36d370738d7a3ec7a8eb5e7eb6987a5d30a",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "9c3f927b6fb6a1c0de234f215416c36d370738d7a3ec7a8eb5e7eb6987a5d30a",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "9c3f927b6fb6a1c0de234f215416c36d370738d7a3ec7a8eb5e7eb6987a5d30a"
+    },
+    "packages/core/src/dom/list.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "e83f40972376a69edfdb7c5eefe174202f12b0d54734aa06f432f3b7121479ad",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "e83f40972376a69edfdb7c5eefe174202f12b0d54734aa06f432f3b7121479ad",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "e83f40972376a69edfdb7c5eefe174202f12b0d54734aa06f432f3b7121479ad"
+    },
+    "packages/core/src/reactive/effect.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "5c70b00c9dda06b87094dceb04c37c62500ad4ad5952d49d92a2c9a5af1f48d1",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "864b054315d2639d10d5e53a2e24f5c0708207f60ee554a239f61351b0a42b09",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "864b054315d2639d10d5e53a2e24f5c0708207f60ee554a239f61351b0a42b09"
+    },
+    "packages/core/src/reactive/adoption-hooks.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "613e96eaf09497691aab2739077bc2847bd850f00caf614a194006b3e1de6c54",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "4046ce7b4d680c6010be793b4b584a25d032ae700578dd08e9ce9105f4035673",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "4046ce7b4d680c6010be793b4b584a25d032ae700578dd08e9ce9105f4035673"
+    },
+    "packages/core/src/reactive/root.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "96e6ac67c390d08d4f7c20e7ca354a46cf9140f620afd3b387737e0c3874e06e",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "b37fcc2db45257fa5059ff0b6cca5f193a51029bc7bafa3d4823185b71cc6483",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "b37fcc2db45257fa5059ff0b6cca5f193a51029bc7bafa3d4823185b71cc6483"
+    },
+    "packages/core/src/reactive/cleanup.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "8bad7249845915962ec4066b3f4f8a3a783744abd0ee720ad5dd6e13c45cf997",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "f448d58db6f8de90c4040eed980753522bd166da826f1f3c2a93b1fd4b0c3e86",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "f448d58db6f8de90c4040eed980753522bd166da826f1f3c2a93b1fd4b0c3e86"
+    },
+    "packages/core/src/dom/element.ts": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "985b2efb8bb2a4929110ce8d1b85ab2c90115d79264ea43e9a447fb96b7e9fff",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "ea6ad0c074e7cc2c0a8e9a72e7cd384200dadf6c7716e547c93a5aa907f4ae72",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "ea6ad0c074e7cc2c0a8e9a72e7cd384200dadf6c7716e547c93a5aa907f4ae72"
+    },
+    "benchmarks/grand-prix/signals-race/benchmarks.mjs": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "6ad60edbee4100b27dd6b3f2e3837514d989e7720a3062d7d5c2415053abda9e",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "6ad60edbee4100b27dd6b3f2e3837514d989e7720a3062d7d5c2415053abda9e",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "6ad60edbee4100b27dd6b3f2e3837514d989e7720a3062d7d5c2415053abda9e"
+    },
+    "benchmarks/grand-prix/client-race/apps/forma/src/main.jsx": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "3ba89957c35240eb4cda6f4e1779ebfdad32ce4c772400ca07647d17dbddfea4",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "3ba89957c35240eb4cda6f4e1779ebfdad32ce4c772400ca07647d17dbddfea4",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "3ba89957c35240eb4cda6f4e1779ebfdad32ce4c772400ca07647d17dbddfea4"
+    },
+    "benchmarks/grand-prix/client-race/run.mjs": {
+      "f5be8647439e560c71c27b8c5f4bde26507b8bbb": "c8b969c7d5528c9ec88f3320b07d11e13c18ec4b4dfe0ff46bf3b9b6e0c49655",
+      "9ac07a446ebe8aaad407a895fa8aaece189bc69e": "c8b969c7d5528c9ec88f3320b07d11e13c18ec4b4dfe0ff46bf3b9b6e0c49655",
+      "90ff7f65ceee1641cbd89e3c7350738ed04a3672": "c8b969c7d5528c9ec88f3320b07d11e13c18ec4b4dfe0ff46bf3b9b6e0c49655"
+    }
+  },
+  "mainToSelectedProductionChanges": [
+    "packages/core/src/dom/__tests__/element.test.ts",
+    "packages/core/src/dom/__tests__/list-lazy-index.test.ts",
+    "packages/core/src/dom/element.ts",
+    "packages/core/src/reactive/__tests__/effect-anchor.test.ts",
+    "packages/core/src/reactive/__tests__/effect-context.test.ts",
+    "packages/core/src/reactive/__tests__/effect-dependency.test.ts",
+    "packages/core/src/reactive/__tests__/effect-engine-contract.test.ts",
+    "packages/core/src/reactive/__tests__/effect-node.test.ts",
+    "packages/core/src/reactive/__tests__/effect-startup-disposal.test.ts",
+    "packages/core/src/reactive/adoption-hooks.ts",
+    "packages/core/src/reactive/cleanup.ts",
+    "packages/core/src/reactive/effect-node.ts",
+    "packages/core/src/reactive/effect.ts",
+    "packages/core/src/reactive/root.ts"
+  ]
+}
