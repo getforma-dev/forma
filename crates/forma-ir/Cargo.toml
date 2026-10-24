@@ -45,8 +45,13 @@ crate-type = ["rlib"]
 # Self dev-dependency: the only way to enable a feature for this crate's own
 # integration tests and examples without also enabling it for consumers.
 [dev-dependencies]
+criterion = { version = "=0.5.1", default-features = false }
 serde = { version = "1", features = ["derive"] }
 forma-ir = { path = ".", features = ["test-helpers", "__fault-injection", "__fuzzing"] }
+
+[[bench]]
+name = "walker"
+harness = false
 
 [lints]
 workspace = true
