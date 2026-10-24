@@ -7,7 +7,8 @@
  * TC39 Signals equivalent: Signal.subtle.Watcher (effect is a userland concept)
  */
 
-import { effect as rawEffect, getActiveSub } from 'alien-signals';
+import { effect as rawEffect } from 'alien-signals';
+import { startEffectNode, stopEffectNode, type EffectNode } from './effect-node.js';
 import {
   hasActiveRoot,
   registerDisposer,
@@ -17,7 +18,7 @@ import {
 import { setExecutionContext } from './cleanup.js';
 import { reportError } from './dev.js';
 import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
-import { deferAdoptionEffect, getAdoptionCallbacks, bindAdoptionCallback, runAdoptionCallback } from './adoption-hooks.js';
+import { deferAdoptionEffect, getAdoptionCallbacks, withAdoptionCallbacks, bindAdoptionCallback, runAdoptionCallback } from './adoption-hooks.js';
 
 declare const __FORMA_FRAME_BUILD__: boolean | undefined;
 
@@ -61,8 +62,6 @@ const enum EffectLimit { ReentrantRuns = 100 }
 
 // alien-signals ReactiveFlags.Pending (not exported from the package root).
 const enum ReactiveFlag { Pending = 32 }
-
-interface SubNode { flags: number; }
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -142,25 +141,52 @@ export function internalEffect(fn: () => void): () => void {
  * Returns a dispose function that stops the effect.
  */
 export function createEffect(fn: () => void | (() => void)): () => void {
-  return deferAdoptionEffect(fn, createOwnedEffect) ?? createOwnedEffect(fn, adoptionFailure, false, runPlain);
+  const deferred = deferAdoptionEffect(fn, createOwnedEffect);
+  if (deferred != null) return deferred;
+  const owner = getOwner();
+  if (owner) return createParentedEffect(fn, owner);
+  return new EffectState(fn, adoptionFailure, false).start();
 }
 
-// The effect record is also its generation owner. Its disposer array is allocated
-// only when nested work registers; an ordinary signal reader has no child owner
-// allocation and never traverses disposeOwner's empty array.
+function createParentedEffect(fn: () => void | (() => void), owner: Owner): () => void {
+  const dispose = new EffectState(fn, adoptionFailure, false).start();
+  owner.disposers.push(dispose);
+  return dispose;
+}
+
+// One record is both the engine subscriber and its Forma generation owner.
+// Children and cleanup are allocated only when used; the ordinary record keeps
+// the same six-field shape as a raw effect, with its callback on the prototype.
 type Cleanup = (() => void)[] | undefined;
-class EffectState implements Owner {
-  owner: Owner | null = this;
+// A single inert instance keeps this constructor's graph-node map reachable
+// across GC. It never enters the graph or captures caller authority. The
+// scoped setters restore ambient values; this initializer is safe to erase
+// when the whole public/adopted effect class is unused by an entry point.
+class EffectState implements Owner, EffectNode {
+  private static readonly shapeAnchor = /* @__PURE__ */ withAdoptionCallbacks(undefined, () =>
+    withAdoptionEvents(undefined, () => {
+      const anchor = new this(() => {}, undefined, false);
+      anchor.disposed = true;
+      return anchor;
+    }));
+
+  flags = 2 | 4;
+  deps: EffectNode['deps'] = undefined;
+  depsTail: EffectNode['depsTail'] = undefined;
+  subs: EffectNode['subs'] = undefined;
+  subsTail: EffectNode['subsTail'] = undefined;
+  declare ownerOverride: Owner | null | undefined;
+  get owner(): Owner | null { return this.ownerOverride === undefined ? this : this.ownerOverride; }
+  set owner(owner: Owner | null) { this.ownerOverride = owner === this ? undefined : owner; }
   declare slow: boolean | undefined;
   // Optional state is installed only when used. A leaf reader retains just its
-  // callback, ownership context and engine disposer, rather than empty slots for
+  // user callback and graph links, rather than empty slots for
   // cleanup, children, initial errors and adoption capabilities.
   declare children: (() => void)[] | undefined;
   declare cleanup: Cleanup;
   declare nextCleanup: Cleanup;
   declare disposed: boolean | undefined;
   declare initialError: { error: unknown } | undefined;
-  declare stop: () => void;
   declare callbacks: ReturnType<typeof getAdoptionCallbacks>;
   declare events: ReturnType<typeof getAdoptionEvents>;
   declare reader: ((fn: () => void) => () => void) | undefined;
@@ -168,7 +194,7 @@ class EffectState implements Owner {
   declare initialThrow: boolean | undefined;
 
   constructor(
-    public fn: () => void | (() => void),
+    public callback: () => void | (() => void),
     failure: ((error: unknown) => void) | undefined,
     initialThrow: boolean | undefined,
   ) {
@@ -210,9 +236,9 @@ class EffectState implements Owner {
 
 
   run(reentrantRuns = 0): void {
-    const node = getActiveSub() as SubNode | undefined;
+    const node = this;
     do {
-      if (node) node.flags &= ~ReactiveFlag.Pending;
+      node.flags &= ~ReactiveFlag.Pending;
       const initialThrow = this.initialThrow;
       if (initialThrow) this.initialThrow = false;
       this.clean();
@@ -222,7 +248,7 @@ class EffectState implements Owner {
       if (boundary) { adoptionFailure = this.failure; adoptionInternalEffect = this.reader; }
       let failed = false;
       try {
-        const fn = this.fn;
+        const fn = this.callback;
         // A synchronously flushed ordinary neighbor still gets mode isolation,
         // never the adopted caller's authority. The usual path has no wrapper.
         const cleanup = this.callbacks || this.events || getAdoptionCallbacks() || getAdoptionEvents()
@@ -238,7 +264,12 @@ class EffectState implements Owner {
           if (initialThrow) { this.initialError = {error}; failed = true; }
           else if (this.failure) { this.failure(error); failed = true; }
           else reportError(error, 'effect');
-        } finally { this.owner = this; }
+        } finally {
+          this.owner = this;
+          // A reporter can allocate the first collector or dispose this effect.
+          // Commit its cleanup before the outer finally drains a stopped run.
+          this.cleanup = this.nextCleanup;
+        }
       } finally {
         setExecutionContext(previousContext);
         if (boundary) { adoptionFailure = previousFailure; adoptionInternalEffect = previousReader; }
@@ -246,7 +277,7 @@ class EffectState implements Owner {
         // was created after the first synchronous disposal too.
         if (this.disposed) this.clean();
       }
-      if (failed || this.disposed || !node || !(node.flags & ReactiveFlag.Pending)) break;
+      if (failed || this.disposed || !(node.flags & ReactiveFlag.Pending)) break;
       if (++reentrantRuns >= EffectLimit.ReentrantRuns) {
         node.flags &= ~ReactiveFlag.Pending;
         const error = new Error(`createEffect exceeded ${EffectLimit.ReentrantRuns} self-triggered re-runs (cycle?)`);
@@ -260,43 +291,45 @@ class EffectState implements Owner {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    this.stop();
+    stopEffectNode(this);
     this.clean();
     // The body may still be collecting this generation's cleanup. Its finally
     // commits and drains that array, including work registered after disposal.
   }
 
-  start(run: (this: EffectState) => void = this.run): () => void {
-    this.stop = rawEffect(run.bind(this));
+  start(): () => void {
+    startEffectNode(this);
     if (this.initialError) { this.dispose(); throw this.initialError.error; }
     return this.dispose.bind(this);
   }
-}
-
-function runPlain(this: EffectState): void {
-  if (this.slow || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
-  // alien-signals 3.1.2 esm/index.mjs: effect() and run() enter callbacks
-  // with Watching | Recursed (Pending clear), checked by effect-engine-contract.
-  // Reentrant executions go through run(), which clears it for each turn.
-  const previous = setExecutionContext(this), node = getActiveSub() as SubNode;
-  try {
-    const fn = this.fn, cleanup = fn();
-    if (typeof cleanup === 'function') this.addCleanup(cleanup);
-    if (this.nextCleanup) this.cleanup = this.nextCleanup;
-  } catch (error) {
-    if (this.nextCleanup) this.cleanup = this.nextCleanup;
-    this.owner = previous.owner;
-    try { reportError(error, 'effect'); } finally { this.owner = this; }
-  } finally {
-    setExecutionContext(previous);
-    if (this.disposed) this.clean();
+  fn(): void {
+    if (this.slow || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
+    // alien-signals 3.1.2 esm/index.mjs: effect() and run() enter callbacks
+    // with Watching | Recursed (Pending clear), checked by effect-engine-contract.
+    // Reentrant executions go through run(), which clears it each turn.
+    const previous = setExecutionContext(this), node = this;
+    try {
+      const fn = this.callback, cleanup = fn();
+      if (typeof cleanup === 'function') this.addCleanup(cleanup);
+      if (this.nextCleanup) this.cleanup = this.nextCleanup;
+    } catch (error) {
+      if (this.nextCleanup) this.cleanup = this.nextCleanup;
+      this.owner = previous.owner;
+      try { reportError(error, 'effect'); } finally {
+        this.owner = this;
+        this.cleanup = this.nextCleanup;
+      }
+    } finally {
+      setExecutionContext(previous);
+      if (this.disposed) this.clean();
+    }
+    if (!this.disposed && (node.flags & ReactiveFlag.Pending)) this.run(1);
   }
-  if (!this.disposed && (node.flags & ReactiveFlag.Pending)) this.run(1);
 }
 
-function createOwnedEffect(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow?: boolean, run?: (this: EffectState) => void): () => void {
+function createOwnedEffect(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow?: boolean, State: typeof EffectState = EffectState): () => void {
   const owner = getOwner();
-  const dispose = new EffectState(fn, failure, initialThrow).start(run);
+  const dispose = new State(fn, failure, initialThrow).start();
   if (owner) owner.disposers.push(dispose);
   return dispose;
 }
