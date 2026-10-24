@@ -2,7 +2,7 @@
 // The race director's runner. Usage:
 //   node harness/race.mjs [--cars a,b,c] [--events 1-8 | 1,2,5 | sprint,fuel | dom,bundle,signals | all]
 //        [--duration 10] [--warmup 5] [--runs 3] [--starts 5] [--build-runs 3] [--force] [--skip-smoke]
-// Default cars: every contestants/<car>/ with an image gp/<car>. Default events: 1-8.
+// Default cars: every contestants/<car>/ with an image gp264/<car>. Default events: 1-8.
 // Events 9-11 call client-race/run.mjs, client-race/bundle.mjs and signals-race/run.mjs.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,7 @@ import { spawn } from 'node:child_process';
 import {
   ROOT, CFG, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
   startCar, hostPort, removeContainer, startLoadgen, waitReady, get, checkBody, smokeCar, imageInfo, oha,
-  startSampler, parseMem, machineState, writeRaw, stats, uniq,
+  startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName,
 } from './lib.mjs';
 
 installTrap();
@@ -53,7 +53,7 @@ function discoverCars() {
 }
 const cars = opt.cars ? String(opt.cars).split(',') : discoverCars();
 const serverEvents = events.filter(n => n <= 8);
-if (serverEvents.length && !cars.length) { console.error('no cars: pass --cars or build gp/<car> images'); process.exit(2); }
+if (serverEvents.length && !cars.length) { console.error('no cars: pass --cars or build gp264/<car> images'); process.exit(2); }
 
 // ---------- the quiet-machine rule ----------
 const load1 = os.loadavg()[0];
@@ -178,7 +178,7 @@ async function weight(car) {
     const gz = zlib.gzipSync(plain.body, { level: 9 });
     return { weight: meta(car, { class: 'A', machine: { before, after: machineState() },
       parts: {
-        image: { metric: { name: 'runtime image size', unit: 'bytes', better: 'lower' }, values: [img.sizeBytes], source: 'docker image inspect gp/' + car },
+        image: { metric: { name: 'runtime image size', unit: 'bytes', better: 'lower' }, values: [img.sizeBytes], source: 'docker image inspect ' + imageName(car) },
         gzip: { metric: { name: 'gzip response bytes, 100 rows', unit: 'bytes', better: 'lower' }, values: [gz.length], rawBytes: plain.body.length,
           source: 'response body gzip level 9 by the harness', contentEncodingWhenAsked: enc.headers?.['content-encoding'] || null, bytesWhenServerCompresses: enc.headers?.['content-encoding'] ? enc.body.length : null },
       },
@@ -188,7 +188,7 @@ async function weight(car) {
 
 async function runBuild(car, script) {
   const name = uniq(car + '-build'), t0 = performance.now();
-  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, `gp/${car}-build`, script);
+  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, imageName(car + '-build'), script);
   const wall = performance.now() - t0, m = r.stdout.match(script.includes('rust') ? /GP_RUST_BUILD_MS=(\d+(?:\.\d+)?)/g : /GP_BUILD_MS=(\d+(?:\.\d+)?)/g);
   if (r.code || !m) throw new Error(`${script} failed (exit ${r.code}): ` + (r.stderr + r.stdout).slice(-400));
   return { buildMs: +m[m.length - 1].split('=')[1], wallMs: wall };
@@ -198,21 +198,21 @@ async function runBuild(car, script) {
 async function runFormaBuild() {
   const name = uniq('forma-build'), t0 = performance.now();
   const sh = '/gp/build.sh && cd /app && touch src/*.rs && s=$(date +%s%N) && cargo build --release --locked --offline && e=$(date +%s%N) && echo GP_APP_BUILD_MS=$(( (e - s) / 1000000 ))';
-  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, 'gp/forma-build', 'sh', '-c', sh);
+  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, imageName('forma-build'), 'sh', '-c', sh);
   const f = r.stdout.match(/GP_BUILD_MS=(\d+)/), a = r.stdout.match(/GP_APP_BUILD_MS=(\d+)/);
   if (r.code || !f || !a) throw new Error(`forma build failed (exit ${r.code}): ` + (r.stderr + r.stdout).slice(-400));
   return { buildMs: +f[1] + +a[1], fmirMs: +f[1], appCompileMs: +a[1], wallMs: performance.now() - t0 };
 }
 async function pitstop(car) {
   const before = machineState();
-  if (!imageInfo(car + '-build').id) throw new Error(`gp/${car}-build not found`);
+  if (!imageInfo(car + '-build').id) throw new Error(`gp264/${car}-build not found`);
   const runs = [];
   for (let i = 1; i <= CFG.buildRuns; i++) { const r = car === 'forma' ? await runFormaBuild() : await runBuild(car, '/gp/build.sh'); r.run = i; runs.push(r); log(`  pit stop run ${i}: ${(r.buildMs / 1000).toFixed(1)} s`); }
   const out = { class: 'build', cpus: CFG.buildCpus, machine: { before, after: null }, metric: { name: car === 'forma' ? 'production build time: FMIR build plus app crate release compile, dependencies compiled (Amendment 3)' : 'production build time (GP_BUILD_MS)', unit: 'ms', better: 'lower' }, values: runs.map(r => r.buildMs), runs };
   if (car === 'forma') {
-    const has = (await docker('run', '--rm', '--label', LABEL, '--label', RUN_LABEL, `gp/${car}-build`, 'sh', '-c', 'test -x /gp/build-rust.sh')).code === 0;
+    const has = (await docker('run', '--rm', '--label', LABEL, '--label', RUN_LABEL, imageName(car + '-build'), 'sh', '-c', 'test -x /gp/build-rust.sh')).code === 0;
     if (has) { const r = await runBuild(car, '/gp/build-rust.sh'); out.rust = { note: 'Cold Rust compile from an empty target, every dependency included, one run, reported beside, not scored', ...r }; log(`  forma rust compile: ${(r.buildMs / 1000).toFixed(1)} s`); }
-    else out.rust = { note: '/gp/build-rust.sh not found in gp/forma-build' };
+    else out.rust = { note: '/gp/build-rust.sh not found in gp264/forma-build' };
   }
   out.machine.after = machineState();
   return { pitstop: meta(car, out) };
@@ -225,8 +225,12 @@ async function external(evId, script, extraArgs = []) {
   fs.mkdirSync(path.join(ROOT, 'harness', 'logs'), { recursive: true });
   const logf = path.join(ROOT, 'harness', 'logs', `${evId}-${Date.now()}.log`), out = fs.openSync(logf, 'w');
   const before = machineState();
+  const signals = evId === 'signals';
+  const program = signals ? 'docker' : process.execPath;
+  const args = signals ? ['run', '--rm', '--label', LABEL, '--label', RUN_LABEL, '--cpus=1', '--memory=1g', '-v', `${path.join(ROOT, 'results/raw/signals')}:/out`, imageName('signals'), ...extraArgs] : [file, ...extraArgs];
+  fs.mkdirSync(path.join(ROOT, 'results/raw', evId), { recursive: true });
   const code = await new Promise(res => {
-    const p = spawn('node', [file, ...extraArgs], { cwd: ROOT, stdio: ['ignore', out, out] });
+    const p = spawn(program, args, { cwd: ROOT, stdio: ['ignore', out, out] });
     p.on('error', () => res(-1)); p.on('close', res);
   });
   const dir = path.join(ROOT, 'results', 'raw', evId); fs.mkdirSync(dir, { recursive: true });

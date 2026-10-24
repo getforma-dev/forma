@@ -10,7 +10,7 @@ import { appsDir, rawDir, parseArgs, builtCars, serveDist } from './lib.mjs';
 
 const args = parseArgs(process.argv.slice(2), {
   runs: '5', warmups: '2', out: path.join(rawDir, 'dom'),
-  chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  chrome: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 });
 const RUNS = +args.runs, WARM = +args.warmups;
 const { have, missing } = builtCars(args.cars);

@@ -1,5 +1,5 @@
 // Event 11. Usage: node run.mjs [--cars forma,solid] [--runs 5] [--warmups 2] [--out ../results/raw/signals]
-// In Docker (image gp/signals) the default output is /out: mount the host's results/raw/signals there.
+// In Docker (image gp264/signals) the default output is /out: mount the host's results/raw/signals there.
 // Each car runs in a fresh child process, one after another.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';

@@ -32,8 +32,11 @@ dashboard, plus one server-rendered interactive counter above the table. The
 counter has one button `Increment`, an output initially `0`, and increments by
 one per click. The rows and summary remain unchanged. The counter uses each
 framework's normal state and native adoption/hydration/activation API. Frameworks
-whose application model hydrates the whole route retain that behavior. No manual
-DOM handler may stand in for a framework's state, hydration or update path.
+whose application model hydrates the whole route retain that behavior. Standalone React, Preact, Solid, Svelte and Vue must activate only the counter
+root, since their native APIs support that directly. Next.js and React Router
+retain their native route application behavior. This fairness clarification was
+recorded before scored runs; earlier local diagnostics do not count as races.
+No manual DOM handler may stand in for a framework's state, hydration or update path.
 
 The server HTML must already contain all 100 rows, the button and the initial
 counter value. The browser must reuse the server-rendered counter elements;
@@ -55,13 +58,21 @@ preserved counter node identity, and no console/page errors. Retain every sample
 report median and range rather than a single fastest result. Do not score a car
 that fails correctness. Keep this track separate from the existing standings.
 
+Measurement clarification before racing: transferred JavaScript uses Chromium
+CDP's `encodedDataLength`, which includes HTTP response overhead, through
+readiness, the two verified clicks and 500 ms of network idle. Record this exact
+boundary and do not label it pure minified bundle size. The runner first verifies
+the server output with JavaScript disabled. A qualified run authenticates the
+Chromium executable hash and checks the server container's one-CPU/1-GiB limits.
+
 ## Strength budgets and resource ownership
 
 The Forma check fails above 8 MiB peak under Sprint load, 50 ms application boot,
 or 150,000,000 bytes for the runtime image. Memory uses the original Docker-stats
 sampling definition; image size uses Docker's uncompressed image size. Boot is
-the application process-to-listen metric defined in the original telemetry,
-separate from `docker run` overhead. Missing samples, failed requests or unknown
+the mean of five first-200 times minus their corresponding `docker run` return
+times, exactly as in the original telemetry. It includes the host probe and
+network overhead and is not a direct process-to-listen instrument. Missing samples, failed requests or unknown
 measurement units fail closed. Demonstrate each gate with a deliberate failing
 control, without changing the thresholds. Record release executable bytes and a
 distroless/static-base comparison separately from the original Debian-slim car.

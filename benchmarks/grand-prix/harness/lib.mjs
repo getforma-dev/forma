@@ -1,5 +1,5 @@
 // Shared plumbing for the Grand Prix harness. Everything the race starts carries the labels
-// grandprix=forma-254 and gp254run=<id>, and is removed on exit, on error and on signals.
+// grandprix=forma-264 and gp264run=<id>, and is removed on exit, on error and on signals.
 import { spawn, execFileSync } from 'node:child_process';
 import http from 'node:http';
 import os from 'node:os';
@@ -10,9 +10,13 @@ import { expected } from '../shared/dataset.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const RAW = path.join(ROOT, 'results', 'raw');
-export const LABEL = 'grandprix=forma-254';
-export const RUN_ID = 'r' + Date.now().toString(36) + process.pid;
-export const RUN_LABEL = 'gp254run=' + RUN_ID;
+export const LABEL = 'grandprix=forma-264';
+export const IMAGE_PREFIX = process.env.GP_IMAGE_PREFIX || 'gp264';
+if (!/^[a-z0-9/-]+$/.test(IMAGE_PREFIX)) throw new Error('invalid image prefix');
+export const imageName = car => `${IMAGE_PREFIX}/${car}`;
+export const RUN_ID = process.env.GP_RUN_ID || ('r' + Date.now().toString(36) + process.pid);
+if (!/^[a-z0-9-]+$/.test(RUN_ID)) throw new Error('invalid GP_RUN_ID');
+export const RUN_LABEL = 'gp264run=' + RUN_ID;
 
 // Protocol constants, overridable only for the end-to-end test (the report records what was used).
 export const CFG = {
@@ -66,7 +70,7 @@ export function installTrap() {
   process.on('unhandledRejection', e => { console.error(e); cleanupSync(); process.exit(1); });
 }
 let seq = 0;
-export const uniq = p => `gp254-${p}-${process.pid}-${++seq}`;
+export const uniq = p => `gp264-${p}-${process.pid}-${++seq}`;
 
 export async function makeNetwork() {
   const name = uniq('net');
@@ -84,7 +88,7 @@ export async function startCar(car, cls, network, extra = []) {
   const lim = limitsFor(cls), name = uniq(car);
   const r = await docker('run', '-d', '--name', name, '--label', LABEL, '--label', RUN_LABEL,
     '--network', network, '--cpus=' + lim.cpus, '--memory=' + lim.memory,
-    '-e', 'GP_WORKERS=' + lim.workers, '-e', 'NODE_ENV=production', '-p', '127.0.0.1::3000', ...extra, 'gp/' + car);
+    '-e', 'GP_WORKERS=' + lim.workers, '-e', 'NODE_ENV=production', '-p', '127.0.0.1::3000', ...extra, imageName(car));
   if (r.code) throw new Error('docker run failed: ' + r.stderr.trim());
   return { name, car, cls, id: r.stdout.trim() };
 }
@@ -99,8 +103,8 @@ export async function removeContainer(c) { if (c) await docker('rm', '-f', c.nam
 export async function startLoadgen(network) {
   const name = uniq('loadgen');
   const r = await docker('run', '-d', '--name', name, '--label', LABEL, '--label', RUN_LABEL,
-    '--network', network, '--cpus=' + CFG.loadgenCpus, 'gp/loadgen');
-  if (r.code) throw new Error('loadgen start failed (is gp/loadgen built? harness/build-loadgen.sh): ' + r.stderr.trim());
+    '--network', network, '--cpus=' + CFG.loadgenCpus, imageName('loadgen'));
+  if (r.code) throw new Error('loadgen start failed (is gp264/loadgen built? harness/linux-run.mjs): ' + r.stderr.trim());
   return { name };
 }
 
@@ -140,7 +144,7 @@ export function checkBody(n, body) {
 // Smoke: health + ssr 100 + ssr 1000, against expected(n). Returns the full record.
 export async function smokeCar(car) {
   const rec = { car, at: new Date().toISOString(), pass: false, checks: [], image: imageInfo(car) };
-  if (!rec.image.id) { rec.checks.push({ name: 'image', ok: false, detail: 'gp/' + car + ' not found' }); return rec; }
+  if (!rec.image.id) { rec.checks.push({ name: 'image', ok: false, detail: imageName(car) + ' not found' }); return rec; }
   const net = await makeNetwork(); let c;
   try {
     c = await startCar(car, 'A', net);
@@ -161,7 +165,7 @@ export async function smokeCar(car) {
 }
 
 export function imageInfo(ref) {
-  const out = dockerSync('image', 'inspect', '--format', '{{.Id}}|{{.Size}}|{{.Created}}|{{.Architecture}}', 'gp/' + ref);
+  const out = dockerSync('image', 'inspect', '--format', '{{.Id}}|{{.Size}}|{{.Created}}|{{.Architecture}}', imageName(ref));
   if (!out) return {};
   const [id, size, created, arch] = out.split('|');
   return { id: id.slice(0, 19), sizeBytes: +size, created, arch };
@@ -205,12 +209,14 @@ export function startSampler(name) {
 // ---------- machine state ----------
 export function machineState(extra = {}) {
   const info = dockerSync('info', '--format', '{{.NCPU}}|{{.MemTotal}}|{{.ServerVersion}}|{{.KernelVersion}}|{{.OperatingSystem}}').split('|');
-  const ps = (() => { try { return execFileSync('ps', ['-Ao', 'pcpu,comm', '-r'], { encoding: 'utf8' }).split('\n').slice(1, 6).map(s => s.trim()); } catch { return []; } })();
+  const ps = (() => { try { return execFileSync('ps', process.platform === 'linux' ? ['-Ao', 'pcpu,comm', '--sort=-pcpu'] : ['-Ao', 'pcpu,comm', '-r'], { encoding: 'utf8' }).split('\n').slice(1, 6).map(s => s.trim()); } catch { return []; } })();
   return {
     at: new Date().toISOString(), hostLoadAvg: os.loadavg().map(x => +x.toFixed(2)), hostCpuModel: os.cpus()[0]?.model, hostCpus: os.cpus().length,
     hostMemGB: +(os.totalmem() / 1e9).toFixed(1), hostFreeDisk: freeDisk(),
+    availableCpus: os.availableParallelism(), kernel: os.release(),
+    cpuPressure: fs.existsSync('/proc/pressure/cpu') ? fs.readFileSync('/proc/pressure/cpu', 'utf8') : null,
     dockerCpus: +info[0], dockerMemGB: +(info[1] / 1e9).toFixed(2), dockerVersion: info[2], dockerKernel: info[3], dockerOs: info[4],
-    node: process.version, oha: 'oha 1.16.0 (gp/loadgen)', topProcesses: ps, quiet: os.loadavg()[0] < 2, ...extra,
+    node: process.version, oha: 'oha 1.16.0 (gp264/loadgen)', topProcesses: ps, quiet: os.loadavg()[0] < 2, ...extra,
   };
 }
 export function freeDisk() { try { return execFileSync('df', ['-h', os.homedir()], { encoding: 'utf8' }).split('\n')[1].split(/\s+/)[3]; } catch { return ''; } }

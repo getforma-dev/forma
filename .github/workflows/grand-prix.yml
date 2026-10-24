@@ -1,0 +1,78 @@
+name: Grand Prix budgets
+
+on:
+  pull_request:
+    paths:
+      - 'benchmarks/grand-prix/**'
+      - '.github/workflows/grand-prix.yml'
+  workflow_dispatch:
+    inputs:
+      cars:
+        description: 'Comma-separated cars, or all'
+        default: 'forma'
+        type: string
+      events:
+        description: 'Server events, 1-8 for the whole server grid'
+        default: '1,5-7'
+        type: string
+      runner:
+        description: 'Runner label; a qualified full baseline requires at least eight CPUs'
+        default: 'ubuntu-latest'
+        type: string
+      diagnostic:
+        description: 'Allow a smaller VM for correctness and strength budgets only'
+        default: true
+        type: boolean
+      forma_ref:
+        description: 'Optional exact 40-character source commit for the Forma crates'
+        default: ''
+        type: string
+
+concurrency:
+  group: grand-prix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  budgets:
+    permissions:
+      contents: read
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Qualify budget refusals
+        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs
+      - name: Run isolated Forma strength check or requested server grid
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          GP_CARS: ${{ inputs.cars || 'forma' }}
+          GP_EVENTS: ${{ inputs.events || '1,5-7' }}
+          GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
+          GP_FORMA_REF: ${{ inputs.forma_ref }}
+          GP_BASELINE: 'true'
+          GP_CHECK_BUDGETS: 'true'
+        run: node harness/ci-run.mjs
+      - name: Remove only this run's remaining Docker resources
+        if: always()
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node harness/cleanup.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: grand-prix-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            benchmarks/grand-prix/results/*.json
+            benchmarks/grand-prix/results/*.lock
+            benchmarks/grand-prix/results/raw/
+          if-no-files-found: error
+          retention-days: 30
