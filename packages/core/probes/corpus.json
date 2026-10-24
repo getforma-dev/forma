@@ -2772,5 +2772,35 @@
   "find": "  for (const el of Array.from(content.querySelectorAll('*'))) {\n    for (const attr of Array.from(el.attributes)) {\n",
   "replace": "  for (const el of live ? [] : Array.from(content.querySelectorAll('*'))) {\n    for (const attr of Array.from(el.attributes)) {\n",
   "note": "the live check after each write no longer looks at attributes: a script URL or handler attribute that reaches the root by a path the strip did not see stays in the document and the render stands. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused\""
+ },
+ {
+  "id": "runtime/if-branch-skipped",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      if (!root.contains(el)) {\n        let n: Node | null = el;\n        while (n && n !== root) n = up(n);\n        if (!n) continue;\n      }\n",
+  "replace": "      if (!root.contains(el)) continue;\n",
+  "note": "mountScope skips every node a data-if that is false removed while the scope was binding, so a branch that starts false is never bound: once it shows, its text stays as the markup wrote it, its handlers and inputs do nothing, a nested data-if shows whatever its condition and a data-list shows its raw template (the binding from c9c87ffe until FORMA-279). Verified by: src/__tests__/runtime-if-branch.test.ts > \"binds %s in its branch: it renders and updates once the branch shows\""
+ },
+ {
+  "id": "runtime/if-branch-owner-stops",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  for (let n = node; n; n = up(n) ?? (n.nodeType === 11",
+  "replace": "  for (let n = node; n; n = n.parentNode ?? (n.nodeType === 11",
+  "note": "ownerOf stops at an element a data-if holds out of the tree, so a scope nested in a branch that starts false belongs to no mount and is never mounted: its text stays as written and its handlers do nothing once the branch shows. Verified by: src/__tests__/runtime-if-branch.test.ts > \"a scope nested in a data-if that starts false mounts, as one in a branch that starts true does\""
+ },
+ {
+  "id": "runtime/if-branch-binds-detached",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        if (!n) continue;\n",
+  "replace": "",
+  "note": "mountScope binds every node an earlier binding detached, the data-list row template among them, so the template is bound against the parent scope, where `item` is undeclared: a bogus FORMA_E_UNRESOLVED (FORMA-129). Verified by: src/__tests__/runtime-if-branch.test.ts > \"a data-list row template inside a data-if that starts false is still bound only in its rows\""
  }
 ]
