@@ -25,6 +25,7 @@
 
 import { LIMITS } from './ast';
 import { exprError } from './errors';
+import { isHost } from './host';
 
 // Captured once, like the allowlist's intrinsics, so a page script that later
 // replaces one of them cannot make a cost read low.
@@ -220,6 +221,9 @@ export function weigh(root: unknown, room: number, depth = -2): number {
       // Counting slots: a leaf was counted as its parent's slot.
     } else if (typeof v === 'string') {
       total += v.length;
+    } else if (isHost(v)) {
+      // Same weight as the public { label } representation, once per occurrence.
+      total += 6 + v.label.length;
     } else if (typeof v === 'object' && v) {
       for (const k of keysOf(v)) total += k.length + 1;
       kids = valuesOf(v);

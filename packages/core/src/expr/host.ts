@@ -81,8 +81,19 @@ interface BrandedHost extends Host {
   readonly [HOST]: true;
 }
 
+function hostJSON(this: Host): { label: string } {
+  return { label: this.label };
+}
+
 function brand(host: Host): Host {
-  return Object.freeze({ ...host, [HOST]: true } as BrandedHost);
+  // Data walkers see the label; interpreter dispatch keeps the private fields.
+  for (const key of Object.keys(host)) {
+    if (key !== 'label') Object.defineProperty(host, key, { enumerable: false });
+  }
+  return Object.freeze(Object.defineProperties(host, {
+    [HOST]: { value: true },
+    toJSON: { value: hostJSON },
+  }) as BrandedHost);
 }
 
 /**

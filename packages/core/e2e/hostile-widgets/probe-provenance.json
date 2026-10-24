@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "e2fb38b6278ce83baac98141bc19da86a0f5bebb4070b5df8b5f70a97800a189",
-    "total": 326,
+    "sha256": "61c4c7c02aa98178181bf0052ef31cd2511648957bc388ad95e9a914eb5616b7",
+    "total": 328,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -2711,6 +2711,24 @@
         "disposition": {
           "kind": "separate-structural-regression",
           "reason": "Source mutation whose exact witness stays in the existing per-merge suite (the renderer contract's animation rows on all six sinks, the shared INV1 vectors and src/security/__tests__/url-safety.test.ts); the hostile matrix's two animation contexts are a <set> and an <animate>, so it is not counted as a browser payload. Original note: only <animate> and <set> have their values judged as URLs, so <animateTransform>, <animateMotion> and <animateColor> write a script URL in to, from, by or values (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: src/security/__tests__/url-safety.test.ts > \"rejects a script URL in each item of an SVG animation value, whatever the case of tag and name\""
+        }
+      },
+      {
+        "id": "expr/host-enumerable-fields",
+        "source": "src/expr/host.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "The expression value boundary is covered by the focused host-value suite and a separate browser control; this mutation is not counted as a hostile-matrix browser payload. Original note: Host data reflection must expose only the public label. Verified by: src/expr/__tests__/host-values.test.ts > \"enumerates only a public label for every host kind\""
+        }
+      },
+      {
+        "id": "expr/host-json-projection",
+        "source": "src/expr/host.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "The expression value boundary is covered by the focused host-value suite and a separate browser control; this mutation is not counted as a hostile-matrix browser payload. Original note: Nested host serialization must preserve the public projection when explicit property selection is requested. Verified by: src/expr/__tests__/host-values.test.ts > \"serializes nested hosts through %s without reading their implementation\""
         }
       }
     ]

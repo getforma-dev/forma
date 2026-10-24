@@ -3182,5 +3182,27 @@
   "find": "        else if (evaluate && scope.setters[name]) cycle('conflicts with a state key');\n",
   "replace": "",
   "note": "A computed replaces a writable state getter while retaining its setter, hiding writes and making readers depend on bind order (FORMA-272). Verified by: src/__tests__/runtime-computed.test.ts > \"refusing a state-name collision preserves readers before, on and after the declaration\""
+ },
+ {
+  "id": "expr/host-enumerable-fields",
+  "file": "src/expr/host.ts",
+  "tags": [
+   "security",
+   "expression"
+  ],
+  "find": "if (key !== 'label') Object.defineProperty(host, key, { enumerable: false });",
+  "replace": "if (key !== 'label') Object.defineProperty(host, key, { enumerable: true });",
+  "note": "Host data reflection must expose only the public label. Verified by: src/expr/__tests__/host-values.test.ts > \"enumerates only a public label for every host kind\""
+ },
+ {
+  "id": "expr/host-json-projection",
+  "file": "src/expr/host.ts",
+  "tags": [
+   "security",
+   "expression"
+  ],
+  "find": "toJSON: { value: hostJSON },",
+  "replace": "toJSON: { value: undefined },",
+  "note": "Nested host serialization must preserve the public projection when explicit property selection is requested. Verified by: src/expr/__tests__/host-values.test.ts > \"serializes nested hosts through %s without reading their implementation\""
  }
 ]
