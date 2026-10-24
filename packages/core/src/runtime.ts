@@ -1492,8 +1492,9 @@ const placed = (v: unknown, room: number, depth?: number): number => (typeof v =
  * The 24,000-unit cap is sized from the framework's ordinary row fixtures:
  * CI run 40032265860 measured 4.6 s for 159,992 units of table rows at 4x
  * Chromium throttling (28.75 us/unit). 24,000 predicts 690 ms, leaving about
- * 31% below a one-second target; e2e/expr-cost.spec.ts measures current passes
- * and refuses a regression above one second on Linux Chromium. This is a
+ * 31% below a one-second target. CI run 40108798933 then measured at-cap maxima
+ * of 219.8/245.3/83 ms for ordinary list/table/attribute rows at 4x. The guard in
+ * e2e/expr-cost.spec.ts refuses a regression above one second on Linux Chromium. This is a
  * measured ordinary-row budget, not a universal time bound: expensive native
  * elements, repeated text placeholders and nested lists can cost more
  * (SECURITY.md; FORMA-255). One thousand rows fit at weight 24 or below;
