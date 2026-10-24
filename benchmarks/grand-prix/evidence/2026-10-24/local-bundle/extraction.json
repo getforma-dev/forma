@@ -1,0 +1,21 @@
+{
+  "head": "8b56026efbb9ac3c52e7b4382e483f1433509dd3",
+  "base": "ea0adee8a58772787d6a07f05e83a4b651283289",
+  "source": "6811e86cf7761fa7d6a8c12bc3dfc40fc7031b4b",
+  "included": {
+    "packages/core/src/dom/activate.ts": "0d517bb326da410cf52e8dd92a0b61c9d0ec4d4f29aa0fd627c621c3fc5cc6e1",
+    "packages/core/src/dom/island-disposal.ts": "122f08a3ee852641ef0793331a49321b02e10cd10ec571fe25d1ed536f3839aa",
+    "packages/core/src/dom/island-state.ts": "9ef47c6dd2e5b1cd2fead2b7b1b0eaed31a564cdee40f10744ddf7e6f5b8eee3",
+    "packages/core/src/dom/list.ts": "e83f40972376a69edfdb7c5eefe174202f12b0d54734aa06f432f3b7121479ad",
+    "packages/core/src/dom/__tests__/list-dependency.test.ts": "0a5aba376317b776c213e1a12272fbf933b8f112f7df59d905bedff53cd0c5dd",
+    "packages/core/src/reactive/signal.ts": "2753a7adab7c7439885e1bbaca0004d62fb02b18f32177c74703111c2cef29ad",
+    "packages/core/src/reactive/__tests__/signal-name-dependency.test.ts": "cfefef9a4bb33d99aaafaa473035f6f7b4146bc3377ef521c1cb150417b4a53e"
+  },
+  "excludedEqualMain": {
+    "packages/core/src/reactive/effect.ts": "5c70b00c9dda06b87094dceb04c37c62500ad4ad5952d49d92a2c9a5af1f48d1",
+    "packages/core/src/reactive/root.ts": "96e6ac67c390d08d4f7c20e7ca354a46cf9140f620afd3b387737e0c3874e06e",
+    "packages/core/src/reactive/cleanup.ts": "8bad7249845915962ec4066b3f4f8a3a783744abd0ee720ad5dd6e13c45cf997",
+    "packages/core/src/reactive/adoption-hooks.ts": "613e96eaf09497691aab2739077bc2847bd850f00caf614a194006b3e1de6c54",
+    "packages/core/src/dom/element.ts": "985b2efb8bb2a4929110ce8d1b85ab2c90115d79264ea43e9a447fb96b7e9fff"
+  }
+}

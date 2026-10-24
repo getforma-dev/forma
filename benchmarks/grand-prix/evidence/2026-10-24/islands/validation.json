@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "passed": true,
+  "sourceCommit": "03d0b87a3eed1fa4625d37f6a9add3b77a626d3b",
+  "artifactDigestMatched": true,
+  "exactSourceLockHashesMatched": true,
+  "rawStatisticsRecomputed": true,
+  "frozenProfileValidatorPassed": true,
+  "frozenCampaignValidatorPassed": true,
+  "cars": 11,
+  "measuredContexts": 55,
+  "warmupContexts": 22,
+  "serverHtmlChecks": 11,
+  "originalCounterIdentity": true,
+  "unchangedRowContent": true,
+  "rowNodeIdentityMeasured": false,
+  "errors": [],
+  "notes": [
+    "No new performance run; read-only audit of authenticated hosted evidence.",
+    "Node validates saved profile/campaign structure offline; original runner validated its live host identity."
+  ]
+}

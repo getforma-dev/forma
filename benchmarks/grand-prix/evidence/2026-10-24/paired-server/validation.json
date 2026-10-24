@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "artifactAuthenticated": true,
+  "sourceSnapshotAuthenticated": true,
+  "trialCount": 4,
+  "httpRuns": 48,
+  "renderCountSamples": 808,
+  "renderCountWarmups": 160,
+  "ssrBodiesChecked": 32,
+  "allBudgetsPassed": true,
+  "originalTailAggregateAllPassed": true,
+  "individualTailExceedances": [
+    {
+      "ref": "be029708545efc8d771df25ce774362f461718e2",
+      "run": 3,
+      "ratio": 1.5263773486798256
+    }
+  ]
+}

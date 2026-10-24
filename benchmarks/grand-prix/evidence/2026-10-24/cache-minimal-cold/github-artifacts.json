@@ -1,0 +1,80 @@
+{
+  "artifacts": [
+    {
+      "id": 12565827278,
+      "name": "scaffold-cache-minimal-cold",
+      "size_in_bytes": 1404,
+      "url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565827278",
+      "archive_download_url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565827278/zip",
+      "expired": false,
+      "created_at": "2026-10-24T15:45:07Z",
+      "expires_at": "2026-11-07T15:45:06Z",
+      "updated_at": "2026-10-24T15:45:07Z",
+      "digest": "sha256:8e346a296f5fa8149f38290ac47c8fb5e9b1726fe605a2267bb287018c46097f",
+      "workflow_run": {
+        "id": 40108274094,
+        "repository_id": 1181126362,
+        "head_repository_id": 1181126362,
+        "head_branch": "codex/forma-262-ci-cache",
+        "head_sha": "823c600356b13ccffa18d2d635dba268eeeda71d"
+      }
+    },
+    {
+      "id": 12565677535,
+      "name": "scaffold-cache-dashboard-warm",
+      "size_in_bytes": 422,
+      "url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565677535",
+      "archive_download_url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565677535/zip",
+      "expired": false,
+      "created_at": "2026-10-24T15:47:05Z",
+      "expires_at": "2026-11-07T15:47:04Z",
+      "updated_at": "2026-10-24T15:47:05Z",
+      "digest": "sha256:f3316dd4b77025b0d707a6894f801dd45ef1cbdc90194ba1dfdca4d0c8ccfe66",
+      "workflow_run": {
+        "id": 40108274094,
+        "repository_id": 1181126362,
+        "head_repository_id": 1181126362,
+        "head_branch": "codex/forma-262-ci-cache",
+        "head_sha": "823c600356b13ccffa18d2d635dba268eeeda71d"
+      }
+    },
+    {
+      "id": 12565157943,
+      "name": "scaffold-cache-minimal-warm",
+      "size_in_bytes": 417,
+      "url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565157943",
+      "archive_download_url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565157943/zip",
+      "expired": false,
+      "created_at": "2026-10-24T15:46:55Z",
+      "expires_at": "2026-11-07T15:46:54Z",
+      "updated_at": "2026-10-24T15:46:55Z",
+      "digest": "sha256:1eae15024eab19539fc9bde76063849a2f81a8df35a2a50c011d761916f2def1",
+      "workflow_run": {
+        "id": 40108274094,
+        "repository_id": 1181126362,
+        "head_repository_id": 1181126362,
+        "head_branch": "codex/forma-262-ci-cache",
+        "head_sha": "823c600356b13ccffa18d2d635dba268eeeda71d"
+      }
+    },
+    {
+      "id": 12565092824,
+      "name": "scaffold-cache-dashboard-cold",
+      "size_in_bytes": 1400,
+      "url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565092824",
+      "archive_download_url": "https://api.github.com/repos/getforma-dev/forma/actions/artifacts/12565092824/zip",
+      "expired": false,
+      "created_at": "2026-10-24T15:44:55Z",
+      "expires_at": "2026-11-07T15:44:54Z",
+      "updated_at": "2026-10-24T15:44:55Z",
+      "digest": "sha256:ae46753e4e26c39ed958c542cc91c1fc496197f03bdc602ff0aab4d46470ab42",
+      "workflow_run": {
+        "id": 40108274094,
+        "repository_id": 1181126362,
+        "head_repository_id": 1181126362,
+        "head_branch": "codex/forma-262-ci-cache",
+        "head_sha": "823c600356b13ccffa18d2d635dba268eeeda71d"
+      }
+    }
+  ]
+}

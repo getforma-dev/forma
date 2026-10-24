@@ -1,0 +1,78 @@
+{
+  "passed": true,
+  "harness": "03d0b87a3eed1fa4625d37f6a9add3b77a626d3b",
+  "source": "87ecea920685694dda3ed8a8d914b03f28ddff9c",
+  "artifactSha256": "d5fcf1190e7e0e43cf9abc02101eddae6dc9fcb85b3a1ca938f1d262d9a0b977",
+  "campaign": {
+    "schema": 1,
+    "id": "191c3af4-2340-454b-a88e-6d60af20d3c3",
+    "createdAt": "2026-10-24T17:35:42.945Z",
+    "kind": "github-actions",
+    "hostSha256": "321cfd185d5751777a5ac1a9b430d50baad86b5370f628efe634ec5936a4d871",
+    "machineIdSha256": "399794935aded36b418e3630a41ef1d23f027811adf388b70d95a72238bc049b",
+    "runnerTrackingSha256": "11be2cd066ba3deebc1468c6246d51444efb0b563df8166ded12896ea9751187",
+    "github": {
+      "runId": "40116661885",
+      "runAttempt": "1",
+      "job": "compression",
+      "repository": "getforma-dev/forma"
+    }
+  },
+  "resourceProfile": {
+    "name": "gha-4-v1",
+    "diagnostic": false,
+    "qualified": true,
+    "minimumCpus": 4,
+    "platform": "linux",
+    "githubActions": true,
+    "availableCpus": 4,
+    "affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "selectedCpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "classA": {
+      "cpus": "1",
+      "memory": "1g",
+      "workers": 1,
+      "cpuset": "0"
+    },
+    "classB": {
+      "cpus": "2",
+      "memory": "2g",
+      "workers": 2,
+      "cpuset": "0,1"
+    },
+    "loadgen": {
+      "cpus": "2",
+      "cpuset": "2,3"
+    },
+    "build": {
+      "cpus": "4",
+      "cpuset": "0,1,2,3"
+    },
+    "signals": {
+      "cpus": "1",
+      "memory": "1g",
+      "cpuset": "0"
+    },
+    "browser": {
+      "cpuset": "1,2,3"
+    }
+  },
+  "comparisonsRecomputed": true,
+  "smoke": true,
+  "actualDockerAllocations": true,
+  "cleanup": {
+    "noError": true,
+    "finalOwnedActions": [],
+    "builderCreated": false
+  }
+}

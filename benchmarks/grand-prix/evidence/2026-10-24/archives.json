@@ -1,0 +1,184 @@
+{
+  "schema": 1,
+  "scope": "Original public GitHub Actions ZIP bytes authenticated against provider digests before analysis.",
+  "profileRule": "Each archive records its own profile. Standard Actions VMs do not establish physical-host exclusivity. Cache observations are a separate experiment.",
+  "comparisonRule": "Compare timings only within their recorded campaign. Keep failed measurements and diagnostics separate.",
+  "privacyScan": "High-confidence credential, private-key and signed-URL patterns checked; no private handoff archive read or copied.",
+  "rawMetadata": "Original archives retain public ephemeral runner names, Docker IDs, system paths and hashed host fingerprints needed to audit the experiment.",
+  "archives": [
+    {
+      "name": "server-unresolved",
+      "archive": "server-unresolved/artifact.zip",
+      "runId": 40116667052,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40116667052",
+      "artifactId": 12570952874,
+      "sha256": "16f3908e42f35b4d645237272b624ef5423536f8b69de6589be03b6d7c72baf7",
+      "bytes": 6564375,
+      "result": "source/profile audit passes; qualification unresolved because twelve React Router timed body lengths differ from their probes",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "server-unresolved/publication-summary.json",
+        "server-unresolved/independent-verification.json",
+        "server-unresolved/supplementary-verification.json",
+        "server-unresolved/artifact-verification.json",
+        "server-unresolved/artifact-metadata.json",
+        "server-unresolved/artifact-file-manifest.json",
+        "server-unresolved/harness-source-manifest.json",
+        "server-unresolved/privacy-scan.json",
+        "server-unresolved/ANALYSIS.md",
+        "server-unresolved/verify.mjs",
+        "server-unresolved/verify-supplementary.py",
+        "server-unresolved/privacy_scan.py"
+      ]
+    },
+    {
+      "name": "paired-server",
+      "archive": "paired-server/artifact.zip",
+      "runId": 40116668819,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40116668819",
+      "artifactId": 12570048033,
+      "sha256": "cf16b28f0c1bb4436b07a9e9967a3f805ed635956521fa3ab6edc9b7bad91f7b",
+      "bytes": 25424314,
+      "result": "qualified; static bytes, mean-based tail rule and strength budgets pass",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "paired-server/summary.json",
+        "paired-server/validation.json",
+        "paired-server/github-artifacts.json",
+        "paired-server/framework-source-identities.json"
+      ]
+    },
+    {
+      "name": "islands",
+      "archive": "islands/artifact.zip",
+      "runId": 40116670629,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40116670629",
+      "artifactId": 12569891483,
+      "sha256": "60e5efeb07af1b6c0c7478e636f6c39aeb257f52d16bb7cee3085e4bb8525979",
+      "bytes": 30351,
+      "result": "qualified published baseline; all eleven entrants pass correctness",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "islands/summary.json",
+        "islands/validation.json",
+        "islands/github-artifacts.json"
+      ]
+    },
+    {
+      "name": "compression",
+      "archive": "compression/artifact.zip",
+      "runId": 40116661885,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40116661885",
+      "artifactId": 12570421580,
+      "sha256": "d5fcf1190e7e0e43cf9abc02101eddae6dc9fcb85b3a1ca938f1d262d9a0b977",
+      "bytes": 3903595,
+      "result": "qualified; opt-in compression trades CPU and tail latency for fewer bytes",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "compression/independent-verification.json",
+        "compression/provider-artifacts.json"
+      ]
+    },
+    {
+      "name": "client-withdrawn",
+      "archive": "client-withdrawn/artifact.zip",
+      "runId": 40116672499,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40116672499",
+      "artifactId": 12569600778,
+      "sha256": "91cca014d297dd4749f71deaa641258b5ce0c3044b9c09fc83b63056181194fe",
+      "bytes": 92618,
+      "result": "qualified measurement; acceptance failed and row optimizations withdrawn",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "client-withdrawn/verified.json",
+        "client-withdrawn/archive-authentication.json",
+        "client-withdrawn/github-artifacts.json"
+      ]
+    },
+    {
+      "name": "client-rollback",
+      "archive": "client-rollback/artifact.zip",
+      "runId": 40118323052,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40118323052",
+      "artifactId": 12569878695,
+      "sha256": "3804fef947001400a3ae5de76ffadcacad366595029c8d1c3769e410bbe34d08",
+      "bytes": 138689,
+      "result": "qualified measurement; effect and row-creation acceptance targets still fail",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "client-rollback/verified.json",
+        "client-rollback/archive-authentication.json",
+        "client-rollback/github-artifacts.json",
+        "client-rollback/cross-campaign-source-consistency.json",
+        "client-rollback/dom-changes.json"
+      ]
+    },
+    {
+      "name": "client-zero-diagnostic",
+      "archive": "client-zero-diagnostic/artifact.zip",
+      "runId": 40118146114,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40118146114",
+      "artifactId": 12570012808,
+      "sha256": "5deec16ecfd8f9fb594f2998c701476d8cb1253a2fd0fc9175c7f9720b7e7bd9",
+      "bytes": 27368,
+      "result": "failed diagnostic retained; valid zero-duration observation was incorrectly refused",
+      "profile": "failed diagnostic, not qualified",
+      "summaries": [
+        "client-zero-diagnostic/authentication.json",
+        "client-zero-diagnostic/provider-artifacts.json"
+      ]
+    },
+    {
+      "name": "cache-minimal-cold",
+      "archive": "cache-minimal-cold/artifact.zip",
+      "runId": 40108274094,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40108274094",
+      "artifactId": 12565827278,
+      "sha256": "8e346a296f5fa8149f38290ac47c8fb5e9b1726fe605a2267bb287018c46097f",
+      "bytes": 1404,
+      "result": "separate CI cache experiment; one cold build of the published minimal template",
+      "profile": "separate scaffold cache experiment, one build per condition",
+      "summaries": [
+        "cache-minimal-cold/summary.json",
+        "cache-minimal-cold/manifest.json",
+        "cache-minimal-cold/github-artifacts.json"
+      ]
+    },
+    {
+      "name": "cache-minimal-warm",
+      "archive": "cache-minimal-warm/artifact.zip",
+      "runId": 40108274094,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40108274094",
+      "artifactId": 12565157943,
+      "sha256": "1eae15024eab19539fc9bde76063849a2f81a8df35a2a50c011d761916f2def1",
+      "bytes": 417,
+      "result": "separate CI cache experiment; one warm page-only build of the published minimal template",
+      "profile": "separate scaffold cache experiment, one build per condition",
+      "summaries": []
+    },
+    {
+      "name": "cache-dashboard-cold",
+      "archive": "cache-dashboard-cold/artifact.zip",
+      "runId": 40108274094,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40108274094",
+      "artifactId": 12565092824,
+      "sha256": "ae46753e4e26c39ed958c542cc91c1fc496197f03bdc602ff0aab4d46470ab42",
+      "bytes": 1400,
+      "result": "separate CI cache experiment; one cold build of the published dashboard template",
+      "profile": "separate scaffold cache experiment, one build per condition",
+      "summaries": []
+    },
+    {
+      "name": "cache-dashboard-warm",
+      "archive": "cache-dashboard-warm/artifact.zip",
+      "runId": 40108274094,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40108274094",
+      "artifactId": 12565677535,
+      "sha256": "f3316dd4b77025b0d707a6894f801dd45ef1cbdc90194ba1dfdca4d0c8ccfe66",
+      "bytes": 422,
+      "result": "separate CI cache experiment; one warm page-only build of the published dashboard template",
+      "profile": "separate scaffold cache experiment, one build per condition",
+      "summaries": []
+    }
+  ]
+}
