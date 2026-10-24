@@ -262,7 +262,8 @@ class EffectState implements Owner {
     this.disposed = true;
     this.stop();
     this.clean();
-    this.nextCleanup = undefined;
+    // The body may still be collecting this generation's cleanup. Its finally
+    // commits and drains that array, including work registered after disposal.
   }
 
   start(run: (this: EffectState) => void = this.run): () => void {
