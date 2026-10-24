@@ -377,7 +377,7 @@
   "tags": [
    "security"
   ],
-  "find": "  // A DOM method converts its arguments to strings.\n  preflight(ctx, `${host.label}.${method}`, undefined, args, at);\n",
+  "find": "  // A DOM method converts its arguments to strings.\n  preflight(ctx, what, undefined, args, at);\n",
   "replace": "",
   "note": "a DOM host method's arguments are converted uncharged: $el.setAttribute('title', list) joins a list of any text weight (review S5). Verified by: src/expr/__tests__/native-cost.test.ts > \"a DOM host method does not receive an argument heavier than the budget\""
  },
@@ -2245,8 +2245,8 @@
   "tags": [
    "security"
   ],
-  "find": "  const result = host.kind === 'element' && method === 'closest' && host.bound && !host.bound.dom\n    ? closestWithin(target as unknown as Element, host.bound.root, String(args[0] ?? ''))\n    : Reflect.apply(fn as (...a: unknown[]) => unknown, target, args);",
-  "replace": "  const result = Reflect.apply(fn as (...a: unknown[]) => unknown, target, args);",
+  "find": "  const result = native(ctx, what, at, host.kind === 'element' && method === 'closest' && bound && !bound.dom\n    ? () => closestWithin(target as unknown as Element, bound.root, String(args[0] ?? ''))\n    : fn as Native, target, args);",
+  "replace": "  const result = native(ctx, what, at, fn as Native, target, args);",
   "note": "closest() without dom tests the ancestors outside the root and refuses a match, so the refusal against no match reads an outside ancestor's attribute a character at a time (formajs#30 review, B1). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"closest() without dom never tests an element outside the root: an outside ancestor's attribute cannot be read a character at a time\""
  },
  {
@@ -2572,5 +2572,65 @@
   "find": "        const prevGetter = scope.getters[name];",
   "replace": "        const prevGetter = scope.getters[name];\n        delete scope.getters[name];",
   "note": "a refused computed deletes the getter of the state key it is named like, so every reader of a declared key reports it undeclared (the binding before FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that cannot compile binds nothing either: a state key of its name keeps rendering\""
+ },
+ {
+  "id": "expr/native-throw-escapes",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    throw exprError('FORMA_E_CALL_FAILED', `${what}() threw ${String(e).slice(0, 200)}`, at);",
+  "replace": "    throw e;",
+  "note": "an allowlisted native that throws on its arguments (`JSON.parse('{')`, `(1).toFixed(500)`) escapes mountMarkup as a raw exception and the whole module stays unbound (FORMA-271, from FORMA-268's review). Verified by: src/__tests__/runtime-native-throw.test.ts > \"one native that throws costs one binding: every directive reports on its own element and the rest of the module works\""
+ },
+ {
+  "id": "expr/native-converts-forma-errors",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;",
+  "replace": "    if (host && SAFE_GLOBALS[what] !== host) throw e;",
+  "note": "what Forma's own code throws while a native runs it (a real bug in an arrow callback, a handler a click() dispatches, an expression error with its own code) is filed as the native failing, FORMA_E_CALL_FAILED, hiding the bug (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"a real bug in an arrow callback passes through as it is\""
+ },
+ {
+  "id": "expr/native-converts-runtime-magic",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;",
+  "replace": "    if (ctx.steps !== steps) throw e;",
+  "note": "a runtime magic ($dispatch, $refetch) is treated as a native, so a bug in Forma's own code inside it is filed as FORMA_E_CALL_FAILED instead of surfacing (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"a runtime magic is Forma code, not a native: what it throws passes through as it is\""
+ },
+ {
+  "id": "expr/native-message-unbounded",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "`${what}() threw ${String(e).slice(0, 200)}`",
+  "replace": "`${what}() threw ${String(e)}`",
+  "note": "the FORMA_E_CALL_FAILED message carries the native's whole message, which can quote a megabyte argument (a selector) into the console and the diagnostics ledger (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"the message names the method and the error, and is bounded\""
+ },
+ {
+  "id": "expr/native-closest-walk-unwrapped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  const result = native(ctx, what, at, host.kind === 'element' && method === 'closest' && bound && !bound.dom\n    ? () => closestWithin(target as unknown as Element, bound.root, String(args[0] ?? ''))\n    : fn as Native, target, args);",
+  "replace": "  const result = host.kind === 'element' && method === 'closest' && bound && !bound.dom\n    ? closestWithin(target as unknown as Element, bound.root, String(args[0] ?? ''))\n    : native(ctx, what, at, fn as Native, target, args);",
+  "note": "`$el.closest()` under a mount without dom walks with the native matches() outside the wrapper, so a selector the DOM cannot parse (`'#1'`) escapes mountMarkup (FORMA-271). Verified by: src/__tests__/runtime-native-throw.test.ts > \"data-text=\\\"{%s}\\\" is reported on its element and the rest of the module mounts\""
+ },
+ {
+  "id": "expr/native-fn-call-unwrapped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      return checkResultSize(native(ctx, target.label, at, target.target as Native, undefined, args, target), at);",
+  "replace": "      return checkResultSize(Reflect.apply(target.target as Native, undefined, args), at);",
+  "note": "a call of an allowlisted global function (`String(v)`, `Number(v)`, `parseInt(v)`) is made bare, so what it throws (a stack overflow converting deeply nested data, an application's toString) escapes the binding (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"%s is refused with FORMA_E_CALL_FAILED naming %s and its %s\""
  }
 ]
