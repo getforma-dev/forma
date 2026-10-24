@@ -151,6 +151,80 @@ Verified by `src/__tests__/readme-examples.test.ts` > "accepts every value-expre
 Verified by `src/__tests__/readme-examples.test.ts` > "accepts every handler-statement form the grammar section lists"
 Verified by `src/expr/__tests__/handler-grammar.test.ts` > "a handler statement may be a bare method call"
 
+**`data-on:` takes an event name, with no modifiers.** Vue and Alpine put
+modifiers after a dot (`@click.stop`, `@submit.prevent`, `@keydown.enter`).
+Forma has none. Before FORMA-269, `data-on:click.stop` listened for an event
+named `click.stop`, which no browser dispatches, so the handler never ran and
+nothing said so. A `data-on:` name in that syntax is now refused when it is
+bound:
+
+- a key event (`keydown`, `keyup`, `keypress`) with anything after a dot;
+- any event whose first suffix is `stop`, `prevent`, `self`, `capture`,
+  `once`, `passive`, `native`, `outside`, `away`, `window`, `document`,
+  `debounce`, `throttle`, `exact`, `ctrl`, `alt`, `shift`, `meta`, `cmd`,
+  `left`, `right` or `middle`.
+
+It is reported like a handler outside the grammar: `FORMA_E_UNSUPPORTED`
+(`event modifiers are not supported: use data-on:click and
+$event.stopPropagation(), $event.preventDefault() or $event.key in the
+handler`), with the attribute as the diagnostic's `expr`, and the element is
+marked `data-forma-handler-error="unsupported"`. Nothing is bound, neither the
+literal name nor the base event. Bound to the base event, the handler would
+ignore what its modifier says. `.outside` would fire on a click inside, `.self`
+on a child's click, `.once` every time, `keydown.enter` on every key, and
+`.ctrl` or `.shift` without the key held. `.window` and `.document` would
+listen on the element rather than the window or the document. The element's
+other directives bind.
+
+Refusing a modifier does not perform it. Under a refused
+`data-on:submit.prevent` the form still submits, and under a refused
+`data-on:click.prevent` a link still navigates, exactly as before FORMA-269:
+what is new is the diagnostic. Write the modifier in the handler:
+
+| Instead of | Write |
+|---|---|
+| `data-on:click.stop="{open = false}"` | `data-on:click="{$event.stopPropagation(); open = false}"` |
+| `data-on:submit.prevent="{sent = true}"` | `data-on:submit="{$event.preventDefault(); sent = true}"` |
+| `data-on:keydown.enter="{count++}"` | `data-on:keydown="{if ($event.key === 'Enter') { count++ }}"` |
+
+Any other dotted name is a custom event and binds as before: Bootstrap's
+`data-on:shown.bs.modal`, or `data-on:item.selected` hearing a
+`$dispatch('item.selected')`. The check is by name, so it is conservative: a
+custom event whose first suffix is one of the words above (`timer.stop`) is
+refused too; name it `timer-stop`. A word is matched whole and only as the first
+suffix: `timer.stopped` and `carousel.slide.left` bind.
+
+Not detected, so these still listen for their literal name, which never fires,
+with no diagnostic:
+
+- a first suffix that is not in the list: `click.foo`, `click.foo.stop`;
+- an empty first suffix: `click.`, `click..stop`;
+- Alpine's `.camel` and `.dot` (`data-on:custom-event.camel`);
+- Datastar's `__` syntax (`data-on:click__prevent`).
+
+Svelte's `data-on:click|preventDefault` stays one attribute in Chromium,
+`data-on:click|preventdefault`, and its handler never runs on a click, also
+with no diagnostic.
+
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "data-on:%s is refused and binds nothing"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "plain event names and dotted custom events bind as before, with no diagnostic"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "a custom event named with a modifier after its first dot is refused too"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "modifier syntax the check does not recognise is not detected: it listens for its literal name, with no diagnostic"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "a refused .prevent prevents nothing: the default still happens, as before FORMA-269"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "every row of the rewrite table in docs/HTML-RUNTIME.md: the modifier form is refused and the rewrite runs"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "the refusal costs that handler only: the element's other directives bind"
+Verified by `src/__tests__/runtime-event-modifiers.test.ts` > "the explicit form the diagnostic names works: $event.stopPropagation(), $event.preventDefault() and $event.key"
+
+In Chromium, `e2e/event-modifiers.spec.ts` checks:
+
+- the shape the bug was found in, a modal box with `data-on:click.stop=""`
+  inside a backdrop that closes on click. The name is refused, and under a
+  trusted click `$event.stopPropagation()` keeps the box open;
+- a refused `data-on:submit.prevent`: the form submits, and the
+  `$event.preventDefault()` rewrite does not;
+- Svelte's `|` form, as above.
+
 **Permanently unsupported**, because these are the properties that make it safe:
 statements inside expressions; `while` / `for` / `do`; `async` / `await`; arrows
 used as values (legal *only* as the callback argument of the nine methods
@@ -218,7 +292,7 @@ Verified by `src/__tests__/build-artifacts.test.ts` > "no build emits new Functi
 | `data-show` | Toggle visibility (display) | `data-show="{isOpen}"` |
 | `data-if` | Conditional render (add/remove DOM) | `data-if="{loggedIn}"` |
 | `data-model` | Two-way binding (inputs) | `data-model="{email}"` |
-| `data-on:event` | Event handler | `data-on:click="{count++}"` |
+| `data-on:event` | Event handler; no modifiers: `data-on:click.stop` is refused (see *Handler statements* above) | `data-on:click="{count++}"` |
 | `data-class:name` | Conditional CSS class | `data-class:active="{isActive}"` |
 | `data-bind:attr` | Dynamic attribute | `data-bind:href="{url}"` |
 | `data-list` | List rendering (keyed reconciliation); a pass of more than 160,000 rows × row weight is refused with `FORMA_E_BUDGET` | `data-list="{items}"` |

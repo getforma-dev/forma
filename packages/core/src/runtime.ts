@@ -1739,6 +1739,18 @@ function initScope(stateEl: Element, mount: MountCtx): Scope {
  */
 const ACTIVATION_EVENTS: ReadonlySet<string> = new Set(['click', 'auxclick', 'domactivate', 'submit', 'reset']);
 
+/**
+ * A `data-on:` name in Vue or Alpine modifier syntax: a key event with any
+ * suffix (`keydown.enter`, `keyup.arrow-down`), or any event whose first
+ * suffix is one of their modifiers (`click.stop`, `submit.prevent`,
+ * `input.debounce.300ms`). Forma has no modifiers, and the listener would wait
+ * for an event of that literal name, which never fires (FORMA-269). Any other
+ * dotted name is a custom event (`shown.bs.modal`, `item.selected`).
+ * Verified by: src/__tests__/runtime-event-modifiers.test.ts > "data-on:%s is refused and binds nothing"
+ * Verified by: src/__tests__/runtime-event-modifiers.test.ts > "plain event names and dotted custom events bind as before, with no diagnostic"
+ */
+const EVENT_MODIFIER = /^key(?:down|up|press)\.|^[^.]*\.(?:stop|prevent|self|capture|once|passive|native|outside|away|window|document|debounce|throttle|exact|ctrl|alt|shift|meta|cmd|left|right|middle)(?:\.|$)/;
+
 function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void {
   // Per-element magics. Both are HOST values (src/expr/host.ts): the element is
   // reachable only through the element property allowlist, and $dispatch is a
@@ -2057,6 +2069,15 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
 
     if (name.startsWith('data-on:')) {
       const event = name.slice(8); // 'data-on:'.length === 8
+      // Modifier syntax is refused with a coded diagnostic and binds nothing,
+      // neither the base event (which would drop what the modifier meant) nor
+      // the literal name.
+      // Verified by: src/__tests__/runtime-event-modifiers.test.ts > "data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener"
+      if (EVENT_MODIFIER.test(event)) {
+        reportHandlerFailure(el, `${name}="${attr.value}"`, exprError('FORMA_E_UNSUPPORTED',
+          `event modifiers are not supported: use data-on:${event.split('.')[0]} and $event.stopPropagation(), $event.preventDefault() or $event.key in the handler`), scope.mount);
+        continue;
+      }
       const built = buildHandler(attr.value, scope, el);
       const handler = built.handler;
       // Set only. A stale marker was cleared at the top of bindElement, so an
