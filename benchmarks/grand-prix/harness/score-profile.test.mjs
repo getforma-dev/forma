@@ -77,3 +77,14 @@ test('measurement binding ignores key order and unscored metadata but binds smok
   assert.equal(measurementDigest(raw), measurementDigest(shuffled));
   assert.notEqual(measurementDigest(raw), measurementDigest({ ...raw, smoke: { forma: { pass: false } } }));
 });
+test('unscored engine-reference telemetry binds the saved summary and client campaign', () => {
+  const raw = input();
+  raw['signals-version-check'] = { 'alien-signals-3.1.2': { resourceProfile: structuredClone(profile),
+    campaign: structuredClone(campaign), runs: 5, warmups: 2, correct: true, values: [1, 2, 3, 4, 5] } };
+  const summary = scoringProfile(raw);
+  assert.deepEqual(validateSummaryProfile(summary, raw), summary);
+  raw['signals-version-check']['alien-signals-3.1.2'].values[0]++;
+  assert.throws(() => validateSummaryProfile(summary, raw), /measurementsSha256/);
+  raw['signals-version-check']['alien-signals-3.1.2'].campaign.github.runId = '456';
+  assert.throws(() => scoringProfile(raw), /different campaigns/);
+});

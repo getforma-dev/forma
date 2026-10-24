@@ -4,7 +4,9 @@ import { validateProfile } from './resource-profile.mjs';
 import { validateCampaign } from './campaign.mjs';
 
 const serverEvents = new Set(['sprint', 'endurance', 'multicore', 'reaction', 'fuel', 'grid', 'weight', 'pitstop']);
-const clientEvents = new Set(['dom', 'bundle', 'signals']);
+// The separate engine reference is unscored, but its displayed telemetry must
+// have the same input binding and client campaign as the scored measurements.
+const clientEvents = new Set(['dom', 'bundle', 'signals', 'signals-version-check']);
 
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
