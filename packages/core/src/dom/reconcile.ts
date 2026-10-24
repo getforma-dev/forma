@@ -121,6 +121,18 @@ function determineScopeMode(liveEl: Element, newEl: Element): ScopeMode {
 /** Reused template element — avoids creating a new one per reconcile call. */
 let _parseTemplate: HTMLTemplateElement | null = null;
 
+/**
+ * The document the diff holds the new markup in (FORMA-277, defence in
+ * depth): it has no browsing context, so a node there, such as the parsed
+ * copy of an element the diff keeps, loads nothing and dispatches no event,
+ * whatever attributes it carries, and only what the diff writes is adopted
+ * into the page. Created once, on the first update that diffs.
+ *
+ * Verified by: src/__tests__/reconcile.test.ts > "no node an update copies from belongs to the page: a new element, a RESET scope and a REPLACE scope"
+ * Verified by: src/__tests__/reconcile.test.ts > "a kept element's parsed copy, parsed in the container's context, is moved out of the page before the diff reads it"
+ */
+let _inertDoc: Document | null = null;
+
 function parseHTML(html: string, context?: Element): DocumentFragment {
   if (context) {
     // In the context element's own insertion mode (`innerHTML`'s parse), so
@@ -537,8 +549,10 @@ export function createReconciler(config: ReconcilerConfig) {
       }
 
       // ── Parse new HTML into a DocumentFragment ──
+      // Held in the inert document (see _inertDoc): what the diff writes is
+      // cloned or moved from there into the page.
       const fragment = parse();
-      const templateContainer = document.createElement('div');
+      const templateContainer = (_inertDoc ||= document.implementation.createHTMLDocument('')).createElement('div');
       for (const child of Array.from(fragment.childNodes)) templateContainer.appendChild(child);
 
       // ── Full-replacement fast path ──

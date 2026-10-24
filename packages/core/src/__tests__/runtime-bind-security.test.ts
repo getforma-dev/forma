@@ -6,14 +6,36 @@ import { mountFixture, unmountFixture } from './runtime-fixture';
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { isDangerousUrl } from '../security/url-safety';
+import { isDangerousUrlAttr } from '../security/url-safety';
 
 // Spy on the real implementation (behaviour unchanged) so the tests below can
-// assert what the runtime PASSES to it, not just what it returns.
+// assert what the runtime PASSES to it, not just what it returns. The runtime
+// calls the shared URL check through isDangerousUrlAttr (FORMA-277).
 vi.mock('../security/url-safety', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../security/url-safety')>();
-  return { ...actual, isDangerousUrl: vi.fn(actual.isDangerousUrl) };
+  return { ...actual, isDangerousUrlAttr: vi.fn(actual.isDangerousUrlAttr) };
 });
+
+/**
+ * Custom elements that make a prefixed <svg:set> with createElementNS when
+ * they are connected, which the HTML parser never makes: one carrying
+ * data-bind: attributes, one carrying a row's attribute templates.
+ */
+function definePrefixedSet(name: string, attrs: Record<string, string>): void {
+  if (customElements.get(name)) return;
+  customElements.define(name, class extends HTMLElement {
+    connectedCallback(): void {
+      if (this.firstChild) return;
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const set = document.createElementNS('http://www.w3.org/2000/svg', 'svg:set');
+      for (const [key, value] of Object.entries(attrs)) set.setAttribute(key, value);
+      svg.appendChild(set);
+      this.appendChild(svg);
+    }
+  });
+}
+definePrefixedSet('x-f277-bind', { attributeName: 'href', 'data-bind:to': '{u}', 'data-bind:title': '{t}' });
+definePrefixedSet('x-f277-row', { attributeName: 'href', to: '{item.url}', title: '{item.label}' });
 
 describe('data-bind: attribute injection', () => {
   let container: HTMLDivElement;
@@ -65,7 +87,7 @@ describe('data-bind: attribute injection', () => {
     // `data:image/svg+xml` is inert on <img> but navigable on <a>, so the
     // scheme check is only able to judge it if it knows the element it is
     // about to land on.
-    vi.mocked(isDangerousUrl).mockClear();
+    vi.mocked(isDangerousUrlAttr).mockClear();
     container.innerHTML = `
       <div data-forma-state='{"u": "data:image/svg+xml,<svg/>"}'>
         <a id="a" data-bind:href="{u}">link</a>
@@ -73,9 +95,24 @@ describe('data-bind: attribute injection', () => {
       </div>`;
     mountFixture(container);
 
-    const calls = vi.mocked(isDangerousUrl).mock.calls;
-    expect(calls.some(([, tag]) => tag === 'a')).toBe(true);
-    expect(calls.some(([, tag]) => tag === 'img')).toBe(true);
+    const calls = vi.mocked(isDangerousUrlAttr).mock.calls;
+    expect(calls.some(([tag, name]) => tag === 'a' && name === 'href')).toBe(true);
+    expect(calls.some(([tag, name]) => tag === 'img' && name === 'src')).toBe(true);
+  });
+
+  it('judges a script-made prefixed <svg:set> by its localName', () => {
+    // createElementNS(SVG_NS, 'svg:set') is a <set> whose tagName is
+    // "svg:set". A custom element in the markup makes one when it is
+    // connected, before the scope binds; the check takes the element's
+    // localName, as every other sink passes it, so the prefix cannot hide it.
+    vi.mocked(isDangerousUrlAttr).mockClear();
+    container.innerHTML = `<div data-forma-state='{"u": "javascript:alert(1)", "t": "kept"}'><x-f277-bind></x-f277-bind></div>`;
+    mountFixture(container);
+    const set = [...container.querySelectorAll('*')].find((el) => el.localName === 'set')!;
+    expect([set.tagName, set.localName]).toEqual(['svg:set', 'set']);
+    expect(set.getAttribute('title')).toBe('kept');
+    expect(set.getAttribute('to')).toBeNull();
+    expect(vi.mocked(isDangerousUrlAttr).mock.calls.some(([tag, name]) => tag === 'set' && name === 'to')).toBe(true);
   });
 
   it('still binds safe attributes and URLs', () => {
@@ -130,5 +167,27 @@ describe('data-list row-template attribute injection', () => {
     const a = container.querySelector('li a');
     expect(a).not.toBeNull(); // row rendered
     expect(a!.getAttribute('href') ?? '').not.toMatch(/script:/i);
+  });
+
+  it('judges a row\'s script-made prefixed <svg:set> by its localName', async () => {
+    // The row template holds a custom element that made a prefixed <svg:set>
+    // when it was connected; each row's copy keeps the prefix, so its tagName
+    // is "svg:set" and its localName "set". The row attribute check takes the
+    // localName.
+    vi.mocked(isDangerousUrlAttr).mockClear();
+    container.innerHTML = `
+      <div data-forma-state='{"items": [{"id": 1, "url": "javascript:alert(1)", "label": "kept"}]}'>
+        <ul data-list="{items}"><li data-key="{item.id}"><x-f277-row></x-f277-row></li></ul>
+      </div>`;
+    mountFixture(container);
+    await new Promise((r) => setTimeout(r, 0));
+    const rendered = [...container.querySelectorAll('li *')].filter((el) => el.localName === 'set');
+    expect(rendered.length).toBeGreaterThan(0); // the row rendered
+    for (const set of rendered) {
+      expect(set.tagName).toBe('svg:set'); // the copy kept its prefix
+      expect(set.getAttribute('title')).toBe('kept');
+      expect(set.getAttribute('to')).toBeNull();
+    }
+    expect(vi.mocked(isDangerousUrlAttr).mock.calls.some(([tag, name]) => tag === 'set' && name === 'to')).toBe(true);
   });
 });

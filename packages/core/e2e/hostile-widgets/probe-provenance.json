@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "4802dddffff763283cebe43cff0dcab1556a3b73134ab4b4b720a949f2e04a2d",
-    "total": 296,
+    "sha256": "3bbb5912b436bda1d39c01557b3017a288925dff95ac499364c6ebbf7203b34d",
+    "total": 304,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -996,7 +996,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() reactive attribute path writes javascript: URLs"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() reactive attribute path writes javascript: URLs. Re-anchored for FORMA-277"
         }
       },
       {
@@ -1024,7 +1024,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() static attribute path writes javascript: URLs"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: h() static attribute path writes javascript: URLs. Re-anchored for FORMA-277"
         }
       },
       {
@@ -1038,7 +1038,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: reactive xlink:href writes javascript: URLs"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: reactive xlink:href writes javascript: URLs. Re-anchored for FORMA-277"
         }
       },
       {
@@ -1386,7 +1386,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:* writes javascript: URLs and inline handlers"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:* writes javascript: URLs and inline handlers. Re-anchored for FORMA-277"
         }
       },
       {
@@ -1414,7 +1414,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind: judges every sink as an image sink"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind: judges every sink as an image sink. Re-anchored for FORMA-277"
         }
       },
       {
@@ -1512,7 +1512,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: the shared client-side URL predicate always allows"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: the shared client-side URL predicate always allows. Re-anchored for FORMA-277 (the URL check is isDangerousUrlAttr)"
         }
       },
       {
@@ -2624,6 +2624,93 @@
         "disposition": {
           "kind": "separate-unreviewed-frame-contract",
           "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the live check after each write no longer looks at attributes: a script URL or handler attribute that reaches the root by a path the strip did not see stays in the document and the render stands. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused\""
+        }
+      },
+      {
+        "id": "sec/animation-values-unjudged",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: no sink judges an SVG animation value (to, from, by, values on <set> and every <animate*> element) as a URL, so each writes a script URL into an animation whose attributeName can name href (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: crates/forma-ir/src/walker.rs > \"walk_drops_a_script_url_in_an_svg_animation_value\""
+        }
+      },
+      {
+        "id": "sec/animation-values-first-item-only",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: an animation value is judged as one URL, so a script URL as a later item of a values list is written (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
+        }
+      },
+      {
+        "id": "sec/animation-values-image-context",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: an animation value is judged as an image's, so a data:image/svg+xml document is written although the animation's target is not known (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
+        }
+      },
+      {
+        "id": "sec/animation-tags-drop-set",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: <set>'s values are not judged as URLs, so <set attributeName=\"href\" to=\"javascript:\u2026\"> is written (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
+        }
+      },
+      {
+        "id": "sec/animation-attrs-drop-values",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the two SVG animation contexts (svg-animate, a bound to on a <set>; svg-animate-static, the second item of a values list on an <animate> that update() patches into the element the mount keeps), both targeting href; the renderer contract's animation rows, the shared INV1 vectors and the walker test retain the direct regression. Original note: an animation's values list is not judged as URLs (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\""
+        }
+      },
+      {
+        "id": "reconcile/diff-source-in-page",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact structural/integration witness stays in the existing per-merge suite (src/__tests__/reconcile.test.ts) and in Chromium (e2e/update-diff.spec.ts); not counted as a browser payload. Original note: an update holds its parsed copy of the new markup in the page's document, where a copy the diff only reads loads its resources and runs its own handlers, even for an attribute the diff refuses to write (FORMA-277). Verified by: src/__tests__/reconcile.test.ts > \"no node an update copies from belongs to the page: a new element, a RESET scope and a REPLACE scope\"; Verified by: src/__tests__/reconcile.test.ts > \"a kept element's parsed copy, parsed in the container's context, is moved out of the page before the diff reads it\""
+        }
+      },
+      {
+        "id": "adoption/url-guard-off",
+        "source": "src/dom/adoption-attributes.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-api-regression",
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: hydration adoption expects and writes a URL attribute or SVG animation value with a script scheme, which the SSR walker refuses to emit (sink parity, FORMA-277). Verified by: src/dom/__tests__/inv1-vectors.test.ts > \"$id: raw URL value policy on every writer\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\""
+        }
+      },
+      {
+        "id": "sec/animation-tags-drop-animate-family",
+        "source": "src/security/url-safety.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-structural-regression",
+          "reason": "Source mutation whose exact witness stays in the existing per-merge suite (the renderer contract's animation rows on all six sinks, the shared INV1 vectors and src/security/__tests__/url-safety.test.ts); the hostile matrix's two animation contexts are a <set> and an <animate>, so it is not counted as a browser payload. Original note: only <animate> and <set> have their values judged as URLs, so <animateTransform>, <animateMotion> and <animateColor> write a script URL in to, from, by or values (FORMA-277). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to <%s %s>\"; Verified by: src/security/__tests__/url-safety.test.ts > \"rejects a script URL in each item of an SVG animation value, whatever the case of tag and name\""
         }
       }
     ]

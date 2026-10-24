@@ -1611,6 +1611,49 @@ fn is_url_attr(name: &str) -> bool {
     URL_ATTRS.iter().any(|a| name.eq_ignore_ascii_case(a))
 }
 
+/// True for `<set>` and every `<animate…>` element (FORMA-277): `set`, or
+/// `animate` followed by ASCII letters, digits or `_` only (`animate`,
+/// `animateTransform`, `animateMotion`, `animateColor`), in any ASCII case.
+/// An animation element's `attributeName` can name a URL attribute (`href`),
+/// so its [`ANIMATION_VALUE_ATTRS`] are judged as URLs. Mirrors the tag half
+/// of core's `isDangerousUrlAttr` test, `/^(to|from|by|values) (set|animate\w*)$/i`.
+fn is_animation_tag(tag: &str) -> bool {
+    let bytes = tag.as_bytes();
+    tag.eq_ignore_ascii_case("set")
+        || (bytes.len() >= 7
+            && bytes[..7].eq_ignore_ascii_case(b"animate")
+            && bytes[7..]
+                .iter()
+                .all(|b| b.is_ascii_alphanumeric() || *b == b'_'))
+}
+
+/// The value attributes of an animation element ([`is_animation_tag`]);
+/// `values` is a `;`-separated list.
+const ANIMATION_VALUE_ATTRS: [&str; 4] = ["to", "from", "by", "values"];
+
+/// True if writing `value` to `key` on `<tag>` would write a URL with a
+/// script scheme: a URL attribute, judged against `tag`, or `to`, `from`,
+/// `by` or `values` on `<set>` or an `<animate…>` element, any
+/// `;`-separated item of which is one, judged with no image context.
+///
+/// An animation value is judged whatever `attributeName` says, so neither the
+/// order of the two attributes nor a later change of `attributeName` matters.
+/// `values` is the list; a split of `to`, `from` and `by` can only refuse
+/// more. Matches core's `isDangerousUrlAttr` exactly, which the shared INV1
+/// vectors check on both sides.
+///
+/// Verified by: crates/forma-ir/src/walker.rs > "walk_drops_a_script_url_in_an_svg_animation_value"
+fn is_dangerous_url_attr(tag: &str, key: &str, value: &str) -> bool {
+    if is_url_attr(key) {
+        return is_dangerous_url(value, tag);
+    }
+    is_animation_tag(tag)
+        && ANIMATION_VALUE_ATTRS
+            .iter()
+            .any(|a| key.eq_ignore_ascii_case(a))
+        && value.split(';').any(|item| is_dangerous_url(item, ""))
+}
+
 /// True if writing `value` to a URL attribute on `<tag>` would create an XSS
 /// sink.
 ///
@@ -1732,7 +1775,7 @@ fn emit_attr(
         return Ok(());
     }
     if let AttrValue::Valued(v) = val {
-        if is_url_attr(key) && is_dangerous_url(v, tag) {
+        if is_dangerous_url_attr(tag, key, v) {
             #[cfg(feature = "tracing")]
             tracing::warn!(attr = key, "Dropping URL attribute with a dangerous scheme");
             return Ok(());
@@ -5099,6 +5142,83 @@ mod tests {
             build_declared_fixture(&["a", "href", "javascript:alert(1)"], &[], &opcodes, &[]);
         let module = IrModule::parse(&data).unwrap();
         assert_eq!(walk_to_html(&module, &SlotData::new(0)).unwrap(), "<a>");
+    }
+
+    #[test]
+    fn walk_drops_a_script_url_in_an_svg_animation_value() {
+        // FORMA-277: `to`, `from`, `by` and each `;`-separated item of
+        // `values` on `<set>` and on every `<animate…>` element are judged as
+        // URLs, whatever `attributeName` says, static and dynamic, as core's
+        // sinks judge them (the shared INV1 vectors run the same rule). The
+        // values real animations use (numbers, transforms, coordinates,
+        // colours) are written as they are.
+        for tag in [
+            "animate",
+            "set",
+            "animateTransform",
+            "animateMotion",
+            "animateColor",
+            "ANIMATEMOTION",
+        ] {
+            for name in ["to", "from", "by", "values"] {
+                for (value, written) in [
+                    ("javascript:alert(1)", false),
+                    ("#a; java\tscript:alert(1)", false),
+                    ("0;data:text/html,<p>doc;2", false),
+                    ("data:image/svg+xml,<svg onload=alert(1)>", false),
+                    ("#a; #b", true),
+                    ("0;10;20", true),
+                    ("0 50 50;360 50 50", true),
+                    ("0,0;10,10", true),
+                    ("red;blue", true),
+                    ("data:image/png;base64,aA==", true),
+                ] {
+                    let mut static_page = Page::new();
+                    static_page
+                        .open("svg", &[])
+                        .open(tag, &[("attributeName", "href"), (name, value)])
+                        .close(tag)
+                        .close("svg");
+                    let mut dynamic_page = Page::new();
+                    let slot = dynamic_page.slot(SlotValue::Text(value.to_string()));
+                    dynamic_page
+                        .open("svg", &[])
+                        .open(tag, &[("attributeName", "href")])
+                        .dyn_attr(name, slot)
+                        .close(tag)
+                        .close("svg");
+                    for (writer, html) in [
+                        ("static", static_page.render()),
+                        ("dynamic", dynamic_page.render()),
+                    ] {
+                        assert_eq!(
+                            html.contains(&format!(" {name}=\"")),
+                            written,
+                            "{writer} <{tag} {name}={value:?}>: {html}"
+                        );
+                        assert!(html.contains(" attributeName=\"href\""), "{html}");
+                    }
+                }
+            }
+        }
+        // Only those four attributes, and only on those tags: another
+        // attribute of an animation element, the same names on another
+        // element, and a tag that only starts with `animate` keep their text.
+        for (tag, name) in [
+            ("animate", "begin"),
+            ("set", "fill"),
+            ("animateTransform", "type"),
+            ("animateMotion", "path"),
+            ("g", "to"),
+            ("animate-x", "to"),
+        ] {
+            let mut page = Page::new();
+            page.open(tag, &[(name, "javascript:alert(1)")]).close(tag);
+            assert_eq!(
+                page.render(),
+                format!("<{tag} {name}=\"javascript:alert(1)\"></{tag}>")
+            );
+        }
     }
 
     // -- Number rendering parity (F-05) -------------------------------------

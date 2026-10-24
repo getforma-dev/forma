@@ -485,13 +485,22 @@ widget.unmount(); // every binding disposed, the root emptied
   value has a script scheme (`javascript:`, `vbscript:`, `data:text/html`,
   and `data:image/svg+xml` except on an image, in any case and spelling the
   parser decodes), is removed instead of written, with no diagnostic, as the
-  other sinks drop it (FORMA-276). An element the update adds is written as the
-  markup has it, like the first render. Tier `'unreviewed'` removes and
-  reports both everywhere (*The preview frame*, below). SECURITY.md lists
+  other sinks drop it (FORMA-276). An SVG animation value counts as a URL
+  attribute here, in every sink (FORMA-277): `to`, `from`, `by` and each
+  `;`-separated item of `values` on `<set>` and on every `<animate…>` element
+  (`animate`, `animateTransform`, `animateMotion`, `animateColor`), judged
+  whatever their `attributeName` says. An element the update adds is written
+  as the markup has it, like the first render. The update parses and holds
+  the new markup in a document with no browsing context, so the copy of an
+  element it keeps loads nothing and runs no handler; only what the diff
+  writes is adopted into the page (FORMA-277). Tier `'unreviewed'` removes
+  and reports both everywhere (*The preview frame*, below). SECURITY.md lists
   what each sink does.
 
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a %s mount's first render keeps its markup's own attributes; an update that changes one on an element it keeps applies the URL and handler check"
 Verified by `src/__tests__/renderer-contract.test.ts` > "drops every entity-spelled script scheme on %s"
+Verified by `src/__tests__/renderer-contract.test.ts` > "drops every script scheme written to <%s %s>"
+Verified by `src/__tests__/reconcile.test.ts` > "no node an update copies from belongs to the page: a new element, a RESET scope and a REPLACE scope"
 
 | Grant | What it allows | Without it |
 |---|---|---|
@@ -617,17 +626,18 @@ done anything else; an `<iframe>` still renders, with `src` refused by the
 policy and no document of its own.
 
 A module renders no `on*` handler attribute and no URL attribute whose value
-has a script scheme either (FORMA-276), judged as every attribute sink judges
-them, on the values the parse produced, so a character reference in the
-markup is decoded first. The same strip removes them from the one parse,
-nested `<template>` contents included, and the same live check after every
-write refuses the render, the root cleared, if one reaches the document. Each
-is reported, `FORMA_E_UNREVIEWED_HANDLER` or `FORMA_E_UNREVIEWED_URL`, and
-forwarded to the host as an `error`; the element stays, with its other
-attributes. The frame's hash-only `script-src` and Trusted Types refused them
-before and still do; the frame no longer depends on its policy alone for them.
-Chromium still logs the policy's report for a handler attribute as the parse
-creates it, before the strip removes it.
+has a script scheme either (FORMA-276), nor an SVG animation value with one
+(FORMA-277), judged as every attribute sink judges them, on the values the
+parse produced, so a character reference in the markup is decoded first. The
+same strip removes them from the one parse, nested `<template>` contents
+included, and the same live check after every write refuses the render, the
+root cleared, if one reaches the document. Each is reported,
+`FORMA_E_UNREVIEWED_HANDLER` or `FORMA_E_UNREVIEWED_URL`, and forwarded to the
+host as an `error`; the element stays, with its other attributes. The frame's
+hash-only `script-src` and Trusted Types refused them before and still do; the
+frame no longer depends on its policy alone for them. Chromium still logs the
+policy's report for a handler attribute as the parse creates it, before the
+strip removes it.
 
 A module styles itself with `style` attributes only. The frame's policy
 allows styles by nonce (`style-src 'nonce-…'`, with `style-src-attr

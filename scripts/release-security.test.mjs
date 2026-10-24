@@ -18,7 +18,7 @@ function hostile() {
     observers: profiles.map(profile => ({ profile, executions: 1, outsideReads: 1, response: 200, unexpectedResponse: 404, trustedTypesRefused: true })) };
 }
 test('P17 refuses partial, stale, duplicated, disconnected and unsafe hostile proof', () => {
-  assert.equal(validateHostileProof(hostile(), expected).cases.length, 1950);
+  assert.equal(validateHostileProof(hostile(), expected).cases.length, 2082);
   for (const mutate of [
     r => r.completeMatrix = false, r => r.sourceCommit = 'c'.repeat(40), r => r.sourceClean = false,
     r => r.runtimeSha256 = 'c'.repeat(64), r => delete r.harnessSources['observers.mjs'],
