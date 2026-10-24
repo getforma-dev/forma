@@ -8,7 +8,11 @@
   server also omits unused root attributes and the empty island-state envelope.
   Existing walker entry points and JavaScript route output remain unchanged.
 
-Changes after the prepared 3.0.0 set will be recorded here.
+- Avoid temporary scalar strings in dynamic text and attributes; copy unchanged
+  UTF-8 runs while escaping. HTML, normalization and output-limit refusal counts
+  remain unchanged. A counted Grand Prix walker benchmark records about 19%
+  lower render time and 42% fewer allocations at 100 and 1,000 rows on an M1 Pro
+  (FORMA-258); these are walker measurements, not HTTP throughput claims.
 
 ## [3.0.0] - Prepared; publication pending
 

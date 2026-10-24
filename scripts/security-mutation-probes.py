@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 WALKER = 'crates/forma-ir/src/walker.rs'
 CSP = 'crates/forma-server/src/csp.rs'
 PROBES = [
-    dict(id='text-fast', path=WALKER, function='push_escaped_html', old="'<' => out.push_str(\"&lt;\"),", new="'<' => out.push('<'),", crate='forma-ir', test='walker::tests::walk_text_escaping'),
+    dict(id='text-fast', path=WALKER, function='push_escaped_runs<const ATTRIBUTE: bool>', old='b\'<\' => "&lt;",', new='b\'<\' => "<",', crate='forma-ir', test='walker::tests::walk_text_escaping'),
     dict(id='text-bounded', path=WALKER, function='push_escaped_html', old="'<' => push_checked(out, \"&lt;\", limit)?,", new="'<' => push_char_checked(out, '<', limit)?,", crate='forma-ir', test='walker::tests::security_probe_bounded_text_escaping'),
-    dict(id='attribute-fast', path=WALKER, function='push_escaped_attr', old="'\"' => out.push_str(\"&quot;\"),", new="'\"' => out.push('\"'),", crate='forma-ir', test='walker::tests::walk_attr_escaping'),
+    dict(id='attribute-fast', path=WALKER, function='push_escaped_runs<const ATTRIBUTE: bool>', old='b\'"\' if ATTRIBUTE => "&quot;",', new='b\'"\' if ATTRIBUTE => "\\\"",', crate='forma-ir', test='walker::tests::walk_attr_escaping'),
     dict(id='attribute-bounded', path=WALKER, function='push_escaped_attr', old="'\"' => push_checked(out, \"&quot;\", limit)?,", new="'\"' => push_char_checked(out, '\"', limit)?,", crate='forma-ir', test='walker::tests::security_probe_bounded_attribute_escaping'),
     dict(id='name-tail', path=WALKER, function='is_valid_name', old="chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.'))", new='true', crate='forma-ir', test='walker::tests::walk_rejects_hostile_tag_name'),
     dict(id='script-policy', path=CSP, function='strict_directives', old='"\'strict-dynamic\'".to_string(),', new='"\'unsafe-inline\'".to_string(),', crate='forma-server', test='csp::tests::csp_is_strict'),

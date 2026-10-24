@@ -23,6 +23,8 @@ import { runtimeParser, type RuntimeParser } from './runtime-parser.js';
 export interface ReconcilerConfig {
   mountScope: (el: Element) => void;
   unmountScope: (el: Element) => void;
+  /** Dispose registered scopes under a subtree, including held data-if branches. */
+  unmountTree?: (el: Element) => void;
   disconnectObserver: () => void;
   reconnectObserver: () => void;
   batch: (fn: () => void) => void;
@@ -59,6 +61,26 @@ function getBindTargets(el: Element): Set<string> {
 /** Check if an element owns its subtree (data-list or data-if) */
 function ownsSubtree(el: Element): boolean {
   return el.hasAttribute('data-list') || el.hasAttribute('data-if');
+}
+
+/**
+ * `el`, if it is a `data-forma-state` scope, then every scope under it, in
+ * document order. Each scope binds only its own elements, not a scope nested
+ * in it (FORMA-283), so the reconciler mounts and unmounts each one. Taken
+ * before any of them mounts: a `data-if` that is false takes its branch, and a
+ * scope in it, out of the tree while its own scope mounts.
+ * Verified by: src/__tests__/runtime-nested-scope.test.ts > "%s leaves exactly the bindings a fresh mount makes, each bound once"
+ * Verified by: src/__tests__/runtime-nested-scope.test.ts > "an update that adds a scope whose data-if starts false mounts the scope in that branch once"
+ */
+function scopesIn(el: Element): Element[] {
+  const scopes = Array.from(el.querySelectorAll('[data-forma-state]'));
+  if (el.hasAttribute('data-forma-state')) scopes.unshift(el);
+  return scopes;
+}
+
+function unmountTree(el: Element, config: ReconcilerConfig): void {
+  if (config.unmountTree) config.unmountTree(el);
+  else for (const scope of scopesIn(el)) config.unmountScope(scope);
 }
 
 // ── State shape comparison ────────────────────────────────────────────
@@ -357,19 +379,19 @@ function diffChildren(
 
           case 'RESET':
             // Unmount old scope, patch DOM, mount fresh
-            config.unmountScope(liveMatch);
+            unmountTree(liveMatch, config);
             patchAttributes(liveMatch, newChild, trusted, parser);
             // Replace inner content
             replaceInnerContent(liveMatch, newChild);
-            config.mountScope(liveMatch);
+            for (const s of scopesIn(liveMatch)) config.mountScope(s);
             break;
 
           case 'REPLACE': {
             // Full element swap
-            config.unmountScope(liveMatch);
+            unmountTree(liveMatch, config);
             const replacement = newChild.cloneNode(true) as Element;
             liveParent.replaceChild(replacement, liveMatch);
-            config.mountScope(replacement);
+            for (const s of scopesIn(replacement)) config.mountScope(s);
             usedLiveElements.delete(liveMatch);
             liveMatch = replacement;
             usedLiveElements.add(replacement);
@@ -394,13 +416,7 @@ function diffChildren(
       usedLiveElements.add(clone);
 
       // Mount any scopes in the new element
-      if (clone.hasAttribute('data-forma-state')) {
-        config.mountScope(clone);
-      }
-      const nestedScopes = clone.querySelectorAll('[data-forma-state]');
-      for (const nested of Array.from(nestedScopes)) {
-        config.mountScope(nested);
-      }
+      for (const s of scopesIn(clone)) config.mountScope(s);
     }
   }
 
@@ -412,13 +428,7 @@ function diffChildren(
       // Guard: element is mid-leave transition — its transition will remove it
       if (child.hasAttribute('data-forma-leaving')) continue;
       // Unmount any scopes
-      if (child.hasAttribute('data-forma-state')) {
-        config.unmountScope(child);
-      }
-      const nestedScopes = child.querySelectorAll('[data-forma-state]');
-      for (const nested of Array.from(nestedScopes)) {
-        config.unmountScope(nested);
-      }
+      unmountTree(child, config);
       liveParent.removeChild(child);
     }
   }
