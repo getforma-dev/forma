@@ -267,10 +267,18 @@ pub(crate) fn write_document(
     // with the identity compiled into the bundle before it activates anything. The
     // manifest is data, so it is escaped as any attribute value is, and no render input
     // can set or override it.
-    let build_attr = format!(
-        " data-forma-build=\"{}\"",
-        escape_html(&config.manifest.build)
-    );
+    let static_route = config
+        .manifest
+        .route(config.route_pattern)
+        .is_some_and(crate::RouteAssets::is_static_ssr);
+    let build_attr = if static_route {
+        String::new()
+    } else {
+        format!(
+            " data-forma-build=\"{}\"",
+            escape_html(&config.manifest.build)
+        )
+    };
 
     // Every byte of the completed document, including state tags/envelope,
     // counts against the same response limit. Charge before allocating/copying
@@ -296,7 +304,11 @@ pub(crate) fn write_document(
         "<div id=\"app\"",
         build_attr.as_str(),
         if ssr_body.is_some() {
-            " data-forma-ssr>"
+            if static_route {
+                ">"
+            } else {
+                " data-forma-ssr>"
+            }
         } else {
             "></div>"
         },

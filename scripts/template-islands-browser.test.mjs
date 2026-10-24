@@ -9,7 +9,7 @@ const state = value => `<script type="application/json" data-island-state>${JSON
 const host = '<section data-forma-island="0" data-forma-component="Counter" data-forma-state="0" data-forma-h="0123456789abcdef"><p class="count">Count: <span>7</span></p><button>Increment</button><button>Reset</button></section>';
 const listeners = `let value=7; const span=document.querySelector('.count span'), buttons=document.querySelectorAll('button'); buttons[0].addEventListener('click',()=>{span.textContent=String(++value)}); buttons[1].addEventListener('click',()=>{value=0;span.textContent='0'});`;
 const manifest = { routes: { '/': {mode:'ssr',js:['entry.js'],css:['style.css'],ir:'home.ir'}, '/about': {mode:'ssr',js:[],css:['style.css'],ir:'about.ir'} } };
-async function fixture({script=listeners, staticScript=false, earlyScript='', hangDocument=false}, visit) {
+async function fixture({script=listeners, staticScript=false, earlyScript='', hangDocument=false, staticState=false, staticBody='<p>Static body</p>'}, visit) {
   const server=createServer((request,response)=>{
     const headers={'cache-control':'no-store','content-security-policy':csp};
     if(hangDocument&&request.url==='/')return;
@@ -18,7 +18,7 @@ async function fixture({script=listeners, staticScript=false, earlyScript='', ha
     if(request.url==='/_assets/style.css'){response.writeHead(200,{'content-type':'text/css',...headers});response.end('main{color:rgb(1,2,3)}');return;}
     const about=request.url==='/about';
     response.writeHead(200,{'content-type':'text/html',...headers});
-    response.end(`<!doctype html><html><head><link rel="stylesheet" href="/_assets/style.css">${state(about?[]:[{h:'0123456789abcdef',p:{count:7}}])}</head><body><main><h1>${about?'About this app':'Home'}</h1>${about?'<p>Static body</p>':host}</main>${earlyScript?`<script nonce="template-test">${earlyScript}</script>`:''}${!about||staticScript?'<script type="module" nonce="template-test" src="/_assets/entry.js"></script>':''}</body></html>`);
+    response.end(`<!doctype html><html><head><link rel="stylesheet" href="/_assets/style.css">${about&&!staticState?'':state(about?[]:[{h:'0123456789abcdef',p:{count:7}}])}</head><body><main><h1>${about?'About this app':'Home'}</h1>${about?staticBody:host}</main>${earlyScript?`<script nonce="template-test">${earlyScript}</script>`:''}${!about||staticScript?'<script type="module" nonce="template-test" src="/_assets/entry.js"></script>':''}</body></html>`);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const browser=await chromium.launch({headless:true});
@@ -49,6 +49,27 @@ test('template observation refuses an inert page even when original markup remai
 test('static template observation preserves markup and stylesheet with no executable requests',async()=>{
   const result=await fixture({},(browser,origin)=>verifyStaticTemplate(browser,origin,manifest));
   assert.equal(result.executableScripts,0);assert(result.requests.some(request=>request.type==='stylesheet'));
+});
+test('published static artifacts require the explicit legacy contract',async()=>{
+  await fixture({staticState:true},async(browser,origin)=>{
+    await assert.rejects(verifyStaticTemplate(browser,origin,manifest),/unexpected static state envelope count/);
+    const result=await verifyStaticTemplate(browser,origin,manifest,'/about',{staticHtml:'legacy-v1'});
+    assert.equal(result.executableScripts,0);
+  });
+  await fixture({staticState:false},async(browser,origin)=>{
+    await assert.rejects(verifyStaticTemplate(browser,origin,manifest,'/about',{staticHtml:'legacy-v1'}),/unexpected static state envelope count/);
+  });
+});
+test('static template observation accepts plain static output without an envelope',async()=>{
+  const result=await fixture({staticState:false},(browser,origin)=>verifyStaticTemplate(browser,origin,manifest));
+  assert.equal(result.executableScripts,0);
+});
+test('plain static template observation refuses stranded adoption vocabulary',async()=>{
+  for(const staticBody of ['<p data-forma-key="1">value</p>','<p><!--f:t0-->value<!--/f:t0--></p>']){
+    await fixture({staticState:false,staticBody},async(browser,origin)=>{
+      await assert.rejects(verifyStaticTemplate(browser,origin,manifest),/adoption attributes|adoption comments/);
+    });
+  }
 });
 test('static template observation rejects a script even if it performs no writes',async()=>{
   await fixture({script:'export {};',staticScript:true},async(browser,origin)=>{

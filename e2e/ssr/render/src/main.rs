@@ -230,11 +230,17 @@ fn render_case(name: &str, dist: &Path, source: &Path, out: &Path) -> Result<(),
     for (file, is_ssr, response) in [("index", true, ssr), ("csr", false, csr)] {
         let page = response.into_parts_unchecked();
 
-        // The root also names the build (FORMA-186, DR-29).
-        let ssr_root = format!(
-            "<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
-            manifest.build
-        );
+        // Adoption-capable roots name the build (FORMA-186). The accepted
+        // no-JavaScript route instead uses a plain root (FORMA-257).
+        let static_route = manifest.route("/").is_some_and(|route| route.js.is_empty());
+        let ssr_root = if static_route {
+            "<div id=\"app\">".to_string()
+        } else {
+            format!(
+                "<div id=\"app\" data-forma-build=\"{}\" data-forma-ssr>",
+                manifest.build
+            )
+        };
         let server_rendered = page.html.contains(&ssr_root);
         if server_rendered != is_ssr {
             return Err(format!(

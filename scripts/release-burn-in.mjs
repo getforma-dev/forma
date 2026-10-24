@@ -123,7 +123,7 @@ export async function worker({ tag, commit, attempt, work, payloadRoot }) {
         try {
           const pages = await verifyStagedFixturePages({ staged: staged.fixtures, browser, test: async (_name, fn) => fn() }), templates = {};
           for (const [name, entry] of Object.entries(staged.templates)) await withOwnedServer(entry.binary, [], entry.project, async (_response, origin) => {
-            templates[name] = name === 'minimal' ? { island: await verifyMinimalIsland(browser, origin, entry.manifest), static: await verifyStaticTemplate(browser, origin, entry.manifest) } : await verifyDashboardTemplate(browser, origin);
+            templates[name] = name === 'minimal' ? { island: await verifyMinimalIsland(browser, origin, entry.manifest), static: await verifyStaticTemplate(browser, origin, entry.manifest, '/about', { staticHtml: auth.set.contracts.staticHtml ?? 'legacy-v1' }) } : await verifyDashboardTemplate(browser, origin);
           }, { timeout: 60_000 });
           const checkIds = [...pages.pages.map(p => `fixture:${p.app}:${p.page}`), ...pages.extras.map(name => `extra:${name}`), 'template:minimal:adoption', 'template:minimal:static', 'template:dashboard:interaction'];
           assert.deepEqual(checkIds.slice().sort(), expected.fixtureCheckIds.slice().sort());
