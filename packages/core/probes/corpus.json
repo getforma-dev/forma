@@ -2541,7 +2541,7 @@
   ],
   "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');\n        else if (evaluate) {",
   "replace": "        if (evaluate) {",
-  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: retro-homepage's `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
+  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
  },
  {
   "id": "runtime/computed-cycle-undetected",
@@ -2811,7 +2811,7 @@
   ],
   "find": "    if (d < -201 && v && typeof v === 'object') {",
   "replace": "    if (d < -199 && v && typeof v === 'object') {",
-  "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render\""
+  "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; a nested dictionary still serializes\""
  },
  {
   "id": "expr/weigh-tostring-unrefused",
