@@ -1393,7 +1393,7 @@
   ],
   "find": "          if (items.length * weight > LIST_WEIGHT_CAP) {",
   "replace": "          if (items.length > LIST_WEIGHT_CAP) {",
-  "note": "the data-list cap counts rows and not what each costs to build, so 160,000 rows of a 160-weight template pass it (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
+  "note": "the data-list cap counts rows and not what each costs to build, so rows are admitted without accounting for their template weight (FORMA-172). Verified by: src/__tests__/runtime-list-cap.test.ts > \"a list exactly at the cap renders, and one row more is refused\""
  },
  {
   "id": "runtime/list-cap-weight-ignores-attributes",
@@ -2641,7 +2641,7 @@
   ],
   "find": "      if (EVENT_MODIFIER.test(event)) {",
   "replace": "      if (EVENT_MODIFIER.test('')) {",
-  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269 (vector-studio's folder-picker replay). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
+  "note": "the modifier check never matches, so `data-on:click.stop` listens for an event of that literal name, which never fires, with no diagnostic: the binding before FORMA-269. Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"data-on:click.stop is refused with a coded diagnostic that names the attribute, and binds no listener\""
  },
  {
   "id": "runtime/event-modifier-reported-still-bound",

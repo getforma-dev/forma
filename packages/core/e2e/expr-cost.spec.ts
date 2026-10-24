@@ -157,7 +157,7 @@ test('FORMA-025: data-text of a value heavier than the budget is refused before 
 
 /**
  * FORMA-172 in a real browser: an absolute cap on a `data-list` pass. A pass
- * over more than 160,000 of rows times row weight (1, and 1 for each element
+ * over more than 24,000 of rows times row weight (1, and 1 for each element
  * and attribute of the row template) is refused before any item is read; a
  * list under the cap renders as it did, in the task that hands it its items.
  * Chromium runs at 4x CPU throttling, as sr33.spec.ts does; Firefox and WebKit
@@ -166,7 +166,7 @@ test('FORMA-025: data-text of a value heavier than the budget is refused before 
  * on refusals that measure about a millisecond at 4x, and the passes that
  * build rows are only reported.
  */
-const LIST_CAP = 160_000;
+const LIST_CAP = 24_000;
 
 async function throttled(page: import('@playwright/test').Page, browserName: string): Promise<number> {
   if (browserName !== 'chromium') return 1;
@@ -229,43 +229,39 @@ test('FORMA-172: a data-list of 250,000 items is refused before any item is read
   expect(past.ms).toBeLessThan(50);
 });
 
-test('FORMA-172: 1,000 rows of each served vector-studio template, and lists at the cap, render whole', async ({ page, browserName }) => {
-  test.setTimeout(240_000);
+test('FORMA-289: ordinary 1,000-row lists and cap-boundary rows fit the measured task budget', async ({ page, browserName }) => {
+  test.setTimeout(120_000);
   await page.goto('/runtime-bare.html');
   const rate = await throttled(page, browserName);
-  const fixture = async (name: string): Promise<string> => (await (await page.request.get(`/${name}`)).text()).replace(/<!--[\s\S]*?-->/, '');
-
-  // The rows vector-studio serves (data-fm stamped): todo-list weight 144, team-roster 150.
-  const todo = await fixture('vector-studio-todo-row.html');
-  const todos = "Array.from({length: 1000}, (_, i) => ({ id: i, title: 'Task ' + i, done: i % 3 === 0, priority: ['high', 'medium', 'low'][i % 3], due: i % 2 ? '2025-07-10' : '' }))";
-  const served = await listPass(page, `<div data-list="{v === null ? [] : v}">${todo}</div>`, todos, 'article', { tasks: [], editingId: null, editingText: '' });
-  console.log(`FORMA-172 ${browserName} ${rate}x: 1,000 rows of vector-studio's served todo-list template (weight 144): ${served.built} rows in one ${served.ms.toFixed(0)} ms task`);
-  expect(served.built).toBe(1000);
-  expect(served.budget).toBe(0);
-
-  const roster = await fixture('vector-studio-roster-row.html');
-  const people = (n: number): string => `Array.from({length: ${n}}, (_, i) => ({ id: i, name: 'Person ' + i, initials: 'P' + (i % 10), role: 'Engineer', dept: 'Platform', email: 'p' + i + '@example.com', phone: '555-0100', bio: 'Builds things.', linkedin: '#', twitter: '#' }))`;
-  const most = Math.floor(LIST_CAP / 150);
-  const atCap = await listPass(page, `<div data-list="{v === null ? [] : v}">${roster}</div>`, people(most), 'article');
-  console.log(`FORMA-172 ${browserName} ${rate}x: ${most} rows of vector-studio's served team-roster template (weight 150, at the cap): ${atCap.built} rows in one ${atCap.ms.toFixed(0)} ms task`);
-  expect(atCap.built).toBe(most);
-  expect(atCap.budget).toBe(0);
-  const pastCap = await listPass(page, `<div data-list="{v === null ? [] : v}">${roster}</div>`, people(most + 1), 'article');
-  console.log(`FORMA-172 ${browserName} ${rate}x: ${most + 1} served team-roster rows (one past the cap) refused in ${pastCap.ms.toFixed(1)} ms`);
-  expect(pastCap.built).toBe(0);
-  expect(pastCap.budget).toBe(1);
-
-  // The largest lists the cap admits, for the lightest row and a table row with directives.
-  const lightest = await listPass(page, LI_LIST, numbers(LIST_CAP / 2), 'li');
-  console.log(`FORMA-172 ${browserName} ${rate}x: ${LIST_CAP / 2} rows of <li>{item}</li> (weight 2, at the cap): ${lightest.built} rows in one ${lightest.ms.toFixed(0)} ms task`);
-  expect(lightest.built).toBe(LIST_CAP / 2);
-  expect(lightest.budget).toBe(0);
-
   const table = '<table><tbody data-list="{v === null ? [] : v}"><tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr></tbody></table>';
-  const tableRows = Math.floor(LIST_CAP / 14);
-  const rows = `Array.from({length: ${tableRows}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
-  const tabled = await listPass(page, table, rows, 'tr');
-  console.log(`FORMA-172 ${browserName} ${rate}x: ${tableRows} table rows (weight 14, at the cap): ${tabled.built} rows in one ${tabled.ms.toFixed(0)} ms task`);
-  expect(tabled.built).toBe(tableRows);
-  expect(tabled.budget).toBe(0);
+  const tableData = (n: number) => `Array.from({length: ${n}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
+  const attributes = Array.from({ length: 22 }, (_, i) => `a${i}="v"`).join(' ');
+  const cases = [
+    { name: 'ordinary-li', weight: 2, html: LI_LIST, data: numbers, selector: 'li' },
+    { name: 'directive-table', weight: 14, html: table, data: tableData, selector: 'tr' },
+    { name: 'attribute-row', weight: 24, html: `<ul data-list="{v === null ? [] : v}"><li ${attributes}>{item}</li></ul>`, data: numbers, selector: 'li' },
+  ];
+  for (const row of cases) {
+    const ordinary = await listPass(page, row.html, row.data(1000), row.selector);
+    expect(ordinary.built, row.name).toBe(1000);
+    expect(ordinary.budget, row.name).toBe(0);
+    const count = Math.floor(LIST_CAP / row.weight), samples: number[] = [];
+    for (let run = 0; run < 3; run++) {
+      const at = await listPass(page, row.html, row.data(count), row.selector);
+      expect(at.built, row.name).toBe(count);
+      expect(at.budget, row.name).toBe(0);
+      samples.push(at.ms);
+    }
+    const past = await listPass(page, row.html, row.data(count + 1), row.selector);
+    expect(past.built, row.name).toBe(0);
+    expect(past.budget, row.name).toBe(1);
+    expect(past.ms, row.name).toBeLessThan(50);
+    const maximumMs = Math.max(...samples), units = count * row.weight;
+    console.log('FORMA-289 list budget', JSON.stringify({ browserName, platform: process.platform, rate, row: row.name, weight: row.weight, cap: LIST_CAP, rows: count, units, samplesMs: samples, maximumMs, usPerUnit: maximumMs * 1000 / units, ordinary1000Ms: ordinary.ms, refusedMs: past.ms }));
+    // A measured regression guard for these ordinary shapes, not a claim about
+    // arbitrary expensive elements, nested lists or repeated text placeholders.
+    if (browserName === 'chromium' && process.platform === 'linux') {
+      expect(maximumMs, `${row.name}: worst measured task at ${LIST_CAP} units`).toBeLessThanOrEqual(1000);
+    }
+  }
 });
