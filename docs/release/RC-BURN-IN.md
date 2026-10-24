@@ -17,10 +17,12 @@ until the actual campaign passes.
 
 ## Audit and release chain
 
-Before freezing the RC tree, integrate the accepted beta source, prepare the RC
+Before freezing the RC tree, integrate the accepted source, prepare the RC
 versions, and close each non-audit RC contract row only with its actual evidence.
-The RC performance baseline must come from a successfully published beta DS12;
-a local rehearsal or a failed immutable beta tag cannot provide it. Complete
+The initial 3.0 rollout used a successfully published beta DS12 as its RC
+performance baseline. Later releases use the authenticated published predecessor
+selected by `readPerformanceBaseline`; the 3.1 candidate uses published 3.0.0.
+A local rehearsal or a failed immutable tag cannot provide that baseline. Complete
 current packed qualification and the required full mutation campaign before
 accepting the whole-release audit. Gate statuses and future evidence stay
 pending until those results exist.
