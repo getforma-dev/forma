@@ -46,7 +46,10 @@ describe('scaffolding', () => {
     }, 60_000);
 
     it('produces exactly the template tree, with configuration dotfiles restored', () => {
-      const expected = listFiles(path.join(TEMPLATES_DIR, template))
+      // Published releases keep their authenticated archive's tree. Candidate
+      // packs must still match today's source tree, including new workflow files.
+      const expectedRoot = process.env.FORMA_SCAFFOLD_PUBLISHED_TEMPLATES || TEMPLATES_DIR;
+      const expected = listFiles(path.join(expectedRoot, template))
         .map((f) => f.replace(/(^|\/)_gitignore$/, '$1.gitignore').replace(/(^|\/)_npmrc$/, '$1.npmrc'))
         .filter((f) => !f.startsWith('.git/'))
         .sort();
