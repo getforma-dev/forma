@@ -36,8 +36,16 @@ const DEVELOPMENT_ONLY: ReadonlyArray<[text: string, source: string]> = [
   ['the page refused the Trusted Types policy', 'dom/trusted-html.ts'],
 ];
 
-/** Tracing that no build carries any more (C2): the flag was documented nowhere. */
-const REMOVED = ['[forma:switch]', '[forma:show]', '__FORMA_DEBUG__', 'Nested arrays in function children'];
+/**
+ * Tracing that no build carries any more: createShow's and createSwitch's,
+ * whose flag was documented nowhere (C2), and the HTML runtime's debug log,
+ * which nothing could switch on and which the IIFEs without a Rollup pass
+ * still shipped (FORMA-275).
+ */
+const REMOVED = [
+  '[forma:switch]', '[forma:show]', '__FORMA_DEBUG__', 'Nested arrays in function children',
+  'HANDLER FIRED', 'mountScope: DONE', 'initScope: parsed',
+];
 
 /**
  * Build the tsup config that emits `entries`, narrowed to them, into a private
@@ -97,8 +105,9 @@ describe('development-only text in the built artifacts (FORMA-021)', () => {
       for (const [text, source] of DEVELOPMENT_ONLY) expect(code, `${entries[0]}: ${source}`).not.toContain(text);
       for (const text of REMOVED) expect(code, `${entries[0]}: ${text}`).not.toContain(text);
       expect(code, `${entries[0]}: the registry`).not.toContain('registerInstance');
-      // No guard survives in the IIFEs either, which have no Rollup pass to
-      // fold a binding: the identifier is gone, so every site folded in esbuild.
+      // No guard survives in the IIFEs either: the identifier is gone, so every
+      // site folded in esbuild (the standard IIFE has no Rollup pass to fold a
+      // binding).
       expect(code, `${entries[0]}: a __DEV__ binding or guard`).not.toMatch(/\b__DEV__\d*\b/);
     }
   });

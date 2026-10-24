@@ -17,6 +17,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createContext, runInContext, Script } from 'node:vm';
 import rawConfig from '../../tsup.config';
 import { FRAME_BUILD_FLAG, FRAME_DEFINE } from '../../scripts/build-defines.mjs';
 import { parseImportSpecifiers } from '../../scripts/check-size.mjs';
@@ -261,7 +262,7 @@ async function buildFrame(overrides: Options = {}): Promise<string> {
 }
 
 describe('the frame runtime build (the real tsup config)', () => {
-  // One production build serves the first and the last test; the last builds
+  // One production build serves every test but the flag's; the last builds
   // once more to compare.
   let first: Promise<string> | null = null;
   const production = (): Promise<string> => (first ??= buildFrame());
@@ -288,6 +289,20 @@ describe('the frame runtime build (the real tsup config)', () => {
     // What it is: the frame's connection, mounting in tier (c).
     expect(code).toContain('connectFrame(window)');
     expect(code).toContain('"unreviewed"');
+  });
+
+  it('the frame runtime run as a classic script defines no global and connects to its own window', { timeout: 120_000 }, async () => {
+    // The wrapper is Rollup's (treeshake, FORMA-275): it fills an exports
+    // object that is a fresh literal, so nothing it exports is reachable.
+    const code = await production();
+    const listened: string[] = [];
+    const win = { document: {}, parent: {}, addEventListener: (type: string) => { listened.push(type); }, removeEventListener: () => {} };
+    const context = createContext({ window: win });
+    const sandbox = runInContext('globalThis', context) as object;
+    const before = Reflect.ownKeys(sandbox);
+    new Script(code).runInContext(context);
+    expect(Reflect.ownKeys(sandbox)).toEqual(before);
+    expect(listened).toEqual(['message', 'formajs:diagnostic']);
   });
 
   it('without the frame flag the same entry stays inert and does not connect', { timeout: 120_000 }, async () => {

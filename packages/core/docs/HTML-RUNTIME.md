@@ -440,10 +440,10 @@ source map comment, so a server writes it inline into the frame document and a
 policy allows it by its SHA-256 hash (forma-server's `PageResponse::frame`;
 an application's build writes it, minified, into its assets as `forma-runtime.js`,
 FORMA-175, which is not core's CDN alias of the same name). Core's file is
-unminified and uncompressed, about 160 KB raw (40 KB gzipped; the README's
+unminified and uncompressed, about 158 KB raw (38 KB gzipped; the README's
 size table gates the gzipped figure); like every file published to npm it
 stays readable. The build writes a minified copy of it into the application's
-output instead (about 85 KB raw, FORMA-190; its hash is the one of the bytes
+output instead (about 81 KB raw, FORMA-190 and FORMA-275; its hash is the one of the bytes
 served), and the server inlines that into every frame document it serves
 under `no-store`, so the application still compresses those responses (gzip
 or brotli at its server or its edge) rather than serving the bytes as they
