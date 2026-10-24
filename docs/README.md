@@ -1,8 +1,10 @@
 # Forma documentation
 
-Forma 3.0 is one repository and seven coordinated packages. These links describe
-the shipped APIs. Historical decisions and release evidence are kept separately
-from the path an application author should follow.
+Forma 3.x is one repository and seven coordinated packages. Version 3.0.0 is
+published; current main also contains changes being prepared for 3.1. The
+[3.1 upgrade draft](UPGRADING-3.1.md) distinguishes those unreleased changes.
+Historical decisions and release evidence are kept separately from the path an
+application author should follow.
 
 ## Build with Forma
 
@@ -16,7 +18,8 @@ from the path an application author should follow.
 | Use the explicit HTML runtime | [HTML runtime](../packages/core/docs/HTML-RUNTIME.md) |
 | Know what compiles natively | [Admitted subset and build diagnostics](../packages/compiler/docs/subset.md) |
 | Configure a build or deployment | [Build package](../packages/build/README.md) |
-| Upgrade to 3.0 | [Upgrade guide](UPGRADING-3.0.md) and [compatibility](compatibility.md) |
+| Upgrade to published 3.0 | [Upgrade guide](UPGRADING-3.0.md) and [compatibility](compatibility.md) |
+| Prepare for 3.1 (unpublished) | [3.0 → 3.1 upgrade draft](UPGRADING-3.1.md) |
 | Diagnose a failure | [Diagnostic catalogue](DIAGNOSTICS.md) |
 
 ## Contracts and security

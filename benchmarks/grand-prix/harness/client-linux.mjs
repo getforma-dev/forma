@@ -17,6 +17,7 @@ const option = (key, fallback) => argv.includes(`--${key}`) ? argv[argv.indexOf(
 assert.equal(process.platform, 'linux', 'native Linux required');
 assert.equal(execFileSync('git', ['status', '--porcelain'], { cwd: repository, encoding: 'utf8' }).trim(), '', 'commit source before racing');
 const diagnostic = argv.includes('--diagnostic');
+const profileRows = argv.includes('--profile-rows');
 const resourceProfile = hostProfile({ diagnostic });
 validateEngineProfile(resourceProfile, JSON.parse(execFileSync('docker', ['info', '--format', '{{json .}}'], { encoding: 'utf8' })));
 const chrome = resolve(option('chrome', process.env.CHROME_PATH ?? ''));
@@ -161,6 +162,26 @@ try {
     trial.after = machine(); trial.passed = true; save();
     await run('docker', ['image', 'rm', signalImage]);
     await run('docker', ['buildx', 'prune', '--builder', builder, '--all', '--force']);
+  }
+  if (profileRows) {
+    // All scored measurements finish first. These source-mapped captures are
+    // diagnostic and cannot be substituted for any original timing sample.
+    report.rowProfiles = [];
+    for (const trial of report.trials) {
+      const client = join(work, trial.ref, 'client-race');
+      const raw = join(work, trial.ref, 'raw');
+      const profileOut = join(raw, 'row-profile'); mkdirSync(profileOut);
+      for (const car of ['forma', 'vanilla']) {
+        await quiet();
+        const args = ['profile-rows.mjs', '--car', car, '--source', trial.ref,
+          '--chrome', chrome, '--chrome-sha256', chromeHash,
+          '--resource-profile', profileFile, '--campaign', campaignFile,
+          '--out', join(profileOut, car)];
+        if (resourceProfile.browser.cpuset) await run('taskset', ['--cpu-list', resourceProfile.browser.cpuset, process.execPath, ...args], client);
+        else await run(process.execPath, args, client);
+        report.rowProfiles.push({ ref: trial.ref, car, diagnostic: true }); save();
+      }
+    }
   }
   report.passed = true;
 } catch (error) { report.error = String(error); process.exitCode = 1; }

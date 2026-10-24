@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+- Consolidate public-effect graph and lifecycle state (FORMA-259), preserving
+  adoption, cleanup, error reporting and disposal contracts. Dispose an initial
+  subscription if startup escapes through a throwing error reporter. Retain the
+  simpler implementation; the native-bootstrap experiment is excluded.
+- Explicitly accept the effects delivery tradeoff: core ESM graph 49,212 B gzip
+  against a revised 49,414 B ceiling (previously 48,902 B), and indexed-route
+  Forma allocation 28,304 B against 28,420 B (previously 28,100 B). Other package
+  gates and total route JavaScript budgets are unchanged. The original fan-out
+  target and row-creation target remain recorded misses; final qualification
+  and the [3.1 performance decisions](docs/release/3.1-PERFORMANCE-TRADEOFFS.md)
+  determine release acceptance.
+
+- Add a separate [3.0 → 3.1 upgrade draft](docs/UPGRADING-3.1.md), covering
+  renderer-first version ordering, plain static output, opt-in compression and
+  explicit HTML-runtime declarations. Preserve the published 3.0 output contract
+  in its existing guide. Version 3.1 remains unpublished and gated by qualification.
+
 - Render no-JavaScript native routes as plain HTML (FORMA-257): omit hydration
   comments, injected row keys, empty island state, and the root build/SSR
   attributes when the route has `js: []` and no islands. Scrapers of those

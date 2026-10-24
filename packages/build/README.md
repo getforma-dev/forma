@@ -225,7 +225,7 @@ The build then writes `dist/formajs-frame.global.js` from the
 ### The size report: route classes and ceilings
 
 A production build classifies every route and holds it to its class's
-ceilings (N2; decision brief L-64, DR-35). Sizes are gzip at level 9, a KB
+ceilings (N2; DR-35 and the 3.1 performance decision). Sizes are gzip at level 9, a KB
 being 1,000 bytes and a KiB 1,024; Brotli is reported beside them. A route over
 a ceiling fails the build with `BUILD-819`, naming the route, its class and
 the bytes, before anything is written.
@@ -233,10 +233,15 @@ the bytes, before anything is written.
 | Class | Which routes | Forma's code | All of the route's JavaScript |
 |---|---|---|---|
 | `no-interactive-region` | A server-rendered page with no island, or a route that lists no script | none | none (a service worker counted) |
-| `islands` | A server-rendered page with islands | 28,100 B | 75 KiB (76,800 B), 365 KiB for a canvas |
-| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 28,100 B | as `islands` |
+| `islands` | A server-rendered page with islands | 28,420 B | 75 KiB (76,800 B), 365 KiB for a canvas |
+| `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 28,420 B | as `islands` |
 
-L-64 authorizes this ceiling for cooperative activation only after the full 20-run performance campaign passes the original 50 ms N3 task ceiling. Source constants alone do not establish release qualification.
+The [3.1 performance decision](../../docs/release/3.1-PERFORMANCE-TRADEOFFS.md)
+raises the Forma-code ceiling by 320 bytes from 28,100 B to 28,420 B for the
+selected effect implementation. The indexed route measures 28,304 B; all total
+JavaScript limits stay unchanged. Fresh packed startup qualification remains
+required under the separately versioned acceptance policy. Source constants
+alone do not establish release qualification.
 
 Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
 from the bundler's metafile, plus the identity banner Forma's build writes at
@@ -255,7 +260,7 @@ routes: {
 ```
 
 A canvas may ship 365 KiB of JavaScript instead of 75 KiB; Forma's code stays
-under 28,100 B either way, and the declaration gives nothing to a route
+under 28,420 B either way, and the declaration gives nothing to a route
 without JavaScript. Only `true` or `false` is accepted (anything else is a
 config error, reported before anything is written). It is provisional public
 configuration at 3.0.0: declare it for a page that really is a canvas, and trim
@@ -284,7 +289,7 @@ a route ships.
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (decision brief L-64, DR-35; the ceilings are not configurable): Forma's code at most 28,100 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (DR-35 and the 3.1 performance decision; the ceilings are not configurable): Forma's code at most 28,420 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 **A symlinked `outputDir` is refused (`BUILD-824`).** The swap renames a real directory over `outputDir`, which over a link would replace the link and leave the previous build in its target, where whatever serves the link keeps reading it (watch mode removes the link when it empties `outputDir`). Neither mode follows the link: the build fails first, before staging, deleting or writing anything, naming the link and the directory it points at, and the link and its target are left as they were. Set `outputDir` to the target, or build into a real directory and copy it where the link points. A link that points at nothing is refused too. Only `outputDir` itself is checked: a symlinked directory above it (`/var` on macOS, `link/dist` with `link` a symlink) is followed, and the output is swapped in beside `outputDir` inside the directory the link names. A mount point (a container volume) is not a link and still has its contents replaced in place.

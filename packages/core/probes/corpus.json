@@ -2055,8 +2055,8 @@
   "tags": [
    "security"
   ],
-  "find": "      if (!adopting && el.firstChild) el.replaceChildren();",
-  "replace": "      if (!adopting && el.firstChild) el.innerHTML = '';",
+  "find": "      if (el.firstChild) el.replaceChildren();",
+  "replace": "      if (el.firstChild) el.innerHTML = '';",
   "note": "a reactive dangerouslySetInnerHTML that becomes null empties the element with a string write (DR-20, FORMA-127). Verified by: src/dom/__tests__/trusted-html.test.ts > \"core's own writes raise no Trusted Types violation: mount, unmount, the null clear, and every sink given trustedHtml()\""
  },
  {
@@ -2345,8 +2345,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if (cache['innerHTML'] === markup) return;\n    const sink = rawHtml(html, 'innerHTML');\n    if (!adopting || !holdsMarkup(el, markup, sink)) el.innerHTML = sink;\n    cache['innerHTML'] = markup;",
-  "replace": "    if (cache['innerHTML'] === markup) return;\n    cache['innerHTML'] = markup;\n    const sink = rawHtml(html, 'innerHTML');\n    if (!adopting || !holdsMarkup(el, markup, sink)) el.innerHTML = sink;",
+  "find": "    if (cache['innerHTML'] === markup) return;\n    const sink = rawHtml(html, 'innerHTML');\n    el.innerHTML = sink;\n    cache['innerHTML'] = markup;",
+  "replace": "    if (cache['innerHTML'] === markup) return;\n    cache['innerHTML'] = markup;\n    const sink = rawHtml(html, 'innerHTML');\n    el.innerHTML = sink;",
   "note": "markup is recorded as current before the write, so a string the page refused blocks the same markup as trustedHtml() (formajs#32 review N1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"a refused string does not block the same markup sent later as trustedHtml(), client-rendered and adopted\""
  },
  {

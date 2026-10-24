@@ -6,9 +6,9 @@
  * `BuildResult.sizeReport`, and writes it beside the manifest as
  * `size-report.json`.
  *
- * N2 as restated by L-55 and raised by L-58, L-59 and L-64: Forma's own browser code, `@getforma/core` and its
+ * N2 as restated by L-55 and raised by L-58, L-59, L-64 and the 3.1 decision: Forma's own browser code, `@getforma/core` and its
  * signal library `alien-signals` as the route's bundles carry them, is at most
- * 28,100 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
+ * 28,420 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
  * reported beside it; the application's own code is outside that ceiling. The
  * 10 KB of v2's appendix C is unreachable under the accepted strict adoption
  * (FORMA-104) and the declared island state block (FORMA-103), so the ceiling
@@ -21,6 +21,10 @@
  * on the full 20-run campaign meeting the original 50 ms N3 task ceiling.
  * The prior indexed result was 28,071 B; this is a policy change, not a
  * performance pass, and supersedes the historical rounding rule above.
+ * The 3.1 performance decision adds 320 B (28,420 B) for the simpler effect
+ * lifecycle: the selected indexed route measures 28,304 B. Other route limits
+ * stay unchanged; see docs/release/3.1-PERFORMANCE-TRADEOFFS.md for the explicit
+ * delivery tradeoff and separately qualified startup acceptance policy.
  *
  * The route classes (DR-35; the manifest decides them, see `generateManifest`)
  * and what each may ship, in gzip -9 bytes (1 KiB = 1,024 B):
@@ -30,7 +34,7 @@
  *   forma-server writes the worker's registration only on a page that publishes
  *   a JavaScript entry.
  * - `islands`: a server-rendered page that activates its islands. Forma's code
- *   at most 28,100 B; all of its JavaScript at most 75 KiB, the "other
+ *   at most 28,420 B; all of its JavaScript at most 75 KiB, the "other
  *   server-rendered pages" ceiling of N2, or 365 KiB if the route is declared a
  *   canvas (`canvas: true` on the route).
  * - `whole-page-mount`: a route whose page the browser mounts whole (a declared
@@ -74,8 +78,8 @@ import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { IDENTITY_BANNER_HEAD } from './identity.js';
 import type { RouteManifest } from './types.js';
 
-/** N2's ceiling: Forma's code per route, bytes gzip -9 (28,100 B under L-64). */
-export const FORMA_CODE_CEILING_GZIP = 28_100;
+/** N2's ceiling: Forma code per route, gzip -9 (28,420 B under the 3.1 decision). */
+export const FORMA_CODE_CEILING_GZIP = 28_420;
 
 /** N2's "other server-rendered pages": all of a route's JavaScript, bytes gzip -9 (75 KiB). */
 export const PAGE_JAVASCRIPT_CEILING_GZIP = 75 * 1024;
@@ -433,7 +437,7 @@ export function formatSizeReport(report: SizeReport): string[] {
   const label = (name: string): string => `   ${name.padEnd(14)}   `;
   const lines = [
     '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;',
-    `   N2's ceilings are policy (decision brief L-64, DR-35): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
+    `   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
   ];
   for (const size of routes) {
     const route = size.route.padEnd(routeWidth);
@@ -493,7 +497,7 @@ export function routeSizeFailure(sizes: readonly RouteSize[]): Error | undefined
     .join('; ');
   return new Error(
     `BUILD-819 ${over.length === 1 ? 'a route is over its size ceiling' : `${over.length} routes are over their size ceilings`} ` +
-      `(gzip -9; decision brief L-64 and DR-35; 1 KB = 1,000 B, 1 KiB = 1,024 B): ${listed}. ` +
+      `(gzip -9; DR-35 and the 3.1 performance decision; 1 KB = 1,000 B, 1 KiB = 1,024 B): ${listed}. ` +
       'Trim what the route imports or ships, split it, or declare a heavy page\'s route `canvas: true` (365 KiB of JavaScript instead of 75 KiB); the ceilings are policy and not configurable.',
   );
 }
