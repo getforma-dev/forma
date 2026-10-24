@@ -1,0 +1,1906 @@
+{
+  "runId": 40140319634,
+  "harness": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+  "campaign": {
+    "schema": 1,
+    "id": "338fe0f1-a4e8-49b1-b38b-d91fe0a213cf",
+    "createdAt": "2026-10-24T22:51:45.155Z",
+    "kind": "github-actions",
+    "hostSha256": "3b53850013842a4fcbfe45d0d33768425f9961f939a57ca95cb848ce91c0a2a2",
+    "machineIdSha256": "399794935aded36b418e3630a41ef1d23f027811adf388b70d95a72238bc049b",
+    "runnerTrackingSha256": "bff159ad80ab3c070b85f500c4ccdad5d60e4826ab8e512fdd7e742d6ccd2975",
+    "github": {
+      "runId": "40140319634",
+      "runAttempt": "1",
+      "job": "client",
+      "repository": "getforma-dev/forma"
+    }
+  },
+  "resourceProfile": {
+    "name": "gha-4-v1",
+    "diagnostic": false,
+    "qualified": true,
+    "minimumCpus": 4,
+    "platform": "linux",
+    "githubActions": true,
+    "availableCpus": 4,
+    "affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "selectedCpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "classA": {
+      "cpus": "1",
+      "memory": "1g",
+      "workers": 1,
+      "cpuset": "0"
+    },
+    "classB": {
+      "cpus": "2",
+      "memory": "2g",
+      "workers": 2,
+      "cpuset": "0,1"
+    },
+    "loadgen": {
+      "cpus": "2",
+      "cpuset": "2,3"
+    },
+    "build": {
+      "cpus": "4",
+      "cpuset": "0,1,2,3"
+    },
+    "signals": {
+      "cpus": "1",
+      "memory": "1g",
+      "cpuset": "0"
+    },
+    "browser": {
+      "cpuset": "1,2,3"
+    }
+  },
+  "phase": "fixed final-source campaign; row profiling disabled",
+  "validation": "All11 DOM records and18 signals/control records verified: five samples/two warmups, exact operation sets, correctness, shared campaign, resource allocation/affinity, locks, measured timestamps and arithmetic. Original SD and all samples retained. No cross-host raw-rate comparison or nonnumeric acceptance is asserted.",
+  "records": [
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/forma.json",
+      "sha256": "5df2fa974c9bc8432be1f3c48d4c5c6afa1529820f0f5d9c9c62a3e6d3d43872",
+      "event": 9,
+      "car": "forma",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/vanilla.json",
+      "sha256": "83ce2076d79354d2416ffa8e9a8c04f9e89f6daf7dc276722f37cbd03a6b9f1d",
+      "event": 9,
+      "car": "vanilla",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/react.json",
+      "sha256": "d4d59cb08d4681e1df0e71478f12b713e13c308fc2db1d087818cc03e51bc1cd",
+      "event": 9,
+      "car": "react",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/preact.json",
+      "sha256": "bf627ef709ef62671714df16d2277acc0bbdadbda6f756e951d1a1d2f6dc0a92",
+      "event": 9,
+      "car": "preact",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/solid.json",
+      "sha256": "797be5b3d87713396be30cb4d1cfd73f27e89461e60d8201193f65d64aecfade",
+      "event": 9,
+      "car": "solid",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/svelte.json",
+      "sha256": "10ffa8073aab8252cb3ae1613c30ec3bc142d0d8a69f708bf085fe5541b1deba",
+      "event": 9,
+      "car": "svelte",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/vue.json",
+      "sha256": "802d56ecf1f3bed861788c5f266db0cd5296a64b17dff2983ce794610527e233",
+      "event": 9,
+      "car": "vue",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/forma.json",
+      "sha256": "3a44ad6ba4806a64a0b3f27d169f723ee92a7306c258ed9d8a2673727c52d2ba",
+      "event": 11,
+      "car": "forma",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/solid.json",
+      "sha256": "0110a5381b665cb646e830a7b2d37f37aade5bc6c90f3f5ac4d4b6c6e080e9e8",
+      "event": 11,
+      "car": "solid",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/preact-signals.json",
+      "sha256": "cffac3851d1939a1a36006c18839b1a2bfe4f61c75beed185f5f1f7ce93d1f86",
+      "event": 11,
+      "car": "preact-signals",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/vue-reactivity.json",
+      "sha256": "87b1f45789018daf017396cfaf7f004a92ca6f416fbb5f80847d2559eda77338",
+      "event": 11,
+      "car": "vue-reactivity",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/alien-signals.json",
+      "sha256": "48c0bc5a1f56d0c3d3afe88f11ea49020af9a2e2a26a14a1fe2b8da3485dd34a",
+      "event": 11,
+      "car": "alien-signals",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals-version-check/alien-signals-3.1.2.json",
+      "sha256": "2a84436bafdc6adaad11ad6bda6d6bd01010f44ebe3b1340a9dbf17d8b81a229",
+      "event": 11,
+      "car": "alien-signals-3.1.2",
+      "source": "published",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/dom/forma.json",
+      "sha256": "6a512b9da94c855e89b2e6ffb31f4e155e9a84a32d485384740050798cc7d70f",
+      "event": 9,
+      "car": "forma",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/dom/vanilla.json",
+      "sha256": "9b592a66bef3b98e3fc79f6c81b6dd5e2eccff0841349e15e539556e61cf4640",
+      "event": 9,
+      "car": "vanilla",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/forma.json",
+      "sha256": "388c0aafcb1aac90da4ed90fc802cc5418b1522ad31298533edbd932ecde520d",
+      "event": 11,
+      "car": "forma",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/solid.json",
+      "sha256": "84f83e45674f891b3741b7919303d603130304e5eb98599fcaea42e5c4eef753",
+      "event": 11,
+      "car": "solid",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/preact-signals.json",
+      "sha256": "ce978c045d01dc873e7524ef64ebf07fd64a01acb823d68559c2ba67de400ea0",
+      "event": 11,
+      "car": "preact-signals",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/vue-reactivity.json",
+      "sha256": "a5d92b1ad34b9f7f5d95caeeed2099ae19e234a1d6eed350abb98b4ac0029efa",
+      "event": 11,
+      "car": "vue-reactivity",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/alien-signals.json",
+      "sha256": "7a1a87d8774d861c9002a1d96aede58921ec07dd60d04b77fa7702634c0b8177",
+      "event": 11,
+      "car": "alien-signals",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals-version-check/alien-signals-3.1.2.json",
+      "sha256": "e8ffcbb3a3d0bb7a6300b03a7e2304622c5ac01f6ee49aa68b14315ddd1324c0",
+      "event": 11,
+      "car": "alien-signals-3.1.2",
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/dom/forma.json",
+      "sha256": "14543f8f37fe4496e272b3fde62a475f37d2b4e482d96bbab9de9f8049eab887",
+      "event": 9,
+      "car": "forma",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/dom/vanilla.json",
+      "sha256": "17fd8d5814b38427cc1205cdd61ab2ea99de8c3e1c4a4d72f915b92c0c0c432d",
+      "event": 9,
+      "car": "vanilla",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/forma.json",
+      "sha256": "003bd2866e5bd63e863d230e1c60db6438369709d3cdd3ddd21ccc97f3dc0de1",
+      "event": 11,
+      "car": "forma",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/solid.json",
+      "sha256": "3e9ace1ad09a20c5b6865b2e914b81cf6ddeae7b01901c86083d1eb3d835155e",
+      "event": 11,
+      "car": "solid",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/preact-signals.json",
+      "sha256": "874793565495c0d127b5e77ebc56add07851cccb7d9f350684c697c769cf9590",
+      "event": 11,
+      "car": "preact-signals",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/vue-reactivity.json",
+      "sha256": "b47986df3a40177360f39f8c372abed3a9e7dc8f501a04335712748503e3bc0c",
+      "event": 11,
+      "car": "vue-reactivity",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/alien-signals.json",
+      "sha256": "132510c31204f31521044e2629a03553507c83a1d2d5809e604a23754ca9e662",
+      "event": 11,
+      "car": "alien-signals",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    },
+    {
+      "path": "artifact/forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals-version-check/alien-signals-3.1.2.json",
+      "sha256": "14d40f957ea7873dd6e44df530b3c9482712b0915c0a0d2ebb88d7a677f7942b",
+      "event": 11,
+      "car": "alien-signals-3.1.2",
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "samples": 45,
+      "correct": true
+    }
+  ],
+  "results": [
+    {
+      "source": "published",
+      "signals": [
+        {
+          "name": "signal create",
+          "forma": {
+            "runs": [
+              38721163.865254395,
+              96403847.28474192,
+              30146260.612613715,
+              17398355.977148563,
+              96996409.19294979
+            ],
+            "mean": 55933207.38654168,
+            "sd": 37980965.87636919
+          },
+          "raw312": {
+            "runs": [
+              59095420.48903193,
+              74001278.74209537,
+              52760383.70516713,
+              20130785.688460607,
+              99108518.87273704
+            ],
+            "mean": 61019277.49949841,
+            "sd": 28996128.964638077
+          },
+          "ratioPercent": 91.66481426628079
+        },
+        {
+          "name": "signal read",
+          "forma": {
+            "runs": [
+              106382412.85950646,
+              110882643.58415258,
+              131197834.92084917,
+              123999686.77679248,
+              110763412.45237646
+            ],
+            "mean": 116645198.11873543,
+            "sd": 10476103.044331416
+          },
+          "raw312": {
+            "runs": [
+              113147854.20469049,
+              66615339.54754511,
+              145188897.28887284,
+              136699578.6850634,
+              67810889.53375539
+            ],
+            "mean": 105892511.85198545,
+            "sd": 37211649.68977496
+          },
+          "ratioPercent": 110.15434054655336
+        },
+        {
+          "name": "write with one effect",
+          "forma": {
+            "runs": [
+              5381362.351074163,
+              5779352.80553336,
+              5316965.8691731775,
+              4697069.765906038,
+              5363022.16596054
+            ],
+            "mean": 5307554.591529455,
+            "sd": 388554.3997894288
+          },
+          "raw312": {
+            "runs": [
+              9127781.5944582,
+              11655811.124108,
+              9773723.159584716,
+              7949735.412931134,
+              9920055.26661187
+            ],
+            "mean": 9685421.311538786,
+            "sd": 1348040.607271279
+          },
+          "ratioPercent": 54.79941884620205
+        },
+        {
+          "name": "computed cache hit",
+          "forma": {
+            "runs": [
+              53115404.37022922,
+              79245186.42945212,
+              62683503.999097995,
+              60159377.23012702,
+              80295258.51279342
+            ],
+            "mean": 67099746.10833995,
+            "sd": 12092011.790756295
+          },
+          "raw312": {
+            "runs": [
+              62267739.3862227,
+              86460262.38787499,
+              77217325.42118311,
+              67272685.93060398,
+              95924356.35476293
+            ],
+            "mean": 77828473.89612953,
+            "sd": 13746848.320999563
+          },
+          "ratioPercent": 86.21490663929987
+        },
+        {
+          "name": "chain of 100",
+          "forma": {
+            "runs": [
+              181937.42029549018,
+              180569.3314908045,
+              144047.90042118487,
+              180305.45185988667,
+              181671.70817768335
+            ],
+            "mean": 173706.3624490099,
+            "sd": 16594.198841965208
+          },
+          "raw312": {
+            "runs": [
+              205791.85536750875,
+              203620.90088728227,
+              154984.815362715,
+              208661.00936591634,
+              204147.14305464196
+            ],
+            "mean": 195441.14480761284,
+            "sd": 22700.87793009833
+          },
+          "ratioPercent": 88.8791163293696
+        },
+        {
+          "name": "diamond (500 middles)",
+          "forma": {
+            "runs": [
+              25903.34549996195,
+              23451.55700984389,
+              27612.807361265135,
+              28743.30119401122,
+              26886.01135078978
+            ],
+            "mean": 26519.4044831744,
+            "sd": 2004.174631867682
+          },
+          "raw312": {
+            "runs": [
+              31550.93677886386,
+              31474.497756718134,
+              30745.592611612716,
+              33797.607690415665,
+              35606.826854184364
+            ],
+            "mean": 32635.092338358947,
+            "sd": 2017.128544107185
+          },
+          "ratioPercent": 81.26039359172815
+        },
+        {
+          "name": "fan-out to 100 effects",
+          "forma": {
+            "runs": [
+              67914.10387136205,
+              68398.86612737259,
+              61519.79132289917,
+              69577.26938440092,
+              68954.3799201538
+            ],
+            "mean": 67272.88212523771,
+            "sd": 3275.465407969537
+          },
+          "raw312": {
+            "runs": [
+              227589.00357301085,
+              227385.34503270348,
+              150599.34321819263,
+              220289.80092586842,
+              170169.25476518995
+            ],
+            "mean": 199206.54950299306,
+            "sd": 36228.22344390235
+          },
+          "ratioPercent": 33.770416832719114
+        },
+        {
+          "name": "effect create and dispose",
+          "forma": {
+            "runs": [
+              1943035.7866776749,
+              2400681.121247719,
+              2180313.258251631,
+              1959557.2082635155,
+              2489693.912051045
+            ],
+            "mean": 2194656.257298317,
+            "sd": 249140.3259216752
+          },
+          "raw312": {
+            "runs": [
+              5717968.73963617,
+              8905144.537620045,
+              6910657.090154428,
+              5852787.070865611,
+              9378965.250652395
+            ],
+            "mean": 7353104.537785729,
+            "sd": 1705382.736578038
+          },
+          "ratioPercent": 29.846661991823154
+        },
+        {
+          "name": "batch of 100 writes",
+          "forma": {
+            "runs": [
+              231737.06278603023,
+              128826.99095512088,
+              237805.9075743565,
+              235926.81786036398,
+              240515.45347865933
+            ],
+            "mean": 214962.4465309062,
+            "sd": 48257.095850013866
+          },
+          "raw312": {
+            "runs": [
+              215541.16459046473,
+              173824.3023931007,
+              212713.23172022495,
+              201901.14152886142,
+              214298.64873987078
+            ],
+            "mean": 203655.6977945045,
+            "sd": 17532.585846667964
+          },
+          "ratioPercent": 105.55189413252292
+        }
+      ],
+      "overallRatioPercent": 69.25640436429583,
+      "numeric259Gates": {
+        "write80": false,
+        "fan80": false,
+        "createDispose80": false,
+        "overall85": false
+      },
+      "numeric259Pass": false,
+      "dom": [
+        {
+          "name": "create1000",
+          "forma": {
+            "runs": [
+              43.29999999998836,
+              46.20000000001164,
+              51,
+              42,
+              41.60000000000582
+            ],
+            "mean": 44.820000000001166,
+            "sd": 3.8964086028043194,
+            "min": 41.60000000000582,
+            "max": 51
+          },
+          "vanilla": {
+            "runs": [
+              28.400000000023283,
+              29.800000000017462,
+              24.900000000023283,
+              24.60000000000582,
+              25
+            ],
+            "mean": 26.54000000001397,
+            "sd": 2.3933240482695566,
+            "min": 24.60000000000582,
+            "max": 29.800000000017462
+          },
+          "formaToVanillaRatio": 1.688771665409856
+        },
+        {
+          "name": "replace1000",
+          "forma": {
+            "runs": [
+              45.19999999998254,
+              45.70000000001164,
+              51.10000000000582,
+              43,
+              47.89999999999418
+            ],
+            "mean": 46.57999999999883,
+            "sd": 3.0687130853203333,
+            "min": 43,
+            "max": 51.10000000000582
+          },
+          "vanilla": {
+            "runs": [
+              27.900000000023283,
+              28,
+              29.20000000001164,
+              28.60000000000582,
+              29
+            ],
+            "mean": 28.54000000000815,
+            "sd": 0.5813776741469917,
+            "min": 27.900000000023283,
+            "max": 29.20000000001164
+          },
+          "formaToVanillaRatio": 1.632095304834812
+        },
+        {
+          "name": "update10th",
+          "forma": {
+            "runs": [
+              15.299999999988358,
+              3.7999999999883585,
+              8.699999999982538,
+              8.10000000000582,
+              3.6000000000058208
+            ],
+            "mean": 7.899999999994179,
+            "sd": 4.76287728163994,
+            "min": 3.6000000000058208,
+            "max": 15.299999999988358
+          },
+          "vanilla": {
+            "runs": [
+              8.39999999999418,
+              3.5,
+              8.89999999999418,
+              8,
+              5.100000000005821
+            ],
+            "mean": 6.779999999998836,
+            "sd": 2.3552069972688656,
+            "min": 3.5,
+            "max": 8.89999999999418
+          },
+          "formaToVanillaRatio": 1.1651917404123209
+        },
+        {
+          "name": "select",
+          "forma": {
+            "runs": [
+              0.8000000000174623,
+              0.7000000000116415,
+              0.6000000000058208,
+              0.8000000000174623,
+              0.5
+            ],
+            "mean": 0.6800000000104773,
+            "sd": 0.13038404811164234,
+            "min": 0.5,
+            "max": 0.8000000000174623
+          },
+          "vanilla": {
+            "runs": [
+              0.20000000001164153,
+              0.1999999999825377,
+              0.1999999999825377,
+              0.29999999998835847,
+              0.3000000000174623
+            ],
+            "mean": 0.23999999999650753,
+            "sd": 0.054772255756361576,
+            "min": 0.1999999999825377,
+            "max": 0.3000000000174623
+          },
+          "formaToVanillaRatio": 2.8333333334182194
+        },
+        {
+          "name": "swap",
+          "forma": {
+            "runs": [
+              3.3999999999941792,
+              2.6000000000058208,
+              3.1000000000058208,
+              4.2999999999883585,
+              2.7000000000116415
+            ],
+            "mean": 3.220000000001164,
+            "sd": 0.6833739825220223,
+            "min": 2.6000000000058208,
+            "max": 4.2999999999883585
+          },
+          "vanilla": {
+            "runs": [
+              2.1000000000058208,
+              2.400000000023283,
+              2.3999999999941792,
+              2.2999999999883585,
+              2.1000000000058208
+            ],
+            "mean": 2.2600000000034925,
+            "sd": 0.15165750888122292,
+            "min": 2.1000000000058208,
+            "max": 2.400000000023283
+          },
+          "formaToVanillaRatio": 1.4247787610602602
+        },
+        {
+          "name": "remove",
+          "forma": {
+            "runs": [
+              7.100000000005821,
+              2.6000000000058208,
+              3.1000000000058208,
+              3.7999999999883585,
+              4.100000000005821
+            ],
+            "mean": 4.1400000000023285,
+            "sd": 1.7558473737779627,
+            "min": 2.6000000000058208,
+            "max": 7.100000000005821
+          },
+          "vanilla": {
+            "runs": [
+              2.3000000000174623,
+              1.8999999999941792,
+              2.1999999999825377,
+              1.8999999999941792,
+              2.2000000000116415
+            ],
+            "mean": 2.1,
+            "sd": 0.18708286934569757,
+            "min": 1.8999999999941792,
+            "max": 2.3000000000174623
+          },
+          "formaToVanillaRatio": 1.9714285714296802
+        },
+        {
+          "name": "create10000",
+          "forma": {
+            "runs": [
+              611.6000000000058,
+              432.5999999999767,
+              403.1000000000058,
+              561.1000000000058,
+              394.19999999998254
+            ],
+            "mean": 480.5199999999953,
+            "sd": 99.26785481716477,
+            "min": 394.19999999998254,
+            "max": 611.6000000000058
+          },
+          "vanilla": {
+            "runs": [
+              346.5999999999767,
+              389.3999999999942,
+              309.1000000000058,
+              354.69999999998254,
+              309.79999999998836
+            ],
+            "mean": 341.9199999999895,
+            "sd": 33.72101718512933,
+            "min": 309.1000000000058,
+            "max": 389.3999999999942
+          },
+          "formaToVanillaRatio": 1.4053579784745265
+        },
+        {
+          "name": "append1000",
+          "forma": {
+            "runs": [
+              51.30000000001746,
+              35.10000000000582,
+              43.29999999998836,
+              37.79999999998836,
+              52.19999999998254
+            ],
+            "mean": 43.93999999999651,
+            "sd": 7.7241828046729895,
+            "min": 35.10000000000582,
+            "max": 52.19999999998254
+          },
+          "vanilla": {
+            "runs": [
+              34,
+              33.29999999998836,
+              26.400000000023283,
+              26.29999999998836,
+              31.699999999982538
+            ],
+            "mean": 30.339999999996508,
+            "sd": 3.736709782676271,
+            "min": 26.29999999998836,
+            "max": 34
+          },
+          "formaToVanillaRatio": 1.4482531311800122
+        },
+        {
+          "name": "clear",
+          "forma": {
+            "runs": [
+              9.200000000011642,
+              5.2999999999883585,
+              5.399999999994179,
+              5.199999999982538,
+              5.099999999976717
+            ],
+            "mean": 6.039999999990687,
+            "sd": 1.770028248374257,
+            "min": 5.099999999976717,
+            "max": 9.200000000011642
+          },
+          "vanilla": {
+            "runs": [
+              3.5,
+              3.8999999999941792,
+              3.900000000023283,
+              3.900000000023283,
+              3.6999999999825377
+            ],
+            "mean": 3.7800000000046565,
+            "sd": 0.1788854382087687,
+            "min": 3.5,
+            "max": 3.900000000023283
+          },
+          "formaToVanillaRatio": 1.5978835978791657
+        }
+      ],
+      "domGeomeanFormaMs": 13.875621539861145,
+      "domGeomeanVanillaMs": 8.49083896427301,
+      "numeric260CreateWithin110Percent": false
+    },
+    {
+      "source": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "signals": [
+        {
+          "name": "signal create",
+          "forma": {
+            "runs": [
+              26637159.796854567,
+              96979477.20303097,
+              41519574.92259297,
+              30641056.871333517,
+              96901760.02667864
+            ],
+            "mean": 58535805.76409813,
+            "sd": 35479060.94645251
+          },
+          "raw312": {
+            "runs": [
+              26443452.19797312,
+              100612326.61980632,
+              54107342.47458795,
+              21821894.714376956,
+              100599624.05920637
+            ],
+            "mean": 60716928.01319015,
+            "sd": 38449491.721750565
+          },
+          "ratioPercent": 96.40771969125613
+        },
+        {
+          "name": "signal read",
+          "forma": {
+            "runs": [
+              108528011.78527345,
+              110716750.34823176,
+              130437405.53478408,
+              128143307.27368316,
+              109934192.29315244
+            ],
+            "mean": 117551933.44702499,
+            "sd": 10774895.137532651
+          },
+          "raw312": {
+            "runs": [
+              158746008.1331942,
+              67038003.57607515,
+              156606242.4970925,
+              127067620.49552539,
+              66398529.48504707
+            ],
+            "mean": 115171280.83738688,
+            "sd": 45969363.325748056
+          },
+          "ratioPercent": 102.0670540366738
+        },
+        {
+          "name": "write with one effect",
+          "forma": {
+            "runs": [
+              4395840.031952492,
+              4793806.976643011,
+              4822750.883600305,
+              5253219.90861076,
+              5193007.200364104
+            ],
+            "mean": 4891725.0002341345,
+            "sd": 347021.902325514
+          },
+          "raw312": {
+            "runs": [
+              9037406.41257303,
+              12037530.854448644,
+              9338287.979914473,
+              9202568.878697343,
+              12801725.467765376
+            ],
+            "mean": 10483503.918679774,
+            "sd": 1791135.3234725913
+          },
+          "ratioPercent": 46.66116441772807
+        },
+        {
+          "name": "computed cache hit",
+          "forma": {
+            "runs": [
+              53653328.94091415,
+              80354556.44485737,
+              63133090.74232764,
+              56305014.39789586,
+              81762903.03438903
+            ],
+            "mean": 67041778.712076806,
+            "sd": 13264125.387049343
+          },
+          "raw312": {
+            "runs": [
+              77282813.55811049,
+              67302846.82629229,
+              92533692.32704616,
+              77758045.80967487,
+              65651413.512682475
+            ],
+            "mean": 76105762.40676126,
+            "sd": 10732859.647342568
+          },
+          "ratioPercent": 88.09027935855852
+        },
+        {
+          "name": "chain of 100",
+          "forma": {
+            "runs": [
+              184855.45782042068,
+              184015.6634132704,
+              149278.28427899614,
+              186092.03926169922,
+              184718.34719047305
+            ],
+            "mean": 177791.9583929719,
+            "sd": 15957.15626310678
+          },
+          "raw312": {
+            "runs": [
+              204016.53056179834,
+              193188.40107658462,
+              132785.64389604446,
+              203063.22499409367,
+              131020.35587277423
+            ],
+            "mean": 172814.83128025907,
+            "sd": 37592.24562258793
+          },
+          "ratioPercent": 102.8800347029482
+        },
+        {
+          "name": "diamond (500 middles)",
+          "forma": {
+            "runs": [
+              27000.6328138312,
+              25576.57921948979,
+              27774.757272924344,
+              27023.682663705164,
+              24825.93112199328
+            ],
+            "mean": 26440.31661838876,
+            "sd": 1202.8388158237772
+          },
+          "raw312": {
+            "runs": [
+              33280.58139311982,
+              32885.7311279066,
+              33532.67390212367,
+              32728.341218354348,
+              30098.93489802049
+            ],
+            "mean": 32505.25250790499,
+            "sd": 1382.1746085603002
+          },
+          "ratioPercent": 81.34167427851456
+        },
+        {
+          "name": "fan-out to 100 effects",
+          "forma": {
+            "runs": [
+              69101.71815755851,
+              67981.82399883754,
+              60050.922221228786,
+              68092.68362090988,
+              68470.44944810975
+            ],
+            "mean": 66739.51948932889,
+            "sd": 3764.565318418913
+          },
+          "raw312": {
+            "runs": [
+              245273.3615763979,
+              245700.10081566544,
+              188889.95380847334,
+              248995.3039485678,
+              244796.57942801886
+            ],
+            "mean": 234731.05991542464,
+            "sd": 25679.03002737038
+          },
+          "ratioPercent": 28.432334226827773
+        },
+        {
+          "name": "effect create and dispose",
+          "forma": {
+            "runs": [
+              1867490.0056603611,
+              2426355.794844928,
+              2126716.126994732,
+              1980121.7949154554,
+              2363308.594218966
+            ],
+            "mean": 2152798.4633268886,
+            "sd": 240336.51664579535
+          },
+          "raw312": {
+            "runs": [
+              6300224.999935393,
+              8838978.125738861,
+              6952956.988312757,
+              4968612.282489056,
+              10290587.672822805
+            ],
+            "mean": 7470272.013859774,
+            "sd": 2104902.79460235
+          },
+          "ratioPercent": 28.818207146041676
+        },
+        {
+          "name": "batch of 100 writes",
+          "forma": {
+            "runs": [
+              211359.11520001432,
+              155288.38878436055,
+              220152.44676328875,
+              197166.57825388343,
+              211534.46679142196
+            ],
+            "mean": 199100.1991585938,
+            "sd": 25842.323721734494
+          },
+          "raw312": {
+            "runs": [
+              215322.40708488162,
+              163902.008561748,
+              214025.70363089928,
+              182583.30545894548,
+              204776.22105757167
+            ],
+            "mean": 196121.92915880922,
+            "sd": 22279.5751540143
+          },
+          "ratioPercent": 101.51858081988014
+        }
+      ],
+      "overallRatioPercent": 67.25549863042363,
+      "numeric259Gates": {
+        "write80": false,
+        "fan80": false,
+        "createDispose80": false,
+        "overall85": false
+      },
+      "numeric259Pass": false,
+      "dom": [
+        {
+          "name": "create1000",
+          "forma": {
+            "runs": [
+              48.40000000002328,
+              50.199999999953434,
+              49.600000000034925,
+              31.399999999965075,
+              37.79999999998836
+            ],
+            "mean": 43.47999999999301,
+            "sd": 8.441089977026172,
+            "min": 31.399999999965075,
+            "max": 50.199999999953434
+          },
+          "vanilla": {
+            "runs": [
+              26.5,
+              29.099999999976717,
+              23.399999999965075,
+              23.70000000001164,
+              23.399999999965075
+            ],
+            "mean": 25.219999999983703,
+            "sd": 2.5312052465198365,
+            "min": 23.399999999965075,
+            "max": 29.099999999976717
+          },
+          "formaToVanillaRatio": 1.7240285487716538
+        },
+        {
+          "name": "replace1000",
+          "forma": {
+            "runs": [
+              43.29999999998836,
+              43.59999999997672,
+              45.100000000034925,
+              47.600000000034925,
+              42.59999999997672
+            ],
+            "mean": 44.44000000000233,
+            "sd": 1.9882152801204755,
+            "min": 42.59999999997672,
+            "max": 47.600000000034925
+          },
+          "vanilla": {
+            "runs": [
+              32.40000000002328,
+              32.199999999953434,
+              31.900000000023283,
+              32.5,
+              26.599999999976717
+            ],
+            "mean": 31.119999999995343,
+            "sd": 2.537124356442044,
+            "min": 26.599999999976717,
+            "max": 32.5
+          },
+          "formaToVanillaRatio": 1.4280205655529876
+        },
+        {
+          "name": "update10th",
+          "forma": {
+            "runs": [
+              11.200000000011642,
+              4.5,
+              7.2000000000116415,
+              6.400000000023283,
+              2.800000000046566
+            ],
+            "mean": 6.420000000018627,
+            "sd": 3.1720655730844918,
+            "min": 2.800000000046566,
+            "max": 11.200000000011642
+          },
+          "vanilla": {
+            "runs": [
+              10.799999999988358,
+              2.7000000000116415,
+              6.899999999965075,
+              7.099999999976717,
+              2.7000000000116415
+            ],
+            "mean": 6.039999999990687,
+            "sd": 3.421695486145144,
+            "min": 2.7000000000116415,
+            "max": 10.799999999988358
+          },
+          "formaToVanillaRatio": 1.062913907289491
+        },
+        {
+          "name": "select",
+          "forma": {
+            "runs": [
+              1.5,
+              1.5,
+              2.099999999976717,
+              1.3999999999650754,
+              1.400000000023283
+            ],
+            "mean": 1.579999999993015,
+            "sd": 0.2949576240665668,
+            "min": 1.3999999999650754,
+            "max": 2.099999999976717
+          },
+          "vanilla": {
+            "runs": [
+              0.29999999998835847,
+              0.29999999998835847,
+              0.20000000001164153,
+              0.20000000001164153,
+              0.20000000001164153
+            ],
+            "mean": 0.2400000000023283,
+            "sd": 0.05477225573776395,
+            "min": 0.20000000001164153,
+            "max": 0.29999999998835847
+          },
+          "formaToVanillaRatio": 6.583333333240363
+        },
+        {
+          "name": "swap",
+          "forma": {
+            "runs": [
+              2.7999999999883585,
+              2.900000000023283,
+              2.699999999953434,
+              3.8999999999650754,
+              2.5
+            ],
+            "mean": 2.9599999999860303,
+            "sd": 0.5458937625489706,
+            "min": 2.5,
+            "max": 3.8999999999650754
+          },
+          "vanilla": {
+            "runs": [
+              1.7000000000116415,
+              1.7000000000116415,
+              1.900000000023283,
+              1.7999999999883585,
+              1.8999999999650754
+            ],
+            "mean": 1.8,
+            "sd": 0.09999999999126885,
+            "min": 1.7000000000116415,
+            "max": 1.900000000023283
+          },
+          "formaToVanillaRatio": 1.6444444444366835
+        },
+        {
+          "name": "remove",
+          "forma": {
+            "runs": [
+              2.2999999999883585,
+              2.3999999999650754,
+              2.300000000046566,
+              2.3999999999650754,
+              3.5
+            ],
+            "mean": 2.579999999993015,
+            "sd": 0.5167204273119044,
+            "min": 2.2999999999883585,
+            "max": 3.5
+          },
+          "vanilla": {
+            "runs": [
+              1.900000000023283,
+              1.5,
+              1.599999999976717,
+              1.6000000000349246,
+              1.6999999999534339
+            ],
+            "mean": 1.6599999999976718,
+            "sd": 0.15165750888602053,
+            "min": 1.5,
+            "max": 1.900000000023283
+          },
+          "formaToVanillaRatio": 1.5542168674678516
+        },
+        {
+          "name": "create10000",
+          "forma": {
+            "runs": [
+              587.7999999999884,
+              411.1000000000349,
+              384.6000000000349,
+              525.1000000000349,
+              378.0999999999767
+            ],
+            "mean": 457.34000000001396,
+            "sd": 93.96735071289,
+            "min": 378.0999999999767,
+            "max": 587.7999999999884
+          },
+          "vanilla": {
+            "runs": [
+              298.0999999999767,
+              371.70000000001164,
+              298.9000000000233,
+              339.29999999998836,
+              302.5999999999767
+            ],
+            "mean": 322.11999999999534,
+            "sd": 32.5978833668756,
+            "min": 298.0999999999767,
+            "max": 371.70000000001164
+          },
+          "formaToVanillaRatio": 1.419781447907676
+        },
+        {
+          "name": "append1000",
+          "forma": {
+            "runs": [
+              37.899999999965075,
+              37.59999999997672,
+              41.90000000002328,
+              37.59999999997672,
+              47.5
+            ],
+            "mean": 40.49999999998836,
+            "sd": 4.3168275388448425,
+            "min": 37.59999999997672,
+            "max": 47.5
+          },
+          "vanilla": {
+            "runs": [
+              30.800000000046566,
+              24.20000000001164,
+              24,
+              23.900000000023283,
+              28.29999999998836
+            ],
+            "mean": 26.24000000001397,
+            "sd": 3.1500793640883185,
+            "min": 23.900000000023283,
+            "max": 30.800000000046566
+          },
+          "formaToVanillaRatio": 1.543445121949954
+        },
+        {
+          "name": "clear",
+          "forma": {
+            "runs": [
+              5.2000000000116415,
+              4.400000000023283,
+              4.5,
+              4.599999999976717,
+              4.300000000046566
+            ],
+            "mean": 4.600000000011642,
+            "sd": 0.353553390585042,
+            "min": 4.300000000046566,
+            "max": 5.2000000000116415
+          },
+          "vanilla": {
+            "runs": [
+              3.6000000000349246,
+              3.1000000000349246,
+              3.199999999953434,
+              3.3999999999650754,
+              3.2999999999883585
+            ],
+            "mean": 3.3199999999953436,
+            "sd": 0.1923538406233708,
+            "min": 3.1000000000349246,
+            "max": 3.6000000000349246
+          },
+          "formaToVanillaRatio": 1.3855421686801486
+        }
+      ],
+      "domGeomeanFormaMs": 13.269256013697238,
+      "domGeomeanVanillaMs": 7.702199851372899,
+      "numeric260CreateWithin110Percent": false
+    },
+    {
+      "source": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "signals": [
+        {
+          "name": "signal create",
+          "forma": {
+            "runs": [
+              30268221.847905397,
+              96919228.48417279,
+              40867218.72830176,
+              21584184.145898808,
+              96864167.86172248
+            ],
+            "mean": 57300604.213600256,
+            "sd": 36781039.52771684
+          },
+          "raw312": {
+            "runs": [
+              25062744.581058756,
+              99822017.34307839,
+              52760161.01345896,
+              26576289.564620346,
+              99642582.05815355
+            ],
+            "mean": 60772758.91207401,
+            "sd": 37230743.6799764
+          },
+          "ratioPercent": 94.2866594167672
+        },
+        {
+          "name": "signal read",
+          "forma": {
+            "runs": [
+              94296228.58461939,
+              110078822.49123876,
+              154123730.68511644,
+              102865186.32691284,
+              110695498.71144965
+            ],
+            "mean": 114411893.35986741,
+            "sd": 23171013.83591914
+          },
+          "raw312": {
+            "runs": [
+              127099807.98396523,
+              70463222.76021285,
+              145876281.74194977,
+              101425057.55745141,
+              155692474.97788158
+            ],
+            "mean": 120111369.00429218,
+            "sd": 34615028.42342234
+          },
+          "ratioPercent": 95.25484082674879
+        },
+        {
+          "name": "write with one effect",
+          "forma": {
+            "runs": [
+              8117056.065520894,
+              10863797.367582407,
+              9221771.90260743,
+              7487794.987767365,
+              9621213.312930565
+            ],
+            "mean": 9062326.72728173,
+            "sd": 1318688.7682601693
+          },
+          "raw312": {
+            "runs": [
+              7901508.330777508,
+              12100287.424177302,
+              9369275.37274726,
+              14339919.180215355,
+              8958666.147780728
+            ],
+            "mean": 10533931.291139632,
+            "sd": 2631850.568975441
+          },
+          "ratioPercent": 86.02986365502775
+        },
+        {
+          "name": "computed cache hit",
+          "forma": {
+            "runs": [
+              67415968.18667428,
+              62695486.486097634,
+              75114388.88604449,
+              64237512.291847974,
+              62635978.79521556
+            ],
+            "mean": 66419866.92917599,
+            "sd": 5233030.208011326
+          },
+          "raw312": {
+            "runs": [
+              74012249.17526296,
+              64674876.64641625,
+              89286180.64656839,
+              76099994.02234551,
+              67385901.09724125
+            ],
+            "mean": 74291840.31756687,
+            "sd": 9596299.02222653
+          },
+          "ratioPercent": 89.40398655526441
+        },
+        {
+          "name": "chain of 100",
+          "forma": {
+            "runs": [
+              182512.0594843298,
+              169266.23493395094,
+              140311.40882448177,
+              184367.093762872,
+              182759.21900552622
+            ],
+            "mean": 171843.20320223217,
+            "sd": 18646.22315843857
+          },
+          "raw312": {
+            "runs": [
+              202328.0267412904,
+              187886.09653407297,
+              155117.82408658456,
+              205129.34122917196,
+              205826.26649429963
+            ],
+            "mean": 191257.51101708392,
+            "sd": 21474.84595427035
+          },
+          "ratioPercent": 89.84912659816138
+        },
+        {
+          "name": "diamond (500 middles)",
+          "forma": {
+            "runs": [
+              27409.844772018874,
+              25877.9649516606,
+              27282.56958371633,
+              28500.0140505069,
+              26480.27518725659
+            ],
+            "mean": 27110.133709031863,
+            "sd": 995.7773119363259
+          },
+          "raw312": {
+            "runs": [
+              30775.048673816935,
+              32784.73327750755,
+              31303.790673054336,
+              30749.876323997454,
+              29946.68920334704
+            ],
+            "mean": 31112.027630344663,
+            "sd": 1053.261515705938
+          },
+          "ratioPercent": 87.1371484724139
+        },
+        {
+          "name": "fan-out to 100 effects",
+          "forma": {
+            "runs": [
+              166913.3590475599,
+              174602.4529130366,
+              137024.2026397227,
+              174043.7791114316,
+              174097.2656353101
+            ],
+            "mean": 165336.21186941216,
+            "sd": 16143.870921230096
+          },
+          "raw312": {
+            "runs": [
+              247302.00926947236,
+              228001.02472780595,
+              199532.3679611517,
+              235336.85481989323,
+              243689.8582568194
+            ],
+            "mean": 230772.4230070285,
+            "sd": 19003.57256482248
+          },
+          "ratioPercent": 71.6447007467511
+        },
+        {
+          "name": "effect create and dispose",
+          "forma": {
+            "runs": [
+              6062236.251045183,
+              9802714.489274599,
+              7072875.085528759,
+              5730770.685503329,
+              9884794.694791181
+            ],
+            "mean": 7710678.24122861,
+            "sd": 2009202.9393784783
+          },
+          "raw312": {
+            "runs": [
+              6368671.4352730885,
+              12302212.71288524,
+              7721607.629442488,
+              6559842.25940908,
+              12294984.212010516
+            ],
+            "mean": 9049463.649804082,
+            "sd": 3010890.3734150208
+          },
+          "ratioPercent": 85.20591429079384
+        },
+        {
+          "name": "batch of 100 writes",
+          "forma": {
+            "runs": [
+              194867.5397641834,
+              144042.5305737466,
+              197430.18942538163,
+              194767.3606130329,
+              195454.2425004674
+            ],
+            "mean": 185312.3725753624,
+            "sd": 23095.43725731072
+          },
+          "raw312": {
+            "runs": [
+              243478.7859368617,
+              142974.8213475993,
+              243897.91798981617,
+              241659.01815874246,
+              242272.88794369643
+            ],
+            "mean": 222856.68627534324,
+            "sd": 44664.39673365611
+          },
+          "ratioPercent": 83.15315805530994
+        }
+      ],
+      "overallRatioPercent": 86.62065540639651,
+      "numeric259Gates": {
+        "write80": true,
+        "fan80": false,
+        "createDispose80": true,
+        "overall85": true
+      },
+      "numeric259Pass": false,
+      "dom": [
+        {
+          "name": "create1000",
+          "forma": {
+            "runs": [
+              43.100000000034925,
+              47.600000000034925,
+              50.100000000034925,
+              41.20000000001164,
+              40.79999999998836
+            ],
+            "mean": 44.560000000020956,
+            "sd": 4.107675741843148,
+            "min": 40.79999999998836,
+            "max": 50.100000000034925
+          },
+          "vanilla": {
+            "runs": [
+              27.79999999998836,
+              29.5,
+              24.599999999976717,
+              24.899999999965075,
+              23.900000000023283
+            ],
+            "mean": 26.139999999990685,
+            "sd": 2.396455716261797,
+            "min": 23.900000000023283,
+            "max": 29.5
+          },
+          "formaToVanillaRatio": 1.7046671767420365
+        },
+        {
+          "name": "replace1000",
+          "forma": {
+            "runs": [
+              44.09999999997672,
+              43.40000000002328,
+              46.40000000002328,
+              40.699999999953434,
+              42.399999999965075
+            ],
+            "mean": 43.39999999998836,
+            "sd": 2.1083168642562016,
+            "min": 40.699999999953434,
+            "max": 46.40000000002328
+          },
+          "vanilla": {
+            "runs": [
+              27.300000000046566,
+              27.29999999998836,
+              35.79999999998836,
+              27.5,
+              27.099999999976717
+            ],
+            "mean": 29,
+            "sd": 3.8039453203158495,
+            "min": 27.099999999976717,
+            "max": 35.79999999998836
+          },
+          "formaToVanillaRatio": 1.4965517241375297
+        },
+        {
+          "name": "update10th",
+          "forma": {
+            "runs": [
+              12.299999999988358,
+              4.699999999953434,
+              7.900000000023283,
+              7.599999999976717,
+              4.2000000000116415
+            ],
+            "mean": 7.339999999990686,
+            "sd": 3.233109957922528,
+            "min": 4.2000000000116415,
+            "max": 12.299999999988358
+          },
+          "vanilla": {
+            "runs": [
+              13,
+              3.6000000000349246,
+              8.299999999988358,
+              7.400000000023283,
+              3.099999999976717
+            ],
+            "mean": 7.080000000004657,
+            "sd": 4.018332987693054,
+            "min": 3.099999999976717,
+            "max": 13
+          },
+          "formaToVanillaRatio": 1.0367231638398104
+        },
+        {
+          "name": "select",
+          "forma": {
+            "runs": [
+              1.599999999976717,
+              0.6000000000349246,
+              1.599999999976717,
+              1.3999999999650754,
+              1.6000000000349246
+            ],
+            "mean": 1.3599999999976717,
+            "sd": 0.4335896677558555,
+            "min": 0.6000000000349246,
+            "max": 1.6000000000349246
+          },
+          "vanilla": {
+            "runs": [
+              0.20000000001164153,
+              0.20000000001164153,
+              0.20000000001164153,
+              0.29999999998835847,
+              0.30000000004656613
+            ],
+            "mean": 0.24000000001396984,
+            "sd": 0.05477225575370478,
+            "min": 0.20000000001164153,
+            "max": 0.30000000004656613
+          },
+          "formaToVanillaRatio": 5.666666666327122
+        },
+        {
+          "name": "swap",
+          "forma": {
+            "runs": [
+              2.8999999999650754,
+              2.2999999999883585,
+              2.400000000023283,
+              2.7999999999883585,
+              2.7000000000116415
+            ],
+            "mean": 2.6199999999953434,
+            "sd": 0.2588435820989773,
+            "min": 2.2999999999883585,
+            "max": 2.8999999999650754
+          },
+          "vanilla": {
+            "runs": [
+              2,
+              2.1000000000349246,
+              2,
+              2,
+              1.900000000023283
+            ],
+            "mean": 2.0000000000116414,
+            "sd": 0.07071067812277065,
+            "min": 1.900000000023283,
+            "max": 2.1000000000349246
+          },
+          "formaToVanillaRatio": 1.3099999999900467
+        },
+        {
+          "name": "remove",
+          "forma": {
+            "runs": [
+              2.7000000000116415,
+              2.2999999999883585,
+              2.5,
+              2.2999999999883585,
+              3.300000000046566
+            ],
+            "mean": 2.6200000000069847,
+            "sd": 0.4147288270906948,
+            "min": 2.2999999999883585,
+            "max": 3.300000000046566
+          },
+          "vanilla": {
+            "runs": [
+              2.2000000000116415,
+              1.7999999999883585,
+              2.2000000000116415,
+              1.7999999999883585,
+              2.1000000000349246
+            ],
+            "mean": 2.020000000006985,
+            "sd": 0.20493901533396122,
+            "min": 1.7999999999883585,
+            "max": 2.2000000000116415
+          },
+          "formaToVanillaRatio": 1.2970297029692697
+        },
+        {
+          "name": "create10000",
+          "forma": {
+            "runs": [
+              601.2000000000116,
+              415,
+              382.5999999999767,
+              522.7000000000116,
+              399.29999999998836
+            ],
+            "mean": 464.1599999999977,
+            "sd": 94.18393175060417,
+            "min": 382.5999999999767,
+            "max": 601.2000000000116
+          },
+          "vanilla": {
+            "runs": [
+              302.6000000000349,
+              377.69999999995343,
+              304.70000000001164,
+              351.5,
+              313.80000000004657
+            ],
+            "mean": 330.0600000000093,
+            "sd": 33.1316012290062,
+            "min": 302.6000000000349,
+            "max": 377.69999999995343
+          },
+          "formaToVanillaRatio": 1.4062897654971356
+        },
+        {
+          "name": "append1000",
+          "forma": {
+            "runs": [
+              48.100000000034925,
+              34.199999999953434,
+              40.59999999997672,
+              34.70000000001164,
+              51.5
+            ],
+            "mean": 41.819999999995346,
+            "sd": 7.800448705059206,
+            "min": 34.199999999953434,
+            "max": 51.5
+          },
+          "vanilla": {
+            "runs": [
+              30.900000000023283,
+              25.29999999998836,
+              24.800000000046566,
+              25,
+              30.29999999998836
+            ],
+            "mean": 27.260000000009313,
+            "sd": 3.0615355624226894,
+            "min": 24.800000000046566,
+            "max": 30.900000000023283
+          },
+          "formaToVanillaRatio": 1.5341159207623278
+        },
+        {
+          "name": "clear",
+          "forma": {
+            "runs": [
+              9.200000000011642,
+              5.2999999999883585,
+              5.400000000023283,
+              5,
+              5.099999999976717
+            ],
+            "mean": 6,
+            "sd": 1.79582849961409,
+            "min": 5,
+            "max": 9.200000000011642
+          },
+          "vanilla": {
+            "runs": [
+              3.6000000000349246,
+              3.6000000000349246,
+              3.400000000023283,
+              3.6000000000349246,
+              3.599999999976717
+            ],
+            "mean": 3.560000000020955,
+            "sd": 0.08944271909869002,
+            "min": 3.400000000023283,
+            "max": 3.6000000000349246
+          },
+          "formaToVanillaRatio": 1.6853932584170457
+        }
+      ],
+      "domGeomeanFormaMs": 13.553542692471982,
+      "domGeomeanVanillaMs": 8.194911039005442,
+      "numeric260CreateWithin110Percent": false
+    }
+  ],
+  "sampleCounts": {
+    "dom": 495,
+    "signals": 810
+  },
+  "priorRunComparison": "Earlier campaigns40134851617 and40136359826 retain their original results. This is exact integrated source9ac, not either prior flat source. No cross-host pooling, threshold change, or favorable-run selection."
+}

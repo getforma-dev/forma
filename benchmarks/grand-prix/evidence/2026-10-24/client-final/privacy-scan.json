@@ -1,0 +1,457 @@
+{
+  "uniqueDecodedProbeBodiesScanned": 0,
+  "textFilesScanned": 50,
+  "patterns": [
+    "github-credential",
+    "aws-access-key",
+    "private-key",
+    "slack-credential",
+    "url-userinfo",
+    "signed-download-url"
+  ],
+  "findings": [],
+  "binaryFiles": [],
+  "ephemeralRunnerMetadataLocations": [
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-android-arm-eabi/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-android-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-darwin-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-darwin-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-freebsd-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm-gnueabihf/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-ppc64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-s390x-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-x64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-x64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-openharmony-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-win32-arm64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-win32-x64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-android-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-darwin-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-darwin-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-freebsd-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm-gnueabihf/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-x64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-x64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-win32-arm64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-win32-x64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/dom/forma.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/alien-signals.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/dom/vanilla.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/forma.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/preact-signals.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/solid.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals/vue-reactivity.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/9ac07a446ebe8aaad407a895fa8aaece189bc69e/raw/signals-version-check/alien-signals-3.1.2.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-android-arm-eabi/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-android-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-darwin-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-darwin-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-freebsd-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm-gnueabihf/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-ppc64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-s390x-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-x64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-x64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-openharmony-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-win32-arm64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-win32-x64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-android-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-darwin-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-darwin-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-freebsd-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm-gnueabihf/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-x64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-x64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-win32-arm64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-win32-x64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/dom/forma.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/dom/vanilla.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/alien-signals.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/forma.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/preact-signals.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/solid.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals/vue-reactivity.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/f5be8647439e560c71c27b8c5f4bde26507b8bbb/raw/signals-version-check/alien-signals-3.1.2.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-android-arm-eabi/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-android-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-darwin-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-darwin-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-freebsd-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm-gnueabihf/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-arm64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-ppc64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-s390x-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-x64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-linux-x64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-openharmony-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-win32-arm64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/@rolldown/binding-win32-x64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-android-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-darwin-arm64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-darwin-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-freebsd-x64/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm-gnueabihf/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-arm64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-x64-gnu/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-linux-x64-musl/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-win32-arm64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/client-race/package-lock.json",
+      "key": "/packages/node_modules/lightningcss-win32-x64-msvc/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/forma.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/preact.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/react.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/solid.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/svelte.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/vanilla.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/alien-signals.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/forma.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/preact-signals.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/dom/vue.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/solid.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals/vue-reactivity.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/published/raw/signals-version-check/alien-signals-3.1.2.json",
+      "key": "/machine/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/run.json",
+      "key": "/cpu"
+    },
+    {
+      "file": "forma/forma/benchmarks/grand-prix/results/client-40140319634-1-client/run.json",
+      "key": "/kernel"
+    }
+  ],
+  "limitations": [
+    "Pattern and key scan plus independent source review; it cannot prove that arbitrary binary contents contain no secret.",
+    "CPU/kernel, container/image IDs, disk figures, ephemeral runner hostnames and filesystem paths are expected benchmark provenance, not credentials.",
+    "Campaign machine and runner-tracking identities are SHA-256 hashes; temporary signed download URLs are excluded from publication manifests."
+  ]
+}

@@ -204,6 +204,36 @@
       "result": "separate CI cache experiment; one warm page-only build of the published dashboard template",
       "profile": "separate scaffold cache experiment, one build per condition",
       "summaries": []
+    },
+    {
+      "name": "client-final",
+      "archive": "client-final/artifact.zip",
+      "runId": 40140319634,
+      "runUrl": "https://github.com/getforma-dev/forma/actions/runs/40140319634",
+      "artifactId": 12579300297,
+      "sha256": "b1c5d2493248a7607dda7105a948a8b57158db41f6e367b233fe2b4268ce8a2c",
+      "bytes": 138657,
+      "result": "qualified final-source measurement; original fan-out and row-creation targets remain missed; prospective product tradeoffs accepted, no release qualification",
+      "profile": "gha-4-v1; four virtual CPUs with disjoint measured-workload/driver affinity",
+      "summaries": [
+        "client-final/AUTHENTICATED.json",
+        "client-final/provider-artifacts.json",
+        "client-final/publication-summary.json",
+        "client-final/independent/scored-analysis.json",
+        "client-final/independent/root-comparison.json",
+        "client-final/independent/scored-analysis.py",
+        "client-final/verify.py",
+        "client-final/privacy_scan.py",
+        "client-final/privacy-scan.json",
+        "client-final/effects-review/PRODUCT-ASSESSMENT.md",
+        "client-final/effects-review/SHA256SUMS.json",
+        "client-final/effects-review/count-correction.txt",
+        "client-final/effects-review/recompute-initial-count-assumption.py",
+        "client-final/effects-review/recompute.py",
+        "client-final/effects-review/recomputed.json",
+        "client-final/effects-review/recomputed.txt",
+        "client-final/effects-review/source-provenance.json"
+      ]
     }
   ]
 }
