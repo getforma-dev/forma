@@ -229,35 +229,51 @@ test('FORMA-172: a data-list of 250,000 items is refused before any item is read
   expect(past.ms).toBeLessThan(50);
 });
 
+const TABLE_LIST = '<table><tbody data-list="{v === null ? [] : v}"><tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr></tbody></table>';
+const tableData = (n: number) => `Array.from({length: ${n}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
+const attributes = Array.from({ length: 22 }, (_, i) => `a${i}="v"`).join(' ');
+const LIST_SHAPES = [
+  { name: 'ordinary-li', weight: 2, html: LI_LIST, data: numbers, selector: 'li' },
+  { name: 'directive-table', weight: 14, html: TABLE_LIST, data: tableData, selector: 'tr' },
+  { name: 'attribute-row', weight: 24, html: `<ul data-list="{v === null ? [] : v}"><li ${attributes}>{item}</li></ul>`, data: numbers, selector: 'li' },
+];
+
+// Each first-attempt sample gets Playwright's fresh page/context. Measuring a
+// refusal after several admitted lists also exposes it to their allocation and
+// teardown history. No collection is forced and no result is retried or selected:
+// all nine refusals must independently fit the unchanged 50 ms bound.
+for (const row of LIST_SHAPES) {
+  for (let sample = 1; sample <= 3; sample++) {
+    test(`FORMA-289: ${row.name} over-cap refusal, fresh-page sample ${sample}/3`, async ({ page, browserName }) => {
+      await page.goto('/runtime-bare.html');
+      const rate = await throttled(page, browserName);
+      const count = Math.floor(LIST_CAP / row.weight) + 1;
+      const past = await listPass(page, row.html, row.data(count), row.selector);
+      console.log('FORMA-289 list refusal', JSON.stringify({ browserName, platform: process.platform, rate, row: row.name, sample, weight: row.weight, cap: LIST_CAP, rows: count, ...past }));
+      expect(past.built, row.name).toBe(0);
+      expect(past.budget, row.name).toBe(1);
+      expect(past.ms, row.name).toBeLessThan(50);
+    });
+  }
+}
+
 test('FORMA-289: ordinary 1,000-row lists and cap-boundary rows fit the measured task budget', async ({ page, browserName }) => {
   test.setTimeout(120_000);
   await page.goto('/runtime-bare.html');
   const rate = await throttled(page, browserName);
-  const table = '<table><tbody data-list="{v === null ? [] : v}"><tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr></tbody></table>';
-  const tableData = (n: number) => `Array.from({length: ${n}}, (_, i) => ({ id: i, a: 'a' + i, b: 'b' + i, c: i % 7, d: i % 2 === 0 }))`;
-  const attributes = Array.from({ length: 22 }, (_, i) => `a${i}="v"`).join(' ');
-  const cases = [
-    { name: 'ordinary-li', weight: 2, html: LI_LIST, data: numbers, selector: 'li' },
-    { name: 'directive-table', weight: 14, html: table, data: tableData, selector: 'tr' },
-    { name: 'attribute-row', weight: 24, html: `<ul data-list="{v === null ? [] : v}"><li ${attributes}>{item}</li></ul>`, data: numbers, selector: 'li' },
-  ];
-  for (const row of cases) {
+  for (const row of LIST_SHAPES) {
     const ordinary = await listPass(page, row.html, row.data(1000), row.selector);
+    const count = Math.floor(LIST_CAP / row.weight), samples: Pass[] = [];
+    for (let run = 0; run < 3; run++) samples.push(await listPass(page, row.html, row.data(count), row.selector));
+    const maximumMs = Math.max(...samples.map(sample => sample.ms)), units = count * row.weight;
+    // Emit every observation before assertions, including a failing sample.
+    console.log('FORMA-289 list budget', JSON.stringify({ browserName, platform: process.platform, rate, row: row.name, weight: row.weight, cap: LIST_CAP, rows: count, units, samples, maximumMs, usPerUnit: maximumMs * 1000 / units, ordinary1000: ordinary }));
     expect(ordinary.built, row.name).toBe(1000);
     expect(ordinary.budget, row.name).toBe(0);
-    const count = Math.floor(LIST_CAP / row.weight), samples: number[] = [];
-    for (let run = 0; run < 3; run++) {
-      const at = await listPass(page, row.html, row.data(count), row.selector);
+    for (const at of samples) {
       expect(at.built, row.name).toBe(count);
       expect(at.budget, row.name).toBe(0);
-      samples.push(at.ms);
     }
-    const past = await listPass(page, row.html, row.data(count + 1), row.selector);
-    expect(past.built, row.name).toBe(0);
-    expect(past.budget, row.name).toBe(1);
-    expect(past.ms, row.name).toBeLessThan(50);
-    const maximumMs = Math.max(...samples), units = count * row.weight;
-    console.log('FORMA-289 list budget', JSON.stringify({ browserName, platform: process.platform, rate, row: row.name, weight: row.weight, cap: LIST_CAP, rows: count, units, samplesMs: samples, maximumMs, usPerUnit: maximumMs * 1000 / units, ordinary1000Ms: ordinary.ms, refusedMs: past.ms }));
     // A measured regression guard for these ordinary shapes, not a claim about
     // arbitrary expensive elements, nested lists or repeated text placeholders.
     if (browserName === 'chromium' && process.platform === 'linux') {
