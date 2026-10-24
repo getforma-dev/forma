@@ -2532,5 +2532,45 @@
   "find": "    warnDeprecated('FORMA_W_MANUAL_MOUNT_REMOVED');",
   "replace": "",
   "note": "The obsolete manual attribute silently loses its development migration hint. The explicit control requires one warning across two imports and the exact replacement call."
+ },
+ {
+  "id": "runtime/computed-self-read-bound",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');\n        else if (evaluate) {",
+  "replace": "        if (evaluate) {",
+  "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: retro-homepage's `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
+ },
+ {
+  "id": "runtime/computed-cycle-undetected",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            if (busy) throw cycle('is read while it is being computed');",
+  "replace": "            void busy;",
+  "note": "a computed read while it is being evaluated (two computeds that read each other) gets alien-signals' current value, undefined at first, and mountMarkup throws a TypeError instead of reporting the cycle (FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"computeds that read each other report the cycle on their element and to each reader, never a TypeError\""
+ },
+ {
+  "id": "runtime/computed-arrow-param-read-as-self",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  if (n.k === 'Arrow' && n.params!.includes(name)) return false;\n",
+  "replace": "",
+  "note": "an arrow parameter named like the computed counts as a read of the computed, so `n = items.map(n => n * 2)` is refused as a self-reference (FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed reads its own value only as a free name: an arrow parameter, a property or a string of that name is not a self-reference\""
+ },
+ {
+  "id": "runtime/computed-refusal-unbinds-state",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        const prevGetter = scope.getters[name];",
+  "replace": "        const prevGetter = scope.getters[name];\n        delete scope.getters[name];",
+  "note": "a refused computed deletes the getter of the state key it is named like, so every reader of a declared key reports it undeclared (the binding before FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that cannot compile binds nothing either: a state key of its name keeps rendering\""
  }
 ]
