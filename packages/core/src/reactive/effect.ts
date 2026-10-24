@@ -12,16 +12,13 @@ import {
   hasActiveRoot,
   registerDisposer,
   getOwner,
-  runWithOwner,
   registerOwnerDisposer,
-  createChildOwner,
-  disposeOwner,
   type Owner,
 } from './root.js';
-import { setCleanupCollector } from './cleanup.js';
+import { setExecutionContext } from './cleanup.js';
 import { reportError } from './dev.js';
 import { getAdoptionEvents, withAdoptionEvents } from './adoption-events.js';
-import { deferAdoptionEffect, getAdoptionCallbacks, bindAdoptionCallback } from './adoption-hooks.js';
+import { deferAdoptionEffect, getAdoptionCallbacks, bindAdoptionCallback, runAdoptionCallback, type AdoptionCallbackRunner } from './adoption-hooks.js';
 
 declare const __FORMA_FRAME_BUILD__: boolean | undefined;
 
@@ -93,19 +90,19 @@ function releaseArray(arr: (() => void)[]): void {
 // Unified cleanup runner — single function for both re-run and dispose paths
 // ---------------------------------------------------------------------------
 
-function runCleanup(fn: (() => void) | undefined): void {
+function runCleanup(fn: (() => void) | undefined, callbacks: AdoptionCallbackRunner | undefined): void {
   if (fn === undefined) return;
   try {
-    fn();
+    runAdoptionCallback(fn, callbacks);
   } catch (e) {
     reportError(e, 'effect cleanup');
   }
 }
 
-function runCleanups(bag: (() => void)[] | undefined): void {
+function runCleanups(bag: (() => void)[] | undefined, callbacks: AdoptionCallbackRunner | undefined): void {
   if (bag === undefined) return;
   for (let i = 0; i < bag.length; i++) {
-    try { bag[i]!(); } catch (e) { reportError(e, 'effect cleanup'); }
+    try { runAdoptionCallback(bag[i]!, callbacks); } catch (e) { reportError(e, 'effect cleanup'); }
   }
 }
 
@@ -190,167 +187,155 @@ export function createEffect(fn: () => void | (() => void)): () => void {
   return deferAdoptionEffect(fn, createEffectNow) ?? createEffectNow(fn, adoptionFailure);
 }
 
-function createEffectNow(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow = false): () => void {
-  // Capture the owner active at creation time so this effect's disposer is owned
-  // by whatever created it — a root, or (for a nested effect) the parent effect's
-  // current child-owner. This replaces a hasActiveRoot() snapshot so nested
-  // effects created during a parent re-run (when no root is lexically active) are
-  // still owned and disposed.
-  const ownerAtCreate = getOwner();
-  const callbacks = getAdoptionCallbacks();
-  const runCallback = bindAdoptionCallback(fn, callbacks);
-  const events = getAdoptionEvents();
+// The effect record is also its generation owner. Its disposer array is allocated
+// only when nested work registers; an ordinary signal reader has no child owner
+// allocation and never traverses disposeOwner's empty array.
+type Cleanup = (() => void) | (() => void)[] | undefined;
+class EffectState implements Owner {
+  owner: Owner | null = this;
+  // Optional state is installed only when used. A leaf reader retains just its
+  // callback, ownership context and engine disposer, rather than empty slots for
+  // cleanup, children, initial errors and adoption capabilities.
+  declare private children: (() => void)[] | undefined;
+  declare private cleanup: Cleanup;
+  declare private nextCleanup: Cleanup;
+  declare private disposed: boolean | undefined;
+  declare private initialError: { error: unknown } | undefined;
+  declare private stop: () => void;
+  declare private callbacks: ReturnType<typeof getAdoptionCallbacks>;
+  declare private events: ReturnType<typeof getAdoptionEvents>;
+  declare private reader: ((fn: () => void) => () => void) | undefined;
+  declare private failure: ((error: unknown) => void) | undefined;
+  declare private initialThrow: boolean | undefined;
 
-  // This effect owns its nested effects/roots via a reusable child-owner: it is
-  // disposed (nested cleanups run) at the top of each run and on disposal, then
-  // reused for the next generation. One small allocation per createEffect; the
-  // ordinary CSR DOM path uses internalEffect without a child-owner. Adopted
-  // internal bindings use this owner too, since readers can construct callbacks.
-  const childOwner: Owner = createChildOwner();
-  const internalReader = failure ? (reader: () => void) => createEffectNow(reader, failure, true) : undefined;
-
-  // Most effects have zero or one cleanup. Track the single-cleanup case
-  // without array allocation; only promote to pooled array when needed.
-  let cleanup: (() => void) | undefined;
-  let cleanupBag: (() => void)[] | undefined;
-  let nextCleanup: (() => void) | undefined;
-  let nextCleanupBag: (() => void)[] | undefined;
-  let disposed = false;
-  let firstRun = true;
-  let initialError: {error:unknown}|undefined;
-
-  const addCleanup = (cb: () => void) => {
-    cb = bindAdoptionCallback(cb, callbacks);
-    if (nextCleanupBag !== undefined) {
-      nextCleanupBag.push(cb);
-      return;
+  constructor(
+    private fn: () => void | (() => void),
+    failure: ((error: unknown) => void) | undefined,
+    initialThrow: boolean,
+  ) {
+    const callbacks = getAdoptionCallbacks(), events = getAdoptionEvents();
+    if (callbacks) this.callbacks = callbacks;
+    if (events) this.events = events;
+    if (initialThrow) this.initialThrow = true;
+    if (failure) {
+      this.failure = failure;
+      this.reader = fn => createEffectNow(fn, failure, true);
     }
-    if (nextCleanup !== undefined) {
+  }
+
+  get disposers(): (() => void)[] { return this.children ??= []; }
+
+  addCleanup(callback: () => void): void {
+    if (this.nextCleanup === undefined) this.nextCleanup = callback;
+    else if (typeof this.nextCleanup === 'function') {
       const bag = acquireArray();
-      bag.push(nextCleanup, cb);
-      nextCleanup = undefined;
-      nextCleanupBag = bag;
-      return;
+      bag.push(this.nextCleanup, callback);
+      this.nextCleanup = bag;
+    } else this.nextCleanup.push(callback);
+  }
+
+  private clean(): void {
+    // Children before parents, including children registered during teardown.
+    if (this.children) {
+      for (const dispose of this.children) {
+        try { dispose(); } catch { /* continue tearing down this generation */ }
+      }
+      this.children.length = 0;
     }
-    nextCleanup = cb;
-  };
-
-  const cleanCurrentRun = () => {
-    // Dispose the previous generation of nested effects/roots (running their
-    // cleanups) FIRST — children before parents, matching wrappedDispose so the
-    // teardown order is consistent between the re-run and dispose paths and a
-    // nested cleanup never observes parent-owned state already freed. (alien's
-    // raw unwatched teardown of a nested effect bypasses our cleanup, so we own
-    // nested work explicitly.)
-    disposeOwner(childOwner);
-
-    // Run and clear this effect's own previous cleanups.
+    const cleanup = this.cleanup;
     if (cleanup !== undefined) {
-      runCleanup(cleanup);
-      cleanup = undefined;
+      if (typeof cleanup === 'function') runCleanup(cleanup, this.callbacks);
+      else { runCleanups(cleanup, this.callbacks); releaseArray(cleanup); }
+      this.cleanup = undefined;
     }
-    if (cleanupBag !== undefined) {
-      runCleanups(cleanupBag);
-      releaseArray(cleanupBag);
-      cleanupBag = undefined;
-    }
-  };
+  }
 
-  const runOnce = () => {
-    const initial = firstRun; firstRun = false;
-    cleanCurrentRun();
-
-    nextCleanup = undefined;
-    nextCleanupBag = undefined;
-
-    // Always install the collector so onCleanup()/returned cleanups are captured
-    // on EVERY run. (The old skipCleanupInfra fast-path latched after a clean
-    // first run and then silently dropped — or cross-registered — cleanups
-    // registered on later runs.) The single-cleanup/pooled-array promotion below
-    // keeps the zero/one-cleanup case allocation-free.
-    const prevCollector = setCleanupCollector(addCleanup);
-    const previousFailure = adoptionFailure;
-    const previousReader = adoptionInternalEffect;
-    adoptionFailure = failure;
-    adoptionInternalEffect = internalReader;
-
+  runPlain(): void {
+    if (this.children || this.cleanup || this.callbacks || this.events || this.failure
+      || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
+    const previous = setExecutionContext(this), node = getActiveSub() as SubNode;
+    node.flags &= ~PENDING;
     try {
-      // Run the body with this effect's child-owner installed so any nested
-      // effects/roots it creates are owned by this generation.
-      const result = withAdoptionEvents(events, () => runWithOwner(childOwner, runCallback));
-      if (typeof result === 'function') {
-        addCleanup(result as () => void);
-      }
-      // Commit this run's cleanups. When none were registered, both stay
-      // undefined (allocation-free).
-      if (nextCleanupBag !== undefined) {
-        cleanupBag = nextCleanupBag;
-      } else if (nextCleanup !== undefined) {
-        cleanup = nextCleanup;
-      }
-    } catch (e) {
-      if (nextCleanupBag !== undefined) {
-        cleanupBag = nextCleanupBag;
-      } else if (nextCleanup !== undefined) {
-        cleanup = nextCleanup;
-      }
-      // Let the engine return its disposer even when the first reader throws.
-      // A caught construction error must not leave a subscribed failed effect.
-      // Verified by: src/dom/__tests__/reviewer-adoption-caught-construction.test.ts > "a caught initial h reader failure unsubscribes its failed binding and preserves its live owner"
-      if (initialThrow && initial) { initialError={error:e}; return false; }
-      if (failure) { failure(e); return false; }
-      else reportError(e, 'effect');
+      const fn = this.fn, cleanup = fn();
+      if (typeof cleanup === 'function') this.addCleanup(cleanup);
+      if (this.nextCleanup) this.cleanup = this.nextCleanup;
+    } catch (error) {
+      if (this.nextCleanup) this.cleanup = this.nextCleanup;
+      this.owner = previous.owner;
+      try { reportError(error, 'effect'); } finally { this.owner = this; }
     } finally {
-      setCleanupCollector(prevCollector);
-      adoptionFailure = previousFailure;
-      adoptionInternalEffect = previousReader;
-      // A nested callback can abort this island while this body is still on
-      // the stack. JavaScript then continues the body: drain roots/effects and
-      // cleanups created AFTER wrappedDispose's first synchronous teardown.
-      if (disposed) cleanCurrentRun();
+      setExecutionContext(previous);
+      if (this.disposed) this.clean();
     }
-  };
+    if (!this.disposed && (node.flags & PENDING)) this.run(1);
+  }
 
-  const safeFn = () => {
-    // alien-signals sets activeSub to this effect's node for the duration of this
-    // callback, so getActiveSub() is our own node. If the body writes a signal we
-    // depend on, alien-signals marks this node Pending but skips the re-run; we
-    // detect that and run again, bounded so a genuine cycle is reported instead of
-    // hanging.
+  run(reentrantRuns = 0): void {
     const node = getActiveSub() as SubNode | undefined;
-    let reentrantRuns = 0;
     do {
-      if (node) node.flags &= ~PENDING; // clear before running so we detect a fresh set
-      if (runOnce() === false || disposed) break;
-      if (node === undefined || (node.flags & PENDING) === 0) break;
+      if (node) node.flags &= ~PENDING;
+      const initialThrow = this.initialThrow;
+      if (initialThrow) this.initialThrow = false;
+      if (this.children || this.cleanup) this.clean();
+      if (this.nextCleanup) this.nextCleanup = undefined;
+      const previousContext = setExecutionContext(this);
+      const previousFailure = adoptionFailure, previousReader = adoptionInternalEffect;
+      const boundary = this.failure !== previousFailure;
+      if (boundary) { adoptionFailure = this.failure; adoptionInternalEffect = this.reader; }
+      let failed = false;
+      try {
+        const fn = this.fn;
+        // A synchronously flushed ordinary neighbor still gets mode isolation,
+        // never the adopted caller's authority. The usual path has no wrapper.
+        const cleanup = this.callbacks || this.events || getAdoptionCallbacks() || getAdoptionEvents()
+          ? withAdoptionEvents(this.events, () => runAdoptionCallback(fn, this.callbacks))
+          : fn();
+        if (typeof cleanup === 'function') this.addCleanup(cleanup);
+        if (this.nextCleanup) this.cleanup = this.nextCleanup;
+      } catch (error) {
+        if (this.nextCleanup) this.cleanup = this.nextCleanup;
+        // Reporters execute with the caller's owner but this run's collector.
+        this.owner = previousContext.owner;
+        try {
+          if (initialThrow) { this.initialError = {error}; failed = true; }
+          else if (this.failure) { this.failure(error); failed = true; }
+          else reportError(error, 'effect');
+        } finally { this.owner = this; }
+      } finally {
+        setExecutionContext(previousContext);
+        if (boundary) { adoptionFailure = previousFailure; adoptionInternalEffect = previousReader; }
+        // Abort can occur while the body is still executing. Drain work that
+        // was created after the first synchronous disposal too.
+        if (this.disposed) this.clean();
+      }
+      if (failed || this.disposed || !node || !(node.flags & PENDING)) break;
       if (++reentrantRuns >= MAX_REENTRANT_RUNS) {
         node.flags &= ~PENDING;
         const error = new Error(`createEffect exceeded ${MAX_REENTRANT_RUNS} self-triggered re-runs (cycle?)`);
-        if (failure) failure(error);
+        if (this.failure) this.failure(error);
         else reportError(error, 'effect');
         break;
       }
     } while (true);
-  };
-
-  const dispose = rawEffect(safeFn);
-
-  // Wrap dispose to also run final cleanups
-  const wrappedDispose = () => {
-    if (disposed) return;
-    disposed = true;
-    dispose();
-    // Dispose nested effects/roots this effect owns, then run its own cleanups.
-    cleanCurrentRun();
-  };
-
-  if(initialError){wrappedDispose();throw initialError.error;}
-
-  // Register this effect's disposer with the owner active at creation (a root, or
-  // a parent effect's child-owner).
-  if (ownerAtCreate) {
-    registerOwnerDisposer(ownerAtCreate, wrappedDispose);
   }
 
-  return wrappedDispose;
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.stop();
+    this.clean();
+  }
+
+  start(): () => void {
+    this.stop = rawEffect((this.initialThrow || this.failure ? this.run : this.runPlain).bind(this));
+    if (this.initialError) { this.dispose(); throw this.initialError.error; }
+    return this.dispose.bind(this);
+  }
+}
+
+function createEffectNow(fn: () => void | (() => void), failure?: (error: unknown) => void, initialThrow = false): () => void {
+  const owner = getOwner();
+  const dispose = new EffectState(fn, failure, initialThrow).start();
+  if (owner) registerOwnerDisposer(owner, dispose);
+  return dispose;
 }
