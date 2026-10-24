@@ -90,3 +90,17 @@ application choice using the manifest identity; see `forma_server::sw`.
 - `admin/src/about/app.tsx`: empty-props static page and native root selector.
 - `admin/build.ts`: explicit browser/SSR build selection and CSS entries.
 - `admin/src/styles/app.css`: page styling.
+
+## CI and release builds
+
+The included `.github/workflows/build.yml` builds the frontend before the release
+server. It caches npm downloads and Rust dependencies in `target/`, keyed by the
+lockfile and compiler. A page-only change still recompiles the app crate because
+release builds embed the page assets; the dependency cache avoids compiling the
+whole Rust dependency graph again. Rust cache writes are restricted to the default
+branch. A cache miss is valid and builds from the committed locks.
+
+Keep `admin/dist` and the release binary from the same build. Build assets before
+`cargo build --release --locked`; then deploy the resulting binary atomically.
+Do not restore a server binary as the completed output of a different page build.
+See the [deployment guide](https://github.com/getforma-dev/forma/blob/main/docs/DEPLOYMENT.md).

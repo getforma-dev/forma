@@ -225,6 +225,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
     expect(packed.status, packed.stderr).toBe(0);
     const paths = JSON.parse(packed.stdout)[0].files.map((f: { path: string }) => f.path);
     expect(paths).toContain(`templates/${template}/admin/_npmrc`);
+    expect(paths).toContain(`templates/${template}/.github/workflows/build.yml`);
     expect(fs.readFileSync(path.join(TEMPLATES_DIR, template, 'admin', '_npmrc'), 'utf8')).toContain('ignore-scripts=true');
   }, 60_000);
 
