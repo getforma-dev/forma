@@ -1409,12 +1409,18 @@ function armCap(): void {
 
 /**
  * A budget refusal that is reported, not retried: it arms the cap as a wait
- * does (`armCap`). Only one the budget meter made, with `defer` set false,
- * has done any weighing; the refusals that check a length or a count first
- * (`repeat()` past 10,000, `flat()` too deep, a string past 1 MiB) do none,
- * set no `defer`, and arm nothing, so a binding after one that fits is not
- * delayed (FORMA-249, from FORMA-178's review).
+ * does (`armCap`) if the budget meter made it (an allocation charge or the
+ * step count, with `defer` set false). A refusal that checks a length or a
+ * count (`repeat()` past 10,000, `flat()` too deep, a string past 1 MiB) sets
+ * no `defer` and arms nothing itself, so a binding after it that fits is not
+ * delayed (FORMA-249, from FORMA-178's review). What the evaluation charged
+ * before that check stays on the meter: `repeat()` and `flat()` are charged
+ * their cost-table row first, and a charge before the check that does not fit
+ * is refused by the meter, so `'x'.repeat(300000)` (its row) and
+ * `Array.from({length: 300000}).flat(99)` (`Array.from`'s) are allocation
+ * refusals and do arm the cap (FORMA-250).
  * Verified by: src/__tests__/runtime-task-budget.test.ts > "a cheap refusal that weighed nothing does not delay a binding that fits"
+ * Verified by: src/__tests__/runtime-task-budget.test.ts > "a length or count refusal arms nothing, but the charges before it stay on the meter and one that does not fit arms the cap"
  */
 function reported(err: FormaExprError): void {
   if (err.defer === false) armCap();
@@ -1484,7 +1490,8 @@ const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.
  * stamps `data-fm` on every element of a module it loads, so its team-roster
  * row weighs 150 and its todo-list row 144, and 1,000 rows of either fit. The
  * largest lists the cap admits take about 1.1 to 1.4 s at 4x on an M1 Pro and
- * 3.5 to 4.6 s on a CI runner (SECURITY.md has the measurements).
+ * 2.2 to 4.6 s on a CI runner across runs 40032265860, 40034377741,
+ * 40040340320 and 40042343018 (SECURITY.md has the measurements).
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list of 250,000 items is refused before any item is read"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "a list exactly at the cap renders, and one row more is refused"
  * Verified by: src/__tests__/runtime-list-cap.test.ts > "the heaviest served row template renders up to the cap and is refused one row past it"
@@ -2179,9 +2186,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       if (keyProp) fields.push(keyProp);
       // A pass over more than `LIST_WEIGHT_CAP` of rows times weight is refused
       // on the list's length, before any item is read (FORMA-172). The refusal
-      // weighs nothing and charges the task's meter nothing, so, like the other
-      // refusals that check a length first, it is reported with no `defer` and
-      // arms no cap (FORMA-249): nothing after it waits for it.
+      // itself weighs nothing and charges the meter nothing, so, like the other
+      // refusals that check a length, it is reported with no `defer` and arms
+      // no cap (FORMA-249): nothing after it waits for it. What the list's
+      // expression charged before it stays on the meter.
       // Verified by: src/__tests__/runtime-list-cap.test.ts > "a refused list delays no binding and no list after it"
       let weight = 1;
       const held: ParentNode[] = [template];

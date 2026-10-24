@@ -55,9 +55,13 @@ export interface FormaExprError extends Error {
    * part of its task's budget already spent (FORMA-028): run first in a later
    * task it may fit, so the runtime retries it there instead of reporting it.
    * False when it is final, and reported. Left unset by the refusals that
-   * check a length or a count before any work (`repeat()` past its cap,
-   * `flat()` too deep, a string past 1 MiB, an index past the budget): the
-   * runtime reports those as final and arms nothing for them (FORMA-249).
+   * check a length or a count (`repeat()` past its cap, `flat()` too deep, a
+   * string past 1 MiB, an index past the budget): the runtime reports those
+   * as final and arms nothing for them (FORMA-249). What the evaluation
+   * charged before the check (for `repeat()` and `flat()`, their cost-table
+   * row) stays on the meter, and a charge before the check that does not fit
+   * is refused by the meter first, with `defer` set: false when final, so the
+   * runtime arms the cap for it (FORMA-250).
    */
   defer?: boolean;
 }
