@@ -8,6 +8,7 @@ import {createServer} from 'node:http';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {arch,cpus,platform,release,tmpdir,totalmem} from 'node:os';
+import {assertCurrentFmirHash,packageWriter} from './fmir-corpus.mjs';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const LIMIT = 1_048_576;
@@ -58,6 +59,8 @@ export function decoderPayload(fixture) {
 }
 export async function verifyDecoderCompiler(compilerPath) {
   const artifactPath=join(compilerPath,'dist/index.js');
+  const version=JSON.parse(readFileSync(join(compilerPath,'package.json'),'utf8')).version;
+  const expectedVersion=packageWriter(version);
   const {generateRealIr}=await import(pathToFileURL(artifactPath).href);
   const directory=mkdtempSync(join(tmpdir(),'forma-decoder-contract-'));
   const fixtures=[];
@@ -71,11 +74,13 @@ export async function verifyDecoderCompiler(compilerPath) {
       assert.equal(contract?.mode,'ssr');
       const registration={h:contract.digest,mode:0,schema:contract.schema};
       assert.deepEqual(registration,{h:fixture.h,mode:0,schema:fixture.schema},'decoder: candidate registration drift');
-      assert.equal(sha(result.binary),fixture.irSha256,'decoder: candidate IR drift');
+      assertCurrentFmirHash({name:`decoder ${fixture.id}`,bytes:result.binary,expectedVersion,
+        frozenVersion:[3,0,0],frozenSha256:fixture.irSha256});
       assert.equal(sha(source),fixture.sourceSha256);
-      fixtures.push({id:fixture.id,sourceSha256:sha(source),irSha256:sha(result.binary),registration});
+      fixtures.push({id:fixture.id,sourceSha256:sha(source),irSha256:sha(result.binary),registration,
+        binaryBase64:Buffer.from(result.binary).toString('base64')});
     }
-    return {file:'dist/index.js',sha256:sha(readFileSync(artifactPath)),fixtures};
+    return {file:'dist/index.js',sha256:sha(readFileSync(artifactPath)),version,fixtures};
   } finally {rmSync(directory,{recursive:true,force:true});}
 }
 const sortedSummary = samples => {
@@ -113,8 +118,28 @@ export function validateDecoder(report) {
   assert(/^[a-f0-9]{64}$/.test(report.artifact.sha256));
   assert(Number.isSafeInteger(report.artifact.bytes)&&report.artifact.bytes>0);
   assert.equal(report.compiler?.file,'dist/index.js');assert(/^[a-f0-9]{64}$/.test(report.compiler.sha256));
-  assert.deepEqual(report.compiler.fixtures,DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}})),
-    'decoder: candidate compiler regeneration evidence absent or changed');
+  if(report.compiler.version === undefined) {
+    // Retain the exact archived 3.0 proof format. A new producer always records
+    // its package version and complete actual IR bytes, including the header.
+    assert.equal(report.artifact.version,undefined);
+    assert.deepEqual(report.compiler.fixtures,DECODER_FIXTURES.map(f=>({id:f.id,sourceSha256:f.sourceSha256,irSha256:f.irSha256,registration:{h:f.h,mode:0,schema:f.schema}})),
+      'decoder: candidate compiler regeneration evidence absent or changed');
+  } else {
+    const expectedVersion=packageWriter(report.compiler.version);
+    assert.equal(report.artifact.version,report.compiler.version,'decoder: packed core and compiler versions differ');
+    assert.deepEqual(report.compiler.fixtures?.map(row=>row.id),DECODER_FIXTURES.map(row=>row.id));
+    for(const [index,proof] of report.compiler.fixtures.entries()) {
+      const fixture=DECODER_FIXTURES[index];
+      assert.equal(proof.sourceSha256,fixture.sourceSha256);
+      assert.deepEqual(proof.registration,{h:fixture.h,mode:0,schema:fixture.schema});
+      assert(typeof proof.binaryBase64==='string'&&proof.binaryBase64.length<=24*1024*1024,'decoder: missing actual compiler IR');
+      const bytes=Buffer.from(proof.binaryBase64,'base64');
+      assert.equal(bytes.toString('base64'),proof.binaryBase64,'decoder: noncanonical actual compiler IR');
+      assert.equal(sha(bytes),proof.irSha256,'decoder: actual compiler IR hash differs');
+      assertCurrentFmirHash({name:`decoder ${fixture.id}`,bytes,expectedVersion,
+        frozenVersion:[3,0,0],frozenSha256:fixture.irSha256});
+    }
+  }
   for(const key of ['node','platform','release','architecture','cpu']) assert(typeof report.machine?.[key]==='string'&&report.machine[key].length>0,`decoder: missing machine ${key}`);
   for(const key of ['logicalCpus','memoryBytes']) assert(Number.isSafeInteger(report.machine[key])&&report.machine[key]>0);
   assert.deepEqual(report.cases?.map(row=>row.id),DECODER_FIXTURES.map(f=>f.id));
@@ -123,7 +148,7 @@ export function validateDecoder(report) {
     const fixture=DECODER_FIXTURES[index],payload=decoderPayload(fixture);
     assert.equal(sha(decoderSource(fixture.type)),fixture.sourceSha256);
     assert.deepEqual(row.registration,{h:fixture.h,mode:0,schema:fixture.schema});
-    assert.equal(row.sourceSha256,fixture.sourceSha256); assert.equal(row.irSha256,fixture.irSha256);
+    assert.equal(row.sourceSha256,fixture.sourceSha256); assert.equal(row.irSha256,report.compiler.fixtures[index].irSha256);
     assert.equal(row.payloadBytes,LIMIT); assert.equal(row.payloadSha256,payload.sha256);
     assert.equal(row.warmups?.length,5,'decoder: require five warmups per shape');
     assert.equal(row.samples?.length,40,'decoder: require forty raw samples per shape');
@@ -161,8 +186,10 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
   // P17 supplies sibling installed packed packages. No source imports or
   // bundling participate in the timed path; compiler proof finishes first.
   const compiler=await verifyDecoderCompiler(compilerPath);
+  const version=JSON.parse(readFileSync(join(corePath,'package.json'),'utf8')).version;
+  assert.equal(version,compiler.version,'decoder: packed core and compiler versions differ');
   const artifact=readFileSync(join(corePath,'dist/forma.esm.js'));
-  const specs=DECODER_FIXTURES.map(fixture=>({...fixture,...decoderPayload(fixture)}));
+  const specs=DECODER_FIXTURES.map((fixture,index)=>({...fixture,irSha256:compiler.fixtures[index].irSha256,...decoderPayload(fixture)}));
   const documents=specs.map(spec=>({spec,text:spec.text}));
   documents.push({spec:specs[0],text:specs[0].text+' '},{spec:specs[0],text:specs[0].text.slice(0,-1)});
   const boot = `import {__islandRegistration,activateIslands,h} from '/core.mjs';
@@ -218,7 +245,7 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
     const cpu=cpus();
     const report={schema:1,pilot:false,profile:{...DECODER_PROFILE},recordedAt:new Date().toISOString(),
       browserVersion:browser.version(),responsePolicy:null,
-      artifact:{file:'dist/forma.esm.js',sha256:sha(artifact),bytes:artifact.length},compiler,
+      artifact:{file:'dist/forma.esm.js',sha256:sha(artifact),bytes:artifact.length,version},compiler,
       machine:{node:process.version,platform:platform(),release:release(),architecture:arch(),cpu:cpu[0]?.model,logicalCpus:cpu.length,memoryBytes:totalmem()},cases:[],controls:[]};
     const errors=[],consoleErrors=[];
     page.on('pageerror',error=>errors.push(error.message));

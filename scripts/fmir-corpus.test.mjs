@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertCurrentCorpus, referenceCrc32, withStagedCorpus } from './fmir-corpus.mjs';
+import { assertCurrentCorpus, assertCurrentFmirHash, packageWriter, referenceCrc32, withStagedCorpus } from './fmir-corpus.mjs';
 
 const fixtures = fileURLToPath(new URL('../crates/forma-ir/tests/fixtures/js-emitter/', import.meta.url));
 const cases = readdirSync(fixtures).filter(name => name.endsWith('.ir')).map(name => name.slice(0, -3));
@@ -38,6 +39,27 @@ test('all 14 historical3.0 and current3.1 corpus bodies compare byte for byte', 
     assertCurrentCorpus(f);
     if (writer[1] === 0) assert.deepEqual(f.bytes, f.frozenBytes);
   }
+});
+test('the historical full-binary hash permits only the exact current writer and covering CRC', () => {
+  for (const writer of [[3, 0, 0], [3, 1, 0]]) {
+    const f = fixture('barrel-exports', writer);
+    const proof = { ...f, frozenVersion: [3, 0, 0], frozenSha256: createHash('sha256').update(f.frozenBytes).digest('hex') };
+    assertCurrentFmirHash(proof);
+    for (const [offset, message] of [[0, /signature/], [14, /body length/], [22, /reserved header/], [f.bytes.length - 1, /emitted bytes differ/]]) {
+      const bytes = Buffer.from(f.bytes); bytes[offset] ^= 1; restamp(bytes);
+      assert.throws(() => assertCurrentFmirHash({ ...proof, bytes }), message);
+    }
+    const stale = Buffer.from(f.bytes); stale.writeUInt16LE(writer[1] + 1, 10); restamp(stale);
+    assert.throws(() => assertCurrentFmirHash({ ...proof, bytes: stale }), /writer does not match/);
+    assert.throws(() => assertCurrentFmirHash({ ...proof, frozenSha256: '0'.repeat(64) }), /emitted bytes differ/);
+    const invalid = Buffer.from(f.bytes); invalid[18] ^= 1;
+    assert.throws(() => assertCurrentFmirHash({ ...proof, bytes: invalid }), /CRC/);
+  }
+});
+test('package versions bind the three exact u16 writer components', () => {
+  assert.deepEqual(packageWriter('3.1.0-rc.1'), [3, 1, 0]);
+  assert.deepEqual(packageWriter('3.0.9'), [3, 0, 9]);
+  for (const value of [undefined, '3.1', '3.01.0', '3.1.65536', '3.1.0junk']) assert.throws(() => packageWriter(value));
 });
 test('a payload mutation with independently repaired CRC still fails', () => {
   for (const writer of [[3, 0, 0], [3, 1, 0]]) {

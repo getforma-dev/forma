@@ -2,6 +2,7 @@
 // corpus keeps its original writer; only the current package version and its
 // covering CRC may differ. Never regenerate an expected payload from the emitter.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const SIGNATURE = Buffer.from([0x89, 0x46, 0x4d, 0x49, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -29,19 +30,43 @@ function header(bytes) {
 }
 const firstLine = ({ writer, bodyLength, checksum }) => `FMIR v3 writer=${writer.join('.')} body_len=${bodyLength} crc=${checksum.toString(16).padStart(8, '0')}\n`;
 
-export function assertCurrentCorpus({ name, bytes, dump, frozenBytes, frozenDump, expectedVersion }) {
-  assert(Array.isArray(expectedVersion) && expectedVersion.length === 3 && expectedVersion.every(n => Number.isInteger(n) && n >= 0 && n <= 0xffff), 'expected writer must have three u16 components');
-  const frozen = Buffer.from(frozenBytes), current = Buffer.from(bytes);
-  const old = header(frozen), actual = header(current);
+function validateVersion(version) {
+  assert(Array.isArray(version) && version.length === 3 && version.every(n => Number.isInteger(n) && n >= 0 && n <= 0xffff), 'expected writer must have three u16 components');
+}
+export function packageWriter(version) {
+  assert(typeof version === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/.test(version), 'invalid package version for FMIR writer');
+  const writer = version.split('-')[0].split('.').map(Number);
+  validateVersion(writer);
+  return writer;
+}
+function historicalBytes({ name, bytes, frozenVersion, expectedVersion }) {
+  validateVersion(expectedVersion); validateVersion(frozenVersion);
+  const current = Buffer.from(bytes), actual = header(current);
   assert.equal(expectedVersion[0], 3, 'this comparison requires FMIR v3');
-  assert(old.writer[0] === expectedVersion[0] && old.writer[1] <= expectedVersion[1], `${name}: frozen writer is outside the current reader window`);
+  assert(frozenVersion[0] === expectedVersion[0] && frozenVersion[1] <= expectedVersion[1], `${name}: frozen writer is outside the current reader window`);
   assert.deepEqual(actual.writer, expectedVersion, `${name}: writer does not match the current package version`);
+  frozenVersion.forEach((part, index) => current.writeUInt16LE(part, 8 + 2 * index));
+  current.writeUInt32LE(referenceCrc32(current.subarray(0, 18), current.subarray(22)), 18);
+  return current;
+}
+export function assertCurrentFmir({ name, bytes, frozenBytes, expectedVersion }) {
+  const frozen = Buffer.from(frozenBytes), old = header(frozen);
+  const historical = historicalBytes({ name, bytes, frozenVersion: old.writer, expectedVersion });
+  assert.deepEqual(historical, frozen, `${name}: emitted bytes differ from the frozen corpus beyond the version header`);
+}
+// The decoder's historical proof pins a full binary hash instead of a file.
+// Verify the actual current header first; changing only its writer and CRC must
+// recover that exact historical hash. No payload is regenerated or discarded.
+export function assertCurrentFmirHash({ name, bytes, frozenVersion, frozenSha256, expectedVersion }) {
+  assert(/^[a-f0-9]{64}$/.test(frozenSha256), 'invalid frozen FMIR SHA-256');
+  const historical = historicalBytes({ name, bytes, frozenVersion, expectedVersion });
+  assert.equal(createHash('sha256').update(historical).digest('hex'), frozenSha256, `${name}: emitted bytes differ from the frozen corpus beyond the version header`);
+}
+export function assertCurrentCorpus({ name, bytes, dump, frozenBytes, frozenDump, expectedVersion }) {
+  assertCurrentFmir({ name, bytes, frozenBytes, expectedVersion });
+  const old = header(Buffer.from(frozenBytes)), actual = header(Buffer.from(bytes));
   assert(frozenDump.startsWith(firstLine(old)), `${name}: frozen dump header disagrees with frozen bytes`);
-  const expected = Buffer.from(frozen);
-  expectedVersion.forEach((part, index) => expected.writeUInt16LE(part, 8 + 2 * index));
-  expected.writeUInt32LE(referenceCrc32(expected.subarray(0, 18), expected.subarray(22)), 18);
-  assert.deepEqual(current, expected, `${name}: emitted bytes differ from the frozen corpus beyond the version header`);
-  const expectedDump = firstLine(header(expected)) + frozenDump.slice(firstLine(old).length);
+  const expectedDump = firstLine(actual) + frozenDump.slice(firstLine(old).length);
   assert.equal(dump, expectedDump, `${name}: canonical dump differs from the frozen corpus beyond the version header`);
 }
 
