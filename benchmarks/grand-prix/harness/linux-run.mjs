@@ -119,6 +119,14 @@ try {
         '--source-commit', formaRef ?? (baseline ? BASELINE_SOURCE : report.sourceCommit),
         '--builder', builder, '--out', comparison]);
       report.runtimeComparison = { directory: comparison, sourceImage }; save();
+      if (!compression) {
+        const buildImage = JSON.parse(execFileSync('docker', ['image', 'inspect', imageName('forma-build')], { encoding: 'utf8' }))[0].Id;
+        const counts = join(results, `${id}-render-counts`);
+        await run(process.execPath, ['harness/render-counts.mjs', '--runtime-image', sourceImage,
+          '--build-image', buildImage, '--source-commit', formaRef ?? (baseline ? BASELINE_SOURCE : report.sourceCommit),
+          '--out', counts, ...(diagnostic ? ['--diagnostic'] : [])]);
+        report.renderCounts = { directory: counts, runtimeImage: sourceImage, buildImage }; save();
+      }
     }
     // Remove only images just built by this run, and this run's builder cache.
     await run('docker', ['image', 'rm', imageName(car), imageName(car + '-build')]);

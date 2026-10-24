@@ -55,7 +55,7 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Qualify budget refusals
-        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs benchmarks/grand-prix/harness/compression.test.mjs
+        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs benchmarks/grand-prix/harness/compression.test.mjs benchmarks/grand-prix/harness/render-counts.test.mjs
       - name: Run isolated Forma strength check or requested server grid
         working-directory: benchmarks/grand-prix
         env:
@@ -84,5 +84,6 @@ jobs:
             benchmarks/grand-prix/results/raw/
             benchmarks/grand-prix/results/*-runtime/
             benchmarks/grand-prix/results/*-compression/
+            benchmarks/grand-prix/results/*-render-counts/
           if-no-files-found: error
           retention-days: 30

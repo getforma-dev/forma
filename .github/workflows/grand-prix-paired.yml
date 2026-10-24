@@ -64,6 +64,7 @@ jobs:
             benchmarks/grand-prix/results/*.lock
             benchmarks/grand-prix/results/*-paired/
             benchmarks/grand-prix/results/*-runtime/
+            benchmarks/grand-prix/results/*-render-counts/
             benchmarks/grand-prix/results/raw/
           if-no-files-found: error
           retention-days: 30
