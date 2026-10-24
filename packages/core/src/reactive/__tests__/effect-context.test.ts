@@ -55,4 +55,46 @@ describe('effect execution context', () => {
     withAdoptionCallbacks(fn => { calls.push('ambient'); return fn(); }, dispose);
     expect(calls).toEqual(['captured', 'cleanup']);
   });
+
+  for (const contextual of [false, true]) {
+    const start = (fn: () => void | (() => void)) => contextual
+      ? withAdoptionCallbacks(fn => fn(), () => createEffect(fn))
+      : createEffect(fn);
+
+    it(`drains cleanup and children registered before and after self-disposal (${contextual ? 'captured' : 'ordinary'})`, () => {
+      const [value, setValue] = createSignal(0), cleaned: string[] = [];
+      let dispose: () => void;
+      dispose = start(() => {
+        if (!value()) return;
+        createRoot(() => { registerDisposer(() => cleaned.push('child-before')); });
+        onCleanup(() => { cleaned.push('before'); dispose(); });
+        dispose();
+        createRoot(() => { registerDisposer(() => cleaned.push('child-after')); });
+        onCleanup(() => cleaned.push('after'));
+        return () => cleaned.push('returned');
+      });
+      setValue(1);
+      expect(cleaned).toEqual(['child-before', 'child-after', 'before', 'after', 'returned']);
+      setValue(2); dispose();
+      expect(cleaned).toEqual(['child-before', 'child-after', 'before', 'after', 'returned']);
+      expect(getOwner()).toBeNull();
+    });
+
+    it(`drains the active generation after self-disposal and a thrown body (${contextual ? 'captured' : 'ordinary'})`, () => {
+      const [value, setValue] = createSignal(0), cleaned: number[] = [], errors: unknown[] = [];
+      const off = onError(error => errors.push(error));
+      let dispose: () => void;
+      try {
+        dispose = start(() => {
+          const current = value();
+          onCleanup(() => cleaned.push(current));
+          if (current) { dispose(); throw new Error('after disposal'); }
+        });
+        setValue(1); setValue(2); dispose();
+        expect(cleaned).toEqual([0, 1]);
+        expect(errors).toHaveLength(1);
+        expect(getOwner()).toBeNull();
+      } finally { off(); }
+    });
+  }
 });
