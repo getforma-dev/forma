@@ -19,6 +19,14 @@ fn load(value: &Value) -> Result<AssetManifest, String> {
 
 #[test]
 fn schema_writer_and_mode_refusals_happen_before_binding() {
+    let reader = forma_ir::format::reader_version();
+    let future = format!(
+        "{}.{}.{}",
+        reader[0],
+        reader[1].checked_add(1).unwrap(),
+        reader[2]
+    );
+    let reader_diagnostic = format!("reader {}.{}.{}", reader[0], reader[1], reader[2]);
     let mut cases = Vec::new();
     for version in [1, 3] {
         let mut v = valid();
@@ -29,10 +37,10 @@ fn schema_writer_and_mode_refusals_happen_before_binding() {
     let mut v = valid();
     v.as_object_mut().unwrap().remove("app");
     cases.push((v, "schema-1"));
-    for writer in ["3.1.0", "2.9.99", "4.0.0"] {
+    for writer in [future.as_str(), "2.9.99", "4.0.0"] {
         let mut v = valid();
         v["writer"] = writer.into();
-        cases.push((v, "reader 3.0.0"));
+        cases.push((v, reader_diagnostic.as_str()));
     }
     for writer in ["3.0.0-dev", "3.0.0+build", "03.0.0", "3.0", "3.0.65536"] {
         let mut v = valid();
@@ -78,12 +86,18 @@ fn schema_writer_and_mode_refusals_happen_before_binding() {
         v["writer"] = writer.into();
         assert!(load(&v).is_ok(), "{writer}");
     }
+    let mut current = valid();
+    current["writer"] = format!("{}.{}.{}", reader[0], reader[1], reader[2]).into();
+    assert!(
+        load(&current).is_ok(),
+        "current native writer must be accepted"
+    );
     let mut constructed = load(&valid()).unwrap();
-    constructed.writer = "3.1.0".into();
+    constructed.writer = future.clone();
     let errors = load_ir_modules::<Files>(&constructed).unwrap_err();
     assert_eq!(errors.len(), 1);
     assert_eq!(errors[0].ir_file, "manifest.json");
-    assert!(errors[0].reason.contains("3.1.0"));
+    assert!(errors[0].reason.contains(&future));
 }
 
 /// A retained file is the previous release's, kept for tabs still open on it
