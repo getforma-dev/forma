@@ -1865,18 +1865,20 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         // read its own name read its own getter while it was being evaluated,
         // which alien-signals answers with the computed's current value,
         // undefined before its first evaluation (FORMA-268: a TypeError out of
-        // mountMarkup). One that reads itself through another computed is
-        // refused when that read is made, on this element, and its readers
-        // report it.
+        // mountMarkup). The bind-time check is by name, so it also refuses a
+        // read that would resolve elsewhere (a list row's `item`). At run
+        // time only a read of a computed while it is being evaluated is
+        // caught (through another computed, or a handler a `$dispatch` in it
+        // runs): it is refused on this element, and the reader reports it.
         // Verified by: src/__tests__/runtime-computed.test.ts > "a computed that reads its own name is refused on its element, and the state key of that name keeps rendering"
         // Verified by: src/__tests__/runtime-computed.test.ts > "computeds that read each other report the cycle on their element and to each reader, never a TypeError"
         const evaluate = buildEvaluator(`{${expr}}`, scope, el);
-        const cycle = (): FormaExprError => {
-          const err = exprError('FORMA_E_UNSUPPORTED', `computed "${name}" reads its own value`);
+        const cycle = (why: string): FormaExprError => {
+          const err = exprError('FORMA_E_UNSUPPORTED', `computed "${name}" ${why}`);
           reportExprFailure(el, trimmed, err, scope.mount);
           return err;
         };
-        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle();
+        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');
         else if (evaluate) {
           // Read inside a binding, a computed spends that binding's budget. If
           // it is refused for what was spent before it, it is evaluated again
@@ -1899,7 +1901,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
             }
           });
           scope.getters[name] = () => {
-            if (busy) throw cycle();
+            if (busy) throw cycle('is read while it is being computed');
             const r = cell();
             if (!r.ok) throw r.e;
             return r.v;

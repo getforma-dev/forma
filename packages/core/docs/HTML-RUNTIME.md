@@ -232,29 +232,50 @@ Verified by `src/__tests__/runtime-srcdoc.test.ts` > "data-bind:srcdoc is refuse
 Verified by `src/__tests__/runtime-srcdoc.test.ts` > "a list row's srcdoc is refused with its binding code"
 
 **A `data-computed` may be named like a state key, and may not read itself.**
-`data-computed="name = expr"` binds `name` for its scope. If the state also
-declares `name`, the computed wins: every reader reads the computed, and the
-state's value is only a placeholder (a handler that writes `name` writes that
-value, which no reader sees while the computed is bound). A computed whose
-expression reads its own name (`visitCount = visitCount`, `x = x + 1`,
-`n = items.map(i => i + n)`) is refused when it is bound, with
-`FORMA_E_UNSUPPORTED` (`computed "x" reads its own value`) reported on its
+`data-computed="name = expr"` binds `name` for its scope. Elements bind in
+document order, and a reader is evaluated when it binds. If the state also
+declares `name`, a reader bound after the computed (on a later element, or
+on the computed's own element) reads the computed, and the state's value is
+only a placeholder. A reader on an element before the computed's reads the
+state value instead, and follows only it: it reads the computed once the key
+is next written. A handler that writes `name` writes the state value, which
+the readers bound after the computed never see.
+
+A computed whose expression reads its own name (`visitCount = visitCount`,
+`x = x + 1`, `n = items.map(i => i + n)`) is refused when it is bound, with
+`FORMA_E_UNSUPPORTED` (`computed "x" reads its own name`) reported on its
 element like any refused expression, and binds nothing: a state key of that
 name keeps its value; otherwise each reader of the name reports
 `FORMA_E_UNRESOLVED`. An arrow parameter, a property or a string of that name
-is not a read of it. A computed that cannot compile binds nothing in the same
-way. Computeds that read each other (`a = b; b = a`) are refused when the
-cycle is first evaluated: the computed it re-entered is reported on its
-element with the same code, and each reader of the cycle reports it and keeps
-the text it had. None of these throws out of `mountMarkup`; the rest of the
-markup binds.
+is not a read of it. The check is by name, so it is conservative: a computed
+in a `data-list` row named after a row local (`item = item * 2`, where `item`
+would read the row's item) is refused on every row too, and the rows render
+the row local. A computed that cannot compile binds nothing in the same way.
 
-Verified by `src/__tests__/runtime-computed.test.ts` > "a computed may be named like a state key: its readers read the computed, and follow what it reads"
+When it runs, only a read of a computed while that computed is being
+evaluated is caught: through another computed (`a = b; b = a`), or through a
+handler that a `$dispatch` in the computed runs. The read is refused with
+`FORMA_E_UNSUPPORTED` (`computed "a" is read while it is being computed`),
+reported on the computed's element, and the reader reports it too: a binding
+keeps the text it had, a handler stops. That is all it catches. A cycle that
+a later change closes, after both computeds already have values, is not
+detected: with `a = flag ? b : 1; b = a + 1` and `flag` turning true, `a` and
+`b` both answer 2 with no diagnostic. And a computed that cached the refusal
+before reading anything that can change keeps it after the cycle breaks,
+until the markup is mounted again. None of these throws out of `mountMarkup`;
+the rest of the markup binds.
+
+Verified by `src/__tests__/runtime-computed.test.ts` > "a computed may be named like a state key: a reader bound after it reads the computed, and follows what it reads"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a reader before the computed in document order reads the state placeholder until the key is next written"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that reads its own name is refused on its element, and the state key of that name keeps rendering"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that reads its own name and is no state key is refused, and each reader reports the name unresolved"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed reads its own value only as a free name: an arrow parameter, a property or a string of that name is not a self-reference"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a list-row computed named after a row local is refused on every row; the row local still renders"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that cannot compile binds nothing either: a state key of its name keeps rendering"
 Verified by `src/__tests__/runtime-computed.test.ts` > "computeds that read each other report the cycle on their element and to each reader, never a TypeError"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a handler that a $dispatch in a computed runs, and reads that computed, is refused; the computed still renders"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a cycle that a later change closes, after both computeds have values, is not detected"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that cached a cycle error keeps it after the cycle breaks"
 
 `$el`, `$event` and `$refs` hand expressions a **wrapped** element rather than
 the live node, and the wrapper survives every hop, so `$el.ownerDocument`,

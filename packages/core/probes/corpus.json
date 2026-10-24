@@ -2539,7 +2539,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle();\n        else if (evaluate) {",
+  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');\n        else if (evaluate) {",
   "replace": "        if (evaluate) {",
   "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: retro-homepage's `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
  },
@@ -2549,7 +2549,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "            if (busy) throw cycle();",
+  "find": "            if (busy) throw cycle('is read while it is being computed');",
   "replace": "            void busy;",
   "note": "a computed read while it is being evaluated (two computeds that read each other) gets alien-signals' current value, undefined at first, and mountMarkup throws a TypeError instead of reporting the cycle (FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"computeds that read each other report the cycle on their element and to each reader, never a TypeError\""
  },
