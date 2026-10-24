@@ -1,0 +1,42 @@
+{
+  "text": [
+    {
+      "value": "<b>&\r\n\u0000",
+      "html": "&lt;b&gt;&amp;\n�"
+    },
+    {
+      "value": "",
+      "html": ""
+    },
+    {
+      "value": null,
+      "html": ""
+    },
+    {
+      "value": "​",
+      "html": "​"
+    },
+    {
+      "value": false,
+      "html": "false"
+    },
+    {
+      "value": 42,
+      "html": "42"
+    }
+  ],
+  "pre": [
+    {
+      "value": "\r\nx",
+      "html": "\n\nx"
+    },
+    {
+      "value": "",
+      "html": ""
+    },
+    {
+      "value": "x",
+      "html": "x"
+    }
+  ]
+}

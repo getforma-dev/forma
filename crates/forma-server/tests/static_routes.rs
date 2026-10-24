@@ -52,7 +52,14 @@ fn module(island: bool) -> Vec<u8> {
             &[(0, 1, 0, 2, 0, &[])],
         )
     } else {
-        build_minimal_ir(&["p", "native"], &[], &body, &[])
+        // Exercise the selected walker mode with a live DYN_TEXT opcode.
+        let body = [
+            encode_open_tag(0, &[]),
+            vec![5, 0, 0, 0, 0],
+            encode_close_tag(0),
+        ]
+        .concat();
+        build_minimal_ir(&["p", "native"], &[(0, 1, 1, 1, b"native")], &body, &[])
     }
 }
 fn metadata(bytes: &[u8]) -> Value {
@@ -127,13 +134,22 @@ fn startup_refuses_islands_without_js_and_accepts_both_valid_products() {
         .html
         .contains("data-forma-component=\"Panel\""));
     let manifest = install(false, false, false);
-    assert!(render(&page(&manifest), &RenderCtx::new())
+    assert!(!render(&page(&manifest), &RenderCtx::new())
         .html
         .contains(STATE));
 }
 
 #[test]
-fn static_ssr_keeps_inert_state_css_fonts_headers_and_exact_response_budget() {
+fn javascript_routes_without_islands_keep_the_existing_adoption_output() {
+    let manifest = install(true, false, false);
+    let html = render(&page(&manifest), &RenderCtx::new()).html;
+    assert!(html.contains("<p><!--f:t0-->native<!--/f:t0--></p>"));
+    assert!(html.contains(STATE));
+    assert!(html.contains("data-forma-build=\"fixture\" data-forma-ssr"));
+}
+
+#[test]
+fn static_ssr_omits_adoption_state_and_keeps_css_fonts_headers_and_exact_response_budget() {
     let manifest = install(false, false, false);
     let page = page(&manifest);
     let ctx = RenderCtx::new()
@@ -141,8 +157,24 @@ fn static_ssr_keeps_inert_state_css_fonts_headers_and_exact_response_budget() {
         .with_personality_css("p{display:block}");
     let response = render(&page, &ctx);
     assert!(response.html.contains("<p>native</p>"));
-    assert_eq!(response.html.matches("<script").count(), 1);
-    assert!(response.html.contains(STATE));
+    assert_eq!(response.html.matches("<script").count(), 0);
+    assert!(!response.html.contains(STATE));
+    assert!(response
+        .html
+        .contains("<div id=\"app\"><p>native</p></div>"));
+    for marker in [
+        "<!--f:",
+        "data-forma-key",
+        "data-island-state",
+        "data-forma-ssr",
+        "data-forma-build",
+    ] {
+        assert!(
+            !response.html.contains(marker),
+            "{marker}: {}",
+            response.html
+        );
+    }
     assert!(!response.html.contains("modulepreload"));
     assert!(!response.html.contains("serviceWorker"));
     assert!(!response.html.contains("__FORMA_CONFIG__"));
@@ -238,11 +270,11 @@ fn static_ssr_refuses_a_stale_preload_table_even_when_the_asset_is_retained() {
 fn reload_keeps_the_good_pair_and_retries_same_bytes_after_route_policy_changes() {
     let initial = install(false, false, false);
     let page = page(&initial);
-    assert!(render(&page, &RenderCtx::new()).html.contains(STATE));
+    assert!(!render(&page, &RenderCtx::new()).html.contains(STATE));
     write("home.ir", module(true));
     for _ in 0..3 {
         let html = render(&page, &RenderCtx::new()).html;
-        assert!(html.contains(STATE));
+        assert!(!html.contains(STATE));
         assert!(!html.contains("data-forma-island"));
         assert!(!html.contains("/_assets/app.js"));
     }
@@ -262,7 +294,7 @@ fn reload_keeps_the_good_pair_and_retries_same_bytes_after_route_policy_changes(
     write("home.ir", module(false));
     write("manifest.json", manifest(false, false, false).to_string());
     let html = render(&page, &RenderCtx::new()).html;
-    assert!(html.contains(STATE));
+    assert!(!html.contains(STATE));
     assert!(!html.contains("/_assets/app.js"));
     assert!(!html.contains("serviceWorker"));
 }

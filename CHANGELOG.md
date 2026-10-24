@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Render no-JavaScript native routes as plain HTML (FORMA-257): omit hydration
+  comments, injected row keys, empty island state, and the root build/SSR
+  attributes when the route has `js: []` and no islands. Scrapers of those
+  attributes should use authored attributes instead. JavaScript routes keep
+  byte-identical adoption markup; key validation, value rules and response
+  policy are unchanged.
+
 - Reconcile public guides with shipped 3.0 APIs and final release/soak evidence;
   organize application, contributor and historical documentation, and relocate
   internal work-board/session snapshots outside the source tree while preserving

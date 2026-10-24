@@ -180,7 +180,7 @@ async function openStatic(page: Page, name: CaseName): Promise<void> {
     if (request.resourceType() === 'script') scripts.push(request.url());
   });
   await page.goto(`/${name}/`);
-  await expectServerRendered(page);
+  await expectServerRendered(page, true);
   expect(await page.locator('script[src], link[rel="modulepreload"]').count(), 'the page references no script').toBe(0);
   expect(scripts, 'the page loaded no script').toEqual([]);
 }
@@ -200,9 +200,16 @@ function submitted(page: Page, field: string): Promise<string[]> {
   }, field);
 }
 
-/** A Phase 2 page as parsed: #app carries data-forma-ssr. */
-async function expectServerRendered(page: Page): Promise<void> {
-  await expect(page.locator('#app'), 'a Phase 2 page').toHaveAttribute('data-forma-ssr', '');
+/** Adoption-capable pages carry the SSR guard; no-JS pages omit all adoption vocabulary. */
+async function expectServerRendered(page: Page, isStatic = false): Promise<void> {
+  if (isStatic) {
+    await expect(page.locator('#app')).not.toHaveAttribute('data-forma-ssr', '');
+    await expect(page.locator('#app')).not.toHaveAttribute('data-forma-build');
+    expect(await page.locator('script[data-island-state], [data-forma-key]').count()).toBe(0);
+    expect(await page.locator('#app').innerHTML()).not.toContain('<!--f:');
+  } else {
+    await expect(page.locator('#app'), 'an adoption-capable Phase 2 page').toHaveAttribute('data-forma-ssr', '');
+  }
 }
 
 /** A select's live state: its value and selected index. */
@@ -229,7 +236,7 @@ test.describe('every case is server-rendered and activates', () => {
   for (const name of Object.keys(CASES) as CaseName[]) {
     test(`${name}: walker HTML present, Phase 2 ${CASES[name] === 'island' ? 'activates' : 'is static'}, Phase 1 mounts, no errors`, async ({ browser, page }) => {
       const noJs = await openWithoutJs(browser, `/${name}/`);
-      await expectServerRendered(noJs.page);
+      await expectServerRendered(noJs.page, CASES[name] === 'static');
       const serverHtml = await noJs.page.locator('#app').innerHTML();
       await noJs.close();
       expect(serverHtml.trim().length, 'the walker rendered content into #app').toBeGreaterThan(0);
@@ -288,7 +295,7 @@ test.describe('root-fragment', () => {
     await expect(page.locator('#note')).toHaveText('hello');
     await page.click('#go');
     await expect(page.locator('#note')).toHaveText('hello');
-    await expectServerRendered(page);
+    await expectServerRendered(page, true);
   });
 });
 
