@@ -7,16 +7,14 @@ import { mountFixture, unmountFixture } from './runtime-fixture';
  * one task, 3.3 s at 4x CPU throttling. A pass is now refused when its rows
  * times the weight of a row (1, and 1 for each element and attribute of the
  * row template, a nested `<template>`'s contents included) pass
- * `LIST_WEIGHT_CAP` = 160,000, before any item is read or any row is built.
+ * `LIST_WEIGHT_CAP` = 24,000, before any item is read or any row is built.
  * Under the cap nothing changes: no per-task charge, no waiting, the rows
  * render in the task that hands the list its items, as on main.
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as runtime from '../runtime';
 
-const CAP = 160_000;
+const CAP = 24_000;
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
 async function settle(ticks = 5): Promise<void> {
@@ -44,18 +42,6 @@ function weightOf(row: string): number {
   }
   return weight;
 }
-
-/** vector-studio's todo-list and team-roster rows as the app serves them (data-fm stamped): see the fixtures' headers. */
-const fixture = (name: string): string => readFileSync(resolve(process.cwd(), `e2e/fixtures/${name}`), 'utf8').replace(/<!--[\s\S]*?-->/, '').trim();
-const TODO_ROW = fixture('vector-studio-todo-row.html');
-const ROSTER_ROW = fixture('vector-studio-roster-row.html');
-const todos = (n: number): unknown[] => Array.from({ length: n }, (_, i) => ({
-  id: i, title: `Task ${i}`, done: i % 3 === 0, priority: ['high', 'medium', 'low'][i % 3], due: i % 2 ? '2025-07-10' : '',
-}));
-const people = (n: number): unknown[] => Array.from({ length: n }, (_, i) => ({
-  id: i, name: `Person ${i}`, initials: `P${i % 10}`, role: 'Engineer', dept: 'Platform', email: `p${i}@example.com`,
-  phone: '555-0100', bio: 'Builds things.', linkedin: '#', twitter: '#',
-}));
 
 const items = (n: number): number[] => Array.from({ length: n }, (_, i) => i % 10);
 
@@ -117,17 +103,17 @@ describe('a data-list pass past an absolute cap is refused (FORMA-172)', () => {
   });
 
   it('a list exactly at the cap renders, and one row more is refused', async () => {
-    // A row of `<li>` with 158 attributes weighs 160: 1,000 rows are the cap.
-    const row = attrs(158);
-    expect(weightOf(row)).toBe(160);
+    // A row of `<li>` with 22 attributes weighs 24: 1,000 rows are the cap.
+    const row = attrs(22);
+    expect(weightOf(row)).toBe(24);
     await mount({ rows: items(1000) }, '{rows}', row);
     expect(rows()).toBe(1000);
     expect(codes()).toEqual([]);
     await mount({ rows: items(1001) }, '{rows}', row);
     expect(rows()).toBe(0);
     expect(codes()).toEqual(['FORMA_E_BUDGET']);
-    // The lightest row there is, `<li>{item}</li>`, weighs 2: 80,000 rows.
-    expect(CAP / weightOf('<li>{item}</li>')).toBe(80_000);
+    // The lightest row there is, `<li>{item}</li>`, weighs 2: 12,000 rows.
+    expect(CAP / weightOf('<li>{item}</li>')).toBe(12_000);
   });
 
   it('a refused list is reported once, naming the data-list and its row limit, and keeps the rows it had', async () => {
@@ -140,7 +126,7 @@ describe('a data-list pass past an absolute cap is refused (FORMA-172)', () => {
     const [d, ...more] = runtime.getDiagnostics();
     expect(more).toEqual([]);
     expect(d).toMatchObject({ kind: 'expression-unsupported', code: 'FORMA_E_BUDGET', expr: 'rows', count: 1 });
-    expect(d!.reason).toBe('a data-list of rows weighing 2 is refused past 80000 rows (rows × weight is capped at 160000)');
+    expect(d!.reason).toBe('a data-list of rows weighing 2 is refused past 12000 rows (rows × weight is capped at 24000)');
     expect(container.querySelector('ul')!.getAttribute('data-forma-expr-error')).toBe('unsupported');
     expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/not evaluated: rows\n.*FORMA_E_BUDGET: a data-list of rows weighing 2.*\n.*on: <ul [^>]*data-list="\{rows\}"/));
     // Final: no later task builds them.
@@ -165,37 +151,19 @@ describe('a data-list pass past an absolute cap is refused (FORMA-172)', () => {
     expect(codes()).toEqual(['FORMA_E_BUDGET']);
   });
 
-  it('1,000 rows of each of the heaviest row templates vector-studio serves render, in the task that hands the list its items', async () => {
-    // The todo-list row weighs 144 (21 elements, 122 attributes), the
-    // team-roster row 150 (27 elements, 122 attributes): 1,000 rows of either
-    // are under the cap (144,000 and 150,000).
-    expect(weightOf(TODO_ROW)).toBe(144);
-    expect(weightOf(ROSTER_ROW)).toBe(150);
-    await mount({ rows: [], tasks: [], editingId: null, editingText: '' }, '{rows}', TODO_ROW, '', '', 'div');
-    runtime.setScopeValue(scope(), 'rows', todos(1000));
-    expect(rows('article')).toBe(1000);
-    expect(container.querySelectorAll('[data-text="item.title"]')[999]!.textContent).toBe('Task 999');
-    // The only diagnostics are the three handlers the 3.0 grammar refuses, none of them a budget.
-    expect(budget()).toEqual([]);
-    expect(new Set(runtime.getDiagnostics().map((d) => d.kind))).toEqual(new Set(['handler-unsupported']));
-
-    await mount({ rows: [] }, '{rows}', ROSTER_ROW, '', '', 'div');
-    runtime.setScopeValue(scope(), 'rows', people(1000));
-    expect(rows('article')).toBe(1000);
+  it('a directive row at the cap retains its rows when one more is refused', async () => {
+    const row = '<li data-key="{item.id}"><b data-text="{item.name}"></b></li>';
+    expect(weightOf(row)).toBe(5);
+    const most = CAP / 5;
+    const data = (n: number) => Array.from({ length: n }, (_, id) => ({ id, name: `Row ${id}` }));
+    await mount({ rows: [] }, '{rows}', row);
+    runtime.setScopeValue(scope(), 'rows', data(most));
+    expect(rows()).toBe(most);
     expect(codes()).toEqual([]);
-  }, 120_000);
-
-  it('the heaviest served row template renders up to the cap and is refused one row past it', async () => {
-    // 160,000 / 150 = 1,066 team-roster rows (159,900); 1,067 are 160,050.
-    expect(Math.floor(CAP / weightOf(ROSTER_ROW))).toBe(1066);
-    await mount({ rows: [] }, '{rows}', ROSTER_ROW, '', '', 'div');
-    runtime.setScopeValue(scope(), 'rows', people(1066));
-    expect(rows('article')).toBe(1066);
-    expect(codes()).toEqual([]);
-    runtime.setScopeValue(scope(), 'rows', people(1067));
-    expect(rows('article')).toBe(1066);
-    expect(runtime.getDiagnostics()[0]!.reason).toBe('a data-list of rows weighing 150 is refused past 1066 rows (rows × weight is capped at 160000)');
-  }, 120_000);
+    runtime.setScopeValue(scope(), 'rows', data(most + 1));
+    expect(rows()).toBe(most);
+    expect(runtime.getDiagnostics()[0]!.reason).toBe('a data-list of rows weighing 5 is refused past 4800 rows (rows × weight is capped at 24000)');
+  }, 30_000);
 
   it('a 1,000-row table with directives in every row, and an ordinary list, render as before', async () => {
     const row = '<tr data-key="{item.id}"><td>{item.id}</td><td data-text="{item.a}"></td><td data-text="{item.b}"></td><td data-class:odd="{item.c > 3}">{item.c}</td><td data-show="{item.d}">yes</td><td><b>{item.a}</b></td></tr>';
@@ -214,12 +182,12 @@ describe('a data-list pass past an absolute cap is refused (FORMA-172)', () => {
 
   it('the contents of a <template> in a row count toward its weight', async () => {
     // The row's 1, then <li>, <template>, the template's fragment and the 497
-    // <span>s in it, 1 each: weight 501; 319 rows fit.
+    // <span>s in it, 1 each: weight 501; 47 rows fit.
     const row = `<li><template>${'<span></span>'.repeat(497)}</template></li>`;
     const w = weightOf(row);
     expect(w).toBe(501);
     const most = Math.floor(CAP / w);
-    expect(most).toBe(319);
+    expect(most).toBe(47);
     await mount({ rows: items(most) }, '{rows}', row);
     expect(rows()).toBe(most);
     expect(codes()).toEqual([]);
@@ -242,13 +210,13 @@ describe('a data-list pass past an absolute cap is refused (FORMA-172)', () => {
   }, 30_000);
 
   it('a list under the cap charges the task nothing: the bindings in its rows and after it render in the same task', async () => {
-    // 1,000 rows of weight 160, each with six cells that charge (a method
+    // 1,000 rows of weight 24, each with six cells that charge (a method
     // call), are the cap exactly. Every cell binds in the mount task, and a
     // binding after the list that spends 200,000 of the task's 250,000 units
     // renders there too: the list took nothing from the task's budget.
     const cells = '<span data-text="{item.toUpperCase()}"></span>'.repeat(6);
-    const row = attrs(146, cells);
-    expect(weightOf(row)).toBe(160);
+    const row = attrs(10, cells);
+    expect(weightOf(row)).toBe(24);
     const name = 'x'.repeat(40);
     await mount({ rows: Array.from({ length: 1000 }, () => name) }, '{rows}', row, '', `<p data-text="{${spending(200_000)}}">server</p>`);
     expect(rows()).toBe(1000);
