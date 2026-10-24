@@ -53,10 +53,11 @@ export function withAdoptionCallbacks<T>(runner:AdoptionCallbackRunner|undefined
 }
 export function getAdoptionCallbacks():AdoptionCallbackRunner|undefined{return callbacks;}
 export function bindAdoptionCallback<T>(fn:()=>T,runner:AdoptionCallbackRunner|undefined):()=>T {
-  return ()=>{
-    // An ordinary neighbor can be synchronously flushed by a describing
-    // factory. It gets mode isolation, never the adopted owner's authority.
-    const current=runner??callbacks;
-    return current?withAdoptionCallbacks(current,()=>current(fn)):fn();
-  };
+  return ()=>runAdoptionCallback(fn,runner);
+}
+export function runAdoptionCallback<T>(fn:()=>T,runner:AdoptionCallbackRunner|undefined):T {
+  // An ordinary neighbor can be synchronously flushed by a describing
+  // factory. It gets mode isolation, never the adopted owner's authority.
+  const current=runner??callbacks;
+  return current?withAdoptionCallbacks(current,()=>current(fn)):fn();
 }
