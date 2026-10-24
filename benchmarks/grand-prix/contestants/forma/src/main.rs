@@ -82,6 +82,7 @@ fn build(n: usize) -> Props {
 
 struct AppState {
     page: PageHandle<Props>,
+    island: PageHandle<Props>,
 }
 
 #[tokio::main]
@@ -102,15 +103,22 @@ async fn main() {
         }),
         _ => { eprintln!("route /ssr is not an SSR route"); std::process::exit(1); }
     };
+    let island = pages.bind::<Props>("island").unwrap_or_else(|errors| {
+        for error in errors { eprintln!("{error}"); }
+        std::process::exit(1);
+    });
     pages.finalize().unwrap_or_else(|errors| {
         for e in errors { eprintln!("{e}"); }
         std::process::exit(1);
     });
 
-    let state = Arc::new(AppState { page });
+    let state = Arc::new(AppState { page, island });
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/ssr", get(ssr))
+        .route("/island", get(island_route))
+        .route("/favicon.ico", get(|| async { StatusCode::NO_CONTENT }))
+        .route("/_assets/{*filename}", get(assets::serve_asset::<Assets>))
         .with_state(state);
 
     let port: u16 = std::env::var("PORT").ok().and_then(|v| v.parse().ok()).unwrap_or(3000);
@@ -129,6 +137,17 @@ async fn ssr(State(state): State<Arc<AppState>>, Query(q): Query<HashMap<String,
     };
     let ctx = RenderCtx::new().with_title("Grand Prix");
     match state.page.render(&build(n), &ctx) {
+        Ok(page) => page.into_response(),
+        Err(error) => {
+            tracing::error!(code = error.code(), route = error.route(), "{error}");
+            (StatusCode::INTERNAL_SERVER_ERROR, [(header::CACHE_CONTROL, "no-store")], "Internal Server Error").into_response()
+        }
+    }
+}
+
+async fn island_route(State(state): State<Arc<AppState>>) -> Response {
+    let ctx = RenderCtx::new().with_title("Grand Prix");
+    match state.island.render(&build(100), &ctx) {
         Ok(page) => page.into_response(),
         Err(error) => {
             tracing::error!(code = error.code(), route = error.route(), "{error}");
