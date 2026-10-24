@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- FORMA-257: plain HTML for no-JavaScript routes without islands. The additive
+  counted `RenderMode::Static` walk omits adoption markers, empty-text holders
+  and injected row keys while retaining value, key and resource checks. The
+  server also omits unused root attributes and the empty island-state envelope.
+  Existing walker entry points and JavaScript route output remain unchanged.
+
 Changes after the prepared 3.0.0 set will be recorded here.
 
 ## [3.0.0] - Prepared; publication pending

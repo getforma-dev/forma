@@ -238,6 +238,7 @@ export async function verify(dir, reportPath) {
   assert([undefined, null, 'finalized-v1'].includes(set.contracts.boundRender), 'P17 has no verifier for the recorded bound rendering contract');
   assert([undefined, null, 'sha384-v1'].includes(set.contracts.assetIntegrity), 'P17 has no verifier for the recorded asset integrity contract');
   assert([undefined, null, 'declared-v1', 'islands-v1'].includes(set.contracts.sourceTemplates), 'P17 has no verifier for the recorded source template contract');
+  assert([undefined, null, 'plain-v1'].includes(set.contracts.staticHtml), 'P17 has no verifier for the recorded static HTML contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.stateBlock), 'P17 has no verifier for the recorded state block contract');
   assert([undefined, null, 'declared-v1'].includes(set.contracts.fixtureApps), 'P17 has no verifier for the recorded fixture applications contract');
   assert([undefined, null, 'native-v1'].includes(set.contracts.deploymentSkew), 'P17 has no verifier for the recorded deployment skew contract');
@@ -482,7 +483,7 @@ export async function verify(dir, reportPath) {
                   const actual = engine === 'chromium' ? browser : await launcher.launch();
                   try {
                     const island = await verifyMinimalIsland(actual, releaseOrigin, manifest);
-                    const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest);
+                    const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest, '/about', { staticHtml: set.contracts.staticHtml ?? 'legacy-v1' });
                     report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, profile: 'release', island, staticRoute });
                   } finally { if (actual !== browser) await actual.close(); }
                 }
