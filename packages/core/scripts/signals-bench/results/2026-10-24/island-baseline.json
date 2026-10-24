@@ -1,0 +1,92 @@
+{
+  "entry": "<workspace>/evidence/FORMA-259/baseline-dist/forma.esm.js",
+  "browser": "156.0.8078.4",
+  "rows": 1000,
+  "warm": 5,
+  "runs": 15,
+  "samples": [
+    {
+      "adoptionMs": 5,
+      "updateMs": 0.5,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 5.300000071525574,
+      "updateMs": 0.3999999761581421,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4.100000023841858,
+      "updateMs": 0.5999999046325684,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4.5,
+      "updateMs": 0.6000000238418579,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4.5,
+      "updateMs": 0.5999999046325684,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4.399999976158142,
+      "updateMs": 0.5,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 5.199999928474426,
+      "updateMs": 0.40000009536743164,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4,
+      "updateMs": 0.5,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4.399999976158142,
+      "updateMs": 0.6000000238418579,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 5.399999976158142,
+      "updateMs": 0.2999999523162842,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 3.899999976158142,
+      "updateMs": 0.5,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 4.200000047683716,
+      "updateMs": 0.5,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 6,
+      "updateMs": 0.3999999761581421,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 3.8000000715255737,
+      "updateMs": 0.2999999523162842,
+      "writes": 0
+    },
+    {
+      "adoptionMs": 3.899999976158142,
+      "updateMs": 0.5,
+      "writes": 0
+    }
+  ],
+  "mean": {
+    "adoptionMs": 4.573333334922791,
+    "updateMs": 0.47999998728434246
+  },
+  "median": {
+    "adoptionMs": 4.399999976158142,
+    "updateMs": 0.5
+  }
+}
