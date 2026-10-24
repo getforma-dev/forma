@@ -322,3 +322,98 @@ test("a module's iframe srcdoc renders no document: the attribute is removed, wr
     await counter.close();
   }
 });
+
+/**
+ * Every attribute in the frame document (nested `<template>` contents
+ * included) that the URL check or the handler check refuses: an `on…` name,
+ * or a URL attribute whose value, with the characters a URL parser ignores
+ * taken out, starts with a script scheme (`data:image/svg+xml` too, but on an
+ * image). Written out here, so the oracle is not the code under test.
+ */
+const refusedAttrs = (page: Page): Promise<string[]> => frameOf(page).evaluate(() => {
+  const found: string[] = [];
+  const walk = (node: ParentNode): void => {
+    for (const el of Array.from(node.querySelectorAll('*'))) {
+      for (const a of Array.from(el.attributes)) {
+        const v = a.value.replace(/[\u0000- \u007f-\u009f]/g, '').toLowerCase();
+        const url = /^(?:href|src|action|formaction|xlink:href|poster|background|data)$/i.test(a.name)
+          && (/^(?:javascript:|vbscript:|data:text\/html)/.test(v) || (v.startsWith('data:image/svg+xml') && el.localName !== 'img'));
+        if (/^on/i.test(a.name) || url) found.push(`${el.localName}#${el.id}[${a.name}]`);
+      }
+    }
+    for (const t of Array.from(node.querySelectorAll('template'))) walk(t.content);
+  };
+  walk(document);
+  return found;
+});
+
+test("a module's script URL and handler attributes never reach the frame document, after render and after update()", async ({ page }) => {
+  // FORMA-276: the frame refused these only through its policy. The
+  // unreviewed tier now removes them from the one parse, as it removes
+  // <link> and srcdoc, with the live check after each write, so the frame
+  // does not depend on its policy alone. (Chromium still logs the policy's
+  // report for each handler attribute as the parse creates it, inside a
+  // <template> too, before the strip runs; the attribute never reaches the
+  // document.)
+  await host(page);
+  await send(page, {
+    type: 'module',
+    html: `<a id="a1" href="javascript:alert(1)" title="kept">a</a>` +
+      `<a id="a2" href="JaVaScRiPt:alert(1)">a</a>` +
+      `<a id="a3" href="&#106;avascript&colon;alert(1)">a</a>` +
+      `<a id="a4" href="java&Tab;script:alert(1)">a</a>` +
+      `<a id="a5" href="java&#x0A;script:alert(1)">a</a>` +
+      `<a id="a6" href="&#x01;&#x20;vbscript:msgbox(1)">a</a>` +
+      `<a id="a7" href="data:text/html,&lt;p&gt;doc">a</a>` +
+      `<a id="a8" href="data:image/svg+xml,&lt;svg/&gt;">a</a>` +
+      `<img id="i1" src="data:image/svg+xml,&lt;svg/&gt;" alt="kept">` +
+      `<form id="f1" action="javascript:alert(1)"><button id="b1" formaction="vbscript:x">b</button></form>` +
+      `<svg><a id="x1" xlink:href="javascript:alert(1)"><text>s</text></a><a id="x2" href="javascript:alert(1)"><text>t</text></a></svg>` +
+      `<div id="h1" onclick="alert(1)" onmouseover="alert(2)" title="kept">h</div>` +
+      `<svg id="h2" onload="alert(1)"></svg><img id="h3" src="/x.png" onerror="alert(1)">` +
+      `<a id="s1" href="/relative/javascript-guide">ok</a><a id="s2" href="#javascript">ok</a>` +
+      `<template><a href="javascript:alert(1)" onclick="alert(1)">t</a></template>` +
+      `<div data-forma-state='{"u":"javascript:alert(1)","rows":[{"u":"javascript:alert(1)"}]}'>` +
+      `<a id="bound" data-bind:href="{u}">b</a><ul data-list="{rows}"><li><a class="row" href="{item.u}">r</a></li></ul></div>` +
+      `<p id="p">first</p>`,
+  });
+  const preview = page.frameLocator('#preview');
+  await expect(preview.locator('#p')).toHaveText('first');
+  expect(await refusedAttrs(page)).toEqual([]);
+  const attrs = (id: string) => frameOf(page).evaluate((i) => {
+    const el = document.getElementById(i)!;
+    return Object.fromEntries(el.getAttributeNames().map((n) => [n, el.getAttribute(n)]));
+  }, id);
+  // The elements stay, with their other attributes; ordinary URLs and an SVG
+  // image on an image are kept.
+  expect(await attrs('a1')).toEqual({ id: 'a1', title: 'kept' });
+  expect(await attrs('h1')).toEqual({ id: 'h1', title: 'kept' });
+  expect(await attrs('i1')).toEqual({ id: 'i1', src: 'data:image/svg+xml,<svg/>', alt: 'kept' });
+  expect(await attrs('s1')).toEqual({ id: 's1', href: '/relative/javascript-guide' });
+  expect(await attrs('s2')).toEqual({ id: 's2', href: '#javascript' });
+  // The binding is refused by data-bind:'s own check, as before.
+  expect(await attrs('bound')).toEqual({ id: 'bound', 'data-bind:href': '{u}' });
+  const codes = async (code: string) => (await received(page)).filter((m) => m.code === code);
+  await expect.poll(async () => (await codes('FORMA_E_UNREVIEWED_URL')).length).toBe(13);
+  await expect.poll(async () => (await codes('FORMA_E_UNREVIEWED_HANDLER')).length).toBe(5);
+
+  // An update is stripped the same way: a kept element whose attribute
+  // changes, and an element the update adds.
+  await send(page, {
+    type: 'module',
+    html: `<a id="a1" href="vbscript:msgbox(2)" title="again">a</a><a id="a2" href="/now-safe">a</a>` +
+      `<svg><a id="x1" xlink:href="&#x6A;avascript:alert(3)"><text>s</text></a></svg>` +
+      `<button id="added" onclick="alert(3)">n</button><p id="p">second</p>`,
+  });
+  await expect(preview.locator('#p')).toHaveText('second');
+  expect(await refusedAttrs(page)).toEqual([]);
+  expect(await attrs('a1')).toEqual({ id: 'a1', title: 'again' });
+  expect(await attrs('a2')).toEqual({ id: 'a2', href: '/now-safe' });
+  expect(await attrs('x1')).toEqual({ id: 'x1' });
+  expect(await attrs('added')).toEqual({ id: 'added' });
+  await expect.poll(async () => (await codes('FORMA_E_UNREVIEWED_URL')).length).toBe(15);
+  await expect.poll(async () => (await codes('FORMA_E_UNREVIEWED_HANDLER')).length).toBe(6);
+  const errors = (await received(page)).filter((m) => m.type === 'error');
+  expect(new Set(errors.map((m) => m.code))).toEqual(new Set(['FORMA_E_UNREVIEWED_URL', 'FORMA_E_UNREVIEWED_HANDLER']));
+  expect(errors.some((m) => /reached the document/.test(m.message ?? ''))).toBe(false);
+});

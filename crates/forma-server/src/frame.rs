@@ -64,7 +64,11 @@
 //! `data-bind:srcdoc`), checks the live subtree after each write, and refuses
 //! the render if one reaches the document (`FORMA_E_UNREVIEWED_LINK`,
 //! `FORMA_E_UNREVIEWED_SRCDOC`). Only core 2.1.0 and later ship the frame
-//! runtime, so every frame has it.
+//! runtime, so every frame has it. Since FORMA-276 the same strip and live
+//! check also remove every `on*` handler attribute and every URL attribute
+//! whose value has a script scheme (`FORMA_E_UNREVIEWED_HANDLER`,
+//! `FORMA_E_UNREVIEWED_URL`), which this policy refuses too, so the frame
+//! does not depend on the policy alone for them.
 //!
 //! Checked in Chrome 155 (forma#22 and its review): markup alone (`<img>`, a
 //! stylesheet, a `url()` in a `style` attribute, a font) reached neither the

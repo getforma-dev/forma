@@ -41,7 +41,13 @@ export const expressionPayloads = [
   ['arrow-block', 'items.map(x => { return x; })', 'FORMA_E_UNSUPPORTED'],
 ];
 
-export const valueContexts = ['state', 'computed', 'text', 'show', 'if', 'model', 'class', 'attribute', 'event', 'list-text', 'list-attribute', 'list-property', 'persist', 'ref', 'srcdoc', 'url', 'form-action', 'image-src', 'svg-xlink'];
+export const valueContexts = ['state', 'computed', 'text', 'show', 'if', 'model', 'class', 'attribute', 'event', 'list-text', 'list-attribute', 'list-property', 'persist', 'ref', 'srcdoc', 'url', 'form-action', 'image-src', 'svg-xlink', 'url-static', 'form-action-static', 'image-src-static', 'svg-xlink-static'];
+// The four URL sinks again as static attributes, written by an update(): the
+// mount renders the attribute with a benign URL, then the reconciler patches
+// the payload into the element it keeps (FORMA-276). The parser has replaced
+// a NUL in the markup with U+FFFD by then, so there is no NUL left to refuse:
+// that value is written as the parser made it, a relative URL.
+export const staticUrlContexts = new Set(['url-static', 'form-action-static', 'image-src-static', 'svg-xlink-static']);
 // data-model/data-persist accept assignable state/member paths, not arbitrary
 // expression programs. Every literal payload still runs through their live
 // value path; inventing an expression position there would create inert tests.
@@ -57,7 +63,7 @@ export function cases() {
     for (const [id, payload] of valuePayloads) for (const context of valueContexts) out.push({ id: `value/${id}/${context}/${profile}`, kind: 'value', payload, context, profile,
       // Existing INV1 contract: SVG data is inert in an image sink, while a
       // NUL is refused in every URL sink. Keep this oracle explicit here.
-      dangerousUrl: ['javascript', 'mixed-scheme', 'tab-scheme', 'newline-scheme', 'control-prefix', 'data-document', 'vbscript', 'nul-markup'].includes(id) || id === 'svg-data' && context !== 'image-src' });
+      dangerousUrl: ['javascript', 'mixed-scheme', 'tab-scheme', 'newline-scheme', 'control-prefix', 'data-document', 'vbscript'].includes(id) || id === 'nul-markup' && !staticUrlContexts.has(context) || id === 'svg-data' && !context.startsWith('image-src') });
     // data-fetch parses a URL mini-DSL, not expressions. Exercise every
     // hostile executable/document scheme there without inventing inert syntax.
     // Its anchored URL mini-DSL does not admit embedded newlines; that payload

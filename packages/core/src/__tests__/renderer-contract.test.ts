@@ -1,7 +1,7 @@
 /**
  * THE SHARED RENDERER CONTRACT.
  *
- * FormaJS writes attributes and text through five browser code paths, and
+ * FormaJS writes attributes and text through six browser code paths, and
  * every one of them must uphold the same guarantees:
  *
  *   1. `src/dom/element.ts`  — `h()` with static props
@@ -9,6 +9,8 @@
  *   3. `src/runtime.ts`      — the HTML runtime's `data-bind:*` / `data-text`
  *   4. `src/expr/interp.ts`  — `$el.setAttribute()` in the CSP-safe grammar
  *   5. `src/dom/adoption.ts` — strict preparation/commit and its later writers
+ *   6. `src/dom/reconcile.ts` — a mount's `update()`, diffing new markup into
+ *      the elements it keeps (FORMA-276)
  *
  * Historically each guarantee was asserted thoroughly on exactly ONE of them.
  * That single habit produced 7 of the 25 code defects in
@@ -39,8 +41,8 @@ import { h } from '../dom/element';
 import { prepareRaw, prepareStyle } from '../dom/adoption-content';
 import { trustedHtml } from '../dom/trusted-html';
 import { prepareAdoption } from '../dom/adoption';
-import { mountFixture, unmountFixture } from './runtime-fixture';
-import { URL_ATTRS } from '../security/url-safety';
+import { mountFixture, unmountFixture, updateFixture } from './runtime-fixture';
+import { URL_ATTRS, isUrlAttr } from '../security/url-safety';
 import { compileHandler, runHandler } from '../expr/index';
 import { hostObject } from '../expr/host';
 import type { ScopeLike } from '../expr/interp';
@@ -193,6 +195,45 @@ function stateAttr(obj: Record<string, unknown>): string {
   return JSON.stringify(obj).replace(/&/g, '&amp;').replace(/'/g, '&#39;');
 }
 
+/**
+ * `value` as a double-quoted attribute value in markup: the parser hands the
+ * element exactly `value` back, its tabs, newlines and control characters
+ * included (an attribute value keeps them; only `&`, `"` and `<` are escaped).
+ */
+function quoted(value: unknown): string {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/** `text` as the text of an element in markup. */
+function textOf(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Markup for one `<tag id="probe" attrs>`: an SVG tag inside `<svg>`, so the
+ * parser makes it an SVG element, and a void tag with no end tag.
+ */
+function probeMarkup(tag: string, attrs: string, inner = ''): string {
+  const el = /^(?:img|input)$/.test(tag) ? `<${tag} id="probe" ${attrs}>` : `<${tag} id="probe" ${attrs}>${inner}</${tag}>`;
+  return /^(?:use|image)$/.test(tag) ? `<svg>${el}</svg>` : el;
+}
+
+/**
+ * The reconcile sink: a reviewed mount renders `<tag>` first, then its
+ * `update()` hands it the same element carrying `name=value`, which the diff
+ * patches into the element it keeps. A URL attribute starts out as `/initial`,
+ * so the update changes it, and a refused value cannot read as "nothing was
+ * written": the stale value has to go too.
+ */
+function reconciled(tag: string, attrs: string, first: string, inner = ''): Element {
+  const box = host();
+  updateFixture(box, trustedHtml(probeMarkup(tag, `${first} ${BENIGN_ATTR}="${BENIGN_VALUE}"`, inner)));
+  updateFixture(box, trustedHtml(probeMarkup(tag, `${attrs} ${BENIGN_ATTR}="${BENIGN_VALUE}"`, inner)));
+  const el = box.querySelector('#probe');
+  if (!el) throw new Error(`reconcile fixture produced no <${tag}>`);
+  return el;
+}
+
 /** A scope with `$el` bound, matching what `src/runtime.ts` injects. */
 function exprScope(state: Record<string, unknown>, el: Element): ScopeLike {
   const getters: Record<string, () => unknown> = Object.create(null);
@@ -311,6 +352,22 @@ const SINKS: Sink[] = [
       return el;
     },
   },
+  {
+    // The names come from markup, which the parser lowercases; a value is
+    // whatever the markup spells, so `true` is the word, as $el.setAttribute's.
+    name: 'reconcile-update',
+    programmaticNames: false,
+    declarative: false,
+    objectValues: false,
+    write: (tag, name, value) =>
+      reconciled(tag, `${name}="${quoted(value)}"`, isUrlAttr(name) ? `${name}="/initial"` : ''),
+    writeText: (tag, text) => {
+      const box = host();
+      updateFixture(box, trustedHtml(`<${tag} id="probe">initial</${tag}>`));
+      updateFixture(box, trustedHtml(`<${tag} id="probe">${textOf(text)}</${tag}>`));
+      return box.querySelector('#probe')!;
+    },
+  },
 ];
 
 const NAME_SINKS = SINKS.filter((s) => s.programmaticNames);
@@ -342,6 +399,7 @@ describe('renderer contract: the table covers every sink', () => {
       'prepared-adopt',
       'data-bind',
       '$el.setAttribute',
+      'reconcile-update',
     ]);
   });
 
@@ -357,7 +415,6 @@ describe('renderer contract: the table covers every sink', () => {
       'src/dom/skew.ts': 'writes only data-forma-status="skew"; fixed internal name and value, verified by skew.test.ts',
       'src/dom/adoption-controls.ts': 'fixed control attributes only on new detached-document normalization mirrors; retained native MutationObserver plus live setter controls prove no writes to the observed document (adoption-controls.spec.ts)',
       'src/dom/form-control.ts': 'writes only fixed value/checked/selected names, covered by h/prepared-adopt sinks and form-control.test.ts',
-      'src/dom/reconcile.ts': 'copies attributes DOM→DOM between two already-guarded elements; writes no on* or script src, and mints a trusted srcdoc (trusted-html.test.ts)',
     };
     const DOM_SINK_FILES = [
       'src/dom/element.ts',
@@ -365,6 +422,10 @@ describe('renderer contract: the table covers every sink', () => {
       'src/runtime.ts',
       'src/expr/interp.ts',
       'src/expr/allowlist.ts',
+      // The reconcile-update row (FORMA-276). It was a NON_SINK, "copies
+      // attributes DOM→DOM between two already-guarded elements", but the new
+      // element is parsed from markup, which no sink guarded.
+      'src/dom/reconcile.ts',
     ];
     // Fixed detached parser-context attributes are not generic caller props.
     // This module is still a real typed raw/CSS sink, exercised separately below.
@@ -470,6 +531,58 @@ describe.each(SINKS)('renderer contract [$name]: dangerous URLs', (sink) => {
     expect(readAttr(sink.write('img', 'src', SVG_DATA_URL), 'src')).toBe(SVG_DATA_URL);
     expect(readAttr(sink.write('a', 'href', SVG_DATA_URL), 'href')).toBeNull();
     expect(readAttr(sink.write('object', 'data', SVG_DATA_URL), 'data')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G1a — the reconcile sink reads values the parser has already decoded
+// ---------------------------------------------------------------------------
+
+/**
+ * Markup spellings of a script URL that only the HTML parser turns into one:
+ * character references, decimal, hex, zero-padded and named, for a letter, the
+ * colon, or a tab, newline, space or control character the URL parser then
+ * ignores. Written into the markup as they are, not escaped. The reconcile
+ * sink checks the value the parser produced, so each is the same case as its
+ * decoded row in DANGEROUS_URLS.
+ */
+const ENTITY_URLS = [
+  '&#106;avascript:alert(1)',
+  '&#x6A;avascript:alert(1)',
+  '&#X6a;avascript:alert(1)',
+  '&#0000106;avascript:alert(1)',
+  'javascript&colon;alert(1)',
+  'JaVa&#83;cRiPt&#58;alert(1)',
+  'java&Tab;script:alert(1)',
+  'java&NewLine;script:alert(1)',
+  'java&#x09;script:alert(1)',
+  '&#x20;&#x01;javascript:alert(1)',
+  'vbscript&colon;msgbox(1)',
+  'data&colon;text/html,&lt;script&gt;alert(1)&lt;/script&gt;',
+  '&#100;ata:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==',
+] as const;
+
+/** Their negative space: character references that decode to an ordinary URL. */
+const ENTITY_SAFE_URLS = [
+  ['&#x2F;relative&#x2F;javascript-guide', '/relative/javascript-guide'],
+  ['https&#58;//example.com/guides/javascript', 'https://example.com/guides/javascript'],
+  ['&#35;javascript', '#javascript'],
+] as const;
+
+describe('renderer contract [reconcile-update]: character references are decoded before the check', () => {
+  it.each(URL_ATTRIBUTE_CASES)('drops every entity-spelled script scheme on %s', (attr) => {
+    for (const spelled of ENTITY_URLS) {
+      const el = reconciled(ATTR_TAG[attr]!, `${attr}="${spelled}"`, `${attr}="/initial"`);
+      expect(readAttr(el, attr), `${spelled} on ${attr}`).toBeNull();
+      expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+    }
+  });
+
+  it.each(URL_ATTRIBUTE_CASES)('keeps an ordinary URL spelled with character references on %s', (attr) => {
+    for (const [spelled, decoded] of ENTITY_SAFE_URLS) {
+      const el = reconciled(ATTR_TAG[attr]!, `${attr}="${spelled}"`, `${attr}="/initial"`);
+      expect(readAttr(el, attr), `${spelled} on ${attr}`).toBe(decoded);
+    }
   });
 });
 

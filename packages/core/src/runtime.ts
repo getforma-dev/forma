@@ -79,8 +79,8 @@ declare const __FORMA_DEV_BUILD__: boolean | undefined;
 /**
  * True if writing `value` to attribute `name` on a `<tag>` element via
  * setAttribute would create an XSS sink: an `on*` inline event handler, or a
- * URL attribute carrying a script-executing scheme. Shared by data-bind:* and
- * list-template binding.
+ * URL attribute carrying a script-executing scheme. Shared by data-bind:*,
+ * list-template binding and the unreviewed tier's strip (refuseUnreviewed).
  *
  * `tag` is the lower-case name of the element receiving the attribute and is
  * always passed: `isDangerousUrl` needs it to tell a `data:image/svg+xml` that
@@ -2717,7 +2717,12 @@ function resetScope(element: Element): void {
  * `<link>` does anything else; and every `srcdoc` attribute
  * (`FORMA_E_UNREVIEWED_SRCDOC`), because an `<iframe srcdoc>` parses a child
  * document the strip cannot see into, and WebKit connects for a `<link>` in
- * it. Nested `<template>` contents are walked too.
+ * it. And what every attribute sink refuses (FORMA-276), so the frame does
+ * not depend on its policy alone for them: every `on*` handler attribute
+ * (`FORMA_E_UNREVIEWED_HANDLER`), and every URL attribute whose value has a
+ * script scheme, judged against its element's tag (`FORMA_E_UNREVIEWED_URL`).
+ * The values are the parsed ones, character references decoded. Nested
+ * `<template>` contents are walked too.
  *
  * It runs twice per render. First on the fragment the reconciler parsed in
  * the root's own context, which the reconciler then writes as nodes: the root
@@ -2735,6 +2740,8 @@ function resetScope(element: Element): void {
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount parses its markup once, in the root's context, and writes no string to the root"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount fails closed: a <link> that reaches the root after the strip is removed, reported, and the markup refused"
+ * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update"
+ * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused"
  */
 function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): string | null {
   let code: string | null = null;
@@ -2755,6 +2762,14 @@ function refuseUnreviewed(content: ParentNode, mount: MountCtx, live: boolean): 
   for (const el of Array.from(content.querySelectorAll('[srcdoc]'))) {
     refuse(el, 'srcdoc', 'FORMA_E_UNREVIEWED_SRCDOC');
     el.removeAttribute('srcdoc');
+  }
+  for (const el of Array.from(content.querySelectorAll('*'))) {
+    for (const attr of Array.from(el.attributes)) {
+      if (!isUnsafeAttrBinding(attr.name, attr.value, el.localName)) continue;
+      if (isEventHandlerAttr(attr.name)) refuse(el, `handler attribute ${attr.name}`, 'FORMA_E_UNREVIEWED_HANDLER');
+      else refuse(el, `script URL in ${attr.name}`, 'FORMA_E_UNREVIEWED_URL');
+      el.removeAttributeNode(attr);
+    }
   }
   for (const nested of Array.from(content.querySelectorAll('template'))) {
     code = refuseUnreviewed(nested.content, mount, live) ?? code;
