@@ -72,7 +72,7 @@ export async function qualificationEvidence({ set, reportPath, directory, env = 
       assets.push(file);
       return { fields, assets, report };
     }
-    const retained = readBurnInReference(root), file = join(directory, retained.assetName);
+    const retained = readBurnInReference(root, set.tag.slice(1)), file = join(directory, retained.assetName);
     writeFileSync(file, retained.bytes);
     fields.burnIn = { file: retained.assetName, sha256: retained.sha256,
       rcTag: retained.reference.rcTag, rcCommit: retained.reference.rcCommit,

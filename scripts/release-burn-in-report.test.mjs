@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateBurnInReport, CONTRACT, MIN_ACTIVE_NS, FUZZ_TARGETS, ENGINES, SKEW_CHECKS, readFuzzCompletion} from './release-burn-in-report.mjs';
 const H = 'a'.repeat(64), COMMIT = 'b'.repeat(40);
-function fixture() {
+function fixture(version = '3.0.0-rc.1') {
   const ids = [['crates','forma-ir'],['crates','forma-ir-derive'],['crates','forma-server'],['npm','@getforma/core'],['npm','@getforma/compiler'],['npm','@getforma/build'],['npm','@getforma/create-app']];
-  const expected = {rcTag:'v3.0.0-rc.1',sourceCommit:COMMIT,ds12Sha256:H,p17EvidenceSha256:H,d14EvidenceSha256:H,harnessSha256:H,packages:ids.map(([registry,name],i)=>({registry,name,version:'3.0.0-rc.1',file:`archive-${i}.tgz`,bytes:100+i,sha256:H})),hostileCaseIds:['native-call/control','confined-read/control'],fixtureCheckIds:['minimal/activation','dashboard/activation','Counter/update','indexed/set']};
+  const expected = {rcTag:`v${version}`,sourceCommit:COMMIT,ds12Sha256:H,p17EvidenceSha256:H,d14EvidenceSha256:H,harnessSha256:H,packages:ids.map(([registry,name],i)=>({registry,name,version,file:`archive-${i}.tgz`,bytes:100+i,sha256:H})),hostileCaseIds:['native-call/control','confined-read/control'],fixtureCheckIds:['minimal/activation','dashboard/activation','Counter/update','indexed/set']};
   const taskIds=[...FUZZ_TARGETS.map(t=>`fuzz:${t}`),'hostile',...ENGINES.map(e=>`skew:${e}`),'fixtures'];
   let time=0n;
   const rounds=Array.from({length:15},(_,round)=>{
@@ -27,6 +27,12 @@ function fixture() {
   return {report,expected};
 }
 const refuses=edit=>{const {report,expected}=fixture();edit(report,expected);assert.throws(()=>validateBurnInReport(report,expected));};
+test('3.1 RC retains the complete active-hour and matching seven-archive requirements', () => {
+ const {report,expected}=fixture('3.1.0-rc.1');
+ assert.equal(validateBurnInReport(report,expected).activeNanoseconds,String(MIN_ACTIVE_NS));
+ const stale=structuredClone(report);stale.packages[0].version='3.0.0-rc.5';assert.throws(()=>validateBurnInReport(stale,expected));
+ const short=structuredClone(report);const last=short.rounds.at(-1).tasks[0];last.fuzzSeconds=59;last.activeNanoseconds='59000000000';short.activeNanoseconds=String(MIN_ACTIVE_NS-1_000_000_000n);short.orchestrationNanoseconds=String(BigInt(short.orchestrationNanoseconds)+1_000_000_000n);assert.throws(()=>validateBurnInReport(short,expected));
+});
 test('exact hour of complete ordered workloads validates content only, never hosted attestation',()=>{
  const {report,expected}=fixture();const result=validateBurnInReport(report,expected);
  assert.equal(result.contentValid,true);assert.equal(result.activeNanoseconds,String(MIN_ACTIVE_NS));assert.equal(result.orchestrationNanoseconds,'4640000000000');assert.equal(result.hostedAttestationVerified,false);assert.equal(result.releaseAccepted,false);
