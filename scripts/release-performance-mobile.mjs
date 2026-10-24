@@ -6,6 +6,7 @@ import {MOBILE_PROFILE} from './release-performance-spec.mjs';
 import {encodeMobileTrace,attributeMobileTasks,summarizeMobileStartup} from './release-performance-attribution.mjs';
 export {MOBILE_PROFILE} from './release-performance-spec.mjs';
 import {percentile,validateMobileControls} from './release-performance-contract.mjs';
+import {observeActivation} from './release-activation-observer.mjs';
 
 
 // Serialized into each fresh page before any application script executes.
@@ -87,10 +88,7 @@ export async function measureActivation(url,kind,{disabled=false,longTask=false,
   await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:throttle.requestLatencyMs,downloadThroughput:throttle.downloadThroughputKbps*1024/8,uploadThroughput:throttle.uploadThroughputKbps*1024/8,connectionType:'cellular4g'});
   await cdp.send('Emulation.setCPUThrottlingRate',{rate:throttle.cpuSlowdownMultiplier});
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForFunction(()=>window.__formaPerformance?.done,{},{timeout:12000});
-  // Let the buffered long-task observer deliver the task that completed the probe.
-  await page.waitForTimeout(100);
-  return await page.evaluate(()=>window.__formaPerformance);
+  return await observeActivation(cdp);
  }finally{await browser.close();}
 }
 export async function audit(url,{saveArtifacts,onFailure=()=>{},includeTrace=false}={}){
