@@ -277,8 +277,9 @@ Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a
   `$el.scrollIntoView({behavior: 'bad'})`: `$el.scrollIntoView() rejected TypeError: …`;
 - a value nested more than 100 arrays or objects deep, whatever made it (state,
   a response, a handler, `reduce`): `FORMA_E_BUDGET`, `a value nested over 100
-  deep`, before anything converts it. The deepest values found in the
-  founder's applications nest 5 levels in state and 23 in any JSON file;
+  deep`, before anything converts it. The cap leaves more than sixfold
+  headroom below the lowest measured engine overflow depth (Firefox: 622
+  with 2,000 caller frames); engine stack sizes are not a universal bound;
 - a value converted to text or a number whose `toString` is not a function,
   an object JSON shadowed (`{"toString": 1}`) or an array a handler gave one
   (`list.toString = 1`), arrays at any depth included: `FORMA_E_CALL_FAILED`,
@@ -289,8 +290,8 @@ Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a
 - more than 32 evaluations nested inside one another, a chain of computeds or
   a handler that `$dispatch`es to itself: `FORMA_E_BUDGET`, `evaluations nested
   over 32 deep`. A computed refused this way is computed again on its next
-  read. The longest chain of computeds found in the founder's applications
-  is 4.
+  read. Boundary tests cover 31 computeds plus their binding, and 31 relayed
+  handlers converting a value 100 deep in the browser engines.
 
 A test mounts every directive with 48 hostile values each and finds nothing
 that throws. Markup nested a few hundred levels deep can still overflow the

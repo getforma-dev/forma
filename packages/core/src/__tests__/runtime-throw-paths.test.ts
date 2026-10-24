@@ -181,7 +181,7 @@ describe('values nested too deep are refused before anything converts them (FORM
     expect(swallowed).toEqual([]);
   });
 
-  it('a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render', () => {
+  it('a value 100 deep renders and one 101 deep is refused; a nested dictionary still serializes', () => {
     expect(mount('<p id="a" data-text="{a}">a</p><p id="b" data-text="{b}">b</p><p id="c" data-text="{JSON.stringify(c).length}">c</p>',
       `{"a": ${nested(100)}, "b": ${nested(101)}, "c": ${'{"k":'.repeat(23)}[1]${'}'.repeat(23)}}`)).toBeNull();
     expect(el('a').textContent).toBe('0');

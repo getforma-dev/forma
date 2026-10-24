@@ -180,18 +180,19 @@ const size = (v: unknown, room: number): number => {
  * out of `mountMarkup`, or an uncaught page error. Measured on a fresh stack
  * (and under 2,000 frames of a caller), `String()` of nested arrays
  * overflowed past 785 levels in Firefox 157 (622), 2,822 in Node 24 (2,185),
- * 4,112 in Chromium 156 (3,178) and 4,990 in WebKit 27.2 (4,771). The deepest
- * values in the founder's applications nest 5 levels in a `data-forma-state`
- * and 23 in any JSON file of theirs (a CDK tree; their `data-fetch` fixtures
- * 4), so 100 is four times the deepest found and six below Firefox's stack
- * under load. Every conversion of a value is priced here before it runs, so
+ * 4,112 in Chromium 156 (3,178) and 4,990 in WebKit 27.2 (4,771). The cap of
+ * 100 leaves more than sixfold headroom below the lowest measured overflow
+ * depth, Firefox's 622 under caller load. The combined boundary is also
+ * tested with 31 relayed handlers converting a value 100 deep. Engine stack
+ * sizes vary; this is a conservative policy, not a universal stack bound.
+ * Every conversion of a value is priced here before it runs, so
  * this one check covers each source a value comes from: state, a response,
  * storage, a handler's write, and an expression that built it (`reduce`
  * makes 10,000 levels inside every budget). It is final and arms nothing,
  * like a refusal that checks a length (FORMA-249).
  * Verified by: src/expr/__tests__/native-cost.test.ts > "weighing stops at the budget on a cyclic or deeply nested value"
  * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value an expression builds itself is refused the same way: no entry point sees it"
- * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value 100 deep renders and one 101 deep is refused; a nested dictionary still serializes"
  * Verified by: src/__tests__/runtime-throw-paths.test.ts > "is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler"
  * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail"
  * Verified by: src/__tests__/runtime-throw-paths.test.ts > "an array a handler gave its own toString is refused wherever it is converted"

@@ -180,8 +180,10 @@ export const NESTED = 'evaluations nested over 32 deep';
  * goes, so a chain of 1,000 computeds overflowed Chromium's stack out of
  * `mountMarkup` in a few thousand steps, and a handler that dispatched its
  * own event to itself recursed into an uncaught page error in every engine.
- * The longest chain of computeds in the founder's applications is 4. The
- * 33rd is refused with `FORMA_E_BUDGET` before it starts: final, arming
+ * The policy caps nesting at 32; boundary tests exercise 31 computeds plus
+ * their binding, and 31 relayed handlers converting a value 100 deep in the
+ * browser engines. The 33rd is refused with `FORMA_E_BUDGET` before it
+ * starts: final, arming
  * nothing, like a refusal that checks a count. A computed refused this way
  * read nothing, so the runtime has it computed again on its next read after
  * the task, instead of keeping the refusal as its value.
