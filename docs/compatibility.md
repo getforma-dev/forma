@@ -65,7 +65,9 @@ amended by L-56): 16 lowercase hex characters computed from every output of a fi
 bundling pass (bundles, `.ir` modules, css, fonts) and the writers' versions,
 compiled into every JavaScript bundle (`__FORMA_BUILD__` and a banner), and `dev` in
 watch. forma-server stamps it on the page's root (`data-forma-build`, both the
-server-rendered form and the browser shell). Before `activateIslands` or `mount`,
+JavaScript-enabled server-rendered form and the browser shell). The upcoming 3.1
+plain-HTML mode omits that root attribute on explicit no-JavaScript SSR routes;
+3.0.0 retains it. Before `activateIslands` or `mount`,
 core compares the bundle identity with that root's attribute, freezes the verdict
 per Document, and leaves a mismatched page inert. The cancelable Document event
 `forma:skew` reports `{ page, bundle, reload }`; automatic reload is at most once
