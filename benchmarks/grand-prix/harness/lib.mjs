@@ -10,11 +10,13 @@ import { expected } from '../shared/dataset.mjs';
 import assert from 'node:assert/strict';
 import { hostProfile, parseCpuList } from './resource-profile.mjs';
 import { createCampaign, readCampaign } from './campaign.mjs';
+import { requestHeaders, ohaArguments, captureResponse, validateResponse, assertSampleRepresentation, wireMeasurement } from './transport.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const RAW = process.env.GP_RAW_DIR ? path.resolve(process.env.GP_RAW_DIR) : path.join(ROOT, 'results', 'raw');
 export const REQUEST_ENCODING = process.env.GP_ACCEPT_ENCODING;
 if (REQUEST_ENCODING && !['identity', 'br', 'gzip'].includes(REQUEST_ENCODING)) throw new Error('invalid compression experiment encoding');
+export const REQUEST_HEADERS = requestHeaders(REQUEST_ENCODING ?? 'identity');
 export const LABEL = 'grandprix=forma-264';
 export const IMAGE_PREFIX = process.env.GP_IMAGE_PREFIX || 'gp264';
 if (!/^[a-z0-9/-]+$/.test(IMAGE_PREFIX)) throw new Error('invalid image prefix');
@@ -28,7 +30,7 @@ export const cpusetArgs = cpuset => cpuset ? ['--cpuset-cpus=' + cpuset] : [];
 
 // Protocol constants, overridable only for the end-to-end test (the report records what was used).
 export const CFG = {
-  duration: 10, warmup: 5, runs: 3, concurrency: 64, starts: 5, buildRuns: 3,
+  duration: 10, warmup: 5, runs: 3, concurrency: 64, starts: 5, buildRuns: 3, requestHeaders: REQUEST_HEADERS,
   ...(REQUEST_ENCODING ? { acceptEncoding: REQUEST_ENCODING } : {}),
 };
 
@@ -139,9 +141,9 @@ export async function assertContainerResources(container, limits) {
 // ---------- HTTP probes from the host ----------
 export function get(port, p, headers = {}, timeout = 5000) {
   return new Promise(resolve => {
-    const req = http.get({ host: '127.0.0.1', port, path: p, agent: false, headers, timeout }, res => {
+    const req = http.get({ host: '127.0.0.1', port, path: p, agent: false, headers: { ...REQUEST_HEADERS, ...headers }, timeout }, res => {
       const chunks = []; res.on('data', d => chunks.push(d));
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) }));
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, rawHeaders: res.rawHeaders, body: Buffer.concat(chunks) }));
       res.on('error', e => resolve({ status: 0, error: e.message }));
     });
     req.on('timeout', () => { req.destroy(); resolve({ status: 0, error: 'timeout' }); });
@@ -169,9 +171,9 @@ export function checkBody(n, body) {
   return { ok: !problems.length, rows: count, problems };
 }
 
-// Smoke: health + ssr 100 + ssr 1000, against expected(n). Returns the full record.
+// Retain the exact representation checked before timing, including small-page coverage.
 export async function smokeCar(car) {
-  const rec = { car, at: new Date().toISOString(), pass: false, checks: [], image: imageInfo(car) };
+  const rec = { car, at: new Date().toISOString(), pass: false, checks: [], responses: {}, requestHeaders: REQUEST_HEADERS, image: imageInfo(car) };
   if (!rec.image.id) { rec.checks.push({ name: 'image', ok: false, detail: imageName(car) + ' not found' }); return rec; }
   const net = await makeNetwork(); let c;
   try {
@@ -180,11 +182,13 @@ export async function smokeCar(car) {
     try { rec.readyMs = await waitReady(c, port); } catch (e) { rec.checks.push({ name: 'health', ok: false, detail: e.message }); return rec; }
     const h = await get(port, '/health');
     rec.checks.push({ name: 'health', ok: h.status === 200 && h.body.toString().trim() === 'ok', detail: `status ${h.status} body "${h.body?.toString().slice(0, 20)}"` });
-    for (const n of [100, 1000]) {
+    for (const n of [10, 100, 1000]) {
       const r = await get(port, '/ssr?rows=' + n, {}, 15000);
-      if (r.status !== 200) { rec.checks.push({ name: 'ssr' + n, ok: false, detail: 'status ' + r.status + ' ' + (r.error || '') }); continue; }
-      const b = checkBody(n, r.body);
-      rec.checks.push({ name: 'ssr' + n, ok: b.ok, detail: b.ok ? `${b.rows} rows, ${r.body.length} bytes` : b.problems.join('; '), bytes: r.body.length });
+      const response = rec.responses[n] = captureResponse(n, r, REQUEST_HEADERS);
+      try {
+        validateResponse(response, REQUEST_HEADERS);
+        rec.checks.push({ name: 'ssr' + n, ok: true, detail: `${n} rows, ${response.bytes} bytes`, bytes: response.bytes });
+      } catch (error) { rec.checks.push({ name: 'ssr' + n, ok: false, detail: error.message }); }
     }
     rec.pass = rec.checks.every(x => x.ok);
   } catch (e) { rec.checks.push({ name: 'start', ok: false, detail: e.message }); }
@@ -200,22 +204,31 @@ export function imageInfo(ref) {
 }
 
 // ---------- oha ----------
-export async function oha(lg, url, { c, z }) {
-  // oha's flag suppresses only its automatic Accept-Encoding header; explicit
-  // -H values are applied afterward. Preserve raw transferred byte accounting.
-  const headers = REQUEST_ENCODING ? ['-H', `Accept-Encoding: ${REQUEST_ENCODING}`] : [];
-  const r = await docker('exec', lg.name, 'oha', '-z', z + 's', '-c', String(c), '--no-tui', '--disable-compression', ...headers, '--output-format', 'json', url);
-  if (r.code) throw new Error('oha failed: ' + r.stderr.slice(0, 300));
-  const j = JSON.parse(r.stdout);
+export async function oha(lg, url, { c, z, evidence, response }) {
+  const args = ohaArguments(url, { c, z }, REQUEST_HEADERS);
+  const r = await docker('exec', lg.name, ...args);
+  // Save even malformed output and nonzero exits before any assertion. Warmups
+  // and every timed sample have their own retained file, including on failure.
+  const raw = { at: new Date().toISOString(), target: url, requested: { c, z }, arguments: args,
+    requestHeaders: REQUEST_HEADERS, response, exitCode: r.code, stderr: r.stderr };
+  try { raw.rawOha = JSON.parse(r.stdout); } catch { raw.stdout = r.stdout; }
+  writeRaw('transport', evidence, raw);
+  assert.equal(r.code, 0, 'oha failed: ' + r.stderr.slice(0, 300));
+  const j = raw.rawOha;
+  assert(j?.summary, 'invalid oha output');
   const codes = j.statusCodeDistribution || {};
   const total = Object.values(codes).reduce((a, b) => a + b, 0);
   const ok = codes['200'] || 0;
-  return {
-    seconds: j.summary.total, rps: j.summary.requestsPerSec, okRps: ok / j.summary.total, requests: total, ok, nonOk: total - ok,
+  const result = {
+    ...raw, seconds: j.summary.total, rps: j.summary.requestsPerSec, okRps: ok / j.summary.total, requests: total, ok, nonOk: total - ok,
     successRate: j.summary.successRate, statusCodes: codes, errorDistribution: j.errorDistribution,
     latencyMs: { mean: j.summary.average * 1000, p50: j.latencyPercentiles.p50 * 1000, p95: j.latencyPercentiles.p95 * 1000, p99: j.latencyPercentiles.p99 * 1000, max: j.summary.slowest * 1000 },
-    bytesPerRequest: j.summary.sizePerRequest,
+    bytesPerRequest: j.summary.sizePerRequest, totalData: j.summary.totalData,
   };
+  result.wireBytes = wireMeasurement(result, response);
+  writeRaw('transport', evidence, result);
+  assertSampleRepresentation(result, response, REQUEST_HEADERS);
+  return result;
 }
 
 // ---------- docker stats sampler ----------

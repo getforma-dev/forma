@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { validateProfile } from './resource-profile.mjs';
 import { validateCampaign } from './campaign.mjs';
+import { requestHeaders, validateResponse, assertSampleRepresentation } from './transport.mjs';
 
 const serverEvents = new Set(['sprint', 'endurance', 'multicore', 'reaction', 'fuel', 'grid', 'weight', 'pitstop']);
 // The separate engine reference is unscored, but its displayed telemetry must
@@ -65,6 +66,14 @@ export function scoringProfile(raw) {
       assert.equal(raw.smoke?.[car]?.pass, true, `${car}: qualified scoring requires a passing smoke check`);
       assert.deepEqual(raw.smoke[car].campaign, campaign, `${car}: smoke belongs to a different campaign`);
       assert.equal(record.config?.forced, false, 'forced measurements cannot qualify');
+      const headers = requestHeaders(record.config.acceptEncoding ?? 'identity');
+      assert.deepEqual(record.config.requestHeaders, headers, 'qualified scoring requires explicit transport headers');
+      assert.deepEqual(raw.smoke[car].requestHeaders, headers);
+      for (const rows of [10, 100, 1000]) {
+        const response = raw.smoke[car].responses?.[rows];
+        assert.equal(response?.rows, rows, 'retained smoke response required');
+        validateResponse(response, headers);
+      }
       for (const [key, value] of Object.entries({ duration: 10, warmup: 5, runs: 3, starts: 5, buildRuns: 3, concurrency: 64 })) {
         assert.equal(record.config[key], value, `qualified scoring requires unchanged ${key}`);
       }
@@ -79,7 +88,15 @@ export function scoringProfile(raw) {
         assert.equal(record.durationS, 10); assert.equal(record.warmupS, 5);
         assert.equal(record.concurrency, event === 'reaction' ? 1 : 64);
         assert.deepEqual(record.container, event === 'multicore' ? profile.classB : profile.classA);
+        assert.equal(record.response?.rows, event === 'endurance' ? 1000 : 100);
+        validateResponse(record.response, headers);
+        if (headers['accept-encoding'] === 'identity') assert.equal(record.response.bytes, raw.smoke[car].responses[record.response.rows].bytes, 'smoke/event response sizes differ');
+        assertSampleRepresentation(record.warmup, record.response, headers);
+        assert.equal(record.warmup.requested.z, 5);
+        assert.equal(record.warmup.requested.c, record.concurrency);
         for (const run of record.runs) {
+          assertSampleRepresentation(run, record.response, headers);
+          assert.equal(run.requested.z, 10); assert.equal(run.requested.c, record.concurrency);
           assert.equal(run.nonOk, 0); assert.equal(run.successRate, 1);
           assert(run.errorDistribution && typeof run.errorDistribution === 'object' && !Array.isArray(run.errorDistribution), 'transport evidence required');
           for (const [error, count] of Object.entries(run.errorDistribution)) {

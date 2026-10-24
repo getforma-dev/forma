@@ -5,6 +5,8 @@ import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { checkCandidateLock } from './candidate-lock.mjs';
 import { decodeExperimentResponse } from './compression-response.mjs';
 import { summarizeCompression } from './compression-report.mjs';
+import { expected } from '../shared/dataset.mjs';
+import { requestHeaders, captureResponse, ohaArguments, wireMeasurement } from './transport.mjs';
 import { profileConfiguration } from './resource-profile.mjs';
 
 const codecs = JSON.parse(readFileSync(new URL('./compression-codecs.json', import.meta.url))).packages;
@@ -101,3 +103,49 @@ for (const [name, mutate] of [
 ]) test(`four-CPU comparison refuses ${name}`, () => {
   const records = sample('gha-4-v1'); mutate(records); assert.throws(() => summarizeCompression(records));
 });
+
+function explicitSample() {
+  const records = sample('gha-4-v1');
+  const page = nonce => Buffer.from(expected(100).mustContain.join(' ') + '<tr data-id="1"></tr>'.repeat(100) + `<script nonce="${nonce}"></script>`);
+  const nonces = ['AAAAAAAAAAAAAAAAAAAAAA==', 'mY5yPWZxVhhP9k1n2Q3Xgw==', 'BBBBBBBBBBBBBBBBBBBBBB=='];
+  for (const [encoding, events] of Object.entries(records)) {
+    const headers = requestHeaders(encoding);
+    const encoded = nonces.map(nonce => { const body = page(nonce); return encoding === 'gzip' ? gzipSync(body) : encoding === 'br' ? brotliCompressSync(body) : body; });
+    const response = captureResponse(100, { status: 200, body: encoded[0], headers: { 'content-length': String(encoded[0].length), 'content-encoding': encoding },
+      rawHeaders: ['Content-Length', String(encoded[0].length), 'Content-Encoding', encoding] }, headers);
+    for (const record of Object.values(events)) record.config.requestHeaders = headers;
+    for (const event of ['sprint', 'multicore', 'reaction']) {
+      const record = events[event]; record.response = response;
+      const load = (index, z) => {
+        const requested = { c: record.concurrency, z }, target = 'http://car:3000/ssr?rows=100';
+        const totalData = encoded[index].length * 100 + encoded[(index + 1) % 3].length;
+        const run = { requested, target, response, requestHeaders: headers, arguments: ohaArguments(target, requested, headers),
+          nonOk: 0, successRate: 1, errorDistribution: {}, statusCodes: { 200: 101 }, requests: 101, ok: 101, seconds: z, okRps: 101 / z,
+          bytesPerRequest: Math.floor(totalData / 101), totalData, latencyMs: { p95: 2, p99: 3 },
+          rawOha: { summary: { total: z, successRate: 1, totalData, sizePerRequest: Math.floor(totalData / 101) }, statusCodeDistribution: { 200: 101 }, errorDistribution: {} } };
+        run.wireBytes = wireMeasurement(run, response); return run;
+      };
+      record.runs = [0, 1, 2].map(index => load(index, 10)); record.warmup = load(0, 5);
+    }
+    Object.assign(events.weight.representation, { encodedBytes: encoded[0].length, decodedBytes: page(nonces[0]).length });
+  }
+  return records;
+}
+test('current compression reports real aggregate wire means when fresh nonces vary encoded lengths', () => {
+  const records = explicitSample(), report = summarizeCompression(records);
+  for (const encoding of ['br', 'gzip']) {
+    const variant = report.variants[encoding];
+    assert.equal(variant.wireBytes.sprint.kind, 'aggregate-encoded-length');
+    assert.notEqual(variant.wireBytes.sprint.meanBytes, variant.encodedBytes);
+    assert.equal(variant.wireBytes.sprint.totalBytes, records[encoding].sprint.runs.reduce((n, run) => n + run.totalData, 0));
+  }
+  assert.equal(report.variants.identity.wireBytes.sprint.meanBytes, report.variants.identity.encodedBytes);
+  assert.match(report.meaning, /not a per-response compressed length claim/);
+});
+for (const [name, edit] of [
+  ['missing current headers', r => { delete r.br.sprint.config.requestHeaders; }],
+  ['false aggregate bytes', r => { r.br.sprint.runs[1].totalData++; }],
+  ['corrupt compressed probe', r => { r.gzip.sprint.response.bodyBase64 = 'AAAA'; }],
+  ['wrong decoded row count', r => { r.br.sprint.response.rows = 10; }],
+  ['identity660-byte drift', r => { const run = r.identity.sprint.runs[0]; run.bytesPerRequest -= 660; run.totalData -= 660 * run.requests; run.rawOha.summary.sizePerRequest = run.bytesPerRequest; run.rawOha.summary.totalData = run.totalData; run.wireBytes = wireMeasurement(run, run.response); }],
+]) test(`current compression refuses ${name}`, () => { const records = explicitSample(); edit(records); assert.throws(() => summarizeCompression(records)); });
