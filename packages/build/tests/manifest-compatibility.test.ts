@@ -6,7 +6,10 @@ import { join } from 'node:path';
 import { build } from '../src/build';
 import { buildInChild } from './helpers/child-build';
 import { watching } from './helpers/watch';
-import { requireCompatibleCompiler } from '../src/compatibility';
+import { BUILD_WRITER_VERSION, requireCompatibleCompiler } from '../src/compatibility';
+const currentWriter = BUILD_WRITER_VERSION.join('.');
+const newerRenderer = [BUILD_WRITER_VERSION[0], BUILD_WRITER_VERSION[1] + 1, 0].join('.');
+const patchRenderer = [BUILD_WRITER_VERSION[0], BUILD_WRITER_VERSION[1], 65535].join('.');
 const roots: string[] = [];
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), 'forma-manifest2-')); roots.push(root);
@@ -22,7 +25,7 @@ describe('manifest2 compatibility through real builds', () => {
     const fontDir = join(root, 'fonts'); mkdirSync(fontDir); writeFileSync(join(fontDir, 'plain.woff2'), 'font bytes');
     const result = await build({app: 'ledger', entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir, fontDir});
     const manifest = result.manifest;
-    expect(manifest.version).toBe(2); expect(manifest.writer).toBe('3.0.0'); expect(manifest.app).toBe('ledger');
+    expect(manifest.version).toBe(2); expect(manifest.writer).toBe(currentWriter); expect(manifest.app).toBe('ledger');
     expect(manifest.routes['/'].mode).toBe('browser'); expect(manifest.routes['/'].ir).toBeUndefined();
     expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).not.toContain('-dev');
     const script = manifest.aliases['app.js'];
@@ -57,15 +60,15 @@ describe('manifest2 compatibility through real builds', () => {
     mkdirSync(outputDir); writeFileSync(join(outputDir, 'sentinel'), 'last good build');
     writeFileSync(lock, 'version=4\n[[package]]\nname="forma-server"\nversion="2.9.0"\n');
     const refused = await buildInChild(config, root, root);
-    expect(refused.message).toContain('@getforma/build writer 3.0.0 is incompatible with forma-server 2.9.0');
-    expect(refused.message).toContain('upgrade forma-server to at least 3.0.0');
+    expect(refused.message).toContain(`@getforma/build writer ${currentWriter} is incompatible with forma-server 2.9.0`);
+    expect(refused.message).toContain(`upgrade forma-server to at least ${currentWriter}`);
     expect(readFileSync(join(outputDir, 'sentinel'), 'utf8')).toBe('last good build');
     expect(readdirSync(root).filter(name => name.includes('forma-staging'))).toEqual([]);
-    writeFileSync(lock, 'version=4\n[[package]]\nname="forma-server"\nversion="3.1.0"\n');
+    writeFileSync(lock, `version=4\n[[package]]\nname="forma-server"\nversion="${newerRenderer}"\n`);
     const accepted = await buildInChild(config, root, root);
     expect(accepted.message, accepted.output).toBeUndefined();
     expect(accepted.manifest?.app).toBe('ledger');
-    expect(accepted.manifest?.writer).toBe('3.0.0');
+    expect(accepted.manifest?.writer).toBe(currentWriter);
     expect(existsSync(join(outputDir, 'sentinel'))).toBe(false);
   }, 30_000); // two child builds, each bundling the build and the compiler first: seconds on a busy machine
 
@@ -73,7 +76,7 @@ describe('manifest2 compatibility through real builds', () => {
     const {root, entry, outputDir} = fixture();
     const lock = join(root, 'Cargo.lock');
     const setServer = (version: string) => writeFileSync(lock, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
-    setServer('3.0.0');
+    setServer(currentWriter);
     await watching({app: 'ledger', codeSplitting, entryPoints: [{entry, outfile: 'app.js'}], routes: {'/': {js: ['app'], css: []}}, outputDir}, async ({manifest, output, ready, change}) => {
       await ready();
       await vi.waitFor(() => expect(existsSync(join(outputDir, 'manifest.json')), output()).toBe(true));
@@ -88,9 +91,9 @@ describe('manifest2 compatibility through real builds', () => {
       await change(() => writeFileSync(entry, 'export const message = "changed while refused";'));
       expect(readFileSync(bundle(), 'utf8')).toBe(original);
       expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(originalManifest);
-      await change(() => setServer('3.1.0'));
+      await change(() => setServer(newerRenderer));
       await vi.waitFor(() => expect(readFileSync(bundle(), 'utf8')).toContain('changed while refused'), {timeout: 10_000});
-      expect(manifest().writer).toBe('3.0.0');
+      expect(manifest().writer).toBe(currentWriter);
       const recovered = readFileSync(bundle(), 'utf8');
       await change(() => setServer('4.0.0'));
       await vi.waitFor(() => expect(output()).toContain('incompatible with forma-server 4.0.0'), {timeout: 10_000});
@@ -99,7 +102,7 @@ describe('manifest2 compatibility through real builds', () => {
       await change(() => writeFileSync(entry, 'export const message = "patch recovery";'));
       expect(readFileSync(bundle(), 'utf8')).toBe(recovered);
       expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(recoveredManifest);
-      await change(() => setServer('3.0.99'));
+      await change(() => setServer(patchRenderer));
       await vi.waitFor(() => expect(readFileSync(bundle(), 'utf8')).toContain('patch recovery'), {timeout: 10_000});
       // Development caching remains disabled even though URLs retain their bytes.
       expect(manifest().assets[manifest().aliases['app.js']].immutable).toBe(false);
