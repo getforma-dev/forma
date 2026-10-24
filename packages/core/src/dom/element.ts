@@ -936,7 +936,7 @@ function appendChild(parent: Node, child: unknown): void {
  * and created with the correct SVG namespace. Inside a `foreignObject`,
  * children switch back to the HTML namespace.
  *
- * Event listeners are attached with an AbortController signal so they can
+ * Event listeners are retained in an element-local registry so they can
  * be removed in bulk via `cleanup(el)`.
  *
  * Hyperscript-style API:
