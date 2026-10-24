@@ -41,7 +41,7 @@ function defines() {
  * for. The guard sits at every warning site (FORMA-021 C1): esbuild never
  * inlines a `const` into its use sites, so an imported or module-level
  * `__DEV__` folds only where tsup's Rollup pass runs, which the standard
- * runtime IIFE and the frame have none of. See src/reactive/dev.ts.
+ * runtime IIFE has none of. See src/reactive/dev.ts.
  *
  * Verified by: src/__tests__/build-artifacts.test.ts > "the allowlist interpreter is actually in the bundle"
  * Verified by: src/__tests__/dev-fold-build.test.ts > "the production code-split entries carry no development warning text, and the development twin carries every one"
@@ -173,6 +173,15 @@ const PRODUCTION: Options[] = [
   // flag, so it never mounts the page's `data-forma-state` on load or watches
   // `body`: it binds only the module its host sends, in tier (c). No global.
   //
+  // `treeshake` runs tsup's Rollup pass, as on the hardened IIFE (FORMA-275).
+  // It drops what esbuild keeps but the frame never reaches: the teardown of
+  // islands the frame never activates, the fetch-grant parser, and the
+  // branches for the tiers, grants and options its one `mountMarkup` call
+  // never passes. The wrapper becomes `(function (exports) {…})({})`, still
+  // one classic script, and the exports object it fills is a fresh literal
+  // nothing else can reach, so it still defines no global. It is gated at
+  // 40,000 B gzip by scripts/check-size.mjs.
+  //
   // Verified by: src/__tests__/runtime-frame.test.ts > "the frame runtime is one classic script a server can inline as it is"
   // Verified by: src/__tests__/runtime-frame.test.ts > "two builds of the frame runtime are byte-identical"
   {
@@ -181,6 +190,7 @@ const PRODUCTION: Options[] = [
     outDir: 'dist',
     minify: false,
     sourcemap: false,
+    treeshake: true,
     target: 'es2022',
     define: { ...FRAME_DEFINE },
     esbuildOptions(options) {

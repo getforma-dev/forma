@@ -125,11 +125,7 @@ const FETCH_TIMEOUT_MS = 30_000;
  */
 function $refetch(id: string, registry: Map<string, () => void>): void {
   const fn = registry.get(id);
-  if (fn) {
-    fn();
-  } else if (_debug) {
-    dbg(`$refetch: no data-fetch with id "${id}" found`);
-  }
+  if (fn) fn();
 }
 
 function createChildScope(parent: Scope, locals: Record<string, unknown>): Scope {
@@ -155,16 +151,7 @@ function createChildScope(parent: Scope, locals: Record<string, unknown>): Scope
   return child;
 }
 
-// Internal debug branches are compiled away; configuration belongs to mounts.
-const _debug = false;
-
 // ── Configuration & diagnostics ──
-
-function dbg(...args: unknown[]): void {
-  if (_debug) {
-    console.log('[FormaJS]', ...args);
-  }
-}
 
 interface RuntimeDiagnostic {
   kind: 'handler-unsupported' | 'expression-unsupported' | 'grant-denied' | 'markup-refused';
@@ -620,9 +607,6 @@ function applyContainmentHints(
     if (changed) applied++;
   }
 
-  if (_debug && applied > 0) {
-    dbg('applyContainmentHints: applied to', applied, 'element(s)');
-  }
   return applied;
 }
 
@@ -1671,15 +1655,9 @@ function parseState(raw: string): Record<string, unknown> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    if (_debug) {
-      dbg('parseState: Invalid JSON in data-forma-state — use valid JSON with quoted keys. Got:', raw.slice(0, 200));
-    }
     return {};
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    if (_debug) {
-      dbg('parseState: data-forma-state must be a JSON object. Got:', raw.slice(0, 200));
-    }
     return {};
   }
   const state = parsed as Record<string, unknown>;
@@ -1721,13 +1699,6 @@ function ownBindings(bind: (disposers: (() => void)[]) => void): () => void {
 function initScope(stateEl: Element, mount: MountCtx): Scope {
   const raw = stateEl.getAttribute('data-forma-state') ?? '{}';
   const state = parseState(raw);
-  const keys = Object.keys(state);
-  if (_debug) {
-    dbg('initScope: parsed', keys.length, 'keys:', keys.join(', '));
-    if (keys.length === 0) {
-      dbg('initScope: WARNING — empty state! Raw attribute:', raw.slice(0, 200));
-    }
-  }
   // Null-prototype, so an expression naming a member of Object.prototype does
   // not resolve to one. With a `{}` literal here, `data-text="{constructor}"`
   // read `Object` off the prototype chain and the parser's `getters[expr]?.()`
@@ -1933,17 +1904,11 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   if (showExpr) {
     const evaluate = evaluator(showExpr);
     const transition = parseTransitionSpec(el);
-    if (_debug) {
-      const tag = el.tagName.toLowerCase();
-      const cls = el.className ? `.${String(el.className).split(' ')[0]}` : '';
-      dbg(`bindElement: data-show="${showExpr}" on <${tag}${cls}>`);
-    }
     let initialized = false;
     const dispose = internalEffect(() => {
       const value = evaluate();
       if (value === EXPR_FAILED) return;
       const visible = !!value;
-      if (_debug) dbg(`data-show effect: "${showExpr}" → ${visible}`);
       applyShowVisibility(el as HTMLElement, visible, transition, !initialized);
       initialized = true;
     });
@@ -2094,12 +2059,6 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       const event = name.slice(8); // 'data-on:'.length === 8
       const built = buildHandler(attr.value, scope, el);
       const handler = built.handler;
-      if (_debug) {
-        const tag = el.tagName.toLowerCase();
-        const id = el.id ? `#${el.id}` : '';
-        const cls = el.className ? `.${String(el.className).split(' ')[0]}` : '';
-        dbg(`bindElement: data-on:${event}="${attr.value}" on <${tag}${id}${cls}>`);
-      }
       // Set only. A stale marker was cleared at the top of bindElement, so an
       // element carrying two handlers cannot have the second one erase the
       // first one's failure.
@@ -2107,18 +2066,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       if (!built.supported) {
         el.setAttribute('data-forma-handler-error', 'unsupported');
       }
-      if (_debug) {
-        const attrVal = attr.value;
-        const tracedHandler = (e: Event) => {
-          dbg(`HANDLER FIRED: data-on:${event}="${attrVal}"`, 'isTrusted:', e.isTrusted);
-          handler(e);
-        };
-        el.addEventListener(event, tracedHandler);
-        disposers.push(() => { el.removeEventListener(event, tracedHandler); });
-      } else {
-        el.addEventListener(event, handler);
-        disposers.push(() => { el.removeEventListener(event, handler); });
-      }
+      el.addEventListener(event, handler);
+      disposers.push(() => { el.removeEventListener(event, handler); });
     } else if (name.startsWith('data-class:')) {
       const cls = name.slice(11); // 'data-class:'.length === 11
       const evaluate = evaluator(attr.value);
@@ -2582,10 +2531,7 @@ function hasDirective(el: Element): boolean {
 function mountScope(root: Element, mount: MountCtx): void {
   if (ownerOf(root) !== mount) return;
   // Idempotency guard — never double-bind
-  if ((root as any).__formaDisposers) {
-    if (_debug) dbg('mountScope: SKIPPED (already mounted)');
-    return;
-  }
+  if ((root as any).__formaDisposers) return;
 
   const scope = initScope(root, mount);
   const dispose = ownBindings(disposers => {
@@ -2624,7 +2570,6 @@ function mountScope(root: Element, mount: MountCtx): void {
     // A scope may itself be detached or inside a shadow root: document-level
     // isConnected would incorrectly skip those legitimate descendants.
     // Verified by: src/__tests__/failure-semantics.test.ts > "a data-list row template is not bound against the parent scope"
-    let boundCount = 0;
     const targets = root.querySelectorAll('*');
     for (let i = 0; i < targets.length; i++) {
       const el = targets[i]!;
@@ -2632,10 +2577,7 @@ function mountScope(root: Element, mount: MountCtx): void {
       if (!hasDirective(el)) continue;
       if (ownedBelow(el, root)) continue;
       bindElement(el, scope, disposers);
-      boundCount++;
     }
-
-    if (_debug) dbg('mountScope: DONE —', boundCount, 'elements bound,', disposers.length, 'disposers');
   });
   // Store disposers on the root element for cleanup
   (root as any).__formaDisposers = [dispose];
