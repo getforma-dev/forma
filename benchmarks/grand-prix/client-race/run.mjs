@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { appsDir, rawDir, parseArgs, builtCars, serveDist } from './lib.mjs';
 import { validateProfile, verifyRoleAffinity } from '../harness/resource-profile.mjs';
+import { measuredDuration, operationGeomean } from './timing.mjs';
 
 const args = parseArgs(process.argv.slice(2), {
   runs: '5', warmups: '2', out: path.join(rawDir, 'dom'),
@@ -101,7 +102,7 @@ for (const car of have) {
       for (const p of op.prep) await page.evaluate((s) => window.__prep(s), prepSel[p]);
       const before = op.before ? await page.evaluate(() => window.__state()) : null;
       const ms = await page.evaluate((s) => window.__measure(s), op.click);
-      if (!Number.isFinite(ms) || ms <= 0) throw new Error(`${car} ${op.name}: invalid timing ${ms}`);
+      measuredDuration(ms, `${car} ${op.name}`);
       const state = await page.evaluate(() => window.__state());
       if (!op.check(state, before)) throw new Error(`${car} ${op.name}: result check failed (rows=${state.rows})`);
       if (i >= WARM) runs.push(ms);
@@ -109,7 +110,7 @@ for (const car of have) {
     result[op.name] = { runs, ...stats(runs) };
     console.log(`${car.padEnd(8)} ${op.name.padEnd(12)} ${result[op.name].mean.toFixed(1)} ms +- ${result[op.name].sd.toFixed(1)}`);
   }
-  const geomean = Math.exp(ops.reduce((a, o) => a + Math.log(result[o.name].mean), 0) / ops.length);
+  const geomean = operationGeomean(ops.map(o => result[o.name].mean));
   console.log(`${car.padEnd(8)} geometric mean ${geomean.toFixed(2)} ms${errors.length ? '  PAGE ERRORS: ' + errors.length : ''}`);
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify({
     event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean, resourceProfile, campaign, processAffinity, browserProcessAffinity,

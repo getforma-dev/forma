@@ -19,5 +19,8 @@ static files. Cars: `forma`, `vanilla`, `react`, `preact`, `solid`, `svelte`, `v
   task boundary (`performance.now()` inside the page; PROTOCOL.md Amendment 1 replaced the first
   clock, the second `requestAnimationFrame` after the click, which measured 60 Hz frame pacing); two warm-ups and five
   timed runs per operation, fresh page per car. Writes `results/raw/dom/<car>.json`.
+  Finite zero readings are retained as clock-quantized observations after the same result checks;
+  negative or non-finite timings fail. Geometric summaries use the existing 0.1 ms resolution
+  floor without changing raw samples, sample counts or the operation boundary.
 - Bundle: the Brotli and gzip size of all JavaScript the built `index.html` loads, written to
   `results/raw/bundle/<car>.json`.
