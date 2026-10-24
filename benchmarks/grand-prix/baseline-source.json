@@ -1,0 +1,897 @@
+{
+  "origin": "FORMA-254 experiment, 2026-10-23",
+  "files": [
+    {
+      "path": "contestants/sync-shared.sh",
+      "sha256": "54d4373241f6215218efef9fbdda3196f7b68a4f7c41f2ce07ab904cb7f15d0d"
+    },
+    {
+      "path": "contestants/_build-smoke.sh",
+      "sha256": "6dccee9b112676755e68318946adc66f82652f8e2395140bcc7a20ab7fd5f995"
+    },
+    {
+      "path": "contestants/_smoke.mjs",
+      "sha256": "adb6707bf82f0b5f6b7af186c60c4bed9f53e20ebc40f732d29f5f8244d7d1ef"
+    },
+    {
+      "path": "contestants/next/Dockerfile",
+      "sha256": "9310cc5a664aa1cf48bb6c4717b014e9bbc05d476e9d4ef25d15c29e73340994"
+    },
+    {
+      "path": "contestants/next/next.config.mjs",
+      "sha256": "c40b772b9fbda4c852b9daed88c5e6f4dc27411f605a440914679f26d3ee873b"
+    },
+    {
+      "path": "contestants/next/.dockerignore",
+      "sha256": "387b492061ac2600dfa0fd6c8e3eec7ddb01a26c15469b3705608b79543eab5b"
+    },
+    {
+      "path": "contestants/next/package-lock.json",
+      "sha256": "a12c31ee8622e9fe51818e1f07d159581d4e40b74f6f84793bc78ae85ff7ed5a"
+    },
+    {
+      "path": "contestants/next/package.json",
+      "sha256": "2792c9315147b86f0c9a9db2268b4109dcd7b980f77e231b5ede94fcc85524a1"
+    },
+    {
+      "path": "contestants/next/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/next/app/layout.jsx",
+      "sha256": "cf237585194bf02eee6a48e1152a50e4f222814cd7da583b8dac8198d6f9685a"
+    },
+    {
+      "path": "contestants/next/app/health/route.js",
+      "sha256": "6d84c674789be1a6d652a0fcf4ce18bbed1a6744a5d9e2f119b28ffad3f48841"
+    },
+    {
+      "path": "contestants/next/app/ssr/page.jsx",
+      "sha256": "4784c3139a5b491e3ebfcacda274eec09d18a3a1a6e3ff41fcf96ddc25af2eb0"
+    },
+    {
+      "path": "contestants/react-deno/Dockerfile",
+      "sha256": "f0c3c152bd69a094caccfbc5fee13bceaa565dc67f8c9d1fa3a81f7d4da8d296"
+    },
+    {
+      "path": "contestants/react-deno/deno.json",
+      "sha256": "8916e15859d5f0fd6d4242253b9855853f62e8598b5f9be50e58907b6ec8c6a9"
+    },
+    {
+      "path": "contestants/react-deno/build.sh",
+      "sha256": "4d61ba8e22e8a7aafea5e0ae474dde5ffee83d3d9feaf3af02c2c3efea507c3c"
+    },
+    {
+      "path": "contestants/react-deno/deno.lock",
+      "sha256": "0f8bf0885f0d5e838c2b02e78aba4bd444b0dede3622eb6cfe8b5b2e33968551"
+    },
+    {
+      "path": "contestants/react-deno/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/react-deno/start.sh",
+      "sha256": "32db14985fb08eb46e8c3f50ba5d88999321c96d21f0f7a14900e4cb6fb49788"
+    },
+    {
+      "path": "contestants/react-deno/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/react-deno/src/render.mjs",
+      "sha256": "a06d7f75d1ac71cfb4b9c487d270ac122228998ecec217c680131537df64ba78"
+    },
+    {
+      "path": "contestants/react-deno/src/page.jsx",
+      "sha256": "7a9fb88b97c5bc2f90a4132dec451bf3ea4a2b2e46164ccdcb350c0ad1e2030b"
+    },
+    {
+      "path": "contestants/react-deno/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/react-deno/src/server.mjs",
+      "sha256": "3d63898c0e98a3e6254e3c735eb71e0825e74d1b5e688f2cf582903a0116afea"
+    },
+    {
+      "path": "contestants/forma/Cargo.toml",
+      "sha256": "62c77686ea8f06722408a9ee02d6121a68a2d653b2fabe788dd0c5156cb5d76d"
+    },
+    {
+      "path": "contestants/forma/Dockerfile",
+      "sha256": "4bafaade813dd08645705478ab806b92df838b9931798cf2e1abf79b44226e64"
+    },
+    {
+      "path": "contestants/forma/Cargo.lock",
+      "sha256": "85cf09908b848e064183090cb116449c0047b26e3c0c9f68630714127d3374af"
+    },
+    {
+      "path": "contestants/forma/.dockerignore",
+      "sha256": "025a9997bb1335418b3fe230d7c00b7e56411b43023994e100cbb1d19d36cc4d"
+    },
+    {
+      "path": "contestants/forma/admin/.npmrc",
+      "sha256": "50d1878b2057a4b1cead1b11eacaf31dfcb924fac03a4ce907654bdc841f00bd"
+    },
+    {
+      "path": "contestants/forma/admin/package-lock.json",
+      "sha256": "9340f8f632c82b29712a6507826a5842e4cd92a4d65963ac735972416c38e9d7"
+    },
+    {
+      "path": "contestants/forma/admin/package.json",
+      "sha256": "23a0c504eff0d3cf3b0e21743f8e73b4893b619d0a1149dd4b8a462ba0c254c5"
+    },
+    {
+      "path": "contestants/forma/admin/tsconfig.json",
+      "sha256": "8f54953b133871cc1c728d72bf59b8e03eb929a85a60da177368619f5a2049a4"
+    },
+    {
+      "path": "contestants/forma/admin/build.ts",
+      "sha256": "256d2939301bd6ee873a38eecc54db68573010763e75d9f8db15d2273ffccd4d"
+    },
+    {
+      "path": "contestants/forma/admin/src/page/app.tsx",
+      "sha256": "91abe19db2a18df1578a573d909375def2a04caf26030d5000b58c03ffb0212d"
+    },
+    {
+      "path": "contestants/forma/src/main.rs",
+      "sha256": "cfa6ecd360e98522d670792a4c0d489865ee37588785514bb35169daedb62526"
+    },
+    {
+      "path": "contestants/react-bun/Dockerfile",
+      "sha256": "ef817e982fcbb1bb6fd1247fc8a63d72ac4eb9eb9cf1d7c8696daf48c877c459"
+    },
+    {
+      "path": "contestants/react-bun/bun.lock",
+      "sha256": "4b6ffb54aeeee1caf1290468eb05b63686210ecec923db9794baa6688eb90aa9"
+    },
+    {
+      "path": "contestants/react-bun/build.sh",
+      "sha256": "b84e557c437431c46ba94b24ef506dab2f55bd038e17e09a97dc61e4beb5e16e"
+    },
+    {
+      "path": "contestants/react-bun/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/react-bun/package.json",
+      "sha256": "68070f4be5a4c471c46c04cc84402b0b91b3f792973b93f1311bd76142f6c3a3"
+    },
+    {
+      "path": "contestants/react-bun/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/react-bun/src/render.mjs",
+      "sha256": "a06d7f75d1ac71cfb4b9c487d270ac122228998ecec217c680131537df64ba78"
+    },
+    {
+      "path": "contestants/react-bun/src/page.jsx",
+      "sha256": "7a9fb88b97c5bc2f90a4132dec451bf3ea4a2b2e46164ccdcb350c0ad1e2030b"
+    },
+    {
+      "path": "contestants/react-bun/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/react-bun/src/server.mjs",
+      "sha256": "e84f42eed7767c40e638d1332781d09cccd27571453ff2ee196940fed269e6e2"
+    },
+    {
+      "path": "contestants/vanilla-deno/Dockerfile",
+      "sha256": "71cb4efacef222329ee4fb4ed56eb93b16f536c4ab50a3f1d8f95e31ac1a37ec"
+    },
+    {
+      "path": "contestants/vanilla-deno/deno.json",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "path": "contestants/vanilla-deno/build.sh",
+      "sha256": "de438c8d16c5987bb13c9dadfca61908d86f50c23860cb6b1bdee46bb100c9fb"
+    },
+    {
+      "path": "contestants/vanilla-deno/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/vanilla-deno/start.sh",
+      "sha256": "32db14985fb08eb46e8c3f50ba5d88999321c96d21f0f7a14900e4cb6fb49788"
+    },
+    {
+      "path": "contestants/vanilla-deno/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/vanilla-deno/src/page.vanilla.mjs",
+      "sha256": "8dd322b2c1cd780a3779724cd8aa0efd82d9deef0763ec8a66c86601c3cae673"
+    },
+    {
+      "path": "contestants/vanilla-deno/src/render.mjs",
+      "sha256": "a97d594639bf98c22e2dbada37a03f4c5306123726beed621b4b980882047800"
+    },
+    {
+      "path": "contestants/vanilla-deno/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/vanilla-deno/src/server.mjs",
+      "sha256": "3d63898c0e98a3e6254e3c735eb71e0825e74d1b5e688f2cf582903a0116afea"
+    },
+    {
+      "path": "contestants/svelte-node/Dockerfile",
+      "sha256": "8848c3a1af3877a5b8ba2e804871305aff85c102a47ef6c53c4b3985a96384c5"
+    },
+    {
+      "path": "contestants/svelte-node/vite.config.js",
+      "sha256": "3305ffea96430682401625b43488706f9b45947e432f795b89760fadc31c2679"
+    },
+    {
+      "path": "contestants/svelte-node/build.sh",
+      "sha256": "0e8fb0d6ffb1c7b26732093aa5dbe11458ceb89cbe756b35394152887b45dd18"
+    },
+    {
+      "path": "contestants/svelte-node/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/svelte-node/package-lock.json",
+      "sha256": "001c971ea5c867c6f935aef6d594d8934eb9230619a8696c9aa961195e381630"
+    },
+    {
+      "path": "contestants/svelte-node/package.json",
+      "sha256": "fe7cb9f7ae09fe496113b4918c9949251a10d2bade057a0fe4867bd4d499a449"
+    },
+    {
+      "path": "contestants/svelte-node/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/svelte-node/src/Page.svelte",
+      "sha256": "4cd9aba2523c5dce3c5a2c342b74102bcedcbcf5c6c5cebbaed05766dcf6730a"
+    },
+    {
+      "path": "contestants/svelte-node/src/render.mjs",
+      "sha256": "6b731555c54f26964d7adaaa00ee3ecbfabdd510d33976fe1af15a647affe347"
+    },
+    {
+      "path": "contestants/svelte-node/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/svelte-node/src/server.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/solid-node/Dockerfile",
+      "sha256": "8848c3a1af3877a5b8ba2e804871305aff85c102a47ef6c53c4b3985a96384c5"
+    },
+    {
+      "path": "contestants/solid-node/vite.config.js",
+      "sha256": "ed3ce12f051d6c1c9ed76997364287abaaa7b460425b163a66b4bdb37ceae73d"
+    },
+    {
+      "path": "contestants/solid-node/build.sh",
+      "sha256": "0e8fb0d6ffb1c7b26732093aa5dbe11458ceb89cbe756b35394152887b45dd18"
+    },
+    {
+      "path": "contestants/solid-node/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/solid-node/package-lock.json",
+      "sha256": "5b2b59316fc92e949376c9a4aebe3b5bfac011cc0ccb4d65458ee895e7b715e5"
+    },
+    {
+      "path": "contestants/solid-node/package.json",
+      "sha256": "aa8d51430b444a73efef1b1b2d33395b9dc6dd01f7c38fdfed46606fd70252d7"
+    },
+    {
+      "path": "contestants/solid-node/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/solid-node/src/render.mjs",
+      "sha256": "a06d7f75d1ac71cfb4b9c487d270ac122228998ecec217c680131537df64ba78"
+    },
+    {
+      "path": "contestants/solid-node/src/page.jsx",
+      "sha256": "b1fae608fa5eb82098924adc3eb5cd1045ef28df619eaec856036f4daa9a1afa"
+    },
+    {
+      "path": "contestants/solid-node/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/solid-node/src/server.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/preact-node/Dockerfile",
+      "sha256": "8848c3a1af3877a5b8ba2e804871305aff85c102a47ef6c53c4b3985a96384c5"
+    },
+    {
+      "path": "contestants/preact-node/vite.config.js",
+      "sha256": "5fcddbb48874f4715302cb030285f74fd95aa21e47efb41cefb30899f5e900bf"
+    },
+    {
+      "path": "contestants/preact-node/build.sh",
+      "sha256": "0e8fb0d6ffb1c7b26732093aa5dbe11458ceb89cbe756b35394152887b45dd18"
+    },
+    {
+      "path": "contestants/preact-node/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/preact-node/package-lock.json",
+      "sha256": "758cf3119c0b1746e9b72bdf01085a3b0c146714c3611aab499969055870b87c"
+    },
+    {
+      "path": "contestants/preact-node/package.json",
+      "sha256": "5520e6ae25b50865a6877805cba94594b771512debad922a7a896ce26a13043f"
+    },
+    {
+      "path": "contestants/preact-node/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/preact-node/src/render.mjs",
+      "sha256": "a06d7f75d1ac71cfb4b9c487d270ac122228998ecec217c680131537df64ba78"
+    },
+    {
+      "path": "contestants/preact-node/src/page.jsx",
+      "sha256": "f244d81aeea662451810159f64844212ba97abeaf92a2ab27590b25722c91ecc"
+    },
+    {
+      "path": "contestants/preact-node/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/preact-node/src/server.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/vanilla-node/Dockerfile",
+      "sha256": "8cf0eddfb89c0dc3105c762bbbf829b5077c6b51de11c4b89661340929fcf0e7"
+    },
+    {
+      "path": "contestants/vanilla-node/build.sh",
+      "sha256": "68385d030a6aa4af733208bb11b939266c1adb7c397e765d0eb5f86be8339a56"
+    },
+    {
+      "path": "contestants/vanilla-node/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/vanilla-node/package-lock.json",
+      "sha256": "2810a055933e22998ca1f34f44eade7fccc025e73766956bab8f35251ab6e394"
+    },
+    {
+      "path": "contestants/vanilla-node/package.json",
+      "sha256": "ba00d49d1e7e1570d296b7325f5ddf5c380a6e2ee675256948602b9e79e5870f"
+    },
+    {
+      "path": "contestants/vanilla-node/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/vanilla-node/src/page.vanilla.mjs",
+      "sha256": "8dd322b2c1cd780a3779724cd8aa0efd82d9deef0763ec8a66c86601c3cae673"
+    },
+    {
+      "path": "contestants/vanilla-node/src/render.mjs",
+      "sha256": "a97d594639bf98c22e2dbada37a03f4c5306123726beed621b4b980882047800"
+    },
+    {
+      "path": "contestants/vanilla-node/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/vanilla-node/src/server.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/vue-node/Dockerfile",
+      "sha256": "8848c3a1af3877a5b8ba2e804871305aff85c102a47ef6c53c4b3985a96384c5"
+    },
+    {
+      "path": "contestants/vue-node/vite.config.js",
+      "sha256": "ff54a6cfcec5e51befc87c76a47b203ff6378647afd1cd3f586719bf26e7841b"
+    },
+    {
+      "path": "contestants/vue-node/build.sh",
+      "sha256": "0e8fb0d6ffb1c7b26732093aa5dbe11458ceb89cbe756b35394152887b45dd18"
+    },
+    {
+      "path": "contestants/vue-node/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/vue-node/package-lock.json",
+      "sha256": "fa6962f04372ae323503ff612e11850b28406e37eaa9fe175eb8214e33e19e26"
+    },
+    {
+      "path": "contestants/vue-node/package.json",
+      "sha256": "381f94ab740caa55b504fd40862532eb9505d68d47c8b6b1632e23321b10fbed"
+    },
+    {
+      "path": "contestants/vue-node/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/vue-node/src/render.mjs",
+      "sha256": "9f4e5efc1f1ced9cda090fded0ae4d4f1221c6c05a6e41445030a778e7be92b3"
+    },
+    {
+      "path": "contestants/vue-node/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/vue-node/src/server.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/vue-node/src/Page.vue",
+      "sha256": "a61ad8b6c17ed4acc0a1a305504ae74e3d4b7e04ce846704977a1c68ff334033"
+    },
+    {
+      "path": "contestants/_shared/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/_shared/page.vanilla.mjs",
+      "sha256": "8dd322b2c1cd780a3779724cd8aa0efd82d9deef0763ec8a66c86601c3cae673"
+    },
+    {
+      "path": "contestants/_shared/page.jsx",
+      "sha256": "7a9fb88b97c5bc2f90a4132dec451bf3ea4a2b2e46164ccdcb350c0ad1e2030b"
+    },
+    {
+      "path": "contestants/_shared/render.react.mjs",
+      "sha256": "a06d7f75d1ac71cfb4b9c487d270ac122228998ecec217c680131537df64ba78"
+    },
+    {
+      "path": "contestants/_shared/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/_shared/render.vanilla.mjs",
+      "sha256": "a97d594639bf98c22e2dbada37a03f4c5306123726beed621b4b980882047800"
+    },
+    {
+      "path": "contestants/_shared/server.deno.mjs",
+      "sha256": "3d63898c0e98a3e6254e3c735eb71e0825e74d1b5e688f2cf582903a0116afea"
+    },
+    {
+      "path": "contestants/_shared/server.node.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/_shared/server.bun.mjs",
+      "sha256": "e84f42eed7767c40e638d1332781d09cccd27571453ff2ee196940fed269e6e2"
+    },
+    {
+      "path": "contestants/_shared/svelte/Page.svelte",
+      "sha256": "4cd9aba2523c5dce3c5a2c342b74102bcedcbcf5c6c5cebbaed05766dcf6730a"
+    },
+    {
+      "path": "contestants/_shared/svelte/render.mjs",
+      "sha256": "6b731555c54f26964d7adaaa00ee3ecbfabdd510d33976fe1af15a647affe347"
+    },
+    {
+      "path": "contestants/_shared/vue/render.mjs",
+      "sha256": "9f4e5efc1f1ced9cda090fded0ae4d4f1221c6c05a6e41445030a778e7be92b3"
+    },
+    {
+      "path": "contestants/_shared/vue/Page.vue",
+      "sha256": "a61ad8b6c17ed4acc0a1a305504ae74e3d4b7e04ce846704977a1c68ff334033"
+    },
+    {
+      "path": "contestants/_shared/solid/page.jsx",
+      "sha256": "b1fae608fa5eb82098924adc3eb5cd1045ef28df619eaec856036f4daa9a1afa"
+    },
+    {
+      "path": "contestants/_shared/preact/page.jsx",
+      "sha256": "f244d81aeea662451810159f64844212ba97abeaf92a2ab27590b25722c91ecc"
+    },
+    {
+      "path": "contestants/astro/Dockerfile",
+      "sha256": "d9ba2bf412b600aeadf08914b124e273976d4950bd5724141da170d07904ae33"
+    },
+    {
+      "path": "contestants/astro/astro.config.mjs",
+      "sha256": "acf97a0f005d8a437314114f943cd0d9b323b5c3afa49d5c6bce5cee7c39d4ae"
+    },
+    {
+      "path": "contestants/astro/.dockerignore",
+      "sha256": "6b788f80a718ae2a683d05e03831fa198ce83b9e7d04221d67e69f989cb3df80"
+    },
+    {
+      "path": "contestants/astro/package-lock.json",
+      "sha256": "755a93865d839a8f29c67e4dacf353dadd97547d2e0e75ac96f1ba5d0b90ba5c"
+    },
+    {
+      "path": "contestants/astro/package.json",
+      "sha256": "4daf630ec18fd532c8cd4c372e4613a1f804e0c31bcd6770d159518b990db581"
+    },
+    {
+      "path": "contestants/astro/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/astro/src/pages/ssr.astro",
+      "sha256": "25ea9638ee855a98bb67b91c9d6d0c3fa8b6a1a1425ca09acdb5b8bc82cfb216"
+    },
+    {
+      "path": "contestants/astro/src/pages/health.ts",
+      "sha256": "fd4fbbe93e757df30b7633e6c98768366633315f3384ff8eec2eaf64d22e40fc"
+    },
+    {
+      "path": "contestants/react-node/Dockerfile",
+      "sha256": "8848c3a1af3877a5b8ba2e804871305aff85c102a47ef6c53c4b3985a96384c5"
+    },
+    {
+      "path": "contestants/react-node/vite.config.js",
+      "sha256": "3fd669f471710424af3f1c78c9f1d205bd249d4233aad6717eb7dd92ab974e55"
+    },
+    {
+      "path": "contestants/react-node/build.sh",
+      "sha256": "0e8fb0d6ffb1c7b26732093aa5dbe11458ceb89cbe756b35394152887b45dd18"
+    },
+    {
+      "path": "contestants/react-node/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/react-node/package-lock.json",
+      "sha256": "7f6ccac401d3ee8b4220b649179ef2003c5c8043b27a753275af4a4bfed96b37"
+    },
+    {
+      "path": "contestants/react-node/package.json",
+      "sha256": "058fd434c617fc8f22cd85292131ec01b95ae45df58ff7bde7d13d3befabb6d2"
+    },
+    {
+      "path": "contestants/react-node/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/react-node/src/render.mjs",
+      "sha256": "a06d7f75d1ac71cfb4b9c487d270ac122228998ecec217c680131537df64ba78"
+    },
+    {
+      "path": "contestants/react-node/src/page.jsx",
+      "sha256": "7a9fb88b97c5bc2f90a4132dec451bf3ea4a2b2e46164ccdcb350c0ad1e2030b"
+    },
+    {
+      "path": "contestants/react-node/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/react-node/src/server.mjs",
+      "sha256": "2ea5da2015cbdb194e6177d27cecf1e5e1c6bfe186d2c0453976bca358f4b14b"
+    },
+    {
+      "path": "contestants/vanilla-bun/Dockerfile",
+      "sha256": "1e10098d5906bf3e8bb5d43d829d7c537d104494af129d28f959b1a32c162dc9"
+    },
+    {
+      "path": "contestants/vanilla-bun/build.sh",
+      "sha256": "b84e557c437431c46ba94b24ef506dab2f55bd038e17e09a97dc61e4beb5e16e"
+    },
+    {
+      "path": "contestants/vanilla-bun/.dockerignore",
+      "sha256": "29c1bef4627ac01805f9dde2a6721526275cc36b515648bdae0398d7df0d10f8"
+    },
+    {
+      "path": "contestants/vanilla-bun/package.json",
+      "sha256": "2145363da0fd183cde090b4adad2e1374d11c9e265278e9eafc941c3a227d2a9"
+    },
+    {
+      "path": "contestants/vanilla-bun/src/rows.mjs",
+      "sha256": "68da2c3cf91401b5811521a8f8f5348a430d0ce0b02c6c21f87c87ee49a26477"
+    },
+    {
+      "path": "contestants/vanilla-bun/src/page.vanilla.mjs",
+      "sha256": "8dd322b2c1cd780a3779724cd8aa0efd82d9deef0763ec8a66c86601c3cae673"
+    },
+    {
+      "path": "contestants/vanilla-bun/src/render.mjs",
+      "sha256": "a97d594639bf98c22e2dbada37a03f4c5306123726beed621b4b980882047800"
+    },
+    {
+      "path": "contestants/vanilla-bun/src/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/vanilla-bun/src/server.mjs",
+      "sha256": "e84f42eed7767c40e638d1332781d09cccd27571453ff2ee196940fed269e6e2"
+    },
+    {
+      "path": "contestants/react-router/Dockerfile",
+      "sha256": "14dc4689bd0f240cd8b155b04e6c010ff1a56460a6f1f843c3ce708293125b12"
+    },
+    {
+      "path": "contestants/react-router/react-router.config.ts",
+      "sha256": "702c9ecfa1c2cd36895e8bd592dbf4e72eeab923223799fe1e5dd98b10fb6dbf"
+    },
+    {
+      "path": "contestants/react-router/.dockerignore",
+      "sha256": "6b788f80a718ae2a683d05e03831fa198ce83b9e7d04221d67e69f989cb3df80"
+    },
+    {
+      "path": "contestants/react-router/package-lock.json",
+      "sha256": "944f60743bb5fe83b6cad3b329767a6ab241af6a48a2604888247b6bdd955c93"
+    },
+    {
+      "path": "contestants/react-router/package.json",
+      "sha256": "b7e1e623089d79c591e6978fc60677c8358beb071890594c7f075098f7698ff8"
+    },
+    {
+      "path": "contestants/react-router/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "contestants/react-router/tsconfig.json",
+      "sha256": "6769de4b3585ef79fbbbd7ffdbeb8c5e9fa2b7294e37ad8fd5241bd9536b1614"
+    },
+    {
+      "path": "contestants/react-router/vite.config.ts",
+      "sha256": "06557a6e8bdf6daec9227750a4cc8b37bf50616ef5ff4272041402eafca5c233"
+    },
+    {
+      "path": "contestants/react-router/app/routes.ts",
+      "sha256": "7e420cef4aad355c40e2e7a8df65d1d8507079bdb4fa12b06afae34e5786e3ec"
+    },
+    {
+      "path": "contestants/react-router/app/root.tsx",
+      "sha256": "11fcc3b6ed2ad778b57f8329c09d763e55d206ae925c30b2cef9d17e250faa39"
+    },
+    {
+      "path": "contestants/react-router/app/routes/ssr.tsx",
+      "sha256": "b2deb58523571b50b4fd37512239c0188a918bbe290a71de31612bbc3a7d43f0"
+    },
+    {
+      "path": "contestants/react-router/app/routes/health.ts",
+      "sha256": "414cf86cae27d48d6d01900158eb498e1e2efb353b02dd86d97bf8a68efc4659"
+    },
+    {
+      "path": "shared/PAGE-SPEC.md",
+      "sha256": "70ff863152035125e009bf448b3b2f93194e648bd97842247957a7d76915dac2"
+    },
+    {
+      "path": "shared/dataset.mjs",
+      "sha256": "0588b041d0ba1d1dc5af40da358fe285b8c907aa71e848420e7d529001e28351"
+    },
+    {
+      "path": "harness/score.mjs",
+      "sha256": "5f1cbeb4a09d446a748a9678e3f4663b5d3db619a8f3ebbf2a17e2dfd34d6e99"
+    },
+    {
+      "path": "harness/smoke.mjs",
+      "sha256": "1a0ee9ef7f381d33922e37b935d0c7c0cd752f5d9e9f085636c020f484fcd5d8"
+    },
+    {
+      "path": "harness/lib.mjs",
+      "sha256": "f215a417461ca631d81af2a3a4e2061124aab30e574a144d76201ddd10f37e36"
+    },
+    {
+      "path": "harness/build-loadgen.sh",
+      "sha256": "d6478ab8ceff50de967b9a705ac8c84fc55c8b701ea09179c0e091b74ebb0f28"
+    },
+    {
+      "path": "harness/report.mjs",
+      "sha256": "b1293c739f9f8cb987299d8ce37d81fd1660ef7a44ed22a05ed84779b43e39b8"
+    },
+    {
+      "path": "harness/report-views.js",
+      "sha256": "8717f56375b2174223df04499f978f5aee76ca0b46d3272c0468b27e9cbbd051"
+    },
+    {
+      "path": "harness/cleanup.sh",
+      "sha256": "088c09612aba9790dd1c1e22e48141c9f50d5c42cd86831d5c8025266fb8e7fc"
+    },
+    {
+      "path": "harness/race.mjs",
+      "sha256": "36e5356d96400f1614c316eeea73fd4c3600e2a9b4e00457e60dc2e10a2110c5"
+    },
+    {
+      "path": "harness/loadgen/Dockerfile",
+      "sha256": "c2aff5d312420df3f951ab6845252af19685f803dd117d0bd7f0df7c96b139d7"
+    },
+    {
+      "path": "client-race/run.mjs",
+      "sha256": "97aff17972f931a8e187ab1e97643dd7316abcf74d7424721e69bd47a12f299f"
+    },
+    {
+      "path": "client-race/lib.mjs",
+      "sha256": "0be678e1344d1781c616ae546a21a9fab0439e48674e675a4f63d0998c6e49e2"
+    },
+    {
+      "path": "client-race/package-lock.json",
+      "sha256": "09f06bc3dc603ae65d2c6f7721a6fa276287faec41da97b592cc16ad819a099d"
+    },
+    {
+      "path": "client-race/package.json",
+      "sha256": "35f7efd61a4be81880685840c16d606118f6242c1993d722aa58ac5dbe51dcf2"
+    },
+    {
+      "path": "client-race/SPEC.md",
+      "sha256": "8e65b257c0742ac1b0153f1c45b0a5443287e83becb0e62bb45942ccfb910746"
+    },
+    {
+      "path": "client-race/bundle.mjs",
+      "sha256": "d2806fc828d0f1df690e749a6be1a44b3ced69dc44a945e9a237d64981d40716"
+    },
+    {
+      "path": "client-race/shared/data.js",
+      "sha256": "53605b503efa861c5802ec36f1488ee17ddb37b19f491e907d6f205a8ad212b5"
+    },
+    {
+      "path": "client-race/shared/chrome.css",
+      "sha256": "1c858c8d84d613cbe515b2a6a2b6b553c5750898ffe4d8a871a953f6e374fa81"
+    },
+    {
+      "path": "client-race/apps/svelte/svelte.config.js",
+      "sha256": "3c328d509de22605aa7d1bcfd4a34941b99c2ecaea7026dde935785d8b6661e4"
+    },
+    {
+      "path": "client-race/apps/svelte/index.html",
+      "sha256": "bbf12a0bc7ae9e1f635858528fd07aec0be97a8b3995ca8cd1b8a42a730526b7"
+    },
+    {
+      "path": "client-race/apps/svelte/vite.config.js",
+      "sha256": "2291deb6a54dfc83baf968e5c5691911f068eb95b73d97b69edcda4d9d64463c"
+    },
+    {
+      "path": "client-race/apps/svelte/src/App.svelte",
+      "sha256": "dfa0d1881307fca0f996c252b439bdd4520bd3cd2497d65f9898f0c85e4a5c6a"
+    },
+    {
+      "path": "client-race/apps/svelte/src/main.js",
+      "sha256": "6dea81eaa6b66e6f56eb194e04f0b97021c9424dd9ffcecc9fb1c89fd2d29cdb"
+    },
+    {
+      "path": "client-race/apps/svelte/src/Item.svelte.js",
+      "sha256": "a8e59d074073c681edaffb1509cc92a249632500d1e86dcc7401ec97da583ed4"
+    },
+    {
+      "path": "client-race/apps/forma/index.html",
+      "sha256": "7f66dcb32338c11bb34cfe6b3efff86b81276a095a1415e8b4777a2f11c9b032"
+    },
+    {
+      "path": "client-race/apps/forma/vite.config.js",
+      "sha256": "2bed06776fbac8c5c47cfbad5484999aebe8d3eb2f19bbf11b5497698f7b7b69"
+    },
+    {
+      "path": "client-race/apps/forma/src/main.jsx",
+      "sha256": "3ba89957c35240eb4cda6f4e1779ebfdad32ce4c772400ca07647d17dbddfea4"
+    },
+    {
+      "path": "client-race/apps/vue/index.html",
+      "sha256": "6cc63a57937b02bf9941f710162ef0a76e0ac79640646b5127c5cb530d6ae222"
+    },
+    {
+      "path": "client-race/apps/vue/vite.config.js",
+      "sha256": "741f962f12054e2a8ccc61de06778b049e47812c2f6a1b054700858bfddfe6a5"
+    },
+    {
+      "path": "client-race/apps/vue/src/App.vue",
+      "sha256": "88ad259d4ff9583ca524654425741088f596b4cbcbc5c5679e3f7193badd2c0b"
+    },
+    {
+      "path": "client-race/apps/vue/src/main.js",
+      "sha256": "4445536386aabcc95160bab95f9194fbba8be23ca624cd2f0879d30b78a8729b"
+    },
+    {
+      "path": "client-race/apps/solid/index.html",
+      "sha256": "cd1659ede09c60e0ffea803f0bd328def956eb7c86c8bfcf35dbbf8fed6828b2"
+    },
+    {
+      "path": "client-race/apps/solid/vite.config.js",
+      "sha256": "1f58f296e99e4f7be2bfac66d0ac5f61472b248c487bc883397017ae683f8ee5"
+    },
+    {
+      "path": "client-race/apps/solid/src/main.jsx",
+      "sha256": "57a761cceb522fefa86f92c8adb3b00a91061fe03dfbe9bc2970080c69b9d904"
+    },
+    {
+      "path": "client-race/apps/preact/index.html",
+      "sha256": "375fce857b8f2639901e24c05305dad0c563fb7e9a458613137744bb44fc193d"
+    },
+    {
+      "path": "client-race/apps/preact/vite.config.js",
+      "sha256": "feb1755e5f541a2848887ef6cd0516757ab71ed03fe34a2941a15c9f7cffaecc"
+    },
+    {
+      "path": "client-race/apps/preact/src/main.jsx",
+      "sha256": "7931b424046126d864a98a4d385cb6c5bdb4ef8e4df9f2f432a38cecdaa896b1"
+    },
+    {
+      "path": "client-race/apps/vanilla/index.html",
+      "sha256": "7f778abb857090f3665c7f63b23479513d02eaf3857d3e833057f88dc9903355"
+    },
+    {
+      "path": "client-race/apps/vanilla/vite.config.js",
+      "sha256": "c2df0198da09413ae285666ae8239ce2c87003d6fe5878c67a2a40e7eb034652"
+    },
+    {
+      "path": "client-race/apps/vanilla/src/main.js",
+      "sha256": "eb53796f7a682c0bab99d6b32384761bc1e83ce7dc20aa9f74af8bf1dc589e36"
+    },
+    {
+      "path": "client-race/apps/react/index.html",
+      "sha256": "28c7b0235fc52d20fd058a1415268229402fc5b8a268414f6e1cbf4e4e94e899"
+    },
+    {
+      "path": "client-race/apps/react/vite.config.js",
+      "sha256": "e07cd88ce141314efded2b2107703cddd9e3b662ee2ccaa4955ab447de0e125c"
+    },
+    {
+      "path": "client-race/apps/react/src/main.jsx",
+      "sha256": "bb0167fa8420c7c579d089284790a04efff47c33e54b0e207aebf5bdee970754"
+    },
+    {
+      "path": "signals-race/worker.mjs",
+      "sha256": "ad4f4688aae522c76188631a8a877824d05b9a32234e0184250c735be26d64d9"
+    },
+    {
+      "path": "signals-race/run.mjs",
+      "sha256": "a09a87c6aa1c332ae8af0a44ccfdc1e4c50e4e31484c625d51ea3d87b99fa08e"
+    },
+    {
+      "path": "signals-race/Dockerfile",
+      "sha256": "edf3cb1a1f220ce57ee04afcf0d48df22f0071cf4bfe3a9848eec2ae4c0700db"
+    },
+    {
+      "path": "signals-race/correctness.mjs",
+      "sha256": "9a1f4fb5c27496700b8b882c5484d65b334df7106fdb4962483750aa59956c03"
+    },
+    {
+      "path": "signals-race/.dockerignore",
+      "sha256": "0c54cb15d0d697ad5a660571187444b7e332f86e0e5a81b409c1b84d91e5ea46"
+    },
+    {
+      "path": "signals-race/package-lock.json",
+      "sha256": "21eea2e8c5e9f86d156b4e8cf264c57790ce215c0c0ae1997ffc0f6f306cd7ec"
+    },
+    {
+      "path": "signals-race/package.json",
+      "sha256": "a094e0c1e8239e1cd16981e7b4df37c37c06546a473a9d7eb1c1d662b8e0d28a"
+    },
+    {
+      "path": "signals-race/cars.mjs",
+      "sha256": "389fb01039316128c587391a492fcc2e0b8ecf0130b82531d5369c9df13f2070"
+    },
+    {
+      "path": "signals-race/SPEC.md",
+      "sha256": "8223ad1adcb4a25bcb2889c35b030764d5ab24ca57f4c279353b12abce5b9a05"
+    },
+    {
+      "path": "signals-race/benchmarks.mjs",
+      "sha256": "6ad60edbee4100b27dd6b3f2e3837514d989e7720a3062d7d5c2415053abda9e"
+    },
+    {
+      "path": "signals-race/adapters/forma.mjs",
+      "sha256": "77ce73c5c7767fe2ab2c4646ca7061ad77e19fdf1522211349b40bbc965f1f67"
+    },
+    {
+      "path": "signals-race/adapters/alien-signals-3.1.2.mjs",
+      "sha256": "8311894a2b12e474a6a01a4e437503b61c52eabd397a5d3026b092babd24aa40"
+    },
+    {
+      "path": "signals-race/adapters/solid.mjs",
+      "sha256": "88a4fed7c44bfc359dd62365d3928af0d57319efaac6e6e25a81b46506c777b1"
+    },
+    {
+      "path": "signals-race/adapters/preact-signals.mjs",
+      "sha256": "1b21b3f59ba34e1c8d751eb03d1e07c59f871706e55420de85d4e3be482a0a8f"
+    },
+    {
+      "path": "signals-race/adapters/alien-signals.mjs",
+      "sha256": "fbeaa685ebf61dadc4eb35f1c8a600c803b91cebe54595aabc429628d1480abd"
+    },
+    {
+      "path": "signals-race/adapters/vue-reactivity.mjs",
+      "sha256": "33e0dee7bef37cb600c916028ce0dbab50c85feb5d32320f4f7017cc92c9a668"
+    }
+  ]
+}

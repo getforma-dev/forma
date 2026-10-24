@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "react": "npm:react@19.3.1",
+    "react/jsx-runtime": "npm:react@19.3.1/jsx-runtime",
+    "react-dom/server": "npm:react-dom@19.3.1/server",
+    "react-dom/client": "npm:react-dom@19.3.1/client"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  }
+}

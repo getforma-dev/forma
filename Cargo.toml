@@ -4,7 +4,7 @@ members = ["crates/forma-ir", "crates/forma-ir-derive", "crates/forma-server"]
 # (e2e/Cargo.toml): the frame server embeds what e2e/frame/build.sh builds, which
 # does not exist on a clean clone, so `cargo test --workspace` here must not
 # compile it. They depend on these crates by path.
-exclude = ["e2e"]
+exclude = ["e2e", "benchmarks/grand-prix/contestants/forma"]
 resolver = "2"
 
 [workspace.package]

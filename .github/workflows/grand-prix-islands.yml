@@ -1,0 +1,93 @@
+name: Grand Prix native islands
+
+on:
+  pull_request:
+    paths:
+      - 'benchmarks/grand-prix/**'
+      - '.github/workflows/grand-prix-islands.yml'
+  workflow_dispatch:
+    inputs:
+      cars:
+        description: 'Comma-separated island cars, or all eleven'
+        default: 'forma,react-node,react-bun,react-deno,preact-node,solid-node,svelte-node,vue-node,next,react-router,astro'
+        type: string
+      runner:
+        description: 'Native Linux x64 runner matching the selected resource profile'
+        default: 'ubuntu-latest'
+        type: string
+      profile:
+        description: 'Frozen CPU allocation; gha-4-v1 requires the standard four-CPU GHA VM'
+        type: choice
+        default: native-8-v1
+        options:
+          - native-8-v1
+          - gha-4-v1
+      diagnostic:
+        description: 'Use a smaller VM for correctness; results are not scored'
+        default: true
+        type: boolean
+
+concurrency:
+  group: grand-prix-islands-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  islands:
+    permissions:
+      contents: read
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install the locked browser runner
+        working-directory: benchmarks/grand-prix/island-race
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify container ownership controls
+        run: node --test benchmarks/grand-prix/harness/islands-linux.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
+      - name: Check browser profile path restrictions
+        run: node --test benchmarks/grand-prix/harness/browser-sandbox.test.mjs benchmarks/grand-prix/harness/campaign.test.mjs
+      - name: Install and authenticate the frozen Linux browser
+        id: browser
+        working-directory: benchmarks/grand-prix
+        run: sudo --preserve-env=GITHUB_OUTPUT "$(command -v node)" harness/install-linux-browser.mjs "$RUNNER_TEMP/gp264-browser" --install-deps --install-apparmor-profile
+      - name: Run all requested native island cars sequentially
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: islands-ci-${{ github.run_id }}-${{ github.run_attempt }}
+          GP_CHROME: ${{ steps.browser.outputs.path }}
+          GP_CARS: ${{ inputs.cars || 'forma,react-node,react-bun,react-deno,preact-node,solid-node,svelte-node,vue-node,next,react-router,astro' }}
+          GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
+          GP_PROFILE: ${{ inputs.profile || 'native-8-v1' }}
+        run: |
+          args=(harness/islands-linux.mjs --chrome "$GP_CHROME" --cars "$GP_CARS")
+          if [[ "$GP_DIAGNOSTIC" == true ]]; then args+=(--diagnostic); fi
+          node "${args[@]}"
+      - name: Remove this run's browser profile
+        if: always() && steps.browser.outputs.sandbox_profile != ''
+        env:
+          GP_BROWSER_PROFILE: ${{ steps.browser.outputs.sandbox_profile }}
+        run: sudo "$(command -v node)" benchmarks/grand-prix/harness/browser-sandbox.mjs --remove "$GP_BROWSER_PROFILE"
+      - name: Remove only this run's Docker resources
+        if: always()
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: islands-ci-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node harness/cleanup.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: grand-prix-islands-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            benchmarks/grand-prix/results/islands-*/run.json
+            benchmarks/grand-prix/results/islands-*/*.json
+            benchmarks/grand-prix/results/*-cleanup.json
+            benchmarks/grand-prix/results/*-ownership.json
+            ${{ runner.temp }}/gp264-browser/browser-lock.json
+          if-no-files-found: error
+          retention-days: 30
