@@ -61,6 +61,8 @@ step "cargo clippy --locked --workspace --all-targets --all-features -- -D warni
 cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 step "cargo test --locked --workspace"
 cargo test --locked --workspace
+step "cargo test --locked -p forma-server --features compression"
+cargo test --locked -p forma-server --features compression
 step "actual renderer 3.1 accepts older writers and refuses 3.2 before bind"
 node scripts/test-renderer-window.mjs
 step "cargo doc --locked --workspace --no-deps"

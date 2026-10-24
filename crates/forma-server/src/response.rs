@@ -5,6 +5,11 @@ use axum::http::{header, HeaderName, HeaderValue};
 use axum::response::{IntoResponse, Response};
 use std::time::Duration;
 
+#[cfg(feature = "compression")]
+mod compression;
+#[cfg(feature = "compression")]
+pub use compression::CompressedPageResponse;
+
 /// A rendered page, ready to send.
 ///
 /// As axum's [`IntoResponse`] it always writes, together with the HTML:
@@ -108,6 +113,24 @@ pub struct PageParts {
 }
 
 impl PageResponse {
+    /// Opt this response into Brotli/gzip negotiation (the `compression` feature).
+    ///
+    /// Only call this for a route whose response cannot put a secret such as a
+    /// CSRF token beside attacker-controlled text. Compression can expose secrets
+    /// through response length (BREACH); a fresh CSP nonce and `no-store` do not
+    /// protect other secrets. This method never enables compression globally.
+    ///
+    /// Preserves every page policy header and adds `Vary: Accept-Encoding`.
+    /// Bodies below 1 KiB stay uncompressed when identity is acceptable. Axum's
+    /// GET routing supplies the same headers for HEAD and removes its body.
+    #[cfg(feature = "compression")]
+    pub fn with_compression(
+        self,
+        request_headers: &axum::http::HeaderMap,
+    ) -> CompressedPageResponse {
+        CompressedPageResponse::new(self, request_headers)
+    }
+
     /// Wrap a rendered document whose policy was built, from the same nonce,
     /// before the walk (so an invalid extension costs no walk).
     pub(crate) fn with_policy(
