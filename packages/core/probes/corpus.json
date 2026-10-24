@@ -2802,5 +2802,85 @@
   "find": "        if (!n) continue;\n",
   "replace": "",
   "note": "mountScope binds every node an earlier binding detached, the data-list row template among them, so the template is bound against the parent scope, where `item` is undeclared: a bogus FORMA_E_UNRESOLVED (FORMA-129). Verified by: src/__tests__/runtime-if-branch.test.ts > \"a data-list row template inside a data-if that starts false is still bound only in its rows\""
+ },
+ {
+  "id": "runtime/nested-scope-bound-by-outer",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (tieredRoots.has(n) || (n as Element).hasAttribute('data-forma-state')) return true;\n",
+  "replace": "    if (tieredRoots.has(n)) return true;\n",
+  "note": "ownedBelow stops only at a nested mountMarkup root, so a scope also binds every element of a data-forma-state scope nested in it, against its own state: an outer write overwrites the inner scope's text, a click runs the inner handler and the outer one, and a name only the inner scope declares is reported FORMA_E_UNRESOLVED (every release from 0.1.0 until FORMA-283). Verified by: src/__tests__/runtime-nested-scope.test.ts > \"the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them\""
+ },
+ {
+  "id": "runtime/nested-scope-root-bound-by-outer",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (tieredRoots.has(n) || (n as Element).hasAttribute('data-forma-state')) return true;\n",
+  "replace": "    if (tieredRoots.has(n) || (n !== el && (n as Element).hasAttribute('data-forma-state'))) return true;\n",
+  "note": "the outer scope binds a nested scope root's own directives as well as the nested scope does: its data-bind:, data-class: and data-text follow the outer state too, and its handler runs twice. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"a nested scope root's own directives are its scope's, bound once\""
+ },
+ {
+  "id": "reconcile/reset-skips-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            replaceInnerContent(liveMatch, newChild);\n            for (const s of scopesIn(liveMatch)) config.mountScope(s);\n",
+  "replace": "            replaceInnerContent(liveMatch, newChild);\n            config.mountScope(liveMatch);\n",
+  "note": "an update that changes a scope's state shape (RESET) mounts that scope only, not the scopes nested in its new content, so their elements stay as the markup wrote them and their handlers do nothing. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/reset-leaks-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            for (const s of scopesIn(liveMatch)) config.unmountScope(s);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
+  "replace": "            config.unmountScope(liveMatch);\n            patchAttributes(liveMatch, newChild, trusted, parser);\n",
+  "note": "a RESET disposes the scope only, not the scopes nested in it: their effects and listeners stay live on the replaced nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/replace-skips-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            for (const s of scopesIn(replacement)) config.mountScope(s);\n",
+  "replace": "            config.mountScope(replacement);\n",
+  "note": "an update that changes a scope's data-module (REPLACE) mounts the replacement only, not the scopes nested in it, so their elements stay as the markup wrote them and their handlers do nothing. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/replace-leaks-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "            for (const s of scopesIn(liveMatch)) config.unmountScope(s);\n            const replacement",
+  "replace": "            config.unmountScope(liveMatch);\n            const replacement",
+  "note": "a REPLACE disposes the replaced scope only, not the scopes nested in it: their effects and listeners stay live on the removed nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s leaves exactly the bindings a fresh mount makes, each bound once\""
+ },
+ {
+  "id": "reconcile/insert-misses-hidden-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      for (const s of scopesIn(clone)) config.mountScope(s);\n",
+  "replace": "      if (clone.hasAttribute('data-forma-state')) config.mountScope(clone);\n      for (const s of Array.from(clone.querySelectorAll('[data-forma-state]'))) config.mountScope(s);\n",
+  "note": "an update that adds a scope looks for the scopes nested in it only after that scope mounted, when a data-if that is false has taken its branch out of the tree, so a scope in that branch is never mounted (the order before FORMA-283). Verified by: src/__tests__/runtime-nested-scope.test.ts > \"an update that adds a scope whose data-if starts false mounts the scope in that branch once\""
+ },
+ {
+  "id": "reconcile/remove-leaks-nested-scopes",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      for (const s of scopesIn(child)) config.unmountScope(s);\n",
+  "replace": "      if (child.hasAttribute('data-forma-state')) config.unmountScope(child);\n",
+  "note": "an update that removes an element disposes a scope on that element only, not the scopes nested in it: their effects and listeners stay live on the removed nodes until the mount is unmounted. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"an update that removes the nested scope disposes it, and one that adds it back binds it once\""
  }
 ]
