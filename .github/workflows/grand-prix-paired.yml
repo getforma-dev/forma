@@ -1,0 +1,69 @@
+name: Grand Prix before and after
+
+on:
+  pull_request:
+    paths:
+      - 'benchmarks/grand-prix/harness/paired-server*'
+      - '.github/workflows/grand-prix-paired.yml'
+  workflow_dispatch:
+    inputs:
+      forma_refs:
+        description: 'One to four exact candidate commits; published baseline always runs first'
+        required: true
+        type: string
+      runner:
+        description: 'Linux runner label; qualified runs require at least eight CPUs'
+        default: 'ubuntu-latest'
+        type: string
+      diagnostic:
+        description: 'Allow a smaller VM; results remain diagnostic'
+        default: true
+        type: boolean
+
+concurrency:
+  group: grand-prix-paired-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  comparison:
+    permissions:
+      contents: read
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Check candidate and ownership restrictions
+        run: node --test benchmarks/grand-prix/harness/paired-server.test.mjs
+      - name: Run the baseline then each candidate sequentially
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: paired-${{ github.run_id }}-${{ github.run_attempt }}
+          GP_FORMA_REFS: ${{ inputs.forma_refs }}
+          GP_DIAGNOSTIC: ${{ inputs.diagnostic && 'true' || 'false' }}
+        run: node harness/paired-server.mjs
+      - name: Remove only this comparison's remaining Docker resources
+        if: always() && github.event_name == 'workflow_dispatch'
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: paired-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node harness/paired-server.mjs --cleanup
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always() && github.event_name == 'workflow_dispatch'
+        with:
+          name: grand-prix-paired-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            benchmarks/grand-prix/results/*.json
+            benchmarks/grand-prix/results/*.lock
+            benchmarks/grand-prix/results/*-paired/
+            benchmarks/grand-prix/results/*-runtime/
+            benchmarks/grand-prix/results/raw/
+          if-no-files-found: error
+          retention-days: 30
