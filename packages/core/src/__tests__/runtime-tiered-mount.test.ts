@@ -1052,6 +1052,192 @@ describe('tiers and configuration', () => {
     expect(text('k')).toBe('5');
   });
 
+  /**
+   * Every attribute in `node` (nested `<template>` contents included) that
+   * the URL check or the handler check refuses: an `on…` name, or a URL
+   * attribute whose value, with the characters a URL parser ignores taken
+   * out, starts with a script scheme (`data:image/svg+xml` too, but on an
+   * image). Written out here rather than imported, so the oracle is not the
+   * code under test.
+   */
+  const refusedAttrs = (node: ParentNode): string[] => {
+    const found: string[] = [];
+    const walk = (n: ParentNode): void => {
+      for (const el of Array.from(n.querySelectorAll('*'))) {
+        for (const a of Array.from(el.attributes)) {
+          const v = a.value.replace(/[\u0000- \u007f-\u009f]/g, '').toLowerCase();
+          const url = /^(?:href|src|action|formaction|xlink:href|poster|background|data)$/i.test(a.name)
+            && (/^(?:javascript:|vbscript:|data:text\/html)/.test(v) || (v.startsWith('data:image/svg+xml') && el.localName !== 'img'));
+          if (/^on/i.test(a.name) || url) found.push(`${el.localName}#${el.id}[${a.name}]`);
+        }
+      }
+      for (const t of Array.from(n.querySelectorAll('template'))) walk(t.content);
+    };
+    walk(node);
+    return found;
+  };
+
+  it('an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update', async () => {
+    // FORMA-276: the preview frame refused these only through its policy.
+    // Now the strip that removes <link> and srcdoc removes them too, so the
+    // frame does not depend on its policy alone. The values are entity-
+    // decoded by the parse before they are checked.
+    vi.stubGlobal('origin', 'null');
+    const root = page();
+    const markup =
+      `<a id="a1" href="javascript:alert(1)" title="kept">a</a>` +
+      `<a id="a2" href="JaVaScRiPt:alert(1)">a</a>` +
+      `<a id="a3" href="&#106;avascript&colon;alert(1)">a</a>` +
+      `<a id="a4" href="java&Tab;script:alert(1)">a</a>` +
+      `<a id="a5" href="java\nscript:alert(1)">a</a>` +
+      `<a id="a6" href="&#x01; vbscript:msgbox(1)">a</a>` +
+      `<a id="a7" href="data:text/html,&lt;p&gt;doc">a</a>` +
+      `<a id="a8" href="data:image/svg+xml,&lt;svg/&gt;">a</a>` +
+      `<img id="i1" src="data:image/svg+xml,&lt;svg/&gt;" alt="kept">` +
+      `<form id="f1" action="javascript:alert(1)"><button id="b1" formaction="vbscript:x">b</button></form>` +
+      `<svg><a id="x1" xlink:href="javascript:alert(1)"><text>s</text></a><a id="x2" href="javascript:alert(1)"></a></svg>` +
+      `<video id="v1" poster="javascript:alert(1)"></video><table id="t1" background="javascript:alert(1)"></table>` +
+      `<div id="h1" ONCLICK="alert(1)" onmouseover="alert(2)" title="kept">h</div>` +
+      `<svg id="h2" onload="alert(1)"></svg><img id="h3" src="/x.png" onerror="alert(1)">` +
+      `<a id="s1" href="/relative/javascript-guide">ok</a><a id="s2" href="https://example.com/javascript">ok</a>` +
+      `<a id="s3" href="#javascript">ok</a><a id="s4" href="mailto:a@example.com">ok</a>` +
+      `<template><a id="n1" href="javascript:alert(1)" onclick="alert(1)">t</a></template>` +
+      `<div data-forma-state='{"u":"javascript:alert(1)","rows":[{"u":"javascript:alert(1)"}]}'>` +
+      `<a id="bound" data-bind:href="{u}" data-bind:title="{u}">b</a>` +
+      `<ul data-list="{rows}"><li><a class="row" href="{item.u}" title="{item.u}">r</a></li></ul>` +
+      `<p id="kept" data-text="{'kept'}">-</p></div>`;
+    const handle = mountSuccessfully(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
+    await settle();
+    const el = (id: string): Element => document.getElementById(id)!;
+    expect(text('kept')).toBe('kept');
+    expect(refusedAttrs(root)).toEqual([]);
+    for (const id of ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'x2']) expect(el(id).getAttribute('href'), id).toBeNull();
+    expect(el('x1').getAttribute('xlink:href')).toBeNull();
+    expect(el('f1').getAttribute('action')).toBeNull();
+    expect(el('b1').getAttribute('formaction')).toBeNull();
+    expect(el('v1').getAttribute('poster')).toBeNull();
+    expect(el('t1').getAttribute('background')).toBeNull();
+    expect(el('h1').getAttributeNames()).toEqual(['id', 'title']);
+    expect(el('h2').getAttribute('onload')).toBeNull();
+    expect(el('h3').getAttributeNames()).toEqual(['id', 'src']);
+    // The elements stay, with their other attributes; ordinary URLs and an
+    // SVG image on an image are kept, and the bindings run.
+    expect(el('a1').getAttribute('title')).toBe('kept');
+    expect(el('i1').getAttribute('src')).toBe('data:image/svg+xml,<svg/>');
+    expect(['s1', 's2', 's3', 's4'].map((id) => el(id).getAttribute('href')))
+      .toEqual(['/relative/javascript-guide', 'https://example.com/javascript', '#javascript', 'mailto:a@example.com']);
+    expect(el('bound').getAttribute('href')).toBeNull();
+    expect(el('bound').getAttribute('title')).toBe('javascript:alert(1)');
+    expect(root.querySelector('a.row')!.getAttribute('href')).toBeNull();
+    expect(root.querySelector('a.row')!.getAttribute('title')).toBe('javascript:alert(1)');
+    const reported = (code: string) => runtime.getDiagnostics().filter((d) => d.code === code);
+    // One report for each attribute removed: 15 URLs (the nested template's
+    // included) and 5 handlers (h1's two, h2's, h3's, the nested template's).
+    expect(reported('FORMA_E_UNREVIEWED_URL').map((d) => [d.kind, d.tier])).toEqual(Array(15).fill(['markup-refused', 'unreviewed']));
+    expect(reported('FORMA_E_UNREVIEWED_HANDLER').map((d) => [d.kind, d.tier])).toEqual(Array(5).fill(['markup-refused', 'unreviewed']));
+    expect(reported('FORMA_E_UNREVIEWED_URL').every((d) => /renders no script URL in (?:href|xlink:href|action|formaction|poster|background): removed$/.test(d.reason))).toBe(true);
+    expect(reported('FORMA_E_UNREVIEWED_HANDLER').map((d) => d.reason).sort()).toEqual([
+      'unreviewed markup renders no handler attribute onclick: removed',
+      'unreviewed markup renders no handler attribute onclick: removed',
+      'unreviewed markup renders no handler attribute onload: removed',
+      'unreviewed markup renders no handler attribute onmouseover: removed',
+      'unreviewed markup renders no handler attribute onerror: removed',
+    ].sort());
+
+    // An update is stripped the same way: a kept element whose attribute
+    // changes, and an element the update adds.
+    runtime.clearDiagnostics();
+    handle.update(runtime.trustedHtml(
+      `<a id="a1" href="vbscript:msgbox(2)" title="again">a</a><a id="a2" href="/now-safe">a</a>` +
+      `<img id="i2" src="/x.png" onerror="alert(3)"><svg><a id="x1" xlink:href="&#x6A;avascript:alert(3)"><text>s</text></a></svg>` +
+      `<p id="kept">again</p>`,
+    ));
+    await settle();
+    expect(text('kept')).toBe('again');
+    expect(refusedAttrs(root)).toEqual([]);
+    expect(el('a1').getAttribute('href')).toBeNull();
+    expect(el('a1').getAttribute('title')).toBe('again');
+    expect(el('a2').getAttribute('href')).toBe('/now-safe');
+    expect(el('i2').getAttribute('src')).toBe('/x.png');
+    expect(el('x1').getAttribute('xlink:href')).toBeNull();
+    expect(runtime.getDiagnostics().map((d) => d.code).sort())
+      .toEqual(['FORMA_E_UNREVIEWED_HANDLER', 'FORMA_E_UNREVIEWED_URL', 'FORMA_E_UNREVIEWED_URL']);
+    handles.pop()!.unmount();
+
+    // Reported whatever the mount's diagnostics switch says.
+    runtime.clearDiagnostics();
+    mountOn(root, `<a href="javascript:alert(1)" onclick="alert(1)">quiet</a>`, { tier: 'unreviewed', config: { diagnostics: false } });
+    expect(runtime.getDiagnostics().map((d) => d.code).sort()).toEqual(['FORMA_E_UNREVIEWED_HANDLER', 'FORMA_E_UNREVIEWED_URL']);
+  });
+
+  it('an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused', async () => {
+    // The live check after every write (as for <link>) covers these too: an
+    // attribute planted by the DOM between the strip and the write is
+    // removed, reported as having reached the document, and the render
+    // refused with the root cleared.
+    vi.stubGlobal('origin', 'null');
+    const root = page();
+
+    // On an update, through the diff path's clone of a new element.
+    const handle = mountOn(root, '<p id="k">1</p>', { tier: 'unreviewed' });
+    const clone = Node.prototype.cloneNode;
+    const cloning = vi.spyOn(Node.prototype, 'cloneNode').mockImplementation(function (this: Node, deep?: boolean) {
+      const copy = clone.call(this, deep);
+      if ((this as Element).localName === 'span') (copy as Element).setAttribute('onclick', 'alert(1)');
+      return copy;
+    });
+    let thrown: (Error & { code?: string }) | null = null;
+    try { handle.update(runtime.trustedHtml('<p id="k">2</p><span id="s">s</span>')); } catch (err) { thrown = err as Error; }
+    cloning.mockRestore();
+    expect(thrown?.code).toBe('FORMA_E_UNREVIEWED_HANDLER');
+    expect(root.childNodes).toHaveLength(0);
+    const reached = runtime.getDiagnostics().filter((d) => d.code === 'FORMA_E_UNREVIEWED_HANDLER');
+    expect(reached).toHaveLength(1);
+    expect(reached[0]!.reason).toMatch(/reached the document/);
+    expect(reached[0]!.kind).toBe('markup-refused');
+    // The mount lives on, and renders what is clean.
+    handle.update(runtime.trustedHtml('<p id="k">3</p>'));
+    expect(text('k')).toBe('3');
+    handles.pop()!.unmount();
+
+    // On a first render, through the write itself: the root is left free.
+    const replace = Element.prototype.replaceChildren;
+    const replacing = vi.spyOn(Element.prototype, 'replaceChildren').mockImplementation(function (this: Element, ...nodes: (Node | string)[]) {
+      replace.apply(this, nodes);
+      if (nodes.length > 0 && this === root) this.appendChild(document.createElement('a')).setAttribute('href', 'java\tscript:alert(1)');
+    });
+    thrown = null;
+    try { mountOn(root, '<p id="k">4</p>', { tier: 'unreviewed' }); } catch (err) { thrown = err as Error; }
+    replacing.mockRestore();
+    expect(thrown?.code).toBe('FORMA_E_UNREVIEWED_URL');
+    expect(root.childNodes).toHaveLength(0);
+    expect(runtime.getDiagnostics().filter((d) => d.code === 'FORMA_E_UNREVIEWED_URL' && /reached the document/.test(d.reason))).toHaveLength(1);
+    handles.pop();
+    mountOn(root, '<p id="k">5</p>', { tier: 'unreviewed' });
+    expect(text('k')).toBe('5');
+  });
+
+  it.each(['compiled', 'reviewed'] as const)("a %s mount's first render keeps its markup's own attributes; an update that changes one on an element it keeps applies the URL and handler check", (tier) => {
+    // FORMA-276. The first render is the application's admission of its own
+    // markup, and is unchanged (docs/HTML-RUNTIME.md). The update path now
+    // checks a changed attribute as h(), data-bind: and hydration do.
+    const root = page();
+    const handle = mountOn(root, `<a id="l" href="javascript:void 0" title="1">l</a><button id="b" onclick="void 0">b</button>`, { tier });
+    const link = document.getElementById('l')!, button = document.getElementById('b')!;
+    expect(link.getAttribute('href')).toBe('javascript:void 0');
+    expect(button.getAttribute('onclick')).toBe('void 0');
+    handle.update(runtime.trustedHtml(`<a id="l" href="&#106;avascript:void 1" title="2">l</a><button id="b" onclick="void 1">b</button>`));
+    expect(document.getElementById('l')).toBe(link);
+    expect(link.getAttribute('href')).toBeNull();
+    expect(link.getAttribute('title')).toBe('2');
+    expect(button.getAttribute('onclick')).toBeNull();
+    handle.update(runtime.trustedHtml(`<a id="l" href="/safe" title="3">l</a><button id="b">b</button>`));
+    expect(link.getAttribute('href')).toBe('/safe');
+    // Nothing is reported: like the other attribute sinks, the diff drops
+    // the write.
+    expect(runtime.getDiagnostics()).toEqual([]);
+  });
+
   it('a mount call names a known tier, an element and markup, and mounts a root once', () => {
     const root = page();
     for (const bad of [

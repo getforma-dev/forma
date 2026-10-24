@@ -2155,9 +2155,9 @@
   "tags": [
    "security"
   ],
-  "find": "      if (trusted && isScriptAttr(liveEl, attr.name)) {\n        liveEl.removeAttribute(attr.name);\n        continue;\n      }\n",
+  "find": "      if (trusted && isRefusedAttr(liveEl, attr.name, attr.value)) {\n        liveEl.removeAttribute(attr.name);\n        continue;\n      }\n",
   "replace": "",
-  "note": "reconcile()'s diff writes a changed on* handler or script src, a Trusted Types script sink core writes nowhere else (formajs#29 review S1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src\""
+  "note": "reconcile()'s diff writes a changed on* handler or script src, a Trusted Types script sink core writes nowhere else (formajs#29 review S1), and since FORMA-276 a changed URL attribute with a script scheme. Re-anchored for FORMA-276. Verified by: src/dom/__tests__/trusted-html.test.ts > \"reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src\""
  },
  {
   "id": "trusted/runtime-handle-mints-strings",
@@ -2702,5 +2702,75 @@
   "find": "|^[^.]*\\.(?:stop|",
   "replace": "|\\.(?:stop|",
   "note": "a modifier word is matched in any suffix, not only the first, so a custom event with one later in its name (`carousel.slide.left`, `menu.item.stop`) is refused (FORMA-269 review, R3). Verified by: src/__tests__/runtime-event-modifiers.test.ts > \"plain event names and dotted custom events bind as before, with no diagnostic\""
+ },
+ {
+  "id": "reconcile/url-scheme-written",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  return isUnsafeAttrWrite(el.localName, name, value) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));",
+  "replace": "  return /^on/i.test(name) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));",
+  "note": "the update path checks a changed attribute for an on* name only, as before FORMA-276, so it writes a URL attribute with a script scheme that h(), hydration, data-bind: and the SSR walker refuse (sink parity). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every entity-spelled script scheme on %s\"; Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a %s mount's first render keeps its markup's own attributes; an update that changes one on an element it keeps applies the URL and handler check\""
+ },
+ {
+  "id": "reconcile/url-check-image-tag",
+  "file": "src/dom/reconcile.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  return isUnsafeAttrWrite(el.localName, name, value) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));",
+  "replace": "  return isUnsafeAttrWrite('img', name, value) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));",
+  "note": "the update path judges every URL attribute as an image's, so a data:image/svg+xml value, inert only through an image sink, is written to <a href> and <object data>, where it is a document. Verified by: src/__tests__/renderer-contract.test.ts > \"keeps data:image/svg+xml on an image sink and drops it on a document sink\""
+ },
+ {
+  "id": "frame-url/not-stripped",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "      if (!isUnsafeAttrBinding(attr.name, attr.value, el.localName)) continue;",
+  "replace": "      if (!isEventHandlerAttr(attr.name)) continue;",
+  "note": "unreviewed markup keeps its URL attributes with a script scheme, so the preview frame refuses them only through its policy (FORMA-276). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+ },
+ {
+  "id": "frame-handler/not-stripped",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "      if (!isUnsafeAttrBinding(attr.name, attr.value, el.localName)) continue;",
+  "replace": "      if (!isUrlAttr(attr.name) || !isDangerousUrl(attr.value, el.localName)) continue;",
+  "note": "unreviewed markup keeps its on* handler attributes, so the preview frame refuses them only through its policy (FORMA-276). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+ },
+ {
+  "id": "frame-attr/url-check-image-tag",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "      if (!isUnsafeAttrBinding(attr.name, attr.value, el.localName)) continue;",
+  "replace": "      if (!isUnsafeAttrBinding(attr.name, attr.value, 'img')) continue;",
+  "note": "the unreviewed strip judges every URL attribute as an image's, so it keeps a data:image/svg+xml document on <a href>. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+ },
+ {
+  "id": "frame-attr/reported-not-removed",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "      el.removeAttributeNode(attr);\n",
+  "replace": "",
+  "note": "the unreviewed strip reports a script URL or handler attribute and leaves it in the markup it writes. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+ },
+ {
+  "id": "frame-attr/live-check-skipped",
+  "file": "src/runtime.ts",
+  "tags": [
+   "security"
+  ],
+  "find": "  for (const el of Array.from(content.querySelectorAll('*'))) {\n    for (const attr of Array.from(el.attributes)) {\n",
+  "replace": "  for (const el of live ? [] : Array.from(content.querySelectorAll('*'))) {\n    for (const attr of Array.from(el.attributes)) {\n",
+  "note": "the live check after each write no longer looks at attributes: a script URL or handler attribute that reaches the root by a path the strip did not see stays in the document and the render stands. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused\""
  }
 ]

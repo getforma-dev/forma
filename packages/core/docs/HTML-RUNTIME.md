@@ -433,6 +433,23 @@ widget.unmount(); // every binding disposed, the root emptied
   document with an opaque origin (an `iframe` sandboxed without
   `allow-same-origin`, where `self.origin` is `"null"`) and takes no grants; on
   any other origin the call throws `FORMA_E_MOUNT_ORIGIN`.
+- **URL and handler attributes in the markup.** In tiers `'compiled'` and
+  `'reviewed'` the first render writes the markup as it is: it is the
+  application's own, admitted as `trustedHtml()`, and is not sanitized. When
+  `update()` changes an attribute of an element the diff keeps, it applies the
+  check every other attribute sink applies (`h()`, hydration, `data-bind:`,
+  the SSR walker): an `on*` attribute, or a URL attribute (`href`, `src`,
+  `action`, `formaction`, `xlink:href`, `poster`, `background`, `data`) whose
+  value has a script scheme (`javascript:`, `vbscript:`, `data:text/html`,
+  and `data:image/svg+xml` except on an image, in any case and spelling the
+  parser decodes), is removed instead of written, with no diagnostic, as the
+  other sinks drop it (FORMA-276). An element the update adds is written as the
+  markup has it, like the first render. Tier `'unreviewed'` removes and
+  reports both everywhere (*The preview frame*, below). SECURITY.md lists
+  what each sink does.
+
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "a %s mount's first render keeps its markup's own attributes; an update that changes one on an element it keeps applies the URL and handler check"
+Verified by `src/__tests__/renderer-contract.test.ts` > "drops every entity-spelled script scheme on %s"
 
 | Grant | What it allows | Without it |
 |---|---|---|
@@ -557,6 +574,19 @@ it to the host as an `error`). Under the frame's policy no `<link>` would have
 done anything else; an `<iframe>` still renders, with `src` refused by the
 policy and no document of its own.
 
+A module renders no `on*` handler attribute and no URL attribute whose value
+has a script scheme either (FORMA-276), judged as every attribute sink judges
+them, on the values the parse produced, so a character reference in the
+markup is decoded first. The same strip removes them from the one parse,
+nested `<template>` contents included, and the same live check after every
+write refuses the render, the root cleared, if one reaches the document. Each
+is reported, `FORMA_E_UNREVIEWED_HANDLER` or `FORMA_E_UNREVIEWED_URL`, and
+forwarded to the host as an `error`; the element stays, with its other
+attributes. The frame's hash-only `script-src` and Trusted Types refused them
+before and still do; the frame no longer depends on its policy alone for them.
+Chromium still logs the policy's report for a handler attribute as the parse
+creates it, before the strip removes it.
+
 A module styles itself with `style` attributes only. The frame's policy
 allows styles by nonce (`style-src 'nonce-…'`, with `style-src-attr
 'unsafe-inline'`), and the runtime, allowed by its hash, has no nonce to give
@@ -572,6 +602,8 @@ Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount 
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount parses its markup once, in the root's context, and writes no string to the root"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount renders no srcdoc: the attribute is removed, a binding that would write one is refused, and each is reported"
 Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount fails closed: a <link> that reaches the root after the strip is removed, reported, and the markup refused"
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update"
+Verified by `src/__tests__/runtime-tiered-mount.test.ts` > "an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused"
 Verified by `src/__tests__/runtime-frame.test.ts` > "the frame runtime is one classic script a server can inline as it is"
 Verified by `src/__tests__/runtime-frame.test.ts` > "two builds of the frame runtime are byte-identical"
 

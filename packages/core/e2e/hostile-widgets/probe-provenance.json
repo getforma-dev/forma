@@ -973,8 +973,8 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "2d0e7ddb2b790ab6d44076d118d06fedb622383c768cfc9e2ddef7904e18df04",
-    "total": 278,
+    "sha256": "0a68f0833c79361c4d313ad94ca11587290f4216d97153bfc0ea51b490203baf",
+    "total": 285,
     "rows": [
       {
         "id": "activate/props-not-sanitized",
@@ -2340,7 +2340,7 @@
         "security": true,
         "disposition": {
           "kind": "separate-api-regression",
-          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: reconcile()'s diff writes a changed on* handler or script src, a Trusted Types script sink core writes nowhere else (formajs#29 review S1). Verified by: src/dom/__tests__/trusted-html.test.ts > \"reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src\""
+          "reason": "Requires typed API objects, mint identity, hydration, storage or conversion hooks; no equivalent literal widget payload is claimed. Original note: reconcile()'s diff writes a changed on* handler or script src, a Trusted Types script sink core writes nowhere else (formajs#29 review S1), and since FORMA-276 a changed URL attribute with a script scheme. Re-anchored for FORMA-276. Verified by: src/dom/__tests__/trusted-html.test.ts > \"reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src\""
         }
       },
       {
@@ -2555,6 +2555,75 @@
         "disposition": {
           "kind": "separate-api-regression",
           "reason": "Captured scope ownership is replaced by current DOM ancestry. Both explicit owned-scope cases assert an old detached/moved counter cannot run after its owner handle unmounts."
+        }
+      },
+      {
+        "id": "reconcile/url-scheme-written",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the four static URL contexts (url-static, form-action-static, image-src-static, svg-xlink-static), which update() patches into the element the mount keeps; the renderer contract's reconcile-update rows retain the direct regression. Original note: the update path checks a changed attribute for an on* name only, as before FORMA-276, so it writes a URL attribute with a script scheme that h(), hydration, data-bind: and the SSR walker refuse (sink parity). Verified by: src/__tests__/renderer-contract.test.ts > \"drops every script scheme written to %s\"; Verified by: src/__tests__/renderer-contract.test.ts > \"drops every entity-spelled script scheme on %s\"; Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"a %s mount's first render keeps its markup's own attributes; an update that changes one on an element it keeps applies the URL and handler check\""
+        }
+      },
+      {
+        "id": "reconcile/url-check-image-tag",
+        "source": "src/dom/reconcile.ts",
+        "security": true,
+        "disposition": {
+          "kind": "matrix-payload",
+          "families": [
+            "value"
+          ],
+          "reason": "Literal script-scheme and svg-data payloads in the four static URL contexts (url-static, form-action-static, image-src-static, svg-xlink-static), which update() patches into the element the mount keeps; the renderer contract's reconcile-update rows retain the direct regression. Original note: the update path judges every URL attribute as an image's, so a data:image/svg+xml value, inert only through an image sink, is written to <a href> and <object data>, where it is a document. Verified by: src/__tests__/renderer-contract.test.ts > \"keeps data:image/svg+xml on an image sink and drops it on a document sink\""
+        }
+      },
+      {
+        "id": "frame-url/not-stripped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: unreviewed markup keeps its URL attributes with a script scheme, so the preview frame refuses them only through its policy (FORMA-276). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+        }
+      },
+      {
+        "id": "frame-handler/not-stripped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: unreviewed markup keeps its on* handler attributes, so the preview frame refuses them only through its policy (FORMA-276). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+        }
+      },
+      {
+        "id": "frame-attr/url-check-image-tag",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the unreviewed strip judges every URL attribute as an image's, so it keeps a data:image/svg+xml document on <a href>. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+        }
+      },
+      {
+        "id": "frame-attr/reported-not-removed",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the unreviewed strip reports a script URL or handler attribute and leaves it in the markup it writes. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount renders no script URL and no handler attribute: each is removed and reported, on the first render and on update\""
+        }
+      },
+      {
+        "id": "frame-attr/live-check-skipped",
+        "source": "src/runtime.ts",
+        "security": true,
+        "disposition": {
+          "kind": "separate-unreviewed-frame-contract",
+          "reason": "Opaque unreviewed frame boundary is separate from the reviewed widget grant matrix; existing frame tests remain mandatory. Original note: the live check after each write no longer looks at attributes: a script URL or handler attribute that reaches the root by a path the strip did not see stays in the document and the render stands. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused\""
         }
       }
     ]

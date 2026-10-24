@@ -14,7 +14,7 @@
  *   REPLACE  — different data-module → remove old, insert new, mount fresh
  */
 
-import { isEventHandlerAttr } from '../security/url-safety.js';
+import { isUnsafeAttrWrite } from '../security/url-safety.js';
 import { rawHtml, type TrustedHtml } from './trusted-html.js';
 import { runtimeParser, type RuntimeParser } from './runtime-parser.js';
 
@@ -125,21 +125,29 @@ function parseHTML(html: string, context?: Element): DocumentFragment {
 // ── Attribute patching ────────────────────────────────────────────────
 
 /**
- * An attribute that is a Trusted Types script sink: an `on*` handler, or a
- * script element's `src` or `href`. The diff of trusted markup writes none,
- * as h() and adoption write no `on*` name, and v2's nonce policy runs none of
- * them anyway. Raw strings cannot enter the diff.
+ * A changed attribute the diff does not write. What every other attribute
+ * sink refuses (`isUnsafeAttrWrite`, as h(), hydration, `data-bind:` and the
+ * SSR walker apply it): an `on*` handler, or a URL attribute whose value has
+ * a script scheme, judged against the element's tag. And a script element's
+ * `src` or `href`, a Trusted Types script sink. `value` is the parsed value,
+ * so a character reference in the markup is already decoded. Raw strings
+ * cannot enter the diff.
+ *
+ * Verified by: src/__tests__/renderer-contract.test.ts > "drops every script scheme written to %s"
+ * Verified by: src/__tests__/renderer-contract.test.ts > "drops every entity-spelled script scheme on %s"
  */
-function isScriptAttr(el: Element, name: string): boolean {
-  return isEventHandlerAttr(name) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));
+function isRefusedAttr(el: Element, name: string, value: string): boolean {
+  return isUnsafeAttrWrite(el.localName, name, value) || (el.localName === 'script' && /^(?:src|href|xlink:href)$/i.test(name));
 }
 
 /**
  * Patch `liveEl`'s attributes to `newEl`'s. `trusted` is set when the markup
- * arrived as trusted HTML: a changed script attribute is then not written (the
- * stale one is removed), and where `parser` is set too, a changed `srcdoc` is
- * minted again through forma-runtime, so a page enforcing Trusted Types
- * accepts it. Raw strings are refused before parsing or diffing.
+ * arrived as trusted HTML: a changed attribute that `isRefusedAttr` refuses is
+ * then not written (the stale one is removed), and where `parser` is set too,
+ * a changed `srcdoc` is minted again through forma-runtime, so a page
+ * enforcing Trusted Types accepts it. Raw strings are refused before parsing
+ * or diffing. An element the diff adds is written as the markup has it, like
+ * the first render (FORMA-276: the application's admission of its own markup).
  *
  * Verified by: src/dom/__tests__/trusted-html.test.ts > "reconcile()'s diff mints a changed srcdoc of trusted markup and writes no on* or script src"
  * Verified by: src/dom/__tests__/trusted-html.test.ts > "a string cannot enter reconcile after trusted markup populated its cache"
@@ -171,7 +179,7 @@ function patchAttributes(liveEl: Element, newEl: Element, trusted: boolean, pars
 
     const liveVal = liveEl.getAttribute(attr.name);
     if (liveVal !== attr.value) {
-      if (trusted && isScriptAttr(liveEl, attr.name)) {
+      if (trusted && isRefusedAttr(liveEl, attr.name, attr.value)) {
         liveEl.removeAttribute(attr.name);
         continue;
       }

@@ -14,7 +14,7 @@ export async function runBrowserCase(input) {
   window.__outsideReads = 0;
   const state = { value: input.payload, result: 'untouched', items: [1], rows: [{ id: 'row', value: input.payload }] };
   let extra = '';
-  let markup;
+  let markup, initial = null;
   const p = source => `<p id="out" data-text="${binding(source)}">untouched</p>`;
   if (input.kind === 'value') {
     switch (input.context) {
@@ -37,6 +37,11 @@ export async function runBrowserCase(input) {
       case 'form-action': markup = '<form id="out" data-bind:action="{value}"></form>'; break;
       case 'image-src': markup = '<img id="out" data-bind:src="{value}">'; break;
       case 'svg-xlink': markup = '<svg><a id="out" data-bind:xlink:href="{value}">svg link</a></svg>'; break;
+      // Static attributes, which the update below patches in (FORMA-276).
+      case 'url-static': initial = '<a id="out" href="/benign">link</a>'; markup = `<a id="out" href="${attr(input.payload)}">link</a>`; break;
+      case 'form-action-static': initial = '<form id="out" action="/benign"></form>'; markup = `<form id="out" action="${attr(input.payload)}"></form>`; break;
+      case 'image-src-static': initial = '<img id="out" src="/benign.png">'; markup = `<img id="out" src="${attr(input.payload)}">`; break;
+      case 'svg-xlink-static': initial = '<svg><a id="out" xlink:href="/benign">svg link</a></svg>'; markup = `<svg><a id="out" xlink:href="${attr(input.payload)}">svg link</a></svg>`; break;
       default: throw new Error('unknown value context');
     }
   } else if (input.kind === 'expression') {
@@ -60,12 +65,18 @@ export async function runBrowserCase(input) {
   } else if (input.kind === 'fetch') markup = `<div id="out" data-fetch="${attr(`GET ${input.payload} → fetched |error:failed`)}"></div>` + p('failed').replace('id="out"', 'id="fetch-error"');
   else if (input.kind === 'markup') markup = input.payload;
   else throw new Error('unknown hostile case kind');
-  markup = `<div data-forma-state="${attr(JSON.stringify(state))}"${extra}><p id="alive" data-text="{1 + 2}">unbound</p>${markup}</div>`;
+  const scoped = inner => `<div data-forma-state="${attr(JSON.stringify(state))}"${extra}><p id="alive" data-text="{1 + 2}">unbound</p>${inner}</div>`;
+  markup = scoped(markup);
   const grants = input.profile === 'all' ? { dom: true, navigate: true, fetch: { methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], paths: ['/'], cookies: true } }
     : input.profile === 'typical' ? { fetch: { methods: ['GET'], paths: ['/api/widget/'], cookies: false } } : {};
   window.__observeHostile = true;
-  const handle = runtime.mountMarkup(root, runtime.trustedHtml(markup), { tier: 'reviewed', grants });
+  const handle = runtime.mountMarkup(root, runtime.trustedHtml(initial === null ? markup : scoped(initial)), { tier: 'reviewed', grants });
   try {
+    if (initial !== null) {
+      const kept = node();
+      handle.update(runtime.trustedHtml(markup));
+      eq(node() === kept, true, 'the update kept the element');
+    }
     root.querySelector('#trigger')?.click();
     // Let real image/SVG/parser events run while the mounted tree is retained.
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -89,9 +100,11 @@ export async function runBrowserCase(input) {
         eq(node().hasAttribute('srcdoc'), false, 'srcdoc refused');
         eq(root.querySelector('#proof').textContent, input.payload, 'same bytes inert text');
         if (!codes.includes('FORMA_E_RUNTIME_SRCDOC')) throw new Error(`missing srcdoc refusal: ${codes}`);
-      } else if (['url', 'form-action', 'image-src', 'svg-xlink'].includes(input.context)) {
-        const name = { url: 'href', 'form-action': 'action', 'image-src': 'src', 'svg-xlink': 'xlink:href' }[input.context];
-        eq(node().getAttribute(name), input.dangerousUrl ? null : input.payload, 'URL guard');
+      } else if (['url', 'form-action', 'image-src', 'svg-xlink'].includes(input.context.replace(/-static$/, ''))) {
+        const name = { url: 'href', 'form-action': 'action', 'image-src': 'src', 'svg-xlink': 'xlink:href' }[input.context.replace(/-static$/, '')];
+        // Markup is parsed: the parser writes a NUL as U+FFFD.
+        const written = input.context.endsWith('-static') ? input.payload.replaceAll('\0', '\uFFFD') : input.payload;
+        eq(node().getAttribute(name), input.dangerousUrl ? null : written, 'URL guard');
       } else {
         if (codes.length) throw new Error(`${input.id}: unexpected diagnostics ${JSON.stringify(runtime.getDiagnostics())}`);
         switch (input.context) {

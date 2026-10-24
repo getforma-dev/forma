@@ -182,7 +182,9 @@ What core writes of its own passes such a policy:
 - `mountMarkup()` and its returned handle's `update()` pass trusted markup to
   the internal `forma-runtime` parser. Reconciliation writes no `on*` attribute
   or script `src`: a changed one is removed, as h() and adoption write no `on*`
-  name either. Raw strings are refused before parsing or a cached-markup shortcut.
+  name either, and since FORMA-276 neither a changed URL attribute with a
+  script scheme ([SECURITY.md](./SECURITY.md#url-and-handler-attributes-in-each-sink)).
+  Raw strings are refused before parsing or a cached-markup shortcut.
 
 Raw APIs accept only named trusted markup. Runtime `data-bind:srcdoc` and
 `{item…}` interpolation cannot carry that value, so both are refused before
