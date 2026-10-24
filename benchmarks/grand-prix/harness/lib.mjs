@@ -168,7 +168,7 @@ export function imageInfo(ref) {
   const out = dockerSync('image', 'inspect', '--format', '{{.Id}}|{{.Size}}|{{.Created}}|{{.Architecture}}', imageName(ref));
   if (!out) return {};
   const [id, size, created, arch] = out.split('|');
-  return { id: id.slice(0, 19), sizeBytes: +size, created, arch };
+  return { id, sizeBytes: +size, created, arch };
 }
 
 // ---------- oha ----------
@@ -181,7 +181,7 @@ export async function oha(lg, url, { c, z }) {
   const ok = codes['200'] || 0;
   return {
     seconds: j.summary.total, rps: j.summary.requestsPerSec, okRps: ok / j.summary.total, requests: total, ok, nonOk: total - ok,
-    successRate: j.summary.successRate, statusCodes: codes,
+    successRate: j.summary.successRate, statusCodes: codes, errorDistribution: j.errorDistribution ?? {},
     latencyMs: { mean: j.summary.average * 1000, p50: j.latencyPercentiles.p50 * 1000, p95: j.latencyPercentiles.p95 * 1000, p99: j.latencyPercentiles.p99 * 1000, max: j.summary.slowest * 1000 },
     bytesPerRequest: j.summary.sizePerRequest,
   };

@@ -3,9 +3,9 @@ import { test } from 'node:test';
 import { evaluateBudgets } from './budgets.mjs';
 
 function sample() {
-  const base = event => ({ car: 'forma', event, image: { id: 'sha256:control' }, config: { forced: false } });
+  const base = event => ({ car: 'forma', event, image: { id: 'sha256:' + 'a'.repeat(64) }, config: { forced: false } });
   return {
-    sprint: { ...base('sprint'), runs: Array.from({ length: 3 }, () => ({ nonOk: 0, okRps: 1000 })) },
+    sprint: { ...base('sprint'), runs: Array.from({ length: 3 }, () => ({ nonOk: 0, okRps: 1000, successRate: 1, errorDistribution: {} })) },
     fuel: { ...base('fuel'), metric: { unit: 'MiB' }, values: [5, 5, 5], runs: Array.from({ length: 3 }, () => ({ samples: 10 })) },
     grid: { ...base('grid'), metric: { unit: 'ms' }, runs: Array.from({ length: 5 }, () => ({ ms: 200, dockerRunReturnedMs: 175 })) },
     weight: { ...base('weight'), parts: { image: { metric: { unit: 'bytes' }, values: [140_000_000] } } },
@@ -25,6 +25,10 @@ for (const [metric, mutate] of [
 for (const [label, mutate] of [
   ['missing memory', r => { r.fuel.values.pop(); }],
   ['no memory samples', r => { r.fuel.runs[0].samples = 0; }],
+  ['transport failure', r => { r.sprint.runs[0].successRate = 0.9; }],
+  ['missing transport evidence', r => { delete r.sprint.runs[0].errorDistribution; }],
+  ['transport error counts', r => { r.sprint.runs[0].errorDistribution = { reset: 1 }; }],
+  ['truncated image identity', r => { Object.values(r).forEach(event => { event.image.id = 'sha256:abc'; }); }],
   ['failed load', r => { r.sprint.runs[0].nonOk = 1; }],
   ['invalid time', r => { r.grid.runs[0].ms = NaN; }],
   ['wrong image', r => { r.grid.image.id = 'other'; }],

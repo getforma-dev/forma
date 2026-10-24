@@ -21,6 +21,8 @@ const baseline = argv.includes('--baseline');
 const formaRef = option('forma-ref', undefined);
 assert.equal(process.platform, 'linux', 'this runner is for native Linux');
 if (!diagnostic) assert(os.availableParallelism() >= 8, 'baseline needs eight CPUs; --diagnostic cannot qualify the Linux baseline');
+const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root, encoding: 'utf8' });
+assert.equal(dirty.trim(), '', 'commit all benchmark and framework source before racing');
 const id = process.env.GP_RUN_ID || `r${Date.now().toString(36)}-${process.pid}`;
 assert(/^[a-z0-9-]+$/.test(id), 'invalid run ID');
 process.env.GP_RUN_ID = id;

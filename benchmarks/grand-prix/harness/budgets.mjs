@@ -11,13 +11,16 @@ export function evaluateBudgets({ sprint, fuel, grid, weight }) {
   for (const [event, record] of Object.entries({ sprint, fuel, grid, weight })) {
     assert.equal(record?.car, 'forma', `${event}: expected Forma`);
     assert.equal(record?.event, event, `${event}: unexpected event`);
-    assert(record.image?.id, `${event}: missing image identity`);
+    assert(/^sha256:[a-f0-9]{64}$/.test(record.image?.id ?? ''), `${event}: missing/full image identity required`);
     assert.equal(record.image.id, sprint.image.id, 'mixed image identities');
     assert.equal(record.config?.forced, false, `${event}: loaded-machine override is not budget evidence`);
   }
   assert.equal(sprint.runs?.length, 3, 'three Sprint samples required');
   for (const run of sprint.runs) {
     assert.equal(run.nonOk, 0, 'failed Sprint requests');
+    assert.equal(run.successRate, 1, 'failed Sprint transports');
+    assert(run.errorDistribution && typeof run.errorDistribution === 'object' && !Array.isArray(run.errorDistribution), 'missing Sprint transport evidence');
+    assert(Object.values(run.errorDistribution).every(count => count === 0), 'Sprint transport errors');
     positive(run.okRps, 'Sprint throughput');
   }
   assert.equal(fuel.metric?.unit, 'MiB');

@@ -5,6 +5,9 @@ on:
     paths:
       - 'benchmarks/grand-prix/**'
       - '.github/workflows/grand-prix.yml'
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
   workflow_dispatch:
     inputs:
       cars:
@@ -56,7 +59,7 @@ jobs:
           GP_CARS: ${{ inputs.cars || 'forma' }}
           GP_EVENTS: ${{ inputs.events || '1,5-7' }}
           GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
-          GP_FORMA_REF: ${{ inputs.forma_ref }}
+          GP_FORMA_REF: ${{ github.event_name == 'pull_request' && github.sha || inputs.forma_ref }}
           GP_BASELINE: 'true'
           GP_CHECK_BUDGETS: 'true'
         run: node harness/ci-run.mjs
