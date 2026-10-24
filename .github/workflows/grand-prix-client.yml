@@ -22,6 +22,10 @@ on:
         description: 'Comma-separated exact source commits after the published baseline; empty uses this checkout'
         default: ''
         type: string
+      profile_rows:
+        description: 'Retain diagnostic source-mapped row CPU captures after all scored timings'
+        default: false
+        type: boolean
   pull_request:
     paths:
       - 'benchmarks/grand-prix/client-race/**'
@@ -68,6 +72,7 @@ jobs:
           GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
           GP_PROFILE: ${{ inputs.profile || 'native-8-v1' }}
           GP_CLIENT_REFS: ${{ inputs.forma_refs || github.sha }}
+          GP_PROFILE_ROWS: ${{ inputs.profile_rows && 'true' || 'false' }}
           CHROME_PATH: ${{ steps.browser.outputs.path }}
         run: |
           node --input-type=module <<'JS'
@@ -76,6 +81,7 @@ jobs:
           const lock=JSON.parse(readFileSync('harness/chromium-linux-lock.json'));
           const args=['harness/client-linux.mjs','--chrome',process.env.CHROME_PATH,'--chrome-sha256',lock.executableSha256,'--forma-refs',process.env.GP_CLIENT_REFS];
           if(process.env.GP_DIAGNOSTIC==='true')args.push('--diagnostic');
+          if(process.env.GP_PROFILE_ROWS==='true')args.push('--profile-rows');
           const result=spawnSync(process.execPath,args,{stdio:'inherit'});
           process.exit(result.status??1);
           JS
