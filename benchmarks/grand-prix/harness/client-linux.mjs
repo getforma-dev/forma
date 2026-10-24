@@ -8,6 +8,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import { hostProfile, validateEngineProfile, validateContainerResources } from './resource-profile.mjs';
+import { SIGNAL_CONTROL, SIGNAL_RUNS, SIGNAL_WARMUPS, describeSignalControl, validateSignalControl } from './client-signals-control.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repository = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' }).trim();
@@ -90,6 +91,8 @@ try {
     const signalDockerfile = join(signals, 'Dockerfile');
     writeFileSync(signalDockerfile, readFileSync(signalDockerfile, 'utf8') + '\nCOPY resource-profile.mjs /gp/harness/resource-profile.mjs\nCOPY campaign.mjs /gp/harness/campaign.mjs\n');
     await run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], client);
+    const publishedPackage = JSON.parse(readFileSync(join(client, 'node_modules/@getforma/core/package.json'), 'utf8'));
+    let corePackage = publishedPackage;
     let core;
     if (ref !== 'published') {
       const candidate = join(trialDir, 'candidate');
@@ -98,8 +101,8 @@ try {
       await run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], candidate);
       await run('npm', ['run', 'build', '--workspace', '@getforma/core'], candidate);
       core = join(candidate, 'packages/core');
-      const publishedPackage = JSON.parse(readFileSync(join(client, 'node_modules/@getforma/core/package.json'), 'utf8'));
       const candidatePackage = JSON.parse(readFileSync(join(core, 'package.json'), 'utf8'));
+      corePackage = candidatePackage;
       for (const field of ['dependencies', 'optionalDependencies', 'peerDependencies', 'peerDependenciesMeta']) {
         assert.deepEqual(candidatePackage[field] ?? {}, publishedPackage[field] ?? {}, `candidate changed ${field}; review the locked benchmark dependency graph before racing`);
       }
@@ -115,10 +118,12 @@ try {
     const cars = ref === 'published' ? ['forma', 'vanilla', 'react', 'preact', 'solid', 'svelte', 'vue'] : ['forma', 'vanilla'];
     for (const car of cars) await run(process.execPath, ['node_modules/vite/bin/vite.js', 'build', `apps/${car}`, '--config', `apps/${car}/vite.config.js`], client);
     const signalImage = `gp264/${id}/signals-${ref}`;
+    const signalVersionControl = describeSignalControl(JSON.parse(readFileSync(join(signals, 'package-lock.json'), 'utf8')),
+      corePackage, sha(join(signals, 'adapters', `${SIGNAL_CONTROL}.mjs`)));
     await run('docker', ['buildx', 'build', '--builder', builder, '--load', '--label', 'grandprix=forma-264', '--label', label, '-t', signalImage, signals]);
     const trial = { ref, cars, resourceProfile, campaign, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
       coreBundle: sha(join(client, 'node_modules/@getforma/core/dist/index.js')),
-      signalsImage: JSON.parse(execFileSync('docker', ['image', 'inspect', signalImage], { encoding: 'utf8' }))[0].Id,
+      signalsImage: JSON.parse(execFileSync('docker', ['image', 'inspect', signalImage], { encoding: 'utf8' }))[0].Id, signalVersionControl,
       before: machine(), passed: false };
     report.trials.push(trial); save();
     await quiet();
@@ -129,18 +134,30 @@ try {
     else await run(process.execPath, browserArgs, client);
     await run(process.execPath, ['bundle.mjs', '--cars', cars.join(','), '--out', join(raw, 'bundle'), '--resource-profile', profileFile, '--campaign', campaignFile], client);
     await quiet();
-    const signalOut = join(raw, 'signals'); mkdirSync(signalOut);
-    const signalContainer = execFileSync('docker', ['create', '--label', 'grandprix=forma-264', '--label', label, '--cpus=1', '--memory=1g',
-      ...(resourceProfile.signals.cpuset ? [`--cpuset-cpus=${resourceProfile.signals.cpuset}`] : []),
-      '-e', `GP_RESOURCE_PROFILE=${JSON.stringify(resourceProfile)}`, '-e', `GP_CAMPAIGN_JSON=${JSON.stringify(campaign)}`, '-v', `${signalOut}:/out`, signalImage], { encoding: 'utf8' }).trim();
-    try {
-      const inspected = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
-      validateContainerResources(inspected, resourceProfile.signals);
-      trial.signalsContainer = { id: inspected.Id, image: inspected.Image, nanoCpus: inspected.HostConfig.NanoCpus, memoryBytes: inspected.HostConfig.Memory, cpuset: inspected.HostConfig.CpusetCpus };
-      await run('docker', ['start', '--attach', signalContainer]);
-      const finished = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
-      assert.equal(finished.State.ExitCode, 0, 'signals race failed inside the container');
-    } finally { await run('docker', ['rm', '-f', signalContainer]); }
+    // Official rankings retain their five cars. The exact engine reference is a
+    // separate sequential container from the same image, with identical resources.
+    for (const control of [false, true]) {
+      const signalOut = join(raw, control ? 'signals-version-check' : 'signals'); mkdirSync(signalOut);
+      const signalContainer = execFileSync('docker', ['create', '--label', 'grandprix=forma-264', '--label', label, '--cpus=1', '--memory=1g',
+        ...(resourceProfile.signals.cpuset ? [`--cpuset-cpus=${resourceProfile.signals.cpuset}`] : []),
+        '-e', `GP_RESOURCE_PROFILE=${JSON.stringify(resourceProfile)}`, '-e', `GP_CAMPAIGN_JSON=${JSON.stringify(campaign)}`, '-v', `${signalOut}:/out`, signalImage,
+        '--runs', String(SIGNAL_RUNS), '--warmups', String(SIGNAL_WARMUPS), ...(control ? ['--cars', SIGNAL_CONTROL] : [])], { encoding: 'utf8' }).trim();
+      try {
+        const inspected = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
+        validateContainerResources(inspected, resourceProfile.signals);
+        const container = { id: inspected.Id, image: inspected.Image, nanoCpus: inspected.HostConfig.NanoCpus, memoryBytes: inspected.HostConfig.Memory, cpuset: inspected.HostConfig.CpusetCpus };
+        if (control) trial.signalVersionControl.container = container;
+        else trial.signalsContainer = container;
+        await run('docker', ['start', '--attach', signalContainer]);
+        const finished = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
+        assert.equal(finished.State.ExitCode, 0, 'signals race failed inside the container');
+        if (control) {
+          const resultPath = join(signalOut, `${SIGNAL_CONTROL}.json`);
+          validateSignalControl(JSON.parse(readFileSync(resultPath, 'utf8')), signalVersionControl, resourceProfile, campaign);
+          trial.signalVersionControl.resultSha256 = sha(resultPath);
+        }
+      } finally { await run('docker', ['rm', '-f', signalContainer]); }
+    }
     trial.after = machine(); trial.passed = true; save();
     await run('docker', ['image', 'rm', signalImage]);
     await run('docker', ['buildx', 'prune', '--builder', builder, '--all', '--force']);
