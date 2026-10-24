@@ -289,6 +289,41 @@ function preflight(ctx: EvalCtx, name: string, recv: unknown, args: unknown[], a
   if (cost) charge(ctx, cost(recv, args, room(ctx)), name, at);
 }
 
+type Native = (...a: never[]) => unknown;
+
+/**
+ * Make an allowlisted native call: a captured intrinsic, or a DOM method of a
+ * host's target. An exception the native throws on its arguments
+ * (`JSON.parse('{')`, `(1).toFixed(500)`, `Object.keys(null)`, `[].reduce(f)`,
+ * a selector the DOM cannot parse) is refused as `FORMA_E_CALL_FAILED`,
+ * naming the method and the error, on the binding that made the call, instead
+ * of escaping `mountMarkup` (FORMA-271). Nothing else is converted. What
+ * Forma's own code throws while the native runs it (an arrow callback, a
+ * handler a `click()` dispatches, a computed it reads) passes through as it
+ * is, a real bug or an expression error with its own code and `defer`: any
+ * such code steps this evaluation (an evaluation nested in it hands its steps
+ * back), so a step taken during the call marks the error as not the native's.
+ * A call of a `fn` host passes it as `host`: only the allowlist's own (`Number`,
+ * `String`, `parseInt`, ...) are natives, and a runtime magic (`$dispatch`,
+ * `$refetch`) is Forma's own code too. The refusal is final and arms nothing
+ * (`defer` unset): the same call would throw again in a later task. What the
+ * call was charged before it ran stays on the meter, as any evaluation's
+ * charges do (FORMA-250).
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "no allowlisted native throws a raw exception, whatever plain data it is given, and these are the ones that refuse"
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "a real bug in an evaluation a DOM method runs (a handler a click() dispatches) passes through as it is"
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "a runtime magic is Forma code, not a native: what it throws passes through as it is"
+ * Verified by: src/__tests__/runtime-native-throw.test.ts > "a native that throws is final: it arms nothing, and what it was charged before it ran stays on the task's meter"
+ */
+function native(ctx: EvalCtx, what: string, at: number, fn: Native, recv: unknown, args: unknown[], host?: Host): unknown {
+  const steps = ctx.steps;
+  try {
+    return Reflect.apply(fn, recv, args);
+  } catch (e) {
+    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;
+    throw exprError('FORMA_E_CALL_FAILED', `${what}() threw ${String(e).slice(0, 200)}`, at);
+  }
+}
+
 /**
  * An array or object an operator is about to convert to text or a number
  * (`'' + list`, `${list}`, `list < 1`): the conversion is a `join`, so it is
@@ -653,13 +688,13 @@ function makeCallback(node: Expr, ctx: EvalCtx, maxParams: number, at: number): 
   // is invoked with OUR arity, never the raw one the method would pass.
   const value = evalExpr(node, ctx);
   if (isHost(value) && value.kind === 'fn') {
-    const fn = value.target as (...a: unknown[]) => unknown;
+    const fn = value.target as Native;
     const arity = Math.min(value.maxArgs, maxParams);
     return (...jsArgs: unknown[]) => {
       step(ctx, at);
       const args = jsArgs.slice(0, arity);
       preflight(ctx, value.label, undefined, args, at);
-      return Reflect.apply(fn, undefined, args);
+      return native(ctx, value.label, at, fn, undefined, args, value);
     };
   }
   throw exprError(
@@ -690,7 +725,7 @@ function evalCall(node: Expr & { k: 'Call' }, ctx: EvalCtx): unknown {
     if (isHost(target) && target.kind === 'fn') {
       const args = node.args.map((a) => evalArg(a, ctx)).slice(0, target.maxArgs);
       preflight(ctx, target.label, undefined, args, at);
-      return checkResultSize(Reflect.apply(target.target as (...a: unknown[]) => unknown, undefined, args), at);
+      return checkResultSize(native(ctx, target.label, at, target.target as Native, undefined, args, target), at);
     }
     throw exprError(
       'FORMA_E_CALL_DENIED',
@@ -739,7 +774,8 @@ function evalCall(node: Expr & { k: 'Call' }, ctx: EvalCtx): unknown {
     copied(ctx, callee.object, recv, at);
   }
   const names = (NAMES[kind] ??= Object.create(null) as Record<string, string>);
-  preflight(ctx, (names[method] ??= `${kind}.${method}`), recv, args, at);
+  const what = (names[method] ??= `${kind}.${method}`);
+  preflight(ctx, what, recv, args, at);
   guardArgs(method, args, at);
   if (method === 'flatMap' && typeof args[0] === 'function') {
     // Each array the callback returns is copied into the result: charged as
@@ -752,7 +788,7 @@ function evalCall(node: Expr & { k: 'Call' }, ctx: EvalCtx): unknown {
     };
   }
   const receiver = ARRAY_COPY_FIRST.has(method) ? (recv as unknown[]).slice() : recv;
-  return checkResultSize(Reflect.apply(tbl[method]!, receiver, args), at);
+  return checkResultSize(native(ctx, what, at, tbl[method]!, receiver, args), at);
 }
 
 /**
@@ -837,15 +873,16 @@ function closestWithin(el: Element, root: Node, selector: string): Element | nul
 
 function callHostMethod(host: Host, method: string, argNodes: Expr[], ctx: EvalCtx, at: number): unknown {
   const args = argNodes.map((a) => evalArg(a, ctx));
+  const what = `${host.label}.${method}`;
 
   if (host.kind === 'namespace' || host.kind === 'fn') {
     const members = host.members;
     const fn = members && Object.hasOwn(members, method) ? members[method] : undefined;
     if (typeof fn !== 'function') {
-      throw exprError('FORMA_E_METHOD_DENIED', `${host.label}.${method} is not on the allowlist`, at);
+      throw exprError('FORMA_E_METHOD_DENIED', `${what} is not on the allowlist`, at);
     }
-    preflight(ctx, `${host.label}.${method}`, undefined, args, at);
-    return checkResultSize(Reflect.apply(fn as (...a: unknown[]) => unknown, undefined, args), at);
+    preflight(ctx, what, undefined, args, at);
+    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args), at);
   }
 
   const allowed = host.kind === 'element'
@@ -859,10 +896,10 @@ function callHostMethod(host: Host, method: string, argNodes: Expr[], ctx: EvalC
           : null;
 
   if (!allowed || !allowed.has(method)) {
-    throw exprError('FORMA_E_METHOD_DENIED', `${host.label}.${method}() is not on the allowlist`, at);
+    throw exprError('FORMA_E_METHOD_DENIED', `${what}() is not on the allowlist`, at);
   }
   // A DOM method converts its arguments to strings.
-  preflight(ctx, `${host.label}.${method}`, undefined, args, at);
+  preflight(ctx, what, undefined, args, at);
   if (host.kind === 'style' && method === 'setProperty' && STYLE_DENY_PROPS.has(String(args[0]))) {
     throw exprError('FORMA_E_METHOD_DENIED', `style.setProperty("${String(args[0])}") is not available`, at);
   }
@@ -874,11 +911,14 @@ function callHostMethod(host: Host, method: string, argNodes: Expr[], ctx: EvalC
   const target = host.target as Record<string, unknown>;
   const fn = Reflect.get(target, method);
   if (typeof fn !== 'function') {
-    throw exprError('FORMA_E_METHOD_DENIED', `${host.label}.${method}() is unavailable here`, at);
+    throw exprError('FORMA_E_METHOD_DENIED', `${what}() is unavailable here`, at);
   }
-  const result = host.kind === 'element' && method === 'closest' && host.bound && !host.bound.dom
-    ? closestWithin(target as unknown as Element, host.bound.root, String(args[0] ?? ''))
-    : Reflect.apply(fn as (...a: unknown[]) => unknown, target, args);
+  // `closest()` without `dom` is `closestWithin`'s walk, whose only call that
+  // can throw is the native `matches()`, so the walk is made as the native call.
+  const bound = host.bound;
+  const result = native(ctx, what, at, host.kind === 'element' && method === 'closest' && bound && !bound.dom
+    ? () => closestWithin(target as unknown as Element, bound.root, String(args[0] ?? ''))
+    : fn as Native, target, args);
 
   if (host.kind === 'element' && Object.hasOwn(ELEMENT_METHOD_RESULT, method)) {
     const as = ELEMENT_METHOD_RESULT[method]!;

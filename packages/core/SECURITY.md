@@ -211,6 +211,29 @@ An expression that cannot be compiled or cannot be evaluated is **not evaluated,
 Verified by: `src/__tests__/failure-semantics.test.ts` > "a denied expression leaves the previous text in place and never renders undefined"
 Verified by: `src/__tests__/failure-semantics.test.ts` > "a genuine runtime bug is not swallowed as an expression denial"
 
+**An allowlisted native that throws is reported the same way** (FORMA-271). `JSON.parse('{')`, `(1).toFixed(500)`, `(1).toString(1)`, `Object.keys(null)`, `Array.from(null)`, `[].reduce(f)`, a higher-order method called with no callback, a selector the DOM cannot parse (`$el.matches('#1')`) and `classList.add('')` throw on their arguments. Each is now refused as `FORMA_E_CALL_FAILED` on the binding that made the call, with a message that names the method and the native's error, its text cut at 200 characters (`number.toFixed() threw RangeError: toFixed() digits argument must be between 0 and 100`). The rest of the markup binds. Before, the exception escaped `mountMarkup` from any binding and left the whole module unbound. From a handler it was an uncaught page error with no diagnostic.
+
+Only the native call is converted. The interpreter makes every allowlisted call through one wrapper. An error that Forma's own code throws while a native runs it passes through as it is, whether it is a real bug or an expression error with its own code: an arrow callback, a handler that `click()` dispatches, a computed that a callback reads, and the runtime magics `$dispatch` and `$refetch`. Code an application put in reach and a native runs is converted, because the native call is what threw: a `toString` or getter of a value the application put in state, or the application's own override of an element method.
+
+The refusal is final and arms no cap, like the refusals that check a length or a count (FORMA-249): the same call would throw again in a later task. What the call was charged before it ran stays on the task's meter.
+
+The message can quote part of the call's argument, which may be T2 data, up to the 200-character cut. In Chromium 156, `JSON.parse` quotes the first characters of the text it refused, and a DOM method quotes the selector it could not parse. The message reaches the console, `getDiagnostics()` and the `formajs:diagnostic` event, and so any telemetry that hooks them; the last two are skipped only when the mount turns diagnostics off. The preview frame forwards it to the host as untrusted text. A throw during a render reached the host before this change too, as `FRAME_E_RENDER`; a throw at event time was an uncaught error in the frame and did not reach the host at all, and now reaches it the same way. Markup cannot read it.
+
+This is not a guarantee that markup cannot throw out of `mountMarkup`: *Known gaps* names the paths that still can.
+
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "no allowlisted native throws a raw exception, whatever plain data it is given, and these are the ones that refuse"
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "the message names the method and the error, and is bounded"
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "code an application put in reach and a native runs is converted: a toString of a value in state, an override of an element method"
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "a real bug in an arrow callback passes through as it is"
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "a runtime magic is Forma code, not a native: what it throws passes through as it is"
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "a real bug in an evaluation a DOM method runs (a handler a click() dispatches) passes through as it is"
+Verified by: `src/expr/__tests__/native-throw.test.ts` > "a budget refusal inside a callback keeps its defer, so it still waits for a later task"
+Verified by: `src/__tests__/runtime-native-throw.test.ts` > "one native that throws costs one binding: every directive reports on its own element and the rest of the module works"
+Verified by: `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a native runs is rethrown, not filed as the native failing"
+Verified by: `src/__tests__/runtime-native-throw.test.ts` > "a native that throws is final: it arms nothing, and what it was charged before it ran stays on the task's meter"
+
+In Chromium, `e2e/native-throw.spec.ts` checks the DOM methods that throw only in a browser (`classList.add('')`, `classList.add('a b')`, `classList.toggle('')`, `classList.replace('', 'x')`): each handler reports a coded diagnostic, and no uncaught page error reaches the page.
+
 ### Residual risks
 
 - **`toString` coercion.** Rendering a value as text, interpolating it into a template literal, or `Array#join`-ing it calls that value's `toString`. JSON data cannot supply one; an app that puts class instances into state can. The method is then the app's own code, not the attacker's, under T2.
@@ -276,6 +299,24 @@ Verified by: `src/state/__tests__/store-proto-hijack.test.ts` > "assigning __pro
 Stated here rather than left for a reader to discover:
 
 - **An expression is still code under T1** — the grammar bounds what it can reach, not the fact that it runs. See *Residual risks* above.
+- **Markup can still throw out of `mountMarkup`.** FORMA-271 converts what an allowlisted native throws (*Failure is always visible*). It does not convert what the runtime's own DOM writes and conversions throw, an operator's, or the checks Forma makes before a call. These are robustness gaps. The paths found that still throw:
+  - a `data-bind:` with no attribute name: the runtime's `setAttribute('')` throws `InvalidCharacterError`;
+  - a `data-class:` with no class name: `classList.toggle('')` throws `SyntaxError` in Chromium (happy-dom accepts it);
+  - a `data-model` on an `<input type="file">` whose state value is not empty: the runtime's own write of `value` throws `InvalidStateError`;
+  - a value nested about 10,000 deep (T2: a `data-forma-state` of about 20 KB). The engine's stack overflows (`RangeError`) wherever something other than the native call converts it:
+    - the runtime's `data-text`, converting it to text;
+    - an operator (`'' + v`, a template literal);
+    - Forma's own checks before a call, converting an argument: a selector (`$el.matches(v)`, with or without `dom`), an attribute name or value (`$el.setAttribute(v, …)`, `$el.setAttribute('title', v)`, `$el.toggleAttribute(v)`), a style property name (`$el.style.setProperty(v, …)`), a `repeat` count (`'x'.repeat(v)`), a `flat` depth (`[1].flat(v)`);
+    - a sort comparator's result (`[1, 2].sort((a, b) => v)`). The native converts it, but only after the comparator ran, so the wrapper's step rule takes the error for Forma's own. This is unchanged from before FORMA-271.
+
+    Only a conversion the native makes of its own argument (`v.join()`, `String(v)`) is refused with `FORMA_E_CALL_FAILED`;
+  - a value that application code throws through a native and that cannot be converted to text, such as `Object.create(null)` or an object whose `toString` throws: the wrapper's own conversion throws instead (a `TypeError`, or whatever that `toString` throws), and that escapes in place of it.
+
+  At event time a handler can still fail without a diagnostic, though not out of `mountMarkup`. A DOM property write the browser refuses is an uncaught page error: `$el.dataset['a-b'] = 1`, `$el.value = 'x'` on a file input, `$el.value = 'abc'` on a `<progress>`. A DOM method that rejects instead of throwing is an unhandled rejection: Chromium 156's `scrollIntoView({behavior: 'bad'})` returns a rejected promise.
+
+  Verified by: `src/__tests__/runtime-native-throw.test.ts` > "what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text"
+
+  In Chromium, `e2e/native-throw.spec.ts` checks the `data-class:` and `data-bind:` cases.
 
 ## Supported Versions
 
