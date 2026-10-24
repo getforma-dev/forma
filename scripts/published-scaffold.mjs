@@ -81,6 +81,13 @@ export async function publishedStatus(version, request = fetch, { sleep = sleepF
   return {ready:missing.length === 0,version,missing,packages};
 }
 
+// The authenticated 3.0.0 registry release (and its RCs) predates plain static
+// HTML. Current candidates use their recorded contract, never this version map.
+export function publishedStaticHtml(version) {
+  assert(SEMVER.test(version ?? '') && Number(version.split('.')[0]) >= 3);
+  return /^3\.0\.0(?:$|-)/.test(version) ? 'legacy-v1' : 'plain-v1';
+}
+
 export async function preparePublished(work, request = fetch) {
   const status = await publishedStatus(sourceVersion(),request); assert(status.ready,'coordinated release is not fully published');
   work=resolve(work); assert(!existsSync(work),'published scaffold work must be fresh'); mkdirSync(work,{recursive:true});
@@ -121,7 +128,7 @@ export async function preparePublished(work, request = fetch) {
     }
   }
   save(join(work,'published-record.json'),status);
-  return {mode:'published',commit:run('git',['rev-parse','HEAD']).trim(),recordSha256:digest(join(work,'published-record.json')),work,cli:join(cli,'dist/index.js'),target:join(work,'target')};
+  return {mode:'published',commit:run('git',['rev-parse','HEAD']).trim(),recordSha256:digest(join(work,'published-record.json')),staticHtml:publishedStaticHtml(status.version),work,cli:join(cli,'dist/index.js'),target:join(work,'target')};
 }
 
 async function main() {

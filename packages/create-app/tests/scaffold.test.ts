@@ -519,7 +519,9 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
         await withEngine(engine, launcher, async (browser) => {
           const island = await verifyMinimalIsland(browser, origin, manifest);
-          const staticRoute = await verifyStaticTemplate(browser, origin, manifest);
+          const staticRoute = await verifyStaticTemplate(browser, origin, manifest, '/about', {
+            staticHtml: process.env.FORMA_SCAFFOLD_STATIC_HTML ?? 'plain-v1',
+          });
           recordObservation(`minimal: ${engine} actual native island and static route`, {engine, profile: 'release', island, staticRoute});
         });
       }

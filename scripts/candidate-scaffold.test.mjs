@@ -19,6 +19,10 @@ test('candidate authentication refuses changed record, changed archive, other so
     assert.deepEqual(validateCandidate(dir,hash,commit),set);
     save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:'declared-v1'}});
     assert.equal(validateCandidate(dir,digest(record),commit).contracts.sourceTemplates,'islands-v1');
+    save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:'declared-v1',staticHtml:'plain-v1'}});
+    assert.equal(validateCandidate(dir,digest(record),commit).contracts.staticHtml,'plain-v1');
+    save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:'declared-v1',staticHtml:'unknown-v99'}});
+    assert.throws(()=>validateCandidate(dir,digest(record),commit),/static HTML contract/);
     save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:null}});
     assert.throws(()=>validateCandidate(dir,digest(record),commit),/declared state/);
     save(record,{...set,contracts:{sourceTemplates:'unknown-v99'}});
