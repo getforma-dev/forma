@@ -10,10 +10,11 @@ import os from 'node:os';
 import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import {
-  ROOT, RAW, REQUEST_ENCODING, CFG, CAMPAIGN, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
+  ROOT, RAW, REQUEST_ENCODING, REQUEST_HEADERS, CFG, CAMPAIGN, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
   startCar, hostPort, removeContainer, startLoadgen, waitReady, get, checkBody, smokeCar, imageInfo, oha,
   startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName, cpusetArgs, assertContainerResources, configureResources,
 } from './lib.mjs';
+import { captureResponse, validateResponse } from './transport.mjs';
 import { decodeExperimentResponse } from './compression-response.mjs';
 
 configureResources();
@@ -68,13 +69,18 @@ const forced = load1 > 4;
 const sleepBetween = opt.settle ? +opt.settle : 5000;
 
 // ---------- stack helper ----------
-async function withStack(car, cls, { loadgen = true, rows = 100 } = {}, fn) {
+async function withStack(car, cls, { loadgen = true, rows = 100, event } = {}, fn) {
   const net = await makeNetwork(); let c, lg;
   try {
     c = await startCar(car, cls, net);
     const port = await hostPort(c);
     await waitReady(c, port);
-    const r = await get(port, '/ssr?rows=' + rows, REQUEST_ENCODING ? { 'accept-encoding': REQUEST_ENCODING } : {}, 20000);
+    const r = await get(port, '/ssr?rows=' + rows, {}, 20000);
+    const response = captureResponse(rows, r, REQUEST_HEADERS);
+    writeRaw('transport', `${car}-${event}-preflight`, { requestHeaders: REQUEST_HEADERS, response });
+    validateResponse(response, REQUEST_HEADERS);
+    const smoke = smokeResults[car]?.responses?.[rows];
+    if (REQUEST_HEADERS['accept-encoding'] === 'identity' && smoke && smoke.bytes !== response.bytes) throw new Error('smoke/event response sizes differ');
     const body = REQUEST_ENCODING ? decodeExperimentResponse(r, REQUEST_ENCODING) : r.body;
     const chk = r.status === 200 ? checkBody(rows, body) : { ok: false, problems: ['status ' + r.status] };
     if (!chk.ok) throw new Error('body check failed before timing: ' + chk.problems.join('; '));
@@ -83,8 +89,8 @@ async function withStack(car, cls, { loadgen = true, rows = 100 } = {}, fn) {
       lg = await startLoadgen(net);
       resources.loadgen = await assertContainerResources(lg, { cpus: CFG.loadgenCpus, cpuset: CFG.loadgenCpuset });
     }
-    const records = await fn({ c, port, lg, net, url: `http://${c.name}:3000` });
-    for (const record of Object.values(records)) record.resources = resources;
+    const records = await fn({ c, port, lg, net, response, url: `http://${c.name}:3000` });
+    for (const record of Object.values(records)) { record.resources = resources; record.response = response; }
     return records;
   } finally { await removeContainer(lg); await removeContainer(c); await removeNetwork(net); }
 }
@@ -93,20 +99,22 @@ const meta = (car, extra) => ({ at: new Date().toISOString(), runId: RUN_ID, cam
 // ---------- events ----------
 async function throughput(car, evId, cls, rows, alsoFuel) {
   const before = machineState();
-  return withStack(car, cls, { rows }, async ({ c, lg, url }) => {
+  return withStack(car, cls, { rows, event: evId }, async ({ c, lg, url, response }) => {
     const target = `${url}/ssr?rows=${rows}`;
     const idle = (await docker('stats', '--no-stream', '--format', '{{.MemUsage}}', c.name)).stdout.trim();
     log(`  ${evId} warm-up ${CFG.warmup}s`);
     const sw = alsoFuel ? startSampler(c.name) : null;
-    await oha(lg, target, { c: CFG.concurrency, z: CFG.warmup });
-    const warmSamples = sw ? await sw.stop() : [];
+    let warmup, warmSamples = [];
+    try { warmup = await oha(lg, target, { c: CFG.concurrency, z: CFG.warmup, response, evidence: `${car}-${evId}-warmup` }); }
+    finally { if (sw) warmSamples = await sw.stop(); }
     const runs = [], peaks = [], allSamples = [];
     for (let i = 1; i <= CFG.runs; i++) {
       const s = alsoFuel ? startSampler(c.name) : null;
-      const r = await oha(lg, target, { c: CFG.concurrency, z: CFG.duration });
-      let smp = [];
+      let r, smp = [];
+      try { r = await oha(lg, target, { c: CFG.concurrency, z: CFG.duration, response, evidence: `${car}-${evId}-${i}` }); }
+      finally { if (s) await s.stop(); }
       if (s) {
-        await s.stop(); smp = s.samples;
+        smp = s.samples;
         const fin = parseMem((await docker('stats', '--no-stream', '--format', '{{.MemUsage}}', c.name)).stdout.trim()); // residency right after the load
         if (fin != null) smp.push({ t: Date.now(), mib: +fin.toFixed(2), cpu: 'post' });
         allSamples.push(...smp);
@@ -117,7 +125,7 @@ async function throughput(car, evId, cls, rows, alsoFuel) {
     }
     const out = {
       class: cls, rows, concurrency: CFG.concurrency, durationS: CFG.duration, warmupS: CFG.warmup,
-      metric: { name: 'requests per second', unit: 'req/s', better: 'higher' }, values: runs.map(r => r.okRps), runs,
+      metric: { name: 'requests per second', unit: 'req/s', better: 'higher' }, values: runs.map(r => r.okRps), runs, warmup,
       bytesPerRequest: runs[0].bytesPerRequest, container: { ...limits(cls) },
     };
     const result = { [evId]: meta(car, { machine: { before, after: machineState() }, ...out }) };
@@ -138,17 +146,17 @@ const limits = cls => (cls === 'B' ? CFG.classB : CFG.classA);
 
 async function reaction(car) {
   const before = machineState();
-  return withStack(car, 'A', {}, async ({ lg, url }) => {
+  return withStack(car, 'A', { event: 'reaction' }, async ({ lg, url, response }) => {
     const target = `${url}/ssr?rows=100`;
     log(`  reaction warm-up ${CFG.warmup}s`);
-    await oha(lg, target, { c: 1, z: CFG.warmup });
+    const warmup = await oha(lg, target, { c: 1, z: CFG.warmup, response, evidence: `${car}-reaction-warmup` });
     const runs = [];
     for (let i = 1; i <= CFG.runs; i++) {
-      const r = await oha(lg, target, { c: 1, z: CFG.duration }); r.run = i; runs.push(r);
+      const r = await oha(lg, target, { c: 1, z: CFG.duration, response, evidence: `${car}-reaction-${i}` }); r.run = i; runs.push(r);
       log(`  reaction run ${i}: p99 ${r.latencyMs.p99.toFixed(3)} ms (p50 ${r.latencyMs.p50.toFixed(3)}), ${r.requests} reqs`);
     }
     return { reaction: meta(car, { class: 'A', rows: 100, concurrency: 1, durationS: CFG.duration, warmupS: CFG.warmup, container: { ...limits('A') }, machine: { before, after: machineState() },
-      metric: { name: 'p99 latency at concurrency 1', unit: 'ms', better: 'lower' }, values: runs.map(r => r.latencyMs.p99), runs }) };
+      metric: { name: 'p99 latency at concurrency 1', unit: 'ms', better: 'lower' }, values: runs.map(r => r.latencyMs.p99), runs, warmup }) };
   });
 }
 
@@ -183,8 +191,8 @@ async function gridStart(car) {
 
 async function weight(car) {
   const before = machineState(), img = imageInfo(car);
-  return withStack(car, 'A', { loadgen: false }, async ({ port }) => {
-    const plain = await get(port, '/ssr?rows=100', {}, 15000);
+  return withStack(car, 'A', { loadgen: false, event: 'weight' }, async ({ port }) => {
+    const plain = await get(port, '/ssr?rows=100', { 'accept-encoding': 'identity' }, 15000);
     const enc = await get(port, '/ssr?rows=100', { 'accept-encoding': REQUEST_ENCODING ?? 'gzip' }, 15000);
     let representation;
     if (REQUEST_ENCODING) {

@@ -1,0 +1,56 @@
+{
+  "create1000": {
+    "originalToRollbackTimeRatio": 1.0776523702028085,
+    "publishedToRollbackTimeRatio": 1.0122985580999373,
+    "originalToRollbackNormalizedRatio": 1.0031217193343267,
+    "publishedToRollbackNormalizedRatio": 1.3373485538194205
+  },
+  "replace1000": {
+    "originalToRollbackTimeRatio": 1.0566942869605709,
+    "publishedToRollbackTimeRatio": 1.0332622601281305,
+    "originalToRollbackNormalizedRatio": 1.009070573177812,
+    "publishedToRollbackNormalizedRatio": 1.278248674514323
+  },
+  "update10th": {
+    "originalToRollbackTimeRatio": 0.7556053811647766,
+    "publishedToRollbackTimeRatio": 1.0732484076425255,
+    "originalToRollbackNormalizedRatio": 0.6018915413686338,
+    "publishedToRollbackNormalizedRatio": 1.1442721993246951
+  },
+  "select": {
+    "originalToRollbackTimeRatio": 0.34693877551196173,
+    "publishedToRollbackTimeRatio": 1.0625000000082423,
+    "originalToRollbackNormalizedRatio": 0.38163265307729405,
+    "publishedToRollbackNormalizedRatio": 2.3375000001511017
+  },
+  "swap": {
+    "originalToRollbackTimeRatio": 0.9745222929921664,
+    "publishedToRollbackTimeRatio": 1.0337837837838104,
+    "originalToRollbackNormalizedRatio": 0.8802136839898994,
+    "publishedToRollbackNormalizedRatio": 1.1421643417587581
+  },
+  "remove": {
+    "originalToRollbackTimeRatio": 0.8111111111143628,
+    "publishedToRollbackTimeRatio": 1.0281690140871773,
+    "originalToRollbackNormalizedRatio": 0.49698137443758483,
+    "publishedToRollbackNormalizedRatio": 0.6418627371164518
+  },
+  "create10000": {
+    "originalToRollbackTimeRatio": 1.1286664059445017,
+    "publishedToRollbackTimeRatio": 0.9594016206108592,
+    "originalToRollbackNormalizedRatio": 1.104494303436902,
+    "publishedToRollbackNormalizedRatio": 0.9497422782162924
+  },
+  "append1000": {
+    "originalToRollbackTimeRatio": 0.9752380952383239,
+    "publishedToRollbackTimeRatio": 0.8689011455243727,
+    "originalToRollbackNormalizedRatio": 0.8668783068782805,
+    "publishedToRollbackNormalizedRatio": 0.7602225565878208
+  },
+  "clear": {
+    "originalToRollbackTimeRatio": 1.1392405063320519,
+    "publishedToRollbackTimeRatio": 1.0975609756096587,
+    "originalToRollbackNormalizedRatio": 1.0753578611209207,
+    "publishedToRollbackNormalizedRatio": 1.066788237980535
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "artifactId": 12573154988,
+  "runId": 40123441558,
+  "runAttempt": 1,
+  "sourceCommit": "be858597a42c3fbcbd0146d111c2f3bc7bc8d67a",
+  "sha256": "40b5692f0b9773d3797f7eb33f66a828e31c112d9e753a34f832587714211b41",
+  "githubDigest": "sha256:40b5692f0b9773d3797f7eb33f66a828e31c112d9e753a34f832587714211b41",
+  "bytes": 12859901,
+  "files": 459
+}

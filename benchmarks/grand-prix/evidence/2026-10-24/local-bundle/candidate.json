@@ -1,0 +1,16 @@
+{
+  "event": 10,
+  "car": "forma",
+  "measuredAt": "2026-10-24T18:26:41.257Z",
+  "files": [
+    {
+      "file": "assets/index-u1Ahk4_J.js",
+      "bytes": 25063,
+      "gzip": 9267,
+      "brotli": 8417
+    }
+  ],
+  "bytes": 25063,
+  "gzip": 9267,
+  "brotli": 8417
+}

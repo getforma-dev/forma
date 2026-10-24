@@ -4,11 +4,15 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateProfile } from './resource-profile.mjs';
 import { validateCampaign } from './campaign.mjs';
+import { requestHeaders, validateResponse, assertSampleRepresentation } from './transport.mjs';
 
 const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
 const positive = n => assert(Number.isFinite(n) && n > 0, 'invalid numeric measurement');
 export function summarizeCompression(records, { diagnostic = false } = {}) {
   const variants = {};
+  // Preserve the meaning of historical evidence; current explicit-transport
+  // captures additionally retain raw oha byte totals and exact probe bodies.
+  const explicitTransport = Object.values(records).flatMap(Object.values).some(record => record.config?.requestHeaders);
   const campaign = records.identity?.sprint?.campaign;
   if (campaign) validateCampaign(campaign);
   if (!diagnostic) assert(campaign, 'qualified comparison requires one host campaign');
@@ -24,6 +28,7 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
       assert.equal(record.car, 'forma');
       assert.deepEqual(record.campaign, campaign, 'mixed host campaigns');
       assert.equal(record.config?.acceptEncoding, encoding);
+      if (explicitTransport) assert.deepEqual(record.config.requestHeaders, requestHeaders(encoding), 'mixed transport generations');
       assert.deepEqual(record.config.resourceProfile, resourceProfile, 'mixed resource profiles');
       if (!diagnostic) {
         assert.equal(record.config.forced, false, 'loaded run cannot qualify');
@@ -48,7 +53,12 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
           ? resourceProfile.classB : resourceProfile.classA);
       }
       assert.equal(record.runs.length, 3, 'three samples required');
+      if (explicitTransport) {
+        validateResponse(record.response, requestHeaders(encoding));
+        assertSampleRepresentation(record.warmup, record.response, requestHeaders(encoding));
+      }
       for (const run of record.runs) {
+        if (explicitTransport) assertSampleRepresentation(run, record.response, requestHeaders(encoding));
         assert.equal(run.nonOk, 0); assert.equal(run.successRate, 1);
         assert(run.errorDistribution && typeof run.errorDistribution === 'object' && !Array.isArray(run.errorDistribution));
         for (const [error, count] of Object.entries(run.errorDistribution)) {
@@ -68,11 +78,16 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
     assert.equal(representation.contentEncoding, encoding);
     positive(representation.encodedBytes); positive(representation.decodedBytes);
     for (const event of ['sprint', 'multicore', 'reaction']) for (const run of events[event].runs) {
-      assert.equal(run.bytesPerRequest, representation.encodedBytes, 'load generator did not transfer the verified encoded body');
+      if (!explicitTransport || encoding === 'identity') assert.equal(run.bytesPerRequest, representation.encodedBytes, 'load generator did not transfer the verified encoded body');
     }
     if (encoding === 'identity') assert.equal(representation.encodedBytes, representation.decodedBytes);
     else assert.equal(representation.decodedBytes, variants.identity.decodedBytes);
     variants[encoding] = { encodedBytes: representation.encodedBytes, decodedBytes: representation.decodedBytes,
+      ...(explicitTransport ? { wireBytes: Object.fromEntries(['sprint', 'multicore', 'reaction'].map(event => {
+        const runs = events[event].runs, totalBytes = runs.reduce((n, run) => n + run.totalData, 0), completedResponses = runs.reduce((n, run) => n + run.requests, 0);
+        return [event, { kind: encoding === 'identity' ? 'exact-identity-length' : 'aggregate-encoded-length', totalBytes, completedResponses,
+          meanBytes: totalBytes / completedResponses, sampleMeanBytes: runs.map(run => run.totalData / run.requests) }];
+      })) } : {}),
       sprintRps: mean(events.sprint.runs.map(run => run.okRps)),
       sprintP95Ms: mean(events.sprint.runs.map(run => run.latencyMs.p95)),
       sprintP99Ms: mean(events.sprint.runs.map(run => run.latencyMs.p99)),
@@ -89,7 +104,7 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
     protocol: { durationS: records.identity.sprint.durationS, warmupS: records.identity.sprint.warmupS,
       samples: records.identity.sprint.runs.length, concurrency: records.identity.sprint.concurrency,
       classA: records.identity.sprint.config.classA, classB: records.identity.sprint.config.classB },
-    meaning: 'Same opt-in binary; identity includes negotiation. CPU percentages are sampled during one-CPU Sprint runs; timings are means of three samples.' };
+    meaning: 'Same opt-in binary; identity includes negotiation. CPU percentages are sampled during one-CPU Sprint runs; timings are means of three samples.' + (explicitTransport ? ' encodedBytes is one retained probe; wireBytes contains actual totalData/completed-response means, not a per-response compressed length claim.' : '') };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const directory = resolve(process.argv[2]);

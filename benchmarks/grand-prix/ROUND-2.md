@@ -114,8 +114,8 @@ Chromium executable hash and checks the server container's one-CPU/1-GiB limits.
 
 ## Strength budgets and resource ownership
 
-The Forma check fails above 8 MiB peak under Sprint load, 50 ms application boot,
-or 150,000,000 bytes for the runtime image. Memory uses the original Docker-stats
+The Forma check fails above 8 MiB peak under Sprint load, a 50 ms readiness
+remainder after `docker run` returns, or 150,000,000 bytes for the runtime image. Memory uses the original Docker-stats
 sampling definition; image size uses Docker's uncompressed image size. Boot is
 the mean of five first-200 times minus their corresponding `docker run` return
 times, exactly as in the original telemetry. It includes the host probe and
@@ -136,8 +136,9 @@ A resource profile specifies allocations; it does not identify a machine. Each
 host driver now writes an immutable campaign JSON before starting measurements.
 The record has a fresh UUID, timestamp, a host fingerprint, and hashed machine
 and runner identities. GitHub Actions records also retain the run ID, attempt,
-job and repository. Raw machine IDs, hostnames and runner tracking IDs are never
-written into the evidence. A child driver refuses an inherited campaign from a
+job and repository. Campaign records contain no raw machine or runner tracking
+IDs. Original Docker/system inspection records may contain public ephemeral
+runner hostnames and container IDs. A child driver refuses an inherited campaign from a
 different host or job. A native invocation gets a unique UUID and host hash.
 
 One paired server campaign spans the published car and every exact candidate;
@@ -150,3 +151,25 @@ Resource-profile equality cannot substitute for campaign equality. Prior raw
 artifacts remain unchanged and cannot acquire a new qualified campaign merely
 by being rescored. Server and client jobs may contribute normalized points to
 the same overall view, but raw speed comparisons require the same campaign.
+
+### Explicit transport evidence (2026-10-24)
+
+The first full server campaign exposed differing probe/load representations for
+React Router. That archive remains unresolved and unchanged. From harness
+`be858597a42c3fbcbd0146d111c2f3bc7bc8d67a`, every server probe and oha request
+explicitly sends `User-Agent: oha/1.16.0`, `Accept: */*` and the selected
+`Accept-Encoding` (`identity` for the ordinary race). Retain encoded response
+bodies, hashes and raw headers at 10/100/1,000 rows and each event preflight.
+Every warmup and timed sample retains its complete oha output and exact arguments,
+including malformed output and failures. Decoded probes must satisfy the shared
+row/content model. No framework-specific byte normalization is permitted.
+
+For identity responses, smoke, event preflight and every load sample must agree
+on body length, and `totalData` must equal that length times completed responses.
+This checks exact byte accounting; it does not capture every individual timed
+body. Deadline cancellations are excluded from oha's successful-byte denominator.
+Compressed lengths can vary with a fresh nonce, so record their actual aggregate
+wire-byte means separately from a retained probe's encoded length. Validate
+encoded integrity, headers, decoded content and raw arithmetic without claiming
+that each timed compressed body has the probe's length. Historical archives must
+be read with their recorded harness; they cannot acquire these new proofs.
