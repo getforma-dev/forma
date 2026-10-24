@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostProfile } from './resource-profile.mjs';
 
 export function trialPlan(id, refs) {
   assert(/^[a-z0-9-]+$/.test(id ?? ''), 'invalid run ID');
@@ -41,7 +42,8 @@ async function main() {
   const trials = trialPlan(id, (process.env.GP_FORMA_REFS ?? '').split(',').filter(Boolean));
   assert(!existsSync(out) && !existsSync(join(results, 'raw')), 'fresh comparison evidence required');
   mkdirSync(out, { recursive: true });
-  const report = { schema: 1, id, diagnostic: process.env.GP_DIAGNOSTIC !== 'false',
+  const diagnostic = process.env.GP_DIAGNOSTIC !== 'false';
+  const report = { schema: 1, id, diagnostic, resourceProfile: hostProfile({ diagnostic }),
     before: new Date().toISOString(), events: '1-7', trials, passed: false };
   const save = () => writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n');
   save();

@@ -2,18 +2,35 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { validateProfile } from './resource-profile.mjs';
 
 export const BUDGETS = Object.freeze({ peakMiB: 8, appBootMs: 50, imageBytes: 150_000_000 });
 const positive = (n, label) => assert(Number.isFinite(n) && n > 0, `missing/invalid ${label}`);
 const mean = values => values.reduce((a, b) => a + b, 0) / values.length;
 
 export function evaluateBudgets({ sprint, fuel, grid, weight }) {
+  const resourceProfile = sprint.config?.resourceProfile;
+  if (resourceProfile) validateProfile(resourceProfile);
   for (const [event, record] of Object.entries({ sprint, fuel, grid, weight })) {
     assert.equal(record?.car, 'forma', `${event}: expected Forma`);
     assert.equal(record?.event, event, `${event}: unexpected event`);
     assert(/^sha256:[a-f0-9]{64}$/.test(record.image?.id ?? ''), `${event}: missing/full image identity required`);
     assert.equal(record.image.id, sprint.image.id, 'mixed image identities');
+    assert.deepEqual(record.config?.resourceProfile, resourceProfile, 'mixed resource profiles');
+    if (resourceProfile) {
+      assert.deepEqual(record.config.classA, resourceProfile.classA);
+      assert.deepEqual(record.config.classB, resourceProfile.classB);
+      assert.equal(record.config.loadgenCpus, resourceProfile.loadgen.cpus);
+      assert.equal(record.config.loadgenCpuset, resourceProfile.loadgen.cpuset);
+      if (resourceProfile.qualified) for (const [key, value] of Object.entries({ duration: 10, warmup: 5, runs: 3, concurrency: 64, starts: 5 })) {
+        assert.equal(record.config[key], value, 'qualified budget requires unchanged ' + key);
+      }
+    }
     assert.equal(record.config?.forced, false, `${event}: loaded-machine override is not budget evidence`);
+  }
+  if (resourceProfile?.qualified) {
+    assert.equal(sprint.durationS, 10); assert.equal(sprint.warmupS, 5); assert.equal(sprint.concurrency, 64);
+    assert.deepEqual(sprint.container, resourceProfile.classA);
   }
   assert.equal(sprint.runs?.length, 3, 'three Sprint samples required');
   for (const run of sprint.runs) {
@@ -52,7 +69,7 @@ export function evaluateBudgets({ sprint, fuel, grid, weight }) {
   const checks = Object.entries(BUDGETS).map(([metric, limit]) => ({
     metric, limit, measured: measured[metric], passed: measured[metric] <= limit,
   }));
-  return { schema: 1, image: sprint.image.id, measured, limits: BUDGETS,
+  return { schema: 1, image: sprint.image.id, resourceProfile: resourceProfile ?? null, diagnostic: resourceProfile?.diagnostic ?? true, measured, limits: BUDGETS,
     samples: { memoryPeaks: fuel.values, bootRemainders: boots },
     checks, passed: checks.every(check => check.passed) };
 }

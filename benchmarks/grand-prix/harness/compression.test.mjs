@@ -5,6 +5,7 @@ import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { checkCandidateLock } from './candidate-lock.mjs';
 import { decodeExperimentResponse } from './compression-response.mjs';
 import { summarizeCompression } from './compression-report.mjs';
+import { profileConfiguration } from './resource-profile.mjs';
 
 const codecs = JSON.parse(readFileSync(new URL('./compression-codecs.json', import.meta.url))).packages;
 const original = readFileSync(new URL('../contestants/forma/Cargo.lock', import.meta.url), 'utf8');
@@ -34,13 +35,14 @@ test('all three representations decode exactly; false headers and corrupt bodies
     if (encoding !== 'identity') assert.throws(() => decodeExperimentResponse({ ...response, body: encoded.subarray(0, 1), headers: { ...response.headers, 'content-length': '1' } }, encoding));
   }
 });
-function sample() {
+function sample(name = 'native-8-v1') {
+  const resourceProfile = profileConfiguration({ name, githubActions: true, availableCpus: name === 'gha-4-v1' ? 4 : 8, affinity: name === 'gha-4-v1' ? [4, 5, 6, 7] : [0, 1, 2, 3, 4, 5, 6, 7] });
   return Object.fromEntries(['identity', 'br', 'gzip'].map(encoding => {
     const base = event => ({ event, car: 'forma', image: { id: 'sha256:' + 'a'.repeat(64) }, config: {
-      acceptEncoding: encoding, forced: false, duration: 10, warmup: 5, runs: 3, concurrency: 64, loadgenCpus: '4',
-      classA: { cpus: '1', memory: '1g', workers: 1 }, classB: { cpus: '4', memory: '2g', workers: 4 } } });
+      acceptEncoding: encoding, forced: false, duration: 10, warmup: 5, runs: 3, concurrency: 64, resourceProfile: structuredClone(resourceProfile), loadgenCpus: resourceProfile.loadgen.cpus, loadgenCpuset: resourceProfile.loadgen.cpuset,
+      classA: structuredClone(resourceProfile.classA), classB: structuredClone(resourceProfile.classB) } });
     const load = event => ({ ...base(event), rows: 100, durationS: 10, warmupS: 5, concurrency: event === 'reaction' ? 1 : 64,
-      container: event === 'multicore' ? { cpus: '4', memory: '2g', workers: 4 } : { cpus: '1', memory: '1g', workers: 1 },
+      container: structuredClone(event === 'multicore' ? resourceProfile.classB : resourceProfile.classA),
       runs: Array.from({ length: 3 }, () => ({ nonOk: 0, successRate: 1, errorDistribution: {}, okRps: 1000,
         bytesPerRequest: encoding === 'identity' ? 33000 : 2500, latencyMs: { p95: 2, p99: 3 } })) });
     return [encoding, { sprint: load('sprint'), multicore: load('multicore'), reaction: load('reaction'),
@@ -79,4 +81,20 @@ test('shortened observations can be reported only as diagnostics with their actu
   assert.throws(() => summarizeCompression(records));
   const report = summarizeCompression(records, { diagnostic: true });
   assert.equal(report.diagnostic, true); assert.equal(report.protocol.durationS, 1); assert.equal(report.protocol.warmupS, 1);
+});
+
+test('GHA four-CPU compression is a distinct qualified profile with disjoint actual affinity', () => {
+  const report = summarizeCompression(sample('gha-4-v1'));
+  assert.equal(report.resourceProfile.name, 'gha-4-v1');
+  assert.equal(report.protocol.classB.cpus, '2');
+  assert.equal(report.resourceProfile.loadgen.cpuset, '6,7');
+});
+for (const [name, mutate] of [
+  ['missing profile', records => { for (const events of Object.values(records)) for (const record of Object.values(events)) delete record.config.resourceProfile; }],
+  ['mixed profiles', records => { records.br.sprint.config.resourceProfile = sample('native-8-v1').br.sprint.config.resourceProfile; }],
+  ['overlapping affinity', records => { records.identity.sprint.config.resourceProfile.loadgen.cpuset = '4,5'; }],
+  ['unapplied affinity', records => { records.gzip.multicore.container.cpuset = '4,5,6,7'; }],
+  ['diagnostic promoted', records => { for (const events of Object.values(records)) for (const record of Object.values(events)) record.config.resourceProfile.diagnostic = true; }],
+]) test(`four-CPU comparison refuses ${name}`, () => {
+  const records = sample('gha-4-v1'); mutate(records); assert.throws(() => summarizeCompression(records));
 });

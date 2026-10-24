@@ -12,9 +12,16 @@ on:
         required: true
         type: string
       runner:
-        description: 'Linux runner label; qualified runs require at least eight CPUs'
+        description: 'Linux runner label; must satisfy the selected resource protocol'
         default: 'ubuntu-latest'
         type: string
+      profile:
+        description: 'Resource protocol; four-CPU GHA results are separate from the native eight-CPU baseline'
+        default: 'native-8-v1'
+        type: choice
+        options:
+          - native-8-v1
+          - gha-4-v1
       diagnostic:
         description: 'Allow a smaller VM; results remain diagnostic'
         default: true
@@ -40,13 +47,14 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Check candidate and ownership restrictions
-        run: node --test benchmarks/grand-prix/harness/paired-server.test.mjs
+        run: node --test benchmarks/grand-prix/harness/paired-server.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
       - name: Run the baseline then each candidate sequentially
         if: github.event_name == 'workflow_dispatch'
         working-directory: benchmarks/grand-prix
         env:
           GP_RUN_ID: paired-${{ github.run_id }}-${{ github.run_attempt }}
           GP_FORMA_REFS: ${{ inputs.forma_refs }}
+          GP_PROFILE: ${{ inputs.profile || 'native-8-v1' }}
           GP_DIAGNOSTIC: ${{ inputs.diagnostic && 'true' || 'false' }}
         run: node harness/paired-server.mjs
       - name: Remove only this comparison's remaining Docker resources

@@ -2,11 +2,15 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { validateProfile } from './resource-profile.mjs';
 
 const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
 const positive = n => assert(Number.isFinite(n) && n > 0, 'invalid numeric measurement');
 export function summarizeCompression(records, { diagnostic = false } = {}) {
   const variants = {};
+  const resourceProfile = records.identity?.sprint?.config?.resourceProfile;
+  if (resourceProfile) validateProfile(resourceProfile);
+  if (!diagnostic) assert(resourceProfile?.qualified, 'qualified comparison needs an explicit qualified resource profile');
   let image;
   for (const encoding of ['identity', 'br', 'gzip']) {
     const events = records[encoding];
@@ -15,13 +19,15 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
       assert.equal(record?.event, event);
       assert.equal(record.car, 'forma');
       assert.equal(record.config?.acceptEncoding, encoding);
+      assert.deepEqual(record.config.resourceProfile, resourceProfile, 'mixed resource profiles');
       if (!diagnostic) {
         assert.equal(record.config.forced, false, 'loaded run cannot qualify');
-        for (const [field, value] of Object.entries({ duration: 10, warmup: 5, runs: 3, concurrency: 64, loadgenCpus: '4' })) {
+        for (const [field, value] of Object.entries({ duration: 10, warmup: 5, runs: 3, concurrency: 64, loadgenCpus: resourceProfile.loadgen.cpus })) {
           assert.equal(record.config[field], value, `qualified profile requires original ${field}`);
         }
-        assert.deepEqual(record.config.classA, { cpus: '1', memory: '1g', workers: 1 });
-        assert.deepEqual(record.config.classB, { cpus: '4', memory: '2g', workers: 4 });
+        assert.deepEqual(record.config.classA, resourceProfile.classA);
+        assert.deepEqual(record.config.classB, resourceProfile.classB);
+        assert.equal(record.config.loadgenCpuset, resourceProfile.loadgen.cpuset);
       }
       assert(/^sha256:[a-f0-9]{64}$/.test(record.image?.id ?? ''), 'missing image identity');
       image ??= record.image.id;
@@ -31,10 +37,10 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
       const record = events[event];
       assert.equal(record.rows, 100);
       assert.equal(record.concurrency, event === 'reaction' ? 1 : 64);
-      if (!diagnostic && event !== 'reaction') {
+      if (!diagnostic) {
         assert.equal(record.durationS, 10); assert.equal(record.warmupS, 5);
         assert.deepEqual(record.container, event === 'multicore'
-          ? { cpus: '4', memory: '2g', workers: 4 } : { cpus: '1', memory: '1g', workers: 1 });
+          ? resourceProfile.classB : resourceProfile.classA);
       }
       assert.equal(record.runs.length, 3, 'three samples required');
       for (const run of record.runs) {
@@ -74,7 +80,7 @@ export function summarizeCompression(records, { diagnostic = false } = {}) {
     variant.sprintRpsRatioToIdentity = variant.sprintRps / variants.identity.sprintRps;
     variant.sprintP99RatioToIdentity = variant.sprintP99Ms / variants.identity.sprintP99Ms;
   }
-  return { schema: 1, image, diagnostic, variants, passed: true,
+  return { schema: 1, image, diagnostic, resourceProfile: resourceProfile ?? null, variants, passed: true,
     protocol: { durationS: records.identity.sprint.durationS, warmupS: records.identity.sprint.warmupS,
       samples: records.identity.sprint.runs.length, concurrency: records.identity.sprint.concurrency,
       classA: records.identity.sprint.config.classA, classB: records.identity.sprint.config.classB },

@@ -10,7 +10,12 @@ GP_RUN_ID=compression-example node harness/linux-run.mjs \
   --compression --events 1,3,4,5,7
 ```
 
-Use `--diagnostic` on a Linux host with fewer than eight CPUs. The existing
+The default `native-8-v1` profile requires eight available CPUs. On the standard
+four-CPU GitHub Actions runner select `GP_PROFILE=gha-4-v1` (or workflow input
+`profile: gha-4-v1`); that is a separately dated baseline with two server CPUs
+and two disjoint load-generator CPUs for event 3. Both profiles retain the
+one-CPU Sprint and unchanged warmups, durations, samples and memory limits.
+Use `--diagnostic` for observations that must not qualify a selected baseline. The existing
 Grand Prix response compression workflow runs this experiment in its own
 concurrency group, so it can coexist with the full server grid. The budgets
 workflow also exposes it through its `compression` input. Both require
@@ -36,7 +41,7 @@ One server image is built. Identity, Brotli and gzip then run sequentially in
 fresh directories beneath `results/<run>-compression/`, with the original
 five-second warmup, three ten-second samples, and CPU/memory limits. Events
 1/5 record one-CPU throughput, p95/p99 latency, memory peaks and sampled CPU;
-event 3 repeats throughput and tails with four CPUs; event 4 measures
+event 3 repeats throughput and tails with the selected profile's Class B CPUs; event 4 measures
 single-client p99; event 7 records actual encoded bytes. The machine settles
 after compilation and between encodings. No compilation overlaps a timed race.
 
@@ -53,7 +58,10 @@ cannot be reported as a compression measurement.
 three-run throughput/latency set, memory peaks, CPU sample mean/max, and ratios
 to identity. Every raw event stays available. It rejects mixed images, missing
 samples, transport failures, changed decoded page sizes and missing CPU data.
-Only oha's bounded duration-expiry cancellation is accepted. A loaded-machine
+The complete resource profile and actual allowed CPU IDs are retained; mixed
+profiles, overlapping allocations and unapplied affinity are refused. Previous
+diagnostics have no new-profile identity and are never promoted. Only oha's
+bounded duration-expiry cancellation is accepted. A loaded-machine
 override is diagnostic only.
 
 The identity case uses the same compression-enabled binary and includes

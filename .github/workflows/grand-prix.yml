@@ -19,9 +19,16 @@ on:
         default: '1,5-7'
         type: string
       runner:
-        description: 'Runner label; a qualified full baseline requires at least eight CPUs'
+        description: 'Runner label; must satisfy the selected resource protocol'
         default: 'ubuntu-latest'
         type: string
+      profile:
+        description: 'Resource protocol; four-CPU GHA results are separate from the native eight-CPU baseline'
+        default: 'native-8-v1'
+        type: choice
+        options:
+          - native-8-v1
+          - gha-4-v1
       diagnostic:
         description: 'Allow a smaller VM for correctness and strength budgets only'
         default: true
@@ -55,13 +62,14 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Qualify budget refusals
-        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs benchmarks/grand-prix/harness/compression.test.mjs benchmarks/grand-prix/harness/render-counts.test.mjs
+        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs benchmarks/grand-prix/harness/compression.test.mjs benchmarks/grand-prix/harness/render-counts.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
       - name: Run isolated Forma strength check or requested server grid
         working-directory: benchmarks/grand-prix
         env:
           GP_RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
           GP_CARS: ${{ inputs.cars || 'forma' }}
           GP_EVENTS: ${{ inputs.events || '1,5-7' }}
+          GP_PROFILE: ${{ inputs.profile || 'native-8-v1' }}
           GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
           GP_FORMA_REF: ${{ github.event_name == 'pull_request' && github.sha || inputs.forma_ref }}
           GP_BASELINE: 'true'

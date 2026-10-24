@@ -14,9 +14,16 @@ on:
         required: true
         type: string
       runner:
-        description: 'Linux runner label; qualified measurements require at least eight CPUs'
+        description: 'Linux runner label; must satisfy the selected resource protocol'
         default: 'ubuntu-latest'
         type: string
+      profile:
+        description: 'Resource protocol; four-CPU GHA results are separate from the native eight-CPU baseline'
+        default: 'native-8-v1'
+        type: choice
+        options:
+          - native-8-v1
+          - gha-4-v1
       diagnostic:
         description: 'Allow a smaller Linux VM; results remain diagnostic'
         default: true
@@ -42,7 +49,7 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Check codec, encoding and qualification refusals
-        run: node --test benchmarks/grand-prix/harness/compression.test.mjs
+        run: node --test benchmarks/grand-prix/harness/compression.test.mjs benchmarks/grand-prix/harness/resource-profile.test.mjs
       - name: Run identity, Brotli and gzip sequentially from one binary
         if: github.event_name == 'workflow_dispatch'
         working-directory: benchmarks/grand-prix
@@ -51,6 +58,7 @@ jobs:
           GP_CARS: forma
           GP_BASELINE: 'true'
           GP_COMPRESSION: 'true'
+          GP_PROFILE: ${{ inputs.profile || 'native-8-v1' }}
           GP_DIAGNOSTIC: ${{ inputs.diagnostic && 'true' || 'false' }}
           GP_FORMA_REF: ${{ inputs.forma_ref }}
         run: node harness/ci-run.mjs

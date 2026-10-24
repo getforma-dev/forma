@@ -6,6 +6,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'n
 import { join, resolve } from 'node:path';
 import os from 'node:os';
 import { instrumentRenderCounts } from './render-counts-source.mjs';
+import { hostProfile, validateEngineProfile, parseCpuList } from './resource-profile.mjs';
 
 const argv = process.argv.slice(2);
 const option = key => argv.includes(`--${key}`) ? argv[argv.indexOf(`--${key}`) + 1] : undefined;
@@ -15,7 +16,8 @@ assert(/^[a-f0-9]{40}$/.test(commit ?? ''), 'exact source commit required');
 const runId = process.env.GP_RUN_ID;
 assert(/^[a-z0-9-]+$/.test(runId ?? ''), 'GP_RUN_ID required');
 const diagnostic = argv.includes('--diagnostic');
-if (!diagnostic) assert(process.platform === 'linux' && os.availableParallelism() >= 8, 'qualified profile requires native Linux with eight CPUs');
+const resourceProfile = hostProfile({ diagnostic });
+const cpusetArgs = resourceProfile.classA.cpuset ? ['--cpuset-cpus=' + resourceProfile.classA.cpuset] : [];
 assert(option('out'), 'fresh output directory required');
 const out = resolve(option('out'));
 assert(!out.includes(','), 'output path must be usable in a Docker bind mount');
@@ -27,9 +29,9 @@ const labels = ['--label', 'grandprix=forma-264', '--label', `gp264run=${runId}`
 const containers = new Set();
 const machine = () => ({ at: new Date().toISOString(), host: `${process.platform}/${process.arch}`, kernel: os.release(),
   cpu: os.cpus()[0]?.model, cpus: os.availableParallelism(), load: os.loadavg() });
-const report = { schema: 1, kind: 'instrumented-render-counts', instrumentation: true, diagnostic, sourceCommit: commit,
+const report = { schema: 1, kind: 'instrumented-render-counts', instrumentation: true, diagnostic, resourceProfile, sourceCommit: commit,
   runtimeImage: runtime, buildImage: build, before: machine(), samples: [], passed: false,
-  protocol: { warmups: 20, samples: 101, rows: [100, 1000], concurrency: 1, cpus: 1, memoryBytes: 1024 ** 3 },
+  protocol: { warmups: 20, samples: 101, rows: [100, 1000], concurrency: 1, cpus: 1, cpuset: resourceProfile.classA.cpuset, memoryBytes: 1024 ** 3 },
   meaning: 'PageResponse.counts().walk_time excludes props conversion, document assembly, header instrumentation and HTTP transfer. This is not a throughput race.' };
 const save = () => writeFileSync(join(out, 'render-counts.json'), JSON.stringify(report, null, 2) + '\n');
 save();
@@ -51,6 +53,7 @@ async function start(id) {
   const container = inspect('container', id);
   assert.equal(container.HostConfig.NanoCpus, 1_000_000_000);
   assert.equal(container.HostConfig.Memory, 1024 ** 3);
+  assert.deepEqual(container.HostConfig.CpusetCpus ? parseCpuList(container.HostConfig.CpusetCpus) : [], resourceProfile.classA.cpuset ? parseCpuList(resourceProfile.classA.cpuset) : []);
   const url = `http://127.0.0.1:${container.NetworkSettings.Ports['3000/tcp'][0].HostPort}`;
   const deadline = Date.now() + 15_000;
   while (Date.now() < deadline && !stopping) {
@@ -85,14 +88,17 @@ function stats(values) {
     p95: sorted[Math.ceil(sorted.length * 0.95) - 1], p99: sorted[Math.ceil(sorted.length * 0.99) - 1], min: sorted[0], max: sorted.at(-1) };
 }
 try {
+  const engine = JSON.parse(docker(['info', '--format', '{{json .}}']));
+  if (!diagnostic || resourceProfile.name === 'gha-4-v1') validateEngineProfile(resourceProfile, engine);
+  report.dockerEngine = engine; save();
   for (const [name, id] of [['runtime', runtime], ['build', build]]) {
     const image = inspect('image', id);
     assert.equal(image.Id, id); assert.equal(image.Os, 'linux');
     assert.equal(image.Config.Labels?.grandprix, 'forma-264');
     writeFileSync(join(out, `${name}-image.json`), JSON.stringify(image, null, 2) + '\n');
   }
-  const original = create(runtime, ['--cpus=1', '--memory=1g', '-p', '127.0.0.1::3000']);
-  const compiler = create(build, ['--cpus=1', '--memory=2g', '-e', 'CARGO_BUILD_JOBS=1'],
+  const original = create(runtime, ['--cpus=1', ...cpusetArgs, '--memory=1g', '-p', '127.0.0.1::3000']);
+  const compiler = create(build, ['--cpus=1', ...cpusetArgs, '--memory=2g', '-e', 'CARGO_BUILD_JOBS=1'],
     ['sh', '-c', 'cd /app && touch src/main.rs && cargo build --release --locked --offline']);
   docker(['cp', `${original}:/usr/local/bin/grandprix`, join(out, 'original-binary')]);
   docker(['cp', `${compiler}:/app/target/release/grandprix-forma`, join(out, 'build-binary')]);
@@ -121,7 +127,7 @@ try {
     bodies.set(rows, body); writeFileSync(join(out, `original-${rows}.html`), body);
   }
   remove(original);
-  const instrumentedContainer = create(runtime, ['--cpus=1', '--memory=1g', '-p', '127.0.0.1::3000',
+  const instrumentedContainer = create(runtime, ['--cpus=1', ...cpusetArgs, '--memory=1g', '-p', '127.0.0.1::3000',
     '--mount', `type=bind,src=${executable},dst=/usr/local/bin/grandprix,readonly`]);
   const instrumentedUrl = await start(instrumentedContainer);
   writeFileSync(join(out, 'instrumented-container.json'), JSON.stringify(inspect('container', instrumentedContainer), null, 2) + '\n');

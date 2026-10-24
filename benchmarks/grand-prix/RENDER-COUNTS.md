@@ -37,8 +37,12 @@ GP_RUN_ID=counts-example node harness/render-counts.mjs \
   --out results/counts-example
 ```
 
-A qualified measurement requires native Linux with eight available CPUs and
-a host load average below two after compilation. `--diagnostic` retains the
+A qualified measurement uses the selected `native-8-v1` or `gha-4-v1` Linux
+resource profile and a host load average below two after compilation. Select
+`GP_PROFILE=gha-4-v1` only for the dated four-CPU GitHub Actions baseline. The
+one-CPU container is pinned to that profile's Class A CPU, and its actual
+Docker affinity is checked and retained. Results with different profile names
+must not be used to claim before/after gains. `--diagnostic` retains the
 same sample count and container limits while marking a smaller or non-Linux
 host as diagnostic. Only containers created by this helper are removed; the
 original runtime and build images stay available to their owning driver.

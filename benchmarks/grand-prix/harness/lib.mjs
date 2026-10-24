@@ -7,6 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expected } from '../shared/dataset.mjs';
+import assert from 'node:assert/strict';
+import { hostProfile, parseCpuList } from './resource-profile.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const RAW = process.env.GP_RAW_DIR ? path.resolve(process.env.GP_RAW_DIR) : path.join(ROOT, 'results', 'raw');
@@ -20,14 +22,22 @@ export const RUN_ID = process.env.GP_RUN_ID || ('r' + Date.now().toString(36) + 
 if (!/^[a-z0-9-]+$/.test(RUN_ID)) throw new Error('invalid GP_RUN_ID');
 export const RUN_LABEL = 'gp264run=' + RUN_ID;
 
+// Reporting imports this module offline; only runners initialize host resources.
+export const cpusetArgs = cpuset => cpuset ? ['--cpuset-cpus=' + cpuset] : [];
+
 // Protocol constants, overridable only for the end-to-end test (the report records what was used).
 export const CFG = {
   duration: 10, warmup: 5, runs: 3, concurrency: 64, starts: 5, buildRuns: 3,
-  classA: { cpus: '1', memory: '1g', workers: 1 },
-  classB: { cpus: '4', memory: '2g', workers: 4 },
-  loadgenCpus: '4', buildCpus: '4',
   ...(REQUEST_ENCODING ? { acceptEncoding: REQUEST_ENCODING } : {}),
 };
+
+export function configureResources() {
+  const profile = hostProfile();
+  Object.assign(CFG, { resourceProfile: profile, classA: profile.classA, classB: profile.classB,
+    loadgenCpus: profile.loadgen.cpus, loadgenCpuset: profile.loadgen.cpuset,
+    buildCpus: profile.build.cpus, buildCpuset: profile.build.cpuset });
+  return profile;
+}
 
 export const EVENTS = [
   { n: 1, id: 'sprint', title: 'SSR Sprint' }, { n: 2, id: 'endurance', title: 'SSR Endurance' },
@@ -90,7 +100,7 @@ export function limitsFor(cls) { return cls === 'B' ? CFG.classB : CFG.classA; }
 export async function startCar(car, cls, network, extra = []) {
   const lim = limitsFor(cls), name = uniq(car);
   const r = await docker('run', '-d', '--name', name, '--label', LABEL, '--label', RUN_LABEL,
-    '--network', network, '--cpus=' + lim.cpus, '--memory=' + lim.memory,
+    '--network', network, '--cpus=' + lim.cpus, ...cpusetArgs(lim.cpuset), '--memory=' + lim.memory,
     '-e', 'GP_WORKERS=' + lim.workers, '-e', 'NODE_ENV=production', '-p', '127.0.0.1::3000', ...extra, imageName(car));
   if (r.code) throw new Error('docker run failed: ' + r.stderr.trim());
   return { name, car, cls, id: r.stdout.trim() };
@@ -106,9 +116,21 @@ export async function removeContainer(c) { if (c) await docker('rm', '-f', c.nam
 export async function startLoadgen(network) {
   const name = uniq('loadgen');
   const r = await docker('run', '-d', '--name', name, '--label', LABEL, '--label', RUN_LABEL,
-    '--network', network, '--cpus=' + CFG.loadgenCpus, imageName('loadgen'));
+    '--network', network, '--cpus=' + CFG.loadgenCpus, ...cpusetArgs(CFG.loadgenCpuset), imageName('loadgen'));
   if (r.code) throw new Error('loadgen start failed (is gp264/loadgen built? harness/linux-run.mjs): ' + r.stderr.trim());
   return { name };
+}
+
+// Inspect after startup/timing so the boot metric keeps its original timer boundary.
+export async function assertContainerResources(container, limits) {
+  const result = await docker('container', 'inspect', container.name);
+  assert.equal(result.code, 0, 'cannot verify container resource limits');
+  const actual = JSON.parse(result.stdout)[0];
+  assert.equal(actual.HostConfig.NanoCpus, Number(limits.cpus) * 1e9, 'CPU quota drift');
+  assert.deepEqual(actual.HostConfig.CpusetCpus ? parseCpuList(actual.HostConfig.CpusetCpus) : [], limits.cpuset ? parseCpuList(limits.cpuset) : [], 'CPU affinity drift');
+  if (limits.memory) assert.equal(actual.HostConfig.Memory, Number(limits.memory.replace('g', '')) * 1024 ** 3, 'memory quota drift');
+  if (limits.workers) assert(actual.Config.Env.includes('GP_WORKERS=' + limits.workers), 'worker count drift');
+  return { nanoCpus: actual.HostConfig.NanoCpus, cpuset: actual.HostConfig.CpusetCpus, memoryBytes: actual.HostConfig.Memory };
 }
 
 // ---------- HTTP probes from the host ----------

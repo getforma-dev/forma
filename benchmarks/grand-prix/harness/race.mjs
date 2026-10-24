@@ -12,10 +12,11 @@ import { spawn } from 'node:child_process';
 import {
   ROOT, RAW, REQUEST_ENCODING, CFG, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
   startCar, hostPort, removeContainer, startLoadgen, waitReady, get, checkBody, smokeCar, imageInfo, oha,
-  startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName,
+  startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName, cpusetArgs, assertContainerResources, configureResources,
 } from './lib.mjs';
 import { decodeExperimentResponse } from './compression-response.mjs';
 
+configureResources();
 installTrap();
 
 // ---------- arguments ----------
@@ -77,8 +78,14 @@ async function withStack(car, cls, { loadgen = true, rows = 100 } = {}, fn) {
     const body = REQUEST_ENCODING ? decodeExperimentResponse(r, REQUEST_ENCODING) : r.body;
     const chk = r.status === 200 ? checkBody(rows, body) : { ok: false, problems: ['status ' + r.status] };
     if (!chk.ok) throw new Error('body check failed before timing: ' + chk.problems.join('; '));
-    if (loadgen) lg = await startLoadgen(net);
-    return await fn({ c, port, lg, net, url: `http://${c.name}:3000` });
+    const resources = { server: await assertContainerResources(c, limits(cls)), loadgen: null };
+    if (loadgen) {
+      lg = await startLoadgen(net);
+      resources.loadgen = await assertContainerResources(lg, { cpus: CFG.loadgenCpus, cpuset: CFG.loadgenCpuset });
+    }
+    const records = await fn({ c, port, lg, net, url: `http://${c.name}:3000` });
+    for (const record of Object.values(records)) record.resources = resources;
+    return records;
   } finally { await removeContainer(lg); await removeContainer(c); await removeNetwork(net); }
 }
 const meta = (car, extra) => ({ at: new Date().toISOString(), runId: RUN_ID, config: { ...CFG, forced }, image: imageInfo(car), ...extra });
@@ -111,7 +118,7 @@ async function throughput(car, evId, cls, rows, alsoFuel) {
     const out = {
       class: cls, rows, concurrency: CFG.concurrency, durationS: CFG.duration, warmupS: CFG.warmup,
       metric: { name: 'requests per second', unit: 'req/s', better: 'higher' }, values: runs.map(r => r.okRps), runs,
-      bytesPerRequest: runs[0].bytesPerRequest, container: { cpus: limits(cls).cpus, memory: limits(cls).memory, workers: limits(cls).workers },
+      bytesPerRequest: runs[0].bytesPerRequest, container: { ...limits(cls) },
     };
     const result = { [evId]: meta(car, { machine: { before, after: machineState() }, ...out }) };
     if (alsoFuel) {
@@ -140,7 +147,7 @@ async function reaction(car) {
       const r = await oha(lg, target, { c: 1, z: CFG.duration }); r.run = i; runs.push(r);
       log(`  reaction run ${i}: p99 ${r.latencyMs.p99.toFixed(3)} ms (p50 ${r.latencyMs.p50.toFixed(3)}), ${r.requests} reqs`);
     }
-    return { reaction: meta(car, { class: 'A', rows: 100, concurrency: 1, machine: { before, after: machineState() },
+    return { reaction: meta(car, { class: 'A', rows: 100, concurrency: 1, durationS: CFG.duration, warmupS: CFG.warmup, container: { ...limits('A') }, machine: { before, after: machineState() },
       metric: { name: 'p99 latency at concurrency 1', unit: 'ms', better: 'lower' }, values: runs.map(r => r.latencyMs.p99), runs }) };
   });
 }
@@ -150,7 +157,7 @@ async function gridStart(car) {
   const net = await makeNetwork();
   try {
     for (let i = 1; i <= CFG.starts; i++) {
-      const t0 = performance.now(); let c, tRun, ms, status = 0;
+      const t0 = performance.now(); let c, tRun, ms, resources, status = 0;
       try {
         c = await startCar(car, 'A', net); tRun = performance.now() - t0;
         const port = await hostPort(c);
@@ -162,8 +169,9 @@ async function gridStart(car) {
           if (up !== 'true') throw new Error('container exited: ' + dockerSync('logs', '--tail', '5', c.name));
           await sleep(2);
         }
+        resources = await assertContainerResources(c, limits('A'));
       } finally { await removeContainer(c); }
-      starts.push({ start: i, ms, dockerRunReturnedMs: tRun });
+      starts.push({ start: i, ms, dockerRunReturnedMs: tRun, resources });
       log(`  grid start ${i}: ${ms.toFixed(0)} ms`);
       await sleep(1000);
     }
@@ -199,7 +207,7 @@ async function weight(car) {
 
 async function runBuild(car, script) {
   const name = uniq(car + '-build'), t0 = performance.now();
-  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, imageName(car + '-build'), script);
+  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, ...cpusetArgs(CFG.buildCpuset), imageName(car + '-build'), script);
   const wall = performance.now() - t0, m = r.stdout.match(script.includes('rust') ? /GP_RUST_BUILD_MS=(\d+(?:\.\d+)?)/g : /GP_BUILD_MS=(\d+(?:\.\d+)?)/g);
   if (r.code || !m) throw new Error(`${script} failed (exit ${r.code}): ` + (r.stderr + r.stdout).slice(-400));
   return { buildMs: +m[m.length - 1].split('=')[1], wallMs: wall };
@@ -209,7 +217,7 @@ async function runBuild(car, script) {
 async function runFormaBuild() {
   const name = uniq('forma-build'), t0 = performance.now();
   const sh = '/gp/build.sh && cd /app && touch src/*.rs && s=$(date +%s%N) && cargo build --release --locked --offline && e=$(date +%s%N) && echo GP_APP_BUILD_MS=$(( (e - s) / 1000000 ))';
-  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, imageName('forma-build'), 'sh', '-c', sh);
+  const r = await docker('run', '--rm', '--name', name, '--label', LABEL, '--label', RUN_LABEL, '--cpus=' + CFG.buildCpus, ...cpusetArgs(CFG.buildCpuset), imageName('forma-build'), 'sh', '-c', sh);
   const f = r.stdout.match(/GP_BUILD_MS=(\d+)/), a = r.stdout.match(/GP_APP_BUILD_MS=(\d+)/);
   if (r.code || !f || !a) throw new Error(`forma build failed (exit ${r.code}): ` + (r.stderr + r.stdout).slice(-400));
   return { buildMs: +f[1] + +a[1], fmirMs: +f[1], appCompileMs: +a[1], wallMs: performance.now() - t0 };
@@ -219,7 +227,7 @@ async function pitstop(car) {
   if (!imageInfo(car + '-build').id) throw new Error(`gp264/${car}-build not found`);
   const runs = [];
   for (let i = 1; i <= CFG.buildRuns; i++) { const r = car === 'forma' ? await runFormaBuild() : await runBuild(car, '/gp/build.sh'); r.run = i; runs.push(r); log(`  pit stop run ${i}: ${(r.buildMs / 1000).toFixed(1)} s`); }
-  const out = { class: 'build', cpus: CFG.buildCpus, machine: { before, after: null }, metric: { name: car === 'forma' ? 'production build time: FMIR build plus app crate release compile, dependencies compiled (Amendment 3)' : 'production build time (GP_BUILD_MS)', unit: 'ms', better: 'lower' }, values: runs.map(r => r.buildMs), runs };
+  const out = { class: 'build', cpus: CFG.buildCpus, cpuset: CFG.buildCpuset, machine: { before, after: null }, metric: { name: car === 'forma' ? 'production build time: FMIR build plus app crate release compile, dependencies compiled (Amendment 3)' : 'production build time (GP_BUILD_MS)', unit: 'ms', better: 'lower' }, values: runs.map(r => r.buildMs), runs };
   if (car === 'forma') {
     const has = (await docker('run', '--rm', '--label', LABEL, '--label', RUN_LABEL, imageName(car + '-build'), 'sh', '-c', 'test -x /gp/build-rust.sh')).code === 0;
     if (has) { const r = await runBuild(car, '/gp/build-rust.sh'); out.rust = { note: 'Cold Rust compile from an empty target, every dependency included, one run, reported beside, not scored', ...r }; log(`  forma rust compile: ${(r.buildMs / 1000).toFixed(1)} s`); }

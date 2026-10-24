@@ -6,6 +6,7 @@ import os from 'node:os';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prepareCars, BASELINE_SOURCE } from './prepare-car.mjs';
+import { hostProfile, validateEngineProfile } from './resource-profile.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 assert(!process.env.GP_RAW_DIR && !process.env.GP_ACCEPT_ENCODING, 'this driver owns raw-output and request-encoding selection');
@@ -26,7 +27,10 @@ if (compression) {
   assert.equal(events, '1,3,4,5,7', 'compression profile requires events 1,3,4,5,7');
 }
 assert.equal(process.platform, 'linux', 'this runner is for native Linux');
-if (!diagnostic) assert(os.availableParallelism() >= 8, 'baseline needs eight CPUs; --diagnostic cannot qualify the Linux baseline');
+process.env.GP_DIAGNOSTIC = String(diagnostic);
+const resourceProfile = hostProfile({ diagnostic });
+process.env.GP_PROFILE = resourceProfile.name;
+const dockerEngine = validateEngineProfile(resourceProfile, JSON.parse(execFileSync('docker', ['info', '--format', '{{json .}}'], { encoding: 'utf8' })));
 const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root, encoding: 'utf8' });
 assert.equal(dirty.trim(), '', 'commit all benchmark and framework source before racing');
 const id = process.env.GP_RUN_ID || `r${Date.now().toString(36)}-${process.pid}`;
@@ -42,7 +46,7 @@ assert(!existsSync(join(results, 'raw')), 'fresh raw directory required; archive
 const ownershipPath = join(results, `${id}-ownership.json`);
 assert(!existsSync(ownershipPath), 'run ID already used');
 const ownership = { id, builder, builderCreated: false };
-const report = { schema: 1, id, diagnostic, cars, events, platform: process.platform, arch: process.arch,
+const report = { schema: 1, id, diagnostic, resourceProfile, dockerEngine, cars, events, platform: process.platform, arch: process.arch,
   carSource: baseline ? BASELINE_SOURCE : 'current checkout', formaRef: formaRef ?? 'published 3.0.0', compression,
   cpus: os.availableParallelism(), cpu: os.cpus()[0]?.model, kernel: os.release(), memoryBytes: os.totalmem(),
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),

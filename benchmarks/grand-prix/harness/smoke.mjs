@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // node harness/smoke.mjs <car> [--no-write]   exit 0 = pass
-import { smokeCar, installTrap, writeRaw } from './lib.mjs';
+import { smokeCar, installTrap, writeRaw, configureResources } from './lib.mjs';
+configureResources();
 installTrap();
 const car = process.argv[2];
 if (!car) { console.error('usage: node harness/smoke.mjs <car> [--no-write]'); process.exit(2); }

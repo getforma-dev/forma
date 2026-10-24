@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { evaluateBudgets } from './budgets.mjs';
+import { profileConfiguration } from './resource-profile.mjs';
 
 function sample() {
   const base = event => ({ car: 'forma', event, image: { id: 'sha256:' + 'a'.repeat(64) }, config: { forced: false } });
@@ -44,3 +45,27 @@ for (const [label, mutate] of [
 ]) test(`${label} refuses budget evidence`, () => {
   const r = sample(); mutate(r); assert.throws(() => evaluateBudgets(r));
 });
+
+function profiledSample() {
+  const records = sample();
+  const profile = profileConfiguration({ name: 'gha-4-v1', githubActions: true, availableCpus: 4, affinity: [4, 5, 6, 7] });
+  for (const record of Object.values(records)) record.config = { forced: false, duration: 10, warmup: 5, runs: 3, concurrency: 64, starts: 5, resourceProfile: structuredClone(profile),
+    classA: structuredClone(profile.classA), classB: structuredClone(profile.classB),
+    loadgenCpus: profile.loadgen.cpus, loadgenCpuset: profile.loadgen.cpuset };
+  Object.assign(records.sprint, { durationS: 10, warmupS: 5, container: structuredClone(profile.classA) });
+  return records;
+}
+test('budget values stay unchanged and retain the four-CPU profile identity', () => {
+  const result = evaluateBudgets(profiledSample());
+  assert(result.passed); assert.equal(result.resourceProfile.name, 'gha-4-v1'); assert.equal(result.diagnostic, false);
+  assert.equal(evaluateBudgets(sample()).diagnostic, true, 'old records must not become qualified');
+});
+for (const [label, mutate] of [
+  ['mixed profile', r => { delete r.fuel.config.resourceProfile; }],
+  ['overlapping allocation', r => { r.sprint.config.resourceProfile.loadgen.cpuset = '4,5'; }],
+  ['wrong server affinity', r => { r.grid.config.classA.cpuset = '6'; }],
+  ['wrong loadgen affinity', r => { r.weight.config.loadgenCpuset = '4,5'; }],
+  ['shortened duration', r => { r.sprint.durationS = 1; }],
+  ['shortened warmup', r => { r.fuel.config.warmup = 1; }],
+  ['actual server limits', r => { r.sprint.container.cpus = '2'; }],
+]) test(`budget refuses ${label}`, () => { const records = profiledSample(); mutate(records); assert.throws(() => evaluateBudgets(records)); });
