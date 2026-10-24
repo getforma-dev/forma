@@ -879,9 +879,9 @@
   "tags": [
    "security"
   ],
-  "find": "        if (isUnsafeAttrBinding(attrName, str, el.tagName.toLowerCase())) {",
+  "find": "        if (isUnsafeAttrBinding(attrName, str, el.localName)) {",
   "replace": "        if (false) {",
-  "note": "data-bind:* writes javascript: URLs and inline handlers"
+  "note": "data-bind:* writes javascript: URLs and inline handlers. Re-anchored for FORMA-277"
  },
  {
   "id": "runtime/bind-no-eventhandler",

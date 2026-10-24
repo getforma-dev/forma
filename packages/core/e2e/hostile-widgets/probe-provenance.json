@@ -973,7 +973,7 @@
   },
   "current": {
     "path": "packages/core/probes/corpus.json",
-    "sha256": "91a05d9c013c8b5bcb350daea0ab59da8fc9791bbab550018a4a928ce63bee76",
+    "sha256": "5ffa3e1e8e76d748ee5981d24d1068a925d97b59bdd60a27c5479c274639bad6",
     "total": 293,
     "rows": [
       {
@@ -1386,7 +1386,7 @@
             "expression",
             "markup"
           ],
-          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:* writes javascript: URLs and inline handlers"
+          "reason": "Literal HTML/URL/key payloads and binder-specific observations; state-parser prototype case retains its existing direct regression. Original note: data-bind:* writes javascript: URLs and inline handlers. Re-anchored for FORMA-277"
         }
       },
       {

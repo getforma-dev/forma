@@ -123,15 +123,19 @@ export function isEventHandlerAttr(name: string): boolean {
  * The animation value attributes (FORMA-277) are `to`, `from`, `by` and
  * `values` on `<set>` and on every `<animate…>` element (`animate`,
  * `animateTransform`, `animateMotion`, `animateColor`: a tag that is
- * `animate` followed by letters, digits or `_` only), tag and name in any
- * case. An animation element's `attributeName` can name a URL attribute
- * (`href`, `xlink:href`), so its values are judged as URLs, item by item.
+ * `animate` followed by ASCII letters, digits or `_` only), tag and name in
+ * any ASCII case. An animation element's `attributeName` can name a URL
+ * attribute (`href`, `xlink:href`), so its values are judged as URLs, item by
+ * item.
  * They are judged whatever `attributeName` says, so the order the two are
  * written in, or a later change of `attributeName` by a binding or an
  * update, cannot let a value through. Each item is judged with no image
  * context, since the target is not known, so `data:image/svg+xml` is refused
- * there too. Numbers, coordinates, transforms and colours are never script
- * URLs, so animations of other attributes keep their values.
+ * there too. The test is `isDangerousUrl`'s conservative prefix rule, so an
+ * item that begins with `javascript` or `vbscript` (with or without a colon)
+ * or `data:text/html` is refused; numbers, coordinates, transforms and
+ * colours never begin with one of those, so animations of other attributes
+ * keep their values.
  *
  * This is `isUnsafeAttrWrite`'s URL half, called on its own by the sinks that
  * refuse an `on*` name themselves first: h(), hydration adoption,

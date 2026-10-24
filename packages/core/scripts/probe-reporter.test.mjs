@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { cleanProbeBaseline, classifyProbe } from './probe-results.mjs';
+import ProbeReporter from './probe-reporter.mjs';
 
 const require = createRequire(import.meta.url);
 const vitest = join(dirname(require.resolve('vitest/package.json')), 'vitest.mjs');
@@ -76,6 +77,40 @@ for (const [name, body] of [
     assert.notEqual(run.processResult.status, 0, run.output);
     assert.throws(() => classifyProbe(run.text, run.processResult, baseline));
   });
+});
+
+/**
+ * The reporter pairs a hook's start and end by count, not by order. Vitest
+ * reports each update batch from the worker without waiting for the previous
+ * one, so a hook's end that opens one batch can reach the reporter before its
+ * start that closed the batch before it.
+ */
+function incompleteHooks(calls) {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-probe-hooks-'));
+  const previous = process.env.FORMA_PROBE_REPORT;
+  try {
+    process.env.FORMA_PROBE_REPORT = join(dir, 'report.json');
+    const reporter = new ProbeReporter();
+    for (const [kind, id, name] of calls) reporter[kind === 'start' ? 'onHookStart' : 'onHookEnd']({ name, entity: { id } });
+    reporter.onTestRunEnd([], [], 'passed');
+    return JSON.parse(readFileSync(process.env.FORMA_PROBE_REPORT, 'utf8')).incompleteHooks;
+  } finally {
+    if (previous === undefined) delete process.env.FORMA_PROBE_REPORT; else process.env.FORMA_PROBE_REPORT = previous;
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+test('a hook whose end is reported before its start is complete', () => {
+  assert.deepEqual(incompleteHooks([['start', 't1', 'beforeEach'], ['end', 't1', 'afterEach'], ['end', 't1', 'beforeEach'], ['start', 't1', 'afterEach']]), []);
+});
+test('a hook that starts and never ends is incomplete, whatever else is reordered', () => {
+  assert.deepEqual(incompleteHooks([['start', 't1', 'afterEach']]), ['t1:afterEach']);
+  assert.deepEqual(incompleteHooks([['end', 't1', 'afterEach'], ['start', 't1', 'afterEach'], ['start', 't2', 'afterEach'], ['start', 't3', 'beforeEach'], ['end', 't3', 'beforeEach']]), ['t2:afterEach']);
+});
+test('a key that starts twice needs two ends, in either order', () => {
+  assert.deepEqual(incompleteHooks([['start', 's', 'beforeAll'], ['start', 's', 'beforeAll'], ['end', 's', 'beforeAll']]), ['s:beforeAll']);
+  assert.deepEqual(incompleteHooks([['end', 's', 'beforeAll'], ['start', 's', 'beforeAll'], ['start', 's', 'beforeAll'], ['end', 's', 'beforeAll']]), []);
+  // An end with no start is not an open hook.
+  assert.deepEqual(incompleteHooks([['end', 's', 'afterAll']]), []);
 });
 
 /** Run the actual campaign CLI, not a simulation of its continuation branch. */
