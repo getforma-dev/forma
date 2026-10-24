@@ -9,7 +9,6 @@
 
 import { effect as rawEffect, getActiveSub } from 'alien-signals';
 import {
-  hasActiveRoot,
   registerDisposer,
   getOwner,
   runWithOwner,
@@ -165,24 +164,21 @@ export function internalEffect(fn: () => void): () => void {
   // Verified by: src/reactive/__tests__/frame-effect.test.ts > "keeps the frame reader reactive and disposable without linking the unused adoption effect graph"
   if (!(typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) && adoptionInternalEffect) return adoptionInternalEffect(fn);
   const events = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionEvents();
-  const callback = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : bindAdoptionCallback(fn, getAdoptionCallbacks());
-  const run = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? fn : () => withAdoptionEvents(events, callback);
+  const callbacks = (typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__) ? undefined : getAdoptionCallbacks();
   let firstRun = true;
   const dispose = rawEffect(() => {
-    if (firstRun) {
-      firstRun = false;
-      run();
-      return;
-    }
+    const initial = firstRun;
+    firstRun = false;
     try {
-      run();
-    } catch (e) {
-      reportError(e, 'binding');
+      if ((typeof __FORMA_FRAME_BUILD__ === 'boolean' && __FORMA_FRAME_BUILD__)
+        || !(events || callbacks || getAdoptionEvents() || getAdoptionCallbacks())) fn();
+      else withAdoptionEvents(events, bindAdoptionCallback(fn, callbacks));
+    } catch (error) {
+      if (initial) throw error;
+      reportError(error, 'binding');
     }
   });
-  if (hasActiveRoot()) {
-    registerDisposer(dispose);
-  }
+  registerDisposer(dispose);
   return dispose;
 }
 
