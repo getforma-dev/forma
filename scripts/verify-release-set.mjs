@@ -19,6 +19,7 @@ import { verifyPackedSkew } from './release-skew-drill.mjs';
 import { performanceTarget } from './release-performance.mjs';
 import { completeMeasurements, machineProfile } from './release-measurements.mjs';
 import { verifyPackedSecurity } from './release-security.mjs';
+import { assertCurrentCorpus, withStagedCorpus } from './fmir-corpus.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
 
 async function freePort() {
@@ -317,23 +318,32 @@ export async function verify(dir, reportPath) {
       const emitted = join(scratch, 'crates/forma-ir/tests/fixtures/js-emitter');
       const cases = readdirSync(corpus, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name);
       assert(cases.length >= 14, 'the conformance corpus shrank');
+      const manifest = join(scratch, 'crates/forma-ir/Cargo.toml');
+      // Exercise the unchanged historical corpus before staging this version's
+      // actual output; both runs retain the packed HTML goldens.
+      if (set.contracts.fmir === 3) verifyPackedCorpus(manifest, 3);
+      const currentCorpus = [];
       for (const name of cases) {
         const entry = ['app.ts', 'app.tsx'].map(f => join(corpus, name, f)).find(existsSync);
         const result = generateRealIr(entry);
         assert(result && !result.islands.some(i => i.name === 'createList' || /^island_\d+$/.test(i.name)), `${name}: compiler fell back to placeholder`);
         const bytes = result.binary;
         assert(bytes, `${name}: compiler result has no IR bytes`);
-        assert.deepEqual(Buffer.from(bytes), readFileSync(join(emitted, `${name}.ir`)), `${name}: emitted bytes differ from packed reader corpus`);
         if (set.contracts.fmir === 3) {
           assert.equal(typeof compiler.readFmirContainer, 'function', 'packed v3 compiler lacks its container reader');
           assert.equal(typeof compiler.dumpFmir, 'function', 'packed v3 compiler lacks its canonical dump');
           const reader = set.packages.find(p => p.name === 'forma-ir');
           const expectedVersion = reader.version.split('-')[0].split('.').map(Number);
           assert.deepEqual(compiler.readFmirContainer(bytes).writer, expectedVersion, `${name}: writer does not match packed Rust reader`);
-          assert.equal(compiler.dumpFmir(bytes), readFileSync(join(emitted, `${name}.dump`), 'utf8'), `${name}: canonical dump differs from packed reader corpus`);
-        }
+          const dump = compiler.dumpFmir(bytes);
+          assertCurrentCorpus({ name, bytes, dump, expectedVersion,
+            frozenBytes: readFileSync(join(emitted, `${name}.ir`)),
+            frozenDump: readFileSync(join(emitted, `${name}.dump`), 'utf8') });
+          currentCorpus.push({ path: join(emitted, `${name}.ir`), bytes }, { path: join(emitted, `${name}.dump`), bytes: dump });
+        } else assert.deepEqual(Buffer.from(bytes), readFileSync(join(emitted, `${name}.ir`)), `${name}: emitted bytes differ from packed reader corpus`);
       }
-      verifyPackedCorpus(join(scratch, 'crates/forma-ir/Cargo.toml'), set.contracts.fmir);
+      if (set.contracts.fmir === 3) withStagedCorpus(currentCorpus, () => verifyPackedCorpus(manifest, 3));
+      else verifyPackedCorpus(manifest, 2);
     });
     if (set.contracts.props === 'declared-v1') {
       await test('packed compiler declared props bind and render through packed typed Pages', async () => {
