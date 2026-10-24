@@ -1,12 +1,13 @@
 // One production car per invocation; the portable driver owns its container.
 import puppeteer from 'puppeteer-core';
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
+import { createReadStream, readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { rows, summary, money } from '../shared/dataset.mjs';
+import { validateProfile, verifyRoleAffinity, validateContainerResources } from '../harness/resource-profile.mjs';
 
 const args = {};
 for (let i=2; i<process.argv.length; i++) {
@@ -18,6 +19,10 @@ const cars=['forma','react-node','react-bun','react-deno','preact-node','solid-n
 if (!cars.includes(args.car) || !args.url || !args.chrome || !args.out) throw new Error('--car, --url, --chrome and --out are required');
 const sourceUrl=new URL('/island',args.url).href;
 const diagnostic=args.diagnostic===true;
+const resourceProfile=args['resource-profile'] ? validateProfile(JSON.parse(readFileSync(args['resource-profile'], 'utf8'))) : null;
+if (!diagnostic && !resourceProfile) throw new Error('qualified run requires an explicit resource profile');
+if (resourceProfile && resourceProfile.diagnostic !== diagnostic) throw new Error('resource profile diagnostic status differs');
+const processAffinity=resourceProfile ? verifyRoleAffinity(resourceProfile, 'browser') : null;
 const runs=5, warmups=2;
 const digest=createHash('sha256');
 for await (const chunk of createReadStream(args.chrome)) digest.update(chunk);
@@ -30,6 +35,7 @@ if (!diagnostic) {
   const inspected=JSON.parse(execFileSync('docker',['inspect',args['container-id']],{encoding:'utf8'}))[0];
   if (inspected.HostConfig.NanoCpus!==1e9 || inspected.HostConfig.Memory!==1073741824) throw new Error('island server must have exactly one CPU and 1 GiB');
   if (inspected.Config.Labels?.['grandprix'] !== 'forma-264') throw new Error('container is not owned by round 2');
+  if (resourceProfile) validateContainerResources(inspected, resourceProfile.classA);
   container={id:inspected.Id,image:inspected.Image,nanoCpus:inspected.HostConfig.NanoCpus,memoryBytes:inspected.HostConfig.Memory};
 }
 const expectedRows=rows(100).map(r=>[String(r.id),r.label,r.owner,money(r.amount),r.status,r.updated]);
@@ -37,17 +43,18 @@ const sums=summary(rows(100));
 const expectedSummary=[String(sums.count),String(sums.open),money(sums.total),money(sums.average)];
 const output=path.resolve(args.out);
 await mkdir(path.dirname(output),{recursive:true});
-const result={protocol:'forma-264-island-v1',car:args.car,url:sourceUrl,sourceCommit:args.commit??null,qualifiedProfile:!diagnostic,container,runs,warmups,
+const result={protocol:'forma-264-island-v1',car:args.car,url:sourceUrl,sourceCommit:args.commit??null,qualifiedProfile:!diagnostic,resourceProfile,processAffinity,container,runs,warmups,
   measuredAt:new Date().toISOString(),machine:{platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0]?.model,cpus:os.cpus().length,loadBefore:os.loadavg(),node:process.version},
   browser:{executable:args.chrome,sha256:chromeSha256},samples:[],warmupSamples:[],verified:false};
 const persist=()=>writeFile(output,JSON.stringify(result,null,2)+'\n');
 await writeFile(output,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
 const browser=await puppeteer.launch({executablePath:args.chrome,headless:true,args:['--no-first-run','--disable-extensions','--disable-background-timer-throttling','--disable-renderer-backgrounding'],defaultViewport:{width:1280,height:800}});
-result.browser.version=await browser.version();
 function equal(actual,expected,label) { if (JSON.stringify(actual)!==JSON.stringify(expected)) throw new Error(`${label}: ${JSON.stringify(actual).slice(0,500)}`); }
 const readDashboard=()=>({rows:[...document.querySelectorAll('tbody tr')].map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent.trim())),summary:[...document.querySelectorAll('.cards .card b')].map(el=>el.textContent.trim()),count:document.querySelector('#gp-count')?.textContent,button:document.querySelector('#gp-increment')?.textContent});
 function checkDashboard(state,label) { equal(state.rows,expectedRows,`${label} rows`);equal(state.summary,expectedSummary,`${label} summary`);equal(state.button,'Increment',`${label} button`); }
 try {
+  if (resourceProfile) result.browser.processAffinity=verifyRoleAffinity(resourceProfile, 'browser', readFileSync(`/proc/${browser.process().pid}/status`, 'utf8'));
+  result.browser.version=await browser.version();
   // Execution disabled: a client-built facsimile cannot pass the server check.
   const ssrContext=await browser.createBrowserContext();
   const ssr=await ssrContext.newPage();

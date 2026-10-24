@@ -1,11 +1,16 @@
 // One car in one fresh process: correctness first, then warm-up and timed rounds. Prints one JSON line.
 import { correctness } from './correctness.mjs';
 import { BENCHES, getSink } from './benchmarks.mjs';
+let processAffinity = null;
+if (process.env.GP_RESOURCE_PROFILE) {
+  const { validateProfile, verifyRoleAffinity } = await import('../harness/resource-profile.mjs');
+  processAffinity = verifyRoleAffinity(validateProfile(JSON.parse(process.env.GP_RESOURCE_PROFILE)), 'signals');
+}
 
 const [car, warm = '2', runs = '5'] = process.argv.slice(2);
 const lib = (await import(`./adapters/${car}.mjs`)).default;
 const checks = correctness(lib);
-const out = { car, library: lib.name, version: lib.version, node: process.version, checks, correct: checks.every((c) => c.ok), benches: {} };
+const out = { car, library: lib.name, version: lib.version, node: process.version, processAffinity, checks, correct: checks.every((c) => c.ok), benches: {} };
 if (out.correct) {
   for (let r = 0; r < +warm + +runs; r++) {
     for (const b of BENCHES) {

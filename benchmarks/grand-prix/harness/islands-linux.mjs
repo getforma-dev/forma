@@ -6,6 +6,7 @@ import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync, sta
 import os from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { hostProfile, validateEngineProfile, validateContainerResources } from './resource-profile.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const CARS = ['forma', 'react-node', 'react-bun', 'react-deno', 'preact-node', 'solid-node',
@@ -25,7 +26,7 @@ export function archiveContestants(directory, sourceCommit) {
 }
 
 /** The URL is derived from this exact owned container, never supplied separately. */
-export function inspectedIslandUrl(container, { runId, imageId }) {
+export function inspectedIslandUrl(container, { runId, imageId, resourceProfile }) {
   assert.equal(container.State?.Running, true, 'island container is not running');
   assert.equal(container.Config?.Labels?.grandprix, 'forma-264', 'foreign round');
   assert.equal(container.Config?.Labels?.gp264run, runId, 'foreign run');
@@ -33,6 +34,7 @@ export function inspectedIslandUrl(container, { runId, imageId }) {
   assert.equal(container.Image, imageId, 'container is running another image');
   assert.equal(container.HostConfig?.NanoCpus, 1e9, 'island server requires exactly one CPU');
   assert.equal(container.HostConfig?.Memory, 1073741824, 'island server requires exactly 1 GiB');
+  if (resourceProfile) validateContainerResources(container, resourceProfile.classA);
   const bindings = container.NetworkSettings?.Ports?.['3000/tcp'];
   assert.equal(bindings?.length, 1, 'expected one published server port');
   assert.equal(bindings[0].HostIp, '127.0.0.1', 'server must bind only loopback');
@@ -58,7 +60,7 @@ export async function main(argv = process.argv.slice(2)) {
   assert(cars.length && new Set(cars).size === cars.length && cars.every(car => CARS.includes(car)), 'invalid car set');
   assert.equal(process.platform, 'linux', 'island orchestration requires native Linux');
   assert.equal(process.arch, lock.arch, 'frozen browser architecture differs');
-  if (!diagnostic) assert(os.availableParallelism() >= 8, 'a qualified baseline needs eight available CPUs');
+  const resourceProfile = hostProfile({ diagnostic });
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   assert.equal(git('status', '--porcelain', '--untracked-files=normal'), '', 'commit all source before racing');
   const sourceCommit = git('rev-parse', 'HEAD');
@@ -85,14 +87,14 @@ export async function main(argv = process.argv.slice(2)) {
     memoryBytes: os.totalmem(), load: os.loadavg(), freeBytes: free(),
     cpuPressure: existsSync('/proc/pressure/cpu') ? readFileSync('/proc/pressure/cpu', 'utf8') : null });
   const engine = JSON.parse(docker('info', '--format', '{{json .}}'));
-  assert.equal(engine.OSType, 'linux', 'Docker engine must run Linux containers');
-  assert(!/docker desktop/i.test(engine.OperatingSystem ?? ''), 'Docker Desktop is not a native Linux baseline');
-  if (!diagnostic) assert(engine.NCPU >= 8, 'Docker engine needs eight CPUs for the qualified baseline');
+  validateEngineProfile(resourceProfile, engine);
   const report = { schema: 1, protocol: 'forma-264-island-v1', id, diagnostic, qualifiedProfile: !diagnostic,
-    sourceCommit, cars, browser: lock, engine: { version: engine.ServerVersion, os: engine.OperatingSystem,
+    sourceCommit, cars, resourceProfile, browser: lock, engine: { version: engine.ServerVersion, os: engine.OperatingSystem,
       kernel: engine.KernelVersion, cpus: engine.NCPU, memoryBytes: engine.MemTotal },
     before: machine(), steps: [], failures: [], passed: false };
   const save = () => writeFileSync(join(output, 'run.json'), JSON.stringify(report, null, 2) + '\n');
+  const profileFile = join(output, 'resource-profile.json');
+  writeFileSync(profileFile, JSON.stringify(resourceProfile, null, 2) + '\n');
   let active, stopping = false;
   const onSignal = signal => { stopping = true; active?.kill(signal); };
   const handlers = Object.fromEntries(['SIGINT', 'SIGTERM', 'SIGHUP'].map(signal => [signal, () => onSignal(signal)]));
@@ -134,10 +136,11 @@ export async function main(argv = process.argv.slice(2)) {
         await quiet(); step.before = machine();
         containerId = docker('run', '-d', '--name', `gp264-${id}-${car}`, '--label', 'grandprix=forma-264', '--label', label,
           '--network', network, '--cpus=1', '--memory=1g', '-e', 'GP_WORKERS=1', '-e', 'NODE_ENV=production',
+          ...(resourceProfile.classA.cpuset ? [`--cpuset-cpus=${resourceProfile.classA.cpuset}`] : []),
           '-p', '127.0.0.1::3000', image);
         const inspected = JSON.parse(docker('inspect', containerId))[0];
-        const url = inspectedIslandUrl(inspected, { runId: id, imageId: step.image.id });
-        step.container = { id: inspected.Id, url, nanoCpus: inspected.HostConfig.NanoCpus, memoryBytes: inspected.HostConfig.Memory };
+        const url = inspectedIslandUrl(inspected, { runId: id, imageId: step.image.id, resourceProfile });
+        step.container = { id: inspected.Id, url, nanoCpus: inspected.HostConfig.NanoCpus, memoryBytes: inspected.HostConfig.Memory, cpuset: inspected.HostConfig.CpusetCpus };
         let ready = false;
         for (const deadline = Date.now() + 60_000; Date.now() < deadline && !stopping;) {
           try { const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(1000) }); ready = response.status === 200 && (await response.text()).trim() === 'ok'; } catch {}
@@ -147,11 +150,13 @@ export async function main(argv = process.argv.slice(2)) {
         assert(ready && !stopping, 'server did not become healthy');
         const raw = join(output, `${car}.json`);
         const args = ['island-race/run.mjs', '--car', car, '--url', url, '--chrome', chrome,
-          '--chrome-sha256', lock.executableSha256, '--container-id', containerId, '--commit', sourceCommit, '--out', raw];
+          '--chrome-sha256', lock.executableSha256, '--container-id', containerId, '--commit', sourceCommit, '--out', raw, '--resource-profile', profileFile];
         if (diagnostic) args.push('--diagnostic');
-        await run(process.execPath, args);
+        if (resourceProfile.browser.cpuset) await run('taskset', ['--cpu-list', resourceProfile.browser.cpuset, process.execPath, ...args]);
+        else await run(process.execPath, args);
         const measured = JSON.parse(readFileSync(raw, 'utf8'));
         assert.equal(measured.verified, true); assert.equal(measured.qualifiedProfile, !diagnostic);
+        assert.deepEqual(measured.resourceProfile, resourceProfile);
         assert.equal(measured.sourceCommit, sourceCommit); assert.equal(measured.browser.sha256, lock.executableSha256);
         step.passed = true;
       } catch (error) { step.error = String(error); console.error(step.error); report.failures.push({ car, error: step.error }); }

@@ -4,15 +4,20 @@
 // Every requested car must have a built index.html; missing cars and browser errors fail the run.
 import puppeteer from 'puppeteer-core';
 import { writeFile, mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { appsDir, rawDir, parseArgs, builtCars, serveDist } from './lib.mjs';
+import { validateProfile, verifyRoleAffinity } from '../harness/resource-profile.mjs';
 
 const args = parseArgs(process.argv.slice(2), {
   runs: '5', warmups: '2', out: path.join(rawDir, 'dom'),
   chrome: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 });
 const RUNS = +args.runs, WARM = +args.warmups;
+const resourceProfile = args['resource-profile'] ? validateProfile(JSON.parse(readFileSync(args['resource-profile'], 'utf8'))) : null;
+const processAffinity = resourceProfile ? verifyRoleAffinity(resourceProfile, 'browser') : null;
+if (resourceProfile?.qualified && (RUNS !== 5 || WARM !== 2)) throw new Error('qualified DOM race requires five runs and two warmups');
 const { have, missing } = builtCars(args.cars);
 if (missing.length || !have.length) throw new Error('requested client cars missing built output: ' + missing.join(', '));
 
@@ -70,9 +75,11 @@ const browser = await puppeteer.launch({
   args: ['--window-size=1280,800', '--no-first-run', '--disable-extensions', '--disable-background-timer-throttling', '--disable-renderer-backgrounding'],
   defaultViewport: { width: 1280, height: 800 },
 });
-const chromeVersion = await browser.version();
+let browserProcessAffinity = null, chromeVersion;
 
 try {
+browserProcessAffinity = resourceProfile ? verifyRoleAffinity(resourceProfile, 'browser', readFileSync(`/proc/${browser.process().pid}/status`, 'utf8')) : null;
+chromeVersion = await browser.version();
 for (const car of have) {
   const server = await serveDist(path.join(appsDir, car, 'dist'));
   let page;
@@ -102,14 +109,14 @@ for (const car of have) {
   const geomean = Math.exp(ops.reduce((a, o) => a + Math.log(result[o.name].mean), 0) / ops.length);
   console.log(`${car.padEnd(8)} geometric mean ${geomean.toFixed(2)} ms${errors.length ? '  PAGE ERRORS: ' + errors.length : ''}`);
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify({
-    event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean,
+    event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean, resourceProfile, processAffinity, browserProcessAffinity,
     ops: result, pageErrors: errors, verified: errors.length === 0,
     machine: { cpu: os.cpus()[0].model, cores: os.cpus().length, loadavg: os.loadavg(), chrome: chromeVersion, node: process.version },
   }, null, 2) + '\n');
   if (errors.length) throw new Error(`${car}: browser errors invalidate the race: ${errors.join('; ')}`);
   } catch (error) {
     await writeFile(path.join(args.out, `${car}.failed.json`), JSON.stringify({
-      event: 9, car, measuredAt: new Date().toISOString(), verified: false, error: String(error),
+      event: 9, car, measuredAt: new Date().toISOString(), verified: false, error: String(error), resourceProfile, processAffinity, browserProcessAffinity,
       ops: result, pageErrors: errors, chrome: chromeVersion,
     }, null, 2) + '\n');
     throw error;

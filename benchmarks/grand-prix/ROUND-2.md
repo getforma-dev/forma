@@ -16,6 +16,53 @@ Do not describe Docker Desktop results as native Linux measurements. Require
 eight available CPUs for the four-CPU server plus four-CPU load generator;
 results from a smaller machine are diagnostic only, not the requested baseline.
 
+### Dated amendment: GitHub Actions four-CPU baseline (2026-10-24)
+
+The user selected GitHub Actions for the Linux baseline. The public repository's
+available standard Ubuntu x64 VM has four vCPUs and 16 GB RAM. No self-hosted
+runner is configured, and the organization's larger-runner API reports that the
+feature is unsupported. GitHub's [standard-runner specifications](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+and [larger-runner requirements](https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-larger-runners)
+confirm that an arbitrary eight-core label is not an available standard runner.
+
+The original allocation above remains `native-8-v1`. A new, separately named
+`gha-4-v1` profile is frozen before its first measurement. It requires native
+Linux on GitHub Actions, exactly four CPUs in the process's actual allowed CPU
+list and available parallelism, and a four-CPU Docker engine. CPU numbers come
+from `/proc/self/status`; they are not assumed to begin at zero or be contiguous.
+The first through fourth allowed CPUs are assigned as follows:
+
+| Workload | CPU quota and affinity | Memory / workers |
+| --- | --- | --- |
+| Class A server | 1 CPU, first allowed CPU | 1 GiB / one worker |
+| Class B server | 2 CPUs, first two allowed CPUs | 2 GiB / two workers where the native server exposes worker count |
+| HTTP load generator | 2 CPUs, last two allowed CPUs, disjoint from both server classes | unchanged |
+| Build-only event | 4 CPUs, all four allowed CPUs | unchanged |
+| Signals | 1 CPU, first allowed CPU | 1 GiB |
+| Island server | 1 CPU, first allowed CPU | 1 GiB / one worker |
+| Island and DOM browser process trees | last three allowed CPUs | unchanged |
+
+The host coordinator and operating system still share the VM; the profile does
+not claim physical-core exclusivity. Record CPU model, allowed IDs, image/kernel,
+load and CPU pressure, exact container quota/affinity, and observed browser or
+signals process affinity. Incorrect or missing affinity fails closed. Builds,
+installs and measurements remain serial, and timing begins after load settles.
+
+This changes the multicore event to a disclosed **two-core** comparison and the
+load generator to two CPUs. The dataset, semantic checks, warmups, durations,
+sample counts, browser pin, source identities and all three strength budgets
+remain unchanged. Rerun all entrants and all compared Forma source revisions
+fresh under this same profile on the same job/VM for each paired campaign.
+Profile identity and allocations are retained in the raw evidence. No speedup
+or ranking may combine different profiles, different hosts, or old diagnostics.
+Cross-host figures may be displayed only as separately labelled observations.
+
+All prior four-CPU diagnostics remain diagnostic forever. They used the original
+four/four quotas without the new CPU affinity contract and cannot be relabelled
+as `gha-4-v1`. Workflow defaults retain `native-8-v1`; a new qualified campaign
+must explicitly select `gha-4-v1` with diagnostic mode disabled. The original
+eight-CPU profile remains available and its data remains a separate comparison.
+
 Rerun the Forma server at the unmodified 3.0.0 tag, after FORMA-257, and after
 FORMA-258 for events 1–4 and 7, using the same machine and protocol. Rerun client
 events 9 and 11 before/after FORMA-259 and FORMA-260. Retain each raw run separately

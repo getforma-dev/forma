@@ -5,6 +5,7 @@ import os from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { archiveContestants, CARS, inspectedIslandUrl } from './islands-linux.mjs';
+import { profileConfiguration } from './resource-profile.mjs';
 
 const expected = { runId: 'island-control', imageId: 'sha256:' + 'a'.repeat(64) };
 function container() {
@@ -33,6 +34,13 @@ for (const [name, mutate] of [
 test('truncated image identity cannot qualify the matching container', () => {
   const c = container(); c.Image = 'sha256:abc';
   assert.throws(() => inspectedIslandUrl(c, { ...expected, imageId: c.Image }));
+});
+test('the GHA4 URL also requires the actual declared server affinity', () => {
+  const resourceProfile = profileConfiguration({ name: 'gha-4-v1', availableCpus: 4, affinity: [2,4,7,9], githubActions: true });
+  const c = container(); c.HostConfig.CpusetCpus = '2';
+  assert.equal(inspectedIslandUrl(c, { ...expected, resourceProfile }), 'http://127.0.0.1:32768');
+  c.HostConfig.CpusetCpus = '4';
+  assert.throws(() => inspectedIslandUrl(c, { ...expected, resourceProfile }));
 });
 
 test('a committed subtree archive contains every contestant even when the driver lives below the repository root', () => {

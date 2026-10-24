@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
+import { hostProfile, validateEngineProfile, validateContainerResources } from './resource-profile.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repository = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' }).trim();
@@ -14,7 +15,8 @@ const option = (key, fallback) => argv.includes(`--${key}`) ? argv[argv.indexOf(
 assert.equal(process.platform, 'linux', 'native Linux required');
 assert.equal(execFileSync('git', ['status', '--porcelain'], { cwd: repository, encoding: 'utf8' }).trim(), '', 'commit source before racing');
 const diagnostic = argv.includes('--diagnostic');
-if (!diagnostic) assert(os.availableParallelism() >= 8, 'full baseline needs eight CPUs');
+const resourceProfile = hostProfile({ diagnostic });
+validateEngineProfile(resourceProfile, JSON.parse(execFileSync('docker', ['info', '--format', '{{json .}}'], { encoding: 'utf8' })));
 const chrome = resolve(option('chrome', process.env.CHROME_PATH ?? ''));
 const chromeHash = option('chrome-sha256', process.env.CHROME_SHA256);
 const sha = file => createHash('sha256').update(readFileSync(file)).digest('hex');
@@ -30,10 +32,12 @@ mkdirSync(results, { recursive: true });
 const work = join(results, `${id}-client`);
 assert(!existsSync(work), 'fresh evidence directory required');
 mkdirSync(work);
-const report = { schema: 1, id, diagnostic, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+const report = { schema: 1, id, diagnostic, qualifiedProfile: !diagnostic, resourceProfile, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   chromeHash, cpu: os.cpus()[0]?.model, cpus: os.availableParallelism(), kernel: os.release(), memoryBytes: os.totalmem(),
   before: new Date().toISOString(), trials: [], passed: false };
 const save = () => writeFileSync(join(work, 'run.json'), JSON.stringify(report, null, 2) + '\n');
+const profileFile = join(work, 'resource-profile.json');
+writeFileSync(profileFile, JSON.stringify(resourceProfile, null, 2) + '\n');
 const label = `gp264run=${id}`;
 const builder = `gp264-${id}`;
 const ownership = { id, builder, builderCreated: false };
@@ -71,10 +75,15 @@ try {
   ownership.builderCreated = true; writeFileSync(ownershipPath, JSON.stringify(ownership));
   for (const ref of ['published', ...refs]) {
     const trialDir = join(work, ref); mkdirSync(trialDir);
+    mkdirSync(join(trialDir, 'harness'));
+    cpSync(join(root, 'harness/resource-profile.mjs'), join(trialDir, 'harness/resource-profile.mjs'));
     const client = join(trialDir, 'client-race'), signals = join(trialDir, 'signals-race');
     for (const [source, dest] of [['client-race', client], ['signals-race', signals]]) {
       cpSync(join(root, source), dest, { recursive: true, filter: path => !/(?:^|\/)(?:node_modules|dist|results)(?:\/|$)/.test(path.slice(join(root, source).length)) });
     }
+    cpSync(join(root, 'harness/resource-profile.mjs'), join(signals, 'resource-profile.mjs'));
+    const signalDockerfile = join(signals, 'Dockerfile');
+    writeFileSync(signalDockerfile, readFileSync(signalDockerfile, 'utf8') + '\nCOPY resource-profile.mjs /gp/harness/resource-profile.mjs\n');
     await run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], client);
     let core;
     if (ref !== 'published') {
@@ -102,7 +111,7 @@ try {
     for (const car of cars) await run(process.execPath, ['node_modules/vite/bin/vite.js', 'build', `apps/${car}`, '--config', `apps/${car}/vite.config.js`], client);
     const signalImage = `gp264/${id}/signals-${ref}`;
     await run('docker', ['buildx', 'build', '--builder', builder, '--load', '--label', 'grandprix=forma-264', '--label', label, '-t', signalImage, signals]);
-    const trial = { ref, cars, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
+    const trial = { ref, cars, resourceProfile, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
       coreBundle: sha(join(client, 'node_modules/@getforma/core/dist/index.js')),
       signalsImage: JSON.parse(execFileSync('docker', ['image', 'inspect', signalImage], { encoding: 'utf8' }))[0].Id,
       before: machine(), passed: false };
@@ -110,11 +119,23 @@ try {
     await quiet();
     assert.equal(sha(chrome), chromeHash);
     const raw = join(trialDir, 'raw'); mkdirSync(raw);
-    await run(process.execPath, ['run.mjs', '--cars', cars.join(','), '--chrome', chrome, '--runs', '5', '--warmups', '2', '--out', join(raw, 'dom')], client);
-    await run(process.execPath, ['bundle.mjs', '--cars', cars.join(','), '--out', join(raw, 'bundle')], client);
+    const browserArgs = ['run.mjs', '--cars', cars.join(','), '--chrome', chrome, '--runs', '5', '--warmups', '2', '--out', join(raw, 'dom'), '--resource-profile', profileFile];
+    if (resourceProfile.browser.cpuset) await run('taskset', ['--cpu-list', resourceProfile.browser.cpuset, process.execPath, ...browserArgs], client);
+    else await run(process.execPath, browserArgs, client);
+    await run(process.execPath, ['bundle.mjs', '--cars', cars.join(','), '--out', join(raw, 'bundle'), '--resource-profile', profileFile], client);
     await quiet();
     const signalOut = join(raw, 'signals'); mkdirSync(signalOut);
-    await run('docker', ['run', '--rm', '--label', 'grandprix=forma-264', '--label', label, '--cpus=1', '--memory=1g', '-v', `${signalOut}:/out`, signalImage]);
+    const signalContainer = execFileSync('docker', ['create', '--label', 'grandprix=forma-264', '--label', label, '--cpus=1', '--memory=1g',
+      ...(resourceProfile.signals.cpuset ? [`--cpuset-cpus=${resourceProfile.signals.cpuset}`] : []),
+      '-e', `GP_RESOURCE_PROFILE=${JSON.stringify(resourceProfile)}`, '-v', `${signalOut}:/out`, signalImage], { encoding: 'utf8' }).trim();
+    try {
+      const inspected = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
+      validateContainerResources(inspected, resourceProfile.signals);
+      trial.signalsContainer = { id: inspected.Id, image: inspected.Image, nanoCpus: inspected.HostConfig.NanoCpus, memoryBytes: inspected.HostConfig.Memory, cpuset: inspected.HostConfig.CpusetCpus };
+      await run('docker', ['start', '--attach', signalContainer]);
+      const finished = JSON.parse(execFileSync('docker', ['inspect', signalContainer], { encoding: 'utf8' }))[0];
+      assert.equal(finished.State.ExitCode, 0, 'signals race failed inside the container');
+    } finally { await run('docker', ['rm', '-f', signalContainer]); }
     trial.after = machine(); trial.passed = true; save();
     await run('docker', ['image', 'rm', signalImage]);
     await run('docker', ['buildx', 'prune', '--builder', builder, '--all', '--force']);
