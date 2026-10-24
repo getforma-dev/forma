@@ -10,6 +10,7 @@ import { trustedHtml } from '../dom/trusted-html';
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mountFixture, unmountFixture, updateFixture } from './runtime-fixture';
+import { createReconciler } from '../dom/reconcile';
 
 function waitForEffects(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -698,6 +699,79 @@ describe('reconciler', () => {
       expect(leavingEl.textContent).toBe('Animating out');
       expect(leavingEl.hasAttribute('data-forma-leaving')).toBe(true);
       expect(container.querySelector('[data-forma-id="a1"]')?.textContent).toBe('Keep');
+    });
+  });
+
+  // ── The diff source is inert (FORMA-277) ───────────────────────────
+
+  describe('the new markup the diff reads is held in a document of its own', () => {
+    /**
+     * Every node the reconciler copies into the page, recorded with whether
+     * it belonged to the page's document before it was copied. Only the diff
+     * source is cloned during an update of this markup (no data-list).
+     */
+    function cloneOwners(run: () => void): Array<{ id: string; live: boolean }> {
+      const clone = Node.prototype.cloneNode;
+      const seen: Array<{ id: string; live: boolean }> = [];
+      const spy = vi.spyOn(Node.prototype, 'cloneNode').mockImplementation(function (this: Node, deep?: boolean) {
+        if (this.nodeType === 1) seen.push({ id: (this as Element).id, live: this.ownerDocument === document });
+        return clone.call(this, deep);
+      });
+      try { run(); } finally { spy.mockRestore(); }
+      return seen;
+    }
+
+    it('no node an update copies from belongs to the page: a new element, a RESET scope and a REPLACE scope', async () => {
+      // A node in the page's document, though detached, loads its resources
+      // and runs its handlers there. The parsed copy is held in a document
+      // with no browsing context, and only what the diff writes is adopted.
+      updateFixture(container, trustedHtml(
+        `<div data-forma-id="r" data-module="m" data-forma-state='{"a":1}'><p id="r-in" data-text="{a}">-</p></div>` +
+        `<div data-forma-id="x" id="x" data-module="m" data-forma-state='{"n":1}'><p id="x-in" data-text="{n}">-</p></div>` +
+        `<p data-forma-id="k" id="k" title="one">kept</p>`,
+      ));
+      await waitForEffects();
+      const seen = cloneOwners(() => updateFixture(container, trustedHtml(
+        `<div data-forma-id="r" data-module="m" data-forma-state='{"b":2}'><p id="r-in" data-text="{b}">-</p></div>` +
+        `<div data-forma-id="x" id="x" data-module="other" data-forma-state='{"n":3}'><p id="x-in" data-text="{n}">-</p></div>` +
+        `<p data-forma-id="k" id="k" title="two">kept</p><img data-forma-id="added" id="added" src="data:image/png;base64,iVBORw0KGgo=" alt="new">`,
+      )));
+      await waitForEffects();
+      // RESET clones the new children, REPLACE the new scope, and the
+      // insertion the new element: each from the parsed copy.
+      expect(seen.map((s) => s.id)).toEqual(expect.arrayContaining(['added', 'r-in', 'x']));
+      expect(seen.filter((s) => s.live)).toEqual([]);
+      // What the diff wrote is in the page, bound.
+      for (const id of ['r-in', 'x-in', 'k', 'added']) {
+        const el = document.getElementById(id)!;
+        expect(el.ownerDocument, id).toBe(document);
+        expect(el.isConnected, id).toBe(true);
+      }
+      expect(document.getElementById('r-in')!.textContent).toBe('2');
+      expect(document.getElementById('x-in')!.textContent).toBe('3');
+      expect(document.getElementById('k')!.getAttribute('title')).toBe('two');
+      expect(document.getElementById('added')!.getAttribute('alt')).toBe('new');
+    });
+
+    it("a kept element's parsed copy, parsed in the container's context, is moved out of the page before the diff reads it", () => {
+      // The strip path (tier unreviewed) parses in the container's own
+      // context, which is the page's document; the copy then leaves it.
+      let parsed: Element[] = [];
+      const reconcile = createReconciler({
+        mountScope: () => {}, unmountScope: () => {}, disconnectObserver: () => {}, reconnectObserver: () => {},
+        batch: (fn) => fn(),
+        strip: (fragment) => { parsed = Array.from(fragment.querySelectorAll('*')); },
+      });
+      reconcile(container, trustedHtml('<p id="k" title="one">kept</p>'));
+      const live = container.querySelector('#k')!;
+      reconcile(container, trustedHtml('<p id="k" title="two">kept</p><span id="new">n</span>'));
+      expect(container.querySelector('#k')).toBe(live);
+      expect(live.getAttribute('title')).toBe('two');
+      expect(document.getElementById('new')!.isConnected).toBe(true);
+      const copy = parsed.find((el) => el.id === 'k')!;
+      expect(copy).not.toBe(live);
+      expect(copy.ownerDocument).not.toBe(document);
+      expect(copy.isConnected).toBe(false);
     });
   });
 });

@@ -160,6 +160,28 @@ describe('isUnsafeAttrWrite', () => {
     expect(isUnsafeAttrWrite('div', 'title', 'javascript:alert(1)')).toBe(false); // not a URL attr
     expect(isUnsafeAttrWrite('div', 'data-once', '1')).toBe(false);
   });
+
+  it('rejects a script URL in each item of an SVG animation value, whatever the case of tag and name', () => {
+    // FORMA-277: <animate> and <set> write their values into the attribute
+    // attributeName names, which can be href, so each value is a URL.
+    for (const tag of ['animate', 'set', 'SET']) {
+      for (const name of ['to', 'from', 'by', 'values', 'VALUES']) {
+        expect(isUnsafeAttrWrite(tag, name, 'javascript:alert(1)'), `${tag} ${name}`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, `#a; java${TAB}script:alert(1) ;#c`), `${tag} ${name} list`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, '0;data:text/html,x'), `${tag} ${name} html`).toBe(true);
+        // No image context: the target is not known.
+        expect(isUnsafeAttrWrite(tag, name, 'data:image/svg+xml,<svg/>'), `${tag} ${name} svg`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, `1${NUL}2`), `${tag} ${name} NUL`).toBe(true);
+        expect(isUnsafeAttrWrite(tag, name, '0;10;20'), `${tag} ${name} numbers`).toBe(false);
+        expect(isUnsafeAttrWrite(tag, name, 'data:image/png;base64,aA==;#b'), `${tag} ${name} png`).toBe(false);
+      }
+    }
+    // Other animation elements cannot target a URL attribute; other names are not values.
+    expect(isUnsafeAttrWrite('animateTransform', 'to', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('animateMotion', 'values', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('animate', 'begin', 'javascript:alert(1)')).toBe(false);
+    expect(isUnsafeAttrWrite('g', 'to', 'javascript:alert(1)')).toBe(false);
+  });
 });
 
 describe('isSafeTagName', () => {

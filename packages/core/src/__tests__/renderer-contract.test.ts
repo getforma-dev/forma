@@ -107,6 +107,37 @@ const URL_ATTRIBUTE_CASES = Object.keys(ATTR_TAG);
 const SVG_DATA_URL =
   'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>';
 
+/**
+ * SVG animation value attributes (FORMA-277). `<animate>` and `<set>` write
+ * `to`, `from`, `by` and each `;`-separated item of `values` into the
+ * attribute their `attributeName` names, which can be a URL attribute
+ * (`href`, `xlink:href`), so every sink judges these values as URLs. They are
+ * judged whatever `attributeName` says, so the order the two are written in,
+ * or a later change of `attributeName`, cannot matter.
+ */
+const ANIMATION_TAGS = ['animate', 'set'] as const;
+const ANIMATION_VALUE_ATTRS = ['to', 'from', 'by', 'values'] as const;
+const ANIMATION_CASES = ANIMATION_TAGS.flatMap((tag) => ANIMATION_VALUE_ATTRS.map((attr) => [tag, attr] as const));
+/** A script URL as one item of a `values` list, first or later. */
+const DANGEROUS_VALUE_LISTS = [
+  '#a;javascript:alert(1)',
+  `javascript:alert(1); #b`,
+  `#a ; ${TAB}java${TAB}script:alert(1) ;#c`,
+  '#a;vbscript:msgbox(1)',
+  '0;data:text/html,<script>alert(1)</script>',
+] as const;
+/** Ordinary animation values, a `data:image/png` list item with its own `;` included. */
+const SAFE_ANIMATION_VALUES = [
+  '0;10;20',
+  'red',
+  '#a; #b',
+  '/relative/javascript-guide',
+  'data:image/png;base64,iVBORw0KGgo=',
+  'https://example.com/javascript',
+] as const;
+const isAnimationValue = (tag: string, name: string): boolean =>
+  (ANIMATION_TAGS as readonly string[]).includes(tag) && (ANIMATION_VALUE_ATTRS as readonly string[]).includes(name);
+
 /** The benign sibling every "we block X" row renders alongside X (rule P3). */
 const BENIGN_ATTR = 'title';
 const BENIGN_VALUE = 'kept';
@@ -215,8 +246,14 @@ function textOf(text: string): string {
  */
 function probeMarkup(tag: string, attrs: string, inner = ''): string {
   const el = /^(?:img|input)$/.test(tag) ? `<${tag} id="probe" ${attrs}>` : `<${tag} id="probe" ${attrs}>${inner}</${tag}>`;
-  return /^(?:use|image)$/.test(tag) ? `<svg>${el}</svg>` : el;
+  return /^(?:use|image)$/.test(tag) || ANIMATION_ROW_TAGS.test(tag) ? `<svg>${el}</svg>` : el;
 }
+
+/**
+ * The SVG elements the animation rows write to (FORMA-277). Every sink creates
+ * them in the SVG namespace, inside an `<svg>` where it parses markup.
+ */
+const ANIMATION_ROW_TAGS = /^(?:animate|set|animateTransform|animateMotion|g)$/;
 
 /**
  * The reconcile sink: a reviewed mount renders `<tag>` first, then its
@@ -271,10 +308,11 @@ const SINKS: Sink[] = [
     objectValues: false,
     write: (tag, name, value) => {
       const box = host();
-      const el = tag === 'use'
+      const svg = tag === 'use' || ANIMATION_ROW_TAGS.test(tag);
+      const el = svg
         ? document.createElementNS('http://www.w3.org/2000/svg', tag)
         : document.createElement(tag);
-      if (tag === 'use') {
+      if (svg) {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         box.appendChild(svg); svg.appendChild(el);
       } else box.appendChild(el);
@@ -307,9 +345,10 @@ const SINKS: Sink[] = [
     objectValues: false,
     write: (tag, name, value) => {
       const box = host();
+      const markup = `<${tag} id="probe" data-bind:${name}="{v}" data-bind:${BENIGN_ATTR}="{b}"></${tag}>`;
       box.innerHTML =
         `<div data-forma-state='${stateAttr({ v: value, b: BENIGN_VALUE })}'>` +
-        `<${tag} id="probe" data-bind:${name}="{v}" data-bind:${BENIGN_ATTR}="{b}"></${tag}>` +
+        (ANIMATION_ROW_TAGS.test(tag) ? `<svg>${markup}</svg>` : markup) +
         `</div>`;
       mountFixture(box);
       const el = box.querySelector('#probe');
@@ -331,7 +370,9 @@ const SINKS: Sink[] = [
     declarative: false,
     objectValues: false,
     write: (tag, name, value) => {
-      const el = document.createElement(tag);
+      const el = ANIMATION_ROW_TAGS.test(tag)
+        ? document.createElementNS('http://www.w3.org/2000/svg', tag)
+        : document.createElement(tag);
       host().appendChild(el);
       const scope = exprScope({ n: name, v: value, bn: BENIGN_ATTR, bv: BENIGN_VALUE }, el);
       // Two statements: the hostile write, then a benign write on the same
@@ -360,7 +401,7 @@ const SINKS: Sink[] = [
     declarative: false,
     objectValues: false,
     write: (tag, name, value) =>
-      reconciled(tag, `${name}="${quoted(value)}"`, isUrlAttr(name) ? `${name}="/initial"` : ''),
+      reconciled(tag, `${name}="${quoted(value)}"`, isUrlAttr(name) || isAnimationValue(tag, name) ? `${name}="/initial"` : ''),
     writeText: (tag, text) => {
       const box = host();
       updateFixture(box, trustedHtml(`<${tag} id="probe">initial</${tag}>`));
@@ -614,6 +655,73 @@ describe.each(OBJECT_SINKS)('renderer contract [$name]: one conversion per write
     const el = sink.write(ATTR_TAG[attr]!, attr, changingString('https://example.com/', 'javascript:alert(1)'));
     expect(readAttr(el, attr)).toBe('https://example.com/');
     expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// G1c — SVG animation values are judged as URLs on every sink (FORMA-277)
+// ---------------------------------------------------------------------------
+
+describe.each(SINKS)('renderer contract [$name]: SVG animation values', (sink) => {
+  it.each(ANIMATION_CASES)('drops every script scheme written to <%s %s>', (tag, attr) => {
+    for (const url of [...DANGEROUS_URLS, ...DANGEROUS_VALUE_LISTS, SVG_DATA_URL]) {
+      const el = sink.write(tag, attr, url);
+      expect(el.namespaceURI, `<${tag}> is an SVG element`).toBe('http://www.w3.org/2000/svg');
+      expect(readAttr(el, attr), `[${url}] on <${tag} ${attr}>`).toBeNull();
+      expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+    }
+  });
+
+  it.each(ANIMATION_CASES)('keeps ordinary animation values on <%s %s>', (tag, attr) => {
+    for (const value of SAFE_ANIMATION_VALUES) {
+      const el = sink.write(tag, attr, value);
+      expect(readAttr(el, attr), `${value} on <${tag} ${attr}>`).toBe(value);
+      expect(readAttr(el, BENIGN_ATTR)).toBe(BENIGN_VALUE);
+    }
+  });
+
+  it('judges only the value attributes of <animate> and <set>: other tags and attributes keep the text', () => {
+    // animateTransform and animateMotion cannot target a URL attribute
+    // (Chromium 156), and begin or fill is not a value the animation writes.
+    for (const [tag, attr] of [['animateTransform', 'to'], ['animateMotion', 'values'], ['animate', 'begin'], ['set', 'fill'], ['g', 'to']] as const) {
+      const el = sink.write(tag, attr, 'javascript:alert(1)');
+      expect(readAttr(el, attr), `<${tag} ${attr}>`).toBe('javascript:alert(1)');
+    }
+  });
+});
+
+describe('renderer contract: an animation value is judged whatever attributeName says, written before or after it', () => {
+  const SCRIPT = 'javascript:alert(1)';
+  it('h(): a reactive attributeName that turns to href never lets a script value through', () => {
+    const [name, setName] = createSignal('fill');
+    const el = owned(() => h('set', { attributeName: name, to: () => SCRIPT, [BENIGN_ATTR]: BENIGN_VALUE }));
+    expect(el.getAttribute('to')).toBeNull();
+    setName('href');
+    expect(el.getAttribute('attributeName')).toBe('href');
+    expect(el.getAttribute('to')).toBeNull();
+  });
+
+  it('data-bind: a bound attributeName and a bound value, in either order', () => {
+    for (const order of [['attributeName', 'to'], ['to', 'attributeName']]) {
+      const box = host();
+      const binds = order.map((n) => `data-bind:${n}="{${n === 'to' ? 'v' : 'a'}}"`).join(' ');
+      box.innerHTML = `<div data-forma-state='${stateAttr({ v: SCRIPT, a: 'href' })}'><svg><a><set id="probe" ${binds}></set></a></svg></div>`;
+      mountFixture(box);
+      const el = box.querySelector('#probe')!;
+      // The parser lowercases a data-bind: name in SVG (happy-dom keeps its case).
+      expect([...el.attributes].find((a) => a.name.toLowerCase() === 'attributename')?.value).toBe('href');
+      expect(el.getAttribute('to'), order.join(' then ')).toBeNull();
+    }
+  });
+
+  it('update(): a kept <animate> whose attributeName changes to href with a script value', () => {
+    const box = host();
+    updateFixture(box, trustedHtml(`<svg><a><animate id="probe" attributeName="fill" values="red;blue" title="kept"></animate></a></svg>`));
+    updateFixture(box, trustedHtml(`<svg><a><animate id="probe" attributeName="href" values="#a;${SCRIPT}" title="kept"></animate></a></svg>`));
+    const el = box.querySelector('#probe')!;
+    expect(el.getAttribute('attributeName')).toBe('href');
+    expect(el.getAttribute('values')).toBeNull();
+    expect(el.getAttribute('title')).toBe('kept');
   });
 });
 

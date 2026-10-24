@@ -1170,6 +1170,69 @@ describe('tiers and configuration', () => {
     expect(runtime.getDiagnostics().map((d) => d.code).sort()).toEqual(['FORMA_E_UNREVIEWED_HANDLER', 'FORMA_E_UNREVIEWED_URL']);
   });
 
+  it('an unreviewed mount renders no script URL in an SVG animation value: each is removed and reported, on the first render and on update', async () => {
+    // FORMA-277: <animate> and <set> write to, from, by and each item of
+    // values into the attribute attributeName names, which can be href. The
+    // strip judges them as URLs whatever attributeName says.
+    vi.stubGlobal('origin', 'null');
+    const root = page();
+    const markup =
+      `<svg><a id="link"><text>t</text>` +
+      `<animate id="m1" attributeName="href" values="#a; javascript:alert(1)"></animate>` +
+      `<set id="m2" attributeName="href" to="&#106;avascript&colon;alert(1)"></set>` +
+      `<animate id="m3" attributeName="href" from="java&Tab;script:alert(1)" to="#b" by="vbscript:x"></animate>` +
+      `<set id="m4" to="data:text/html,&lt;p&gt;doc"></set>` +
+      `<animate id="ok1" attributeName="x" values="0;10;20" dur="1s"></animate>` +
+      `<set id="ok2" attributeName="href" to="#safe"></set>` +
+      `<animateTransform id="ok3" attributeName="transform" type="rotate" from="0" to="90"></animateTransform>` +
+      `</a></svg><template><svg><set id="n1" attributeName="href" to="javascript:alert(1)"></set></svg></template>` +
+      `<p id="kept">first</p>`;
+    const handle = mountSuccessfully(root, runtime.trustedHtml(markup), { tier: 'unreviewed' });
+    await settle();
+    const attrs = (id: string): Record<string, string | null> => {
+      const el = document.getElementById(id)!;
+      return Object.fromEntries(el.getAttributeNames().map((n) => [n, el.getAttribute(n)]));
+    };
+    expect(text('kept')).toBe('first');
+    expect(attrs('m1')).toEqual({ id: 'm1', attributeName: 'href' });
+    expect(attrs('m2')).toEqual({ id: 'm2', attributeName: 'href' });
+    expect(attrs('m3')).toEqual({ id: 'm3', attributeName: 'href', to: '#b' });
+    expect(attrs('m4')).toEqual({ id: 'm4' });
+    // Animations of other attributes, and ordinary URLs, are untouched.
+    expect(attrs('ok1')).toEqual({ id: 'ok1', attributeName: 'x', values: '0;10;20', dur: '1s' });
+    expect(attrs('ok2')).toEqual({ id: 'ok2', attributeName: 'href', to: '#safe' });
+    expect(attrs('ok3')).toEqual({ id: 'ok3', attributeName: 'transform', type: 'rotate', from: '0', to: '90' });
+    const nested = (root.querySelector('template') as HTMLTemplateElement).content.querySelector('#n1')!;
+    expect(nested.getAttribute('to')).toBeNull();
+    const reported = (): string[] => runtime.getDiagnostics().filter((d) => d.code === 'FORMA_E_UNREVIEWED_URL').map((d) => d.reason);
+    // m1 values, m2 to, m3 from and by, m4 to, n1 to.
+    expect(reported().sort()).toEqual([
+      ...Array(1).fill('unreviewed markup renders no script URL in by: removed'),
+      ...Array(1).fill('unreviewed markup renders no script URL in from: removed'),
+      ...Array(3).fill('unreviewed markup renders no script URL in to: removed'),
+      ...Array(1).fill('unreviewed markup renders no script URL in values: removed'),
+    ]);
+
+    // An update: a kept element whose value changes, and an element it adds.
+    runtime.clearDiagnostics();
+    handle.update(runtime.trustedHtml(
+      `<svg><a id="link"><text>t</text>` +
+      `<animate id="m1" attributeName="href" values="#a; #c"></animate>` +
+      `<set id="m2" attributeName="href" to="#b"></set>` +
+      `<animate id="m3" attributeName="href" from="#b" to="JaVaScRiPt:alert(2)"></animate>` +
+      `<set id="m5" attributeName="href" to="vbscript:x"></set>` +
+      `</a></svg><p id="kept">second</p>`,
+    ));
+    await settle();
+    expect(text('kept')).toBe('second');
+    expect(attrs('m1')).toEqual({ id: 'm1', attributeName: 'href', values: '#a; #c' });
+    expect(attrs('m2')).toEqual({ id: 'm2', attributeName: 'href', to: '#b' });
+    expect(attrs('m3')).toEqual({ id: 'm3', attributeName: 'href', from: '#b' });
+    expect(attrs('m5')).toEqual({ id: 'm5', attributeName: 'href' });
+    expect(reported().sort()).toEqual(Array(2).fill('unreviewed markup renders no script URL in to: removed'));
+    handles.pop()!.unmount();
+  });
+
   it('an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused', async () => {
     // The live check after every write (as for <link>) covers these too: an
     // attribute planted by the DOM between the strip and the write is

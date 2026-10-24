@@ -38,7 +38,7 @@ import { createSignal, internalEffect, createComputed, createUnownedRoot, regist
 import { reconcileList, type ListTransitionHooks } from './dom/list';
 import { createReconciler } from './dom/reconcile';
 import { isTrustedHtml, trustedHtml, RUNTIME_SRCDOC_CODE, type TrustedHtml } from './dom/trusted-html';
-import { isDangerousUrl, isUrlAttr, isEventHandlerAttr, isRawHtmlAttr } from './security/url-safety';
+import { isDangerousUrlAttr, isEventHandlerAttr, isRawHtmlAttr } from './security/url-safety';
 import {
   compileExpression,
   exprError,
@@ -79,7 +79,8 @@ declare const __FORMA_DEV_BUILD__: boolean | undefined;
 /**
  * True if writing `value` to attribute `name` on a `<tag>` element via
  * setAttribute would create an XSS sink: an `on*` inline event handler, or a
- * URL attribute carrying a script-executing scheme. Shared by data-bind:*,
+ * URL attribute carrying a script-executing scheme, or an SVG animation value
+ * carrying one (`isDangerousUrlAttr`, FORMA-277). Shared by data-bind:*,
  * list-template binding and the unreviewed tier's strip (refuseUnreviewed).
  *
  * `tag` is the lower-case name of the element receiving the attribute and is
@@ -91,7 +92,7 @@ declare const __FORMA_DEV_BUILD__: boolean | undefined;
  */
 function isUnsafeAttrBinding(name: string, value: string, tag: string): boolean {
   if (isEventHandlerAttr(name)) return true;
-  if (isUrlAttr(name) && isDangerousUrl(value, tag)) return true;
+  if (isDangerousUrlAttr(tag, name, value)) return true;
   return false;
 }
 

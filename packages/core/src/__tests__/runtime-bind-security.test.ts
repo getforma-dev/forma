@@ -6,13 +6,14 @@ import { mountFixture, unmountFixture } from './runtime-fixture';
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { isDangerousUrl } from '../security/url-safety';
+import { isDangerousUrlAttr } from '../security/url-safety';
 
 // Spy on the real implementation (behaviour unchanged) so the tests below can
-// assert what the runtime PASSES to it, not just what it returns.
+// assert what the runtime PASSES to it, not just what it returns. The runtime
+// calls the shared URL check through isDangerousUrlAttr (FORMA-277).
 vi.mock('../security/url-safety', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../security/url-safety')>();
-  return { ...actual, isDangerousUrl: vi.fn(actual.isDangerousUrl) };
+  return { ...actual, isDangerousUrlAttr: vi.fn(actual.isDangerousUrlAttr) };
 });
 
 describe('data-bind: attribute injection', () => {
@@ -65,7 +66,7 @@ describe('data-bind: attribute injection', () => {
     // `data:image/svg+xml` is inert on <img> but navigable on <a>, so the
     // scheme check is only able to judge it if it knows the element it is
     // about to land on.
-    vi.mocked(isDangerousUrl).mockClear();
+    vi.mocked(isDangerousUrlAttr).mockClear();
     container.innerHTML = `
       <div data-forma-state='{"u": "data:image/svg+xml,<svg/>"}'>
         <a id="a" data-bind:href="{u}">link</a>
@@ -73,9 +74,9 @@ describe('data-bind: attribute injection', () => {
       </div>`;
     mountFixture(container);
 
-    const calls = vi.mocked(isDangerousUrl).mock.calls;
-    expect(calls.some(([, tag]) => tag === 'a')).toBe(true);
-    expect(calls.some(([, tag]) => tag === 'img')).toBe(true);
+    const calls = vi.mocked(isDangerousUrlAttr).mock.calls;
+    expect(calls.some(([tag, name]) => tag === 'a' && name === 'href')).toBe(true);
+    expect(calls.some(([tag, name]) => tag === 'img' && name === 'src')).toBe(true);
   });
 
   it('still binds safe attributes and URLs', () => {
