@@ -168,6 +168,62 @@ sections[1:1]=[{
  'sources':[src('Resource, build and separate runtime evidence',run(40123441558))]
 }]
 sections[-1]['rows'][0]=['Full 14-stack server championship','Corrected full campaign independently passes; prior unresolved run retained']
-j={'status':'Round 2 is in progress. Full and paired server, compression, island and client evidence are audited; failed client targets remain open. Release is blocked until both effect and row-creation performance targets pass.','method':'Fresh Linux campaigns use separately recorded VM identities and the dated gha-4-v1 allocation. Compare paired trials only within a campaign. Historical October 23 standings remain in the separate historical report.','sections':sections}
+final=json.loads((E/'client-final/publication-summary.json').read_text())
+assert final['runId']==40140319634 and final['source']=='9ac07a446ebe8aaad407a895fa8aaece189bc69e'
+ft=final['results']
+labels=['Published 3.0.0','Main f5be8647','Final candidate 9ac07a44']
+assert [t['source'] for t in ft]==['published','f5be8647439e560c71c27b8c5f4bde26507b8bbb',final['source']]
+def final_stat(value,scale=1):
+ return f"{value['mean']/scale:,.3f} ± {value['sd']/scale:,.3f}"
+def effect_ratio(trial,name):
+ return next(row['ratioPercent'] for row in trial['signals'] if row['name']==name)
+policy_url='https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md'
+final_sources=[src('Final client campaign and original samples',run(40140319634)),src('Exact measured candidate','https://github.com/getforma-dev/forma/tree/'+final['source']),src('Prospective 3.1 product decisions',policy_url)]
+sections[1:1]=[{
+ 'title':'Final client campaign — measured outcome and release decision',
+ 'description':'Run 40140319634 measures published 3.0.0, pre-effect main f5be8647 and final integrated candidate 9ac07a44 sequentially on one Linux VM. Each workload retains two warmups and five measured samples. The full source IDs, original ZIP, own-engine controls and raw samples accompany this report. Row profiling was disabled.',
+ 'columns':['Original criterion']+labels+['Original target'],
+ 'rows':[[label]+[f"{effect_ratio(t,name):.2f}%" for t in ft]+['At least 80%'] for label,name in [('Write / own engine','write with one effect'),('Fan-out / own engine','fan-out to 100 effects'),('Effect create/dispose / own engine','effect create and dispose')]]+[
+  ['Nine-signal geometric mean / own engine']+[f"{t['overallRatioPercent']:.2f}%" for t in ft]+['At least 85%'],
+  ['Create 1,000 / same-trial vanilla']+[f"{t['dom'][0]['formaToVanillaRatio']:.3f}×" for t in ft]+['At most 1.100×'],
+ ],
+ 'note':'The original fan-out and row-creation targets are still missed. Write, effect creation/disposal and the overall signal ratio meet their individual numerical targets in this campaign. The maintainer accepted the remaining misses as explicit 3.1 product tradeoffs while retaining default row and native listener semantics; no experimental compiler is included. This prospective decision does not turn failed historical targets into passes, establish packed qualification, publish an RC or satisfy burn-in.',
+ 'sources':final_sources
+},{
+ 'title':'Final client campaign — all nine reactive-core workloads',
+ 'description':'Values are millions of operations per second, mean ± sample SD; higher is better. The last column divides final Forma mean throughput by its contemporaneous pristine alien-signals 3.1.2 mean, which matches Forma’s own engine dependency. The separate official alien-signals race entry is 3.2.1.',
+ 'columns':['Workload']+labels+['Final / own 3.1.2'],
+ 'rows':[[row['name']]+[final_stat(row[label],1e6) for label in ['published','main','candidate']]+[f"{row['ownEnginePercent']:.2f}%"] for row in final['signalsComparison']],
+ 'note':'Final writes improve 70.74%, fan-out 145.77% and effect creation/disposal 251.34% versus published Forma in this campaign. The batch-of-100-writes mean regresses 13.79% versus published and 6.93% versus pre-effect main. All five samples and their substantial spreads remain visible in the evidence; overlapping SDs do not prove equivalence. The 86.62% overall own-engine ratio does not erase that batching point regression or the 71.64% fan-out miss.',
+ 'sources':final_sources
+},{
+ 'title':'Final client campaign — all nine DOM operations',
+ 'description':'Milliseconds, mean ± sample SD; lower is better. Each source has its own same-trial vanilla control in the archive; the table shows the final candidate’s paired vanilla. Percentage changes compare the final candidate with published and pre-effect main in this same campaign.',
+ 'columns':['Operation']+labels+['Final-trial vanilla','Final vs published','Final vs main'],
+ 'rows':[[row['name']]+[final_stat(row[label]) for label in ['published','main','candidate','sameTrialVanilla']]+[f"{row['candidateVsPublishedDurationChangePercent']:+.2f}%",f"{row['candidateVsMainDurationChangePercent']:+.2f}%"] for row in final['domComparison']],
+ 'note':'Create-1,000 is 44.56 ± 4.11 ms versus vanilla 26.14 ± 2.40 ms: 1.705×, above the original 1.10× target. Selection is 1.36 ms versus published 0.68 ms, though pre-effect main is already 1.58 ms. Clear rises from main’s 4.60 ms to 6.00 ms (+30.43%), with published at 6.04 ms. These point regressions are disclosed, not hidden by a geometric mean. Five sequential samples and nonrandomized source order limit causal attribution; no blanket non-regression claim is made.',
+ 'sources':final_sources
+},{
+ 'title':'Final client campaign — application bytes and evidence boundaries',
+ 'description':'All statically loaded JavaScript for the unchanged client benchmark application. These bytes belong to each source in run 40140319634; they are separate from package import-graph and island-route budgets.',
+ 'columns':['Source','Raw JavaScript, B','gzip 9, B','Brotli 11, B'],
+ 'rows':[[label]+[f"{bundle[key]:,}" for key in ['bytes','gzip','brotli']] for label,bundle in zip(labels,final['bundles'])],
+ 'note':'The final application is 8,498 B Brotli: 154 B smaller than published Forma and 81 B larger than pre-effect main. The independent package/route size decisions, their old-limit misses and their new ceilings are documented separately. This campaign uses gha-4-v1: signal processes receive one CPU/1 GiB on CPU 0, and the browser/driver use CPUs 1–3 with the locked Chromium 156.0.8078.4. No cross-campaign timing gains, final server rerace, publication or deployment are inferred.',
+ 'sources':final_sources
+}]
+sections[-1].update({
+ 'title':'Qualification and disclosed limitations',
+ 'description':'Each campaign keeps its source, VM, raw samples and outcome. Product acceptance decisions are separate from whether the original numerical target passed.',
+ 'rows':[
+  ['Full 14-stack server championship','Corrected full campaign independently passes; prior unresolved run retained'],
+  ['Paired static routes and walker','Audited; byte, mean-based tail and strength budgets pass'],
+  ['Final client 9ac07a44','Measured and audited; original fan-out and row-creation targets missed, batching point regression disclosed'],
+  ['3.1 product decision','Stable row behavior and explicit remaining performance costs accepted prospectively'],
+  ['Release qualification and publication','Packed checks, independent release audit, RC publication and active burn-in remain separate requirements'],
+ ],
+ 'note':'The retained failed and rollback campaigns stay unchanged. No package release or deployment is established by this report.',
+ 'sources':[src('Qualified full server campaign',run(40123441558)),src('Paired server campaign',run(40116668819))]+final_sources,
+})
+j={'status':'The final client candidate is measured alongside published Forma and pre-effect main. Public effects improve substantially; the original fan-out and row-creation targets remain missed, with batching and DOM point regressions disclosed below. These limitations are accepted as prospective 3.1 product tradeoffs. Packed release qualification, publication and burn-in are not established by this report.','method':'Fresh Linux campaigns use separately recorded VM identities and the dated gha-4-v1 allocation. Compare trials only within a campaign; all samples, spreads and earlier failed outcomes are retained. Historical October 23 standings remain in the separate historical report.','sections':sections}
 out.write_text(json.dumps(j,ensure_ascii=False,indent=2)+'\n')
 print(out)

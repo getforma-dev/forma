@@ -25,6 +25,7 @@ records that separate authentication step.
 | `compression` | Same executable, identity/Brotli/gzip. Compression reduces transfer bytes and costs CPU/tail latency; it remains opt-in. |
 | `client-withdrawn` | First qualified client measurement. Acceptance failed; row optimizations were withdrawn. |
 | `client-rollback` | Published, withdrawn and rollback sources with contemporaneous vanilla and pristine own-engine controls. Both effect and row-creation targets still fail. |
+| `client-final` | Final integrated source `9ac07a44`, pre-effect main `f5be8647` and published Forma on one VM. Effect throughput improves; the original fan-out and row-creation targets still fail. Batching and DOM point regressions are disclosed. These remaining costs are accepted as prospective 3.1 product tradeoffs, not numerical passes. |
 | `client-zero-diagnostic` | Failed diagnostic retained. A valid zero-duration observation was incorrectly rejected by the old harness. |
 | `server-unresolved` | Original full server run retained. All 12 React Router samples report floored mean body sizes 660 bytes shorter than their probes. Individual timed bodies were not retained. The old ranking is not qualified by this audit. |
 | `cache-*` | Separate starter-cache experiment: one cold/warm pair per starter, across four runners. Each cold run reports 113 registry compilation artifacts representing 89 unique package IDs; each warm run reports zero. |
@@ -80,9 +81,35 @@ and hashed host fingerprints needed to audit the experiments. High-confidence
 credential, private-key and signed-URL patterns were checked before preservation.
 Private security/handoff archives are excluded.
 
-No release or deployment is established by these measurements. Release remains
-blocked until both FORMA-259 and FORMA-260 targets and the ordinary correctness,
-size, CI, package qualification, independent review and burn-in gates pass.
+No release or deployment is established by these measurements. The maintainer
+accepted the remaining FORMA-259 fan-out and FORMA-260 row-creation misses as
+prospective [3.1 product tradeoffs](https://github.com/getforma-dev/forma/blob/2cbf169f78cba285805915f0f1440aabc97894ed/docs/release/3.1-PERFORMANCE-TRADEOFFS.md).
+The original numerical targets remain missed. Ordinary correctness, the explicit
+size budgets, CI, packed qualification, independent release review and active
+RC burn-in remain required; this report supplies none of that release credit.
+
+`client-final` preserves run 40140319634's original 138,657-byte ZIP and provider
+metadata. Its candidate is exactly `9ac07a446ebe8aaad407a895fa8aaece189bc69e`,
+with pre-effect main `f5be8647439e560c71c27b8c5f4bde26507b8bbb` and published
+Forma as separate trials. The portable audit checks the archive digest, all
+29 timing records, five samples/two warmups, resource identities, own-engine
+ratios, all eleven bundle records and derived report arithmetic. It replays
+both independent arithmetic implementations in a temporary directory:
+
+```sh
+python3 benchmarks/grand-prix/evidence/2026-10-24/client-final/verify.py
+```
+
+The report retains all nine signal and DOM operations. In particular, batching
+throughput is 13.79% below published Forma and 6.93% below pre-effect main;
+selection is slower than published, and clear is slower than pre-effect main.
+Observed spreads and sequential trial order limit attribution and do not prove
+equivalence. The original failed/rollback campaigns remain separate and unchanged.
+The restricted compiler/listener experiments are excluded from this release.
+The separate `client-final/effects-review/PRODUCT-ASSESSMENT.md` records the
+independent regression assessment and its source proof: the later `90ff7f65`
+repair changes only the core README; all other tracked blobs match measured
+`9ac07a44`. That source equivalence does not change the campaign's identity.
 
 The self-contained `index.html` presents the curated Round 2 results without
 embedding the separate historical report's local machine records. To reproduce
