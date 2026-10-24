@@ -8,6 +8,7 @@ import { readRecordedSet, publishedRelease } from './release-support.mjs';
 import { githubReleaseMetadata } from './release-support-history.mjs';
 import { publishedStatus } from './published-scaffold.mjs';
 import { bindAuditToRc, validateAuditEvidence, AUDIT_FILES } from './release-audit.mjs';
+import { rcLine } from './release-line.mjs';
 import { verifyEvidence } from './release-evidence.mjs';
 import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
 import { evidenceRoom, writeEvidence } from './release-burn-in-storage.mjs';
@@ -103,7 +104,7 @@ export function verifyRegistryArchive(item, published, bytes) {
   return { ...item, bytes: bytes.length };
 }
 export async function authenticateRc({ tag, commit, directory, fetchImpl = fetch, token = process.env.GH_TOKEN, root = ROOT, checkoutRequired = true }) {
-  assert.match(tag ?? '', /^v3\.0\.0-rc\.[1-9][0-9]*$/); assert.match(commit ?? '', /^[a-f0-9]{40}$/);
+  const line = rcLine(tag); assert.match(commit ?? '', /^[a-f0-9]{40}$/);
   if (checkoutRequired) assert.equal(run('git', ['rev-parse', 'HEAD'], root).trim(), commit);
   assert.equal(run('git', ['status', '--porcelain', '--untracked-files=no'], root).trim(), '');
   assert.equal(run('git', ['rev-parse', `${tag}^{commit}`], root).trim(), commit, 'checkout is not the immutable RC tag');
@@ -116,6 +117,7 @@ export async function authenticateRc({ tag, commit, directory, fetchImpl = fetch
   };
   const ds12 = await getAsset('release-record.json'), record = readRecordedSet(ds12, sha256(ds12));
   publishedRelease(record, metadata); assert.equal(record.tag, tag); assert.equal(record.commit, commit); assert.equal(record.milestone?.name, 'rc');
+  assert.equal(record.contracts?.version, line.finalVersion, 'published RC contract names another version line');
   writeEvidence(directory, join(directory, 'release-record.json'), ds12); writeEvidence(directory, join(directory, 'release-metadata.json'), JSON.stringify(metadata));
   const p17 = record.p17Evidence; assert.equal(p17?.artifactName, 'release-p17');
   const p17Proof = await downloadRunEvidence({ get, ...p17, name: p17.artifactName, destination: join(directory, 'p17'), commit, tag, workflow: '.github/workflows/release.yml', event: 'push', requiredJob: 'verify', requiredStep: 'P17 packed corpus and both templates', evidenceRoot: directory, reserveBytes: 64 * MiB });

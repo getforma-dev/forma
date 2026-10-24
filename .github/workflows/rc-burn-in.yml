@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       rc_tag:
-        description: 'Exact published v3.0.0-rc.N; dispatch this workflow at that same tag'
+        description: 'Exact published vX.Y.Z-rc.N; dispatch this workflow at that same tag'
         required: true
         type: string
 permissions:
@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
+      PYTHONDONTWRITEBYTECODE: '1'
       CARGO_BUILD_JOBS: '3'
       CARGO_INCREMENTAL: '0'
       CARGO_TERM_COLOR: never
@@ -36,6 +37,9 @@ jobs:
         run: |
           test "$GITHUB_REF" = "refs/tags/$RC_TAG"
           test "$(git rev-parse "$RC_TAG^{commit}")" = "$GITHUB_SHA"
+          mkdir "$RUNNER_TEMP/burn-in-source"
+          git status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/burn-in-source/before.txt"
+          test ! -s "$RUNNER_TEMP/burn-in-source/before.txt"
           python3 scripts/release-owned-linux.test.py
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
@@ -52,15 +56,30 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RC_TAG: ${{ inputs.rc_tag }}
         run: |
+          git status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/burn-in-source/pre-worker.txt"
+          test ! -s "$RUNNER_TEMP/burn-in-source/pre-worker.txt"
           python3 scripts/release-owned-linux.py "$RUNNER_TEMP/burn-in-owned" 9900 -- node scripts/release-burn-in.mjs worker "$RC_TAG" "$GITHUB_SHA" "$RUNNER_TEMP/burn-in-evidence" "$RUNNER_TEMP/burn-in-work"
       - name: Authenticate results and cleanup before recording success
         id: result
         run: node scripts/release-burn-in.mjs finalize "$RUNNER_TEMP/burn-in-evidence" "$RUNNER_TEMP/burn-in-owned" "$RUNNER_TEMP/burn-in-work"
+      - name: Retain source status after success or failure
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/burn-in-source"
+          git status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/burn-in-source/after.txt"
+          test ! -s "$RUNNER_TEMP/burn-in-source/after.txt"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rc-burn-in
           path: ${{ runner.temp }}/burn-in-evidence/
+          if-no-files-found: error
+          retention-days: 90
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: rc-burn-in-source
+          path: ${{ runner.temp }}/burn-in-source/
           if-no-files-found: error
           retention-days: 90
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

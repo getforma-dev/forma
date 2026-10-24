@@ -67,6 +67,9 @@ A record-only workflow retry retains the earlier P17 producer attempt.
 
 Dispatch `rc-burn-in.yml` at the exact published RC tag and supply that same tag
 as `rc_tag`. The job has read-only GitHub permissions and no publishing authority.
+The ordinary workflow suppresses Python bytecode before ownership imports and
+retains before, pre-worker and after source status outside the checkout, including
+after failures. Dirty source still fails; it is never ignored or repaired in place.
 It authenticates the actual successful release/P17 workflow attempt and nested
 evidence, the DS12/D14 assets, and all seven original npm/crates registry archives
 against both DS12 and registry integrity. It neither repacks these archives nor
@@ -127,6 +130,13 @@ coordinated version-preparation function, final-gate completion, the immutable
 pointer, and independently reviewed documentation/changelog changes are allowed.
 The final DS12 attaches the exact pointer bytes and hash. This source does not
 approve an audit, publish a tag, waive a gate, or claim a completed campaign.
+
+For later releases, the pointer's `finalVersion` names that release (for example
+`3.1.0`) and its `rcTag` must name the same version with an `-rc.N` suffix. The
+validator projects that exact final version from the authenticated RC source;
+it never permits product changes between RC and final. All workload, provenance,
+review, source and cleanup checks above still apply. Historical 3.0 post-final
+donor workflows and receipts remain specific to their original publication.
 
 ### 3.0.0 post-release scheduling (L-66-QUOTA)
 

@@ -24,8 +24,9 @@ import { capabilityCases } from '../packages/core/e2e/hostile-widgets/capabiliti
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const encode = value => JSON.stringify(value, null, 2) + '\n';
+// The L-66 waiver is frozen to 3.0.0 and must never inherit a newer live contract.
 const contracts = () => {
-  const value = json(join(ROOT, 'scripts/release-contracts.json'));
+  const value = json(join(ROOT, 'scripts/fixtures/release-contracts-3.0.0.json'));
   for (const entry of Object.values(value.milestones)) for (const gate of Object.values(entry.gates)) gate.status = 'done';
   value.milestones.final.gates[SOAK_GATE] = { ...value.milestones.final.gates[SOAK_GATE], status: 'deferred', deferral: { ...SOAK_POLICY } };
   return value;

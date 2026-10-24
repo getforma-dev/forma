@@ -17,6 +17,11 @@ authorize publication. See [the milestone gate](#milestone-gate) below and the
 historical [alpha runbook](release/ALPHA-RUNBOOK.md). Earlier alpha and A2 results
 retain their original scope and do not establish beta, RC or final qualification.
 
+Later version lines use their own reviewed contract, RC audit and completed
+pre-final soak. The RC tag and final version must have the same exact major,
+minor and patch; 3.0 evidence cannot qualify 3.1. The L-66-QUOTA deferral remains
+exclusive to 3.0.0. Version-line support does not close gates or publish packages.
+
 ## Prepare and test
 
 Use Node from `.node-version` (24.22.0) and Rust/Cargo 1.93.1. Published runtime

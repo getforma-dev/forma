@@ -11,16 +11,18 @@ import { validateBurnInReport, readFuzzCompletion } from './release-burn-in-repo
 import { requireSkewChecks } from './release-skew-drill.mjs';
 import { securityHarnessHashes, validateHostileProof } from './release-security.mjs';
 import { SOAK_CONTRACT, SOAK_GATE, SOAK_REFERENCE, validateSoakGate, validateSoakReference, soakDisposition } from './release-soak-deferral.mjs';
+import { rcLine } from './release-line.mjs';
 
-export function readBurnInReference(root = ROOT) {
+export function readBurnInReference(root = ROOT, finalVersion) {
   const path = join(root, 'docs/release/rc-burn-in.json');
   assert(statSync(path).isFile() && statSync(path).size <= 4 * 1024 * 1024, 'burn-in reference size');
   const bytes = readFileSync(path), reference = JSON.parse(bytes);
   assert.equal(reference.contract, 'rc-burn-in-reference-v1');
-  assert.match(reference.rcTag ?? '', /^v3\.0\.0-rc\.[1-9][0-9]*$/);
+  assert.equal(typeof reference.finalVersion, 'string');
+  rcLine(reference.rcTag, reference.finalVersion);
+  if (finalVersion !== undefined) assert.equal(reference.finalVersion, finalVersion, 'burn-in reference names another final version');
   assert.match(reference.rcCommit ?? '', /^[a-f0-9]{40}$/); assert.match(reference.manifestSha256 ?? '', /^[a-f0-9]{64}$/);
   assert(Number.isSafeInteger(reference.runId) && reference.runId > 0 && Number.isSafeInteger(reference.runAttempt) && reference.runAttempt > 0);
-  assert.equal(reference.finalVersion, '3.0.0');
   assert(Array.isArray(reference.reviewedChanges) && reference.reviewedChanges.length <= 10000);
   assert.equal(typeof reference.reviewEvidence?.content, 'string'); assert(reference.reviewEvidence.content.trim());
   assert.equal(sha256(Buffer.from(reference.reviewEvidence.content)), reference.reviewEvidence.sha256);
@@ -32,7 +34,7 @@ export function finalDiffBinding(reference, finalCommit, root = ROOT) {
   if (deferred) validateSoakReference(reference);
   else assert.equal(reference.contract, 'rc-burn-in-reference-v1');
   assert.match(reference.rcCommit ?? '', /^[a-f0-9]{40}$/);
-  assert.equal(reference.finalVersion, '3.0.0'); assert.match(reference.rcTag ?? '', /^v3\.0\.0-rc\.[1-9][0-9]*$/);
+  assert.equal(typeof reference.finalVersion, 'string'); rcLine(reference.rcTag, reference.finalVersion);
   assert.equal(typeof reference.reviewEvidence?.content, 'string'); assert(reference.reviewEvidence.content.trim());
   assert.equal(sha256(Buffer.from(reference.reviewEvidence.content)), reference.reviewEvidence.sha256, 'final diff review evidence changed');
   run('git', ['merge-base', '--is-ancestor', reference.rcCommit, finalCommit], root);
@@ -47,7 +49,7 @@ export function finalDiffBinding(reference, finalCommit, root = ROOT) {
   try {
     const archive = join(scratch, 'source.tar'); run('git', ['archive', '--format=tar', `--output=${archive}`, reference.rcCommit], root);
     run('tar', ['-xf', archive, '-C', scratch]);
-    versions = versionFiles(scratch, '3.0.0');
+    versions = versionFiles(scratch, reference.finalVersion);
   } finally { rmSync(scratch, { recursive: true, force: true }); }
   const old = new Map(before.entries.map(row => [row.path, row])), current = new Map(after.entries.map(row => [row.path, row])), changes = [];
   for (const path of [...new Set([...old.keys(), ...current.keys()])].sort()) {

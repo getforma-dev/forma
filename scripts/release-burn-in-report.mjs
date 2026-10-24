@@ -1,5 +1,6 @@
 // Report consistency is not authentication of a hosted CI run.
 import assert from 'node:assert/strict';
+import { rcLine } from './release-line.mjs';
 export const CONTRACT = 'forma-rc-burn-in-v1';
 export const MIN_ACTIVE_NS = 3_600_000_000_000n;
 export const FUZZ_TARGETS = ['parse_raw', 'parse_body', 'parse_mutated', 'walk'];
@@ -24,7 +25,7 @@ const packages = (rows, version) => {
  */
 export function validateBurnInReport(report, expected) {
   assert.equal(report.contract, CONTRACT, 'unsupported burn-in contract');
-  assert.match(expected.rcTag ?? '', /^v3\.0\.0-rc\.[1-9][0-9]*$/, 'expected a 3.0.0 RC');
+  rcLine(expected.rcTag);
   assert.match(expected.sourceCommit ?? '', /^[a-f0-9]{40}$/, 'expected exact RC source');
   assert.equal(report.rcTag, expected.rcTag); assert.equal(report.sourceCommit, expected.sourceCommit);
   assert.equal(report.harnessCommit, expected.sourceCommit, 'harness differs from RC source');
