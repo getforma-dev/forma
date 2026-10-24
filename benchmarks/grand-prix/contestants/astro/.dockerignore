@@ -1,0 +1,7 @@
+node_modules
+.next
+build
+dist
+.react-router
+.astro
+SMOKE.md

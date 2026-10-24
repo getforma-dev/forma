@@ -1,0 +1,16 @@
+{
+  "event": 10,
+  "car": "forma",
+  "measuredAt": "2026-10-24T18:25:47.227Z",
+  "files": [
+    {
+      "file": "assets/index-BOx50xR2.js",
+      "bytes": 25876,
+      "gzip": 9549,
+      "brotli": 8654
+    }
+  ],
+  "bytes": 25876,
+  "gzip": 9549,
+  "brotli": 8654
+}

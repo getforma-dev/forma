@@ -1,0 +1,1838 @@
+{
+  "ci-40123441558-1-campaign.json": {
+    "bytes": 535,
+    "sha256": "adcb885a52519f97beafec9808ba3250ec552f496a16d9a466f89b1f8cc2ccb7"
+  },
+  "ci-40123441558-1-linux.json": {
+    "bytes": 18166,
+    "sha256": "610b71a442ff9bdade1ba61917883d378349eb72b3462ef406c0d58094410acd"
+  },
+  "ci-40123441558-1-cleanup.json": {
+    "bytes": 321,
+    "sha256": "22137964cf12b6ab9f7b6c7c6f5f2de18b82ffb882fb3d89a86402785bb698b9"
+  },
+  "ci-40123441558-1-ownership.json": {
+    "bytes": 83,
+    "sha256": "420180c3b06fdb8f6ecdd386dc9686202e022384bf215dd24c95f81a7ae051e6"
+  },
+  "ci-40123441558-1-render-counts/Cargo.lock": {
+    "bytes": 25251,
+    "sha256": "85cf09908b848e064183090cb116449c0047b26e3c0c9f68630714127d3374af"
+  },
+  "ci-40123441558-1-render-counts/build-binary": {
+    "bytes": 3319752,
+    "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+  },
+  "ci-40123441558-1-render-counts/build-image.json": {
+    "bytes": 4633,
+    "sha256": "862b11d08b756ff44cc41f74a6cc70080c4e6f6959b3d7eb86c23f9907688f73"
+  },
+  "ci-40123441558-1-render-counts/campaign.json": {
+    "bytes": 535,
+    "sha256": "adcb885a52519f97beafec9808ba3250ec552f496a16d9a466f89b1f8cc2ccb7"
+  },
+  "ci-40123441558-1-render-counts/instrumentation.patch": {
+    "bytes": 1486,
+    "sha256": "0da166400afce5c3bca34f40d21d5c364f39a1e0a6ab910c8333c97a423e63ac"
+  },
+  "ci-40123441558-1-render-counts/instrumented-binary": {
+    "bytes": 3324128,
+    "sha256": "0b11eb6db0c1d042d928a0dc883c352c85d78442071842b1d576a7e6297c46d3"
+  },
+  "ci-40123441558-1-render-counts/instrumented-container.json": {
+    "bytes": 6966,
+    "sha256": "228f4479c50f9076f282ba60066eae27c1e755fac061d19e1c5c93093442b6ef"
+  },
+  "ci-40123441558-1-render-counts/original-100.html": {
+    "bytes": 33193,
+    "sha256": "2b3179c74569c1d4b301bb2188a6bafa16211e723ab0ea0e79b55bed11bf3d5d"
+  },
+  "ci-40123441558-1-render-counts/original-1000.html": {
+    "bytes": 326726,
+    "sha256": "a176c7d95178243edc08c9da54e9eba14f3d82bd9c519d4d6947e5c0347a7022"
+  },
+  "ci-40123441558-1-render-counts/original-binary": {
+    "bytes": 3319752,
+    "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+  },
+  "ci-40123441558-1-render-counts/render-counts.json": {
+    "bytes": 40156,
+    "sha256": "d273bd4f3bfe98c831c66609661162cc94f4fb0621b707fc9fdea28add27f8e8"
+  },
+  "ci-40123441558-1-render-counts/runtime-image.json": {
+    "bytes": 1844,
+    "sha256": "1c64bf40c13159a35fc982d8288265e904a3460e610f91daa7c811005f43c989"
+  },
+  "ci-40123441558-1-render-counts/source.instrumented.rs": {
+    "bytes": 5796,
+    "sha256": "97e8e676090f4af8d5b191a50af42efa1490f2a6f979cd768395fb6882993d0e"
+  },
+  "ci-40123441558-1-render-counts/source.original.rs": {
+    "bytes": 5009,
+    "sha256": "cfa6ecd360e98522d670792a4c0d489865ee37588785514bb35169daedb62526"
+  },
+  "ci-40123441558-1-runtime/context/Dockerfile": {
+    "bytes": 396,
+    "sha256": "cd3b3a4ace1183776a139e2b595f8c8f3c674bb624bb08807de7e56930f49098"
+  },
+  "ci-40123441558-1-runtime/context/grandprix": {
+    "bytes": 3319752,
+    "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+  },
+  "ci-40123441558-1-runtime/debian-10-headers.json": {
+    "bytes": 833,
+    "sha256": "30acef88a155968c1b09698f7b2dbb307be83e691a81729b382fab2f815b7157"
+  },
+  "ci-40123441558-1-runtime/debian-10.html": {
+    "bytes": 4105,
+    "sha256": "0de150ce86b04542ea7d51b43a4c2b648483b3ce8b1fd018b5b1840fd3e0c311"
+  },
+  "ci-40123441558-1-runtime/debian-100-headers.json": {
+    "bytes": 834,
+    "sha256": "9df2c694555b9419790cc6a224fb647adfb207629e564167647f7667651d47a2"
+  },
+  "ci-40123441558-1-runtime/debian-100.html": {
+    "bytes": 33193,
+    "sha256": "2b3179c74569c1d4b301bb2188a6bafa16211e723ab0ea0e79b55bed11bf3d5d"
+  },
+  "ci-40123441558-1-runtime/debian-1000-headers.json": {
+    "bytes": 835,
+    "sha256": "0889c25c0fddaa5ff207cb6b7b6bd52e2e7ce2946e04ce10d39723f214981272"
+  },
+  "ci-40123441558-1-runtime/debian-1000.html": {
+    "bytes": 326726,
+    "sha256": "a176c7d95178243edc08c9da54e9eba14f3d82bd9c519d4d6947e5c0347a7022"
+  },
+  "ci-40123441558-1-runtime/distroless-10-headers.json": {
+    "bytes": 833,
+    "sha256": "a68c5ea3a7d6ee9557c4111d218da42dbf8d7e6307e4fff026f3786151641518"
+  },
+  "ci-40123441558-1-runtime/distroless-10.html": {
+    "bytes": 4105,
+    "sha256": "0de150ce86b04542ea7d51b43a4c2b648483b3ce8b1fd018b5b1840fd3e0c311"
+  },
+  "ci-40123441558-1-runtime/distroless-100-headers.json": {
+    "bytes": 834,
+    "sha256": "a612010f1130292b724305b722546ec9ad5ba973d37e40bcd590de84f44ab17b"
+  },
+  "ci-40123441558-1-runtime/distroless-100.html": {
+    "bytes": 33193,
+    "sha256": "2b3179c74569c1d4b301bb2188a6bafa16211e723ab0ea0e79b55bed11bf3d5d"
+  },
+  "ci-40123441558-1-runtime/distroless-1000-headers.json": {
+    "bytes": 835,
+    "sha256": "5351b95f48b5925bce1e26ff8d92e3eadbb6559bfc1f56aab4529751e8547a92"
+  },
+  "ci-40123441558-1-runtime/distroless-1000.html": {
+    "bytes": 326726,
+    "sha256": "a176c7d95178243edc08c9da54e9eba14f3d82bd9c519d4d6947e5c0347a7022"
+  },
+  "ci-40123441558-1-runtime/distroless-binary": {
+    "bytes": 3319752,
+    "sha256": "a747bf5cd7e222cc3ec0f253c083999d61a94ba97e686ebcc007f7aff32df53a"
+  },
+  "ci-40123441558-1-runtime/distroless-image.json": {
+    "bytes": 5441,
+    "sha256": "1306256d34d7b43544452a001d40c2d9085613b6a4160a7359a87ff9d4a435f5"
+  },
+  "ci-40123441558-1-runtime/image-id": {
+    "bytes": 71,
+    "sha256": "7770a31332fed566326b70a0431f66e8b1fdcd58437fe5c80a776d0048e4ce9d"
+  },
+  "ci-40123441558-1-runtime/runtime.json": {
+    "bytes": 2126,
+    "sha256": "e910d2e04a4d7873466fc5b84e2716fc256e44d41c9ffa39ef510df495b39d1b"
+  },
+  "ci-40123441558-1-runtime/source-image.json": {
+    "bytes": 1844,
+    "sha256": "1c64bf40c13159a35fc982d8288265e904a3460e610f91daa7c811005f43c989"
+  },
+  "raw/_run-ci-40123441558-1.json": {
+    "bytes": 2255,
+    "sha256": "910752a66e3b12b3731fd42af9d2cade2788e0c0dafede3f38380bc00e0115ea"
+  },
+  "raw/endurance/astro.json": {
+    "bytes": 1151063,
+    "sha256": "57726a9673fabaa8b815a2ae8a6c3a7c25cbe6b0495225cb4e0cf9198f0c38f0"
+  },
+  "raw/endurance/forma.json": {
+    "bytes": 2213842,
+    "sha256": "dd03dbb6b2559313e5bc66db8f51c0a277d827dd30849bfcdb67134ef61c038d"
+  },
+  "raw/endurance/preact-node.json": {
+    "bytes": 1144319,
+    "sha256": "0df406ebb6efe9dca9be368e7ce82adde6512fad383bad26f77b5193120e4ccf"
+  },
+  "raw/endurance/next.json": {
+    "bytes": 4173563,
+    "sha256": "876e510ebcf3304d34cd31263ace960656f794d7f6d71bcf8e6b1f5874e14b85"
+  },
+  "raw/endurance/react-bun.json": {
+    "bytes": 1144116,
+    "sha256": "162e6c37f14249626be804319110d1b9908f812b4d350171494607c11d788676"
+  },
+  "raw/endurance/react-deno.json": {
+    "bytes": 1144376,
+    "sha256": "37f86e20b78c95bd01005832abcb0ea5e806551213674d618f9a1acd2ba151b7"
+  },
+  "raw/endurance/react-node.json": {
+    "bytes": 1144429,
+    "sha256": "ebdb46b0a927014be9ed321509cf32e1555707bf02af0d87c3ec2484b4b35f0d"
+  },
+  "raw/endurance/react-router.json": {
+    "bytes": 1869014,
+    "sha256": "cf86ce42984d646bc5cb710f41b27a56a23e6be625032b75aecc60332034f180"
+  },
+  "raw/endurance/solid-node.json": {
+    "bytes": 1144308,
+    "sha256": "a8d10fa3fedf357418a8ebcf1268bfbdbab5328467293c4f766f89578523f542"
+  },
+  "raw/endurance/svelte-node.json": {
+    "bytes": 1144583,
+    "sha256": "8bbb7e3584a2d1942a0ec7e8864d0abef3ea547fd9889c582e1b0c7fcd018a2c"
+  },
+  "raw/endurance/vanilla-bun.json": {
+    "bytes": 1144242,
+    "sha256": "bcbe83bc158b33de7fbb8d65ad6dee7f24c0abe9cde4245581df176c827b5a42"
+  },
+  "raw/endurance/vanilla-deno.json": {
+    "bytes": 1144466,
+    "sha256": "a5d51716af41faee246f058c6061d6b42ae5530994552174dbebc7b9f824bdfc"
+  },
+  "raw/endurance/vanilla-node.json": {
+    "bytes": 1144538,
+    "sha256": "a652ee278890ee6f25cd0ab05a609c5c3fcdb1c2a540b6323e6b077b91b505d8"
+  },
+  "raw/endurance/vue-node.json": {
+    "bytes": 1144504,
+    "sha256": "1224161e80a45cd0453db51d9c6bf9a137d4bbf6a975e40aff23f4921f9d98fc"
+  },
+  "raw/forma-budgets.json": {
+    "bytes": 2334,
+    "sha256": "bb9ee281475458eeb0cde3c9b6bb1b98850b0f8eac29919e75a7611c0d85afd0"
+  },
+  "raw/fuel/forma.json": {
+    "bytes": 53100,
+    "sha256": "b6cf3c51a64e7aa1fc3ca5657bd6a00ce7270f83df6843ea366fc7e83a5a2039"
+  },
+  "raw/fuel/next.json": {
+    "bytes": 96737,
+    "sha256": "e5121d3e730c6b26edcbcf8ca06ce176919637662e324b44ec7039551cde249c"
+  },
+  "raw/fuel/astro.json": {
+    "bytes": 30240,
+    "sha256": "21368a1f29707b0aeccad0a1e38f6c865126c3c77bfe51fed4eaa35f6e596057"
+  },
+  "raw/fuel/preact-node.json": {
+    "bytes": 30110,
+    "sha256": "c3244735194971365e7eacb19bc45ff72538a5bd882f30a353602e7b4bd0bdd9"
+  },
+  "raw/fuel/react-bun.json": {
+    "bytes": 30049,
+    "sha256": "a7b72d8d15042a657c07f6c05a7c473761c112124f44f5138f30e5e323e7435b"
+  },
+  "raw/fuel/react-deno.json": {
+    "bytes": 30111,
+    "sha256": "d1a2724a2d99dc9f8dcc2ceee43f1b2a28ed29d19a84e27a7f9ac7d97acbbe67"
+  },
+  "raw/fuel/react-node.json": {
+    "bytes": 30107,
+    "sha256": "c97991d015d837f7cab873cee75740acac18f23a014a6f7e9e3665366ac6e833"
+  },
+  "raw/fuel/react-router.json": {
+    "bytes": 48102,
+    "sha256": "fbc35c7971ebc36dce62f121c8a0fa821fd43813bd73b0f8e2f48c41206df07a"
+  },
+  "raw/fuel/solid-node.json": {
+    "bytes": 30113,
+    "sha256": "ba45c2626a39114714b44b30861e5366c91e80441ca9b716dc5f7753b9c52e50"
+  },
+  "raw/fuel/svelte-node.json": {
+    "bytes": 30166,
+    "sha256": "79dac7e1aa9a5c701b4e92dd8425f38cb8105182eeae73122169a3aa13cec8c7"
+  },
+  "raw/fuel/vanilla-bun.json": {
+    "bytes": 30062,
+    "sha256": "b67119a8bc0f7a2bb68e9d664cd9eff1955509717faebce70ebdccfa6b91e6ea"
+  },
+  "raw/fuel/vanilla-deno.json": {
+    "bytes": 30136,
+    "sha256": "384db301bdd858c4a03408c2ca094e6eab47bf26ff6785080c58466453eebce1"
+  },
+  "raw/fuel/vanilla-node.json": {
+    "bytes": 30127,
+    "sha256": "ac42f33d42cf7421dcb2bb462adf0dca0c14e487ba0f44840ee2adf4985ced45"
+  },
+  "raw/fuel/vue-node.json": {
+    "bytes": 30124,
+    "sha256": "8196794391deab75700075a082bce1f5fcc5bbb7eb05bd474a78cf4ac4c6ce26"
+  },
+  "raw/grid/astro.json": {
+    "bytes": 5719,
+    "sha256": "2e42c2abad32ef5ae7ce1720268663370ed990400e480479eb18124d03ae73da"
+  },
+  "raw/grid/forma.json": {
+    "bytes": 5713,
+    "sha256": "a9063c2f3174688260ae207b6cb71da7a718844d7a823f06ff84218003c004e4"
+  },
+  "raw/grid/next.json": {
+    "bytes": 5712,
+    "sha256": "44715fb7ed6f11207042e2a4dfba345007b8c5354f2621183f2768b51994bfa2"
+  },
+  "raw/grid/preact-node.json": {
+    "bytes": 5718,
+    "sha256": "cf42c511a3fd9c75b81da438aa8d0f46dc26fb933bcf1813784edb6a41ce8303"
+  },
+  "raw/grid/react-bun.json": {
+    "bytes": 5724,
+    "sha256": "a300ecafd1808f06ce19080430f0b48208906b47e8582194276ee79487753de5"
+  },
+  "raw/grid/react-deno.json": {
+    "bytes": 5720,
+    "sha256": "d8465aa03bfe4dfd1e7e94f3de3b2c293015916ec5fc06a2b5a991ad975975a7"
+  },
+  "raw/grid/react-node.json": {
+    "bytes": 5714,
+    "sha256": "5c29b52f589896cfab3468afd800ac212596e06afc5ac9d8b70f794cde019a60"
+  },
+  "raw/grid/react-router.json": {
+    "bytes": 5735,
+    "sha256": "77c84c880cd043f2fbc34e56ef3cc954f1cb0feed26f1b5b76188b708562fd27"
+  },
+  "raw/grid/solid-node.json": {
+    "bytes": 5727,
+    "sha256": "95c89c26cb074ac13d0be2d3bd1fef6e0a768492d42eb47daee716575781b5a1"
+  },
+  "raw/grid/svelte-node.json": {
+    "bytes": 5723,
+    "sha256": "7a64c2ff4f80cb2ca9d31fd4cb5645316671f57c988f72cc4cbb2ff677dd10e9"
+  },
+  "raw/grid/vanilla-bun.json": {
+    "bytes": 5725,
+    "sha256": "d84ab63e3e1116abfb69a6c3a44a50637bd55a177097a38ec7c58baa59529d87"
+  },
+  "raw/grid/vanilla-deno.json": {
+    "bytes": 5728,
+    "sha256": "0db470512f6c7435cbcb885bb3bc86ad90e3c1cc61a46ceb0e460f76cb702554"
+  },
+  "raw/grid/vanilla-node.json": {
+    "bytes": 5718,
+    "sha256": "2186ee8e89b887698f79cfe78d7386a33e6a5ef8169eac177bdd61ae3a6c9bdd"
+  },
+  "raw/grid/vue-node.json": {
+    "bytes": 5726,
+    "sha256": "b045d6918566e6d4f74311f321ede354f93566e99b176adbff384e36a7f7331c"
+  },
+  "raw/multicore/astro.json": {
+    "bytes": 142175,
+    "sha256": "9afce5be969cd99216cafd9a7e9197e137c4f24bf2c8cb5fcca33addb0911a94"
+  },
+  "raw/multicore/forma.json": {
+    "bytes": 257082,
+    "sha256": "0bd48ee87db95d4784b0fb5ccbee8d6f111719b529cf5cd4971128d720794dbd"
+  },
+  "raw/multicore/next.json": {
+    "bytes": 474573,
+    "sha256": "a294cd1f5796d9e285bc6fb1a5d1d63c4e097b34451437fb3d17ac9b4ebf7607"
+  },
+  "raw/multicore/preact-node.json": {
+    "bytes": 141511,
+    "sha256": "4a9d997df9153ad0ccd931eb11df765e0f52899976b99e38798722f6921a1faf"
+  },
+  "raw/multicore/react-bun.json": {
+    "bytes": 141132,
+    "sha256": "46a00011c8c693ae276ccdb60b16af96b9402bdd959b5421a9b4d9d75dd7fe12"
+  },
+  "raw/multicore/react-deno.json": {
+    "bytes": 141617,
+    "sha256": "bb87dd9c065c88009c74b4c7c37e4d123750011cdcdc46913a7da7620834bdb9"
+  },
+  "raw/multicore/react-node.json": {
+    "bytes": 141532,
+    "sha256": "2bbaf346a61db1accf6e8b6f4a8880aa523385945be1c87faa467cd9c79c3e67"
+  },
+  "raw/multicore/react-router.json": {
+    "bytes": 231573,
+    "sha256": "28dd0f8a1bd48bb9d3fdf6277c23b084e3d568beae0cbdcc96878e4a5bd3decd"
+  },
+  "raw/multicore/solid-node.json": {
+    "bytes": 141564,
+    "sha256": "66e658f940335df77bccd41784b49e1f5218094980e22410d43ce0cf508713e9"
+  },
+  "raw/multicore/svelte-node.json": {
+    "bytes": 141728,
+    "sha256": "c10d254177ed6129c039054437dfd1af0be627a356dd70dc6b77b20ff2552fe4"
+  },
+  "raw/multicore/vanilla-bun.json": {
+    "bytes": 141440,
+    "sha256": "e4f1b92c24ba8b92b1c5f083e5b488cf05f9fc466ed04c0e880d1742fb68e73f"
+  },
+  "raw/multicore/vanilla-deno.json": {
+    "bytes": 141658,
+    "sha256": "64e567e9305a35ee1824ffa5c5c0b58b178f4557d920ac6c8e8666600c45de13"
+  },
+  "raw/multicore/vanilla-node.json": {
+    "bytes": 141592,
+    "sha256": "03e98aae07e147981f3f2d55b3643c18f36a2c182cbc5f89327165c6848a8132"
+  },
+  "raw/multicore/vue-node.json": {
+    "bytes": 141577,
+    "sha256": "9df5d9fdc2fd026eeddf212726f557eb2cd7fe547583ed959d5c742433e9140b"
+  },
+  "raw/pitstop/astro.json": {
+    "bytes": 4646,
+    "sha256": "682e8d2d3a1f9a820d99bd9fdd8e2284c2d70e3a82be3209343100faafe194fd"
+  },
+  "raw/pitstop/forma.json": {
+    "bytes": 5038,
+    "sha256": "cef98e6ab406a9a5e599c46f19715c7f744a3848c51b99b743e2ffa234359a05"
+  },
+  "raw/pitstop/next.json": {
+    "bytes": 4651,
+    "sha256": "dcea526d584c27d3c7e63ce9aeb546b1283a236a09af6b232460ee072157cb25"
+  },
+  "raw/pitstop/preact-node.json": {
+    "bytes": 4636,
+    "sha256": "9888b8d37234201611c29165e495d12d91f49f659dec6e7fc8205e64e6139740"
+  },
+  "raw/pitstop/react-deno.json": {
+    "bytes": 4641,
+    "sha256": "530f6307b19804992b219f2563971c5aad6c63d7832472d563c7514275ecff8e"
+  },
+  "raw/pitstop/react-bun.json": {
+    "bytes": 4634,
+    "sha256": "b82c96f47d55d6a7fa2fc1a514b99fa00a0801221d5f16ebe2b7b2dd9464412b"
+  },
+  "raw/pitstop/react-node.json": {
+    "bytes": 4632,
+    "sha256": "1e7a1679023557a1a0944a8f1d95e34aa7d16567c15b595e94e734e1dad9a548"
+  },
+  "raw/pitstop/react-router.json": {
+    "bytes": 4655,
+    "sha256": "a012383f3b7c0e4b4fb00d8341497f5d1962d0ae46649eddbf88be9a346ea04f"
+  },
+  "raw/pitstop/solid-node.json": {
+    "bytes": 4638,
+    "sha256": "2230e24644bf19504288fd3aa045b86e23a69c36d8acf5d456d8f875a533ed3b"
+  },
+  "raw/pitstop/svelte-node.json": {
+    "bytes": 4636,
+    "sha256": "5670e0a273464277b093cb6bf593721f36f71a61b90ac455e72cb1d21c519dde"
+  },
+  "raw/pitstop/vanilla-bun.json": {
+    "bytes": 4630,
+    "sha256": "053878356bdfc797f77d15ffda8192464eeba3fcc4a7311e52c0d13f6470f954"
+  },
+  "raw/pitstop/vanilla-deno.json": {
+    "bytes": 4639,
+    "sha256": "7c78722381d8cbe2d1da46f8d81ca7ba4ccfd98d1365946c1e851c896be124f2"
+  },
+  "raw/pitstop/vanilla-node.json": {
+    "bytes": 4632,
+    "sha256": "ca6e5bff80eec5db098ea14a7e04382227e31217539b0217ba6ba9d3c9b613e2"
+  },
+  "raw/pitstop/vue-node.json": {
+    "bytes": 4643,
+    "sha256": "67b18d348be5b7fa60006b5620082e6088113cd1d093a1c48cd99ea4dcf1852e"
+  },
+  "raw/reaction/astro.json": {
+    "bytes": 141948,
+    "sha256": "c30d1dd8e776d185d60c19977bdadead3b56890c481cf04f74f05857b83ee5b5"
+  },
+  "raw/reaction/forma.json": {
+    "bytes": 256675,
+    "sha256": "dadb963f17df43dcf79b7507aea434e73e4b9cd12b03ebdbe01c97e54dea84b3"
+  },
+  "raw/reaction/next.json": {
+    "bytes": 474354,
+    "sha256": "0f8a16b259ab5aaa7b3ce698d9f42debe06a4957bdcd97c1f4d6597118cb93b3"
+  },
+  "raw/reaction/preact-node.json": {
+    "bytes": 141336,
+    "sha256": "15d70918adcf7ac39e0797bb70c26b15bd44a52740d90bf0a451d2852a57884f"
+  },
+  "raw/reaction/react-bun.json": {
+    "bytes": 141111,
+    "sha256": "3e62c2d352d7c9328cfeb9b0ae248f28e41b73dae51eac452b59869d1ffe8b06"
+  },
+  "raw/reaction/react-deno.json": {
+    "bytes": 141442,
+    "sha256": "1be6c6d53d45d471edf009e1eead14ec766d5668db620e516416cebf0b0bd003"
+  },
+  "raw/reaction/react-node.json": {
+    "bytes": 141287,
+    "sha256": "311840b952ea9cf7cf8b226ccebcb9ce32d29cef496d61ce3f30c0603ebf16bd"
+  },
+  "raw/reaction/react-router.json": {
+    "bytes": 231317,
+    "sha256": "4c9abcc686a9fe44fcac87dc585f02f7e763d832fcc0f5ee4ef1b439a375491d"
+  },
+  "raw/reaction/solid-node.json": {
+    "bytes": 141308,
+    "sha256": "3358844660fdef8a9d33482013d2cdd81af27baf713399d2a84dae45eae297c1"
+  },
+  "raw/reaction/svelte-node.json": {
+    "bytes": 141493,
+    "sha256": "2a52b36d7403feac457258db5b494e5004c86d0216eef6f701044fe23d46c2ca"
+  },
+  "raw/reaction/vanilla-bun.json": {
+    "bytes": 141151,
+    "sha256": "68e12f6cd60bac592f1d78b8708c93630fe280c3ac4b1de9d147868d9ef5a295"
+  },
+  "raw/reaction/vanilla-deno.json": {
+    "bytes": 141478,
+    "sha256": "94f30fed2b7eb27eb18e04f0ef850a945f3bd9833692eb0eb32f752c5e6c1e77"
+  },
+  "raw/reaction/vanilla-node.json": {
+    "bytes": 141383,
+    "sha256": "7f5eea0f35fded8dc41eb8d91ac762b1a7a43918b1bcac4cbd2a5205b918fae7"
+  },
+  "raw/reaction/vue-node.json": {
+    "bytes": 141398,
+    "sha256": "5948a774599853295a43fdc0a92ab62b49382e7a5062da2fd42d0614922d35b2"
+  },
+  "raw/smoke/astro.json": {
+    "bytes": 254149,
+    "sha256": "4a328e61d8f83c6316942a1394b8c2bbbba1e35bd7cf01684127363d4529a683"
+  },
+  "raw/smoke/forma.json": {
+    "bytes": 493733,
+    "sha256": "b685da76a80222fcb749bce0716f4a2e7420d4e77ef3f9159b7cb0a57acadc95"
+  },
+  "raw/smoke/next.json": {
+    "bytes": 938522,
+    "sha256": "749e26a4201d4486b54b03b30418dc0bb4cb17b6a875e7beeda1d3d504e425d8"
+  },
+  "raw/smoke/preact-node.json": {
+    "bytes": 252671,
+    "sha256": "412ec30235a8bee56d5107c39bdd40d8189a8673083e51c649aeb9a087cbff87"
+  },
+  "raw/smoke/react-bun.json": {
+    "bytes": 252458,
+    "sha256": "87e7be4dc4a8cba54a8b69b82962744cb38edea00572c1c191d0fe6514cb18b4"
+  },
+  "raw/smoke/react-deno.json": {
+    "bytes": 252671,
+    "sha256": "b93746fe271480ef6f3a535eebeff3e290632b94b9597e645859c1d037875cba"
+  },
+  "raw/smoke/react-node.json": {
+    "bytes": 252670,
+    "sha256": "5a52a041212bfdeedf0200f99c10d52156ead74eb66dab1ae8307bdbdcdacfd6"
+  },
+  "raw/smoke/react-router.json": {
+    "bytes": 421689,
+    "sha256": "046782f028b6719aae217ef9453cb85ee71c529fdedbb9decc554b844b70471f"
+  },
+  "raw/smoke/solid-node.json": {
+    "bytes": 252665,
+    "sha256": "6fecdd1c823629d5f9add840a4677f1a88b25caa0e22ea980822137bee31d212"
+  },
+  "raw/smoke/svelte-node.json": {
+    "bytes": 252815,
+    "sha256": "040a623bb1279ad108117530608989ddcfeef0871704171b14a5bba6cbf92454"
+  },
+  "raw/smoke/vanilla-bun.json": {
+    "bytes": 252515,
+    "sha256": "400b7dd3031acf24a9dbca7b22daf1c898e854b3581be306e2ded64bbda82cd5"
+  },
+  "raw/smoke/vanilla-deno.json": {
+    "bytes": 252728,
+    "sha256": "cbe611bd928fd788f4c486057362530db7c8eae48dccda2527f18915cd6b64e2"
+  },
+  "raw/smoke/vanilla-node.json": {
+    "bytes": 252729,
+    "sha256": "9f9a43c037e87e6aa4af4e48b51ae1e34c539a7cebf4a5e8339c18ae115442ca"
+  },
+  "raw/smoke/vue-node.json": {
+    "bytes": 252729,
+    "sha256": "12cbdd8e536c2c3376d1179c4a2dfe69601634d404b9699ce3bd0d0975178cb7"
+  },
+  "raw/sprint/astro.json": {
+    "bytes": 142280,
+    "sha256": "6df2ff03f2466e3cd4b3364e22921907586a51f82b3ff850a9bca2d4b4625265"
+  },
+  "raw/sprint/forma.json": {
+    "bytes": 257047,
+    "sha256": "b49329ec5e9f2c7a6584312c868f929be7f5877e4d691d1cd415115d412e7612"
+  },
+  "raw/sprint/next.json": {
+    "bytes": 474705,
+    "sha256": "c120134733508a61f017692268b714f4f0763f2cc4a7a56402b42b4fa0b04cd2"
+  },
+  "raw/sprint/preact-node.json": {
+    "bytes": 141710,
+    "sha256": "cd7e5110219df9fc0a3227e55208e579ba393cc06b3a1662e344ecd3de5de158"
+  },
+  "raw/sprint/react-bun.json": {
+    "bytes": 141215,
+    "sha256": "9b2d954934c16931f9571997ec84f71333ff3dc3c7774b8027bb65dd62f0a03e"
+  },
+  "raw/sprint/react-deno.json": {
+    "bytes": 141662,
+    "sha256": "a7e9cdcebd673be44ae5b5ae2f65fcd93a84918f3b081dcd4a35dc9e9ef1ea6c"
+  },
+  "raw/sprint/react-node.json": {
+    "bytes": 141611,
+    "sha256": "c87c024de790fb6f1e8bea622d89f29809a86304063f0fdfb26abdcbabb0b75f"
+  },
+  "raw/sprint/react-router.json": {
+    "bytes": 231667,
+    "sha256": "b675de3c49ed319ed6e3aa5c5e1f1f630ab3be6581716350de4393669545b495"
+  },
+  "raw/sprint/solid-node.json": {
+    "bytes": 141672,
+    "sha256": "3bbf396aa8ba789c17d718792d052170a2e014a346bc72f74de5508ce94b8a59"
+  },
+  "raw/sprint/svelte-node.json": {
+    "bytes": 141932,
+    "sha256": "1be949bd99b920994b51a80628dfd8bfc1df0c6afe967b81a238192026a69e32"
+  },
+  "raw/sprint/vanilla-bun.json": {
+    "bytes": 141373,
+    "sha256": "128e1e3c59a730aa8b089c9c8abd85740c6772089687607ea4e510472251f31f"
+  },
+  "raw/sprint/vanilla-deno.json": {
+    "bytes": 141664,
+    "sha256": "62c4636b7bd0271093e9a767630b0cc6bbb504869271d50b7cb8c8db1b1de61e"
+  },
+  "raw/sprint/vanilla-node.json": {
+    "bytes": 141741,
+    "sha256": "68671af77365616ad01567c98c58a82f83c40a556224afd4027e631dedec817d"
+  },
+  "raw/sprint/vue-node.json": {
+    "bytes": 141869,
+    "sha256": "02805ea3fc2793188c6327d9f16b309cf5ae81fa832a411c7a65b05b678465b9"
+  },
+  "raw/transport/astro-endurance-1.json": {
+    "bytes": 230130,
+    "sha256": "36447adcc287a095f479c14e2e33652f9e0f9dd1345f380dc79fa70fa07f4372"
+  },
+  "raw/transport/astro-endurance-2.json": {
+    "bytes": 230120,
+    "sha256": "4268a3ffd47ffc284af5a502970d3aaff0d073ffb29b9231a3cbc6658254b363"
+  },
+  "raw/transport/astro-endurance-3.json": {
+    "bytes": 230158,
+    "sha256": "cfce595cb59e4c0b4297f1906ad7a1e62c7cc2e778a74f273a52668978bdc34b"
+  },
+  "raw/transport/astro-endurance-preflight.json": {
+    "bytes": 226093,
+    "sha256": "0a515e513a0fc3a548cde1ca7a8c2604f9633f336c437cfadb8b51dd1378fe80"
+  },
+  "raw/transport/astro-endurance-warmup.json": {
+    "bytes": 230137,
+    "sha256": "cc9f759d5cf5fc4189f9615a93021853d69d0810307d8c946e24d768051e9c60"
+  },
+  "raw/transport/astro-multicore-1.json": {
+    "bytes": 28365,
+    "sha256": "0c132f34611b50498e8fe4573df2ced3351603322f48e287959223e455b77008"
+  },
+  "raw/transport/astro-multicore-2.json": {
+    "bytes": 28360,
+    "sha256": "513d07373962cb8485905f6a50f580bbaabd4a1aa26b4e133e1e7833c233e410"
+  },
+  "raw/transport/astro-multicore-3.json": {
+    "bytes": 28368,
+    "sha256": "6d3a3dd5fc6941d79f3994cc102ede194c9dfaaf1a32c4bb1f2b8da38b156267"
+  },
+  "raw/transport/astro-multicore-preflight.json": {
+    "bytes": 24315,
+    "sha256": "7f8e0249e59e14f028a81c05cb635f61bdc5c9a232ac64f1c33a5876f8acec4b"
+  },
+  "raw/transport/astro-multicore-warmup.json": {
+    "bytes": 28338,
+    "sha256": "8aadab534753464ee5254f1be6ab4f07e8a33b56f7f0798f7f8cb10f01a66394"
+  },
+  "raw/transport/astro-reaction-1.json": {
+    "bytes": 28315,
+    "sha256": "6771c62211750e3b2f73e8d1cd007ec6360d3e924e4f3bdca1b67902dc443d94"
+  },
+  "raw/transport/astro-reaction-2.json": {
+    "bytes": 28309,
+    "sha256": "17e1bf2595d611bb6380b64a08691d2cdc00e42641e9a01807a0fc87116c785c"
+  },
+  "raw/transport/astro-reaction-3.json": {
+    "bytes": 28324,
+    "sha256": "f8f3e4758d7ae2abd76aeab7e97056c911aa1b3727433e2c85bd1186be69fdfb"
+  },
+  "raw/transport/astro-reaction-preflight.json": {
+    "bytes": 24314,
+    "sha256": "c31fa439b5fa17f2becab118138e44f18034aff9bd12cdc734294b53f82bf1a6"
+  },
+  "raw/transport/astro-reaction-warmup.json": {
+    "bytes": 28309,
+    "sha256": "c11b776358e2eda7d5a47e72a340ee67b599bbcfa4006da04765b07470e86bdc"
+  },
+  "raw/transport/astro-sprint-1.json": {
+    "bytes": 28380,
+    "sha256": "0d5b3c389c262635af584cb9a96d69c5875503f3c00454e84934c6d9479f571f"
+  },
+  "raw/transport/astro-sprint-2.json": {
+    "bytes": 28323,
+    "sha256": "ae1496ee952d1491752b3632dcb7aaee20998b8a30e3d589df0683d28ed0a23b"
+  },
+  "raw/transport/astro-sprint-3.json": {
+    "bytes": 28362,
+    "sha256": "4c5e85f98930630d1b95530f109220dba4d511de3d508ef9d7aafed3beb534fc"
+  },
+  "raw/transport/astro-sprint-preflight.json": {
+    "bytes": 24312,
+    "sha256": "77479b28b728a731b8e90e216faa22469f27dba23039017f4a35be843a94e618"
+  },
+  "raw/transport/astro-sprint-warmup.json": {
+    "bytes": 28328,
+    "sha256": "acae0805ee5fa99080ff68f10787325b9e9a76c432b90d05b20116e6083e927c"
+  },
+  "raw/transport/astro-weight-preflight.json": {
+    "bytes": 24312,
+    "sha256": "d4184f23168f1ebc2745fdfbb4a401caba7e01dbeaaa75042b7ab9f18db1931a"
+  },
+  "raw/transport/forma-endurance-1.json": {
+    "bytes": 442615,
+    "sha256": "cbb3eca7a73bd771be28ba6a16dc11fb58d029a837dc47dbeffacf635ef95c9e"
+  },
+  "raw/transport/forma-endurance-2.json": {
+    "bytes": 442670,
+    "sha256": "e8cbb938b50396772255dd1175edf39afc9787cf09c597f7a5fbdaf22fc8016c"
+  },
+  "raw/transport/forma-endurance-preflight.json": {
+    "bytes": 438601,
+    "sha256": "831974de222b056ccbbff4a6db0dca1089b1e02c50679d5d0900cdd12704a768"
+  },
+  "raw/transport/forma-endurance-warmup.json": {
+    "bytes": 442645,
+    "sha256": "b6ff9d26c746ecce84261e1dbbe20255a7aa870f0a30fc4447293fd9eb5e823f"
+  },
+  "raw/transport/forma-endurance-3.json": {
+    "bytes": 442644,
+    "sha256": "71c83458e89861a979cc690c7acccb27809a7e5f3a566304b40464608351cfe2"
+  },
+  "raw/transport/forma-multicore-1.json": {
+    "bytes": 51296,
+    "sha256": "0831a419406bc86e6c57aa339702d270596c42a48e7a8063f702ee166858d794"
+  },
+  "raw/transport/forma-multicore-2.json": {
+    "bytes": 51263,
+    "sha256": "9e99ef6e7c2508e28e4bcc4c463d6792c0cee5f6eca7c7f6e0bc2baafcb80e62"
+  },
+  "raw/transport/forma-multicore-3.json": {
+    "bytes": 51293,
+    "sha256": "abc66dd398958448246c78581c49360246ae84c5c47365a7654ef303700443a4"
+  },
+  "raw/transport/forma-multicore-preflight.json": {
+    "bytes": 47221,
+    "sha256": "5e292d49f342488a42eefcb4670d5a475c55ebbf879b033f29b90fe2df102b0f"
+  },
+  "raw/transport/forma-multicore-warmup.json": {
+    "bytes": 51340,
+    "sha256": "370b467f8573beb0275c2e1fb372b9b56d0d7b0bd4739cad4829c072b769131e"
+  },
+  "raw/transport/forma-reaction-1.json": {
+    "bytes": 51196,
+    "sha256": "63546c8ce722be163a7db608323bc8630f6b8be86075fbe0f0c50e448b3b3196"
+  },
+  "raw/transport/forma-reaction-2.json": {
+    "bytes": 51211,
+    "sha256": "d677841a498623f4283b994472efac0c6b09157d7bf03cd23737f54d4e010ac7"
+  },
+  "raw/transport/forma-reaction-3.json": {
+    "bytes": 51214,
+    "sha256": "4638b4de9a2d6a59609a90dc6e5cc97b644498518525ef06713950927a420127"
+  },
+  "raw/transport/forma-reaction-preflight.json": {
+    "bytes": 47220,
+    "sha256": "8670ef0a43681deea8b3743a1cf34a1bf0500bfd9f929d803bb239309e383428"
+  },
+  "raw/transport/forma-reaction-warmup.json": {
+    "bytes": 51219,
+    "sha256": "8a3e2a5589d81140ac0635e0bfbcc898d3d9d0ff7913d71cff67a4966ec148fb"
+  },
+  "raw/transport/forma-sprint-1.json": {
+    "bytes": 51299,
+    "sha256": "c5477f3d84442f4bcb2545ecb3429d51f47a617f6b344d391e15d5882b427454"
+  },
+  "raw/transport/forma-sprint-2.json": {
+    "bytes": 51232,
+    "sha256": "e07342bca274c732116f65db9f6413d406006a909dd96028d774f6a28d56ed13"
+  },
+  "raw/transport/forma-sprint-3.json": {
+    "bytes": 51230,
+    "sha256": "5ee75081cad29d221cda0722b762aaaa018e80c7f24df68948711f4e6e24aacf"
+  },
+  "raw/transport/forma-sprint-preflight.json": {
+    "bytes": 47218,
+    "sha256": "14eb5318b618766fdcfe6ee707798eff208239ba6af768c3c42272f5c4dfbb42"
+  },
+  "raw/transport/forma-sprint-warmup.json": {
+    "bytes": 51260,
+    "sha256": "dd208385de90fa75bba892a8266831321183c2ae0ddde2ad3e72ebbb85188c6d"
+  },
+  "raw/transport/forma-weight-preflight.json": {
+    "bytes": 47218,
+    "sha256": "46a695f5e664b85b57fbabeb23e2f3b420d28e8f80fd9f9a46a86f873e982d4e"
+  },
+  "raw/transport/next-endurance-1.json": {
+    "bytes": 834619,
+    "sha256": "a29cc2c964f30d77b3dcc5cc5e94716d98610d540bf42b1f473eb62067bf9791"
+  },
+  "raw/transport/next-endurance-2.json": {
+    "bytes": 834583,
+    "sha256": "4bac09b34ae15d838863268bbfdc2c8d3195040252b2afba1b6466dc7db0dac4"
+  },
+  "raw/transport/next-endurance-3.json": {
+    "bytes": 834600,
+    "sha256": "961ad2cd4d5928f6a99b5429b10a9bdb3d710ae94f916c8e6b902f04d5230bc5"
+  },
+  "raw/transport/next-endurance-preflight.json": {
+    "bytes": 830606,
+    "sha256": "4e70d954aa948b82893266caaf7c5e1741cd22dd0bc7e8df5a697fb67767bc9f"
+  },
+  "raw/transport/next-endurance-warmup.json": {
+    "bytes": 834627,
+    "sha256": "0bc7b56295035b255141bfd96a95c2e4727fae2826f2e502eba3f6468c5e66d0"
+  },
+  "raw/transport/next-multicore-1.json": {
+    "bytes": 94809,
+    "sha256": "d75c65ab678c1bb9de6fb4aa114c82bcac979edc5793a27438c38ece63f09f68"
+  },
+  "raw/transport/next-multicore-2.json": {
+    "bytes": 94801,
+    "sha256": "2363c0096b8d17e7374ebf0cb317794242a4e333daba42f4247a39774e656bc1"
+  },
+  "raw/transport/next-multicore-3.json": {
+    "bytes": 94848,
+    "sha256": "b5f7abe0294db576ac0f4542744e45cab025cf14a22bfa3df0b870bb153d891c"
+  },
+  "raw/transport/next-multicore-preflight.json": {
+    "bytes": 90800,
+    "sha256": "7af6e29dda899f024ef7abff94e54bc126e66a2e06aae9b4934265d598729aea"
+  },
+  "raw/transport/next-multicore-warmup.json": {
+    "bytes": 94788,
+    "sha256": "ab1b8890b33b3111df9720f0bb5a751afe68c64db2ea7f8437ac9efb84ccd242"
+  },
+  "raw/transport/next-reaction-1.json": {
+    "bytes": 94751,
+    "sha256": "5365afdc44d5670ac9d961c15e3bc80e93117769f6360f11343db03969bd24b4"
+  },
+  "raw/transport/next-reaction-2.json": {
+    "bytes": 94769,
+    "sha256": "a6830221bfc18f18db16584e183f8236aef206b7da842957d47772b6b860a7be"
+  },
+  "raw/transport/next-reaction-3.json": {
+    "bytes": 94754,
+    "sha256": "e0695ccc99dd05bbbc8faf3d196ac4745e2e8dd655d8e8d9b75d11fec5902801"
+  },
+  "raw/transport/next-reaction-preflight.json": {
+    "bytes": 90799,
+    "sha256": "f7043340e0767ca78c8f0583256e5191b51025129940fe259d76be5361edf85e"
+  },
+  "raw/transport/next-reaction-warmup.json": {
+    "bytes": 94800,
+    "sha256": "534da6fc4b9d2f823b892b036f94f3efaf70e5df04b5afa3a266d066085e1737"
+  },
+  "raw/transport/next-sprint-1.json": {
+    "bytes": 94765,
+    "sha256": "dd58a9b7711fbc7cb7ef5fb38494e74705c00017eb6ff03029f221d0cce8e306"
+  },
+  "raw/transport/next-sprint-2.json": {
+    "bytes": 94794,
+    "sha256": "7981ce5a9d327adaac639aad5cd5c9a546579134b252b31f059627479d713d0a"
+  },
+  "raw/transport/next-sprint-3.json": {
+    "bytes": 94802,
+    "sha256": "44b602f293a7ec2f928b415d4a78484b05b4971298a0ab9d7c3f3f38b158797d"
+  },
+  "raw/transport/next-sprint-preflight.json": {
+    "bytes": 90797,
+    "sha256": "fa457d182a6fbf7038ed398f31198f578d90999679dee13f0fb527505dc2c42a"
+  },
+  "raw/transport/next-sprint-warmup.json": {
+    "bytes": 94875,
+    "sha256": "4179be2afb9513d23cd90489822896013fc4aabf3b7c4495687fa1f3a20e47b2"
+  },
+  "raw/transport/next-weight-preflight.json": {
+    "bytes": 90797,
+    "sha256": "9cb4ebfa11bb7257522a36ec1c40a8213270ea26716f7bdd123971848cbccc8a"
+  },
+  "raw/transport/preact-node-endurance-1.json": {
+    "bytes": 228814,
+    "sha256": "6feb6b98b53bc06b3256aaa29404ce73fde1f2101f3d8f87f7e36b9c443451f6"
+  },
+  "raw/transport/preact-node-endurance-2.json": {
+    "bytes": 228779,
+    "sha256": "922cdbd9922c751994db71bc14e1d02fa4890face4d5ba486e80f348e1ba7e63"
+  },
+  "raw/transport/preact-node-endurance-3.json": {
+    "bytes": 228801,
+    "sha256": "b75fbed6c782ac97737fdd63a465eca07d245898a39e5d046f641b3b10cf2e86"
+  },
+  "raw/transport/preact-node-endurance-preflight.json": {
+    "bytes": 224765,
+    "sha256": "04548f09c4c63798fadf7ec14a0cbc57f5743836dfa3f45f28dc29b990759c22"
+  },
+  "raw/transport/preact-node-endurance-warmup.json": {
+    "bytes": 228764,
+    "sha256": "7dadcb9595e5ff9b884e2ea20f82076b73eedd9b5c709d4ad104882855068625"
+  },
+  "raw/transport/preact-node-multicore-1.json": {
+    "bytes": 28261,
+    "sha256": "6ee09f932450f988e7697133642e032b3a2ba402536e008e783d525c393dfb2b"
+  },
+  "raw/transport/preact-node-multicore-2.json": {
+    "bytes": 28212,
+    "sha256": "dbade7ed6f0ed1d774bc9d9f285275a905f1f5db780d0067f38ff2515520dd0e"
+  },
+  "raw/transport/preact-node-multicore-3.json": {
+    "bytes": 28201,
+    "sha256": "1fd9f9118e88013c5bbea8e88afcc30899f39c44d4541c956f2d749ed875e8a0"
+  },
+  "raw/transport/preact-node-multicore-preflight.json": {
+    "bytes": 24185,
+    "sha256": "00a8a7bf0cc3ce8cee1b94fedec7665dc9a39ee5628509b444672fe7a33d42a2"
+  },
+  "raw/transport/preact-node-multicore-warmup.json": {
+    "bytes": 28260,
+    "sha256": "886b26445dfb23c4a52d5bfa2faaf9e84ac10e17e2f755bb26a6288b7b12362a"
+  },
+  "raw/transport/preact-node-reaction-1.json": {
+    "bytes": 28166,
+    "sha256": "ee34a7479ea1509fc3cd85a37c97d8f8f61917a49a987411a3660a899b4b4938"
+  },
+  "raw/transport/preact-node-reaction-2.json": {
+    "bytes": 28205,
+    "sha256": "649718c8ef97700e85dd21a427f7058a2c5c369e589fdcb36d8b63cf35a61f0e"
+  },
+  "raw/transport/preact-node-reaction-3.json": {
+    "bytes": 28219,
+    "sha256": "9cf033a1109cf9e5aaf8f60b48a8e9be9978ba54b7b2c3453fa4df39ab6caea5"
+  },
+  "raw/transport/preact-node-reaction-preflight.json": {
+    "bytes": 24184,
+    "sha256": "65ace60c7dd48af41b924616d904ad2d791a7490dcd647709cec45d8dc7b708d"
+  },
+  "raw/transport/preact-node-reaction-warmup.json": {
+    "bytes": 28203,
+    "sha256": "ae5d8ec99947da014ce826ac4641d874cf826fedb6a437907e8c56e48c89d460"
+  },
+  "raw/transport/preact-node-sprint-1.json": {
+    "bytes": 28260,
+    "sha256": "85759e2d97f202a7e740f04668651ae10971e52be15f840068dbbb59b521f981"
+  },
+  "raw/transport/preact-node-sprint-2.json": {
+    "bytes": 28195,
+    "sha256": "81cb2026f0409e3844a9b16d760dab06ccd933adab4076390068e217fd880bb0"
+  },
+  "raw/transport/preact-node-sprint-3.json": {
+    "bytes": 28269,
+    "sha256": "941b49cf7dc172cb9d982673d00db10237f43751917fb048c6b994e13b43aa1a"
+  },
+  "raw/transport/preact-node-sprint-preflight.json": {
+    "bytes": 24182,
+    "sha256": "5481d0feeea8c3ecd5db2351ca7105da1085202d8fa05f4b3caf8cb2b0fd67a4"
+  },
+  "raw/transport/preact-node-sprint-warmup.json": {
+    "bytes": 28257,
+    "sha256": "9d30aeef90f591edcf9bc7894e69696d27a2689c2e292f28addd4bbf0afa7994"
+  },
+  "raw/transport/preact-node-weight-preflight.json": {
+    "bytes": 24182,
+    "sha256": "006ddbcc9e577f22975a48192c9ab901fb0a85128212336ef9dff5a5e13c7dd4"
+  },
+  "raw/transport/react-bun-endurance-1.json": {
+    "bytes": 228725,
+    "sha256": "108e4b07c8cc6a9634841a8483761f4b27f0a383adcc4c888148805be36c5488"
+  },
+  "raw/transport/react-bun-endurance-2.json": {
+    "bytes": 228804,
+    "sha256": "8785ac04c25d2683e3cd29edb09b40d742209dcde20838fadd4b0a09af47d8b8"
+  },
+  "raw/transport/react-bun-endurance-3.json": {
+    "bytes": 228795,
+    "sha256": "780b66edd2c794208e9a9a29cbad8011e0d28fbfe6a319a5c207cd815c361105"
+  },
+  "raw/transport/react-bun-endurance-preflight.json": {
+    "bytes": 224699,
+    "sha256": "e14ec7fe128870997b83fa999a61b56bfd183eee974e907f55b131e388af8a43"
+  },
+  "raw/transport/react-bun-endurance-warmup.json": {
+    "bytes": 228731,
+    "sha256": "c193af086c79fe58772907ea3486d38e370098892383ad7f1da636f78f042355"
+  },
+  "raw/transport/react-bun-multicore-1.json": {
+    "bytes": 28175,
+    "sha256": "92d499dca7678801f7917698bbef1c69acdba782c59b97198b4e05dab9f9f0e6"
+  },
+  "raw/transport/react-bun-multicore-2.json": {
+    "bytes": 28166,
+    "sha256": "e4bea4be7b3638e5db4cd45a35812051a72c400f39d5e085bebc75ed56e92c88"
+  },
+  "raw/transport/react-bun-multicore-3.json": {
+    "bytes": 28172,
+    "sha256": "0bfc0e7bc6d4a1290e59723e980ff388271a6f63d370c5e26eb74369cb484ca2"
+  },
+  "raw/transport/react-bun-multicore-preflight.json": {
+    "bytes": 24119,
+    "sha256": "9b16f436204bb6a1cc72473cd161083fece2ff5ca0b5a98adbb631d1cf128e02"
+  },
+  "raw/transport/react-bun-multicore-warmup.json": {
+    "bytes": 28145,
+    "sha256": "f1a981c13cfe01bb22d1a607ab3d3a600c0b2d83784f3ca1ae5e44a3ab7f7947"
+  },
+  "raw/transport/react-bun-reaction-1.json": {
+    "bytes": 28162,
+    "sha256": "33c8a03825064a5de32bac100583f1ad5c31f528a32f5003eef382651ede131b"
+  },
+  "raw/transport/react-bun-reaction-2.json": {
+    "bytes": 28179,
+    "sha256": "33780a63c83f7a4c71807127c438d82b8b92e59110062f11a396a1ffb64ffb5a"
+  },
+  "raw/transport/react-bun-reaction-3.json": {
+    "bytes": 28144,
+    "sha256": "755c6bc5b31307e73ad73f4f5062b17b44ad791ab2a732bc602daa689d9879e0"
+  },
+  "raw/transport/react-bun-reaction-preflight.json": {
+    "bytes": 24118,
+    "sha256": "5681b4afc539721271615c1ab4143b97f9be140259e842ada780eb55ca6c0957"
+  },
+  "raw/transport/react-bun-reaction-warmup.json": {
+    "bytes": 28178,
+    "sha256": "94287b96b4a0cb60335db55ca71ebfc9654e68dc8a6b673eed5d8ce41a62b974"
+  },
+  "raw/transport/react-bun-sprint-1.json": {
+    "bytes": 28193,
+    "sha256": "e84bb60725c5975e03e89f2e9a5d043690677149bae75a2caee33f66645d4afb"
+  },
+  "raw/transport/react-bun-sprint-2.json": {
+    "bytes": 28119,
+    "sha256": "9850125d2209119cff30c17dab6e7915e1972d2478c50394a3d5673439d691d3"
+  },
+  "raw/transport/react-bun-sprint-3.json": {
+    "bytes": 28153,
+    "sha256": "9a061ba5e115f14af8cafea613017b6a45d970083532d887af552fa37b4be07c"
+  },
+  "raw/transport/react-bun-sprint-preflight.json": {
+    "bytes": 24116,
+    "sha256": "298420aee0cdc27ff027ac175f9cc31f52e59248964b6b20cac010c0cbcc5ed1"
+  },
+  "raw/transport/react-bun-sprint-warmup.json": {
+    "bytes": 28116,
+    "sha256": "3f7e90d91e27a6d32243d21b997158e0439133ea66a7d99556eda558c674bfe3"
+  },
+  "raw/transport/react-bun-weight-preflight.json": {
+    "bytes": 24116,
+    "sha256": "2537ac88fa6022b95040521b8c330f142eb535a41a5e87ba31240fc53bf68144"
+  },
+  "raw/transport/react-deno-endurance-1.json": {
+    "bytes": 228823,
+    "sha256": "b09f4ad2656164353ad0ed8a626ac3d70f1d67ff16af63d44c04932f5b8accf6"
+  },
+  "raw/transport/react-deno-endurance-2.json": {
+    "bytes": 228785,
+    "sha256": "946a1dc7f091c8156bd6f652c68e409a54815ab6b22ac6941745bcdfdf394beb"
+  },
+  "raw/transport/react-deno-endurance-3.json": {
+    "bytes": 228803,
+    "sha256": "64575d0dda44ae5b38f55be3177200378910c894fff90ae7bd69e4c18e530daf"
+  },
+  "raw/transport/react-deno-endurance-preflight.json": {
+    "bytes": 224764,
+    "sha256": "8670b4906e1e3862976d7a4ffa1bd2c4123caf8cb624f8539d9f0a243a088d71"
+  },
+  "raw/transport/react-deno-endurance-warmup.json": {
+    "bytes": 228795,
+    "sha256": "b4febca04bbb5aca336c32b844cd46f9cae0ebc4c6d77e1a44b9039283596009"
+  },
+  "raw/transport/react-deno-multicore-1.json": {
+    "bytes": 28243,
+    "sha256": "432dcb0307e574271953de9c0e0a963462bf5a98042fc37431e2d1081ffe1c7b"
+  },
+  "raw/transport/react-deno-multicore-2.json": {
+    "bytes": 28280,
+    "sha256": "0936c73001194566f791a19a83a850804ca76d109552ea72225b45ea8670dc1f"
+  },
+  "raw/transport/react-deno-multicore-3.json": {
+    "bytes": 28272,
+    "sha256": "126705d376ac53bd18e906a457227a680762d1a22b4d4169d719307ccb085acb"
+  },
+  "raw/transport/react-deno-multicore-preflight.json": {
+    "bytes": 24184,
+    "sha256": "e55e01d95a12ade0b5c4c24322e008a0b784e7b219ff38b15ffa2663fc8208ee"
+  },
+  "raw/transport/react-deno-multicore-warmup.json": {
+    "bytes": 28238,
+    "sha256": "4cd01d8afdd5dc63f75da150e79a7b6264dca71c270e47bf0499015049d8038a"
+  },
+  "raw/transport/react-deno-reaction-1.json": {
+    "bytes": 28251,
+    "sha256": "1c6e2a7b9c26bb5a01d964a2434bc818206c670b2433a24f5cdeafbfe5b4e9c9"
+  },
+  "raw/transport/react-deno-reaction-2.json": {
+    "bytes": 28155,
+    "sha256": "69998f25931765c8975ce8cccc41d3b06ec1d2ec8dd8da1a7da1258e89cbedcd"
+  },
+  "raw/transport/react-deno-reaction-3.json": {
+    "bytes": 28254,
+    "sha256": "7efd35a81ff99f711ade53fc5a5b8dbe4dadf562b5d17690110903c50e298829"
+  },
+  "raw/transport/react-deno-reaction-preflight.json": {
+    "bytes": 24183,
+    "sha256": "103917a2898ba67d3945435d64d4a4b758d692e73a283c9eec9f2dc83d61de70"
+  },
+  "raw/transport/react-deno-reaction-warmup.json": {
+    "bytes": 28234,
+    "sha256": "ac969245904db3c30a040d41bc1daedb7449a1773b46a36937bc5bde386e85bb"
+  },
+  "raw/transport/react-deno-sprint-1.json": {
+    "bytes": 28223,
+    "sha256": "e33e0d33b645fc9b42f45eeca08f0ec5538c5dc0a7cb9f2d21b1c989b2a56a2f"
+  },
+  "raw/transport/react-deno-sprint-2.json": {
+    "bytes": 28229,
+    "sha256": "f789bde79c0099c0e6184b4d75ae811f30c5aa30d0fe436199f7bdbd895818e1"
+  },
+  "raw/transport/react-deno-sprint-3.json": {
+    "bytes": 28245,
+    "sha256": "4124c88d714bc756773b98cf25bdec73e7867cc76f4a437b7d8c047c79e52422"
+  },
+  "raw/transport/react-deno-sprint-preflight.json": {
+    "bytes": 24181,
+    "sha256": "dfef8c6f2c0f0721f9c9a2dfd18e59f83efc12a1ab8643739565fac2ce961fc7"
+  },
+  "raw/transport/react-deno-sprint-warmup.json": {
+    "bytes": 28232,
+    "sha256": "9cccc81456af785bdb45a1390f0937dea62a7dd354fa9f9ef099fe930812838e"
+  },
+  "raw/transport/react-deno-weight-preflight.json": {
+    "bytes": 24181,
+    "sha256": "855d03051b55ba39949d95b6ffe05864befdc65527a0846949b160568bcae05b"
+  },
+  "raw/transport/react-node-endurance-1.json": {
+    "bytes": 228830,
+    "sha256": "c3da613e80e70b04784aadfe0dfd097b8dd32307a3a41a9932c502166c41bb2b"
+  },
+  "raw/transport/react-node-endurance-2.json": {
+    "bytes": 228813,
+    "sha256": "f6c6a1f2a483f3535f65ccfdd265d58448ce8b89b3abe774e72f7207bb3b5e68"
+  },
+  "raw/transport/react-node-endurance-3.json": {
+    "bytes": 228837,
+    "sha256": "c6d222ae0f30e295ae1137b4c72d66a35425ad1ab73d1d9dd9371502e4e8e066"
+  },
+  "raw/transport/react-node-endurance-preflight.json": {
+    "bytes": 224764,
+    "sha256": "5641ced1e4900fb401cecb0f2437f98c0bfeb8c458238412ee7108aa3c7ad064"
+  },
+  "raw/transport/react-node-endurance-warmup.json": {
+    "bytes": 228784,
+    "sha256": "1df806552b8d1ce8d585f89678c577fd097a46a7ca5e5979783d69a955f735d8"
+  },
+  "raw/transport/react-node-multicore-1.json": {
+    "bytes": 28224,
+    "sha256": "8b945c0cc47f72b4e38e8f670b281291286fbbd0cc69d63ccffe1dfd92727328"
+  },
+  "raw/transport/react-node-multicore-2.json": {
+    "bytes": 28235,
+    "sha256": "6ef2007a483885735436c986a8a0aa5f724d802003d1e5ec3aac07038934dbd0"
+  },
+  "raw/transport/react-node-multicore-preflight.json": {
+    "bytes": 24184,
+    "sha256": "607d6bb37e79344421f212e0b1ff578f75bfcc4c8c5f5bb04bfbd772f6a81ae3"
+  },
+  "raw/transport/react-node-multicore-3.json": {
+    "bytes": 28250,
+    "sha256": "81640773373fc2d9f30c15b994315ee81fbab49eae12b3d7a4f941255ffd30a2"
+  },
+  "raw/transport/react-node-multicore-warmup.json": {
+    "bytes": 28245,
+    "sha256": "6fc9262fb4ed4ef6e911f609890013c15558e4c97fe54cadc06e2bfe25a3c21a"
+  },
+  "raw/transport/react-node-reaction-1.json": {
+    "bytes": 28162,
+    "sha256": "1eec8bf9c8dac198a06f8b1640355674847799c25af89e5d3f6ffe2323b14291"
+  },
+  "raw/transport/react-node-reaction-3.json": {
+    "bytes": 28207,
+    "sha256": "377dfd3344fd2d7480ef86da7c786d4793667c684e66fbc1faf83fad3c4a09a1"
+  },
+  "raw/transport/react-node-reaction-2.json": {
+    "bytes": 28175,
+    "sha256": "38c4c2b453e4b71a07cd8a4017170d0ac440d7e9e5f705a9a4791084c49c4596"
+  },
+  "raw/transport/react-node-reaction-preflight.json": {
+    "bytes": 24183,
+    "sha256": "a4b3c09fca846cedeb7a913b1d84f0299da175c73b3742b4b5364815809db996"
+  },
+  "raw/transport/react-node-reaction-warmup.json": {
+    "bytes": 28208,
+    "sha256": "846dd28aa346be33c3012cffef8ea692129828c0a8ff8219b61d2328819ff16f"
+  },
+  "raw/transport/react-node-sprint-2.json": {
+    "bytes": 28210,
+    "sha256": "990bf77c86887a04e0ed58a75b86c28bf6da55c090282d3e1e1e9f04fff0816c"
+  },
+  "raw/transport/react-node-sprint-1.json": {
+    "bytes": 28228,
+    "sha256": "7101b29752d1d8a33b8a842dbdb0816a0aa68176522ab97f790190dffaec0fe0"
+  },
+  "raw/transport/react-node-sprint-3.json": {
+    "bytes": 28221,
+    "sha256": "a320d28021866a8b4e3a67369b7e652d5997d55a1ca99f4f42a603519cd18319"
+  },
+  "raw/transport/react-node-sprint-preflight.json": {
+    "bytes": 24181,
+    "sha256": "ff40c61af7e62c8d13f4c8d9d4807d42cef9ffab55986bc84e23e7254dc93e11"
+  },
+  "raw/transport/react-node-weight-preflight.json": {
+    "bytes": 24181,
+    "sha256": "deed8022ef73556e981d151359f0d28a528c16882f6e9e71bb2e1f517e1c3e5f"
+  },
+  "raw/transport/react-router-endurance-1.json": {
+    "bytes": 373692,
+    "sha256": "15950c4317cb3ed36d7d0b6db5e2e654670313aab191d6d6c081f376a1ae1bd6"
+  },
+  "raw/transport/react-node-sprint-warmup.json": {
+    "bytes": 28220,
+    "sha256": "ac2e4a35279da6a7be9d92c283fbd7586d9f30bac38f9510864cb521c9afb03d"
+  },
+  "raw/transport/react-router-endurance-2.json": {
+    "bytes": 373718,
+    "sha256": "b39ab2b60f81f73c671f3745a3fa6b25176faf7eb242b95b581682a25b209deb"
+  },
+  "raw/transport/react-router-endurance-preflight.json": {
+    "bytes": 369694,
+    "sha256": "310f8417cd8115424a4aa798f668fe451396f42571d13d8184a564a1bdc94fdc"
+  },
+  "raw/transport/react-router-endurance-3.json": {
+    "bytes": 373726,
+    "sha256": "b05c3e7ca753ef3aaaf8f0d44749f4c0d5d3ec73c13d3361a84dc1db3133e4ea"
+  },
+  "raw/transport/react-router-endurance-warmup.json": {
+    "bytes": 373739,
+    "sha256": "b3c41210e15cd49a3495a774b17e72fbd24c5f648dfe0a3c4c69934dd3ae6a7a"
+  },
+  "raw/transport/react-router-multicore-1.json": {
+    "bytes": 46234,
+    "sha256": "296eabf4e33899b38a68d524ee9c411099895d2a02702c86995b580a245ebfbd"
+  },
+  "raw/transport/react-router-multicore-2.json": {
+    "bytes": 46267,
+    "sha256": "56d59ab868a26077b8071690c2e079b81a956276a5780ec104e0a8741a307643"
+  },
+  "raw/transport/react-router-multicore-3.json": {
+    "bytes": 46246,
+    "sha256": "9ef9c25f0dea91cacb9d30df00ff52d1f50185bf7ac6d1a64269d834c55cea05"
+  },
+  "raw/transport/react-router-multicore-preflight.json": {
+    "bytes": 42172,
+    "sha256": "0e7b5af3a7e161eab34aa86f0b3de2b1999506868f7d33de51c12b40e0edbb75"
+  },
+  "raw/transport/react-router-multicore-warmup.json": {
+    "bytes": 46209,
+    "sha256": "410dead2767a2058c68d43d55ebce650a15ea985af90cecf30a8cd9c22845d18"
+  },
+  "raw/transport/react-router-reaction-1.json": {
+    "bytes": 46178,
+    "sha256": "28400c3694ba0e820584553a3b5e6709482c3296aa22c2dd084a3a01160b1a71"
+  },
+  "raw/transport/react-router-reaction-2.json": {
+    "bytes": 46144,
+    "sha256": "cfa9735e6597c01b257158831d4da93e8eb2ad1058b3227a8c5186cc8fed85fe"
+  },
+  "raw/transport/react-router-reaction-3.json": {
+    "bytes": 46237,
+    "sha256": "bc2b179631b5f53e796a4a8cda73a9f582018adc09a691be7f01e2229d9897ba"
+  },
+  "raw/transport/react-router-reaction-preflight.json": {
+    "bytes": 42171,
+    "sha256": "deed50373d029dfe3c5333771cb6b422bd7832bd4e3532f7a843b2410c6f02c2"
+  },
+  "raw/transport/react-router-sprint-1.json": {
+    "bytes": 46245,
+    "sha256": "bbc3ea5f246721a9220a9ae8aab55129a1d1b74b4b02d4cce57b6e8eec11cb54"
+  },
+  "raw/transport/react-router-reaction-warmup.json": {
+    "bytes": 46181,
+    "sha256": "bb56908697d8a701e638757c2c42094ce54fb3adc57cb9b3f64647f497f6f93e"
+  },
+  "raw/transport/react-router-sprint-2.json": {
+    "bytes": 46202,
+    "sha256": "79397fd938556e4e084fa6fd7e664995850c530bb2ae06a24ed6a29b8ccda134"
+  },
+  "raw/transport/react-router-sprint-3.json": {
+    "bytes": 46200,
+    "sha256": "d38c78e60a7accd156eb5e01dc2ff382a46e445aaf16fb7636af422f6416dc6f"
+  },
+  "raw/transport/react-router-sprint-preflight.json": {
+    "bytes": 42169,
+    "sha256": "e5492ed294e13f5db35c2b1744c3ee055c56754938bba38274bfa3046c6af530"
+  },
+  "raw/transport/react-router-sprint-warmup.json": {
+    "bytes": 46258,
+    "sha256": "60a3769268ed100056f08e400968facdce5c92fcc71ea23435cc4c2806e55dbf"
+  },
+  "raw/transport/react-router-weight-preflight.json": {
+    "bytes": 42169,
+    "sha256": "55afd8a85996dd3cc10e2dea1d18246b9f5050b232f75ac78f05db73528980d5"
+  },
+  "raw/transport/solid-node-endurance-1.json": {
+    "bytes": 228830,
+    "sha256": "33fcb8a8486184d5f153a58a4a3d09dc18cb7754252769f524cf8ac251dd784d"
+  },
+  "raw/transport/solid-node-endurance-2.json": {
+    "bytes": 228757,
+    "sha256": "58ad337d583cf83e14691706e43232f1a6e0a27c930a1c5c6897ed0fdcf2c49f"
+  },
+  "raw/transport/solid-node-endurance-3.json": {
+    "bytes": 228773,
+    "sha256": "4357f452aed45e16eaff91e3f83212c3ca9606fc06630e2e660f78aec7baeeb9"
+  },
+  "raw/transport/solid-node-endurance-preflight.json": {
+    "bytes": 224764,
+    "sha256": "fe896d4ceda678b3cf6b6d8cf8429ee4e0a0080b61c303d5199ddb7dcf121cf0"
+  },
+  "raw/transport/solid-node-endurance-warmup.json": {
+    "bytes": 228783,
+    "sha256": "e340c8d639d20468e1fc0419bf95d4c1efbe76a75854111c4c8dae3c124fc227"
+  },
+  "raw/transport/solid-node-multicore-2.json": {
+    "bytes": 28264,
+    "sha256": "b8d5211e5857a38c2a1e0f8ba6b9f22e011ac0fe7394c704bce74b187e0a6284"
+  },
+  "raw/transport/solid-node-multicore-1.json": {
+    "bytes": 28228,
+    "sha256": "9a008c660cf93650e74e814c745ae0ea057cfafec5dc4768d1d3ec2c11f27ec9"
+  },
+  "raw/transport/solid-node-multicore-3.json": {
+    "bytes": 28255,
+    "sha256": "3f5b4d987e86a125e0a42efda934ebe2c8abd6f4f0c5688552d8be84cb4a9d9b"
+  },
+  "raw/transport/solid-node-multicore-preflight.json": {
+    "bytes": 24184,
+    "sha256": "27c5fb8be213d22c307f0c40a417041c6393305efa9c07aff09c0c151ae0b28a"
+  },
+  "raw/transport/solid-node-multicore-warmup.json": {
+    "bytes": 28239,
+    "sha256": "7460be2168d63b251947b79e54b01601fd48a4ad0e7d1c012c375aae82d0490c"
+  },
+  "raw/transport/solid-node-reaction-1.json": {
+    "bytes": 28168,
+    "sha256": "750665944e6f296e1128d23e331ca2725207d6d8664df39aee18874758217098"
+  },
+  "raw/transport/solid-node-reaction-2.json": {
+    "bytes": 28209,
+    "sha256": "7d9a343e4ae6ef007c44ee7343b1d994205378f5acfcc94521bd2c746242cff1"
+  },
+  "raw/transport/solid-node-reaction-3.json": {
+    "bytes": 28175,
+    "sha256": "ea4ec2df88433a8790bbe0889df20e77d696454a97de017f841df380b0f8e131"
+  },
+  "raw/transport/solid-node-reaction-preflight.json": {
+    "bytes": 24183,
+    "sha256": "4216f551107353409bf98808608143e0a3e60598a6b3a607ecfafc1982f2fe0f"
+  },
+  "raw/transport/solid-node-reaction-warmup.json": {
+    "bytes": 28219,
+    "sha256": "4a917623f0d0bdaa50669c2daa65cdd8901d6a898d68a71033d9c27ecee82aaa"
+  },
+  "raw/transport/solid-node-sprint-1.json": {
+    "bytes": 28224,
+    "sha256": "857ca90fdd396277807961a0544cf325f1555d8af9bc38f645da93d48a268300"
+  },
+  "raw/transport/solid-node-sprint-2.json": {
+    "bytes": 28237,
+    "sha256": "59b3fd910b2a10266ad3be09dcfe8eff5262f457775503047dc5aec0b34d8970"
+  },
+  "raw/transport/solid-node-sprint-3.json": {
+    "bytes": 28230,
+    "sha256": "2d34b183a47001f2d47da328785326d5d891087d165ee19839e8192f2cef04b3"
+  },
+  "raw/transport/solid-node-sprint-preflight.json": {
+    "bytes": 24181,
+    "sha256": "c95726629b33d3eb7cd90e7e7c765f95f7b02512fc1c510b234c03e3600c7daf"
+  },
+  "raw/transport/solid-node-sprint-warmup.json": {
+    "bytes": 28248,
+    "sha256": "feaef4bb56de2d0da59d2f28e742f56554ccf630fb4c40ca3d2d32409be1eca9"
+  },
+  "raw/transport/solid-node-weight-preflight.json": {
+    "bytes": 24181,
+    "sha256": "1a662b05cbb43a3c9cc5a13184b96ee921f1071e9db9a079694c25ad2da66581"
+  },
+  "raw/transport/svelte-node-endurance-1.json": {
+    "bytes": 228821,
+    "sha256": "70acdff6c1dd1fa1c7ee4472d59405db8d8ce914111f1cb019530d9c4f667b23"
+  },
+  "raw/transport/svelte-node-endurance-2.json": {
+    "bytes": 228860,
+    "sha256": "d729c95236ac8f31fa66a8add0ac5be4e26c88cf92280787f426a994ce124b71"
+  },
+  "raw/transport/svelte-node-endurance-3.json": {
+    "bytes": 228839,
+    "sha256": "f284435bf690b3343dd1e556c83a5b59081558888199f04ffc6767b216df2001"
+  },
+  "raw/transport/svelte-node-endurance-preflight.json": {
+    "bytes": 224813,
+    "sha256": "9d900b2c60de9631e2cc8cae1858e75c372fc876d0ff17c56e2730db00952f0f"
+  },
+  "raw/transport/svelte-node-endurance-warmup.json": {
+    "bytes": 228849,
+    "sha256": "145bac0722e2860a0bdad8f0fcc84cc698e537c078af2f77df6b01f1f3e8b8df"
+  },
+  "raw/transport/svelte-node-multicore-1.json": {
+    "bytes": 28257,
+    "sha256": "fd41455e9a4bd94f4409e0ab35c13b5a2b66aefae57c5b2a8825101c6c0d081d"
+  },
+  "raw/transport/svelte-node-multicore-2.json": {
+    "bytes": 28315,
+    "sha256": "38315b61138fee173c19165ae1da603e52bfb6b444004919bd4204c1bc2f8e4e"
+  },
+  "raw/transport/svelte-node-multicore-3.json": {
+    "bytes": 28251,
+    "sha256": "342c76d3490f1daf0286faf040d1db691042fad43e73f769c54ce2cdbbd2745e"
+  },
+  "raw/transport/svelte-node-multicore-preflight.json": {
+    "bytes": 24233,
+    "sha256": "3fe7a51ed75bc9b57d3cd5fd3c83f3ea2c7630342bc0c0846ddb92c312e279da"
+  },
+  "raw/transport/svelte-node-multicore-warmup.json": {
+    "bytes": 28282,
+    "sha256": "4fb9a1f6e2e9364a861734bd0ac58886034c7416308699805fc60f607eb93086"
+  },
+  "raw/transport/svelte-node-reaction-1.json": {
+    "bytes": 28274,
+    "sha256": "6242f6cfbf646be455323c54b22a4e6c0372fb55e482550168dbdcae48823413"
+  },
+  "raw/transport/svelte-node-reaction-2.json": {
+    "bytes": 28252,
+    "sha256": "1bc76e1690bec8ed113ddf60ea326ff8c945e32b0516da140f8f35430c76bf0c"
+  },
+  "raw/transport/svelte-node-reaction-3.json": {
+    "bytes": 28132,
+    "sha256": "064bf269d1ff7dbd17d9263db0e0ed3a6311a2b1615ddd4f4e26644f346e9092"
+  },
+  "raw/transport/svelte-node-reaction-preflight.json": {
+    "bytes": 24232,
+    "sha256": "dc40e5690ea8693435ec614a939c9a0b17329064461578b4f3e569c2920de673"
+  },
+  "raw/transport/svelte-node-reaction-warmup.json": {
+    "bytes": 28262,
+    "sha256": "f1509d2dd6a4e47030fa09c52b237859672c22c308a6059f9aca54cb7c5457bb"
+  },
+  "raw/transport/svelte-node-sprint-1.json": {
+    "bytes": 28272,
+    "sha256": "0fd6f1ce8e0d95141d7fbbc9b651b1d2ff4cf44a3147f74334b1ee17bb717572"
+  },
+  "raw/transport/svelte-node-sprint-2.json": {
+    "bytes": 28312,
+    "sha256": "0a75a8a7f2f370e3f1d4086deb147d70c9d32e5af081ad678fdcdad5d16b05cc"
+  },
+  "raw/transport/svelte-node-sprint-3.json": {
+    "bytes": 28298,
+    "sha256": "88be74554cc3db3139fda286beaceb2332bccf4f5b484c2420c9673feb95e8f4"
+  },
+  "raw/transport/svelte-node-sprint-preflight.json": {
+    "bytes": 24230,
+    "sha256": "48220780b418c941226a8fbf4402353eb7eefcaf42030e3d710d30af0157195a"
+  },
+  "raw/transport/svelte-node-sprint-warmup.json": {
+    "bytes": 28268,
+    "sha256": "34ab7692edde75cbc0e37660798d7a7c07ace640a4df5cfbe7b5b0c976553f55"
+  },
+  "raw/transport/svelte-node-weight-preflight.json": {
+    "bytes": 24230,
+    "sha256": "d0c5c4a81f5518a499c3e942a64edecf132acc47fc43d29d9f81f9928f2ba334"
+  },
+  "raw/transport/vanilla-bun-endurance-1.json": {
+    "bytes": 228773,
+    "sha256": "c885a0044fa211057e5696f152fc794f7deb9a86f7a1767c46cf2554f3a1651f"
+  },
+  "raw/transport/vanilla-bun-endurance-2.json": {
+    "bytes": 228771,
+    "sha256": "5beceef42246a075893521995d4abb587271ddd4dc90aa517b37369cac812bea"
+  },
+  "raw/transport/vanilla-bun-endurance-3.json": {
+    "bytes": 228839,
+    "sha256": "ba83d5b0d84a8ca013394f3282722ddab9ddffaaa95339c5859a642023cd42a7"
+  },
+  "raw/transport/vanilla-bun-endurance-preflight.json": {
+    "bytes": 224721,
+    "sha256": "f32f65bc7d5ad65f00d2cb745b7c400e963d18509cf6111029fa09aa4a12fd40"
+  },
+  "raw/transport/vanilla-bun-endurance-warmup.json": {
+    "bytes": 228785,
+    "sha256": "90e51928bcb352dd4cfe66bab7f9f7b0ef0ec2340dac9f49dbde0d136a330cf5"
+  },
+  "raw/transport/vanilla-bun-multicore-1.json": {
+    "bytes": 28245,
+    "sha256": "3da172d9a65aac8bc48a0cb7e1a4a0e7bdc78e84591ba45f829b94a64ce448d2"
+  },
+  "raw/transport/vanilla-bun-multicore-2.json": {
+    "bytes": 28211,
+    "sha256": "a951fea88daef2b91f799ccfddfa5e5df62d702fc041546d5f8f4f1430c17e76"
+  },
+  "raw/transport/vanilla-bun-multicore-3.json": {
+    "bytes": 28243,
+    "sha256": "23db2b4931ec322034c80e24b4ec1e6ad1734bb302d07c615235bec3b6c41bed"
+  },
+  "raw/transport/vanilla-bun-multicore-preflight.json": {
+    "bytes": 24141,
+    "sha256": "52819cc69a0499ecd10edbe8a131ccc81d69075204170a44fdc841204837ad55"
+  },
+  "raw/transport/vanilla-bun-multicore-warmup.json": {
+    "bytes": 28256,
+    "sha256": "059896ac5130eae2a13d87c2cf8d8fe81ddbf19f864b498a84b4904bf1aecba7"
+  },
+  "raw/transport/vanilla-bun-reaction-1.json": {
+    "bytes": 28205,
+    "sha256": "5b3e20e715edcb4bd2e5f0b37d18e0b1b3596e7cf80dfedb67853b9bbe5663c4"
+  },
+  "raw/transport/vanilla-bun-reaction-2.json": {
+    "bytes": 28193,
+    "sha256": "0dc0bf15df105d4b5423a4955f864d0f456e1cedef626bc93eb313186fe9bd16"
+  },
+  "raw/transport/vanilla-bun-reaction-3.json": {
+    "bytes": 28152,
+    "sha256": "0f5a2c510d480d697115637975a491afa167d039188b644c79a6ecd40d0f124d"
+  },
+  "raw/transport/vanilla-bun-reaction-preflight.json": {
+    "bytes": 24140,
+    "sha256": "2e76e5fbeecd7f214429af035db48c4ec0e2fa6319defa25b243956b7c31d280"
+  },
+  "raw/transport/vanilla-bun-reaction-warmup.json": {
+    "bytes": 28148,
+    "sha256": "4fc4c41b12e77872e14aabef7c32609ee961c0fd95baaf3785b0234b0d047b7d"
+  },
+  "raw/transport/vanilla-bun-sprint-1.json": {
+    "bytes": 28169,
+    "sha256": "0498b5f3b8809aef27637b44b0a81c3d503d2416c9e9db38d2c86d00f7da574e"
+  },
+  "raw/transport/vanilla-bun-sprint-2.json": {
+    "bytes": 28145,
+    "sha256": "ea5222baa7cae5c009f6d47863dcab3023b707aaf791e378df817286cceac289"
+  },
+  "raw/transport/vanilla-bun-sprint-3.json": {
+    "bytes": 28204,
+    "sha256": "3614f58948a606b95a9b94de48f751191f12c6b0e16ea534eaa5401c6b0538fd"
+  },
+  "raw/transport/vanilla-bun-sprint-preflight.json": {
+    "bytes": 24138,
+    "sha256": "86bd80b567110771e24f99b6fa873bbb40b710a4f080dc4f0b4a898fa682b7c5"
+  },
+  "raw/transport/vanilla-bun-sprint-warmup.json": {
+    "bytes": 28212,
+    "sha256": "17f9abdccb07a35edc58980a204227ec89ff8dfd2cf00f2107edd7ae973970d3"
+  },
+  "raw/transport/vanilla-bun-weight-preflight.json": {
+    "bytes": 24138,
+    "sha256": "356ca5ddc41657cd77db857fae3f0f4aabe44d8ec9cc4d2e136c368e8a57988c"
+  },
+  "raw/transport/vanilla-deno-endurance-1.json": {
+    "bytes": 228800,
+    "sha256": "3294ec907cd98e13926900cf151cc1bcb1ddb32c22b824a12e006ff080277fa6"
+  },
+  "raw/transport/vanilla-deno-endurance-2.json": {
+    "bytes": 228839,
+    "sha256": "767e3e66167eaa0d234de44b2ba90e8329d34322c82bed444b4ca22a810aee3f"
+  },
+  "raw/transport/vanilla-deno-endurance-preflight.json": {
+    "bytes": 224786,
+    "sha256": "e95f2e28e7aad1d10362609e4aab1f47308101790f342a45a506aa8f1a2a9215"
+  },
+  "raw/transport/vanilla-deno-endurance-3.json": {
+    "bytes": 228791,
+    "sha256": "41de442fd68cad97de85aa28ecf32ced97a136e63ed2bcf6ce1322f6b596a463"
+  },
+  "raw/transport/vanilla-deno-endurance-warmup.json": {
+    "bytes": 228856,
+    "sha256": "5c42a9d6cb7f9b592fc2c0d402d915e7e7e9c93a08f6f4f172a563893986e64c"
+  },
+  "raw/transport/vanilla-deno-multicore-1.json": {
+    "bytes": 28293,
+    "sha256": "98192f4c7cc54ea7cb4cc9da33d3b937972ab334896ee8f8125f4f85b82f4648"
+  },
+  "raw/transport/vanilla-deno-multicore-2.json": {
+    "bytes": 28244,
+    "sha256": "08b7ea27892459906329ea7776be70f20316784868864c26b2f9f13f78f73b44"
+  },
+  "raw/transport/vanilla-deno-multicore-3.json": {
+    "bytes": 28249,
+    "sha256": "bdfbb729e848136e0de82ed1d515f1dc423a36bcff99ddbe99b5eb80b0c90cdb"
+  },
+  "raw/transport/vanilla-deno-multicore-preflight.json": {
+    "bytes": 24206,
+    "sha256": "da305d4e81dafe142c19df65c839232065643cb51e9c23b53b1302afda4e7e08"
+  },
+  "raw/transport/vanilla-deno-multicore-warmup.json": {
+    "bytes": 28275,
+    "sha256": "984906bc4c4ca009d336d067cd7ab0cd89cc66a27ce0816ae4650e75b672e334"
+  },
+  "raw/transport/vanilla-deno-reaction-1.json": {
+    "bytes": 28216,
+    "sha256": "0398bb2ecbf31eb596c3c33f8bfbf84dfa58b541417e4ed16b3f9bd9fdfad322"
+  },
+  "raw/transport/vanilla-deno-reaction-2.json": {
+    "bytes": 28258,
+    "sha256": "6f5b06de5da65f5fd2c739940049a623863267cc6c195dc8e2017b1c766a7072"
+  },
+  "raw/transport/vanilla-deno-reaction-3.json": {
+    "bytes": 28188,
+    "sha256": "807ef0427e1654d113fa9a562ccfe50310be776fd4414a6321ef1069b2a3d5b2"
+  },
+  "raw/transport/vanilla-deno-reaction-preflight.json": {
+    "bytes": 24205,
+    "sha256": "0f6bd5d476d1e0a5be9474c50b8471870077f672fcf8e6b5a76860291ddb6a14"
+  },
+  "raw/transport/vanilla-deno-reaction-warmup.json": {
+    "bytes": 28245,
+    "sha256": "68f717bca77a31e4cbde9fd46946b5d16cf021d16729ffc301b139e4a05db6bd"
+  },
+  "raw/transport/vanilla-deno-sprint-3.json": {
+    "bytes": 28238,
+    "sha256": "219f55093581d54719bd0629529debf6e4006a4865cc99775ed8ddb3148123ea"
+  },
+  "raw/transport/vanilla-deno-sprint-1.json": {
+    "bytes": 28220,
+    "sha256": "0287bf17ae647036880a9c86b431edbcdda46277faca4fd75b2cbeeb4a91696d"
+  },
+  "raw/transport/vanilla-deno-sprint-2.json": {
+    "bytes": 28244,
+    "sha256": "b4d821e6f5a02d42af1cf388a5f1fd0d71704538059aff1a09c36b16ffb039d8"
+  },
+  "raw/transport/vanilla-deno-sprint-preflight.json": {
+    "bytes": 24203,
+    "sha256": "a5090512ccaaa5b091f94565f5b4a845909912ee9d9003565634711f869a753c"
+  },
+  "raw/transport/vanilla-deno-sprint-warmup.json": {
+    "bytes": 28213,
+    "sha256": "6368fd7b711c6e60d48713ed02910d72085ec9561b7a96aa7d4c6af159035395"
+  },
+  "raw/transport/vanilla-node-endurance-1.json": {
+    "bytes": 228813,
+    "sha256": "edae36b6bdba9e03ab0c28d202e69b959007bca72dc9060393d274c09a5d57a3"
+  },
+  "raw/transport/vanilla-deno-weight-preflight.json": {
+    "bytes": 24203,
+    "sha256": "e6632a4cff94ae608368534dc6a34cafe4a7244145f29e682aba856f6f55fdc0"
+  },
+  "raw/transport/vanilla-node-endurance-2.json": {
+    "bytes": 228844,
+    "sha256": "d420776ce100218f4de894f747f08d10521bc606591bbd5c2e9311c4b3bcbb1f"
+  },
+  "raw/transport/vanilla-node-endurance-3.json": {
+    "bytes": 228859,
+    "sha256": "624971a43cc1559400fc8e1522955f30e62b6042f1325c4b5876eb181e8f4cde"
+  },
+  "raw/transport/vanilla-node-endurance-preflight.json": {
+    "bytes": 224786,
+    "sha256": "66c9c5c3de2b2893cff87e626d834a4a2edf8675049c3854139df4a9d84a0326"
+  },
+  "raw/transport/vanilla-node-endurance-warmup.json": {
+    "bytes": 228844,
+    "sha256": "872c679a792068a204e4a3cd2563618df899aca65f7b47b375d136dc53af2713"
+  },
+  "raw/transport/vanilla-node-multicore-1.json": {
+    "bytes": 28265,
+    "sha256": "a6eecc7564c570d0641512360c72db3ea8ce38de3a8c044fd4e306048657e3e8"
+  },
+  "raw/transport/vanilla-node-multicore-2.json": {
+    "bytes": 28194,
+    "sha256": "22e001fe8fe329f98850e1ef0a685750e19c7ea321af228875048830ca917ab2"
+  },
+  "raw/transport/vanilla-node-multicore-3.json": {
+    "bytes": 28258,
+    "sha256": "9d897a3fe2ee52b40b403558662a24f6f329bd534d104fbba93daedd114cf07f"
+  },
+  "raw/transport/vanilla-node-multicore-warmup.json": {
+    "bytes": 28287,
+    "sha256": "df4ab3ad8c6fd0b2559a194d731fe2e9bf96249132849feb8281e828cbc18804"
+  },
+  "raw/transport/vanilla-node-multicore-preflight.json": {
+    "bytes": 24206,
+    "sha256": "a8e2bd594c2b8a7d2ebcf599581e0f7414c9c52c7424a9583e73b3c492a4113b"
+  },
+  "raw/transport/vanilla-node-reaction-1.json": {
+    "bytes": 28189,
+    "sha256": "4125ad86e5783facb054e54683faa6e5dbb441304cc1e9f99b1a4e9e54538d5e"
+  },
+  "raw/transport/vanilla-node-reaction-3.json": {
+    "bytes": 28236,
+    "sha256": "5b949554ab895862d139131e0038733fb454e11a6c61e250cf51a051b9af162a"
+  },
+  "raw/transport/vanilla-node-reaction-preflight.json": {
+    "bytes": 24205,
+    "sha256": "8f52a0a40d0b4e18fb8f52520078f2df9107b2cbef22c736394e573ea70a1c10"
+  },
+  "raw/transport/vanilla-node-reaction-2.json": {
+    "bytes": 28189,
+    "sha256": "035e8b345b6f0f5f35e9cf955b42c6464d162b1081fccc5f2a1d6068758b69e3"
+  },
+  "raw/transport/vanilla-node-reaction-warmup.json": {
+    "bytes": 28222,
+    "sha256": "c4ca04dd41173d8e8ef317d2d481aa84c5e635de3df808201b34f6068b4ab904"
+  },
+  "raw/transport/vanilla-node-sprint-1.json": {
+    "bytes": 28247,
+    "sha256": "908201949f4a839e6bf9d67ec178f159936babf275db759b4971ad39a0a22c3e"
+  },
+  "raw/transport/vanilla-node-sprint-2.json": {
+    "bytes": 28227,
+    "sha256": "8d767af9ee97f19b9d70a603a65b519a9a3d2c9ff6a9c685bfdfce00ad8e37dc"
+  },
+  "raw/transport/vanilla-node-sprint-3.json": {
+    "bytes": 28271,
+    "sha256": "5775952796925f2e4008ae434aa1a07551cbf554944ed330d1fde253f61f3395"
+  },
+  "raw/transport/vanilla-node-sprint-preflight.json": {
+    "bytes": 24203,
+    "sha256": "15a9f143519eee508b689490a88a3c2f66ac2d26596fb7defaf78cfd438588aa"
+  },
+  "raw/transport/vanilla-node-sprint-warmup.json": {
+    "bytes": 28249,
+    "sha256": "e727a49cab878df9e2056cbc6a9e8f5f9bb6210cad1a793c7e9e770ae34e0b85"
+  },
+  "raw/transport/vanilla-node-weight-preflight.json": {
+    "bytes": 24203,
+    "sha256": "ac7a25fe58646263ea690ccc85ce23d9a6758fdc154a30d010a68ca0ad4ac887"
+  },
+  "raw/transport/vue-node-endurance-1.json": {
+    "bytes": 228797,
+    "sha256": "c39ff202a6f248940e1ff4af26f9a1e48339df5800d26ee1fd65cb04f3ead519"
+  },
+  "raw/transport/vue-node-endurance-3.json": {
+    "bytes": 228824,
+    "sha256": "493c9360a356e7062d202323371c2d3e420d132a2bfd694aae65451ff4d43aba"
+  },
+  "raw/transport/vue-node-endurance-preflight.json": {
+    "bytes": 224782,
+    "sha256": "38916ad16172aa9c00ee96261f71450863597fa7b70ae201b155ae5390637fff"
+  },
+  "raw/transport/vue-node-endurance-2.json": {
+    "bytes": 228823,
+    "sha256": "b7fde33a760c1f2c8eef2ff34978467cd40daa338e4f529cb2b60d423815ce23"
+  },
+  "raw/transport/vue-node-endurance-warmup.json": {
+    "bytes": 228865,
+    "sha256": "c2e44fc3e9d1e2c935577b917b1630955782a2301241c504edf452c894b8e95c"
+  },
+  "raw/transport/vue-node-multicore-1.json": {
+    "bytes": 28233,
+    "sha256": "6e879d33f5cfbf661cc595b7bf948a05463080d89bfc0d6e17859d668054a8da"
+  },
+  "raw/transport/vue-node-multicore-2.json": {
+    "bytes": 28209,
+    "sha256": "61b38896bdbbbf00fc03f811031aa5f21b554962eb4a94e6db4046a02804dfbc"
+  },
+  "raw/transport/vue-node-multicore-3.json": {
+    "bytes": 28244,
+    "sha256": "836be0cb281c3f798b31a136b268ae03da3de004e2f3506ad3aecbc139e00cf9"
+  },
+  "raw/transport/vue-node-multicore-preflight.json": {
+    "bytes": 24202,
+    "sha256": "11bc4794eae054f10b1eef5a8cf5609e850125406f2e739b767f87aff560f702"
+  },
+  "raw/transport/vue-node-multicore-warmup.json": {
+    "bytes": 28281,
+    "sha256": "c43f219774f0d57816339bffe1c02c4f05d6bee0f68c3ae6d80e901d15e074d7"
+  },
+  "raw/transport/vue-node-reaction-2.json": {
+    "bytes": 28201,
+    "sha256": "1ae85c8aaadc31e2fc4022ba3406dca2e29aa35ade7d53b6179af78e95a6270d"
+  },
+  "raw/transport/vue-node-reaction-1.json": {
+    "bytes": 28152,
+    "sha256": "2c3322b45e7a97f5e1ebfe66f38359a81e4274a12edebd2c3a814212c282c302"
+  },
+  "raw/transport/vue-node-reaction-3.json": {
+    "bytes": 28269,
+    "sha256": "2476f7092dc2794b080d3932189378120d9e3300f0b6aa1b8a3b702913f51bc3"
+  },
+  "raw/transport/vue-node-reaction-warmup.json": {
+    "bytes": 28212,
+    "sha256": "e38e0d9b99883ae96191a3f008b39c34483fa4df62cacdb6f1c89780894322c0"
+  },
+  "raw/transport/vue-node-reaction-preflight.json": {
+    "bytes": 24201,
+    "sha256": "5d929ea8aeb1a6d6a71b2ed951723e825887ca7cc6a0d3398f6a9611c79d5b94"
+  },
+  "raw/transport/vue-node-sprint-1.json": {
+    "bytes": 28241,
+    "sha256": "9f6b8dba5ff3fd34af4493e76c2c55e8e8d7b1133193fff356131ec8f4fa0c3b"
+  },
+  "raw/transport/vue-node-sprint-2.json": {
+    "bytes": 28270,
+    "sha256": "4360bbfd76916c7480700dbcbc2837a69d5267a8a1c56ac233653c641f045dfd"
+  },
+  "raw/transport/vue-node-sprint-3.json": {
+    "bytes": 28309,
+    "sha256": "33ee9b2d715323f03211492804e7e934e50e8a22eda65dabfc28652fecf8b199"
+  },
+  "raw/transport/vue-node-sprint-warmup.json": {
+    "bytes": 28290,
+    "sha256": "054fe320d9d3e4909bb61b06e376d4175df905522a4502dbc9c21f579529e579"
+  },
+  "raw/transport/vue-node-sprint-preflight.json": {
+    "bytes": 24199,
+    "sha256": "1b2988af2574740afe0171a44e44dbd75f4aa04ddb25821fc6648796860a636c"
+  },
+  "raw/weight/astro.json": {
+    "bytes": 28575,
+    "sha256": "c39ae1f112e7fb06500aaaa57e975c393b26a81737a780333a72c6a810c863cc"
+  },
+  "raw/transport/vue-node-weight-preflight.json": {
+    "bytes": 24199,
+    "sha256": "3818e9869ca816e517b5b83fcfc25411d342ff6981b6d2a7970ee3719c89b5fe"
+  },
+  "raw/weight/forma.json": {
+    "bytes": 51488,
+    "sha256": "97046930e72df5487acd3e1ce4958c8f6d9efda226a1c2fe0b478dbad82d9107"
+  },
+  "raw/weight/next.json": {
+    "bytes": 95092,
+    "sha256": "5d04b9d0a32c42c4ceb048d66e0640581651338f6f6e562e12ac7b3879026bde"
+  },
+  "raw/weight/preact-node.json": {
+    "bytes": 28465,
+    "sha256": "2e5088e881749857180c959d52bbaa410a4f6464af24e0860b9e269de2afc3b4"
+  },
+  "raw/weight/react-bun.json": {
+    "bytes": 28396,
+    "sha256": "69d1d62ad2400ee57106f75bc5b9166b39258ed00d472d5dcea3f61ff827bbd9"
+  },
+  "raw/weight/react-deno.json": {
+    "bytes": 28463,
+    "sha256": "a502c643e8a050473e0b2796e753fe98349961d92c118bc4bd29ac67a2fdfebe"
+  },
+  "raw/weight/react-node.json": {
+    "bytes": 28460,
+    "sha256": "96244b5bf467989012ce3023c911fdc4eac0a536fc55412bc3c3b06ed7b2dc87"
+  },
+  "raw/weight/solid-node.json": {
+    "bytes": 28466,
+    "sha256": "03a5f788e428e3b565372d080a7729ec4a0b65328d75007504bf3fa675739b66"
+  },
+  "raw/weight/react-router.json": {
+    "bytes": 46462,
+    "sha256": "29ec54784fbeff98551e03d5f13014171ba84ca0d6dd82d6c1fedd6d03755267"
+  },
+  "raw/weight/svelte-node.json": {
+    "bytes": 28513,
+    "sha256": "94b6c99736db551d936f04a2fbc0215ea3244b442b254a2b21186fe521c27447"
+  },
+  "raw/weight/vanilla-bun.json": {
+    "bytes": 28419,
+    "sha256": "240216642b1083188b7fe6f6be06647be949383bb1feaf3bbc807a1836afe9df"
+  },
+  "raw/weight/vanilla-deno.json": {
+    "bytes": 28487,
+    "sha256": "aed90efdf963ac136a17d8d13af49a4f280cf16a3314a9c0cdbdc602e8cce75f"
+  },
+  "raw/weight/vanilla-node.json": {
+    "bytes": 28485,
+    "sha256": "5a3e2f4ea9f88eaeb4cdc0820befbff2d3da7f6d8b3ce4dfbd3cea09dfed1c56"
+  },
+  "raw/weight/vue-node.json": {
+    "bytes": 28483,
+    "sha256": "c16d80cbb5144ad1fffcddae8aa880c3ea989d76e18747e02ef3de2333dd8e74"
+  }
+}

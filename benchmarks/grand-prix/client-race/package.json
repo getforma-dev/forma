@@ -1,0 +1,1 @@
+{"name":"gp-client-race","private":true,"type":"module","dependencies":{"@getforma/core":"3.0.0","@sveltejs/vite-plugin-svelte":"7.3.1","@vitejs/plugin-vue":"6.0.10","preact":"10.29.8","puppeteer-core":"25.16.0","react":"19.3.1","react-dom":"19.3.1","solid-js":"1.9.17","svelte":"5.57.2","vite":"8.3.5","vite-plugin-solid":"2.11.14","vue":"3.5.44"}}

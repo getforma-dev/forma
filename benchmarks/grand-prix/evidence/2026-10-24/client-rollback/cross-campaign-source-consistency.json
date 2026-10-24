@@ -1,0 +1,24 @@
+{
+  "published": {
+    "coreBundle": "ad5473013772901be7d39cb406799c2a9839da29e98b9b9c0b03c0ce0b27b2d7",
+    "clientLock": "09f06bc3dc603ae65d2c6f7721a6fa276287faec41da97b592cc16ad819a099d",
+    "signalsLock": "21eea2e8c5e9f86d156b4e8cf264c57790ce215c0c0ae1997ffc0f6f306cd7ec"
+  },
+  "54a836c06eeba99c345cf294d47e7118b5ad7924": {
+    "coreBundle": "a2e984e54bb646ad3dca1caf3edfb5c1057eb7b130a8e2389e1cd09f3cc240a7",
+    "clientLock": "09f06bc3dc603ae65d2c6f7721a6fa276287faec41da97b592cc16ad819a099d",
+    "signalsLock": "21eea2e8c5e9f86d156b4e8cf264c57790ce215c0c0ae1997ffc0f6f306cd7ec"
+  },
+  "checks": [
+    "Published and original54 core hashes match original campaign",
+    "Client and signal locks match original campaign",
+    "Chromium executable hash matches original campaign",
+    "Fresh campaign, host and runner identities differ; no records pooled",
+    "Every raw record timestamp falls inside its own trial"
+  ],
+  "cpu": "AMD EPYC 7763 64-Core Processor",
+  "previousCpu": "AMD EPYC 9V45 96-Core Processor",
+  "kernel": "6.17.0-1022-azure",
+  "campaign": "ac6930ea-06ea-40ef-8901-cd50ad22f1ac",
+  "machineIdNote": "Cloned GHA image machine-id hash matches across jobs; full campaign/host/runner identity differs."
+}

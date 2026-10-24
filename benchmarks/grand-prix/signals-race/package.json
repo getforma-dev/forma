@@ -1,0 +1,1 @@
+{"name":"gp-signals-race","private":true,"type":"module","dependencies":{"@getforma/core":"3.0.0","@preact/signals-core":"1.14.4","@vue/reactivity":"3.5.44","alien-signals":"3.2.1","solid-js":"1.9.17"}}

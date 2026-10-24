@@ -1,0 +1,44 @@
+[
+  {
+    "ref": "be029708545efc8d771df25ce774362f461718e2",
+    "commit": [
+      "be029708545efc8d771df25ce774362f461718e2",
+      "4229149a28e215af3bfe26167d80f3f00d26ac8f",
+      "test(ir): re-anchor fast escaping security mutants"
+    ],
+    "contains258": true,
+    "files": {
+      "crates/forma-ir/src/walker.rs": "6d40cf28040cb0821687114ccb3d4dd2f2b429ea0ee68ab7c47afaf3fcd17a63",
+      "crates/forma-server/src/render.rs": "11d99803f45c5bf3f38224643e8ba2b1f2ac83b7223b87df008f60b525290117",
+      "crates/forma-server/src/template.rs": "7c75fe7b9332fb336ff6085c96d36974c2a75a8cf20d8b1822a41eb4fdcc3314"
+    }
+  },
+  {
+    "ref": "d00f231a98dbe6068354fb862134d91e5b276380",
+    "commit": [
+      "d00f231a98dbe6068354fb862134d91e5b276380",
+      "ff5da50dbe6b8bc0c72dfd528679bf3e31c1746e",
+      "test(scaffold): select plain roots for static SSR header checks"
+    ],
+    "contains258": false,
+    "files": {
+      "crates/forma-ir/src/walker.rs": "3de6441c764644aa498649a2df79c3ed461306a857afcf429dad2af0b75af183",
+      "crates/forma-server/src/render.rs": "422f3fc0aefc10da66b0c3b9912f3d07d46e6503e70ec150ac8a5e277e33b2c4",
+      "crates/forma-server/src/template.rs": "bfaaf15a3a69a140eb2f8dd5275fa5b6fb0b83b9d1a86b3646abbadd349d18fa"
+    }
+  },
+  {
+    "ref": "81d1fd815d93f274f9b8bec7a6bc584e1273f3c2",
+    "commit": [
+      "81d1fd815d93f274f9b8bec7a6bc584e1273f3c2",
+      "8b1216a78b022cad7944d730c80c7ffca8fb0523",
+      "test(build): await the refused source edit before watch recovery"
+    ],
+    "contains258": true,
+    "files": {
+      "crates/forma-ir/src/walker.rs": "1db13a9b7fcba3615e6f204f30a7859c8096308421c7421a2e18fda65930003d",
+      "crates/forma-server/src/render.rs": "422f3fc0aefc10da66b0c3b9912f3d07d46e6503e70ec150ac8a5e277e33b2c4",
+      "crates/forma-server/src/template.rs": "bfaaf15a3a69a140eb2f8dd5275fa5b6fb0b83b9d1a86b3646abbadd349d18fa"
+    }
+  }
+]

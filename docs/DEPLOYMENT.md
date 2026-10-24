@@ -48,10 +48,13 @@ claim about the performance of unpublished framework changes.
 Measured on separate hosted Linux runners in [run 40108274094](https://github.com/getforma-dev/forma/actions/runs/40108274094),
 with Rust 1.93.1 and the authenticated 3.0.0 templates:
 
-| Template | Cold Rust release build | Restored-cache page edit | Rebuilt registry dependencies (cold / warm) |
+| Template | Cold Rust release build | Restored-cache page edit | Registry compilation artifacts (cold / warm) |
 | --- | ---: | ---: | ---: |
 | Minimal | 35.84 s | 2.87 s | 113 / 0 |
 | Dashboard | 38.70 s | 4.11 s | 113 / 0 |
+
+Each cold run's 113 registry compilation artifacts represent 89 unique package
+IDs; an artifact count is not a dependency count.
 
 These are one cold/warm pair per template, not universal latency promises. The
 frontend build is separate (0.79–1.13 s for these warm runs); embedding still

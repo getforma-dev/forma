@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "browser": "chrome",
+  "version": "156.0.8078.4",
+  "platform": "linux",
+  "arch": "x64",
+  "archiveUrl": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.4/linux64/chrome-linux64.zip",
+  "archiveSha256": "43fd31766c7533a02dda2ded5ad50c2f861cd5400be7509c0abad71129f79d79",
+  "executableSha256": "377a9fc07b495c3b8d0ab8ec1fdfd153641759f9756fea34d8dfce4de82f5025"
+}
