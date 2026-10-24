@@ -101,11 +101,11 @@ node packages/core/scripts/qualify-expression-mutation.mjs
 step "build: the packed forma-raw-lint bin"
 node packages/build/scripts/test-raw-lint-bin.mjs
 
-step "FMIR contract: this compiler's corpus is the one forma-ir has committed"
-npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures/js-emitter"
-cargo test --locked -p forma-ir --lib js_emitter_contract
+step "FMIR contract: historical and current-writer corpus preserve exact payloads and HTML"
+node --test scripts/fmir-corpus.test.mjs
+node scripts/check-fmir-corpus.mjs
 if [ -n "$(git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter)" ]; then
-  echo "::error::the compiler no longer emits the .ir bytes and canonical .dump texts committed in crates/forma-ir/tests/fixtures/js-emitter:"
+  echo "::error::the historical compiler corpus changed during verification:"
   git status --porcelain -- crates/forma-ir/tests/fixtures/js-emitter
   echo "::error::Review and regenerate the .ir/.dump corpus against docs/FMIR-FORMAT.md; the existing .html goldens must continue to match."
   exit 1
