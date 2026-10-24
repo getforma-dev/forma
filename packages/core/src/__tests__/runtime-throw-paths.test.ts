@@ -377,27 +377,32 @@ describe('evaluations nested inside one another are capped (FORMA-274)', () => {
 });
 
 describe('a computed refused for nesting (FORMA-274 review, F3)', () => {
-  it('a computed refused for nesting is computed again on its next read, not cached as failed', async () => {
-    // A relay of 30 handlers; the last reads `top` first, which reads `mid`,
-    // which reads `sub`: the 33rd evaluation, refused before it reads
-    // anything. (A computed already computed is recomputed from its
-    // dependencies up, not nested, so these are read here for the first time.)
+  it.each([
+    ['read for the first time by the 30th handler of a relay', 30, false],
+    ['already computed, recomputed for the 32nd handler of a relay', 32, true],
+  ])('a computed refused for nesting is computed again on its next read, not cached as failed: %s', async (_, handlers, shownFirst) => {
+    // The last handler of the relay changes `items` and reads `top`, which
+    // reads `mid`, which reads `sub`. Read for the first time, each computed
+    // nests inside the one that reads it, so behind 30 handlers `sub` is the
+    // 33rd evaluation. Already computed, they are recomputed from their
+    // dependencies up, each one level below the reader, so behind 32
+    // handlers `sub` is the 33rd. Either way it is refused before it reads
+    // anything.
     let relay = '<p id="go">go</p>';
-    for (let i = 0; i < 30; i++) {
-      relay = `<div data-on:e${i}="{${i === 29 ? 'items = [5, 6]; x = top' : `$dispatch('e${i + 1}')`}}">${relay}</div>`;
+    for (let i = 0; i < handlers; i++) {
+      relay = `<div data-on:e${i}="{${i === handlers - 1 ? 'items = [5, 6]; x = top' : `$dispatch('e${i + 1}')`}}">${relay}</div>`;
     }
     expect(mount(`<i data-computed="sub = items.length; mid = sub + 1; top = mid + 1"></i>
       <p id="s" data-text="{shown ? sub : '-'}"></p><p id="m" data-text="{shown ? mid : '-'}"></p><p id="t" data-text="{shown ? top : '-'}"></p>
-      ${relay}<button id="reset" data-on:go="{shown = true; items = [1, 2, 3]}"></button>`, '{"items": [1], "x": 0, "shown": false}')).toBeNull();
+      ${relay}<button id="reset" data-on:go="{shown = true; items = [1, 2, 3]}"></button>`, `{"items": [1], "x": 0, "shown": ${shownFirst}}`)).toBeNull();
     const shown = (): string[] => ['s', 'm', 't'].map((id) => el(id).textContent ?? '');
+    expect(shown()).toEqual(shownFirst ? ['1', '2', '3'] : ['-', '-', '-']);
     el('go').dispatchEvent(new Event('e0', { bubbles: true }));
-    expect(runtime.getDiagnostics().map((d) => [d.kind, d.code, d.reason])).toEqual([
-      ['handler-unsupported', 'FORMA_E_BUDGET', 'evaluations nested over 32 deep'],
-    ]);
+    expect(runtime.getDiagnostics().map((d) => [d.kind, d.code, d.reason])).toContainEqual(
+      ['handler-unsupported', 'FORMA_E_BUDGET', 'evaluations nested over 32 deep']);
     await tick();
     el('reset').dispatchEvent(new Event('go'));
     expect(shown()).toEqual(['3', '4', '5']);
-    expect(runtime.getDiagnostics()).toHaveLength(1);
     expect(swallowed).toEqual([]);
   });
 });

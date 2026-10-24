@@ -1926,10 +1926,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
                 // Refused for nesting before it read anything, so nothing
                 // it depends on would recompute it: it reads `retries`, which
                 // the next task bumps, and its next read recomputes it (FORMA-274).
-                // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a computed refused for nesting is computed again on its next read, not cached as failed"
+                // The refused evaluation armed the task's timer (`buildEvaluator`).
+                // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a computed refused for nesting is computed again on its next read, not cached as failed: %s"
                 retries();
                 deferred = true;
-                spend();
               }
               return { ok: false, e: err };
             } finally {

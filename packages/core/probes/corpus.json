@@ -2961,7 +2961,7 @@
   ],
   "find": "              } else if (err.message === NESTED) {",
   "replace": "              } else if (err.message === '') {",
-  "note": "a computed refused for nesting before it read anything caches the refusal with no dependency, so it and its readers stay failed after the data changes, silently (FORMA-274 review, F3). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a computed refused for nesting is computed again on its next read, not cached as failed\""
+  "note": "a computed refused for nesting before it read anything caches the refusal with no dependency, so it and its readers stay failed after the data changes, silently (FORMA-274 review, F3). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a computed refused for nesting is computed again on its next read, not cached as failed: %s\""
  },
  {
   "id": "expr/count-conversion-escapes",
