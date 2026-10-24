@@ -52,6 +52,7 @@ import {
   LIMITS,
   runHandler,
   running,
+  said,
   weigh,
   type Bound,
   type ExprGrant,
@@ -59,6 +60,8 @@ import {
   type Meter,
   type TextCost,
   WAITING_CAP,
+  AS_DATA,
+  NESTED,
 } from './expr';
 import { sourceIsDev, warnDeprecated } from './deprecated';
 
@@ -107,6 +110,8 @@ interface Scope {
   mount: MountCtx;
   /** The mount's step budget, read by the interpreter (`ScopeLike.budget`). */
   budget: number;
+  /** Reports a DOM method's rejected promise on the scope's element (`ScopeLike.fail`). */
+  fail?: (what: string, err: FormaExprError) => void;
 }
 
 // ── $refetch registry ──
@@ -881,7 +886,7 @@ function cloneWithTemplateData(template: Element, item: unknown, mount: MountCtx
  * Update an existing cloned element's text and safe attributes with new item data.
  * Uses the cached original template patterns from the WeakMap.
  */
-function updateTemplateData(el: Element, item: unknown): void {
+function updateTemplateData(el: Element, item: unknown, mount: MountCtx): void {
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
     const node = walker.currentNode;
@@ -892,7 +897,7 @@ function updateTemplateData(el: Element, item: unknown): void {
   }
   for (const node of [el, ...Array.from(el.querySelectorAll('*'))]) {
     for (const { attr, compiled } of templateAttrs.get(node) ?? []) {
-      applyTemplateAttribute(node, attr, compiled, item);
+      applyTemplateAttribute(node, attr, compiled, item, mount);
     }
   }
 }
@@ -1259,12 +1264,12 @@ function applyShowVisibility(
   );
 }
 
-function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown): void {
+function applyTemplateAttribute(node: Element, attr: string, compiled: CompiledTemplate, item: unknown, mount?: MountCtx): void {
   const value = evaluateCompiledTemplate(compiled, item);
   if (isUnsafeAttrBinding(attr, value, node.localName)) {
     node.removeAttribute(attr);
   } else {
-    node.setAttribute(attr, value);
+    write(node, `row ${attr}`, mount, attr, () => node.setAttribute(attr, value));
   }
 }
 
@@ -1284,7 +1289,7 @@ function cloneAttributeTemplates(el: Element, item: unknown, mount?: MountCtx): 
         }
         const compiled = compileTemplate(attr.value);
         entries.push({ attr: attr.name, compiled });
-        applyTemplateAttribute(node, attr.name, compiled, item);
+        applyTemplateAttribute(node, attr.name, compiled, item, mount);
       }
     }
     if (entries.length > 0) {
@@ -1442,9 +1447,11 @@ function later(): void {
  * `String()` of an array or object joins every element, so a list of a
  * thousand references to one long string is three hundred million
  * characters. A string is written as it is; a host value renders as a label.
+ * `depth` is `AS_DATA` for a value serialized, not converted (`data-persist`,
+ * a row's whole `{item}`): weighed the same, never refused for its `toString`.
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "data-text of a value heavier than the budget is refused before it is converted"
  */
-const asText: TextCost = (v, room) => (typeof v === 'object' && v !== null && !isHost(v) ? weigh(v, room) : 0);
+const asText = (v: unknown, room: number, depth?: number): number => (typeof v === 'object' && v !== null && !isHost(v) ? weigh(v, room, depth) : 0);
 
 /**
  * Charge a conversion of a value no expression returned (a `data-model` or
@@ -1452,10 +1459,10 @@ const asText: TextCost = (v, room) => (typeof v === 'object' && v !== null && !i
  * False when refused: reported, or retried in the next task.
  * Verified by: src/__tests__/runtime-text-cost.test.ts > "every other conversion of a result to text is refused before it runs"
  */
-function converts(el: Element, scope: Scope, what: string, value: unknown): boolean {
+function converts(el: Element, scope: Scope, what: string, value: unknown, depth?: number): boolean {
   try {
     spend();
-    evaluateExpression(NOTHING, scope, meter, (_, room) => asText(value, room));
+    evaluateExpression(NOTHING, scope, meter, (_, room) => asText(value, room, depth));
     return true;
   } catch (err) {
     if (!isExprError(err)) throw err;
@@ -1472,7 +1479,7 @@ function converts(el: Element, scope: Scope, what: string, value: unknown): bool
 const NOTHING = compileExpression('0');
 
 /** A value a `data-list` row template places in text, once per row it appears in. */
-const placed = (v: unknown, room: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room));
+const placed = (v: unknown, room: number, depth?: number): number => (typeof v === 'string' ? v.length * GROW : asText(v, room, depth));
 
 /**
  * The most a `data-list` pass may build or rebind, as rows times the weight of
@@ -1530,6 +1537,28 @@ function reportHandlerFailure(el: Element | null, expr: string, err: FormaExprEr
   logExprFailure(el, expr, err, 'handler');
   reportFailure('handler-unsupported', expr, err, mount);
   el?.setAttribute('data-forma-handler-error', 'unsupported');
+}
+
+/**
+ * The runtime's own DOM write of a binding's value, which the browser can
+ * refuse by throwing (FORMA-274): `data-model` writing a file input's
+ * `value`, or a value that is not a number to a `<progress>` or `<meter>`; a
+ * Trusted Types sink under a policy that enforces them (`data-bind:src` or
+ * `data-text` on a `<script>`, a `src` in a `data-list` row). It is reported
+ * on the element as `FORMA_E_CALL_FAILED`, at mount and on every later run;
+ * it used to escape `mountMarkup`, and on a later run reached `onError()`
+ * only. The value is evaluated, checked and charged before `write` is
+ * called, so a bug in that is not caught here: only the conversion of the
+ * priced value and the DOM call itself are.
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a write the browser refuses is reported on its element, at mount and on a later run: %s"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "what a write is handed is checked and charged before it is written, so the write itself is all the wrapper catches"
+ */
+function write(el: Element, expr: string, mount: MountCtx | undefined, what: string, f: () => void): void {
+  try {
+    f();
+  } catch (e) {
+    reportExprFailure(el, stripBraces(expr), exprError('FORMA_E_CALL_FAILED', `${what} write threw ${said(e)}`), mount);
+  }
 }
 
 /** The diagnostic for a failure: a denied grant is `grant-denied`, with its grant, whatever directive met it. */
@@ -1616,6 +1645,7 @@ function buildHandler(expr: string, scope: Scope, el: Element | null): HandlerBu
 
   const eventLocals: Record<string, unknown> = { $event: undefined, event: undefined };
   const eventScope = createChildScope(scope, eventLocals);
+  eventScope.fail = (_, err) => reportHandlerFailure(el, cleaned, err, scope.mount);
 
   const handler = (e: Event) => {
     const outer = eventLocals.$event;
@@ -1792,6 +1822,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
     }, 2),
   };
   scope = createChildScope(scope, elMagics);
+  // A DOM method's promise that rejects is reported on this element (FORMA-274).
+  scope.fail = (what, err) => reportExprFailure(el, what, err, scope.mount);
 
   // A marker left by an EARLIER bind of this element (reconcile re-binds in
   // place) is cleared here, up front, and never again. It used to be cleared in
@@ -1892,6 +1924,14 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
               if (err.defer) {
                 later();
                 staleCells.add(cell);
+              } else if (err.message === NESTED) {
+                // Refused for nesting before it read anything, so nothing
+                // it depends on would recompute it: it reads `retries`, which
+                // the next task bumps, and its next read recomputes it (FORMA-274).
+                // The refused evaluation armed the task's timer (`buildEvaluator`).
+                // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a computed refused for nesting is computed again on its next read, not cached as failed: %s"
+                retries();
+                deferred = true;
               }
               return { ok: false, e: err };
             } finally {
@@ -1921,7 +1961,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
     const dispose = internalEffect(() => {
       const value = evaluate();
       if (value === EXPR_FAILED) return;
-      setElementTextFast(el, toTextValue(value));
+      write(el, textExpr, scope.mount, 'data-text', () => setElementTextFast(el, toTextValue(value)));
     });
     disposers.push(dispose);
   }
@@ -2041,7 +2081,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           const arr = Array.isArray(val) ? val.map(String) : [];
           for (const opt of Array.from(sel.options)) opt.selected = arr.includes(opt.value);
         } else {
-          input.value = String(val ?? '');
+          // A file input, a <progress> or a <meter> refuses some values by throwing.
+          write(el, prop, scope.mount, 'data-model', () => { input.value = String(val ?? ''); });
         }
       });
       disposers.push(dispose);
@@ -2084,6 +2125,16 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   for (let i = 0; i < attrs.length; i++) {
     const attr = attrs[i]!;
     const name = attr.name;
+
+    // A data-class: or data-bind: with nothing after the colon names no class
+    // or attribute: refused before it binds, so the runtime never writes the
+    // empty name (`setAttribute('')` threw InvalidCharacterError out of
+    // `mountMarkup`, `classList.toggle('')` a SyntaxError in browsers) (FORMA-274).
+    // Verified by: src/__tests__/runtime-throw-paths.test.ts > "a data-bind: or data-class: with no name is refused at bind time with FORMA_E_UNSUPPORTED, and the rest of the module mounts"
+    if (name === 'data-class:' || name === 'data-bind:') {
+      reportExprFailure(el, `${name}="${attr.value}"`, exprError('FORMA_E_UNSUPPORTED', `${name} has no name`), scope.mount);
+      continue;
+    }
 
     if (name.startsWith('data-on:')) {
       const event = name.slice(8); // 'data-on:'.length === 8
@@ -2158,7 +2209,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         if (isUnsafeAttrBinding(attrName, str, el.localName)) {
           el.removeAttribute(attrName);
         } else {
-          el.setAttribute(attrName, str);
+          write(el, attr.value, scope.mount, name, () => el.setAttribute(attrName, str));
         }
       });
       disposers.push(dispose);
@@ -2179,7 +2230,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       } catch { /* ignore parse errors */ }
       const dispose = internalEffect(() => {
         const value = getter();
-        if (!converts(el, scope, prop, value)) return;
+        if (!converts(el, scope, prop, value, AS_DATA)) return;
         try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
       });
       disposers.push(dispose);
@@ -2231,7 +2282,8 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           for (const item of items) {
             for (const f of fields) {
               if (n > room) return n;
-              n += placed(f ? (item as Record<string, unknown> | null)?.[f] : item, room);
+              // A whole `{item}` is serialized with JSON.stringify, not converted.
+              n += f ? placed((item as Record<string, unknown> | null)?.[f], room) : placed(item, room, AS_DATA);
             }
           }
         }
@@ -2291,7 +2343,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       /** Dispose old bindings and rebind with fresh data */
       function updateBoundClone(node: Node, item: unknown, index: number): void {
         disposeCloneBindings(node);
-        updateTemplateData(node as Element, item);
+        updateTemplateData(node as Element, item, scope.mount);
         const childScope = createChildScope(scope, { item, index });
         const dispose = ownBindings(itemDisposers => {
           bindElement(node as Element, childScope, itemDisposers);

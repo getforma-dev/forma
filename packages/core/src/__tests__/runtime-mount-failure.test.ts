@@ -22,14 +22,19 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-function refuseEmptyClass(beforeThrow: () => void = () => {}): DOMException {
-  const error = new DOMException('The token provided must not be empty.', 'SyntaxError');
+/**
+ * A binding that throws while the mount binds it. Markup cannot make one since
+ * FORMA-274 (a `data-class:` with no name used to: browsers' `toggle('')`
+ * throws), but a fault in the runtime or the DOM still can, so one is made
+ * here: `classList.toggle('refuse')` throws.
+ */
+function refuseClass(beforeThrow: () => void = () => {}): DOMException {
+  const error = new DOMException('a simulated fault', 'SyntaxError');
   const prototype = Object.getPrototypeOf(document.createElement('p').classList) as DOMTokenList;
   const toggle = prototype.toggle;
   vi.spyOn(prototype, 'toggle').mockImplementation(function(this: DOMTokenList, token: string, force?: boolean) {
-    if (token === '') {
+    if (token === 'refuse') {
       beforeThrow();
-      // Happy DOM accepts this token. All three native engines throw here.
       throw error;
     }
     return Reflect.apply(toggle, this, [token, force]);
@@ -46,10 +51,10 @@ it.each(['partial scope', 'earlier completed scope'] as const)('a failed mount d
   vi.spyOn(reactive, 'createSignal').mockImplementation((...args) => {
     const pair = createSignal(...args); state.push(pair); return pair;
   });
-  const error = refuseEmptyClass(() => {
+  const error = refuseClass(() => {
     button = root.querySelector('#first button'); output = root.querySelector('#first output');
   });
-  const bad = '<p data-class:="{n}"></p>';
+  const bad = '<p data-class:refuse="{n}"></p>';
   const html = placement === 'partial scope' ? counter('first', bad) : counter('first') + counter('second', bad);
   expect(() => runtime.mountMarkup(root, runtime.trustedHtml(html), { tier: 'reviewed' })).toThrow(error);
   expect(button).not.toBeNull(); expect(output).not.toBeNull(); expect(state).toHaveLength(placement === 'partial scope' ? 1 : 2);
@@ -73,10 +78,10 @@ it('unsubscribes the failed initial reader without disposing its unrelated calle
     failedState = createSignal(...args); return failedState;
   });
   let failedReads = 0;
-  const error = refuseEmptyClass(() => { failedReads++; });
+  const error = refuseClass(() => { failedReads++; });
   const disposeParent = reactive.createRoot(dispose => {
     reactive.createEffect(() => { seen.push(other()); });
-    expect(() => runtime.mountMarkup(root, runtime.trustedHtml(counter('bad', '<p data-class:="{n}"></p>')), { tier: 'reviewed' })).toThrow(error);
+    expect(() => runtime.mountMarkup(root, runtime.trustedHtml(counter('bad', '<p data-class:refuse="{n}"></p>')), { tier: 'reviewed' })).toThrow(error);
     return dispose;
   });
   try {
@@ -95,9 +100,9 @@ it('aborts allowed requests and clears polling in completed and partial scopes a
     requests.push(init); return new Promise<Response>(() => {});
   });
   vi.stubGlobal('fetch', fetch);
-  const error = refuseEmptyClass();
+  const error = refuseClass();
   const poll = '<div data-fetch="GET /api/widget/items → data |poll:10"></div>';
-  const scope = (bad: boolean) => `<section data-forma-state='{"data":null,"n":0}'>${poll}${bad ? '<p data-class:="{n}"></p>' : ''}</section>`;
+  const scope = (bad: boolean) => `<section data-forma-state='{"data":null,"n":0}'>${poll}${bad ? '<p data-class:refuse="{n}"></p>' : ''}</section>`;
   expect(() => runtime.mountMarkup(root, runtime.trustedHtml(scope(false) + scope(true)), {
     tier: 'reviewed', grants: { fetch: { methods: ['GET'], paths: ['/api/widget/'], cookies: false } },
   })).toThrow(error);
@@ -163,11 +168,11 @@ it('cancels queued row transition work when a later initial scope refuses', () =
   const root = document.getElementById('root')!;
   let rows: Element[] = [];
   let queued = 0;
-  const error = refuseEmptyClass(() => {
+  const error = refuseClass(() => {
     rows = Array.from(root.querySelectorAll('.row'));
     queued = vi.getTimerCount();
   });
-  expect(() => runtime.mountMarkup(root, runtime.trustedHtml(animatedRows + counter('bad', '<p data-class:="{n}"></p>')), { tier: 'reviewed' })).toThrow(error);
+  expect(() => runtime.mountMarkup(root, runtime.trustedHtml(animatedRows + counter('bad', '<p data-class:refuse="{n}"></p>')), { tier: 'reviewed' })).toThrow(error);
   expect(rows).toHaveLength(2);
   expect(queued, 'the earlier rows actually scheduled enter work').toBeGreaterThan(0);
   // The shared expression task meter owns a zero-delay reset, not row work.

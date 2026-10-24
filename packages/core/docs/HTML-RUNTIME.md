@@ -258,14 +258,57 @@ and the error: `{JSON.parse(payload)}` of a payload that is not JSON reports
 costs that binding only: the rest of the markup binds and keeps working. Before
 FORMA-271 the exception escaped `mountMarkup` and left the whole module
 unbound. A real bug in Forma's own code is still not filed as an expression
-failure. Some markup can still throw out of `mountMarkup`, for example a
-`data-bind:` or `data-class:` with no name, or a value nested about 10,000 deep
-that Forma's own code converts. SECURITY.md, *Known gaps*, lists the paths
-found.
+failure.
 
 Verified by `src/__tests__/runtime-native-throw.test.ts` > "one native that throws costs one binding: every directive reports on its own element and the rest of the module works"
 Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a native runs is rethrown, not filed as the native failing"
-Verified by `src/__tests__/runtime-native-throw.test.ts` > "what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text"
+
+**So is what else threw** (FORMA-274), on the element that met it:
+
+- a `data-bind:` or `data-class:` with nothing after the colon is refused when
+  it is bound: `FORMA_E_UNSUPPORTED`, `data-bind: has no name`;
+- a write of the runtime's that the browser refuses, such as `data-model` on a
+  file input, or a value that is not a number on a `<progress>` or `<meter>`,
+  or, under a Trusted Types policy, `data-bind:src` or `data-text` on a
+  `<script>`: `FORMA_E_CALL_FAILED`, `data-model write threw InvalidStateError: …`;
+- the same at event time, `$el.dataset['a-b'] = 1` or `$el.value = 'x'` on a
+  file input: `$el.value = … threw InvalidStateError: …`;
+- a DOM method's promise that rejects, Chromium's
+  `$el.scrollIntoView({behavior: 'bad'})`: `$el.scrollIntoView() rejected TypeError: …`;
+- a value nested more than 100 arrays or objects deep, whatever made it (state,
+  a response, a handler, `reduce`): `FORMA_E_BUDGET`, `a value nested over 100
+  deep`, before anything converts it. The cap leaves more than sixfold
+  headroom below the lowest measured engine overflow depth (Firefox: 622
+  with 2,000 caller frames); engine stack sizes are not a universal bound;
+- a value converted to text or a number whose `toString` is not a function,
+  an object JSON shadowed (`{"toString": 1}`) or an array a handler gave one
+  (`list.toString = 1`), arrays at any depth included: `FORMA_E_CALL_FAILED`,
+  `a value whose toString is not a function`. Only a conversion refuses it,
+  never an object's members and never a value serialized or handed on as data:
+  a dictionary with a `toString` key still works with `JSON.stringify`,
+  `data-persist`, a row's `{item}`, `$dispatch`'s detail and `Array.from`;
+- more than 32 evaluations nested inside one another, a chain of computeds or
+  a handler that `$dispatch`es to itself: `FORMA_E_BUDGET`, `evaluations nested
+  over 32 deep`. A computed refused this way is computed again on its next
+  read. Boundary tests cover 31 computeds plus their binding, and 31 relayed
+  handlers converting a value 100 deep in the browser engines.
+
+A test mounts every directive with 48 hostile values each and finds nothing
+that throws. Markup nested a few hundred levels deep can still overflow the
+stack (a `data-list` in a row of a `data-list`, hundreds of times), so "markup
+cannot throw out of `mountMarkup`" is not a stated guarantee: SECURITY.md,
+*Known gaps*.
+
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a data-bind: or data-class: with no name is refused at bind time with FORMA_E_UNSUPPORTED, and the rest of the module mounts"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a write the browser refuses is reported on its element, at mount and on a later run: %s"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "%s is reported on its element as FORMA_E_CALL_FAILED, not thrown to the event"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "the rejection is reported on the element, not left unhandled"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a dictionary with a toString key still serializes, persists, renders as a row and travels as $dispatch detail"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "an array a handler gave its own toString is refused wherever it is converted"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow"
+Verified by `src/__tests__/runtime-throw-paths.test.ts` > "every directive given %s: nothing throws out of mountMarkup, an event or a later run, and every failure is coded"
 
 The hardened build is the same runtime under a second, tree-shaken bundling. It
 is no longer a stronger guarantee — every build is equally eval-free:
