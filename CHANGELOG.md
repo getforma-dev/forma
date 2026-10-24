@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Add a separate [3.0 → 3.1 upgrade draft](docs/UPGRADING-3.1.md), covering
+  renderer-first version ordering, plain static output, opt-in compression and
+  explicit HTML-runtime declarations. Preserve the published 3.0 output contract
+  in its existing guide. Version 3.1 remains unpublished and gated by qualification.
+
 - Render no-JavaScript native routes as plain HTML (FORMA-257): omit hydration
   comments, injected row keys, empty island state, and the root build/SSR
   attributes when the route has `js: []` and no islands. Scrapers of those
