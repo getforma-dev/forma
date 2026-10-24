@@ -453,7 +453,7 @@ function handleEvent(el: Element, key: string, value: unknown): void {
  */
 function handleInnerHTML(el: Element, _key: string, value: unknown): void {
   if (typeof value === 'function') {
-    bindInnerHTML(el, value, false);
+    bindInnerHTML(el, value);
   } else {
     if (value == null) {
       el.replaceChildren();
@@ -473,10 +473,8 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
  *   accepted write of the same markup.
  * - `null` and `false` empty the element and forget the markup, so the same
  *   markup after either sentinel is written again.
- * - The retained internal `adopt` flag skips the first matching write: markup the server's
- *   element already holds is not written again ({@link holdsMarkup}), and a
- *   first `null` keeps the server's content, the children adoption bound, as
- *   h() shows its children until markup arrives.
+ * Strict adoption uses prepareRaw's separate no-write validation and typed
+ * update path; this writer is only called during ordinary client construction.
  *
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "an adopted reactive dangerouslySetInnerHTML shows its content, follows its signal through null and back, and matches client rendering ($name)"
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "A → null → A shows A again, client-rendered and adopted"
@@ -484,22 +482,19 @@ function handleInnerHTML(el: Element, _key: string, value: unknown): void {
  * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "a reactive prop whose first value is null keeps the server's fallback child, bound, until markup arrives"
  * Verified by: src/dom/__tests__/trusted-html.test.ts > "a refused string aborts adoption while ordinary CSR accepts later trusted markup"
  */
-export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void {
-  let first = adopt;
+function bindInnerHTML(el: Element, value: unknown): void {
   const write = (resolved: unknown): void => {
-    const adopting = first;
-    first = false;
     const cache = getCache(el);
     if (resolved == null || resolved === false) {
       cache['innerHTML'] = null;
-      if (!adopting && el.firstChild) el.replaceChildren();
+      if (el.firstChild) el.replaceChildren();
       return;
     }
     const html = innerHtmlOf(resolved);
     const markup = String(html);
     if (cache['innerHTML'] === markup) return;
     const sink = rawHtml(html, 'innerHTML');
-    if (!adopting || !holdsMarkup(el, markup, sink)) el.innerHTML = sink;
+    el.innerHTML = sink;
     cache['innerHTML'] = markup;
   };
   if (typeof value === 'function') {
@@ -507,30 +502,6 @@ export function bindInnerHTML(el: Element, value: unknown, adopt: boolean): void
   } else {
     write(value);
   }
-}
-
-/**
- * True when `el`'s content already is what `sink` (whose text is `markup`)
- * parses to: byte-equal to the browser's serialisation, or equal to it once
- * `sink` is parsed through a `<template>` and serialised the same way. A
- * server writes markup as it was given, and `<br/>`, single quotes, `&#39;`,
- * an unclosed `<p>` or a `<table>` without `<tbody>` all serialise
- * differently, so byte equality alone would rewrite the server's nodes (an
- * iframe reloads, typed text is lost: DR-5). The parse writes `sink` itself,
- * so `trustedHtml()` stays typed. Raw strings have already been refused.
- *
- * Verified by: src/dom/__tests__/adopt-inner-html.test.ts > "markup the server wrote in a form the browser serialises differently is not rewritten: %j"
- */
-function holdsMarkup(el: Element, markup: string, sink: string): boolean {
-  const current = el.innerHTML;
-  if (current === markup) return true;
-  // An empty element (the walker's) holds no markup to compare: write, with
-  // no parse first. The typed admission check also runs for an empty target.
-  // Verified by: src/dom/__tests__/trusted-html.test.ts > "adopted and client reactive strings are refused before the browser sink"
-  if (current === '') return false;
-  const tpl = document.createElement('template');
-  tpl.innerHTML = sink;
-  return tpl.innerHTML === current;
 }
 
 /**
