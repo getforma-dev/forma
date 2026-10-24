@@ -174,6 +174,24 @@ already had — it never writes the string `undefined`.
 Verified by `src/__tests__/failure-semantics.test.ts` > "a denied expression leaves the previous text in place and never renders undefined"
 Verified by `src/__tests__/failure-semantics.test.ts` > "a denied binding does not stop its siblings from binding"
 
+**A built-in that throws on its arguments is reported the same way**, on the
+binding that called it, as `FORMA_E_CALL_FAILED`. The message names the method
+and the error: `{JSON.parse(payload)}` of a payload that is not JSON reports
+`JSON.parse() threw SyntaxError: …`, and `{(1).toFixed(500)}`,
+`{(1).toString(1)}`, `{Object.keys(user)}` while `user` is `null`,
+`{[].reduce((a, b) => a + b)}`, `{$el.matches('#1')}` and
+`$el.classList.add('')` in a handler are reported the same way. One bad payload
+costs that binding only: the rest of the markup binds and keeps working. Before
+FORMA-271 the exception escaped `mountMarkup` and left the whole module
+unbound. A real bug in Forma's own code is still not filed as an expression
+failure. Some markup can still throw out of `mountMarkup`: a `data-bind:` or
+`data-class:` with no name, and a value nested about 10,000 deep converted to
+text (SECURITY.md, *Known gaps*).
+
+Verified by `src/__tests__/runtime-native-throw.test.ts` > "one native that throws costs one binding: every directive reports on its own element and the rest of the module works"
+Verified by `src/__tests__/runtime-native-throw.test.ts` > "a real bug in code a native runs is rethrown, not filed as the native failing"
+Verified by `src/__tests__/runtime-native-throw.test.ts` > "what can still throw out of mountMarkup: the runtime's own write of a data-bind: with no name, and a value nested 10,000 deep converted to text"
+
 The hardened build is the same runtime under a second, tree-shaken bundling. It
 is no longer a stronger guarantee — every build is equally eval-free:
 

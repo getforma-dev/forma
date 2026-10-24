@@ -30,6 +30,13 @@ export type ExprErrorCode =
   | 'FORMA_E_METHOD_DENIED'
   /** The call target is not an allowlisted callable. */
   | 'FORMA_E_CALL_DENIED'
+  /**
+   * An allowlisted call was made and its native threw on its arguments
+   * (`JSON.parse('{')`, `(1).toFixed(500)`, `Object.keys(null)`, a selector
+   * the DOM cannot parse). The message names the method and the error
+   * (FORMA-271). Final, like the refusals that check a length: `defer` unset.
+   */
+  | 'FORMA_E_CALL_FAILED'
   /** The assignment target is unknown or not writable. */
   | 'FORMA_E_ASSIGN_DENIED'
   /** An evaluation-time budget (steps, array/string size) was exceeded. */
@@ -56,7 +63,8 @@ export interface FormaExprError extends Error {
    * task it may fit, so the runtime retries it there instead of reporting it.
    * False when it is final, and reported. Left unset by the refusals that
    * check a length or a count (`repeat()` past its cap, `flat()` too deep, a
-   * string past 1 MiB, an index past the budget): the runtime reports those
+   * string past 1 MiB, an index past the budget), and by every other code,
+   * `FORMA_E_CALL_FAILED` included: the runtime reports those
    * as final and arms nothing for them (FORMA-249). What the evaluation
    * charged before the check (for `repeat()` and `flat()`, their cost-table
    * row) stays on the meter, and a charge before the check that does not fit
