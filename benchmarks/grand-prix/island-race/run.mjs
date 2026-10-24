@@ -42,7 +42,7 @@ const result={protocol:'forma-264-island-v1',car:args.car,url:sourceUrl,sourceCo
   browser:{executable:args.chrome,sha256:chromeSha256},samples:[],warmupSamples:[],verified:false};
 const persist=()=>writeFile(output,JSON.stringify(result,null,2)+'\n');
 await writeFile(output,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
-const browser=await puppeteer.launch({executablePath:args.chrome,headless:true,args:['--no-sandbox','--no-first-run','--disable-extensions','--disable-background-timer-throttling','--disable-renderer-backgrounding'],defaultViewport:{width:1280,height:800}});
+const browser=await puppeteer.launch({executablePath:args.chrome,headless:true,args:['--no-first-run','--disable-extensions','--disable-background-timer-throttling','--disable-renderer-backgrounding'],defaultViewport:{width:1280,height:800}});
 result.browser.version=await browser.version();
 function equal(actual,expected,label) { if (JSON.stringify(actual)!==JSON.stringify(expected)) throw new Error(`${label}: ${JSON.stringify(actual).slice(0,500)}`); }
 const readDashboard=()=>({rows:[...document.querySelectorAll('tbody tr')].map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent.trim())),summary:[...document.querySelectorAll('.cards .card b')].map(el=>el.textContent.trim()),count:document.querySelector('#gp-count')?.textContent,button:document.querySelector('#gp-increment')?.textContent});

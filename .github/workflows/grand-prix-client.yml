@@ -21,6 +21,7 @@ on:
       - 'benchmarks/grand-prix/signals-race/**'
       - 'benchmarks/grand-prix/harness/client-linux.mjs'
       - 'benchmarks/grand-prix/harness/install-linux-browser.mjs'
+      - 'benchmarks/grand-prix/harness/browser-sandbox*'
       - 'benchmarks/grand-prix/harness/chromium-linux-lock.json'
       - '.github/workflows/grand-prix-client.yml'
 
@@ -46,9 +47,11 @@ jobs:
       - name: Install locked browser tooling
         working-directory: benchmarks/grand-prix/island-race
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check browser profile path restrictions
+        run: node --test benchmarks/grand-prix/harness/browser-sandbox.test.mjs
       - name: Install and verify frozen Chromium
         id: browser
-        run: sudo --preserve-env=GITHUB_OUTPUT "$(command -v node)" benchmarks/grand-prix/harness/install-linux-browser.mjs "$RUNNER_TEMP/gp264-chromium" --install-deps
+        run: sudo --preserve-env=GITHUB_OUTPUT "$(command -v node)" benchmarks/grand-prix/harness/install-linux-browser.mjs "$RUNNER_TEMP/gp264-chromium" --install-deps --install-apparmor-profile
       - name: Run baseline and candidates sequentially
         working-directory: benchmarks/grand-prix
         env:
@@ -66,6 +69,11 @@ jobs:
           const result=spawnSync(process.execPath,args,{stdio:'inherit'});
           process.exit(result.status??1);
           JS
+      - name: Remove this run's browser profile
+        if: always() && steps.browser.outputs.sandbox_profile != ''
+        env:
+          GP_BROWSER_PROFILE: ${{ steps.browser.outputs.sandbox_profile }}
+        run: sudo "$(command -v node)" benchmarks/grand-prix/harness/browser-sandbox.mjs --remove "$GP_BROWSER_PROFILE"
       - name: Remove only this run's Docker resources
         if: always()
         working-directory: benchmarks/grand-prix
@@ -82,5 +90,6 @@ jobs:
             benchmarks/grand-prix/results/*-client/*/client-race/package-lock.json
             benchmarks/grand-prix/results/*-client/*/signals-race/package-lock.json
             benchmarks/grand-prix/results/*-cleanup.json
+            ${{ runner.temp }}/gp264-chromium/browser-lock.json
           if-no-files-found: error
           retention-days: 30

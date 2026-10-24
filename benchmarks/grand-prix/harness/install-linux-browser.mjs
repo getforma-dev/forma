@@ -6,6 +6,7 @@ import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { installSandboxProfile, sandboxProfile as describeSandboxProfile } from './browser-sandbox.mjs';
 
 assert.equal(process.platform, 'linux', 'the frozen browser is for Linux');
 assert.equal(process.arch, 'x64', 'the frozen browser is for Linux x64');
@@ -21,7 +22,13 @@ const installed = await install({ browser: Browser.CHROME, platform: BrowserPlat
 const hash = createHash('sha256');
 for await (const chunk of createReadStream(installed.executablePath)) hash.update(chunk);
 assert.equal(hash.digest('hex'), lock.executableSha256, 'installed Chromium executable differs from the frozen bytes');
-const observation = { ...lock, executablePath: installed.executablePath, installedAt: new Date().toISOString() };
+const configureSandbox = process.argv.includes('--install-apparmor-profile');
+// Publish recovery identity before creating/loading the owned profile. The
+// always step can remove it even if installation or later evidence writes fail.
+if (configureSandbox && process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT,
+  `sandbox_profile=${describeSandboxProfile(installed.executablePath).path}\n`);
+const sandboxProfile = configureSandbox ? installSandboxProfile(installed.executablePath) : null;
+const observation = { ...lock, executablePath: installed.executablePath, sandboxProfile, installedAt: new Date().toISOString() };
 await writeFile(resolve(cacheDir, 'browser-lock.json'), JSON.stringify(observation, null, 2) + '\n');
 if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT,
   `path=${installed.executablePath}\nsha256=${lock.executableSha256}\n`);
