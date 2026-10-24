@@ -193,6 +193,7 @@ export function createEffect(fn: () => void | (() => void)): () => void {
 type Cleanup = (() => void) | (() => void)[] | undefined;
 class EffectState implements Owner {
   owner: Owner | null = this;
+  declare private slow: boolean | undefined;
   // Optional state is installed only when used. A leaf reader retains just its
   // callback, ownership context and engine disposer, rather than empty slots for
   // cleanup, children, initial errors and adoption capabilities.
@@ -214,6 +215,7 @@ class EffectState implements Owner {
     initialThrow: boolean,
   ) {
     const callbacks = getAdoptionCallbacks(), events = getAdoptionEvents();
+    if (callbacks || events || failure || initialThrow) this.slow = true;
     if (callbacks) this.callbacks = callbacks;
     if (events) this.events = events;
     if (initialThrow) this.initialThrow = true;
@@ -223,9 +225,10 @@ class EffectState implements Owner {
     }
   }
 
-  get disposers(): (() => void)[] { return this.children ??= []; }
+  get disposers(): (() => void)[] { this.slow = true; return this.children ??= []; }
 
   addCleanup(callback: () => void): void {
+    this.slow = true;
     if (this.nextCleanup === undefined) this.nextCleanup = callback;
     else if (typeof this.nextCleanup === 'function') {
       const bag = acquireArray();
@@ -251,8 +254,7 @@ class EffectState implements Owner {
   }
 
   runPlain(): void {
-    if (this.children || this.cleanup || this.callbacks || this.events || this.failure
-      || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
+    if (this.slow || getAdoptionCallbacks() || getAdoptionEvents() || adoptionFailure) return this.run();
     const previous = setExecutionContext(this), node = getActiveSub() as SubNode;
     node.flags &= ~PENDING;
     try {
