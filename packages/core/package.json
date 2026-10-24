@@ -118,7 +118,8 @@
   },
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "licenses/alien-signals.txt"
   ],
   "sideEffects": [
     "./dist/runtime.js",
