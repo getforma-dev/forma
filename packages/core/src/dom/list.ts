@@ -16,7 +16,7 @@
 
 import { createSignal, internalEffect, untrack, createRoot, registerDisposer, __DEV__ } from '../reactive';
 import { describingAdoption } from './adoption-description.js';
-import { deactivateIsland, hasScheduledOrActiveIslands } from './activate.js';
+import { deactivateIslandsIn } from './island-disposal.js';
 import { getNamespace, insertNs, withNamespace } from './namespace.js';
 import { keyedRowsSource, type KeyedRows } from './keyed-rows.js';
 import { cleanup } from './element.js';
@@ -147,17 +147,6 @@ const SMALL_LIST_THRESHOLD = 32;
  * Verified by: src/dom/__tests__/list-disposal.test.ts > "deactivates an island inside a removed row"
  * Verified by: src/dom/__tests__/list-disposal.test.ts > "does not scan a removed row when no island has ever been activated"
  */
-function deactivateIslandsIn(node: Node): void {
-  if (!hasScheduledOrActiveIslands()) return;
-  if (!(node instanceof Element)) return;
-  if (node.hasAttribute('data-forma-island')) {
-    deactivateIsland(node as HTMLElement);
-  }
-  for (const nested of node.querySelectorAll<HTMLElement>('[data-forma-island]')) {
-    deactivateIsland(nested);
-  }
-}
-
 /**
  * Remove one row, honouring an exit animation.
  *
@@ -167,12 +156,12 @@ function deactivateIslandsIn(node: Node): void {
 function removeRow(parent: Node, node: Node, hooks?: ListTransitionHooks): void {
   if (hooks?.onBeforeRemove) {
     hooks.onBeforeRemove(node, () => {
-      deactivateIslandsIn(node);
+      deactivateIslandsIn?.(node);
       if (node.parentNode) node.parentNode.removeChild(node);
     });
     return;
   }
-  deactivateIslandsIn(node);
+  deactivateIslandsIn?.(node);
   parent.removeChild(node);
 }
 
@@ -194,7 +183,7 @@ function updateRowNode<T>(
 ): Node {
   const next = updateFn(node, item);
   if ((updateFn as { [REPLACES_ROW]?: boolean })[REPLACES_ROW] && next instanceof Node && next !== node) {
-    deactivateIslandsIn(node);
+    deactivateIslandsIn?.(node);
     parent.replaceChild(next, node);
     return next;
   }
@@ -640,7 +629,7 @@ function createArrayList<T>(
       // Remove all nodes between the markers
       for (const node of currentNodes) {
         if (node.parentNode === parent) {
-          deactivateIslandsIn(node);
+          deactivateIslandsIn?.(node);
           parent.removeChild(node);
         }
       }
@@ -756,7 +745,7 @@ function createArrayList<T>(
   // Map still holds stale references that prevent GC.
   registerDisposer(() => {
     for (const cached of cache.values()) {
-      deactivateIslandsIn(cached.element);
+      deactivateIslandsIn?.(cached.element);
       cached.dispose();
     }
     cache = new Map();

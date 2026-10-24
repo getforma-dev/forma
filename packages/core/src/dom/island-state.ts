@@ -38,7 +38,7 @@ export type IslandPreflight = { readonly host: HTMLElement; readonly value: Vali
 
 const MAX_STATE_BYTES = 1_048_576;
 const HASH = /^[0-9a-f]{16}$/;
-const stateEncoder = new TextEncoder();
+const stateEncoder = /* @__PURE__ */ new TextEncoder();
 const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
 const registrations = new WeakMap<(...args: never[]) => unknown, Registration>();
 const registeredComponents = new WeakSet<(...args: never[]) => unknown>();
