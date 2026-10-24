@@ -143,6 +143,7 @@
     "pack:release": "npm run build && npm pack --pack-destination releases",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:engine": "vitest run --config vitest.engine-probe.config.ts --maxWorkers=1",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "bench": "node scripts/bench.mjs",

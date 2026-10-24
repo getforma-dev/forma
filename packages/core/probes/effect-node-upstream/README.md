@@ -1,9 +1,12 @@
-# Supplied-node diagnostic controls
+# Supplied-node adapter qualification
 
-This prototype is diagnostic and nonpublishable. It does not satisfy the fixed
-package/route size limits or all effect throughput targets. Its purpose is to
-qualify the graph contract before a source-bound Linux comparison. No limit or
-acceptance criterion changes with this probe.
+These controls qualify the supplied-node adapter selected for the 3.1 release.
+The original flat candidate exceeded the previous package and route size gates,
+and its latest qualified Linux fan-out result was 76.3% of the pinned engine,
+below the original 80% target. The [3.1 performance decision](../../../../docs/release/3.1-PERFORMANCE-TRADEOFFS.md)
+records the explicitly accepted product tradeoff and revised byte budgets.
+Those historical misses remain failures; this suite establishes graph behavior,
+not throughput or release acceptance.
 
 The `pristine` and `adapter` suites retain the upstream alien-signals 3.1.2
 tests from commit `836130c4837f8184ae0079e6d550b0adba07b936`, with only imports
@@ -14,10 +17,11 @@ in the packed package. The engine package itself is not patched or vendored.
 Run both variants and the ESM/CJS export controls with:
 
 ```
-npx vitest run --config vitest.engine-probe.config.ts --maxWorkers=1
+npm run test:engine
 ```
 
-These 84 controls supplement the regular core suite. The adapter uses the
+These 84 controls supplement the regular core suite and run in the regular
+Node CI matrix after the workspace tests. The adapter uses the
 original engine's active subscriber and scheduler; its separate public
 `createReactiveSystem` instance supplies only link/unlink operations. Its
 update/notify hooks deliberately throw if that boundary is crossed. The source
@@ -29,4 +33,5 @@ Native scope teardown stops graph reactions. Forma's returned disposer remains
 responsible for its own cleanup collector, matching the existing wrapper
 contract. The packed ESM and CJS graphs must each resolve the same engine
 instance as their own format's public Forma entry. Packed interop, browser
-ownership, size gates and the unchanged throughput harness are separate checks.
+ownership, size gates and the unchanged throughput harness remain separate,
+source-bound checks required before promoting the selected release candidate.
