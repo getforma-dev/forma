@@ -352,10 +352,11 @@ reads only the inner state, so a name that only the outer state declares is
 reported `FORMA_E_UNRESOLVED` there, and a scope's `$refs` lists only its own
 `data-ref` elements. This holds at any depth and in a `data-if` branch, shown
 or hidden at mount. `update()` disposes each scope it removes or remounts and
-mounts each scope it adds or remounts, nested ones included. A
-`data-forma-state` in a `data-list` row is not mounted as a scope: the row
-binds its elements against the row's scope (the list's state, `item` and
-`index`).
+mounts each scope it adds or remounts, nested ones included. One gap
+remains: a `data-forma-state` in a `data-list` row is not yet mounted as a
+scope, so the row binds its elements against the row's scope (the list's
+state, `item` and `index`), and a name only that nested state declares is
+reported `FORMA_E_UNRESOLVED`.
 
 Verified by `src/__tests__/runtime-nested-scope.test.ts` > "the ticket markup: the inner scope binds its elements once, and the outer scope binds none of them"
 Verified by `src/__tests__/runtime-nested-scope.test.ts` > "the outer scope binds its own elements before and after a nested scope, and they follow its state only"

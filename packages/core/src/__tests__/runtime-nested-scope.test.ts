@@ -176,10 +176,12 @@ describe.each([false, true])('a scope nested in a data-if that is %s at mount', 
 });
 
 it('a scope nested in a data-list row is bound by the row, as before: rows do not mount a nested scope (unchanged here)', () => {
-  // A row binds its clone's elements against the row scope (the list's scope
-  // plus `item` and `index`) and mounts no scope in it; FORMA-283 changes
-  // only what a mounted scope binds. The outer scope's pass still binds
-  // nothing in the row template, and the elements after the list are its own.
+  // A known gap, not fixed here: a row binds its clone's elements against the
+  // row scope (the list's scope plus `item` and `index`) and mounts no scope
+  // in it, so the nested `msg` reads the list's. FORMA-283 changes only what
+  // a mounted scope binds; this pins the row as it is, so the fix for rows
+  // changes this test on purpose. The outer scope's pass still binds nothing
+  // in the row template, and the elements after the list are its own.
   mount(`<section id="o" data-forma-state='{"rows":[{"id":1},{"id":2}],"msg":"outer"}'>`
     + `<ul data-list="{rows}"><li><div data-forma-state='{"msg":"inner"}'><i class="id" data-text="{item.id}"></i>`
     + '<span class="m" data-text="{msg}"></span></div></li></ul><p id="after" data-text="{msg}"></p></section>');
