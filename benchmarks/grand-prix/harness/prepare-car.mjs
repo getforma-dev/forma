@@ -41,7 +41,7 @@ assert.deepEqual(records('Cargo.lock'),records('Cargo.registry.lock'),'candidate
     docker = docker.replace(anchor, [
       'COPY candidate /candidate',
       'COPY candidate-patch.toml check-candidate-lock.mjs ./',
-      'RUN cp Cargo.lock Cargo.registry.lock && cat candidate-patch.toml >> Cargo.toml && cargo update --offline -p forma-ir -p forma-ir-derive -p forma-server && node check-candidate-lock.mjs',
+      "RUN mkdir -p src && echo 'fn main() {}' > src/main.rs && cp Cargo.lock Cargo.registry.lock && cat candidate-patch.toml >> Cargo.toml && cargo update --offline -p forma-ir -p forma-ir-derive -p forma-server && node check-candidate-lock.mjs && rm -rf src",
       anchor,
     ].join('\n'));
     writeFileSync(dockerfile, docker);
