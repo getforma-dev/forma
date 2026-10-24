@@ -1,5 +1,6 @@
 use crate::format::{IrError, SlotType};
 use crate::parser::{IrModule, SlotTable};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 /// Runtime values populated by page handlers before IR walking.
@@ -44,6 +45,21 @@ fn format_js_number(n: f64) -> String {
 }
 
 impl SlotValue {
+    /// The same text as `to_text`, borrowing scalars or a caller's number buffer.
+    /// Arrays retain the existing join conversion so normalization still applies
+    /// once to the complete value, including CRLF across nested array elements.
+    pub(crate) fn text_ref<'a>(&'a self, number: &'a mut ryu_js::Buffer) -> Cow<'a, str> {
+        match self {
+            Self::Null => Cow::Borrowed(""),
+            Self::Text(text) => Cow::Borrowed(text),
+            Self::Bool(true) => Cow::Borrowed("true"),
+            Self::Bool(false) => Cow::Borrowed("false"),
+            Self::Number(value) => Cow::Borrowed(number.format(*value)),
+            Self::Object(_) => Cow::Borrowed("[object Object]"),
+            Self::Array(_) => Cow::Owned(self.to_text()),
+        }
+    }
+
     /// Render to string for DYN_TEXT output.
     ///
     /// Numbers follow ECMAScript `Number::toString` so the SSR text node
@@ -421,6 +437,40 @@ mod tests {
     #[test]
     fn slot_value_text_to_text() {
         assert_eq!(SlotValue::Text("hello".to_string()).to_text(), "hello");
+    }
+
+    #[test]
+    // Spell the exact binary value whose shortest decimal is an ECMAScript tie.
+    #[allow(clippy::excessive_precision)]
+    fn borrowed_scalar_text_preserves_ecmascript_conversion() {
+        let values = vec![
+            SlotValue::Null,
+            SlotValue::Text("\0\r\n<&>\"é🦀".into()),
+            SlotValue::Bool(true),
+            SlotValue::Bool(false),
+            SlotValue::Number(-0.0),
+            SlotValue::Number(f64::NAN),
+            SlotValue::Number(f64::INFINITY),
+            SlotValue::Number(f64::NEG_INFINITY),
+            SlotValue::Number(1e-7),
+            SlotValue::Number(1e21),
+            SlotValue::Number(-270129723325078.625),
+            SlotValue::object(vec![]),
+            SlotValue::array(vec![
+                SlotValue::Text("\r".into()),
+                SlotValue::array(vec![SlotValue::Null, SlotValue::Text("\n".into())]),
+                SlotValue::Number(42.0),
+            ]),
+        ];
+        for value in values {
+            let mut number = ryu_js::Buffer::new();
+            let borrowed = value.text_ref(&mut number);
+            assert_eq!(borrowed, value.to_text(), "{value:?}");
+            assert_eq!(
+                matches!(borrowed, Cow::Owned(_)),
+                matches!(value, SlotValue::Array(_))
+            );
+        }
     }
 
     #[test]
