@@ -27,7 +27,7 @@ export { hostFn, hostObject, isHost, type Bound, type ExprGrant, type Host } fro
 export { isLocalSelector } from './selector';
 export { allowlistSnapshot, SAFE_GLOBALS } from './allowlist';
 export { GROW, weigh } from './cost';
-export { running, safeKey, safeRead, setStepBudget, getStepBudget, WAITING_CAP, type Meter, type ScopeLike } from './interp';
+export { running, safeKey, safeRead, said, setStepBudget, getStepBudget, WAITING_CAP, type Meter, type ScopeLike } from './interp';
 
 const CACHE_MAX = 2048;
 

@@ -387,7 +387,7 @@
   "tags": [
    "security"
   ],
-  "find": "      if (Array.isArray(out)) charge(ctx, out.length, 'flatMap', at);\n",
+  "find": "      else if (Array.isArray(out)) charge(ctx, out.length, 'flatMap', at);\n",
   "replace": "",
   "note": "the arrays a flatMap callback returns are copied uncharged. Verified by: src/expr/__tests__/native-cost.test.ts > \"flatMap charges each array its callback returns\""
  },
@@ -2579,7 +2579,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    throw exprError('FORMA_E_CALL_FAILED', `${what}() threw ${String(e).slice(0, 200)}`, at);",
+  "find": "    throw exprError('FORMA_E_CALL_FAILED', `${what}${how} threw ${said(e)}`, at);",
   "replace": "    throw e;",
   "note": "an allowlisted native that throws on its arguments (`JSON.parse('{')`, `(1).toFixed(500)`) escapes mountMarkup as a raw exception and the whole module stays unbound (FORMA-271, from FORMA-268's review). Verified by: src/__tests__/runtime-native-throw.test.ts > \"one native that throws costs one binding: every directive reports on its own element and the rest of the module works\""
  },
@@ -2589,8 +2589,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;",
-  "replace": "    if (host && SAFE_GLOBALS[what] !== host) throw e;",
+  "find": "    if ((host && SAFE_GLOBALS[host.label] !== host) || ctx.steps !== steps) throw e;",
+  "replace": "    if (host && SAFE_GLOBALS[host.label] !== host) throw e;",
   "note": "what Forma's own code throws while a native runs it (a real bug in an arrow callback, a handler a click() dispatches, an expression error with its own code) is filed as the native failing, FORMA_E_CALL_FAILED, hiding the bug (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"a real bug in an arrow callback passes through as it is\""
  },
  {
@@ -2599,7 +2599,7 @@
   "tags": [
    "correctness"
   ],
-  "find": "    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;",
+  "find": "    if ((host && SAFE_GLOBALS[host.label] !== host) || ctx.steps !== steps) throw e;",
   "replace": "    if (ctx.steps !== steps) throw e;",
   "note": "a runtime magic ($dispatch, $refetch) is treated as a native, so a bug in Forma's own code inside it is filed as FORMA_E_CALL_FAILED instead of surfacing (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"a runtime magic is Forma code, not a native: what it throws passes through as it is\""
  },
@@ -2609,8 +2609,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "`${what}() threw ${String(e).slice(0, 200)}`",
-  "replace": "`${what}() threw ${String(e)}`",
+  "find": "    return String(e).slice(0, 200);",
+  "replace": "    return String(e);",
   "note": "the FORMA_E_CALL_FAILED message carries the native's whole message, which can quote a megabyte argument (a selector) into the console and the diagnostics ledger (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"the message names the method and the error, and is bounded\""
  },
  {
@@ -2631,7 +2631,7 @@
   ],
   "find": "      return checkResultSize(native(ctx, target.label, at, target.target as Native, undefined, args, target), at);",
   "replace": "      return checkResultSize(Reflect.apply(target.target as Native, undefined, args), at);",
-  "note": "a call of an allowlisted global function (`String(v)`, `Number(v)`, `parseInt(v)`) is made bare, so what it throws (a stack overflow converting deeply nested data, an application's toString) escapes the binding (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"%s is refused with FORMA_E_CALL_FAILED naming %s and its %s\""
+  "note": "a call of an allowlisted global function (`String(v)`, `Number(v)`, `parseInt(v)`) is made bare, so what it throws (an application's toString) escapes the binding (FORMA-271). Verified by: src/expr/__tests__/native-throw.test.ts > \"code an application put in reach and a native runs is converted: a toString of a value in state, an override of an element method\""
  },
  {
   "id": "runtime/event-modifier-unchecked",
@@ -2772,5 +2772,145 @@
   "find": "  for (const el of Array.from(content.querySelectorAll('*'))) {\n    for (const attr of Array.from(el.attributes)) {\n",
   "replace": "  for (const el of live ? [] : Array.from(content.querySelectorAll('*'))) {\n    for (const attr of Array.from(el.attributes)) {\n",
   "note": "the live check after each write no longer looks at attributes: a script URL or handler attribute that reaches the root by a path the strip did not see stays in the document and the render stands. Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"an unreviewed mount fails closed: a script URL or handler attribute that reaches the root after the strip is removed, reported, and the markup refused\""
+ },
+ {
+  "id": "runtime/empty-directive-name-bound",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (name === 'data-class:' || name === 'data-bind:') {",
+  "replace": "    if (name === 'data-class:-' || name === 'data-bind:-') {",
+  "note": "a data-bind: or data-class: with nothing after the colon binds, so the runtime writes the empty name: setAttribute('') throws InvalidCharacterError out of mountMarkup, and a browser's classList.toggle('') a SyntaxError (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a data-bind: or data-class: with no name is refused at bind time with FORMA_E_UNSUPPORTED, and the rest of the module mounts\""
+ },
+ {
+  "id": "runtime/dom-write-unwrapped",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  try {\n    f();\n  } catch (e) {\n    reportExprFailure(el, stripBraces(expr), exprError('FORMA_E_CALL_FAILED', `${what} write threw ${said(e)}`), mount);\n  }",
+  "replace": "  f();",
+  "note": "the runtime's own DOM write of a binding's value is made bare: data-model on a file input, a <progress> or a <meter> throws out of mountMarkup, and on a later run reaches onError() only (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a write the browser refuses is reported on its element, at mount and on a later run: %s\""
+ },
+ {
+  "id": "expr/weigh-depth-unrefused",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (d < -100 && v && typeof v === 'object') {",
+  "replace": "    if (d < -1e9 && v && typeof v === 'object') {",
+  "note": "a value nested 10,000 deep is weighed and converted: data-text, an operator, Forma's argument checks and a sort comparator's result overflow the stack out of mountMarkup (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element\""
+ },
+ {
+  "id": "expr/weigh-depth-off-by-one",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    if (d < -100 && v && typeof v === 'object') {",
+  "replace": "    if (d < -99 && v && typeof v === 'object') {",
+  "note": "a value exactly 100 arrays deep is refused, one level short of the documented limit (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render\""
+ },
+ {
+  "id": "expr/weigh-tostring-unrefused",
+  "file": "src/expr/cost.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      if (typeof (v as { toString?: unknown }).toString !== 'function') {",
+  "replace": "      if (typeof (v as { toString?: unknown }).toString === 'symbol') {",
+  "note": "an object whose own toString is not a function, which JSON can send ({\"toString\": 1}), is converted: an operator, data-text, data-bind:, an argument check and a key throw a TypeError out of mountMarkup or a handler (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"is refused with FORMA_E_CALL_FAILED before anything converts it, where it threw a TypeError out of mountMarkup and the handler\""
+ },
+ {
+  "id": "expr/sort-comparator-unpriced",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "      if (method === 'sort') coerce(ctx, out, at);\n",
+  "replace": "      if (method === 'sort') {}\n",
+  "note": "a sort comparator's result is converted by the native after the comparator stepped, unpriced, so a value nested too deep overflows the stack and the step rule files the RangeError as Forma's own (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element\""
+ },
+ {
+  "id": "expr/host-write-unwrapped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    native(ctx, `${host.label}.${key}`, at, Reflect.set as Native, undefined, [host.target, key, v], undefined, ' = \u2026');",
+  "replace": "    Reflect.set(host.target as object, key, v);",
+  "note": "an event-time property write is made bare: a file input's value, a <progress> or <meter> value, $el.dataset['a-b'] raise an uncaught page error (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"%s is reported on its element as FORMA_E_CALL_FAILED, not thrown to the event\""
+ },
+ {
+  "id": "expr/rejection-dropped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    result.catch((e: unknown) => ctx.scope.fail?.(what, exprError('FORMA_E_CALL_FAILED', `${what}() rejected ${said(e)}`, at)));",
+  "replace": "    result.catch(() => {});",
+  "note": "a DOM method's promise that rejects (Chromium 156's scrollIntoView({behavior: 'bad'})) is caught and dropped, with no diagnostic (FORMA-274). Verified by: src/expr/__tests__/native-throw.test.ts > \"a DOM method that answers a promise has its rejection reported to the scope, never left unhandled\""
+ },
+ {
+  "id": "runtime/rejection-not-reported-on-element",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  scope.fail = (what, err) => reportExprFailure(el, what, err, scope.mount);\n",
+  "replace": "",
+  "note": "a value binding's rejected DOM promise has no element to be reported on: it is caught and dropped (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the rejection is reported on the element, not left unhandled\""
+ },
+ {
+  "id": "runtime/rejection-not-reported-on-handler",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  eventScope.fail = (_, err) => reportHandlerFailure(el, cleaned, err, scope.mount);\n",
+  "replace": "",
+  "note": "a handler's rejected DOM promise (scrollIntoView({behavior: 'bad'}) on a click) is caught and dropped instead of reported on the handler's element (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"the rejection is reported on the element, not left unhandled\""
+ },
+ {
+  "id": "expr/native-said-unguarded",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  try {\n    return String(e).slice(0, 200);\n  } catch {\n    return 'an unprintable value';\n  }",
+  "replace": "  return String(e).slice(0, 200);",
+  "note": "what application code throws through a native and that cannot be converted to text (Object.create(null), a toString that throws) makes the wrapper's own String(e) throw in place of the report (FORMA-274). Verified by: src/expr/__tests__/native-throw.test.ts > \"what a native throws that cannot be converted to text is still reported, named as unprintable\""
+ },
+ {
+  "id": "expr/namespace-member-host-dropped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args, host), at);",
+  "replace": "    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args), at);",
+  "note": "a namespace member's call passes no host, so a member that is Forma's own function would have its real bug filed as FORMA_E_CALL_FAILED (FORMA-274, from FORMA-271's review). Verified by: src/expr/__tests__/native-throw.test.ts > \"a namespace member is a native only if the namespace is the allowlist's own: a runtime magic's member passes what it throws through\""
+ },
+ {
+  "id": "expr/evaluation-nesting-uncapped",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
+  "replace": "  if (nest > 1e9) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
+  "note": "evaluations nest without a bound: a chain of 1,000 computeds overflows the stack out of mountMarkup, and a handler that dispatches its own event recurses into an uncaught page error (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow\""
+ },
+ {
+  "id": "expr/evaluation-nesting-off-by-one",
+  "file": "src/expr/interp.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "  if (nest > 32) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
+  "replace": "  if (nest > 31) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');",
+  "note": "the 32nd nested evaluation is refused, one short of the documented cap (FORMA-274). Verified by: src/__tests__/runtime-throw-paths.test.ts > \"a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow\""
  }
 ]

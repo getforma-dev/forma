@@ -35,11 +35,20 @@ export type ExprErrorCode =
    * (`JSON.parse('{')`, `(1).toFixed(500)`, `Object.keys(null)`, a selector
    * the DOM cannot parse). The message names the method and the error
    * (FORMA-271). Final, like the refusals that check a length: `defer` unset.
+   * Since FORMA-274 also: a DOM write the browser refused, the runtime's own
+   * (`data-model write threw …`) or a handler's (`$el.value = … threw …`); a
+   * DOM method's promise that rejected (`… rejected …`, reported after the
+   * evaluation); and an object whose own `toString` is not a function,
+   * refused before it is converted.
    */
   | 'FORMA_E_CALL_FAILED'
   /** The assignment target is unknown or not writable. */
   | 'FORMA_E_ASSIGN_DENIED'
-  /** An evaluation-time budget (steps, array/string size) was exceeded. */
+  /**
+   * An evaluation-time budget (steps, array/string size) was exceeded, or
+   * (FORMA-274) a value nested more than 100 deep was to be converted, or a
+   * 33rd evaluation would have nested inside the others.
+   */
   | 'FORMA_E_BUDGET'
   /**
    * Under a tiered mount (FORMA-128), an element host would have reached past

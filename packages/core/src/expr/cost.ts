@@ -24,6 +24,7 @@
  */
 
 import { LIMITS } from './ast';
+import { exprError } from './errors';
 
 // Captured once, like the allowlist's intrinsics, so a page script that later
 // replaces one of them cannot make a cost read low.
@@ -142,7 +143,27 @@ const size = (v: unknown, room: number): number => {
  * Iterative, and every expansion adds to the total before its children are
  * queued, so a cyclic or ten-thousand-deep value stops at `room` instead of
  * looping or overflowing the stack.
+ *
+ * As text, a value nested more than 100 arrays or objects deep is refused
+ * with `FORMA_E_BUDGET` where the walk reaches its 101st level (FORMA-274).
+ * Converting a value recurses through its nesting (`join`, `String()`, a
+ * default `sort`, `JSON.stringify`, an operator), and past a few thousand
+ * levels the engine's stack overflows in place of the call: a `RangeError`
+ * out of `mountMarkup`, or an uncaught page error. Measured on a fresh stack
+ * (and under 2,000 frames of a caller), `String()` of nested arrays
+ * overflowed past 785 levels in Firefox 157 (622), 2,822 in Node 24 (2,185),
+ * 4,112 in Chromium 156 (3,178) and 4,990 in WebKit 27.2 (4,771). The deepest
+ * values in the founder's applications nest 5 levels in a `data-forma-state`
+ * and 23 in any JSON file of theirs (a CDK tree; their `data-fetch` fixtures
+ * 4), so 100 is four times the deepest found and six below Firefox's stack
+ * under load. Every conversion of a value is priced here before it runs, so
+ * this one check covers each source a value comes from: state, a response,
+ * storage, a handler's write, and an expression that built it (`reduce`
+ * makes 10,000 levels inside every budget). It is final and arms nothing,
+ * like a refusal that checks a length (FORMA-249).
  * Verified by: src/expr/__tests__/native-cost.test.ts > "weighing stops at the budget on a cyclic or deeply nested value"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value an expression builds itself is refused the same way: no entry point sees it"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a value 100 deep renders and one 101 deep is refused; the deepest state and fixtures found in the app corpora render"
  */
 export function weigh(root: unknown, room: number, depth = -1): number {
   if (typeof root !== 'object' || root === null) {
@@ -154,6 +175,9 @@ export function weigh(root: unknown, room: number, depth = -1): number {
   while (todo.length > 0 && total <= room) {
     const v = todo.pop();
     const d = depths.pop()!;
+    if (d < -100 && v && typeof v === 'object') {
+      throw exprError('FORMA_E_BUDGET', 'a value nested more than 100 deep is refused');
+    }
     let kids = NONE;
     if (isArray(v)) {
       if (d) {
@@ -165,6 +189,12 @@ export function weigh(root: unknown, room: number, depth = -1): number {
     } else if (typeof v === 'string') {
       total += v.length;
     } else if (typeof v === 'object' && v) {
+      // JSON can send an own `toString` that is not a function
+      // (`{"toString": 1}`), and converting that object throws a TypeError
+      // (FORMA-274): refused here, before any conversion is made.
+      if (typeof (v as { toString?: unknown }).toString !== 'function') {
+        throw exprError('FORMA_E_CALL_FAILED', 'an object whose toString is not a function cannot be converted');
+      }
       for (const k of keysOf(v)) total += k.length + 1;
       kids = valuesOf(v);
     } else {

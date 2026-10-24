@@ -68,6 +68,12 @@ export interface ScopeLike {
    * call); else the page's, `setStepBudget`'s.
    */
   budget?: number;
+  /**
+   * Reports a failure that arrives after the evaluation has ended: a DOM
+   * method's promise that rejects (FORMA-274). The runtime reports it on the
+   * scope's element.
+   */
+  fail?: (what: string, err: FormaExprError) => void;
 }
 
 interface Frame {
@@ -135,6 +141,8 @@ export interface EvalCtx {
    * set while the outer one ran.
    */
   meter: Meter | null;
+  /** How many evaluations this one is nested in, itself included (`makeCtx`). */
+  nest: number;
 }
 
 /** Prototype of a plain object literal, captured once. */
@@ -162,12 +170,26 @@ let cur: EvalCtx | null = null;
  * Its budget is its scope's, if the scope's mount set one, else the page's.
  * Verified by: src/__tests__/runtime-task-budget.test.ts > "a chain of computeds spends one budget between them"
  * Verified by: src/__tests__/runtime-tiered-mount.test.ts > "a tiered mount takes its step budget from its call, never from a script tag"
+ *
+ * At most 32 evaluations nest (FORMA-274): a computed read by another, or a
+ * handler that `$dispatch` or `click()` runs from inside an evaluation, each
+ * nest one more. The budgets count steps and units, not how deep the stack
+ * goes, so a chain of 1,000 computeds overflowed Chromium's stack out of
+ * `mountMarkup` in a few thousand steps, and a handler that dispatched its
+ * own event to itself recursed into an uncaught page error in every engine.
+ * The longest chain of computeds in the founder's applications is 4. The
+ * 33rd is refused with `FORMA_E_BUDGET` before it starts: final, arming
+ * nothing, like a refusal that checks a count.
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a chain of 31 computeds read by a binding renders; one of 32 is refused with FORMA_E_BUDGET, never a stack overflow"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "a handler that dispatches its own event to itself stops at the cap, with one diagnostic"
  */
 export function makeCtx(scope: ScopeLike, meter?: Meter | null): EvalCtx {
   const base = cur ?? meter;
   const steps = base ? base.steps : 0;
   const cost = base ? base.cost : 0;
-  return { scope, frame: null, steps, budget: scope.budget ?? stepBudget, cost, stepsBefore: steps > 0, unitsBefore: cost > 0, meter: meter ?? cur?.meter ?? null };
+  const nest = (cur?.nest ?? 0) + 1;
+  if (nest > 32) throw exprError('FORMA_E_BUDGET', 'evaluations nested more than 32 deep are refused');
+  return { scope, frame: null, steps, budget: scope.budget ?? stepBudget, cost, stepsBefore: steps > 0, unitsBefore: cost > 0, meter: meter ?? cur?.meter ?? null, nest };
 }
 
 /**
@@ -313,14 +335,46 @@ type Native = (...a: never[]) => unknown;
  * Verified by: src/expr/__tests__/native-throw.test.ts > "a real bug in an evaluation a DOM method runs (a handler a click() dispatches) passes through as it is"
  * Verified by: src/expr/__tests__/native-throw.test.ts > "a runtime magic is Forma code, not a native: what it throws passes through as it is"
  * Verified by: src/__tests__/runtime-native-throw.test.ts > "a native that throws is final: it arms nothing, and what it was charged before it ran stays on the task's meter"
+ *
+ * `host` is the callable's own host, or the namespace a member was read from
+ * (`JSON` for `JSON.parse`): a native only if it is the allowlist's own
+ * (FORMA-274). An element property write is made through here too, as
+ * `Reflect.set` (`how` names it a write): the browser refuses
+ * `$el.dataset['a-b'] = 1`, a file input's `value` and a non-number
+ * `<progress>` or `<meter>` value by throwing.
+ *
+ * In unit tests, happy-dom's `click()` hands a listener's exception back to
+ * its caller, which a browser never does (it reports it as an uncaught
+ * error). A Forma handler steps before it can throw, so the step rule still
+ * files its error as Forma's; only an exception raised before a handler's
+ * first step would be filed as the click's, and only there.
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "a namespace member is a native only if the namespace is the allowlist's own: a runtime magic's member passes what it throws through"
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "happy-dom's click() hands a listener's exception back to its caller, where a browser reports it: the step rule keeps Forma's own as Forma's"
+ * Verified by: src/__tests__/runtime-throw-paths.test.ts > "%s is reported on its element as FORMA_E_CALL_FAILED, not thrown to the event"
  */
-function native(ctx: EvalCtx, what: string, at: number, fn: Native, recv: unknown, args: unknown[], host?: Host): unknown {
+function native(ctx: EvalCtx, what: string, at: number, fn: Native, recv: unknown, args: unknown[], host?: Host, how = '()'): unknown {
   const steps = ctx.steps;
   try {
     return Reflect.apply(fn, recv, args);
   } catch (e) {
-    if ((host && SAFE_GLOBALS[what] !== host) || ctx.steps !== steps) throw e;
-    throw exprError('FORMA_E_CALL_FAILED', `${what}() threw ${String(e).slice(0, 200)}`, at);
+    if ((host && SAFE_GLOBALS[host.label] !== host) || ctx.steps !== steps) throw e;
+    throw exprError('FORMA_E_CALL_FAILED', `${what}${how} threw ${said(e)}`, at);
+  }
+}
+
+/**
+ * An exception as message text, cut at 200 characters. Application code can
+ * throw what does not convert (`Object.create(null)`, an object whose
+ * `toString` throws), and converting it threw in place of the report
+ * (FORMA-274): such a value is named as unprintable.
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "what a native throws that cannot be converted to text is still reported, named as unprintable"
+ * Verified by: src/expr/__tests__/native-throw.test.ts > "the message names the method and the error, and is bounded"
+ */
+export function said(e: unknown): string {
+  try {
+    return String(e).slice(0, 200);
+  } catch {
+    return 'an unprintable value';
   }
 }
 
@@ -777,13 +831,19 @@ function evalCall(node: Expr & { k: 'Call' }, ctx: EvalCtx): unknown {
   const what = (names[method] ??= `${kind}.${method}`);
   preflight(ctx, what, recv, args, at);
   guardArgs(method, args, at);
-  if (method === 'flatMap' && typeof args[0] === 'function') {
-    // Each array the callback returns is copied into the result: charged as
-    // it is returned, before flatMap copies it.
+  if ((method === 'flatMap' || method === 'sort') && typeof args[0] === 'function') {
+    // Each array a flatMap callback returns is copied into the result:
+    // charged as it is returned, before flatMap copies it. `sort` converts
+    // what its comparator returns to a number after the comparator stepped,
+    // so the step rule takes a throw there for Forma's: that result is priced
+    // first, as an operator's operand is, and one nested too deep is refused
+    // (FORMA-274).
+    // Verified by: src/__tests__/runtime-throw-paths.test.ts > "%s of a value nested 10,000 deep is refused with FORMA_E_BUDGET on its element"
     const cb = args[0] as (...a: unknown[]) => unknown;
     args[0] = (...a: unknown[]) => {
       const out = cb(...a);
-      if (Array.isArray(out)) charge(ctx, out.length, 'flatMap', at);
+      if (method === 'sort') coerce(ctx, out, at);
+      else if (Array.isArray(out)) charge(ctx, out.length, 'flatMap', at);
       return out;
     };
   }
@@ -882,7 +942,7 @@ function callHostMethod(host: Host, method: string, argNodes: Expr[], ctx: EvalC
       throw exprError('FORMA_E_METHOD_DENIED', `${what} is not on the allowlist`, at);
     }
     preflight(ctx, what, undefined, args, at);
-    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args), at);
+    return checkResultSize(native(ctx, what, at, fn as Native, undefined, args, host), at);
   }
 
   const allowed = host.kind === 'element'
@@ -919,6 +979,13 @@ function callHostMethod(host: Host, method: string, argNodes: Expr[], ctx: EvalC
   const result = native(ctx, what, at, host.kind === 'element' && method === 'closest' && bound && !bound.dom
     ? () => closestWithin(target as unknown as Element, bound.root, String(args[0] ?? ''))
     : fn as Native, target, args);
+  // A DOM method can answer a promise that rejects instead of throwing
+  // (Chromium 156's `scrollIntoView({behavior: 'bad'})`): its rejection is
+  // reported to the scope, never left unhandled (FORMA-274).
+  // Verified by: src/expr/__tests__/native-throw.test.ts > "a DOM method that answers a promise has its rejection reported to the scope, never left unhandled"
+  if (result instanceof Promise) {
+    result.catch((e: unknown) => ctx.scope.fail?.(what, exprError('FORMA_E_CALL_FAILED', `${what}() rejected ${said(e)}`, at)));
+  }
 
   if (host.kind === 'element' && Object.hasOwn(ELEMENT_METHOD_RESULT, method)) {
     const as = ELEMENT_METHOD_RESULT[method]!;
@@ -1078,31 +1145,27 @@ function stringify(value: unknown, at: number): string {
 
 // ── Statements ──
 
-function writeMember(recv: unknown, key: string, value: unknown, at: number): void {
+function writeMember(ctx: EvalCtx, recv: unknown, key: string, value: unknown, at: number): void {
   const kind = kindOf(recv);
 
   if (kind === 'host') {
     const host = recv as Host;
-    const target = host.target as Record<string, unknown>;
+    let v = value;
     if (host.kind === 'element') {
       if (!ELEMENT_WRITE_PROPS.has(key)) {
         throw exprError('FORMA_E_ASSIGN_DENIED', `${host.label}.${key} is not writable`, at);
       }
-      Reflect.set(target, key, value);
-      return;
-    }
-    if (host.kind === 'style') {
-      if (STYLE_DENY_PROPS.has(key)) {
+    } else if (host.kind === 'style' || host.kind === 'dataset') {
+      if (host.kind === 'style' && STYLE_DENY_PROPS.has(key)) {
         throw exprError('FORMA_E_ASSIGN_DENIED', `style.${key} is not writable`, at);
       }
-      Reflect.set(target, key, value === null || value === undefined ? '' : String(value));
-      return;
+      v = value === null || value === undefined ? '' : String(value);
+    } else {
+      throw exprError('FORMA_E_ASSIGN_DENIED', `${host.label} is read-only`, at);
     }
-    if (host.kind === 'dataset') {
-      Reflect.set(target, key, value === null || value === undefined ? '' : String(value));
-      return;
-    }
-    throw exprError('FORMA_E_ASSIGN_DENIED', `${host.label} is read-only`, at);
+    // The browser refuses some writes by throwing: made as a native call.
+    native(ctx, `${host.label}.${key}`, at, Reflect.set as Native, undefined, [host.target, key, v], undefined, ' = …');
+    return;
   }
 
   if (kind === 'object' || kind === 'array') {
@@ -1195,7 +1258,7 @@ function runStmt(stmt: Stmt, ctx: EvalCtx): void {
       const value = applyOp(ctx, target.i, stmt.op, current, evalExpr(stmt.value, ctx));
       // A DOM property or style write converts the value to a string.
       if (isHost(recv)) coerce(ctx, value, target.i);
-      writeMember(recv, safeKey(key, target.i), value, target.i);
+      writeMember(ctx, recv, safeKey(key, target.i), value, target.i);
       return;
     }
 
@@ -1222,7 +1285,7 @@ function runStmt(stmt: Stmt, ctx: EvalCtx): void {
         target.k === 'Member' ? target.key : evalExpr(target.key, ctx),
         target.i,
       );
-      writeMember(recv, key, applyOp(ctx, target.i, '+=', safeRead(recv, key, target.i, false), delta), target.i);
+      writeMember(ctx, recv, key, applyOp(ctx, target.i, '+=', safeRead(recv, key, target.i, false), delta), target.i);
       return;
     }
 
