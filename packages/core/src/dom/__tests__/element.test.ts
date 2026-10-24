@@ -2,7 +2,7 @@ import { trustedHtml, type TrustedHtml } from '../trusted-html';
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { h, Fragment, fragment, cleanup } from '../element';
+import { h, Fragment, fragment, cleanup, fillElement } from '../element';
 import { createSignal } from '../../reactive/signal';
 import { createRoot } from '../../reactive/root';
 
@@ -294,6 +294,33 @@ describe('cleanup()', () => {
     cleanup(el);
     el.click();
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('removes every owned event type and listener object while retaining external listeners', () => {
+    const click = vi.fn(), hover = { handleEvent: vi.fn() }, external = vi.fn();
+    const el = h('button', { onClick: click, onMouseover: hover });
+    el.addEventListener('click', external);
+    el.click();
+    el.dispatchEvent(new Event('mouseover'));
+    cleanup(el);
+    el.click();
+    el.dispatchEvent(new Event('mouseover'));
+    expect(click).toHaveBeenCalledOnce();
+    expect(hover.handleEvent).toHaveBeenCalledOnce();
+    expect(external).toHaveBeenCalledTimes(2);
+  });
+
+  it('supports binding and cleaning the same element again', () => {
+    const first = vi.fn(), second = vi.fn();
+    const el = h('button', { onClick: first });
+    cleanup(el);
+    fillElement(el, { onClick: second }, []);
+    el.click();
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledOnce();
+    cleanup(el);
+    el.click();
+    expect(second).toHaveBeenCalledOnce();
   });
 });
 

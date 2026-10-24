@@ -9,9 +9,14 @@
 // Cleanup context tracking
 // ---------------------------------------------------------------------------
 
-type CleanupCollector = ((fn: () => void) => void) | null;
+import type { Owner } from './root.js';
 
-let currentCleanupCollector: CleanupCollector = null;
+/** @internal Ownership and cleanup move together when an effect runs. */
+export interface ExecutionContext {
+  owner: Owner | null;
+  addCleanup?(fn: () => void): void;
+}
+export let executionContext: ExecutionContext = { owner: null };
 
 /**
  * Register a cleanup function in the current reactive scope.
@@ -28,14 +33,14 @@ let currentCleanupCollector: CleanupCollector = null;
  * ```
  */
 export function onCleanup(fn: () => void): void {
-  currentCleanupCollector?.(fn);
+  executionContext.addCleanup?.(fn);
 }
 
 /**
- * @internal — Set the cleanup collector for the current effect execution.
+ * @internal — Install an effect's owner and cleanup collector in one operation.
  */
-export function setCleanupCollector(collector: CleanupCollector): CleanupCollector {
-  const prev = currentCleanupCollector;
-  currentCleanupCollector = collector;
+export function setExecutionContext(context: ExecutionContext): ExecutionContext {
+  const prev = executionContext;
+  executionContext = context;
   return prev;
 }

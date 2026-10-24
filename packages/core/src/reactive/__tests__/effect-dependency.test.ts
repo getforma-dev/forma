@@ -37,7 +37,7 @@ describe('internal-effect dependency ownership', () => {
     const dispose = api.internalEffect(() => seen.push(value())); disposers.push(dispose);
     setValue(1); dispose(); setValue(2);
     expect(seen).toEqual([0,1]);
-    expect(code).not.toContain('function createEffectNow');
+    expect(code).not.toContain('function createOwnedEffect');
     expect(code).not.toContain('createEffect exceeded');
     expect(code).not.toContain('getActiveSub');
   });
@@ -51,7 +51,7 @@ describe('internal-effect dependency ownership', () => {
     }); disposers.push(dispose);
     setValue(1); dispose(); setValue(2);
     expect(seen).toEqual(['run:0','cleanup:0','run:1','cleanup:1']);
-    expect(code).toContain('function createEffectNow');
+    expect(code).toContain('function createOwnedEffect');
     expect(code).toContain('createEffect exceeded');
   });
 

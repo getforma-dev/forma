@@ -15,6 +15,7 @@
  */
 
 import { effectScope as rawEffectScope, setActiveSub } from 'alien-signals';
+import { executionContext } from './cleanup.js';
 
 // ---------------------------------------------------------------------------
 // Root scope tracking
@@ -42,12 +43,10 @@ interface RootScope extends Owner {
  * The owner that new disposers register with. Inside a root this equals the
  * current {@link RootScope}; {@link runWithOwner} can temporarily point it at any
  * owner so work created outside the original synchronous scope is still owned.
+ * @internal Returns null outside an ownership scope.
  */
-let currentOwner: Owner | null = null;
-
-/** @internal — the owner disposers currently register with (or null). */
 export function getOwner(): Owner | null {
-  return currentOwner;
+  return executionContext.owner;
 }
 
 /**
@@ -56,12 +55,12 @@ export function getOwner(): Owner | null {
  * original root callback returned) still be owned and disposed.
  */
 export function runWithOwner<T>(owner: Owner | null, fn: () => T): T {
-  const prev = currentOwner;
-  currentOwner = owner;
+  const prev = executionContext.owner;
+  executionContext.owner = owner;
   try {
     return fn();
   } finally {
-    currentOwner = prev;
+    executionContext.owner = prev;
   }
 }
 
@@ -72,14 +71,14 @@ export function runWithOwner<T>(owner: Owner | null, fn: () => T): T {
  */
 export function runWithoutRoot<T>(fn: () => T): T {
   const prevRoot = currentRoot;
-  const prevOwner = currentOwner;
+  const prevOwner = executionContext.owner;
   currentRoot = null;
-  currentOwner = null;
+  executionContext.owner = null;
   try {
     return fn();
   } finally {
     currentRoot = prevRoot;
-    currentOwner = prevOwner;
+    executionContext.owner = prevOwner;
   }
 }
 
@@ -108,12 +107,12 @@ export function disposeOwner(owner: Owner): void {
 
 function createRootImpl<T>(fn: (dispose: () => void) => T, owned: boolean): T {
   const scope: RootScope = { disposers: [], scopeDispose: null };
-  const parentOwner = owned ? currentOwner : null;
+  const parentOwner = owned ? executionContext.owner : null;
 
   rootStack.push(currentRoot);
   currentRoot = scope;
-  const prevOwner = currentOwner;
-  currentOwner = scope;
+  const prevOwner = executionContext.owner;
+  executionContext.owner = scope;
 
   let disposed = false;
   let setupComplete = false;
@@ -191,7 +190,7 @@ function createRootImpl<T>(fn: (dispose: () => void) => T, owned: boolean): T {
     }
   } finally {
     currentRoot = rootStack.pop() ?? null;
-    currentOwner = prevOwner;
+    executionContext.owner = prevOwner;
   }
 
   return result!;
@@ -248,8 +247,8 @@ export function createUnownedRoot<T>(fn: (dispose: () => void) => T): T {
  * with the current owner (a root scope, or an owner installed via runWithOwner).
  */
 export function registerDisposer(dispose: () => void): void {
-  if (currentOwner) {
-    currentOwner.disposers.push(dispose);
+  if (executionContext.owner) {
+    executionContext.owner.disposers.push(dispose);
   }
 }
 
@@ -257,5 +256,5 @@ export function registerDisposer(dispose: () => void): void {
  * @internal — check if we're inside an owner scope (root or runWithOwner).
  */
 export function hasActiveRoot(): boolean {
-  return currentOwner !== null;
+  return executionContext.owner !== null;
 }
