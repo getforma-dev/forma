@@ -46,4 +46,34 @@ for (const captured of [false, true]) {
     }, captured);
     expect(result).toEqual({ calls: 2, cleaned: ['child-before', 'child-after', 'before', 'after'], errors: ['after disposal'], ownerRestored: true });
   });
+  test(`error reporters retain their first cleanup in ${captured ? 'captured' : 'ordinary'} context`, async ({ page }) => {
+    await page.route('**/effect-self-disposal.mjs', route => route.fulfill({ contentType: 'text/javascript', body: moduleText }));
+    await page.route('**/effect-self-disposal.html', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><body></body>' }));
+    await page.goto('/effect-self-disposal.html');
+    const result = await page.evaluate(async captured => {
+      const { createEffect, createSignal, onCleanup, onError, getOwner, withAdoptionCallbacks } = await import('/effect-self-disposal.mjs' as string);
+      return ['body', 'reporter', 'later'].map(disposal => {
+        const [value, setValue] = createSignal(0), cleaned: string[] = [];
+        let dispose: () => void;
+        const off = onError(() => {
+          onCleanup(() => cleaned.push('reporter'));
+          if (disposal === 'reporter') dispose();
+        });
+        const body = () => {
+          if (value() !== 1) return;
+          if (disposal === 'body') dispose();
+          throw new Error('expected');
+        };
+        dispose = captured ? withAdoptionCallbacks((fn: () => unknown) => fn(), () => createEffect(body)) : createEffect(body);
+        setValue(1);
+        const immediate = [...cleaned];
+        setValue(2); dispose(); dispose(); off();
+        return { disposal, immediate, cleaned, ownerRestored: getOwner() === null };
+      });
+    }, captured);
+    expect(result).toEqual(['body', 'reporter', 'later'].map(disposal => ({
+      disposal, immediate: disposal === 'later' ? [] : ['reporter'], cleaned: ['reporter'], ownerRestored: true,
+    })));
+  });
+
 }

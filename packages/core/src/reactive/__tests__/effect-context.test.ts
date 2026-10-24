@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {createEffect} from '../effect.js';
 import {createRoot, getOwner, registerDisposer, type Owner} from '../root.js';
 import {createSignal} from '../signal.js';
@@ -78,6 +78,54 @@ describe('effect execution context', () => {
       setValue(2); dispose();
       expect(cleaned).toEqual(['child-before', 'child-after', 'before', 'after', 'returned']);
       expect(getOwner()).toBeNull();
+    });
+
+    for (const disposal of ['body', 'reporter', 'later'] as const) {
+      it(`owns cleanup first registered by an error reporter (${contextual ? 'captured' : 'ordinary'}, ${disposal} disposal)`, () => {
+        const [value, setValue] = createSignal(0), cleaned: number[] = [];
+        const owners: (Owner | null)[] = [];
+        let dispose: () => void;
+        const off = onError(() => {
+          owners.push(getOwner());
+          onCleanup(() => cleaned.push(1));
+          if (disposal === 'reporter') dispose();
+        });
+        try {
+          dispose = start(() => {
+            if (value() !== 1) return;
+            if (disposal === 'body') dispose();
+            throw new Error('first reporter cleanup');
+          });
+          setValue(1);
+          expect(cleaned).toEqual(disposal === 'later' ? [] : [1]);
+          setValue(2);
+          expect(cleaned).toEqual([1]);
+          dispose(); dispose();
+          expect(cleaned).toEqual([1]);
+          expect(owners).toEqual([null]);
+          expect(getOwner()).toBeNull();
+        } finally { off(); }
+      });
+    }
+
+    it(`commits reporter cleanup even when development reporting throws (${contextual ? 'captured' : 'ordinary'})`, () => {
+      const [value, setValue] = createSignal(0), cleaned: string[] = [];
+      const reportingError = new Error('reporter failed');
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => { throw reportingError; });
+      const off = onError(() => onCleanup(() => cleaned.push('reporter')));
+      let dispose: () => void;
+      try {
+        dispose = start(() => {
+          if (!value()) return;
+          dispose();
+          throw new Error('body failed');
+        });
+        expect(() => setValue(1)).toThrow(reportingError);
+        expect(cleaned).toEqual(['reporter']);
+        dispose();
+        expect(cleaned).toEqual(['reporter']);
+        expect(getOwner()).toBeNull();
+      } finally { off(); consoleError.mockRestore(); }
     });
 
     it(`drains the active generation after self-disposal and a thrown body (${contextual ? 'captured' : 'ordinary'})`, () => {
