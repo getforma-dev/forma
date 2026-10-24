@@ -10,10 +10,11 @@ import os from 'node:os';
 import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import {
-  ROOT, CFG, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
+  ROOT, RAW, REQUEST_ENCODING, CFG, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
   startCar, hostPort, removeContainer, startLoadgen, waitReady, get, checkBody, smokeCar, imageInfo, oha,
   startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName,
 } from './lib.mjs';
+import { decodeExperimentResponse } from './compression-response.mjs';
 
 installTrap();
 
@@ -52,6 +53,7 @@ function discoverCars() {
   return names.filter(c => imageInfo(c).id);
 }
 const cars = opt.cars ? String(opt.cars).split(',') : discoverCars();
+if (REQUEST_ENCODING && (cars.length !== 1 || cars[0] !== 'forma')) throw new Error('compression experiment is Forma-only');
 const serverEvents = events.filter(n => n <= 8);
 if (serverEvents.length && !cars.length) { console.error('no cars: pass --cars or build gp264/<car> images'); process.exit(2); }
 
@@ -71,8 +73,9 @@ async function withStack(car, cls, { loadgen = true, rows = 100 } = {}, fn) {
     c = await startCar(car, cls, net);
     const port = await hostPort(c);
     await waitReady(c, port);
-    const r = await get(port, '/ssr?rows=' + rows, {}, 20000);
-    const chk = r.status === 200 ? checkBody(rows, r.body) : { ok: false, problems: ['status ' + r.status] };
+    const r = await get(port, '/ssr?rows=' + rows, REQUEST_ENCODING ? { 'accept-encoding': REQUEST_ENCODING } : {}, 20000);
+    const body = REQUEST_ENCODING ? decodeExperimentResponse(r, REQUEST_ENCODING) : r.body;
+    const chk = r.status === 200 ? checkBody(rows, body) : { ok: false, problems: ['status ' + r.status] };
     if (!chk.ok) throw new Error('body check failed before timing: ' + chk.problems.join('; '));
     if (loadgen) lg = await startLoadgen(net);
     return await fn({ c, port, lg, net, url: `http://${c.name}:3000` });
@@ -174,7 +177,14 @@ async function weight(car) {
   const before = machineState(), img = imageInfo(car);
   return withStack(car, 'A', { loadgen: false }, async ({ port }) => {
     const plain = await get(port, '/ssr?rows=100', {}, 15000);
-    const enc = await get(port, '/ssr?rows=100', { 'accept-encoding': 'gzip' }, 15000);
+    const enc = await get(port, '/ssr?rows=100', { 'accept-encoding': REQUEST_ENCODING ?? 'gzip' }, 15000);
+    let representation;
+    if (REQUEST_ENCODING) {
+      const decoded = decodeExperimentResponse(enc, REQUEST_ENCODING);
+      if (!decoded.equals(plain.body)) throw new Error('encoded response differs from the identity page');
+      representation = { requestedEncoding: REQUEST_ENCODING, contentEncoding: enc.headers['content-encoding'] ?? 'identity',
+        encodedBytes: enc.body.length, decodedBytes: decoded.length, verified: true };
+    }
     const gz = zlib.gzipSync(plain.body, { level: 9 });
     return { weight: meta(car, { class: 'A', machine: { before, after: machineState() },
       parts: {
@@ -182,6 +192,7 @@ async function weight(car) {
         gzip: { metric: { name: 'gzip response bytes, 100 rows', unit: 'bytes', better: 'lower' }, values: [gz.length], rawBytes: plain.body.length,
           source: 'response body gzip level 9 by the harness', contentEncodingWhenAsked: enc.headers?.['content-encoding'] || null, bytesWhenServerCompresses: enc.headers?.['content-encoding'] ? enc.body.length : null },
       },
+      ...(representation ? { representation } : {}),
       extraHeaders: { contentType: plain.headers['content-type'], contentLength: plain.headers['content-length'] || null } }) };
   });
 }
@@ -242,7 +253,7 @@ async function external(evId, script, extraArgs = []) {
 // ---------- main ----------
 const smokeResults = {}, failures = [];
 async function main() {
-  fs.mkdirSync(path.join(ROOT, 'results', 'raw'), { recursive: true });
+  fs.mkdirSync(RAW, { recursive: true });
   log(`race ${RUN_ID}: cars [${cars.join(', ')}], events [${events.join(', ')}], config ${JSON.stringify({ d: CFG.duration, w: CFG.warmup, runs: CFG.runs, starts: CFG.starts, buildRuns: CFG.buildRuns })}${forced ? ' FORCED on a loaded machine' : ''}`);
   if (serverEvents.length) {
     for (const car of cars) {
@@ -277,7 +288,7 @@ async function main() {
     const r = await external(ext[n][0], ext[n][1]);
     if (!r.ok) failures.push({ event: n, error: r.why || 'runner exited non-zero' });
   }
-  fs.writeFileSync(path.join(ROOT, 'results', 'raw', '_run-' + RUN_ID + '.json'), JSON.stringify({ runId: RUN_ID, cars, events, config: CFG, forced, failures, finished: new Date().toISOString() }, null, 2));
+  fs.writeFileSync(path.join(RAW, '_run-' + RUN_ID + '.json'), JSON.stringify({ runId: RUN_ID, cars, events, config: CFG, forced, failures, finished: new Date().toISOString() }, null, 2));
   const left = dockerSync('ps', '-aq', '--filter', 'label=' + RUN_LABEL);
   log(failures.length ? `done with ${failures.length} failure(s): ${JSON.stringify(failures)}` : 'done, no failures');
   if (left) log('WARNING containers still present, cleaning: ' + left);

@@ -30,6 +30,10 @@ on:
         description: 'Optional exact 40-character source commit for the Forma crates'
         default: ''
         type: string
+      compression:
+        description: 'Explicit opt-in compression experiment; requires a Forma source commit and runs identity/br/gzip separately'
+        default: false
+        type: boolean
 
 concurrency:
   group: grand-prix-${{ github.ref }}
@@ -51,7 +55,7 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - name: Qualify budget refusals
-        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs
+        run: node --test benchmarks/grand-prix/harness/budgets.test.mjs benchmarks/grand-prix/harness/compression.test.mjs
       - name: Run isolated Forma strength check or requested server grid
         working-directory: benchmarks/grand-prix
         env:
@@ -61,6 +65,7 @@ jobs:
           GP_DIAGNOSTIC: ${{ github.event_name == 'pull_request' && 'true' || inputs.diagnostic && 'true' || 'false' }}
           GP_FORMA_REF: ${{ github.event_name == 'pull_request' && github.sha || inputs.forma_ref }}
           GP_BASELINE: 'true'
+          GP_COMPRESSION: ${{ inputs.compression && 'true' || 'false' }}
           GP_CHECK_BUDGETS: 'true'
         run: node harness/ci-run.mjs
       - name: Remove only this run's remaining Docker resources
@@ -77,5 +82,7 @@ jobs:
             benchmarks/grand-prix/results/*.json
             benchmarks/grand-prix/results/*.lock
             benchmarks/grand-prix/results/raw/
+            benchmarks/grand-prix/results/*-runtime/
+            benchmarks/grand-prix/results/*-compression/
           if-no-files-found: error
           retention-days: 30

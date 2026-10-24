@@ -9,7 +9,9 @@ import { fileURLToPath } from 'node:url';
 import { expected } from '../shared/dataset.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const RAW = path.join(ROOT, 'results', 'raw');
+export const RAW = process.env.GP_RAW_DIR ? path.resolve(process.env.GP_RAW_DIR) : path.join(ROOT, 'results', 'raw');
+export const REQUEST_ENCODING = process.env.GP_ACCEPT_ENCODING;
+if (REQUEST_ENCODING && !['identity', 'br', 'gzip'].includes(REQUEST_ENCODING)) throw new Error('invalid compression experiment encoding');
 export const LABEL = 'grandprix=forma-264';
 export const IMAGE_PREFIX = process.env.GP_IMAGE_PREFIX || 'gp264';
 if (!/^[a-z0-9/-]+$/.test(IMAGE_PREFIX)) throw new Error('invalid image prefix');
@@ -24,6 +26,7 @@ export const CFG = {
   classA: { cpus: '1', memory: '1g', workers: 1 },
   classB: { cpus: '4', memory: '2g', workers: 4 },
   loadgenCpus: '4', buildCpus: '4',
+  ...(REQUEST_ENCODING ? { acceptEncoding: REQUEST_ENCODING } : {}),
 };
 
 export const EVENTS = [
@@ -173,7 +176,10 @@ export function imageInfo(ref) {
 
 // ---------- oha ----------
 export async function oha(lg, url, { c, z }) {
-  const r = await docker('exec', lg.name, 'oha', '-z', z + 's', '-c', String(c), '--no-tui', '--disable-compression', '--output-format', 'json', url);
+  // oha's flag suppresses only its automatic Accept-Encoding header; explicit
+  // -H values are applied afterward. Preserve raw transferred byte accounting.
+  const headers = REQUEST_ENCODING ? ['-H', `Accept-Encoding: ${REQUEST_ENCODING}`] : [];
+  const r = await docker('exec', lg.name, 'oha', '-z', z + 's', '-c', String(c), '--no-tui', '--disable-compression', ...headers, '--output-format', 'json', url);
   if (r.code) throw new Error('oha failed: ' + r.stderr.slice(0, 300));
   const j = JSON.parse(r.stdout);
   const codes = j.statusCodeDistribution || {};
@@ -181,7 +187,7 @@ export async function oha(lg, url, { c, z }) {
   const ok = codes['200'] || 0;
   return {
     seconds: j.summary.total, rps: j.summary.requestsPerSec, okRps: ok / j.summary.total, requests: total, ok, nonOk: total - ok,
-    successRate: j.summary.successRate, statusCodes: codes, errorDistribution: j.errorDistribution ?? {},
+    successRate: j.summary.successRate, statusCodes: codes, errorDistribution: j.errorDistribution,
     latencyMs: { mean: j.summary.average * 1000, p50: j.latencyPercentiles.p50 * 1000, p95: j.latencyPercentiles.p95 * 1000, p99: j.latencyPercentiles.p99 * 1000, max: j.summary.slowest * 1000 },
     bytesPerRequest: j.summary.sizePerRequest,
   };

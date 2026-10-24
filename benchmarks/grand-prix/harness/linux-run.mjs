@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { prepareCars, BASELINE_SOURCE } from './prepare-car.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+assert(!process.env.GP_RAW_DIR && !process.env.GP_ACCEPT_ENCODING, 'this driver owns raw-output and request-encoding selection');
 const argv = process.argv.slice(2);
 const option = (name, fallback) => argv.includes(`--${name}`) ? argv[argv.indexOf(`--${name}`) + 1] : fallback;
 const allCars = ['forma', 'vanilla-node', 'react-node', 'preact-node', 'solid-node', 'svelte-node', 'vue-node',
@@ -19,6 +20,11 @@ assert(/^[1-8,-]+$/.test(events), 'server event selector must use 1–8');
 const diagnostic = argv.includes('--diagnostic');
 const baseline = argv.includes('--baseline');
 const formaRef = option('forma-ref', undefined);
+const compression = argv.includes('--compression');
+if (compression) {
+  assert(formaRef && baseline && cars.length === 1 && cars[0] === 'forma', 'compression needs an exact ref and only the frozen Forma car');
+  assert.equal(events, '1,3,4,5,7', 'compression profile requires events 1,3,4,5,7');
+}
 assert.equal(process.platform, 'linux', 'this runner is for native Linux');
 if (!diagnostic) assert(os.availableParallelism() >= 8, 'baseline needs eight CPUs; --diagnostic cannot qualify the Linux baseline');
 const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root, encoding: 'utf8' });
@@ -37,7 +43,7 @@ const ownershipPath = join(results, `${id}-ownership.json`);
 assert(!existsSync(ownershipPath), 'run ID already used');
 const ownership = { id, builder, builderCreated: false };
 const report = { schema: 1, id, diagnostic, cars, events, platform: process.platform, arch: process.arch,
-  carSource: baseline ? BASELINE_SOURCE : 'current checkout', formaRef: formaRef ?? 'published 3.0.0',
+  carSource: baseline ? BASELINE_SOURCE : 'current checkout', formaRef: formaRef ?? 'published 3.0.0', compression,
   cpus: os.availableParallelism(), cpu: os.cpus()[0]?.model, kernel: os.release(), memoryBytes: os.totalmem(),
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   before: new Date().toISOString(), freeBefore: free(), steps: [], passed: false };
@@ -72,7 +78,7 @@ async function build(car, context) {
 }
 try {
   checkDisk();
-  const contexts = prepareCars(root, join(results, `${id}-contexts`), { baseline, formaRef });
+  const contexts = prepareCars(root, join(results, `${id}-contexts`), { baseline, formaRef, compression });
   await run('docker', ['buildx', 'create', '--name', builder, '--driver', 'docker-container']);
   ownership.builderCreated = true;
   writeFileSync(ownershipPath, JSON.stringify(ownership));
@@ -88,8 +94,32 @@ try {
     }
     await quiet();
     const before = { car, at: new Date().toISOString(), load: os.loadavg(), freeBytes: free() };
-    await run(process.execPath, ['harness/race.mjs', '--cars', car, '--events', events]);
+    if (compression) {
+      const directory = join(results, `${id}-compression`);
+      assert(!existsSync(directory), 'fresh compression observations required'); mkdirSync(directory);
+      try {
+        for (const encoding of ['identity', 'br', 'gzip']) {
+          await quiet();
+          process.env.GP_ACCEPT_ENCODING = encoding;
+          process.env.GP_RAW_DIR = join(directory, encoding);
+          assert(!existsSync(process.env.GP_RAW_DIR));
+          await run(process.execPath, ['harness/race.mjs', '--cars', car, '--events', events]);
+        }
+      } finally { delete process.env.GP_ACCEPT_ENCODING; delete process.env.GP_RAW_DIR; }
+      await run(process.execPath, ['harness/compression-report.mjs', directory, ...(diagnostic ? ['--diagnostic'] : [])]);
+      report.compressionEvidence = directory;
+    } else {
+      await run(process.execPath, ['harness/race.mjs', '--cars', car, '--events', events]);
+    }
     report.steps.push({ ...before, finished: new Date().toISOString(), loadAfter: os.loadavg() }); save();
+    if (car === 'forma') {
+      const sourceImage = JSON.parse(execFileSync('docker', ['image', 'inspect', imageName(car)], { encoding: 'utf8' }))[0].Id;
+      const comparison = join(results, `${id}-runtime`);
+      await run(process.execPath, ['harness/compare-runtime.mjs', '--source-image', sourceImage,
+        '--source-commit', formaRef ?? (baseline ? BASELINE_SOURCE : report.sourceCommit),
+        '--builder', builder, '--out', comparison]);
+      report.runtimeComparison = { directory: comparison, sourceImage }; save();
+    }
     // Remove only images just built by this run, and this run's builder cache.
     await run('docker', ['image', 'rm', imageName(car), imageName(car + '-build')]);
     await run('docker', ['buildx', 'prune', '--builder', builder, '--all', '--force']);
