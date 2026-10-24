@@ -411,15 +411,23 @@ Verified by `src/__tests__/runtime-nested-scope.test.ts` > "three levels: each s
 Verified by `src/__tests__/runtime-nested-scope.test.ts` > "%s leaves exactly the bindings a fresh mount makes, each bound once"
 Verified by `src/__tests__/runtime-nested-scope.test.ts` > "a scope nested in a data-list row is bound by the row, as before: rows do not mount a nested scope (unchanged here)"
 
-**A `data-computed` may be named like a state key, and may not read itself.**
-`data-computed="name = expr"` binds `name` for its scope. Elements bind in
-document order, and a reader is evaluated when it binds. If the state also
-declares `name`, a reader bound after the computed (on a later element, or
-on the computed's own element) reads the computed, and the state's value is
-only a placeholder. A reader on an element before the computed's reads the
-state value instead, and follows only it: it reads the computed once the key
-is next written. A handler that writes `name` writes the state value, which
-the readers bound after the computed never see.
+**A `data-computed` must use a name distinct from writable state in its scope.**
+`data-computed="name = expr"` binds a derived value for its scope. If state
+already declares `name`, the declaration is refused before its expression runs,
+with `FORMA_E_UNSUPPORTED` (`computed "name" conflicts with a state key`). The
+original state getter and setter remain intact: readers before, on and after
+the declaration all follow the state, and handler writes remain visible. Other
+computed declarations and bindings continue. Separate `data-forma-state` lexical
+scopes may reuse names; they do not share state or computed declarations.
+
+When migrating markup that used a state placeholder for a computed, remove the
+placeholder if it was never writable, or give the derived value a distinct name.
+For example, retain state `count`, declare `data-computed="doubled = count * 2"`,
+render `data-text="{doubled}"`, and update `count` in handlers. Do not write a
+derived name to override its value. Earlier releases allowed a computed to hide
+a state getter while retaining the setter; that made writes invisible to some
+readers and made results depend on element order. This refusal applies to the
+explicit HTML runtime; the JavaScript `createComputed` API is unchanged.
 
 A computed whose expression reads its own name (`visitCount = visitCount`,
 `x = x + 1`, `n = items.map(i => i + n)`) is refused when it is bound, with
@@ -445,8 +453,10 @@ before reading anything that can change keeps it after the cycle breaks,
 until the markup is mounted again. None of these throws out of `mountMarkup`;
 the rest of the markup binds.
 
-Verified by `src/__tests__/runtime-computed.test.ts` > "a computed may be named like a state key: a reader bound after it reads the computed, and follows what it reads"
-Verified by `src/__tests__/runtime-computed.test.ts` > "a reader before the computed in document order reads the state placeholder until the key is next written"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a computed colliding with state is refused and state reads and writes keep their identity"
+Verified by `src/__tests__/runtime-computed.test.ts` > "refusing a state-name collision preserves readers before, on and after the declaration"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a refused collision never evaluates its expression and does not block a distinct derived name"
+Verified by `src/__tests__/runtime-computed.test.ts` > "a state key and a computed may use the same name in distinct lexical scopes"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that reads its own name is refused on its element, and the state key of that name keeps rendering"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed that reads its own name and is no state key is refused, and each reader reports the name unresolved"
 Verified by `src/__tests__/runtime-computed.test.ts` > "a computed reads its own value only as a free name: an arrow parameter, a property or a string of that name is not a self-reference"

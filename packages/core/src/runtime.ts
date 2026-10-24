@@ -1887,14 +1887,13 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
       if (match) {
         const name = match[1]!;
         const expr = match[2]!;
-        const prevGetter = scope.getters[name];
         // The raw evaluator is used here, not the reporting one: a computed
         // that cannot evaluate must make its READERS fail loudly (each with its
         // own element and diagnostic) rather than caching a sentinel that would
         // then be rendered as text.
-        // A computed that is refused, by `buildEvaluator` (which has reported
-        // it and marked the element) or because it reads its own name, binds
-        // nothing: the name keeps what it had, so a state key of that name
+        // A computed refused by `buildEvaluator` (which reports and marks it),
+        // its own-name check, or a state-key collision binds nothing. The name
+        // keeps what it had, so a state key of that name
         // keeps its value, and a name that had nothing makes every reader of
         // it fail loudly with its own diagnostic.
         // The interpreter resolves a name when it is read, so a computed that
@@ -1915,6 +1914,10 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
           return err;
         };
         if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');
+        // State owns both a getter and a setter. Replacing just its getter
+        // would make handler writes invisible and readers depend on bind order.
+        // Verified by: src/__tests__/runtime-computed.test.ts > "a computed colliding with state is refused and state reads and writes keep their identity"
+        else if (evaluate && scope.setters[name]) cycle('conflicts with a state key');
         else if (evaluate) {
           // Read inside a binding, a computed spends that binding's budget. If
           // it is refused for what was spent before it, it is evaluated again
@@ -1950,11 +1953,6 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
             if (!r.ok) throw r.e;
             return r.v;
           };
-        }
-        // Keep the original setter so manual overrides still work
-        if (!prevGetter) {
-          // If there was no initial state entry, remove the setter too
-          delete scope.setters[name];
         }
       }
     }

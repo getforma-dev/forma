@@ -96,9 +96,9 @@ fn is_denied(filename: &str) -> bool {
 }
 
 /// A parsed `Accept-Encoding` entry.
-struct Encoding<'a> {
-    token: &'a str,
-    q: f32,
+pub(crate) struct Encoding<'a> {
+    pub(crate) token: &'a str,
+    pub(crate) q: f32,
 }
 
 /// Parse `Accept-Encoding` into (token, qvalue) pairs.
@@ -107,7 +107,7 @@ struct Encoding<'a> {
 /// `br;q=0` — the standard way a client or proxy says it cannot decode
 /// brotli — as acceptance, and then serves an undecodable body. A substring
 /// test also matches `x-brotli-nope` as "br".
-fn parse_accept_encoding(header: &str) -> Vec<Encoding<'_>> {
+pub(crate) fn parse_accept_encoding(header: &str) -> Vec<Encoding<'_>> {
     header
         .split(',')
         .filter_map(|element| {

@@ -2539,8 +2539,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');\n        else if (evaluate) {",
-  "replace": "        if (evaluate) {",
+  "find": "        if (evaluate && readsName(compileExpression(stripBraces(`{${expr}}`)), name)) cycle('reads its own name');",
+  "replace": "        if (false) cycle('reads its own name');",
   "note": "a computed that reads its own name is bound, so its readers fail on the cycle instead of reading the state key of that name (FORMA-268: `visitCount = visitCount`). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that reads its own name is refused on its element, and the state key of that name keeps rendering\""
  },
  {
@@ -2569,8 +2569,8 @@
   "tags": [
    "correctness"
   ],
-  "find": "        const prevGetter = scope.getters[name];",
-  "replace": "        const prevGetter = scope.getters[name];\n        delete scope.getters[name];",
+  "find": "        const expr = match[2]!;",
+  "replace": "        const expr = match[2]!;\n        delete scope.getters[name];",
   "note": "a refused computed deletes the getter of the state key it is named like, so every reader of a declared key reports it undeclared (the binding before FORMA-268). Verified by: src/__tests__/runtime-computed.test.ts > \"a computed that cannot compile binds nothing either: a state key of its name keeps rendering\""
  },
  {
@@ -3172,5 +3172,15 @@
   "find": "        while (node && node !== el) node = up(node);",
   "replace": "        while (node && node !== el) node = node.parentNode;",
   "note": "A hidden branch is absent from DOM ancestry. Replacing or removing its containing subtree must dispose its registered nested scope and listeners. Verified by: src/__tests__/runtime-nested-scope.test.ts > \"%s disposes a nested scope held in a hidden branch before the old subtree is discarded\""
+ },
+ {
+  "id": "runtime/computed-shadows-writable-state",
+  "file": "src/runtime.ts",
+  "tags": [
+   "correctness"
+  ],
+  "find": "        else if (evaluate && scope.setters[name]) cycle('conflicts with a state key');\n",
+  "replace": "",
+  "note": "A computed replaces a writable state getter while retaining its setter, hiding writes and making readers depend on bind order (FORMA-272). Verified by: src/__tests__/runtime-computed.test.ts > \"refusing a state-name collision preserves readers before, on and after the declaration\""
  }
 ]

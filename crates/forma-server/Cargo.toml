@@ -19,6 +19,8 @@ keywords = ["ssr", "axum", "web-framework", "islands", "forma"]
 categories = ["web-programming::http-server"]
 
 [dependencies]
+brotli = { version = "8", optional = true }
+flate2 = { version = "1", default-features = false, features = ["rust_backend"], optional = true }
 forma-ir = { version = "=3.0.0", path = "../forma-ir" }
 axum = "0.8"
 rust-embed = "8"
@@ -28,8 +30,14 @@ base64 = "0.22"
 ring = "0.17"
 tracing.workspace = true
 
+[features]
+default = []
+# Explicitly enabled at compile time and per response; never a blanket layer.
+compression = ["dep:brotli", "dep:flate2"]
+
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }
+tower = { version = "0.5", features = ["util"] }
 # Fixture encoders and the stand-in panicking component, for the server's own
 # tests only (dev-dependency features never reach a consumer's build).
 forma-ir = { version = "=3.0.0", path = "../forma-ir", features = ["test-helpers", "__fault-injection"] }
