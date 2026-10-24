@@ -1,10 +1,56 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder} from './release-performance-decoder.mjs';
 
 import {decoder as valid} from './release-performance-test-fixtures.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
+// Exact historical binaries independently checked against the already-pinned
+// full SHA-256 values below. These are validator inputs, never measurements.
+const frozenIr = [
+  'iUZNSQ0KGgoDAAAAAAAHAQAAK8oRcQAABgAAAAEAAQBkAAAAHgAAAAIAAQCCAAAAJwAAAAMAAQCpAAAADAAAAAQAAQC1AAAAHwAAAAUAAQDUAAAAKAAAAAoAAQD8AAAAIwAAAAEAAAAAAAALAAABAgAAAAAAAgIAAAAMAAACAAAAAAUAAAAEAG1haW4HAERlY29kZXIDAGRpdgUAdmFsdWUGAGFwcC50cwEAAAADAAAAAQAAAAEAGwAAAAEAAQAAAAcAAAABAAgLa9SIg2gESgEAAAACAAEAAwAAAAQAAAADAAAAGQAAAAIBAAMAAAAEAAAAAgAAABwAAAACAQAbAAAAAAAEAAAAAQAAAA0AAAABAQABAAUAdmFsdWUCAAA=',
+  'iUZNSQ0KGgoDAAAAAAAKAQAAgcF6EwAABgAAAAEAAQBkAAAAHgAAAAIAAQCCAAAAJwAAAAMAAQCpAAAADAAAAAQAAQC1AAAAHwAAAAUAAQDUAAAAKgAAAAoAAQD+AAAAJAAAAAEAAAAAAAALAAABAgAAAAAAAgIAAAAMAAACAAAAAAUAAAAEAG1haW4HAERlY29kZXIDAGRpdgUAdmFsdWUGAGFwcC50cwEAAAADAAAABAAAAAEAGwAAAAEAAQAAAAcAAAABAAhY0SDTn1XPygEAAAACAAEAAwAAAAQAAAADAAAAGQAAAAYCAQADAAAABAAAAAIAAAAcAAAABgIBABwAAAAAAAQAAAABAAAADgAAAAEBAAEABQB2YWx1ZQYCAAA=',
+];
+function restamp(bytes) {
+  const crc=Number(execFileSync('python3',['-c','import sys,zlib; b=sys.stdin.buffer.read(); print(zlib.crc32(b[:18]+b[22:]) & 0xffffffff)'],{input:bytes,encoding:'utf8'}));
+  bytes.writeUInt32LE(crc,18); return bytes;
+}
+function currentProof(version='3.1.0-rc.1') {
+  const report=valid(); report.compiler.version=version; report.artifact.version=version;
+  report.compiler.fixtures.forEach((proof,index)=>{
+    const bytes=Buffer.from(frozenIr[index],'base64');
+    assert.equal(sha(bytes),DECODER_FIXTURES[index].irSha256);
+    version.split('-')[0].split('.').map(Number).forEach((part,index)=>bytes.writeUInt16LE(part,8+2*index)); restamp(bytes);
+    proof.binaryBase64=bytes.toString('base64'); proof.irSha256=sha(bytes);
+    report.cases[index].irSha256=proof.irSha256;
+  });
+  return report;
+}
+test('current compiler proof retains actual versioned bytes and the unchanged historical full-binary contract',()=>{
+  for(const version of ['3.0.0','3.1.0-rc.1']) {
+    const report=currentProof(version); assert.equal(validateDecoder(report),report);
+  }
+  assert.equal(validateDecoder(valid()).compiler.version,undefined,'archived 3.0 evidence remains exact');
+});
+test('a repaired CRC or matching claimed digest cannot hide current decoder body/header drift',()=>{
+  for(const [offset,message] of [[0,/signature/],[10,/writer does not match/],[14,/body length/],[22,/reserved header/],[286,/emitted bytes differ/]]) {
+    const report=currentProof(),proof=report.compiler.fixtures[0];
+    const bytes=Buffer.from(proof.binaryBase64,'base64'); bytes[offset]^=1; restamp(bytes);
+    proof.binaryBase64=bytes.toString('base64'); proof.irSha256=sha(bytes); report.cases[0].irSha256=proof.irSha256;
+    assert.throws(()=>validateDecoder(report),message);
+  }
+});
+test('current decoder proof rejects absent bytes, stale hashes, mismatched package versions and a legacy downgrade',()=>{
+  for(const mutate of [
+    r=>{delete r.compiler.fixtures[0].binaryBase64;},
+    r=>{r.compiler.fixtures[0].binaryBase64+='\n';},
+    r=>{r.compiler.fixtures[0].irSha256='a'.repeat(64);},
+    r=>{r.cases[0].irSha256=DECODER_FIXTURES[0].irSha256;},
+    r=>{r.artifact.version='3.0.0';},r=>{delete r.compiler.version;},
+    r=>{const p=r.compiler.fixtures[0],b=Buffer.from(p.binaryBase64,'base64');b[18]^=1;p.binaryBase64=b.toString('base64');p.irSha256=sha(b);r.cases[0].irSha256=p.irSha256;},
+  ]) {const report=currentProof();mutate(report);assert.throws(()=>validateDecoder(report));}
+});
 test('both finite payload shapes pin the complete UTF-8 envelope to exactly one MiB',()=>{
   for(const fixture of DECODER_FIXTURES) {
     const payload=decoderPayload(fixture);

@@ -609,6 +609,16 @@ npm run emit:corpus -w packages/compiler -- "$PWD/crates/forma-ir/tests/fixtures
 cargo test -p forma-ir --lib js_emitter_contract
 ```
 
+R17 and packed qualification preserve the committed writer version. They validate
+the historical corpus first, then compare current compiler output with an exact
+copy whose only allowed changes are the writer fields at bytes 8–13 and the
+covering CRC at bytes 18–21. An independent CRC reference checks both headers;
+every body byte and every dump line after the header must remain identical.
+Native checks also render the actual current-writer output against the unchanged
+HTML goldens. Temporary staging restores the original files on success or failure.
+Use `node scripts/check-fmir-corpus.mjs` after building the compiler to run this
+check without permanently regenerating historical fixtures.
+
 The original fourteen outputs, their source inputs and HTML are preserved unchanged in
 [the pre-state corpus archive](archive/2026-10-15-pre-state-contract-corpus/README.md).
 They document the pre-contract behavior; old island modules now refuse. Current
