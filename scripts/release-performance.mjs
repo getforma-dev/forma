@@ -51,7 +51,7 @@ export async function recordPackedDecoder({corePath,compilerPath,evidenceDirecto
 export async function verifyPackedPerformance({staged,set,test,target,before,report,evidenceDirectory}){
  const {project,targetDir}=staged;
  const output=createPerformanceJournal(evidenceDirectory,{contract:PERFORMANCE_CONTRACT,commit:set.commit,targetTag:target.tag,rehearsal:target.rehearsal,
-  producers:Object.fromEntries(['scripts/release-performance.mjs','scripts/release-performance-mobile.mjs','scripts/release-activation-observer.mjs','scripts/release-performance-attribution.mjs','scripts/release-performance-contract.mjs','scripts/release-performance-spec.mjs','scripts/release-performance-journal.mjs','e2e/performance/client/run.mjs','e2e/fixtures/apps/src/bin/measure.rs','e2e/fixtures/apps/src/performance_evidence.rs'].map(file=>[file,digest(join(ROOT,file))]))});
+  producers:Object.fromEntries(['scripts/release-performance.mjs','scripts/release-performance-mobile.mjs','scripts/release-activation-observer.mjs','scripts/release-performance-attribution.mjs','scripts/release-performance-startup.mjs','scripts/release-performance-contract.mjs','scripts/release-performance-spec.mjs','scripts/release-performance-journal.mjs','e2e/performance/client/run.mjs','e2e/fixtures/apps/src/bin/measure.rs','e2e/fixtures/apps/src/performance_evidence.rs'].map(file=>[file,digest(join(ROOT,file))]))});
  const record=(kind,value)=>writePerformanceRecord(output,kind,value);
  const nativePath=join(output,'native-report.json'),clientPath=join(output,'client-report.json');
  const attempt=report.performanceAttempt={contract:PERFORMANCE_CONTRACT,targetTag:target.tag,rehearsal:target.rehearsal,mobile:[]};
