@@ -12,9 +12,10 @@ accepted tradeoffs are in
 [the 3.1 performance decisions](docs/release/3.1-PERFORMANCE-TRADEOFFS.md).
 Package-level details are in each package's CHANGELOG.
 
-- Keep HTML-runtime host values opaque: serialization, enumeration and
-  value-cost traversal now see only a host's public label. Supported dispatch,
-  coercion and grants are unchanged. Upgrading is recommended.
+- Keep HTML-runtime host values opaque: a host nested in data that is
+  serialized, enumerated or weighed now appears only as its public label, and
+  passing a host directly is still refused. Supported dispatch, coercion and
+  grants are unchanged. Upgrading is recommended.
 - Effects (FORMA-259): on the same Linux VM, writes are 70.74% faster, fan-out
   145.77% faster and effect creation/disposal 251.34% faster than published
   3.0.0. Batches of writes are 13.79% slower, and 1,000-binding island
@@ -46,10 +47,11 @@ Package-level details are in each package's CHANGELOG.
   `packages/core/CHANGELOG.md`.
 - `@getforma/build` refuses a symbolic-link `outputDir` with `BUILD-824`
   before writing (FORMA-170) and hardens diagnostics report paths (FORMA-245).
-- Release qualification keeps the 50 ms startup target with a narrow,
-  source-proven cold-start allowance (at most 55 ms, at most two tasks in two of
-  each route's twenty visits, total excess at most 10 ms). Historical strict
-  failures stay failed.
+- Release qualification keeps the 50 ms startup target with a narrow allowance:
+  at most 55 ms, at most two tasks in two of each route's twenty visits, total
+  excess at most 10 ms. Lighthouse tasks need positive cold-start proof;
+  independent activation-observer tasks are bounded by duration and share the
+  same budget. Historical strict failures stay failed.
 
 - Consolidate public-effect graph and lifecycle state (FORMA-259), preserving
   adoption, cleanup, error reporting and disposal contracts. Dispose an initial

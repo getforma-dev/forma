@@ -80,11 +80,12 @@ expression, and the original state getter/setter remain intact. Remove a state
 placeholder that was intended only for a computed value, or give the derived
 value a separate name. Separate lexical scopes may reuse names.
 
-Host values such as `$el` stay opaque to data operations. `JSON.stringify`,
-object enumeration and value-cost accounting see only the host's public
-`label`, at any nesting depth. Supported method calls, coercion and grants are
-unchanged. Markup that serialized a host to read anything other than its label
-must use a supported, granted operation instead.
+Host values such as `$el` stay opaque to data operations. A host nested inside
+data passed to `JSON.stringify`, object enumeration or value-cost accounting
+appears only as its public `label`; passing a host directly is still refused.
+Supported method calls, coercion and grants are unchanged. Markup that
+serialized nested hosts to read anything other than their labels must use a
+supported, granted operation instead.
 
 A `data-list` pass is refused with `FORMA_E_BUDGET` when row count multiplied by
 row weight exceeds 24,000. Row weight is one plus the template's element and

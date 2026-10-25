@@ -64,8 +64,9 @@ P17's independent 1,800-second acceptance limit remains unchanged.
 `target_tag` must match all seven prepared versions. Use `v3.0.0-rc.1` for an RC
 preparation: pending milestone gates remain recorded, so the rehearsal can
 collect evidence before they close. The normal baseline reader still requires
-an actual comparable published predecessor DS12 for RC performance: the 3.0 RC
-used published beta.4, and a 3.1 RC uses published 3.0.0. The workflow has
+an actual comparable DS12 from the newest published predecessor for RC
+performance: published 3.0.0 for 3.1.0-rc.1 unless a later 3.0.x is published
+first. The workflow has
 no publication credentials, never writes DS12 to a Release, and neither closes
 gates nor replaces exact-main CI or the tagged release workflow. A failed run
 remains failed; another attempt requires an explicit decision.
@@ -344,6 +345,13 @@ close FORMA-144's final-version cleanup gate.
 ### Per-release performance contract (FORMA-191)
 
 P17 `performance: measured-v1` requires20,000 native walks for each of five consumer-shaped pages in the application release profile, N5 allocation/time growth, public one-past budget refusals,20 cold applied-mobile Lighthouse13.5.0 runs on each of the tenant-login and100-island pages, independent actual event-response observations, and the archived founder comparison in all three browser engines. FORMA-103 also measures the shipped public activation decoder: one MiB of ASCII and one MiB containing20,000 multibyte strings, five warmups then forty fresh-document samples each at four-times Chromium CPU slowdown. Registration is outside timing; timing ends at the first component instruction. Under the prospective FORMA-210 correction to L61, each shape’s nearest-rank p95 (the 38th sorted duration among all40 original samples) must be at most30ms. The `public-decoder-p95-v1` profile explicitly identifies this statistic; older every-sample profiles cannot qualify. Retain the minimum, median, maximum and every original duration, and validate all sample correctness and refusal controls before timing acceptance. The actual packed compiler regenerates both original contracts before measurement; raw observations, artifact/compiler hashes, enforced Trusted Types policy and real oversize/malformed refusal controls are recorded. Decoder observations are synchronously flushed beside `p17.json` after each timed sample, and the complete report is saved before threshold validation. Interrupted or refused attempts remain outside disposable fixture directories. The paired mobile controls retain raw host/response observations and the injected110-millisecond interval; the long-task observer must capture that interval, rather than merely any unrelated slow task. New and prior records require the same control evidence. No timing row may be omitted. Native p99 throughput below1,500,000nodes/s or at/below half the prior DS12 rate fails. TBT p95 must be below200ms; responses must complete within500ms of first paint; strict startup qualification requires every application/unattributed task to be at most50ms across each route’s fresh20 runs; p95 is retained as a descriptive measurement, not an outlier allowance. Independent observer tasks all count. Only same-audit trace proof of browser work before the first application script in the committed main renderer can exclude a Lighthouse task: either browser-only layout, or the exact main-document commit/parser/context chain with source-bound pinned audit bootstrap. The exact source-bound Lighthouse idle-check wrapper may also be excluded at any time only with its distinct audit context, same-navigation frame, complete child-event nesting and exact timer stack. Application and mixed tasks count in full. Other unattributed tasks may use the founder-approved L-66 correlation only with readable, source-bound trace evidence and all forty complete independent probes recording zero long tasks, as detailed below. DS12 reports the50ms target miss separately, all per-run maxima and the p95. A pilot cannot qualify. The complete raw Lighthouse reports, bounded compressed traces and configuration, per-walk durations, machine/profile, prior-record digest and client comparisons are embedded in DS12. They are measurements of a lab profile, not a phone claim.
+
+The paragraph above is the strict 3.0 acceptance, which still validates the
+published 3.0 records. A 3.1 record must carry the separately versioned
+`N3-cold-start-bounded-v2` acceptance. It admits proven cold-start Lighthouse
+tasks and independent observer tasks up to 55 ms, within one budget per route:
+at most two such tasks, in at most two of twenty visits, with at most 10 ms of
+total excess. See [the 3.1 performance decisions](release/3.1-PERFORMANCE-TRADEOFFS.md#startup-bounded-exceptions).
 
 Each Lighthouse audit still starts a fresh browser profile. Before tracing,
 Lighthouse visits the fixed same-origin `/__forma_performance_blank` fixture
