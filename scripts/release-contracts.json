@@ -169,7 +169,7 @@
           "scope": "retain the bundle component breakdown, remove only proven unused/adoption-specific bytes, publish exact raw/gzip/Brotli deltas with all correctness and existing size budgets passing, and preserve runtime export/activation/disposal behavior"
         },
         "FORMA-264": {
-          "status": "pending",
+          "status": "done",
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         }
       }
