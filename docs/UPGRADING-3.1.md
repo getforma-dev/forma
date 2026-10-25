@@ -80,6 +80,12 @@ expression, and the original state getter/setter remain intact. Remove a state
 placeholder that was intended only for a computed value, or give the derived
 value a separate name. Separate lexical scopes may reuse names.
 
+Host values such as `$el` stay opaque to data operations. `JSON.stringify`,
+object enumeration and value-cost accounting see only the host's public
+`label`, at any nesting depth. Supported method calls, coercion and grants are
+unchanged. Markup that serialized a host to read anything other than its label
+must use a supported, granted operation instead.
+
 A `data-list` pass is refused with `FORMA_E_BUDGET` when row count multiplied by
 row weight exceeds 24,000. Row weight is one plus the template's element and
 attribute count, including nested template contents. This admits 12,000 rows of

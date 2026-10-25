@@ -64,7 +64,8 @@ P17's independent 1,800-second acceptance limit remains unchanged.
 `target_tag` must match all seven prepared versions. Use `v3.0.0-rc.1` for an RC
 preparation: pending milestone gates remain recorded, so the rehearsal can
 collect evidence before they close. The normal baseline reader still requires
-an actual comparable published beta DS12 for RC performance. The workflow has
+an actual comparable published predecessor DS12 for RC performance: the 3.0 RC
+used published beta.4, and a 3.1 RC uses published 3.0.0. The workflow has
 no publication credentials, never writes DS12 to a Release, and neither closes
 gates nor replaces exact-main CI or the tagged release workflow. A failed run
 remains failed; another attempt requires an explicit decision.
