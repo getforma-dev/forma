@@ -131,7 +131,7 @@ for (const overlap of [false, true]) it(`keeps development network-only while fa
       await vi.waitFor(() => expect(existsSync(join(root, 'held-failed'))).toBe(true), {timeout:10_000});
     }
     await change(() => {
-      renderer('3.1.0');
+      renderer([BUILD_WRITER_VERSION[0], BUILD_WRITER_VERSION[1] + 1, 0].join('.'));
       if (overlap) writeFileSync(join(root, 'release-failed'), 'release');
     });
     if (overlap) expect(readFileSync(join(outputDir, 'manifest.json'), 'utf8')).toBe(original);
