@@ -708,8 +708,7 @@
   "tags": [],
   "find": "  if (oldLen < SMALL_LIST_THRESHOLD) {",
   "replace": "  if (oldLen < 1) {",
-  "note": "small-list path never taken \u2014 all lists go through the Map path",
-  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes \u2014 that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
+  "note": "Moves nonempty small lists to the Map path. The existing public NaN-key behavior differs: the flat scan uses === while Map uses SameValueZero, so node identity can change. This is not equivalent over the public key domain; count it as SURVIVED if the suite passes, without narrowing that domain to finite keys."
  },
  {
   "id": "list/small-threshold-huge",
@@ -717,8 +716,7 @@
   "tags": [],
   "find": "  if (oldLen < SMALL_LIST_THRESHOLD) {",
   "replace": "  if (oldLen < 100000) {",
-  "note": "large-list Map path never taken \u2014 all lists go through the flat scan",
-  "equivalent": "reconcileSmall and the Map+LIS path produce identical DOM for every input (src/dom/__tests__/list-keyed-reconciliation.test.ts > \"produces the same DOM either side of SMALL_LIST_THRESHOLD\" pins that). The threshold selects between two behaviourally equal algorithms, so only complexity changes \u2014 that is gated by bench/list.bench.ts > \"shuffle 1000 rows (one full reorder)\" and docs/performance-baseline.json, not by the suite."
+  "note": "Moves lists below 100000 old rows to the flat-scan path. The existing public NaN-key behavior differs: the flat scan uses === while Map uses SameValueZero, so node identity can change. This is not equivalent over the public key domain; count it as SURVIVED if the suite passes, without narrowing that domain to finite keys."
  },
  {
   "id": "mount/container-namespace-ignored",
@@ -744,8 +742,7 @@
   "tags": [],
   "find": "    if (value !== undefined) {\n      (el.style as any)[key] = value;\n    }",
   "replace": "    (el.style as any)[key] = value;",
-  "note": "undefined style values written through",
-  "equivalent": "CSSOM stringifies an assigned value, and \"undefined\" is not a valid declaration value, so the property is left unchanged either way. The guard saves a wasted assignment, not a wrong one \u2014 see the note on setStyle in src/dom-utils/mutate.ts."
+  "note": "Writes undefined style values through. Assigning undefined to cssText clears existing declarations, unlike an invalid value for an individual CSS property. Verified by: src/dom-utils/__tests__/set-style-undefined.test.ts > \"preserves every existing declaration when cssText is undefined\""
  },
  {
   "id": "mutate/setText-uses-innerHTML",
