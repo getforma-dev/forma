@@ -153,7 +153,8 @@ exact DS11 artifacts; it does not repair a stale shipped lock during installatio
 
 ## Public compiler API and duplicate core
 
-The public runtime exports are `formaSsrPlugin`, `generateRealIr`, `getSsrEntryProducts`, `IrEmitContext`,
+The public runtime exports are `formaSsrPlugin`, `formaClientPlugin`,
+`transformClientTemplates`, `generateRealIr`, `getSsrEntryProducts`, `IrEmitContext`,
 `COMPILER_WRITER_VERSION`, `baseWriterVersion`, `FmirContainerError`,
 `readFmirContainer`, `encodeFmirSections`, `dumpFmir`, `crc32`,
 `DIAGNOSTIC_CATALOGUE`, `collectDiagnostics`, `diagnosticEntry`,
