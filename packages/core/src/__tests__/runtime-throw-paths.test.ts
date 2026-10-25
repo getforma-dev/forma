@@ -438,6 +438,20 @@ describe('markup cannot throw out of mountMarkup (FORMA-274, item 8)', () => {
   };
 
   it.each(Object.entries(HOSTILE_VALUES))('every directive given %s: nothing throws out of mountMarkup, an event or a later run, and every failure is coded', async (_, json) => {
+    // These bodies stay bounded only because a data-list pass past its cap is
+    // refused. Check that first, cheaply, so a missing cap fails here instead
+    // of building a row for every character of the 1 MiB string.
+    const capped = document.createElement('div');
+    document.body.appendChild(capped);
+    capped.innerHTML = `<div data-forma-state='{}'><ul data-list="{Array.from({length: 12001})}"><li>{item}</li></ul></div>`;
+    try {
+      mountFixture(capped);
+      expect(capped.querySelectorAll('li').length, 'a data-list pass past its cap is refused').toBe(0);
+    } finally {
+      unmountFixture(capped);
+      capped.remove();
+    }
+    runtime.clearDiagnostics();
     const realFetch = globalThis.fetch;
     globalThis.fetch = (async () => new Response(json, { status: 200, headers: { 'content-type': 'application/json' } })) as typeof fetch;
     try {
