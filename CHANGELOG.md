@@ -4,6 +4,12 @@
 
 Changes after 3.1.0-rc.2 will be recorded here.
 
+- FORMA-290: use the same key equality for small and large component lists,
+  retaining `NaN` rows through repeated updates. Track each row owner by its
+  actual node so duplicate keys cannot overwrite another row's cleanup.
+  Removal, clear and root disposal now retire those effects and compiled
+  handlers. The historical RC1/RC2 known-issue entry below is superseded.
+
 - FORMA-294: add opt-in compiler templates for eligible client-created list
   rows (`clientTemplates: true`). One qualified Linux comparison against RC2
   improves creation of 1,000 rows by 11.6%, 10,000 rows by 17.3%, and the
@@ -53,7 +59,7 @@ Package-level details are in each package's CHANGELOG.
   effects after row removal and root disposal on the small-list path. The same
   defect is reproduced in published 3.0.0; it is not repaired here. Validate
   stable unique string or finite numeric keys as described in the
-  [upgrade guide](docs/UPGRADING-3.1.md#known-issue-nan-keys-in-component-lists).
+  [upgrade guide](docs/UPGRADING-3.1.md#repaired-nan-keys-in-component-lists).
 - Server walker (FORMA-258): dynamic text and attributes no longer build
   temporary scalar strings, about 19% less render time and 42% fewer
   allocations in the walker benchmark. This is a walker measurement, not an

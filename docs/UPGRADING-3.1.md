@@ -69,21 +69,26 @@ budgets and zero-JavaScript static routes stay unchanged. These explicit costs
 support the measured effects gains; they do not mean every workload is faster.
 Use the final qualified report and your application's own measurements.
 
-## Known issue: `NaN` keys in component lists
+## Repaired: `NaN` keys in component lists
 
-The public component `createList` and low-level `reconcileList` have a preexisting
-numeric-key edge case (FORMA-290), reproduced in both published 3.0.0 and the
-3.1 candidate. The small-list scan and large-list Map path treat `NaN` differently.
-Repeated updates on the small-list path can replace a `NaN` row and leave some
-of its effects running after the row is removed and the owning root is disposed.
-This release does not repair that lifecycle defect.
+FORMA-290 repairs a lifecycle defect present in published 3.0.0 and 3.1.0-rc.2.
+The small-list scan now uses the same SameValueZero key equality as the large
+Map path: `NaN` matches itself and positive/negative zero match. Repeated updates
+retain the row and its owner. Each actual row node holds its own ownership record,
+so duplicate keys cannot overwrite another row's cleanup. Removed, cleared or
+rerendered rows stop their effects; root disposal drains the remaining rows.
 
-As a workaround, validate keys before passing them to these APIs: use stable,
-unique strings or finite numbers, and reject non-finite numeric keys before
-rendering or updating. This is a workaround, not a newly imposed public API
-restriction. The separate strict SSR/indexed keyed-list domain already rejects
-`NaN`. The mutation record now counts the two threshold variants as surviving
-coverage gaps rather than claiming the algorithms are equivalent for every input.
+Continue to use stable unique keys for predictable row identity. Finite keys are
+no longer required as a workaround for this component-list leak. The separate
+strict SSR/indexed keyed-list domain still rejects `NaN`; its contract is unchanged.
+The old mutation outcomes remain historical; current qualification must report
+the actual outcomes of the unchanged threshold probes.
+
+This repair does not make list updates transactional. If a row renderer throws
+after earlier rows were replaced, an existing recovery defect can leave stale
+DOM on a later update. Dispose and remount that list boundary after such a
+rendering failure rather than relying on incremental recovery. Parent disposal
+still stops the row effects in the reproduced case.
 
 ## Check explicit HTML-runtime declarations
 
