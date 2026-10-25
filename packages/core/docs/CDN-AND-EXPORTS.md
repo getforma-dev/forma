@@ -130,11 +130,19 @@ so a bundler never pulls them into an app that does not ask for them.
 | Import | Description |
 |---|---|
 | `@getforma/core` | Signals, `h()`, mount, lists, stores, components, islands, events, DOM utils |
+| `@getforma/core/compiled` | Compiler-generated list templates; optional internal entry sharing the main entry's ownership graph |
 | `@getforma/core/http` | `createFetch`, `fetchJSON`, `createSSE`, `createWebSocket` |
 | `@getforma/core/storage` | `createLocalStorage`, `createSessionStorage`, `createIndexedDB` |
 | `@getforma/core/runtime` | HTML runtime — `mountMarkup()`, handle `update()`/`unmount()`, `trustedHtml()`, `getDiagnostics()`; explicit tier and grants |
 | `@getforma/core/runtime-hardened` | The same runtime, bundled without code splitting (alias: `@getforma/core/runtime-csp`) |
 | `@getforma/core/tc39` | TC39-shaped `State` and `Computed` classes |
+
+The compiled entry is for output from a coordinated `@getforma/compiler`
+version. Its construction and event rules are described in the compiler's
+[client-template contract](../../compiler/README.md#client-jsx-templates).
+Applications without compiled rows do not import this helper. Its markup
+callback must return `trustedHtml()`; direct authored uses are covered by the
+raw-entry lint. It is not a separate self-contained CDN build.
 
 ```ts
 // Core — zero network code

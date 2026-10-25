@@ -369,6 +369,7 @@ const FORMA_MODULES = ['@getforma/core', 'formajs'];
 const SINK_ARGUMENT: ReadonlyMap<string, number> = new Map([
   ['template', 0],
   ['templateMany', 0],
+  ['__createCompiledTemplate', 0],
   ['setHTMLUnsafe', 1],
   ['reconcile', 1],
   // 2.1.0's tiered mount (FORMA-128): `mountMarkup(root, markup, options)` (the A2 audit's S2).
@@ -1172,6 +1173,13 @@ class ScriptScan {
 
   /** A sink of core's at `i`, its name ending before `after`: called with untraced markup, or referenced. */
   private checkSinkUse(i: number, sink: string, after: number, argIndex = SINK_ARGUMENT.get(sink)!): void {
+    // Compiler-generated code is emitted after the application-source lint.
+    // An authored call is always inventoried: do not infer the provenance of
+    // markup returned later by its callback, even when it looks like a literal.
+    if (sink === '__createCompiledTemplate') {
+      this.report(i, sink, 'authored compiler-template sink: review its lazy markup callback');
+      return;
+    }
     const open = this.isP(after, '(') ? after : this.isP(after, '?.') && this.isP(after + 1, '(') ? after + 1 : -1;
     if (open === -1) {
       this.report(i, sink, `${sink} referenced, not called: the lint cannot see what it is given`);

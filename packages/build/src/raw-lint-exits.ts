@@ -33,6 +33,7 @@ export const RAW_EXITS: readonly ExitInfo[] = Object.freeze([
   { name: 'setHTMLUnsafe', slug: 'setHTMLUnsafe', language: 'ts', what: "core's setHTMLUnsafe() given markup the lint cannot trace to trustedHtml()" },
   { name: 'template', slug: 'template', language: 'ts', what: "core's template() given markup the lint cannot trace to trustedHtml()" },
   { name: 'templateMany', slug: 'templateMany', language: 'ts', what: "core's templateMany() given markup the lint cannot trace to trustedHtml()" },
+  { name: '__createCompiledTemplate', slug: 'compiled-template', language: 'ts', what: "authored use of core's compiler-only template sink; its lazy markup callback requires review" },
   { name: 'reconcile', slug: 'reconcile', language: 'ts', what: "the runtime's reconcile() given markup the lint cannot trace to trustedHtml()" },
   { name: 'mountMarkup', slug: 'mountMarkup', language: 'ts', what: "the runtime's mountMarkup(), 2.1.0's tiered mount, given markup the lint cannot trace to trustedHtml()" },
   { name: 'MountHandle.update', slug: 'MountHandle-update', language: 'ts', what: "update() on a mountMarkup() handle given markup the lint cannot trace to trustedHtml()" },

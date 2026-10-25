@@ -1,3 +1,4 @@
+export { formaClientPlugin, transformClientTemplates, type ClientTemplateOptions } from './client-template.js';
 /**
  * Forma Compiler - Public API
  *

@@ -122,6 +122,10 @@ export const FRAME_RUNTIME_OUTPUT = 'dist/formajs-frame.global.js';
 export const EXTERNAL_DEPS_OUTPUTS = Object.freeze([
   'dist/index.js',
   'dist/index.cjs',
+  'dist/compiled.js',
+  'dist/compiled.cjs',
   `${DEV_OUT_DIR}/index.js`,
   `${DEV_OUT_DIR}/index.cjs`,
+  `${DEV_OUT_DIR}/compiled.js`,
+  `${DEV_OUT_DIR}/compiled.cjs`,
 ]);

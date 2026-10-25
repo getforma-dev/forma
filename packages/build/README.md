@@ -45,6 +45,16 @@ npx tsx build.ts
 
 This bundles your app with esbuild, content-hashes all assets, generates Brotli + gzip compressed versions, and writes an asset manifest.
 
+When the installed compiler exposes `formaClientPlugin`, the pipeline also lowers
+eligible JSX subtrees in direct `createList` render callbacks to reusable HTML
+templates in browser and island bundles.
+This applies to split, non-split and watch builds. Use a coordinated compiler/core
+set providing `@getforma/core/compiled`; the generated helper shares the route's
+existing reactive graph. Builds without a compiler retain ordinary JSX lowering.
+See the compiler's [client-template contract](../compiler/README.md#client-jsx-templates)
+for eligibility, delegated clicks and adoption behavior. Full route sizes include
+the helper and the fallback description; a template is not a bundle-size guarantee.
+
 ### Optional shared ESM graph
 
 Set `codeSplitting: true` to share one runtime across entries and preserve native
@@ -713,6 +723,7 @@ TypeScript and JavaScript, inline scripts in HTML included:
 | `setHTMLUnsafe` | Core's `setHTMLUnsafe(el, markup)` given markup not traced to `trustedHtml()`. |
 | `template` | Core's `template(markup)`, likewise. |
 | `templateMany` | Core's `templateMany(markup)`, likewise. |
+| `__createCompiledTemplate` | Authored use or re-export of the compiler-only template sink. Its lazy markup callback always needs review; generated compiler output is emitted after the application-source lint. |
 | `reconcile` | A legacy runtime `reconcile(el, markup)` call, likewise. The lint recognizes this removed API for migration audits; use a `mountMarkup` handle's `update` in 3.0. |
 | `mountMarkup` | The runtime's `mountMarkup(root, markup, options)` with an explicit tier, likewise: 3.0 requires trusted markup. |
 | `MountHandle.update` | `update(markup)` on the handle `mountMarkup()` returns, given markup not traced to `trustedHtml()`: on a variable, field or property assigned the handle (`=`, `??=`, `\|\|=`, `&&=`, or an arm of a ternary), by dot or by bracket (`w.update(…)`, `w['update'](…)`), chained on the call (`mountMarkup(…).update(…)`), or destructured from it (`const { update } = mountMarkup(…)`, `{ update: up }`). The follow is by name, file-wide: a second object held under a handle's name, or another `update` destructured in the same file, is reported too, and an entry on the list says so. |

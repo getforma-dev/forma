@@ -5,7 +5,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync, statfsSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import os from 'node:os';
 import { hostProfile, validateEngineProfile, validateContainerResources } from './resource-profile.mjs';
 import { SIGNAL_CONTROL, SIGNAL_RUNS, SIGNAL_WARMUPS, describeSignalControl, validateSignalControl } from './client-signals-control.mjs';
@@ -18,6 +18,8 @@ assert.equal(process.platform, 'linux', 'native Linux required');
 assert.equal(execFileSync('git', ['status', '--porcelain'], { cwd: repository, encoding: 'utf8' }).trim(), '', 'commit source before racing');
 const diagnostic = argv.includes('--diagnostic');
 const profileRows = argv.includes('--profile-rows');
+const compilerTemplates = argv.includes('--compiler-templates');
+if (compilerTemplates && profileRows) throw new Error('--compiler-templates and --profile-rows cannot be combined until generated-code source maps are available; profiling an untransformed rebuild would misattribute the candidate');
 const resourceProfile = hostProfile({ diagnostic });
 validateEngineProfile(resourceProfile, JSON.parse(execFileSync('docker', ['info', '--format', '{{json .}}'], { encoding: 'utf8' })));
 const chrome = resolve(option('chrome', process.env.CHROME_PATH ?? ''));
@@ -49,10 +51,10 @@ const ownership = { id, builder, builderCreated: false };
 const ownershipPath = join(results, `${id}-ownership.json`);
 assert(!existsSync(ownershipPath), 'run ID already used');
 let child, stopping = false;
-function run(program, args, cwd = root) {
+function run(program, args, cwd = root, env = process.env) {
   console.log(JSON.stringify([program, ...args]));
   return new Promise((ok, fail) => {
-    child = spawn(program, args, { cwd, stdio: 'inherit', env: process.env });
+    child = spawn(program, args, { cwd, stdio: 'inherit', env });
     child.once('error', fail);
     child.once('close', code => { child = undefined; code === 0 ? ok() : fail(Error(`${program} exited ${code}`)); });
   });
@@ -94,13 +96,21 @@ try {
     await run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], client);
     const publishedPackage = JSON.parse(readFileSync(join(client, 'node_modules/@getforma/core/package.json'), 'utf8'));
     let corePackage = publishedPackage;
-    let core;
+    let core, compilerModule;
+    const compilerRecord = { requested: compilerTemplates, available: false };
     if (ref !== 'published') {
       const candidate = join(trialDir, 'candidate');
       await run('git', ['fetch', 'origin', ref], repository);
       archive(ref, ['package.json', 'package-lock.json', 'packages', 'scripts'], candidate);
       await run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], candidate);
       await run('npm', ['run', 'build', '--workspace', '@getforma/core'], candidate);
+      if (compilerTemplates) {
+        await run('npm', ['run', 'build', '--workspace', '@getforma/compiler'], candidate);
+        const modulePath = join(candidate, 'packages/compiler/dist/index.js');
+        compilerRecord.sha256 = sha(modulePath);
+        compilerRecord.available = typeof (await import(pathToFileURL(modulePath).href)).transformClientTemplates === 'function';
+        if (compilerRecord.available) compilerModule = modulePath;
+      }
       core = join(candidate, 'packages/core');
       const candidatePackage = JSON.parse(readFileSync(join(core, 'package.json'), 'utf8'));
       corePackage = candidatePackage;
@@ -117,12 +127,16 @@ try {
       writeFileSync(dockerfile, readFileSync(dockerfile, 'utf8') + '\nCOPY candidate-core node_modules/@getforma/core\n');
     }
     const cars = ref === 'published' ? ['forma', 'vanilla', 'react', 'preact', 'solid', 'svelte', 'vue'] : ['forma', 'vanilla'];
-    for (const car of cars) await run(process.execPath, ['node_modules/vite/bin/vite.js', 'build', `apps/${car}`, '--config', `apps/${car}/vite.config.js`], client);
+    for (const car of cars) await run(process.execPath, ['node_modules/vite/bin/vite.js', 'build', `apps/${car}`, '--config', `apps/${car}/vite.config.js`], client, {
+      ...process.env, GP_FORMA_COMPILER: car === 'forma' ? compilerModule ?? '' : '',
+      GP_TEMPLATE_EVIDENCE: car === 'forma' && compilerModule ? join(trialDir, 'compiler-templates.json') : '',
+    });
+    if (compilerModule) compilerRecord.evidenceSha256 = sha(join(trialDir, 'compiler-templates.json'));
     const signalImage = `gp264/${id}/signals-${ref}`;
     const signalVersionControl = describeSignalControl(JSON.parse(readFileSync(join(signals, 'package-lock.json'), 'utf8')),
       corePackage, sha(join(signals, 'adapters', `${SIGNAL_CONTROL}.mjs`)));
     await run('docker', ['buildx', 'build', '--builder', builder, '--load', '--label', 'grandprix=forma-264', '--label', label, '-t', signalImage, signals]);
-    const trial = { ref, cars, resourceProfile, campaign, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
+    const trial = { ref, cars, resourceProfile, campaign, compiler: compilerRecord, clientLock: sha(join(client, 'package-lock.json')), signalsLock: sha(join(signals, 'package-lock.json')),
       coreBundle: sha(join(client, 'node_modules/@getforma/core/dist/index.js')),
       signalsImage: JSON.parse(execFileSync('docker', ['image', 'inspect', signalImage], { encoding: 'utf8' }))[0].Id, signalVersionControl,
       before: machine(), passed: false };

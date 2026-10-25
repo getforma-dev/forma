@@ -1,0 +1,25 @@
+import { afterEach, expect, it } from 'vitest';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { build } from './helpers/named-build';
+const roots: string[] = [];
+afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
+it.each([false, true])('installs the real compiler client plugin in a public Browser build (split=%s)', async codeSplitting => {
+  const root = mkdtempSync(join(tmpdir(), 'forma-build-client-template-')); roots.push(root);
+  const src = join(root, 'src'), dist = join(root, 'dist'), core = join(root, 'node_modules/@getforma/core');
+  mkdirSync(src); mkdirSync(core, { recursive: true });
+  writeFileSync(join(root, 'package.json'), '{"type":"module"}');
+  writeFileSync(join(core, 'package.json'), JSON.stringify({ name:'@getforma/core',version:'3.1.0-rc.2',type:'module',exports:{'.':'./index.js','./compiled':'./compiled.js'} }));
+  writeFileSync(join(core, 'index.js'), 'export function h(tag,props,...children){return {tag,props,children}};export const trustedHtml=value=>value;export const createList=(source,key,render)=>(render??key)(source()[0]);');
+  writeFileSync(join(core, 'compiled.js'), 'export function __createCompiledTemplate(markup,bindings){return initialize=>{const values=[];initialize((i,value)=>{values[i]=value});return {compiled:true,html:markup(),bindings,values}}}');
+  const entry = join(src, 'app.tsx');
+  writeFileSync(entry, `import {h,createList} from '@getforma/core';const n=7;globalThis.result=createList(()=>[{id:1}],row=>row.id,row=><div><span>{n}</span></div>);console.log(JSON.stringify(globalThis.result));`);
+  const result = await build({entryPoints:[{entry,outfile:'app.js',ssr:false}],routes:{'/':{js:['app'],css:[]}},outputDir:dist,codeSplitting});
+  const output = join(dist,result.manifest.aliases['app.js']);
+  const executed = spawnSync(process.execPath,[output],{encoding:'utf8'});
+  expect(executed.status,executed.stderr).toBe(0);
+  expect(JSON.parse(executed.stdout)).toMatchObject({compiled:true,html:'<div><span></span></div>',bindings:[[[0],1]],values:[7]});
+  expect(readFileSync(output,'utf8')).toContain('compiled');
+});

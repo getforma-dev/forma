@@ -226,6 +226,12 @@ function eventName(key: string): string {
 
 const ABORT_SYM = Symbol.for('forma-abort');
 
+// The compiled subpath installs these hooks; ordinary h() does not import its
+// template parser or delegator. A target hook revokes only that target, while
+// the root hook releases the compiled instance's owned resources.
+export const COMPILED_EVENT = Symbol('forma-compiled-event');
+export const COMPILED_CLEANUP = Symbol('forma-compiled-cleanup');
+
 /**
  * @internal Get or lazily create the AbortController an element's listeners
  * are attached with, the one {@link cleanup} aborts for ordinary h() elements.
@@ -247,6 +253,12 @@ export function getAbortController(el: Element): AbortController {
  * deleted so a fresh one is created if the element is reused.
  */
 export function cleanup(el: Element): void {
+  const compiled = (el as any)[COMPILED_CLEANUP] as (() => void) | undefined;
+  if (compiled) {
+    delete (el as any)[COMPILED_CLEANUP];
+    compiled();
+  }
+  if ((el as any)[COMPILED_EVENT]) delete (el as any)[COMPILED_EVENT];
   const controller = (el as any)[ABORT_SYM] as AbortController | undefined;
   if (controller) {
     controller.abort();
@@ -659,8 +671,8 @@ for (const attr of BOOLEAN_ATTRS) {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-/** Apply a single prop to an element (supports both HTML and SVG). */
-function applyProp(el: Element, key: string, value: unknown): void {
+/** @internal Apply a single prop without resetting other bindings' caches. */
+export function applyProp(el: Element, key: string, value: unknown): void {
   key = attributeName(key);
   if (isFormControlProperty(el, key)) {
     if (typeof value === 'function') {

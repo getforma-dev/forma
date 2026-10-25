@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, cpSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { build as bundle } from 'esbuild';
 import { ROOT, json, save, run, stageNpmLock, compatibilityPeer } from './release-set.mjs';
@@ -11,7 +12,7 @@ import { ROOT, json, save, run, stageNpmLock, compatibilityPeer } from './releas
 const publicNames = [
   'COMPILER_WRITER_VERSION', 'DIAGNOSTIC_CATALOGUE', 'FmirContainerError', 'IrEmitContext',
   'baseWriterVersion', 'collectDiagnostics', 'crc32', 'diagnosticEntry', 'dumpFmir',
-  'encodeFmirSections', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'getSsrEntryProducts', 'makeDiagnostic', 'readFmirContainer',
+  'encodeFmirSections', 'formaClientPlugin', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'getSsrEntryProducts', 'makeDiagnostic', 'readFmirContainer', 'transformClientTemplates',
 ].sort();
 function install(dir, members, artifacts) {
   mkdirSync(dir);
@@ -40,6 +41,37 @@ test('the actual packed compiler exposes documented runtime and declaration entr
     const app = join(root, 'consumer'); install(app, members, root);
     const actual = JSON.parse(execute(app, 'import * as compiler from "@getforma/compiler"; console.log(JSON.stringify(Object.keys(compiler).sort()));'));
     assert.deepEqual(actual, publicNames);
+    // Both installed module systems expose the lazy compiler entry without
+    // touching browser globals or evaluating its markup at module creation.
+    assert.equal(execute(app, 'import {createRequire} from "node:module"; import {__createCompiledTemplate as esm} from "@getforma/core/compiled"; const {__createCompiledTemplate:cjs}=createRequire(import.meta.url)("@getforma/core/compiled"); for(const make of [esm,cjs]) { if(typeof make(()=>{throw new Error("eager markup")},[])!=="function") throw new Error("invalid compiled factory"); } console.log("lazy");').trim(), 'lazy');
+    // Use the actually installed main/compiled pair in both module systems.
+    // A source-only bundle could hide a duplicated owner graph in packaging.
+    assert.equal(execute(app, `
+      import assert from 'node:assert/strict';
+      import {createRequire} from 'node:module';
+      import {Window} from ${JSON.stringify(pathToFileURL(join(ROOT, 'node_modules/happy-dom/lib/index.js')).href)};
+      const window = new Window(); globalThis.document = window.document;
+      for (const name of ['Node','Text','Comment','Element','HTMLElement','HTMLTextAreaElement','HTMLInputElement','HTMLSelectElement','SVGElement','DocumentFragment']) globalThis[name] = window[name];
+      const require = createRequire(import.meta.url);
+      for (const [core, compiled] of [
+        [await import('@getforma/core'), await import('@getforma/core/compiled')],
+        [require('@getforma/core'), require('@getforma/core/compiled')],
+      ]) {
+        let stop, stopLive, reads = 0, calls = 0;
+        const [value, setValue] = core.createSignal('initial');
+        const row = compiled.__createCompiledTemplate(() => core.trustedHtml('<div><span></span><button>go</button></div>'), [[[0],1],[[1],2,'onClick']]);
+        const initialize = bind => { bind(0, () => { reads++; return value(); }); bind(1, () => calls++); };
+        const stale = core.createRoot(dispose => { stop = dispose; return row(initialize); });
+        document.body.append(stale); stale.querySelector('button').click();
+        assert.equal(calls,1); assert.equal(stale.querySelector('span').textContent,'initial');
+        stop(); stale.remove(); const before = reads; setValue('after disposal'); assert.equal(reads,before);
+        const live = core.createRoot(dispose => { stopLive = dispose; return row(initialize); });
+        document.body.append(live, stale); stale.querySelector('button').click(); assert.equal(calls,1);
+        live.querySelector('button').click(); assert.equal(calls,2);
+        stopLive(); document.body.replaceChildren();
+      }
+      console.log('shared owners');
+    `).trim(), 'shared owners');
     for (const path of ['@getforma/compiler/src/ir-walk', '@getforma/compiler/dist/ir-resolve.js', '@getforma/compiler/package.json']) {
       assert.throws(() => execute(app, `await import(${JSON.stringify(path)});`), error => /ERR_PACKAGE_PATH_NOT_EXPORTED/.test(String(error.stderr)));
     }
@@ -50,6 +82,9 @@ test('the actual packed compiler exposes documented runtime and declaration entr
       '// @ts-expect-error compiler products and nested definition lists are immutable',
       'products[0]!.islands.push({name: "forged", mode: "ssr"});',
       'const schema: PropsSchema = [[]]; const ctx = new IrEmitContext(); ctx.setPropsSchema(schema); dumpFmir(ctx.toBinary());',
+      'import {h, trustedHtml} from "@getforma/core";',
+      'import {__createCompiledTemplate} from "@getforma/core/compiled";',
+      'const row = __createCompiledTemplate(() => trustedHtml("<div></div>"), []); row(bind => { if (!bind) return h("div", null); });',
       ...privateNames.flatMap(name => ['// @ts-expect-error internal or removed API is not published', `import { ${name} } from "@getforma/compiler";`]),
     ].join('\n'));
     save(join(app, 'tsconfig.json'), { compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', noEmit: true, strict: true, skipLibCheck: true, types: [] }, files: ['surface.mts'] });

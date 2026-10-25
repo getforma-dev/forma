@@ -51,6 +51,10 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
       'mountMarkup', 'resetScope', 'setScopeValue', 'trustedHtml', 'yieldToMain',
     ],
   },
+  './compiled': {
+    load: () => import('../compiled'),
+    exports: ['__createCompiledTemplate'],
+  },
   './http': {
     load: () => import('../http/index'),
     exports: ['createFetch', 'createSSE', 'createWebSocket', 'fetchJSON'],

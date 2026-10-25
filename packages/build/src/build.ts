@@ -819,7 +819,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       entryNames: '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
-      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin), jsxNamespaceFallback()],
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin), ...(compiler?.formaClientPlugin ? [compiler.formaClientPlugin()] : []), jsxNamespaceFallback()],
     });
     const entryOptionsFor = (entry: BuildEntry, options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
       ...options,
@@ -827,7 +827,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       outfile: join(distDir, entry.outfile),
       metafile: true,
       write: false,
-      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), jsxNamespaceFallback()],
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), ...(compiler?.formaClientPlugin ? [compiler.formaClientPlugin()] : []), jsxNamespaceFallback()],
     });
 
     // ── The deployment identity (FORMA-186, DR-29; L-6 as amended by L-56) ──
@@ -997,7 +997,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           assetNames: 'asset.[hash]',
           metafile: true,
           write: false,
-          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
+          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),...(compiler?.formaClientPlugin?[compiler.formaClientPlugin()]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
             builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),[entry]);}finally{firstBuilt();}});
           }}],
         });

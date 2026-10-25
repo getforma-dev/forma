@@ -92,7 +92,19 @@
         "default": "./dist/storage.cjs"
       }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./compiled": {
+      "import": {
+        "types": "./dist/compiled.d.ts",
+        "development": "./dist/dev/compiled.js",
+        "default": "./dist/compiled.js"
+      },
+      "require": {
+        "types": "./dist/compiled.d.cts",
+        "development": "./dist/dev/compiled.cjs",
+        "default": "./dist/compiled.cjs"
+      }
+    }
   },
   "typesVersions": {
     "*": {
@@ -113,6 +125,9 @@
       ],
       "storage": [
         "dist/storage.d.ts"
+      ],
+      "compiled": [
+        "dist/compiled.d.ts"
       ]
     }
   },

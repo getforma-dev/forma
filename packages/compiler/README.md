@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@getforma/compiler)](https://www.npmjs.com/package/@getforma/compiler)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-FMIR compiler for [Forma](https://github.com/getforma-dev/forma). Emits binary modules for native Rust SSR while browser bundles keep runtime `h()`.
+FMIR and client JSX compiler for [Forma](https://github.com/getforma-dev/forma). Emits binary modules for native Rust SSR and lowers eligible browser JSX to reusable HTML templates.
 
 Add the compiler for Rust SSR; browser-only applications run without it.
 
@@ -136,7 +136,8 @@ Historical slot-injection, warning-only and fallback guidance is preserved in
 
 ## Public entrypoints
 
-The package root exports compilation (`formaSsrPlugin`, `generateRealIr`) and
+The package root exports compilation (`formaSsrPlugin`, `generateRealIr`,
+`formaClientPlugin`, `transformClientTemplates`) and
 explicit tooling APIs: `IrEmitContext` and its schema/key-path/source-position
 types; `DIAGNOSTIC_CATALOGUE`, `collectDiagnostics`, `diagnosticEntry`,
 `formatDiagnostic`, `makeDiagnostic` and their diagnostic types; and FMIR
@@ -144,6 +145,66 @@ inspection/encoding (`readFmirContainer`, `dumpFmir`, `encodeFmirSections`,
 `crc32`, `baseWriterVersion`, `COMPILER_WRITER_VERSION`, `FmirContainerError`,
 `WriterVersion`, `FmirSection`). The release packed-set verifier uses the same
 public inspection APIs as consumers.
+
+### Client JSX templates
+
+`formaClientPlugin()` is an esbuild plugin for classic JSX with a named `h`
+import from `@getforma/core`. Configure `jsxFactory: 'h'` and register this plugin
+alongside `formaSsrPlugin()` when building a native/browser pair. `@getforma/build`
+registers it automatically when the installed compiler provides it. Browser-only
+builds without a compiler continue to use `h()`.
+
+The pass hoists escaped, static HTML and child-node binding paths for eligible
+subtrees containing at least two elements inside a direct, synchronous inline
+`createList` render callback imported from core. The two-argument indexed overload
+and the three/four-argument array overload are recognized, including import
+aliases. Named row helpers, nested functions and unrelated JSX remain ordinary.
+Current eligible elements are ordinary
+HTML containers, text formatting, lists, explicit table sections/cells, anchors,
+buttons, `br` and `hr`. Attributes are limited to `class`/`className`, `id`,
+`title`, `role`, and lowercase `data-*`/`aria-*`. Dynamic properties and a sole
+dynamic child use the existing core writers, including reactive function values
+and Node/array children. Inline `onClick` functions use delegated bubbling clicks.
+Spreads, refs, styles, raw HTML, URL attributes, form controls, custom elements,
+foreign namespaces, other event forms, mixed dynamic children and parser-unstable
+trees retain ordinary JSX lowering; eligible descendants may still be lowered.
+
+The initializer preserves expression and initial-reader interleaving: a node's
+attribute expressions run first, then its children are constructed and initialized,
+then its own props and child bindings initialize. Each expression runs once on
+only the chosen construction path. Direct `await`/`yield` expressions and async
+or generator render callbacks remain ordinary; deferred function bodies are not
+moved out of their function. The cached static subtree already has its static
+attributes and internal parent/child links during initialization. Code inspecting those links can observe
+this intentional difference from nested `h()` construction, which attaches each
+child to its parent later.
+
+The factory does no DOM or trust-policy work at module initialization. Its lazy
+markup callback uses the existing explicit `trustedHtml` mint for the compiler's
+escaped literal; the helper validates that branded value at the template sink.
+Adoption and non-HTML fallback execute the original JSX without evaluating the
+markup callback.
+
+Compiled clicks use one shared bubbling listener per document. The original
+composed path supplies handler order and each handler sees its bound element as
+`currentTarget`. Propagation stopped before the document listener prevents these
+handlers; detached-tree and noncomposed shadow clicks do not reach it. Removing a
+compiled row or disposing its owner revokes its handlers and bindings. This is
+the compiled event contract; native event listener options remain available via
+ordinary `h()` trees.
+
+Native FMIR is generated from the original source. Adoption description and
+non-HTML construction execute the original JSX tree; adopted live updates
+and fresh CSR creation retain one ownership/reactive graph. The generated helper
+comes from `@getforma/core/compiled`, so use a coordinated core/compiler set that
+provides this subpath. Applications without compiled templates do not import it.
+
+For bundler integrations, `transformClientTemplates(source, { filename?,
+factory?, runtime? })` returns transformed JSX/TSX as a string before JSX lowering.
+The defaults are `factory: 'h'` and `runtime: 'transform'`; an imported `h` alias
+may be named by `factory`. Unsupported input is returned unchanged. The direct string
+API does not capture files or apply namespace wrapping; integrations must retain
+their source-generation and namespace guarantees. Prefer the plugin for esbuild.
 
 `generateRealIr(entryPointPath)` drives component analysis, resolution, walking
 and emission. Those implementation modules, including `ComponentAnalyzer`,
