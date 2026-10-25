@@ -45,15 +45,19 @@ npx tsx build.ts
 
 This bundles your app with esbuild, content-hashes all assets, generates Brotli + gzip compressed versions, and writes an asset manifest.
 
-When the installed compiler exposes `formaClientPlugin`, the pipeline also lowers
+With `clientTemplates: true`, the pipeline also lowers
 eligible JSX subtrees in direct `createList` render callbacks to reusable HTML
-templates in browser and island bundles.
+templates in browser and island bundles. This is off by default: use it for
+frequently created client-side lists after measuring the complete route.
 This applies to split, non-split and watch builds. Use a coordinated compiler/core
 set providing `@getforma/core/compiled`; the generated helper shares the route's
-existing reactive graph. Builds without a compiler retain ordinary JSX lowering.
+existing reactive graph. Opting in without a supporting compiler fails with
+`BUILD-809`; default builds retain ordinary JSX lowering.
 See the compiler's [client-template contract](../compiler/README.md#client-jsx-templates)
 for eligibility, delegated clicks and adoption behavior. Full route sizes include
-the helper and the fallback description; a template is not a bundle-size guarantee.
+the helper and the fallback description; all size gates remain in force. Adopted
+lists use the original JSX description even for rows added after adoption, so
+this option currently accelerates client-created lists, not server-adopted lists.
 
 ### Optional shared ESM graph
 
@@ -342,6 +346,7 @@ const config: BuildConfig = {
   // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
   // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
   previewFrame: false,                // true: write core's frame runtime, minified, as forma-runtime.js (forma-server's PageResponse::frame)
+  clientTemplates: false,             // opt in for frequently created lists; requires compiler/core support, keeps all route size budgets
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
   formaAlias: "@getforma/core",       // What bare 'formajs' imports resolve to
@@ -843,7 +848,7 @@ What it cannot see, and review must:
 |---|---|---|
 | What it is | Vite/esbuild plugins | Full build pipeline |
 | Use case | Add to existing Vite config | Replace your build script |
-| `h()` → `template()` transform | Yes (Vite plugin) | No — bundles your source as written |
+| Eligible JSX list templates | Explicit `formaClientPlugin()` or string transform | Opt-in `clientTemplates: true` |
 | Content hashing | No | Yes |
 | Compression | No | Yes (Brotli + gzip) |
 | Manifest | No | Yes |

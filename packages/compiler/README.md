@@ -151,8 +151,11 @@ public inspection APIs as consumers.
 `formaClientPlugin()` is an esbuild plugin for classic JSX with a named `h`
 import from `@getforma/core`. Configure `jsxFactory: 'h'` and register this plugin
 alongside `formaSsrPlugin()` when building a native/browser pair. `@getforma/build`
-registers it automatically when the installed compiler provides it. Browser-only
-builds without a compiler continue to use `h()`.
+registers it only with `clientTemplates: true`; it is off by default. This option
+requires a coordinated compiler/core set. It targets frequently created lists,
+where a cached template can repay the helper's download and cleanup cost. Small
+islands should retain ordinary `h()` unless their own measurements support opting
+in. All route size budgets still apply, including to compiled builds.
 
 The pass hoists escaped, static HTML and child-node binding paths for eligible
 subtrees containing at least two elements inside a direct, synchronous inline
@@ -198,6 +201,9 @@ non-HTML construction execute the original JSX tree; adopted live updates
 and fresh CSR creation retain one ownership/reactive graph. The generated helper
 comes from `@getforma/core/compiled`, so use a coordinated core/compiler set that
 provides this subpath. Applications without compiled templates do not import it.
+Server-adopted lists also describe rows inserted after activation through the
+original JSX path. The current clone speedup therefore applies to client-created
+lists; it is not an adopted-list optimization.
 
 For bundler integrations, `transformClientTemplates(source, { filename?,
 factory?, runtime? })` returns transformed JSX/TSX as a string before JSX lowering.

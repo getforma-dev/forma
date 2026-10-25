@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- FORMA-294: add `clientTemplates: true` for explicitly selected builds with a
+  supporting compiler/core set. Off by default; split, ordinary and watch builds
+  keep the same choice and all route size gates. Refuse unsupported compiler
+  sets before publication. Inventory authored compiled-template sinks in raw
+  lint; generated output follows the existing reviewed compiler boundary.
+
 Changes after the prepared 3.0.0 set will be recorded here.
 
 - **`outputDir` that is a symbolic link (a junction on Windows) is refused, with `BUILD-824`, before anything is written** (FORMA-170). The atomic swap renamed a real staging directory over the link, so the link became a directory and the previous build stayed in the link's old target, where a server reading the link kept serving it; watch mode removed the link when it emptied `outputDir`. The error names the link and its target (a dangling link is refused too), and the link, its target and the directory beside it are left untouched. A symlinked directory above `outputDir` is still followed. Following the link was considered and not chosen: it would move the output to a path the configuration does not name. No other behavior changes.

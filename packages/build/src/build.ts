@@ -322,6 +322,11 @@ function validateConfig(config: BuildConfig): void {
     );
   }
 
+  const clientTemplates: unknown = config.clientTemplates;
+  if (clientTemplates !== undefined && typeof clientTemplates !== 'boolean') {
+    problems.push(`clientTemplates is ${shown(clientTemplates)}: use true to opt in to compiled list templates, or false (the default)`);
+  }
+
   // The worker's cache names carry it between colons, and the server must
   // name the same application to retire them (FORMA-130).
   const app: unknown = config.app;
@@ -660,9 +665,12 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
     requireCompatibleCompiler(compiler.COMPILER_WRITER_VERSION);
   }
   if (config.ssr && !compiler) throw new Error('BUILD-801 SSR requires @getforma/compiler; install a compatible compiler before building');
+  if (config.clientTemplates && typeof compiler?.formaClientPlugin !== 'function') {
+    throw new Error('BUILD-809 clientTemplates requires a compatible @getforma/compiler with formaClientPlugin; install the same Forma release set');
+  }
   const writers = [
     { name: '@getforma/build', version: BUILD_WRITER_VERSION },
-    ...(config.ssr && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION }] : []),
+    ...((config.ssr || config.clientTemplates) && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION }] : []),
   ];
   const compatibility = () => { checkProjectCompatibility(project, writers, config.ssr === true); };
   const compatibilityWarnings = checkProjectCompatibility(project, writers, config.ssr === true);
@@ -819,7 +827,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       entryNames: '[name].[hash]',
       chunkNames: 'chunk.[hash]',
       assetNames: 'asset.[hash]',
-      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin), ...(compiler?.formaClientPlugin ? [compiler.formaClientPlugin()] : []), jsxNamespaceFallback()],
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor(config.entryPoints, plugin), ...(config.clientTemplates ? [compiler!.formaClientPlugin()] : []), jsxNamespaceFallback()],
     });
     const entryOptionsFor = (entry: BuildEntry, options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared): esbuild.BuildOptions => ({
       ...options,
@@ -827,7 +835,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       outfile: join(distDir, entry.outfile),
       metafile: true,
       write: false,
-      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), ...(compiler?.formaClientPlugin ? [compiler.formaClientPlugin()] : []), jsxNamespaceFallback()],
+      plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), ...(config.clientTemplates ? [compiler!.formaClientPlugin()] : []), jsxNamespaceFallback()],
     });
 
     // ── The deployment identity (FORMA-186, DR-29; L-6 as amended by L-56) ──
@@ -868,7 +876,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         identity = computeIdentity({
           writers: [
             { name: '@getforma/build', version: BUILD_WRITER_VERSION },
-            ...(config.ssr && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION as readonly [number, number, number] }] : []),
+            ...((config.ssr || config.clientTemplates) && compiler ? [{ name: '@getforma/compiler', version: compiler.COMPILER_WRITER_VERSION as readonly [number, number, number] }] : []),
           ],
           files,
         });
@@ -997,7 +1005,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           assetNames: 'asset.[hash]',
           metafile: true,
           write: false,
-          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),...(compiler?.formaClientPlugin?[compiler.formaClientPlugin()]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
+          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),...(config.clientTemplates?[compiler!.formaClientPlugin()]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
             builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),[entry]);}finally{firstBuilt();}});
           }}],
         });
