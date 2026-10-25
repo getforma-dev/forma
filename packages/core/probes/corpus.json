@@ -1685,8 +1685,8 @@
   "tags": [
    "security"
   ],
-  "find": "    $el: hostObject('element', el, '$el', scope.mount.bound),",
-  "replace": "    $el: hostObject('element', el, '$el'),",
+  "find": "    get $el() { return elHost ??= hostObject('element', el, '$el', bound); },",
+  "replace": "    get $el() { return elHost ??= hostObject('element', el, '$el'); },",
   "note": "a tiered mount's $el is the tierless wrapper: $el.closest('body') reaches the page (SR16, L-36). Verified by: src/__tests__/runtime-tiered-mount.test.ts > \"$el.closest('body') reaches nothing without dom\""
  },
  {

@@ -1809,9 +1809,16 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
   // in state is never invocable, so only magics like this one can be called.
   // Under a tiered mount `$el` carries the mount's bound (L-36): no hop from
   // it reaches past the mount root without the `dom` grant.
+  // Each is made on its first read and then kept, so an element no expression
+  // names costs no host (a list builds thousands of elements per pass).
+  const bound = scope.mount.bound;
+  let elHost: unknown, dispatchHost: unknown;
   const elMagics: Record<string, unknown> = {
-    $el: hostObject('element', el, '$el', scope.mount.bound),
-    $dispatch: hostFn('$dispatch', (name: unknown, detail?: unknown) => {
+    get $el() { return elHost ??= hostObject('element', el, '$el', bound); },
+    get $dispatch() { return dispatchHost ??= dispatchMagic(); },
+  };
+  const dispatchMagic = () =>
+    hostFn('$dispatch', (name: unknown, detail?: unknown) => {
       const type = String(name);
       const mount = scope.mount;
       if (mount && ACTIVATION_EVENTS.has(type.toLowerCase())) {
@@ -1825,8 +1832,7 @@ function bindElement(el: Element, scope: Scope, disposers: (() => void)[]): void
         composed: true, // crosses Shadow DOM boundaries (important for <forma-stage>)
         detail,
       }));
-    }, 2),
-  };
+    }, 2);
   scope = createChildScope(scope, elMagics);
   // A DOM method's promise that rejects is reported on this element (FORMA-274).
   scope.fail = (what, err) => reportExprFailure(el, what, err, scope.mount);
