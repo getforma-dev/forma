@@ -10,6 +10,7 @@ import { chromium, type Browser } from '@playwright/test';
 import { bundleEntry } from '../src/bundle.mts';
 import { readEmitterCases, materialize } from '../src/island-emitter.mts';
 import { summarize } from '../src/compare.mts';
+import { pairDifference } from '../src/fmir-pair.mts';
 import { REPO } from '../src/server.mts';
 import { check, prepare, readCorpus, type CorpusEntry } from '../src/suite.mts';
 
@@ -39,7 +40,7 @@ test('every island-emitter case is rebuilt exactly: compiled, the rebuilt files 
   for (const item of cases) {
     const dir = materialize(item);
     const product = await bundleEntry(item.name, join(dir, 'app.ts'));
-    assert.ok(Buffer.from(product.ir).equals(readFileSync(join(IR, `${item.name}.ir`))), `${item.name}: the rebuilt source compiles to the committed module`);
+    assert.equal(pairDifference(item.name, product.ir, readFileSync(join(IR, `${item.name}.ir`))), null, `${item.name}: the rebuilt source compiles to the committed module`);
     assert.ok(product.js !== null, `${item.name}: an island page ships its entry`);
   }
 });
