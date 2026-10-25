@@ -1,6 +1,6 @@
 # Upgrading from Forma 3.0 to 3.1
 
-**Preparation draft: 3.1 is not published.** This guide describes the reviewed
+**Preparation draft: final 3.1 is not published. RC2 is published; RC3 is being qualified.** This guide describes the reviewed
 changes being prepared for the coordinated release. The documented
 [performance tradeoffs](release/3.1-PERFORMANCE-TRADEOFFS.md), fresh exact-source
 qualification and independent release audit govern RC acceptance. Original
@@ -59,15 +59,33 @@ removing the wrapper or feature.
 
 The selected effect implementation consolidates graph and lifecycle state while
 preserving synchronous execution, cleanup, error reporting and ownership.
-No effect API migration is required. Default `createList` and event ownership
-remain unchanged; the large-table creation gap is a documented limitation.
-The experimental template and listener transforms are excluded from this release.
+No effect API migration is required. Default `createList` construction remains available; the large-table creation
+gap is a documented limitation. Rejected template/listener experiments remain
+excluded. The separately reviewed compiler option below is included.
 
-The core ESM graph gate increases from 48,902 to 49,414 gzip bytes, and the
+The effects change raised the core ESM graph gate from 48,902 to 49,414 gzip
+bytes. The separately reviewed compiler integration raises it to 49,926; the
+current ownership repair measures 49,836. The effects change raised the
 route's Forma-code ceiling from 28,100 to 28,420. Total page/canvas JavaScript
 budgets and zero-JavaScript static routes stay unchanged. These explicit costs
 support the measured effects gains; they do not mean every workload is faster.
 Use the final qualified report and your application's own measurements.
+
+## Optional compiler templates for client-created lists
+
+Set `clientTemplates: true` in the build configuration to use cached static
+subtrees and staged bindings for eligible inline synchronous `createList`
+callbacks. The option is off by default. Unsupported shapes retain the normal
+JSX path. Server-adopted lists retain that path even for subsequently added rows;
+this feature does not accelerate their adoption or row construction.
+
+Generated eligible click handlers use document delegation and stop running when
+their row or owner is disposed. Delegation changes native listener ordering and
+propagation behavior; consult the [compiler candidate report](release/FORMA-294-COMPILER-CANDIDATE.md)
+for the admitted contract and fallback scope. The measured creation benefit has
+bundle and clear costs, and the original vanilla creation target is still missed.
+Opted-in routes must still pass their existing size limits. The tested large
+native route fails N2 with this option, so it should keep the default path.
 
 ## Repaired: `NaN` keys in component lists
 
