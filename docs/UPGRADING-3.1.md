@@ -69,6 +69,22 @@ budgets and zero-JavaScript static routes stay unchanged. These explicit costs
 support the measured effects gains; they do not mean every workload is faster.
 Use the final qualified report and your application's own measurements.
 
+## Known issue: `NaN` keys in component lists
+
+The public component `createList` and low-level `reconcileList` have a preexisting
+numeric-key edge case (FORMA-290), reproduced in both published 3.0.0 and the
+3.1 candidate. The small-list scan and large-list Map path treat `NaN` differently.
+Repeated updates on the small-list path can replace a `NaN` row and leave some
+of its effects running after the row is removed and the owning root is disposed.
+This release does not repair that lifecycle defect.
+
+As a workaround, validate keys before passing them to these APIs: use stable,
+unique strings or finite numbers, and reject non-finite numeric keys before
+rendering or updating. This is a workaround, not a newly imposed public API
+restriction. The separate strict SSR/indexed keyed-list domain already rejects
+`NaN`. The mutation record now counts the two threshold variants as surviving
+coverage gaps rather than claiming the algorithms are equivalent for every input.
+
 ## Check explicit HTML-runtime declarations
 
 These changes apply to `mountMarkup` and `data-*` runtime markup; the weighted

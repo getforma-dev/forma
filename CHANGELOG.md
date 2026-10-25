@@ -26,6 +26,11 @@ Package-level details are in each package's CHANGELOG.
   takes 1.70× vanilla DOM against an original 1.10× target, an explicit 3.1
   limitation; update-every-tenth (+14.33%) and clear (+30.43%) costs against
   the previous main are accepted and documented.
+- Known issue (FORMA-290): public component lists with `NaN` keys can retain
+  effects after row removal and root disposal on the small-list path. The same
+  defect is reproduced in published 3.0.0; it is not repaired here. Validate
+  stable unique string or finite numeric keys as described in the
+  [upgrade guide](docs/UPGRADING-3.1.md#known-issue-nan-keys-in-component-lists).
 - Server walker (FORMA-258): dynamic text and attributes no longer build
   temporary scalar strings, about 19% less render time and 42% fewer
   allocations in the walker benchmark. This is a walker measurement, not an
