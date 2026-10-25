@@ -7,6 +7,7 @@ import {generateRealIr} from '../src/esbuild-ssr-plugin';
 import {getIslands,getSlots} from './helpers/fmir';
 import {readFmirContainer} from '../src/fmir';
 import * as C from '../src/fmir-constants';
+import {expectFrozenFmir} from './helpers/frozen-fmir';
 const dirs:string[]=[];
 const core='import {h,createSignal,createList,browserOnly} from "@getforma/core";';
 function emit(name:string,page:string,island:string,tsx=false) {
@@ -15,7 +16,7 @@ function emit(name:string,page:string,island:string,tsx=false) {
   for(const [file,source]of Object.entries(sources))writeFileSync(join(dir,file),source);
   const result=generateRealIr(join(dir,'app.ts'));expect(result).not.toBeNull();
   if(process.env.FORMA_EMITTER_PROBE_DIR){mkdirSync(process.env.FORMA_EMITTER_PROBE_DIR,{recursive:true});writeFileSync(join(process.env.FORMA_EMITTER_PROBE_DIR,`${name}.ir`),result!.binary);}
-  if(name!=='bad'&&name!=='bad-date') expect(Buffer.from(result!.binary)).toEqual(readFileSync(fileURLToPath(new URL(`../../../crates/forma-ir/tests/fixtures/island-emitter/${name}.ir`,import.meta.url))));
+  if(name!=='bad'&&name!=='bad-date') expectFrozenFmir(name,result!.binary,readFileSync(fileURLToPath(new URL(`../../../crates/forma-ir/tests/fixtures/island-emitter/${name}.ir`,import.meta.url))));
   return result!;
 }
 afterEach(()=>{for(const dir of dirs.splice(0))rmSync(dir,{recursive:true,force:true});});

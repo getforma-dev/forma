@@ -6,6 +6,7 @@ import {afterEach,describe,expect,it,vi} from 'vitest';
 import {generateRealIr} from '../src/esbuild-ssr-plugin';
 import {collectDiagnostics} from '../src/diagnostics';
 import {parseOpcodeList} from './helpers/fmir';
+import {expectFrozenFmirHash} from './helpers/frozen-fmir';
 
 const roots:string[]=[];
 afterEach(()=>{vi.restoreAllMocks();for(const root of roots.splice(0))rmSync(root,{recursive:true,force:true});});
@@ -113,7 +114,7 @@ it('preserves every archived source/product hash and canonical admitted near mis
    expect(sha(readFileSync(join(transitionDir,transition.currentIrFile))),name).toBe(transition.currentIrSha256);
    expect(got.result!.binary.length,name).toBe(transition.currentIrBytes);
   }
-  expect(sha(got.result!.binary),name).toBe(transition?.currentIrSha256??original.sha256);
+  expectFrozenFmirHash(name,got.result!.binary,transition?.currentIrSha256??original.sha256);
  }
 });
 

@@ -7,6 +7,7 @@ import { collectDiagnostics } from '../src/diagnostics';
 import { readFmirContainer } from '../src/fmir';
 import { getSlots, getStrings, parseOpcodeList } from './helpers/fmir';
 import { analyzeIslandBindings } from '../src/island-bindings';
+import {expectFrozenFmir} from './helpers/frozen-fmir';
 const dirs: string[] = [];
 afterEach(() => { dirs.splice(0).forEach(dir => rmSync(dir, { recursive: true, force: true })); vi.restoreAllMocks(); });
 const imports = "import {h,mount,createList,createKeyedRows,activateIslands} from '@getforma/core';\n";
@@ -90,7 +91,7 @@ it('preserves all fourteen existing native corpus modules byte for byte',()=>{
  const corpus=resolve(__dirname,'fixtures/ir-corpus'), native=resolve(__dirname,'../../../crates/forma-ir/tests/fixtures/js-emitter');
  const names=readdirSync(corpus,{withFileTypes:true}).filter(entry=>entry.isDirectory()).map(entry=>entry.name);
  expect(names).toHaveLength(14);
- for(const name of names){const app=readdirSync(join(corpus,name)).find(file=>/^app\.tsx?$/.test(file))!;expect(Buffer.from(generateRealIr(join(corpus,name,app))!.binary),name).toEqual(readFileSync(join(native,name+'.ir')));}
+ for(const name of names){const app=readdirSync(join(corpus,name)).find(file=>/^app\.tsx?$/.test(file))!;expectFrozenFmir(name,generateRealIr(join(corpus,name,app))!.binary,readFileSync(join(native,name+'.ir')));}
 });
 
 it.each([

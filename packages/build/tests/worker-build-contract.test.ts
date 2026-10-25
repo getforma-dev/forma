@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, expect, it, vi } from 'vitest';
 import { build } from '../src/build';
+import { BUILD_WRITER_VERSION } from '../src/compatibility';
 import { generateManifest } from '../src/manifest';
 import { serviceWorkerSource } from '../src/service-worker';
 import type { AssetManifest } from '../src/types';
@@ -112,7 +113,7 @@ for (const overlap of [false, true]) it(`keeps development network-only while fa
   const {entry, lazy, outputDir, config, root} = fixture();
   const lock = join(root, 'Cargo.lock');
   const renderer = (version: string) => writeFileSync(lock, `version=4\n[[package]]\nname="forma-server"\nversion="${version}"\n`);
-  renderer('3.0.0');
+  renderer(BUILD_WRITER_VERSION.join('.'));
   await watching(config, async ({ready, change, manifest}) => {
     await ready();
     const original = readFileSync(join(outputDir, 'manifest.json'), 'utf8');

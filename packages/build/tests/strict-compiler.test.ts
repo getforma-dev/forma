@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { BuildConfig } from '../src/types';
+import { BUILD_WRITER_VERSION } from '../src/compatibility';
 let root: string;
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'forma-build-compiler-'));
@@ -30,7 +31,7 @@ describe('optional compiler boundary', () => {
     vi.doMock('@getforma/compiler', () => ({COMPILER_WRITER_VERSION: [2, 9, 0]}));
     const {build} = await import('../src/build');
     mkdirSync(join(root, 'dist')); writeFileSync(join(root, 'dist', 'sentinel'), 'prior valid build');
-    for (const ssr of [false, true]) await expect(build(config({ssr}))).rejects.toThrow(/BUILD-809.*@getforma\/build 3\.0\.0.*installed compiler is 2\.9\.0/);
+    for (const ssr of [false, true]) await expect(build(config({ssr}))).rejects.toThrow(new RegExp(`BUILD-809.*@getforma/build ${BUILD_WRITER_VERSION.join('\\.')}.*installed compiler is 2\\.9\\.0`));
     expect(readFileSync(join(root, 'dist', 'sentinel'), 'utf8')).toBe('prior valid build');
   });
   it('refuses a pre-v3 compiler lacking writer metadata instead of silently skipping IR', async () => {
