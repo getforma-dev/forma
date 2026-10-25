@@ -1,23 +1,23 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {validateComparison,validateMobile,validatePerformanceRecord} from './release-performance-contract.mjs';
+import {validateComparison,validateMobile,validatePerformanceRecord,validateHistorical30BaselinePerformance} from './release-performance-contract.mjs';
 
 test('only historical baseline validation can admit the original input-control protocol',()=>{
- const historical=performanceRecord();delete historical.inputProtocol;
+ const historical=performanceRecord({historical:true});delete historical.inputProtocol;
  delete historical.controlObservations.slowInput;delete historical.controls.longInputRefused;
- assert.throws(()=>validatePerformanceRecord(historical),/current input protocol required/);
- validatePerformanceRecord(historical,{allowLegacyInputProtocol:true});
+ assert.throws(()=>validatePerformanceRecord(historical),/current startup policy required/);
+ validateHistorical30BaselinePerformance(historical,'v3.0.0-beta.1');
  for(const protocol of ['separate-input-tasks-v1','batched-input-v0','unknown']){
   const claimed={...historical,inputProtocol:protocol};
-  assert.throws(()=>validatePerformanceRecord(claimed,{allowLegacyInputProtocol:true}));
+  assert.throws(()=>validateHistorical30BaselinePerformance(claimed,'v3.0.0-beta.1'));
  }
  const current=performanceRecord();delete current.controlObservations.slowInput;
- assert.throws(()=>validatePerformanceRecord(current,{allowLegacyInputProtocol:true}));
+ assert.throws(()=>validateHistorical30BaselinePerformance(current,'v3.0.0-beta.1'));
 });
 import {validateBaselineRecord} from './release-performance-baseline.mjs';
 import {comparison,mobile,performanceRecord} from './release-performance-test-fixtures.mjs';
 const context={tag:'v3.0.0-beta.1',currentTag:'v3.0.0-rc.1',publishedAt:'2026-10-16T00:00:00Z',before:'2026-10-17T00:00:00Z',digest:'a'.repeat(64)};
-function baseline(){const commit='b'.repeat(40);return {schema:1,dryRun:false,tag:context.tag,commit,contracts:{performance:'measured-v1'},packages:[...['forma-ir','forma-ir-derive','forma-server'].map(name=>({registry:'crates',name})),...['core','compiler','build','create-app'].map(name=>({registry:'npm',name:`@getforma/${name}`}))].map(p=>({...p,version:context.tag.slice(1),sha256:'a'.repeat(64)})),measurements:{commit,passed:true,measurements:{performance:performanceRecord()}}};}
+function baseline(){const commit='b'.repeat(40);return {schema:1,dryRun:false,tag:context.tag,commit,contracts:{performance:'measured-v1'},packages:[...['forma-ir','forma-ir-derive','forma-server'].map(name=>({registry:'crates',name})),...['core','compiler','build','create-app'].map(name=>({registry:'npm',name:`@getforma/${name}`}))].map(p=>({...p,version:context.tag.slice(1),sha256:'a'.repeat(64)})),measurements:{commit,passed:true,measurements:{performance:performanceRecord({historical:true})}}};}
 test('complete restored comparison samples pass; missing, nonfinite and forged values refuse',()=>{
  validateComparison(comparison());
  for(const edit of [r=>r.browsers.chromium.runtime.forma.mount_1={},r=>r.browsers.chromium.runtime.forma.mount_1.samples.pop(),r=>r.browsers.chromium.runtime.forma.mount_1.samples[0].script_ms=NaN,r=>r.browsers.chromium.runtime.forma.mount_1.script_ms.median=5,r=>r.browsers.chromium.server_state.forma_shared.samples[0].browser_requests=undefined,r=>r.browsers.chromium.runtime.forma.memory_500={},r=>r.browsers.firefox.runtime.forma.update_one_of_500.samples[0].repetitions=1]){const r=comparison();edit(r);assert.throws(()=>validateComparison(r));}

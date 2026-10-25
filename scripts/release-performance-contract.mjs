@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {validateDecoder} from './release-performance-decoder.mjs';
-import {N1_SHAPES,PERFORMANCE_CONTRACT,MOBILE_PROFILE,MOBILE_STARTUP_POLICY} from './release-performance-spec.mjs';
+import {N1_SHAPES,PERFORMANCE_CONTRACT,MOBILE_PROFILE,MOBILE_STARTUP_POLICY,MOBILE_OBSERVER_MAX_TASK_MS,MOBILE_STARTUP_ACCEPTANCE} from './release-performance-spec.mjs';
 import {attributeMobileTasks,decodeMobileTrace,summarizeMobileStartup} from './release-performance-attribution.mjs';
+import {summarizeStartupAcceptance,validateStartupAcceptance} from './release-performance-startup.mjs';
 export const finite = (n,label) => {assert(Number.isFinite(n)&&n>=0,`${label}: missing finite nonnegative figure`);return n;};
 export function percentile(samples,fraction) {assert(samples.length>0);const sorted=[...samples].sort((a,b)=>a-b);return sorted[Math.ceil(sorted.length*fraction)-1];}
 const exactKeys=(rows,expected,label)=>assert.deepEqual([...rows].sort(),[...expected].sort(),`${label}: missing or duplicate figure`);
@@ -46,7 +47,7 @@ export function validateActivation(probe,{islands}) {
  assert.equal(probe.expected,islands);assert.equal(probe.active,islands,'N3: islands did not activate');assert.equal(probe.responded,islands,'N3: islands did not respond to real events');
  finite(probe.firstPaintMs,'N3 first paint');finite(probe.lastResponseMs,'N3 last response');
  const afterPaint=Math.max(0,probe.lastResponseMs-probe.firstPaintMs);assert(afterPaint<=MOBILE_STARTUP_POLICY.responseAfterPaintMs,'N3: islands respond later than500ms after first paint');
- assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_STARTUP_POLICY.maxTaskMs),'N3: task over50ms');
+ assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_OBSERVER_MAX_TASK_MS),'N3: task over50ms');
  assert.deepEqual(probe.errors,[],'N3: browser errors');return afterPaint;
 }
 export const INPUT_PROTOCOL='separate-input-tasks-v1';
@@ -110,6 +111,7 @@ export function finalizeMobileAttribution(rows){
  for(const row of rows){
   for(const run of row.runs)run.lighthouse.attribution=attributeMobileTasks(JSON.parse(run.lighthouse.rawLhr),decodeMobileTrace(run.lighthouse.trace),{correlated});
   row.startup=summarizeMobileStartup(row.runs,{correlated});
+  row.startupAcceptance=summarizeStartupAcceptance(row.runs,{correlated});
  }
  return rows;
 }
@@ -119,6 +121,17 @@ export function validateMobile(rows) {
   const startup=summarizeMobileStartup(row.runs,{correlated});
   assert.deepEqual(row.startup,startup,'N3: startup summary differs from raw evidence');
   assert(startup.maxTaskMs<=MOBILE_STARTUP_POLICY.maxTaskMs,'N3: application/unattributed task over50ms');
+ }
+ return rows;
+}
+export function validateCurrentMobile(rows) {
+ const correlated=validateMobileObservations(rows);
+ for(const row of rows){
+  const startup=summarizeMobileStartup(row.runs,{correlated});
+  assert.deepEqual(row.startup,startup,'N3: startup summary differs from raw evidence');
+  const acceptance=summarizeStartupAcceptance(row.runs,{correlated});
+  assert.deepEqual(row.startupAcceptance,acceptance,'N3: startup acceptance differs from raw evidence');
+  validateStartupAcceptance(acceptance);
  }
  return rows;
 }
@@ -171,21 +184,35 @@ export function validateComparison(report){
  }
  return report;
 }
-export function validatePerformanceRecord(performance,{baseline=null,allowLegacyInputProtocol=false}={}){
+// Current qualification never accepts a caller-selected historical policy.
+export function validatePerformanceRecord(performance,{baseline=null,...unknownOptions}={}){
+ assert.deepEqual(unknownOptions,{},'performance: unknown validation option');
+ return validateRecord(performance,baseline,false);
+}
+// Only the authenticated published-baseline reader calls this legacy entry.
+// The tag bounds compatibility; authentication remains the reader's job.
+export function validateHistorical30BaselinePerformance(performance,tag){
+ assert(/^v3\.0\.\d+(?:-(?:alpha|beta|rc)\.[1-9]\d*)?$/.test(tag),'N3: strict historical policy only for3.0 published baselines');
+ return validateRecord(performance,null,true);
+}
+function validateRecord(performance,baseline,historicalPolicy){
  assert.equal(performance?.contract,PERFORMANCE_CONTRACT,'performance: contract absent');assert.equal(performance.passed,true,'performance: failed measurements');
  const {machine,controls}=performance;
  assert(machine?.profile&&machine?.node&&machine?.cpuModel,'performance: machine/profile missing');
  // Only the authenticated historical-baseline reader admits the old absent
  // protocol field. Current measurements must carry the new input control.
- const historical=allowLegacyInputProtocol&&performance.inputProtocol===undefined;
+ if(historicalPolicy){
+  assert(!Object.hasOwn(performance,'startupPolicy')&&performance.mobile.every(row=>!Object.hasOwn(row,'startupAcceptance')),'N3: historical baseline contains prospective startup acceptance');
+ }else assert.equal(performance.startupPolicy,MOBILE_STARTUP_ACCEPTANCE.id,'N3: current startup policy required');
+ const historical=historicalPolicy&&performance.inputProtocol===undefined;
  const inputProtocol=historical?'batched-input-v0':performance.inputProtocol;
  assert(historical||inputProtocol===INPUT_PROTOCOL,'N3: current input protocol required');
  assert.deepEqual(controls,validateMobileControls(performance.controlObservations,{inputProtocol}),'N3: paired controls did not refuse');
  validateNative({schema:1,pilot:false,profile:performance.nativeProfile,n1:performance.n1,n5:performance.n5,boundaries:performance.boundaries},baseline);
- validateMobile(performance.mobile);validateComparison(performance.client);validateDecoder(performance.decoder);return performance;
+ (historicalPolicy?validateMobile:validateCurrentMobile)(performance.mobile);validateComparison(performance.client);validateDecoder(performance.decoder);return performance;
 }
 export function completePerformance({native,mobile,client,decoder,baseline,machine,controls,controlObservations}){
  assert(['bootstrap','comparable'].includes(baseline?.status),'performance: no authenticated baseline');
  validateNative(native,baseline);
- return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,inputProtocol:INPUT_PROTOCOL,passed:true,machine,baseline,controls,controlObservations,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
+ return validatePerformanceRecord({contract:PERFORMANCE_CONTRACT,inputProtocol:INPUT_PROTOCOL,startupPolicy:MOBILE_STARTUP_ACCEPTANCE.id,passed:true,machine,baseline,controls,controlObservations,nativeProfile:native.profile,n1:native.n1,n5:native.n5,boundaries:native.boundaries,mobile,client,decoder},{baseline});
 }

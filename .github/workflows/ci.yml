@@ -483,6 +483,10 @@ jobs:
         with:
           node-version-file: .node-version
           package-manager-cache: false
+      - name: Install locked release-helper dependencies
+        # SR43's self-test runs the release helpers, including the pinned parser
+        # used to prove the current startup exception; absence must still refuse.
+        run: npm ci --ignore-scripts
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: '1.93.1'
