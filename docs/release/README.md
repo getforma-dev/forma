@@ -7,7 +7,9 @@ the later completion receipt supplies the result without rewriting history.
 
 ## 3.1 preparation
 
-3.1.0-rc.2 is being prepared; RC1 was stopped before publication. [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md)
+3.1.0-rc.2 is published; RC1 was stopped before publication. A fresh
+3.1.0-rc.3 is being prepared for the compiler templates and list-ownership repair.
+The earlier RC2 qualification cannot certify these changed runtime bytes. [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md)
 record the accepted tradeoffs and missed targets. [3.1 qualification](3.1-QUALIFICATION.md)
 binds each non-audit RC row to exact-source evidence. The upgrade guide is
 [UPGRADING-3.1](../UPGRADING-3.1.md).
