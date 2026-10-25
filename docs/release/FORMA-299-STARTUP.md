@@ -97,7 +97,13 @@ producer is `cf9ebf84332f8ee5fd5406183b1232489e40b465`, with the same tree as
 signal costs and original missed targets receive an explicit release-specific
 disposition in [the performance decisions](3.1-PERFORMANCE-TRADEOFFS.md).
 
-The full 328-probe campaign 40239819395 remains pending at this checkpoint.
+The full 328-probe campaign 40239819395 passes at 9f53: 326 caught, two counted
+threshold survivors and no equivalent/unqualified probes. Both baselines pass
+4,294 tests, including 26 ownership regressions. Every raw classification is
+independently replayed; unchanged overall/expression 85% floors pass. Frozen Y
+e3f90c48 changes only six reviewed factual docs/readiness files, with its own
+nineteen passing CI jobs and expected registry scaffold skip. The changed core
+CHANGELOG is separately validated; whole-archive equality is not claimed.
 Earlier d6 mutation and 8ae engine/P17 records retain their original source
 identities. Scoped FMIR, SR14 and corrected native-resource reuse through 9f53
 is independently verified; it does not claim whole-package byte equivalence.

@@ -1,55 +1,76 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "9a7146f23e1524d0a104e3a5c15087914cdd3ee4",
-  "reviewedTree": "e4b4dfdc99a4ee403dae9a9e3c6553ffbf5d7817",
-  "inputManifestSha256": "a01beadb6af1594d6ba1dc0b9b7697825785f3d58b249a4a7e13c7e54aaeb5c7",
+  "reviewedCommit": "e3f90c4871a9be4e8f25db944479681f9355e560",
+  "reviewedTree": "c9fe1a360bc8fad69a84ace448812b0dc85c1ed2",
+  "inputManifestSha256": "7f327838edc4bb24a1aa0a1b180d805dbe49fbca3774bfe1a653441d1843b688",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "b02859879a322c5a250986e06b034c74d1eebce136a521fc474c0bae256e943f"
+    "sessionEvidenceSha256": "186ba18933797b9e3c9da93d1550198d7476f876478372219f6e8bd081be223f"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "98c150e5b489b938f37d7af01df4e8057815e6128245ba6093814646e5857671"
+    "sessionEvidenceSha256": "ed53782673fff039ed52f697ee0452082c0277722ac99751be4dee5e8a72d32a"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "dfec43ee8d8af7a56e4d38d508b6b183c875630b4e9561dc502fba001062d0a1"
+    "initializationEvidenceSha256": "6de4c98efef51e58e921b63b4d3df1a1805f7a66a8bacc6ccf1186f267704f5a"
   },
-  "reviewedAt": "2026-10-25T16:34:51.039Z",
+  "reviewedAt": "2026-10-25T23:40:26.532Z",
   "accepted": true,
   "findings": [
     {
-      "id": "D14-STYLE-UNDEFINED",
-      "severity": "medium",
+      "id": "D14-RC3-001",
+      "severity": "low",
       "disposition": "resolved",
-      "rationale": "Exact dbfb67ff additive test preserves the complete style attribute, important priority, color and opacity. Actual canonical selected mutant is caught by that completed assertion with no process error, crash or unfinished started record. Full before/restored baselines4216 preserve every original4215 identity/name/state plus exactly one new test. All4556 source snapshot files independently match Git and are restored. Corpus identities/order/targets/anchors/replacements/tags remain unchanged; false equivalent flags removed. Original full325caught/3declared-equivalent evidence is preserved, combined with this supplement to326/328caught and2survivors; expression98/98, unchanged85floors. This is not a new full328 campaign. The relevant core production, test, corpus and harness inputs remain byte-identical at frozen RC2 Y2; no new full campaign is claimed.",
-      "evidenceSha256": "26481d19025e245e9259514e89fddf89ea2d621f02ed13c72189931e2a3d54e4"
+      "rationale": "The two intended compiler exports missing from the public compatibility inventory were added in d6 and remain correct in Y. Packed API coverage and public source agree.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
     },
     {
-      "id": "D14-LIST-NAN",
-      "severity": "medium",
+      "id": "D14-RC3-002",
+      "severity": "info",
+      "disposition": "resolved",
+      "rationale": "Current full mutation 40239819395 is authenticated and independently checked across all 328 actual probes: 326 caught, 2 scored threshold survivors, 0 equivalent or unqualified. Both 4,294-test baselines and all 26 ownership controls pass, as do the unchanged 85% floors. Historical failures and pre-PIFE evidence do not substitute. Stale survivor notes remain separate FORMA-300 work.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
+    },
+    {
+      "id": "D14-RC3-003",
+      "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "The finite three-update8-row reproduction and64-row control reproduce identically in authenticated published3.0.0 and current packed3.1 bytes; reconciliation source is byte-identical. This is a historical medium lifecycle defect, not an established3.1 regression. The maintainer explicitly accepted this bounded nonblocking disposition, while publishing precise changelog/upgrade disclosure and stable unique string/finite-number validation workaround and tracking FORMA-290. No unsupported-input claim or retrospective public-domain narrowing is used. The two threshold mutants actually survived the corrected full-suite selected runs and count in the denominator, leaving two honest coverage gaps. Production repair remains open and is not represented as done. RC2 changes no reconciliation/ownership implementation, and the disclosure and tracking remain unchanged.",
-      "evidenceSha256": "de02a73be2a2bc02c10f6a479c1a48fbb0d873672526ccf3139052567fe3ec08"
+      "rationale": "Historical multirow partial-render exception recovery remains FORMA-298 with disposal/remount as the documented recovery boundary. It is not repaired by the ownership change; focused evidence shows no parent-effect leak. Retain this bounded limitation.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
     },
     {
-      "id": "D14-FINAL-SEED-FIXTURE",
-      "severity": "medium",
+      "id": "D14-RC3-004",
+      "severity": "high",
       "disposition": "resolved",
-      "rationale": "Five intentionally unequal values now derive a valid unequal version across prerelease and stable transitions. All original refusal assertions remain; exact-source focused RC/final controls pass seven each, and the full final candidate boundary passes105/105. All4556 snapshot inputs and21 canonical final version outputs were independently verified. The repaired test is exact frozen Y2 and fresh Y2 CI passes; no final-diff policy exception or late post-RC test drift is used.",
-      "evidenceSha256": "570ba1532979228e2ba5be9928c8b7c4ac86a15ce53f4a3d29fc4bf658b5d90b"
+      "rationale": "The native resource harness originally compiled registry 3.0 crates despite unused RC3 patches. Exact consumer pins and guards on resolved local packages and unused patches repair identity. Authenticated corrected run 40235112915 satisfies resource caps for current Rust plus the explicitly frozen published npm fixture. No whole-RC3 image or invalid-run credit is claimed.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
     },
     {
-      "id": "D14-NATIVE-ENGINE-FIXTURES",
+      "id": "D14-RC3-005",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "All seven original Firefox/WebKit failures reproduce and are preserved. Repaired controls retain exact Forma diagnostic semantics, native error classes, bad-element attribution and live neighbors, while admitting engine-owned prose and actual native throw/reject behavior. A separate deferred real-native case tests asynchronous rejection and catches the isolated missing-catch weakener in all three engines. Firefox pageerror delivery is awaited explicitly. All29 evidence files, exact source and one-expression mutation are verified;30 local controls pass and all five full hosted engine/parity jobs pass on frozen Y2. No product, timeout or skip change is used.",
-      "evidenceSha256": "a7514761dd3b24825302218f9bf528ab0485d7060f7c76f182b1fffda1fc1068"
+      "rationale": "FORMA-299 original full startup tasks exceeded the unchanged policy. Five named PIFEs preserve function bodies and pass source, import and package review. Fresh packed P17 40239821236 passes 62/62 controls with zero exceptional tasks, visits or excess; full startup task maxima are 42.186/40.343 ms. Browser layout exclusions and historical failure remain disclosed.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
+    },
+    {
+      "id": "D14-RC3-006",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "Current Linux measurements reveal material workload costs; original fan-out, effect-create and row targets remain missed. The founder and independent reviewer explicitly accept the measured candidate for verified startup benefit within authorized scope, without noise, equivalence, causal or universal-speedup claims. All package, route and native caps remain enforced.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
+    },
+    {
+      "id": "D14-RC3-007",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "All 86 current default-branch dependency alerts map to 50 historical snapshots and 36 separate benchmark competitor locks. Checks of seven active locks and 66 applicable version ranges, plus authenticated package scope, find no affected shipped Forma input; current production advisory gates pass. Competitor runtime alerts remain visible maintenance under FORMA-293. No alerts were dismissed and no blanket security guarantee is claimed.",
+      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "f606c6f33464d83a117ed2855f026341d673e1e2f6e833e41ff10cada32719f6"
+  "acceptanceEvidenceSha256": "1549093da63ef83cae98b1d1f522a1026064952ef28bc40ae6e71c5df5f06427"
 }
