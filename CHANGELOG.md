@@ -2,6 +2,55 @@
 
 ## [Unreleased]
 
+Changes after 3.1.0-rc.1 will be recorded here.
+
+## [3.1.0-rc.1] - Prepared; publication pending
+
+Forma 3.1 is a minor release of all seven coordinated packages. The upgrade
+guide is [docs/UPGRADING-3.1.md](docs/UPGRADING-3.1.md); measured costs and
+accepted tradeoffs are in
+[the 3.1 performance decisions](docs/release/3.1-PERFORMANCE-TRADEOFFS.md).
+Package-level details are in each package's CHANGELOG.
+
+- Keep HTML-runtime host values opaque: serialization, enumeration and
+  value-cost traversal now see only a host's public label. Supported dispatch,
+  coercion and grants are unchanged. Upgrading is recommended.
+- Effects (FORMA-259): on the same Linux VM, writes are 70.74% faster, fan-out
+  145.77% faster and effect creation/disposal 251.34% faster than published
+  3.0.0. Batches of writes are 13.79% slower, and 1,000-binding island
+  adoption averaged 0.34 ms (3.96%) slower in its before/after comparison. The
+  original fan-out target (80% of the pinned alien-signals engine) is still
+  missed and recorded as a miss.
+- Rows (FORMA-260): default row semantics are unchanged. Creating 1,000 rows
+  takes 1.70× vanilla DOM against an original 1.10× target, an explicit 3.1
+  limitation; update-every-tenth (+14.33%) and clear (+30.43%) costs against
+  the previous main are accepted and documented.
+- Server walker (FORMA-258): dynamic text and attributes no longer build
+  temporary scalar strings, about 19% less render time and 42% fewer
+  allocations in the walker benchmark. This is a walker measurement, not an
+  HTTP throughput claim.
+- Opt-in rendered-response compression (FORMA-261) through
+  `PageResponse::with_compression`: Brotli/gzip/identity negotiation with
+  unchanged document policy and no-store headers. Off by default; read the
+  BREACH note before enabling it on pages that mix secrets with reflected input.
+- Generated-template CI and release workflows cache locked Cargo builds
+  (FORMA-262): in one recorded cold/warm pair per template, a page-only build
+  took 35.84 s cold and 2.87 s warm (minimal), and 38.70 s and 4.11 s
+  (dashboard).
+- Bundle (FORMA-263): unused adoption-specific bytes removed; the combined
+  benchmark application is 8,498 B Brotli, 154 B below published 3.0.0.
+- HTML runtime refusals now report coded diagnostics instead of throwing out of
+  `mountMarkup` (FORMA-268, FORMA-271, FORMA-272), `data-list` passes are
+  bounded by a 24,000 row-weight cap (FORMA-172, FORMA-289), and over-heavy
+  bindings no longer build one long task (FORMA-178, FORMA-249). See
+  `packages/core/CHANGELOG.md`.
+- `@getforma/build` refuses a symbolic-link `outputDir` with `BUILD-824`
+  before writing (FORMA-170) and hardens diagnostics report paths (FORMA-245).
+- Release qualification keeps the 50 ms startup target with a narrow,
+  source-proven cold-start allowance (at most 55 ms, at most two tasks in two of
+  each route's twenty visits, total excess at most 10 ms). Historical strict
+  failures stay failed.
+
 - Consolidate public-effect graph and lifecycle state (FORMA-259), preserving
   adoption, cleanup, error reporting and disposal contracts. Dispose an initial
   subscription if startup escapes through a throwing error reporter. Retain the
