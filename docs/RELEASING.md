@@ -349,7 +349,8 @@ P17 `performance: measured-v1` requires20,000 native walks for each of five cons
 The paragraph above is the strict 3.0 acceptance, which still validates the
 published 3.0 records. A 3.1 record must carry the separately versioned
 `N3-cold-start-bounded-v2` acceptance. It admits proven cold-start Lighthouse
-tasks and independent observer tasks up to 55 ms, within one budget per route:
+tasks and, by duration alone (input tasks included), independent observer
+tasks up to 55 ms, within one budget per route:
 at most two such tasks, in at most two of twenty visits, with at most 10 ms of
 total excess. See [the 3.1 performance decisions](release/3.1-PERFORMANCE-TRADEOFFS.md#startup-bounded-exceptions).
 
