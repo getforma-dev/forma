@@ -68,6 +68,7 @@ const PRODUCTION: Options[] = [
   {
     entry: {
       index: 'src/index.ts',
+      compiled: 'src/compiled.ts',
       runtime: 'src/runtime.ts',
       'tc39-compat': 'src/reactive/tc39-compat.ts',
       http: 'src/http/index.ts',

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-294: add the optional `./compiled` entry for compiler-generated cached
+  templates with staged bindings, delegated clicks and owner cleanup. Main
+  excludes the helper, but splitting its shared dependencies increases the
+  complete ESM graph from49,212 to49,796 B gzip. The explicit package cap becomes
+  49,926 B (previously49,414); all runtime and route caps stay unchanged. Fix
+  root setup disposal followed by a later binding and a throw: acquire and
+  drain the engine scope, then rethrow the original value. See the repository's
+  `docs/release/FORMA-294-COMPILER-CANDIDATE.md` for measured costs and scope.
+
 - FORMA-272: the explicit HTML runtime refuses a `data-computed` name that collides with writable state in the same scope, reporting `FORMA_E_UNSUPPORTED` before installing or evaluating that computed. State reads and handler writes keep the same identity regardless of element order; separate lexical scopes may reuse a name. Remove an unused state placeholder or use a distinct derived name such as `doubled = count * 2`. The JavaScript `createComputed` API is unchanged. The documented limits for cycles closed later and cached cycle errors remain covered by regressions. Rollback: revert this change.
 
 - FORMA-283 review follow-up: subtree reset, replacement, and removal dispose nested scopes held outside the DOM by a hidden `data-if`. Disposal follows the registered scope ancestry before detaching the old subtree, so old listeners cannot fire afterward. Unit and browser regressions cover all three paths.

@@ -4,6 +4,21 @@
 
 Changes after 3.1.0-rc.2 will be recorded here.
 
+- FORMA-294: add opt-in compiler templates for eligible client-created list
+  rows (`clientTemplates: true`). One qualified Linux comparison against RC2
+  improves creation of 1,000 rows by 11.6%, 10,000 rows by 17.3%, and the
+  nine-operation geomean by 5.6%. Clear costs 0.94 ms more; select/swap are
+  slightly slower and the 1.10× vanilla creation target still fails. The
+  benchmark app adds 936 B Brotli. Adopted lists keep their original JSX path,
+  including newly inserted rows; this is not an adopted-list speedup.
+  See the [scope, evidence and accepted costs](docs/release/FORMA-294-COMPILER-CANDIDATE.md).
+- Accept the optional entry's package transport cost: main ESM graph grows
+  49,212 → 49,796 B gzip, mainly from a shared chunk split. Its cap increases
+  49,414 → 49,926 B; other package caps, route budgets, startup limits and
+  compiler opt-in route refusals are unchanged. The original failures remain
+  recorded. Fix root setup that disposes, creates later bindings, then throws:
+  drain the engine scope before rethrowing the original value.
+
 ## [3.1.0-rc.2] - Prepared; publication pending
 
 - Preserve seed rejection tests across the final version transition and verify

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- FORMA-294: expose `formaClientPlugin` and `transformClientTemplates` for
+  closed HTML subtrees in direct inline core `createList` render callbacks.
+  Staged initializers preserve expression/effect order; original JSX supplies
+  native adoption and non-HTML fallback. Generated markup uses the existing
+  branded `trustedHtml` boundary. This optional client-created-list optimization
+  has explicit construction/event semantics and does not change native FMIR.
+
 Changes after the prepared 3.0.0 set will be recorded here.
 
 - Catalogue `BUILD-824` (`outputDir` is a symbolic link), reported by `@getforma/build` before it writes anything (FORMA-170); the conformance test and `docs/subset.md` list it. The compiler itself reports nothing new.

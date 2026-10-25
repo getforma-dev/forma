@@ -53,6 +53,13 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
  * retired-branch removal measure 49,212 B. The other four gates stay unchanged.
  * See docs/release/3.1-PERFORMANCE-TRADEOFFS.md; this is an accepted delivery
  * cost for effect throughput, not a pass against the previous 48,902 B gate.
+ * FORMA-294's optional compiled entry splits the shared DOM/list chunk. Main
+ * excludes the helper itself but its graph grows 49,212 -> 49,796 B, mostly
+ * from that compression boundary. Its separate delivery decision adds 512 B
+ * to this package ratchet (49,926 B). All four runtime caps and N2's 28,420 B
+ * route budget remain unchanged; template compilation is opt-in. See
+ * docs/release/FORMA-294-COMPILER-CANDIDATE.md. The original +382 B failure
+ * remains recorded; this is an explicit package tradeoff, not a size reduction.
  *
  * The two RUNTIME bundles are deliberately tighter (~7%). They just absorbed
  * the largest single size change this package has taken: replacing the regex
@@ -93,7 +100,7 @@ const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 export const GATES = [
   {
     entry: 'dist/index.js',
-    limit: 49414,
+    limit: 49926,
     note: 'core ESM entry + every shared chunk it imports',
   },
   {

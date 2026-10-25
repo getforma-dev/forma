@@ -65,6 +65,11 @@ export interface BuildConfig {
   formaAlias?: string;
   /** Bundle one shared ESM graph, preserving import() as separately loaded chunks. */
   codeSplitting?: boolean;
+  /** Opt in to compiler-owned templates for eligible inline createList rows.
+   * Intended for frequently created lists: adds a helper and changes compiled
+   * click/construction semantics. Off by default; all route budgets still apply.
+   * Requires a coordinated @getforma/compiler and @getforma/core release set. */
+  clientTemplates?: boolean;
   /** Production worker policy; defaults to on-demand. Only requested, manifest-listed
    * immutable code/style/WASM assets with verified bytes enter its cache. */
   serviceWorker?: 'on-demand';

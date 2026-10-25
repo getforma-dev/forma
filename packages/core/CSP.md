@@ -56,7 +56,7 @@ All four patterns work under strict CSP. Internally, string styles are parsed by
 |-----------|-----------------|-------------------|
 | `el.style.cssText = '...'` | Yes (`style-src` without `unsafe-inline`) | **No** — removed in v1.0.9 |
 | `el.setAttribute('style', '...')` | Yes | **No** |
-| `innerHTML` with `style="..."` | Yes | **Not for library-generated markup** — `h()` builds DOM with `createElement`/`textContent`. `innerHTML` is reached only through the explicit opt-in sinks: `dangerouslySetInnerHTML`, `setHTMLUnsafe()`, `template()` and `templateMany()`, `mountMarkup()` and its returned handle's `update()`, and the `srcdoc` attribute (the browser parses its value as a document), each of which takes `trustedHtml()`. See [SECURITY.md](./SECURITY.md#unsanitized-html-sinks) and [Trusted Types](#trusted-types). |
+| `innerHTML` with `style="..."` | Yes | **No generated inline styles.** Ordinary `h()` uses `createElement`/`textContent`. Compiled list templates parse escaped static markup once through `trustedHtml()`; the compiler excludes style, URL, raw-HTML and event attributes from that markup. Authored raw sinks also require trusted values. See [SECURITY.md](./SECURITY.md#unsanitized-html-sinks) and [Trusted Types](#trusted-types). |
 | `Object.assign(el.style, {...})` | No (CSSOM API) | **Yes** — all styles go through this |
 | `el.style.color = 'red'` | No (CSSOM API) | **Yes** (via Object.assign) |
 | `new Function(...)` | Yes (`script-src` without `unsafe-eval`) | **No** — an allowlist AST interpreter is used instead, in every build. There is no opt-in and no fallback; `scripts/verify-dist.mjs` greps every published artifact. |
@@ -66,6 +66,16 @@ All four patterns work under strict CSP. Internally, string styles are parsed by
 ---
 
 ## Common Issues
+
+Compiler-generated list templates use the existing `forma` Trusted Types policy
+only when first constructed in the browser. Island description/adoption takes
+the ordinary DOM description path and does not parse a template. The internal
+`@getforma/core/compiled` entry accepts a lazy callback returning `TrustedHtml`;
+it cannot mint a trusted value from an arbitrary string. Direct application
+uses and re-exports of that helper are inventoried by `forma-raw-lint`, including
+import aliases. The compiler emits only escaped, closed static literals through
+the existing named `trustedHtml()` entry; dynamic values use the ordinary DOM
+writers. Neither the helper nor `trustedHtml()` sanitizes caller-authored HTML.
 
 ### "Applying inline style violates CSP directive"
 

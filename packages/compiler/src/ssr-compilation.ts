@@ -1,3 +1,4 @@
+import {clientTemplatesEnabled,transformClientTemplates} from './client-template';
 import {collectJsxNamespaceEdits} from '../../shared/jsx-namespace.mjs';
 import {realpathSync} from 'node:fs';
 import type {BuildOptions,Plugin,PluginBuild} from 'esbuild';
@@ -25,7 +26,7 @@ interface Prepared {snapshot:SourceSnapshot;sources:Map<string,string>;browserSo
 class CompilationContext {
   readonly participants=new Map<Setup,Participant>();
   private prepared?:Prepared;
-  constructor(readonly expected:ReadonlySet<Setup>,readonly namespaceOptions:{factory:string;runtime?:string}) {}
+  constructor(readonly expected:ReadonlySet<Setup>,readonly namespaceOptions:{factory:string;runtime?:string},readonly optimizeClient:boolean) {}
   get setupComplete():boolean {return this.participants.size===this.expected.size;}
   begin(setup:Setup):void {
     const current=this.participants.get(setup)!;
@@ -76,9 +77,10 @@ class CompilationContext {
       for(const [file,edits] of editsByFile) {
         const source=snapshot.files.get(file);
         if(source===undefined)throw new PropsSchemaError(file,1,1,'compiler edits have no original source snapshot');
-        try {sources.set(file,applySourceEdits(source,edits));}
+        try {const edited=applySourceEdits(source,edits);sources.set(file,this.optimizeClient?transformClientTemplates(edited,{...this.namespaceOptions,filename:file}):edited);}
         catch(error) {throw new PropsSchemaError(file,1,1,`conflicting original compiler edits: ${(error as Error).message}`);}
       }
+      if(this.optimizeClient)for(const [file,source] of sources)if(!editsByFile.has(file)&&/\.[jt]sx$/.test(file))sources.set(file,transformClientTemplates(source,{...this.namespaceOptions,filename:file}));
       return sources;
     };
     this.prepared={snapshot,sources:transform(true),browserSources:transform(false)};return this.prepared;
@@ -89,6 +91,7 @@ class CompilationContext {
     if(source===undefined&&/\.[jt]sx$/.test(canonical)) {
       const original=prepared.snapshot.read(canonical);
       source=applySourceEdits(original,collectJsxNamespaceEdits(original,this.namespaceOptions));
+      if(this.optimizeClient)source=transformClientTemplates(source,{...this.namespaceOptions,filename:canonical});
       prepared.sources.set(canonical,source);prepared.browserSources.set(canonical,source);
     }
     if(source===undefined)return undefined;
@@ -117,7 +120,7 @@ export function joinSsrCompilation(build:PluginBuild,setup:Setup):{
   let context=contexts.get(build.initialOptions);
   if(context?.setupComplete)context=undefined;
   else if(context?.participants.has(setup))throw new Error('BUILD-611 overlapping setup with the same options object is ambiguous; use a distinct options object for concurrent builds');
-  if(!context){context=new CompilationContext(expected,{factory:build.initialOptions.jsxFactory??'React.createElement',runtime:build.initialOptions.jsx});contexts.set(build.initialOptions,context);}
+  if(!context){context=new CompilationContext(expected,{factory:build.initialOptions.jsxFactory??'React.createElement',runtime:build.initialOptions.jsx},clientTemplatesEnabled(build.initialOptions));contexts.set(build.initialOptions,context);}
   if(context.expected.size!==expected.size||[...expected].some(member=>!context!.expected.has(member)))throw new Error('BUILD-611 SSR plugin membership changed during setup');
   context.participants.set(setup,{epoch:0,done:false});
   const captured=context;

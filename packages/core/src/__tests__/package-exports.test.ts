@@ -22,7 +22,7 @@ function subpathKeys(): string[] {
 describe('exports map', () => {
   it('publishes the exact v3 surface without server functions, WASM or Node SSR', () => {
     expect(Object.keys(pkg.exports).sort()).toEqual([
-      '.', './http', './package.json', './runtime', './runtime-csp',
+      '.', './compiled', './http', './package.json', './runtime', './runtime-csp',
       './runtime-hardened', './storage', './tc39',
     ]);
   });

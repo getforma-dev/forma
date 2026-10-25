@@ -260,6 +260,7 @@ for (const rel of jsArtifacts()) {
 }
 for (const [entry, refusals, warnings] of [
   ['index', ['FORMA_E_RAW_INNER_HTML', 'FORMA_E_RAW_SET_HTML', 'FORMA_E_RAW_TEMPLATE', 'FORMA_E_RAW_SRCDOC', 'FORMA_E_SCRIPT_ELEMENT'], ['FORMA_W_TT_POLICY_REFUSED', 'FORMA_W_INNER_HTML_CHILDREN']],
+  ['compiled', ['FORMA_E_RAW_TEMPLATE'], []],
   ['runtime', ['FORMA_E_RAW_RECONCILE', 'FORMA_E_RUNTIME_SRCDOC'], ['FORMA_W_TT_POLICY_REFUSED']],
   ['runtime-hardened', ['FORMA_E_RAW_RECONCILE', 'FORMA_E_RUNTIME_SRCDOC'], ['FORMA_W_TT_POLICY_REFUSED']],
 ]) {

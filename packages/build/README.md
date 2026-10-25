@@ -45,6 +45,20 @@ npx tsx build.ts
 
 This bundles your app with esbuild, content-hashes all assets, generates Brotli + gzip compressed versions, and writes an asset manifest.
 
+With `clientTemplates: true`, the pipeline also lowers
+eligible JSX subtrees in direct `createList` render callbacks to reusable HTML
+templates in browser and island bundles. This is off by default: use it for
+frequently created client-side lists after measuring the complete route.
+This applies to split, non-split and watch builds. Use a coordinated compiler/core
+set providing `@getforma/core/compiled`; the generated helper shares the route's
+existing reactive graph. Opting in without a supporting compiler fails with
+`BUILD-809`; default builds retain ordinary JSX lowering.
+See the compiler's [client-template contract](../compiler/README.md#client-jsx-templates)
+for eligibility, delegated clicks and adoption behavior. Full route sizes include
+the helper and the fallback description; all size gates remain in force. Adopted
+lists use the original JSX description even for rows added after adoption, so
+this option currently accelerates client-created lists, not server-adopted lists.
+
 ### Optional shared ESM graph
 
 Set `codeSplitting: true` to share one runtime across entries and preserve native
@@ -332,6 +346,7 @@ const config: BuildConfig = {
   // previousDist: "../previous-release/dist", // Keep the live release's assets for open tabs; see "Retention"
   // security: true,                  // This release fixes a vulnerability: retain nothing (or FORMA_SECURITY_RELEASE=1)
   previewFrame: false,                // true: write core's frame runtime, minified, as forma-runtime.js (forma-server's PageResponse::frame)
+  clientTemplates: false,             // opt in for frequently created lists; requires compiler/core support, keeps all route size budgets
   watch: false,                       // Rebuild on change; writes a dev manifest and, with ssr, each page's .ir
   budgetThreshold: 200_000,           // Warn at 200KB brotli per route
   formaAlias: "@getforma/core",       // What bare 'formajs' imports resolve to
@@ -713,6 +728,7 @@ TypeScript and JavaScript, inline scripts in HTML included:
 | `setHTMLUnsafe` | Core's `setHTMLUnsafe(el, markup)` given markup not traced to `trustedHtml()`. |
 | `template` | Core's `template(markup)`, likewise. |
 | `templateMany` | Core's `templateMany(markup)`, likewise. |
+| `__createCompiledTemplate` | Authored use or re-export of the compiler-only template sink. Its lazy markup callback always needs review; generated compiler output is emitted after the application-source lint. |
 | `reconcile` | A legacy runtime `reconcile(el, markup)` call, likewise. The lint recognizes this removed API for migration audits; use a `mountMarkup` handle's `update` in 3.0. |
 | `mountMarkup` | The runtime's `mountMarkup(root, markup, options)` with an explicit tier, likewise: 3.0 requires trusted markup. |
 | `MountHandle.update` | `update(markup)` on the handle `mountMarkup()` returns, given markup not traced to `trustedHtml()`: on a variable, field or property assigned the handle (`=`, `??=`, `\|\|=`, `&&=`, or an arm of a ternary), by dot or by bracket (`w.update(…)`, `w['update'](…)`), chained on the call (`mountMarkup(…).update(…)`), or destructured from it (`const { update } = mountMarkup(…)`, `{ update: up }`). The follow is by name, file-wide: a second object held under a handle's name, or another `update` destructured in the same file, is reported too, and an entry on the list says so. |
@@ -832,7 +848,7 @@ What it cannot see, and review must:
 |---|---|---|
 | What it is | Vite/esbuild plugins | Full build pipeline |
 | Use case | Add to existing Vite config | Replace your build script |
-| `h()` → `template()` transform | Yes (Vite plugin) | No — bundles your source as written |
+| Eligible JSX list templates | Explicit `formaClientPlugin()` or string transform | Opt-in `clientTemplates: true` |
 | Content hashing | No | Yes |
 | Compression | No | Yes (Brotli + gzip) |
 | Manifest | No | Yes |

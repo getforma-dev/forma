@@ -163,20 +163,25 @@ function createRootImpl<T>(fn: (dispose: () => void) => T, owned: boolean): T {
   }
 
   let result: T;
+  let failed = false;
+  let failure: unknown;
+  // Let the engine return its real scope disposer even when user setup
+  // throws. Otherwise neither its graph nor resources registered after an
+  // in-setup dispose() can be drained before the original failure escapes.
+  const run = () => {
+    try { result = fn(dispose); }
+    catch (error) { failed = true; failure = error; }
+  };
   try {
     if (owned) {
       // Owned: alien-signals nesting is kept (belt + suspenders with Forma cascade)
-      scope.scopeDispose = rawEffectScope(() => {
-        result = fn(dispose);
-      });
+      scope.scopeDispose = rawEffectScope(run);
     } else {
       // Unowned: break alien-signals scope nesting so this scope is NOT
       // disposed when the lexical parent scope is disposed.
       const prevSub = setActiveSub(undefined);
       try {
-        scope.scopeDispose = rawEffectScope(() => {
-          result = fn(dispose);
-        });
+        scope.scopeDispose = rawEffectScope(run);
       } finally {
         setActiveSub(prevSub);
       }
@@ -185,9 +190,11 @@ function createRootImpl<T>(fn: (dispose: () => void) => T, owned: boolean): T {
     // child-roots have registered. If dispose() was requested during setup, run
     // the deferred teardown now so everything created in the callback is torn down.
     setupComplete = true;
-    if (disposeRequestedDuringSetup) {
+    if (failed || disposeRequestedDuringSetup) {
+      disposed = true;
       runTeardown();
     }
+    if (failed) throw failure;
   } finally {
     currentRoot = rootStack.pop() ?? null;
     executionContext.owner = prevOwner;

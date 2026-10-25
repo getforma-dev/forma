@@ -65,17 +65,17 @@ historical examples. They use the old automatic lifecycle, not the explicit
 
 Any bundler works — Vite, esbuild, tsup, webpack, Rollup. FormaJS ships standard ESM and CJS via `package.json` exports. No plugins, no special config. For JSX, set `jsx: "react"`, `jsxFactory: "h"`, `jsxFragmentFactory: "Fragment"`.
 
-Gzipped sizes, measured by `npm run check:size` on the selected 3.1 candidate at `9ac07a44` on 2026-10-24 (that script walks the real ESM import graph, so shared chunks are weighed, and CI fails the build if any entry exceeds its limit):
+Gzipped sizes, measured by `npm run check:size` on the FORMA-294 core candidate at `1d204ba4` on 2026-10-25 (the subsequent opt-in decision changes no core runtime bytes). That script walks the real ESM import graph, weighs shared chunks, and fails if any entry exceeds its limit:
 
 | Artifact | Gzipped | CI limit |
 |---|---|---|
-| `@getforma/core` entry + every chunk it imports | 48.1 KiB (49,212 B) | 49,414 B |
-| CDN HTML runtime (`formajs-runtime.global.js`) | 40.0 KiB (40,983 B) | 41,500 B |
-| CDN HTML runtime, hardened (`formajs-runtime-hardened.global.js`) | 39.3 KiB (40,235 B) | 40,500 B |
-| CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 47.6 KiB (48,699 B) | 49,136 B |
-| Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 38.8 KiB (39,719 B) | 40,000 B |
+| `@getforma/core` entry + every chunk it imports | 48.6 KiB (49,796 B) | 49,926 B |
+| CDN HTML runtime (`formajs-runtime.global.js`) | 40.1 KiB (41,113 B) | 41,500 B |
+| CDN HTML runtime, hardened (`formajs-runtime-hardened.global.js`) | 39.4 KiB (40,384 B) | 40,500 B |
+| CDN browser ESM (`forma.esm.js`, inlines alien-signals) | 47.6 KiB (48,776 B) | 49,136 B |
+| Preview frame runtime (`formajs-frame.global.js`, inlined by the server) | 38.9 KiB (39,867 B) | 40,000 B |
 
-The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less. At this candidate, the indexed island route loads 28,304 B gzip -9 of Forma code and its CSR counterpart loads 27,616 B. `@getforma/build` reports Forma code per route and fails over 28,420 B; total-JavaScript ceilings are unchanged. The [3.1 performance decision](../../docs/release/3.1-PERFORMANCE-TRADEOFFS.md) explicitly raises only the core package gate from 48,902 B to 49,414 B and the Forma route gate from 28,100 B to 28,420 B. The candidate exceeded both previous gates; those failures are retained. Package caps remain separate from the route budget.
+The core figure is **untree-shaken** — it is everything `dist/index.js` pulls in. A bundler that drops what your app does not import ships less. `@getforma/build` still refuses routes above 28,420 B gzip -9 of Forma code. The [3.1 performance decision](../../docs/release/3.1-PERFORMANCE-TRADEOFFS.md) records the earlier effects delivery costs. The separate [FORMA-294 decision](../../docs/release/FORMA-294-COMPILER-CANDIDATE.md) accepts 584 B of package growth and raises only its package cap by 512 B, from 49,414 to 49,926 B. The optional helper itself is excluded from main; splitting its shared dependencies creates most of the transport increase. Template compilation is off by default and remains subject to every route budget. Original failed measurements remain failed; package caps are separate from route budgets.
 
 For historical comparison, the 3.0.0-dev build at `91a50157` on 2026-10-16 measured 48,602 B core, 39,203 B runtime, 37,629 B hardened runtime, 48,836 B browser ESM and 38,687 B frame runtime. Its Counter and indexed SSR routes measured 26,213 B and 28,071 B of Forma code. The former 28,100 B N2 gate and original 50 ms N3 condition belong to that L-64 decision; they are not retroactively changed by the 3.1 decision. The core and browser ESM figures had grown from 29,515 and 28,369 B at 2.1.0 with strict island activation (FORMA-104) and the declared island state block (FORMA-103). Measured sizes can change; a test keeps the current table's CI limits aligned with the gate script.
 

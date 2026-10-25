@@ -50,6 +50,6 @@ it('exports only documented compilation, emission and diagnostic entrypoints', (
   expect(Object.keys(compiler).sort()).toEqual([
     'COMPILER_WRITER_VERSION', 'DIAGNOSTIC_CATALOGUE', 'FmirContainerError', 'IrEmitContext',
     'baseWriterVersion', 'collectDiagnostics', 'crc32', 'diagnosticEntry', 'dumpFmir',
-    'encodeFmirSections', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'getSsrEntryProducts', 'makeDiagnostic', 'readFmirContainer',
+    'encodeFmirSections', 'formaClientPlugin', 'formaSsrPlugin', 'formatDiagnostic', 'generateRealIr', 'getSsrEntryProducts', 'makeDiagnostic', 'readFmirContainer', 'transformClientTemplates',
   ].sort());
 });
