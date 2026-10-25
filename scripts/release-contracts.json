@@ -17,7 +17,7 @@
           "scope": "server functions, the WASM walker and Node rendering removed"
         },
         "FORMA-185": {
-          "status": "pending",
+          "status": "done",
           "scope": "FMIR v3 writer and reader on main, seeded-fault replay, the nightly fuzz observed"
         },
         "FORMA-112": {
@@ -41,7 +41,7 @@
           "scope": "the worker's digest checks, integrity on every tag, precache mode removed"
         },
         "FORMA-144 slice 1": {
-          "status": "pending",
+          "status": "done",
           "scope": "both templates on the coordinated 3.1 API, packed and verified by P17"
         }
       }
@@ -55,7 +55,7 @@
           "scope": "island props in one JSON block, compiler-bound seeding"
         },
         "FORMA-104": {
-          "status": "pending",
+          "status": "done",
           "scope": "adoption writes nothing on its first run, coded mismatch errors"
         },
         "FORMA-105": {
@@ -63,31 +63,31 @@
           "scope": "islands only, literal registry, identity digest"
         },
         "FORMA-181": {
-          "status": "pending",
+          "status": "done",
           "scope": "keyed rows"
         },
         "FORMA-182": {
-          "status": "pending",
+          "status": "done",
           "scope": "the marker vocabulary and the seven value rules with shared vectors"
         },
         "FORMA-183": {
-          "status": "pending",
+          "status": "done",
           "scope": "the parity harness and its corpus, blocking in CI"
         },
         "FORMA-184": {
-          "status": "pending",
+          "status": "done",
           "scope": "renderBoth(component, state) in Forma's own suite"
         },
         "FORMA-144 slice 2": {
-          "status": "pending",
+          "status": "done",
           "scope": "island state adoption in the templates: the integrated packed adoption and static-route acceptance"
         },
         "FORMA-188 fixture applications": {
-          "status": "pending",
+          "status": "done",
           "scope": "the three fixture applications in P17"
         },
         "FORMA-021 ratchet": {
-          "status": "pending",
+          "status": "done",
           "scope": "the safe cuts landed and the size gate green at the restated ceiling"
         }
       }
@@ -101,11 +101,11 @@
           "scope": "the published server-renderable subset and coded build errors"
         },
         "FORMA-139": {
-          "status": "pending",
+          "status": "done",
           "scope": "the conformance corpus, a fixture and a near miss per code"
         },
         "FORMA-108": {
-          "status": "pending",
+          "status": "done",
           "scope": "the hostile corpus with zero executions"
         },
         "FORMA-186": {
@@ -113,11 +113,11 @@
           "scope": "the deployment identity and inert-or-reload on a skew"
         },
         "FORMA-188 skew drill": {
-          "status": "pending",
+          "status": "done",
           "scope": "the skew drill green in P17"
         },
         "FORMA-190": {
-          "status": "pending",
+          "status": "done",
           "scope": "the size report green on both templates at the recorded ceiling"
         },
         "FORMA-141": {
@@ -125,15 +125,15 @@
           "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78"
         },
         "FORMA-145 documentation": {
-          "status": "pending",
+          "status": "done",
           "scope": "the 3.1 upgrade and stability documentation matches the final public surface; the complete 3.0 upgrade guide remains available"
         },
         "FORMA-116": {
-          "status": "pending",
+          "status": "done",
           "scope": "reviewed governance source controls and actual SR14 security mutation probes; live rollout deferred by L-60"
         },
         "FORMA-189": {
-          "status": "pending",
+          "status": "done",
           "scope": "the recall script and SECURITY.md generated from the release record"
         },
         "FORMA-145 audit": {
@@ -141,35 +141,35 @@
           "scope": "the whole-release audit on another model or a separate fresh-context reviewer under L-65, with an empty blocking list (D14)"
         },
         "FORMA-257": {
-          "status": "pending",
+          "status": "done",
           "scope": "no-JavaScript routes emit plain HTML without markers, row keys or island state while island adoption bytes remain compatible; shared visible 10/100/1000-row checks pass and the 100-row HTML is at most 17,500 bytes; rerace HTTP events 1-4 and 7 with bytes, throughput, render cost and RenderCounts retained"
         },
         "FORMA-258": {
-          "status": "pending",
+          "status": "done",
           "scope": "profile and reduce per-byte walker cost and allocations without changing adoptable bytes, limits or fault behavior; record 100/1000-row ns/byte and allocations against the 10 ns/byte target, then rerace HTTP events 1-4 with Endurance p99/p50 at most 1.5"
         },
         "FORMA-259": {
-          "status": "pending",
+          "status": "done",
           "scope": "Qualify the selected simpler supplied-node effects and initial-failure cleanup repair under docs/release/3.1-PERFORMANCE-TRADEOFFS.md: preserve adoption/ownership/cleanup/error semantics; retain fresh exact-source Linux results against published Forma and pristine alien-signals 3.1.2, all nine workloads and original 80%/85% target outcomes; explicitly accept the documented fan-out shortfall and delivery tradeoff with core 49,414 B and route 28,420 B gzip ceilings, leaving other budgets unchanged"
         },
         "FORMA-260": {
-          "status": "pending",
+          "status": "done",
           "scope": "Complete source-bound row profiling and preserve stable row/event/ownership/teardown behavior under docs/release/3.1-PERFORMANCE-TRADEOFFS.md; retain all nine fresh exact-source DOM operations and three-engine correctness; accept and disclose the existing create-1,000 gap above 1.10 times same-session vanilla for 3.1, exclude incompatible compiler/listener experiments, and investigate any material new regression before release"
         },
         "FORMA-261": {
-          "status": "pending",
+          "status": "done",
           "scope": "opt-in br/gzip/identity rendered-response compression has correct negotiation, Vary and length behavior, unchanged decoded bytes/no-store/CSP/HEAD semantics, and an explicit reviewed BREACH policy; rerace event 7 and HTTP events 1 and 3 with throughput, CPU, memory and tail latency"
         },
         "FORMA-262": {
-          "status": "pending",
+          "status": "done",
           "scope": "both generated-template CI/release workflows cache locked Cargo builds and retain cold/warm page-only build evidence; evaluate disk-loaded release FMIR and record the decision without changing the existing development reload contract"
         },
         "FORMA-263": {
-          "status": "pending",
+          "status": "done",
           "scope": "retain the bundle component breakdown, remove only proven unused/adoption-specific bytes, publish exact raw/gzip/Brotli deltas with all correctness and existing size budgets passing, and preserve runtime export/activation/disposal behavior"
         },
         "FORMA-264": {
-          "status": "pending",
+          "status": "done",
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory ≤ 8 MiB, boot ≤ 50 ms and image ≤ 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         }
       }
