@@ -1,0 +1,19 @@
+# FORMA-294 exact prebuilt CSR research fixture
+
+This is one experimental, handwritten closed-row scaffold. It is not a shipped compiler, an automatic JSX optimization, or product-release acceptance. The stock Forma workload and vanilla control are retained beside it. No application or runtime is rebuilt by this workflow mode.
+
+The files in `assets/` are byte-exact copies of the frozen local experiment and its two untimed controls. `fixture.json` binds every input; `package-provenance.json` retains the complete 84-file package identity and emitted-module provenance. The embedded core source is `9ac07a446ebe8aaad407a895fa8aaece189bc69e`, from the retained package archive SHA-256 `95617f06ffac0070fd19d34c9691a0edd4e056085725570abb3e842dd25f8ea9`. The new experimental branch commit identifies the transport and fixture, not a replacement core build.
+
+The candidate uses the existing Forma list, roots, signals, internal effects, and dependency graph. Its explicit new CSR contract is in `CONTRACT.md`: one delegated listener on the table body, template cloning, and direct row bindings. It has no server adoption implementation. The retained source files explain the emitted bytes; their moved paths are documentation, not a rebuild recipe. Package and dependency licenses are included.
+
+## Fixed Linux follow-up
+
+Dispatch only the existing `grand-prix-client.yml` workflow with `fixture=forma-294-closed-rows`, `profile=gha-4-v1`, and `diagnostic=false`. The ordinary workflow mode is unchanged. This mode requires a clean committed Linux x64 checkout on the standard four-CPU GitHub runner, the locked Chromium executable, verified actual browser affinity, and one recorded campaign identity. It refuses other profiles instead of silently relaxing the experiment.
+
+Before measurement, the frozen seven contract controls and 34 actual list/parent ownership checks must all pass. The order is fixed: `forma-baseline`, `forma-delegated`, then `vanilla`. The canonical timing collector retains all nine DOM operations, two warmups and five samples per operation, correctness checks, browser errors, and cleanup. The canonical bundle collector records all reachable JavaScript bytes, gzip and Brotli sizes. No retry or favorable-sample selection is added. A failing trial remains a failure artifact.
+
+The transport verifies every asset before controls, immediately before timing, and after measurement. The uploaded artifact includes the exact served files, copied canonical collectors, provenance, raw samples, control results, profile, campaign, and wrapper status. Browser tooling alone is installed; the fixture does not depend on a host framework install.
+
+The original local screen used Chromium 155, macOS, no CPU affinity, and high host load. This follow-up uses the existing locked Linux Chromium 156 and its recorded resource profile. Compare the three cars within this new campaign; do not present changes from the local screen as a performance gain. A qualified research result does not make this scaffold a shipped default build path or close any original ticket by itself.
+
+The existing `scripts/release-owned-linux.py` supervisor is reused unchanged and hash-pinned. Each command has a 900-second bound plus its existing bounded cleanup, with a separate ownership receipt and log. Its subreaper/pidfd cleanup includes detached browser descendants and rejects leaked live children even after producer success. The supervisor is pinned to the reserved CPU; browser collectors retain their original three-CPU affinity. Its periodic child-reaping/logging work is transport overhead, shared by all cars, not part of the browser-marked measurement. This is disclosed rather than assumed to have zero host cost. No new ownership implementation or canonical collector modification is introduced.

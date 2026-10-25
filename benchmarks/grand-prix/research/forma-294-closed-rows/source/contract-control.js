@@ -1,0 +1,22 @@
+import {createRoot, createSignal} from '@getforma/core';
+import {makeDelegatedRows} from '../forma-delegated/src/delegated-row.js';
+const checks=[];const check=(name,ok)=>{checks.push({name,ok});if(!ok)throw new Error(name)};
+let endParent,endRow,labelSet,selectedSet,labelRead,selectedRead;
+const tbody=document.createElement('tbody');document.body.append(tbody);
+let row, listenerSignal;
+const add=tbody.addEventListener;tbody.addEventListener=function(type,handler,options){if(type==='click')listenerSignal=options.signal;return add.call(this,type,handler,options)};
+createRoot(stop=>{
+ endParent=stop;
+ [selectedRead,selectedSet]=createSignal(null);
+ [labelRead,labelSet]=createSignal('first');
+ const rows=makeDelegatedRows(selectedRead,selectedSet,()=>{});rows.attach(tbody);
+ row=createRoot(stopRow=>{endRow=stopRow;return rows.render({id:7,label:labelRead})});tbody.append(row);
+});
+check('initial real binding',row.querySelector('.lbl').textContent==='first');
+labelSet('next');check('live label effect',row.querySelector('.lbl').textContent==='next');
+row.querySelector('.lbl').click();check('delegated selection',selectedRead()===7&&row.className==='danger');
+selectedSet(null);endRow();labelSet('after-dispose');selectedSet(7);
+check('disposed label effect stopped',row.querySelector('.lbl').textContent==='next');check('disposed class effect stopped',row.className==='');
+selectedSet(null);row.querySelector('.lbl').click();check('disposed row handler revoked',selectedRead()===null);
+endParent();check('parent native listener aborted',listenerSignal.aborted);
+window.__contractChecks=checks;

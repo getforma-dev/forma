@@ -3,6 +3,13 @@ name: Grand Prix client and signals
 on:
   workflow_dispatch:
     inputs:
+      fixture:
+        description: 'Standard product race or exact prebuilt FORMA-294 research scaffold'
+        type: choice
+        default: standard
+        options:
+          - standard
+          - forma-294-closed-rows
       runner:
         description: 'Native Linux x64 runner matching the selected resource profile'
         default: 'ubuntu-latest'
@@ -66,6 +73,7 @@ jobs:
         id: browser
         run: sudo --preserve-env=GITHUB_OUTPUT "$(command -v node)" benchmarks/grand-prix/harness/install-linux-browser.mjs "$RUNNER_TEMP/gp264-chromium" --install-deps --install-apparmor-profile
       - name: Run baseline and candidates sequentially
+        if: inputs.fixture != 'forma-294-closed-rows'
         working-directory: benchmarks/grand-prix
         env:
           GP_RUN_ID: client-${{ github.run_id }}-${{ github.run_attempt }}
@@ -85,6 +93,15 @@ jobs:
           const result=spawnSync(process.execPath,args,{stdio:'inherit'});
           process.exit(result.status??1);
           JS
+      - name: Run exact FORMA-294 scaffold research (not shipped-product acceptance)
+        if: inputs.fixture == 'forma-294-closed-rows'
+        working-directory: benchmarks/grand-prix
+        env:
+          GP_RUN_ID: client-${{ github.run_id }}-${{ github.run_attempt }}
+          GP_PROFILE: ${{ inputs.profile }}
+          GP_DIAGNOSTIC: ${{ inputs.diagnostic && 'true' || 'false' }}
+          CHROME_PATH: ${{ steps.browser.outputs.path }}
+        run: node research/forma-294-closed-rows/run-linux.mjs
       - name: Remove this run's browser profile
         if: always() && steps.browser.outputs.sandbox_profile != ''
         env:
@@ -107,6 +124,19 @@ jobs:
             benchmarks/grand-prix/results/*-client/*/client-race/package-lock.json
             benchmarks/grand-prix/results/*-client/*/signals-race/package-lock.json
             benchmarks/grand-prix/results/*-cleanup.json
+            benchmarks/grand-prix/results/*-research/run.json
+            benchmarks/grand-prix/results/*-research/campaign.json
+            benchmarks/grand-prix/results/*-research/resource-profile.json
+            benchmarks/grand-prix/results/*-research/fixture.json
+            benchmarks/grand-prix/results/*-research/CONTRACT.md
+            benchmarks/grand-prix/results/*-research/package-provenance.json
+            benchmarks/grand-prix/results/*-research/owned/
+            benchmarks/grand-prix/results/*-research/raw/
+            benchmarks/grand-prix/results/*-research/race/apps/
+            benchmarks/grand-prix/results/*-research/race/*.mjs
+            benchmarks/grand-prix/results/*-research/harness/
+            benchmarks/grand-prix/results/*-research/source/
+            benchmarks/grand-prix/results/*-research/licenses/
             ${{ runner.temp }}/gp264-chromium/browser-lock.json
           if-no-files-found: error
           retention-days: 30

@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "kind": "handwritten-csr-research-scaffold",
+  "coreSource": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+  "researchOnly": true,
+  "shipsInProduct": false,
+  "corePackageTarballSha256": "95617f06ffac0070fd19d34c9691a0edd4e056085725570abb3e842dd25f8ea9",
+  "alienSignalsVersion": "3.1.2",
+  "localReceiptSha256": "f20bc608380a0d1cda06f6c2bbc09e95fa27d7880ca10f850ebf1f8f6d3f7547",
+  "ownershipReceiptSha256": "ef920f35eaf774b3db547aec43d16c6704f600fe116d780535dbec01529cb50d",
+  "measuredCars": [
+    "forma-baseline",
+    "forma-delegated",
+    "vanilla"
+  ],
+  "controlCars": [
+    "contract-control",
+    "ownership-supplement"
+  ],
+  "harnessBase": "226f0d8d56e0d6e68517d53f52bcc7149ee7e869",
+  "harnessFiles": {
+    "client-race/run.mjs": "c8b969c7d5528c9ec88f3320b07d11e13c18ec4b4dfe0ff46bf3b9b6e0c49655",
+    "client-race/timing.mjs": "68b58e753f0ee74a84f67653829259190a76e2b103f9b371057f0315eb8d1ae8",
+    "client-race/lib.mjs": "0be678e1344d1781c616ae546a21a9fab0439e48674e675a4f63d0998c6e49e2",
+    "client-race/bundle.mjs": "ca4885e5105b1b0619026fd6b27e412a1aa51486fff16d0351a315338058c461",
+    "harness/resource-profile.mjs": "fa881e09cab0718772454572ae071f9b72dc2d8ca90628e963b1bc46949786e2",
+    "harness/campaign.mjs": "47f4bd50d073779c99e8f7b578bb779b446f49cd91612082a09bc0e7ea470a43",
+    "harness/chromium-linux-lock.json": "c02b0ed176536d38c9758d5c808a1fb95700ebbe8b69cc41e59ce5726c7e7235"
+  },
+  "files": [
+    {
+      "path": "CONTRACT.md",
+      "sourceReceiptPath": "CONTRACT.md",
+      "bytes": 2015,
+      "sha256": "20360440af18ce4ec60b03ea747b68e6ad7809337e945b8cdddcd1e8a9fd9317"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3808,
+      "sha256": "7b0dfaa0dcd1aa2a156f56c16d16ad85f4765a82a350d48b3bb4167edb473025"
+    },
+    {
+      "path": "assets/contract-control/assets/index-DJwdvv6V.js",
+      "sourceReceiptPath": "race/apps/contract-control/dist/assets/index-DJwdvv6V.js",
+      "bytes": 8050,
+      "sha256": "a087d4bde86cb121ff9546a22225109ec526bbc2efc2e6726e9917f95a00f1cb"
+    },
+    {
+      "path": "assets/contract-control/index.html",
+      "sourceReceiptPath": "race/apps/contract-control/dist/index.html",
+      "bytes": 93,
+      "sha256": "c1c4b503bed0d3052ce0a37df0a2dbf63e8cc114f9f8fa7407355e0406c4a690"
+    },
+    {
+      "path": "assets/forma-baseline/assets/index-DDgKFVIs.js",
+      "sourceReceiptPath": "race/apps/forma-baseline/dist/assets/index-DDgKFVIs.js",
+      "bytes": 25347,
+      "sha256": "1be9477377021db37dbd8e9068d6f6ce4f873683d20ff0a26430463fafee40b4"
+    },
+    {
+      "path": "assets/forma-baseline/assets/index-LPPuY4Ij.css",
+      "sourceReceiptPath": "race/apps/forma-baseline/dist/assets/index-LPPuY4Ij.css",
+      "bytes": 101,
+      "sha256": "ba1afe555c7e17aceb6c975b7a53a9f4133eee6765996bc74a50370dad063c09"
+    },
+    {
+      "path": "assets/forma-baseline/index.html",
+      "sourceReceiptPath": "race/apps/forma-baseline/dist/index.html",
+      "bytes": 273,
+      "sha256": "23c328abbf67b60f9f590e068931290f160ae812ed879c2e6f666568ebd04663"
+    },
+    {
+      "path": "assets/forma-delegated/assets/index-DXAfcx82.js",
+      "sourceReceiptPath": "race/apps/forma-delegated/dist/assets/index-DXAfcx82.js",
+      "bytes": 25903,
+      "sha256": "81f0c93c475c686b1a96740ddc7f9132647183da89a86734dcb96618a446aa77"
+    },
+    {
+      "path": "assets/forma-delegated/assets/index-LPPuY4Ij.css",
+      "sourceReceiptPath": "race/apps/forma-delegated/dist/assets/index-LPPuY4Ij.css",
+      "bytes": 101,
+      "sha256": "ba1afe555c7e17aceb6c975b7a53a9f4133eee6765996bc74a50370dad063c09"
+    },
+    {
+      "path": "assets/forma-delegated/index.html",
+      "sourceReceiptPath": "race/apps/forma-delegated/dist/index.html",
+      "bytes": 273,
+      "sha256": "2f98a95c483a27d55bbdc6881a58fb3c407e1c1558c0cbee4b5e8c7a669d24eb"
+    },
+    {
+      "path": "assets/ownership-supplement/assets/index-C4bVRsWf.js",
+      "sourceReceiptPath": "race/apps/ownership-supplement/dist/assets/index-C4bVRsWf.js",
+      "bytes": 19568,
+      "sha256": "5499697f507ca591398228927194d362766ea1e285609ddd47570a70738893eb"
+    },
+    {
+      "path": "assets/ownership-supplement/index.html",
+      "sourceReceiptPath": "race/apps/ownership-supplement/dist/index.html",
+      "bytes": 120,
+      "sha256": "e74f5eec7cfd5e8fabf204f2ce215b26586cb421df12e82fb34426aa5374da47"
+    },
+    {
+      "path": "assets/vanilla/assets/index-Djh-t4k4.js",
+      "sourceReceiptPath": "race/apps/vanilla/dist/assets/index-Djh-t4k4.js",
+      "bytes": 2801,
+      "sha256": "0a18537b2f154437bc12c6ad4ed1cf57bb280f91c4fe325206ed08c7b55735e8"
+    },
+    {
+      "path": "assets/vanilla/assets/index-LPPuY4Ij.css",
+      "sourceReceiptPath": "race/apps/vanilla/dist/assets/index-LPPuY4Ij.css",
+      "bytes": 101,
+      "sha256": "ba1afe555c7e17aceb6c975b7a53a9f4133eee6765996bc74a50370dad063c09"
+    },
+    {
+      "path": "assets/vanilla/index.html",
+      "sourceReceiptPath": "race/apps/vanilla/dist/index.html",
+      "bytes": 586,
+      "sha256": "0a7160ca8ae5cd593192a766fcfe9aa950f7dd767c1a6ddb5d21cd2dcf5bf92e"
+    },
+    {
+      "path": "check-controls.mjs",
+      "bytes": 2447,
+      "sha256": "d896258d4c576ab60365e6173707656d2a0aacd286a2eba1073cf66d659e19a7"
+    },
+    {
+      "path": "licenses/LICENSE",
+      "bytes": 1062,
+      "sha256": "ccdffef8595a31b8a2df96f430920d62411fae72c6eeb420ebf0f8194fab0dc1"
+    },
+    {
+      "path": "licenses/alien-signals.txt",
+      "bytes": 1076,
+      "sha256": "75863f712f8f0603b0dba33edf4b725bab80fc858a51756e5905a3c4c8087169"
+    },
+    {
+      "path": "package-provenance.json",
+      "bytes": 15482,
+      "sha256": "ec0c4d6fb5aa3e8d52b1ecb8ed2e13d005f520fa9d6fed404d627076a4d3f7dd"
+    },
+    {
+      "path": "run-linux.mjs",
+      "bytes": 9396,
+      "sha256": "fec5a7b1e62e21ca91f2a8d47aefbaff54c72f31c81e2d0ef13f9ee30954733b"
+    },
+    {
+      "path": "source/baseline-main.jsx",
+      "sourceReceiptPath": "race/apps/forma-baseline/src/main.jsx",
+      "bytes": 2203,
+      "sha256": "3ba89957c35240eb4cda6f4e1779ebfdad32ce4c772400ca07647d17dbddfea4"
+    },
+    {
+      "path": "source/candidate-main.jsx",
+      "sourceReceiptPath": "race/apps/forma-delegated/src/main.jsx",
+      "bytes": 2031,
+      "sha256": "94ce71587f3d933c87d9cad827e69ba9ce0c0d6b29b4e7501d41ae1080b90272"
+    },
+    {
+      "path": "source/contract-control.js",
+      "sourceReceiptPath": "race/apps/contract-control/control.js",
+      "bytes": 1606,
+      "sha256": "e6e7386a5df98eb32b999901188fbbaf712886c46a121f1a34e3934d23cf6e37"
+    },
+    {
+      "path": "source/delegated-row.js",
+      "sourceReceiptPath": "race/apps/forma-delegated/src/delegated-row.js",
+      "bytes": 1745,
+      "sha256": "eceebb73b40f6b07ca186133a0945f6f108a2d01f2429a912eee5337c8f53c05"
+    },
+    {
+      "path": "source/ownership-control.js",
+      "sourceReceiptPath": "race/apps/ownership-supplement/control.js",
+      "bytes": 6931,
+      "sha256": "42292c01b167764e6770a874d21f81ad26d796fbf7cd703dea23c27b8c891611"
+    },
+    {
+      "path": "source/vanilla-main.js",
+      "sourceReceiptPath": "race/apps/vanilla/src/main.js",
+      "bytes": 2370,
+      "sha256": "eb53796f7a682c0bab99d6b32384761bc1e83ce7dc20aa9f74af8bf1dc589e36"
+    }
+  ],
+  "rebuild": false,
+  "note": "Exact prebuilt local browser assets; qualified follow-up measures these bytes on Linux. This does not claim a shipped compiler or transfer historical hosted-byte identity.",
+  "repositoryFiles": {
+    "scripts/release-owned-linux.py": "e42b4b7ae87ce315ccfe78186373207a4075b618ef1276bc9e897dc33f6c838c"
+  }
+}
