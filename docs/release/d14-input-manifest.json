@@ -1,12 +1,12 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "d549642104d8d56ecc05737e697080d7b803f36b",
-  "tree": "4e9f9b2a60d67d3db1ec9694dbce181747d38ff3",
+  "commit": "eb322262b52517a8f3ad717ef51d7419c0fba1aa",
+  "tree": "7c20b763f0a3a9029bb93ed0db9166f6d60debeb",
   "entries": [
     {
       "path": ".gitattributes",
       "mode": "100644",
-      "blob": "b5c2493f0e50a4b3256236a904a8b24b6ddac761"
+      "blob": "27e50e6a1a03932e832bcaa9826a372080d79f75"
     },
     {
       "path": ".github/CODEOWNERS",
@@ -26,17 +26,17 @@
     {
       "path": ".github/dependabot.yml",
       "mode": "100644",
-      "blob": "ca79ca5b4d5245d3dbcf49889b73d7fd0f076132"
+      "blob": "baf947fd3ef1fef90f5c75a09b87e924ede7212e"
     },
     {
       "path": ".github/workflows/advisories.yml",
       "mode": "100644",
-      "blob": "b46a6f107fd7b901e5ed7fccce2ae67ed9dedeb9"
+      "blob": "8e05dfdaeb885b79a25caf881e803910f6ba8567"
     },
     {
       "path": ".github/workflows/ci.yml",
       "mode": "100644",
-      "blob": "5baf0d95bc233a947c2bb14706a8721d3d04ea37"
+      "blob": "a6f76a9666176212aaf3b782242f32f7e95406d5"
     },
     {
       "path": ".github/workflows/compat.yml",
@@ -46,57 +46,97 @@
     {
       "path": ".github/workflows/e2e-engines.yml",
       "mode": "100644",
-      "blob": "fd2a9ac030cac941687016e755ea8f0e32465d4c"
+      "blob": "d016ee11188d099b81aa28286eca032a19cf7062"
     },
     {
       "path": ".github/workflows/fmir-fuzz.yml",
       "mode": "100644",
-      "blob": "30cdd0efe34bcb2389c00777841b805ed1420a1d"
+      "blob": "80b0cd163f3bb22fa81f4afa29865988a8bba127"
+    },
+    {
+      "path": ".github/workflows/grand-prix-client.yml",
+      "mode": "100644",
+      "blob": "aa55c66dc16224bb60a212f48e0e8ca64148de0e"
+    },
+    {
+      "path": ".github/workflows/grand-prix-compression.yml",
+      "mode": "100644",
+      "blob": "fd9b0f68e27c73413b406df7d02757fbb3fb6e7f"
+    },
+    {
+      "path": ".github/workflows/grand-prix-islands.yml",
+      "mode": "100644",
+      "blob": "d257e5afbf369662e3ca9ba1571d0e1851403231"
+    },
+    {
+      "path": ".github/workflows/grand-prix-paired.yml",
+      "mode": "100644",
+      "blob": "b176523ecefa5845132f0a32486deba7c1d80b6d"
+    },
+    {
+      "path": ".github/workflows/grand-prix.yml",
+      "mode": "100644",
+      "blob": "5cc47359af69ec93dc3016dee9c07d21b5537567"
     },
     {
       "path": ".github/workflows/n7-build-loop.yml",
       "mode": "100644",
-      "blob": "8d9675ec27415db601fa2241a6d43eea3141a0bb"
+      "blob": "94bbeb3792ccd00e748da162a5e4aeb82243bb21"
     },
     {
       "path": ".github/workflows/nightly-probes.yml",
       "mode": "100644",
-      "blob": "39049abc1fa484ab0464c728bde753781b8d0e2e"
+      "blob": "0ec828e14ab21379c74f5fc6ba58ccc1777a8d08"
     },
     {
       "path": ".github/workflows/packed-qualification.yml",
       "mode": "100644",
-      "blob": "702a518e6727143431ea1751587d957d7184c2df"
+      "blob": "08cf7d1cbfeaaf467098135bf7ef85d0bdcf4613"
+    },
+    {
+      "path": ".github/workflows/post-final-soak-v2.yml",
+      "mode": "100644",
+      "blob": "ba1a7f5c85b9e12806409de005257276481d6014"
     },
     {
       "path": ".github/workflows/rc-burn-in.yml",
       "mode": "100644",
-      "blob": "6e84c7b41fceeedd1694e64bf6211dd3cb64c549"
+      "blob": "a8080a0dddedf0eec1e32e3e6ddd0e3715b77dc3"
+    },
+    {
+      "path": ".github/workflows/registry-reconcile.yml",
+      "mode": "100644",
+      "blob": "08c45e73c58be9d4a8f0664928fed97ecf5d4eb1"
     },
     {
       "path": ".github/workflows/release-plane-observe.yml",
       "mode": "100644",
-      "blob": "6c4ed9a6b32d485e0ef2074948a4d4d26c8d7049"
+      "blob": "5b1bd3f81b5b186c836985d6fa8e4af6a3868100"
     },
     {
       "path": ".github/workflows/release.yml",
       "mode": "100644",
-      "blob": "f76cd16be378192efab0544913d4c6d9c64b442c"
+      "blob": "9f758a113a33882297f804be0c81e0ffaef19455"
+    },
+    {
+      "path": ".github/workflows/scaffold-cache.yml",
+      "mode": "100644",
+      "blob": "6357585dae98969c98f6bd38a0e46ac94eb80eaa"
     },
     {
       "path": ".github/workflows/security-probes.yml",
       "mode": "100644",
-      "blob": "90407332d07da992d4912ffb8ba9430e7318fd0c"
+      "blob": "1b8a165d965b8443725170a3194a0465e8d3c215"
     },
     {
       "path": ".github/workflows/value-rules.yml",
       "mode": "100644",
-      "blob": "8d746ef8651bc1430f60888b294537d0ee684ac2"
+      "blob": "7fa7bd0b45a4bad0a535e528b0def07f04a277bc"
     },
     {
       "path": ".gitignore",
       "mode": "100644",
-      "blob": "2fd494b542d382bc5f314abe2b6408bc6037b437"
+      "blob": "a45e26eb0326074ff92c74b0cfd9fd4fbd19ddc3"
     },
     {
       "path": ".node-version",
@@ -111,22 +151,22 @@
     {
       "path": "CHANGELOG.md",
       "mode": "100644",
-      "blob": "c99c43a611fd7285059fffcac5b39930958f3ef0"
+      "blob": "171eab3e6269313bf48de82e9d3bfbeac45b6da2"
     },
     {
       "path": "CONTRIBUTING.md",
       "mode": "100644",
-      "blob": "fc868dfb23bccd9c57eff4ea2f386b7281bb9ccc"
+      "blob": "fa85ee798ea92b62d3fa21c8370e18988421409c"
     },
     {
       "path": "Cargo.lock",
       "mode": "100644",
-      "blob": "edd0827f91e83d6e0d6c06a0d3c225f751016adf"
+      "blob": "c0def6e372c4b5c1514f3af782097953aa09d2d6"
     },
     {
       "path": "Cargo.toml",
       "mode": "100644",
-      "blob": "7d53ff9128e672b52cd339929199f19930531caa"
+      "blob": "b9ca2588b51dbb646a14a68b28b5aa10690bbaae"
     },
     {
       "path": "LICENSE",
@@ -136,42 +176,2657 @@
     {
       "path": "README.md",
       "mode": "100644",
-      "blob": "99a51501f824c2e77a9af3d609e3ed327c711016"
+      "blob": "23dbecd8f5c7440b397c3987fa09fa4f1e47fa53"
     },
     {
       "path": "SECURITY.md",
       "mode": "100644",
-      "blob": "5779e6c83b14a98cd9b3258aacf54201baea8836"
+      "blob": "9dfd3ca7190451bdba613fca32a0dd374714848e"
     },
     {
-      "path": "Tickets/4-done/FORMA-215.md",
+      "path": "benchmarks/grand-prix/.gitignore",
       "mode": "100644",
-      "blob": "b8a877c0de9213ed9961ceb6b92cc2fdf92f7a7d"
+      "blob": "c062ec5f2b36a453215f8cacb24e84ed232c19f0"
     },
     {
-      "path": "Tickets/4-done/FORMA-216.md",
+      "path": "benchmarks/grand-prix/COMPRESSION.md",
       "mode": "100644",
-      "blob": "4b39ab4a5e729422b2f7d62201052c43b72ea546"
+      "blob": "9a2acbb5e4c964dfee53e721f81b98804bb1847c"
     },
     {
-      "path": "Tickets/MONDAY-RESUME.md",
+      "path": "benchmarks/grand-prix/CONTRACT.md",
       "mode": "100644",
-      "blob": "7c5d6b581192d66f8ef94b712841a1241c37112c"
+      "blob": "3514a4886ac0a2901fed0fffa1bfd1b2abfc279c"
     },
     {
-      "path": "Tickets/RESUME.md",
+      "path": "benchmarks/grand-prix/PROTOCOL.md",
       "mode": "100644",
-      "blob": "2390d267fb187b69fbbe39d1d9071c68c2270092"
+      "blob": "e4494c745a174c46c1142b8286a81b061a4a334f"
     },
     {
-      "path": "Tickets/THURSDAY-BACKLOG.md",
+      "path": "benchmarks/grand-prix/RENDER-COUNTS.md",
       "mode": "100644",
-      "blob": "5e836149237faf28d652f8c6fc3e3468b50434b5"
+      "blob": "69427dc332644dbc53a5835f7de934e87d26ab88"
+    },
+    {
+      "path": "benchmarks/grand-prix/ROUND-2.md",
+      "mode": "100644",
+      "blob": "3077187eb8c89489a491f104bc886c9f417b2cea"
+    },
+    {
+      "path": "benchmarks/grand-prix/RUNTIME-COMPARISON.md",
+      "mode": "100644",
+      "blob": "54256fcbe3960bee872806e3b512973ba34d4b85"
+    },
+    {
+      "path": "benchmarks/grand-prix/baseline-source.json",
+      "mode": "100644",
+      "blob": "7538e55fe5fe48359da7903cf7bab1244783795f"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/SPEC.md",
+      "mode": "100644",
+      "blob": "fb76a392746991ec04f450acad994c55e399f8c7"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/forma/index.html",
+      "mode": "100644",
+      "blob": "baca0654b5840ac8953aeb65cea77632893b85e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/forma/src/main.jsx",
+      "mode": "100644",
+      "blob": "772438b6cd4202845c5a640ef23240369550b1ea"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/forma/vite.config.js",
+      "mode": "100644",
+      "blob": "08e0d2277863d19aa8b60aa738cb01ae9b38f0f1"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/preact/index.html",
+      "mode": "100644",
+      "blob": "4dfcb8a9fb04b0a5e190dbf5643072d637775877"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/preact/src/main.jsx",
+      "mode": "100644",
+      "blob": "fe919febeca05e9b656e0412f980c5ed0d895a9e"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/preact/vite.config.js",
+      "mode": "100644",
+      "blob": "33031cfdf0ea21492db55cb786d4506968ec9243"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/react/index.html",
+      "mode": "100644",
+      "blob": "60f23cada5c1a505cb8a7c1e31570175d123aa33"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/react/src/main.jsx",
+      "mode": "100644",
+      "blob": "c801967379834b2393f35a75850f8fedbf9c1fa4"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/react/vite.config.js",
+      "mode": "100644",
+      "blob": "832a6d1d43996f69faaed4000bd18e34a51ba298"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/solid/index.html",
+      "mode": "100644",
+      "blob": "d65b99a3ba35be62c171060fac52ea934c40beba"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/solid/src/main.jsx",
+      "mode": "100644",
+      "blob": "008112dceb9da9ec624f054d8ee18b3631251ef9"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/solid/vite.config.js",
+      "mode": "100644",
+      "blob": "9b3c559faeeaf825788eb2fda562297c442a73e3"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/svelte/index.html",
+      "mode": "100644",
+      "blob": "fb853fd91218798531f246daa45eb861e4f5fb99"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/svelte/src/App.svelte",
+      "mode": "100644",
+      "blob": "60dc1d35a752fea73af594b1cfdee72296fa4e02"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/svelte/src/Item.svelte.js",
+      "mode": "100644",
+      "blob": "9b15c7d07bc11381024134491333535f87d7fdba"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/svelte/src/main.js",
+      "mode": "100644",
+      "blob": "b9cddcb58983e65f0761e705b651beaad005b767"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/svelte/svelte.config.js",
+      "mode": "100644",
+      "blob": "037812715941c8d001074d4b994042609b4f4e30"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/svelte/vite.config.js",
+      "mode": "100644",
+      "blob": "ef220074112b0f34228bde72045230003b171c56"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vanilla/index.html",
+      "mode": "100644",
+      "blob": "11a4a77a676698ca0bee999ebb01c748cf2b4c49"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vanilla/src/main.js",
+      "mode": "100644",
+      "blob": "b58693756e6b1e45ef2355afcd637e51691b7fa5"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vanilla/vite.config.js",
+      "mode": "100644",
+      "blob": "51df54043dd78020cb539001adf53d7dc29e6626"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vue/index.html",
+      "mode": "100644",
+      "blob": "8986bf42126f86c6b430631d099ffb291241a6d8"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vue/src/App.vue",
+      "mode": "100644",
+      "blob": "3aa927a57d736cc44bd5752c96a580429580cb7c"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vue/src/main.js",
+      "mode": "100644",
+      "blob": "32d4e848063e527b775bdb2a7a770b36045b64a5"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/apps/vue/vite.config.js",
+      "mode": "100644",
+      "blob": "ccd20a037dbd47031560f62ebf20fec564bc169e"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/bundle.mjs",
+      "mode": "100644",
+      "blob": "5e873b64c65be92a3607e5a977d0966ceb6177ce"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/lib.mjs",
+      "mode": "100644",
+      "blob": "b328193ef218552449377c7b41daa8a75be17a18"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/package-lock.json",
+      "mode": "100644",
+      "blob": "efa47e9315fd2dcd57fc90783caf1ed5a27924d6"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/package.json",
+      "mode": "100644",
+      "blob": "c9dad19a7fcea138c8c439f8f5e7726de4e84fb8"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/profile-rows.mjs",
+      "mode": "100644",
+      "blob": "412f68b93f59f5977dad543fe72096f80edda935"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/run.mjs",
+      "mode": "100644",
+      "blob": "0594e3fa665508d7ae21d7ed39fe7a913fa0a530"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/shared/chrome.css",
+      "mode": "100644",
+      "blob": "89224ac4389fdc56a6356dcaa600a29efe380d5a"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/shared/data.js",
+      "mode": "100644",
+      "blob": "c997ec921303c9ea39d9ac17d11e9ba89cec308f"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/timing.mjs",
+      "mode": "100644",
+      "blob": "dc38e652bc7cc90606c957dc1604a6cd8ff40cb1"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/timing.test.mjs",
+      "mode": "100644",
+      "blob": "f94aeed7cd5d883a70347c187f661f5efa9c3ea8"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/preact/Island.jsx",
+      "mode": "100644",
+      "blob": "5a21e97291773c0dc67f01affa228e2c2db5c691"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/preact/island-client.jsx",
+      "mode": "100644",
+      "blob": "87c91eabade059f0686a0ff777e578b3d8debd07"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/preact/island-server.jsx",
+      "mode": "100644",
+      "blob": "2dad76c70c2764f857313143e714262cff1b9be0"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/react/Island.jsx",
+      "mode": "100644",
+      "blob": "7ff5814d7495863c56e35f0a5bd5435114853bd6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/react/island-client.jsx",
+      "mode": "100644",
+      "blob": "67c4308aad44a3dcf8ebd36c0c8805f0db7a1120"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/react/island-server.jsx",
+      "mode": "100644",
+      "blob": "246d706dade20236da1fe9e0732919f057fd62f6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/solid/Island.jsx",
+      "mode": "100644",
+      "blob": "09ca292c350dd38f59515b5414f72c920e684e7e"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/solid/island-client.jsx",
+      "mode": "100644",
+      "blob": "a8fef5f4ca0388546119e88668b37ed262dca02d"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/solid/island-server.jsx",
+      "mode": "100644",
+      "blob": "21a09d28a6b89754efcb35971a768a5bd4d93b89"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/svelte/Island.svelte",
+      "mode": "100644",
+      "blob": "d58368239390fb5fbf3d141696660868380124a5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/svelte/island-client.mjs",
+      "mode": "100644",
+      "blob": "4539ac35a3f39811637906e80f6751ba29b8af3f"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/svelte/island-server.mjs",
+      "mode": "100644",
+      "blob": "3addcf59519e580572370b768d5ce6b83733ef1f"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/vue/Island.vue",
+      "mode": "100644",
+      "blob": "1d2f935b3d16e728c4f706d4158c348db735b1ff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/vue/island-client.mjs",
+      "mode": "100644",
+      "blob": "bfe282c899e65283c138640e2cdb7384cf008aa2"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/island/vue/island-server.mjs",
+      "mode": "100644",
+      "blob": "bdde128f2a9c7ebe8446202c312661c0e905c388"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/page.jsx",
+      "mode": "100644",
+      "blob": "d18aab6a696a61027c41b0f5d93ca21fe6c2cec4"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/page.vanilla.mjs",
+      "mode": "100644",
+      "blob": "4b86437dc476fb3981986a8dab5abb18a6bf176c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/preact/page.jsx",
+      "mode": "100644",
+      "blob": "3c108d2c17c6c1a5ae1700691072cbc4b2bf715d"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/render.react.mjs",
+      "mode": "100644",
+      "blob": "395b409889652036748ce14a2f90f8a9ae5424f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/render.vanilla.mjs",
+      "mode": "100644",
+      "blob": "2e33898b7e0934effec3cae5cc03e60705cac461"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/server.bun.mjs",
+      "mode": "100644",
+      "blob": "c5ecc4eea62621a8d8cfe82804cc4f82b30800e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/server.deno.mjs",
+      "mode": "100644",
+      "blob": "22c98cd5fed0b792356713462e3c056d8b8d2363"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/server.island.bun.mjs",
+      "mode": "100644",
+      "blob": "827967c8dc4a202193e25f3a3cf737ae17392ab2"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/server.island.deno.mjs",
+      "mode": "100644",
+      "blob": "bf3dcb47db80f1770df973ca818db9ab45643446"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/server.island.node.mjs",
+      "mode": "100644",
+      "blob": "17e68ec51e7bfd8a29aeda2e3fd7c46fbbfd2bdc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/server.node.mjs",
+      "mode": "100644",
+      "blob": "0124c97a52d0828eded402621fb10ddff99548bb"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/solid/page.jsx",
+      "mode": "100644",
+      "blob": "a96251201acd3b994031e110d1c014aff61b11ac"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/svelte/Page.svelte",
+      "mode": "100644",
+      "blob": "e4dfce2d0b1ecc2e32352f6300542ed41703c355"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/svelte/render.mjs",
+      "mode": "100644",
+      "blob": "754eee2d3e03ae81d477bd1917644011c20159ef"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/vue/Page.vue",
+      "mode": "100644",
+      "blob": "f7f5b16bcf8852f7c9e1a7d085f208300c9cb88a"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_shared/vue/render.mjs",
+      "mode": "100644",
+      "blob": "f6d631e1b1742e79229ea83dec4d1686593e6c75"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/_smoke.mjs",
+      "mode": "100644",
+      "blob": "1280ae14dd8f7ec93a8c13ec5635e5e8fb3da449"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/.dockerignore",
+      "mode": "100644",
+      "blob": "a2eb9e7ede0ff17b62ac8e18421fc8a1d393fa97"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/.gitignore",
+      "mode": "100644",
+      "blob": "97e663b1777c76e848725c4c7570707b848f3fb9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/Dockerfile",
+      "mode": "100644",
+      "blob": "88dbe78f490d883b6ee5f5bff04e4ce91fa859dc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/astro.config.mjs",
+      "mode": "100644",
+      "blob": "ac6bf819af3c7e2c109ba57d764ebda50925cf5f"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/package-lock.json",
+      "mode": "100644",
+      "blob": "8c582ab59dd7659d9802a99634e3833481250d07"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/package.json",
+      "mode": "100644",
+      "blob": "749cb0257b056d9f42c69a90fb26491bcf355f13"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/src/components/Counter.jsx",
+      "mode": "100644",
+      "blob": "d6fe2b0a0b3f1f29f446ccb2d2d5564b85cc7f44"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/src/pages/health.ts",
+      "mode": "100644",
+      "blob": "f9f8b8e7ed52d97b088bd1efdd2b34696ebf67f4"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/src/pages/island.astro",
+      "mode": "100644",
+      "blob": "82ee2b6615f343584ad29ea368fc7b762c6ab106"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/astro/src/pages/ssr.astro",
+      "mode": "100644",
+      "blob": "29d1a22a07418b05bca4afb1e9a168ff4c1ebdf2"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/.dockerignore",
+      "mode": "100644",
+      "blob": "b1b96aae180f46fb56590abc273b43ca76565b7e"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/Cargo.lock",
+      "mode": "100644",
+      "blob": "9ea7bc6c3e2264608c6105e2e10b0532eec9572c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/Cargo.toml",
+      "mode": "100644",
+      "blob": "f4645024e3bc044982ae3a52afe8248e0c31fa31"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/Dockerfile",
+      "mode": "100644",
+      "blob": "71705999067d3b581afd79f5683e31be753542e7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/Dockerfile.runtime",
+      "mode": "100644",
+      "blob": "f65d1d988b3a333f701a923c887eec91e1f62004"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/.npmrc",
+      "mode": "100644",
+      "blob": "d18cd578d934873529d6df408590382df956a4aa"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/build.ts",
+      "mode": "100644",
+      "blob": "411f8b252715c2313addf757ab771244d522d4b6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/package-lock.json",
+      "mode": "100644",
+      "blob": "514975901d2678554ced16fbdb27ae35aa46a6f4"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/package.json",
+      "mode": "100644",
+      "blob": "4eb77c9c57083e41be8ad91169901bf72bf90f1c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/src/island/app.tsx",
+      "mode": "100644",
+      "blob": "ce5bbdd0c26c07ddc414a4f6c3036437b35597fd"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/src/page/app.tsx",
+      "mode": "100644",
+      "blob": "fb4f5ad15cc1acba39490821546f38ecb1ec2241"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/admin/tsconfig.json",
+      "mode": "100644",
+      "blob": "7834943c40f7732e16339ef238ac769c5d5ff0ed"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/forma/src/main.rs",
+      "mode": "100644",
+      "blob": "32e43a2d9133c23f9d02e4168c56600783bb2363"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/.dockerignore",
+      "mode": "100644",
+      "blob": "73122217b654da8fb93eb6f101c06fffa2a1deda"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/.gitignore",
+      "mode": "100644",
+      "blob": "536d88c8a6d8fc237bef1bdde42e82eeee2b45b9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/Dockerfile",
+      "mode": "100644",
+      "blob": "0666e479d064e4797829f2480131736b09f536f2"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/app/health/route.js",
+      "mode": "100644",
+      "blob": "8e20a2fbd5cc048da705c3e652e1f2fa690bc511"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/app/island/Counter.jsx",
+      "mode": "100644",
+      "blob": "bff228bc553943a15a7a5056dbc6b61f7ce3338b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/app/island/page.jsx",
+      "mode": "100644",
+      "blob": "1e52cde9624928f2c2859f27464bff2eec91409b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/app/layout.jsx",
+      "mode": "100644",
+      "blob": "591beab4bae946f25c27fc1e5db6503772cfcb98"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/app/ssr/page.jsx",
+      "mode": "100644",
+      "blob": "1a4e3beed9319a45ab98dfa5a0d72b1c4fa06a55"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/next.config.mjs",
+      "mode": "100644",
+      "blob": "b3fbd6084ba796adbe6fb73850c881b2ec7ed0c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/package-lock.json",
+      "mode": "100644",
+      "blob": "f64e7f5a1c0b753402304b2f08c60675f6cb6e25"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/next/package.json",
+      "mode": "100644",
+      "blob": "1cb4cc5bf925cbdc2f449cda57381e9d75891519"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/Dockerfile",
+      "mode": "100644",
+      "blob": "0e670829c7dbb57edc8109383a74a94dcb155c06"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/build.sh",
+      "mode": "100644",
+      "blob": "51f5d20b7ae7c2e61197e54e946c11963122c988"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/package-lock.json",
+      "mode": "100644",
+      "blob": "36b6a745c2f18d834c091381e58c11ca019d5535"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/package.json",
+      "mode": "100644",
+      "blob": "84f28e2ec23b53b15dac7e4e5c0368903964cd65"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/Island.jsx",
+      "mode": "100644",
+      "blob": "5a21e97291773c0dc67f01affa228e2c2db5c691"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/island-client.jsx",
+      "mode": "100644",
+      "blob": "87c91eabade059f0686a0ff777e578b3d8debd07"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/island-server.jsx",
+      "mode": "100644",
+      "blob": "2dad76c70c2764f857313143e714262cff1b9be0"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/page.jsx",
+      "mode": "100644",
+      "blob": "3c108d2c17c6c1a5ae1700691072cbc4b2bf715d"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/render.mjs",
+      "mode": "100644",
+      "blob": "395b409889652036748ce14a2f90f8a9ae5424f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/src/server.mjs",
+      "mode": "100644",
+      "blob": "17e68ec51e7bfd8a29aeda2e3fd7c46fbbfd2bdc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/vite.config.js",
+      "mode": "100644",
+      "blob": "64281a8100b566e2e4c61e36698c1e5873bdf1da"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/preact-node/vite.island.config.js",
+      "mode": "100644",
+      "blob": "1668a8f6223e862afd069153831745694c99167a"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/Dockerfile",
+      "mode": "100644",
+      "blob": "23af90674cbfa32187d7f6d48de9f1f0c404b77e"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/build.sh",
+      "mode": "100644",
+      "blob": "afbc265d647c83a843b23dfc649579a9a8788455"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/bun.lock",
+      "mode": "100644",
+      "blob": "d82f0583f2ff0199f36ba1749ee609b99a43c4e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/package.json",
+      "mode": "100644",
+      "blob": "1531716bfad2981895aff8e41a6f26c88ebe14b3"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/Island.jsx",
+      "mode": "100644",
+      "blob": "7ff5814d7495863c56e35f0a5bd5435114853bd6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/island-client.jsx",
+      "mode": "100644",
+      "blob": "67c4308aad44a3dcf8ebd36c0c8805f0db7a1120"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/island-server.jsx",
+      "mode": "100644",
+      "blob": "246d706dade20236da1fe9e0732919f057fd62f6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/page.jsx",
+      "mode": "100644",
+      "blob": "d18aab6a696a61027c41b0f5d93ca21fe6c2cec4"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/render.mjs",
+      "mode": "100644",
+      "blob": "395b409889652036748ce14a2f90f8a9ae5424f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-bun/src/server.mjs",
+      "mode": "100644",
+      "blob": "827967c8dc4a202193e25f3a3cf737ae17392ab2"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/Dockerfile",
+      "mode": "100644",
+      "blob": "fe2c098fd9b6019d269a4d0e43f41e9e15b7eff1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/build.sh",
+      "mode": "100644",
+      "blob": "0ae361e72bcdf6fa769a00827a4496aa9d04e9a6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/deno.json",
+      "mode": "100644",
+      "blob": "8227161f1f999a93de538bac1997d5f43a8be24c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/deno.lock",
+      "mode": "100644",
+      "blob": "e4980e303537b800ba19d1a597007ec143231bef"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/Island.jsx",
+      "mode": "100644",
+      "blob": "7ff5814d7495863c56e35f0a5bd5435114853bd6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/island-client.jsx",
+      "mode": "100644",
+      "blob": "67c4308aad44a3dcf8ebd36c0c8805f0db7a1120"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/island-server.jsx",
+      "mode": "100644",
+      "blob": "246d706dade20236da1fe9e0732919f057fd62f6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/page.jsx",
+      "mode": "100644",
+      "blob": "d18aab6a696a61027c41b0f5d93ca21fe6c2cec4"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/render.mjs",
+      "mode": "100644",
+      "blob": "395b409889652036748ce14a2f90f8a9ae5424f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/src/server.mjs",
+      "mode": "100644",
+      "blob": "bf3dcb47db80f1770df973ca818db9ab45643446"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-deno/start.sh",
+      "mode": "100644",
+      "blob": "423594c3d6b98a491decb3675c84633539b1cd6b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/Dockerfile",
+      "mode": "100644",
+      "blob": "0e670829c7dbb57edc8109383a74a94dcb155c06"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/build.sh",
+      "mode": "100644",
+      "blob": "51f5d20b7ae7c2e61197e54e946c11963122c988"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/package-lock.json",
+      "mode": "100644",
+      "blob": "412ec095a62e60efde99b4f6a6399c43d27c9868"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/package.json",
+      "mode": "100644",
+      "blob": "710a16656c21fc2af744e4078261fb90c2c89b4b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/Island.jsx",
+      "mode": "100644",
+      "blob": "7ff5814d7495863c56e35f0a5bd5435114853bd6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/island-client.jsx",
+      "mode": "100644",
+      "blob": "67c4308aad44a3dcf8ebd36c0c8805f0db7a1120"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/island-server.jsx",
+      "mode": "100644",
+      "blob": "246d706dade20236da1fe9e0732919f057fd62f6"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/page.jsx",
+      "mode": "100644",
+      "blob": "d18aab6a696a61027c41b0f5d93ca21fe6c2cec4"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/render.mjs",
+      "mode": "100644",
+      "blob": "395b409889652036748ce14a2f90f8a9ae5424f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/src/server.mjs",
+      "mode": "100644",
+      "blob": "17e68ec51e7bfd8a29aeda2e3fd7c46fbbfd2bdc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/vite.config.js",
+      "mode": "100644",
+      "blob": "5478109a4cafba3f2143aa3150f1c47cf5ea9e14"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-node/vite.island.config.js",
+      "mode": "100644",
+      "blob": "e718b8aea027dbb3b829fcf296b5ac6b5d858367"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/.dockerignore",
+      "mode": "100644",
+      "blob": "a2eb9e7ede0ff17b62ac8e18421fc8a1d393fa97"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/.gitignore",
+      "mode": "100644",
+      "blob": "294e836fc2e3399878abe95268acf9a24c5ddb96"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/Dockerfile",
+      "mode": "100644",
+      "blob": "c2c2bac9c98e5e938281ecd409f31903599a16f8"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/app/entry.client.tsx",
+      "mode": "100644",
+      "blob": "f4e1d9a9ac505d2423a22e2cae082f5414485e07"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/app/root.tsx",
+      "mode": "100644",
+      "blob": "3eff10d011031b821170f2f6bd61699a0f28b2f1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/app/routes.ts",
+      "mode": "100644",
+      "blob": "9f52084c39b92e50ce9ab900e91c0793c63f25ce"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/app/routes/health.ts",
+      "mode": "100644",
+      "blob": "afbb2df5019716eda9329b0271ac751d699adb9a"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/app/routes/island.tsx",
+      "mode": "100644",
+      "blob": "1af2d94a68efe59f8225b9e114627c7e9681f87d"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/app/routes/ssr.tsx",
+      "mode": "100644",
+      "blob": "f669859514d003ef3eace773eb773b024881fe7b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/package-lock.json",
+      "mode": "100644",
+      "blob": "c8af24ee44acc87c5c305bfdff517be1eba70c18"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/package.json",
+      "mode": "100644",
+      "blob": "38de9b7e91da375c55fdc992df4c4e92b86f8269"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/react-router.config.ts",
+      "mode": "100644",
+      "blob": "1605b10ead1596a5624cc3151afc86858504713c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/tsconfig.json",
+      "mode": "100644",
+      "blob": "66a236f6ea36abc9b2d3c0b557b30cd701c29e6e"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/react-router/vite.config.ts",
+      "mode": "100644",
+      "blob": "8709c4aba533291ae13d78cca18ec547fc2d6307"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/Dockerfile",
+      "mode": "100644",
+      "blob": "0e670829c7dbb57edc8109383a74a94dcb155c06"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/build.sh",
+      "mode": "100644",
+      "blob": "51f5d20b7ae7c2e61197e54e946c11963122c988"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/package-lock.json",
+      "mode": "100644",
+      "blob": "c521f798bca7bcfdbdd0917fab2d4c05bb632050"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/package.json",
+      "mode": "100644",
+      "blob": "e5bee832379dfc90b1e64d8facd2cbe87ddde747"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/Island.jsx",
+      "mode": "100644",
+      "blob": "09ca292c350dd38f59515b5414f72c920e684e7e"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/island-client.jsx",
+      "mode": "100644",
+      "blob": "a8fef5f4ca0388546119e88668b37ed262dca02d"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/island-server.jsx",
+      "mode": "100644",
+      "blob": "21a09d28a6b89754efcb35971a768a5bd4d93b89"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/page.jsx",
+      "mode": "100644",
+      "blob": "a96251201acd3b994031e110d1c014aff61b11ac"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/render.mjs",
+      "mode": "100644",
+      "blob": "395b409889652036748ce14a2f90f8a9ae5424f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/src/server.mjs",
+      "mode": "100644",
+      "blob": "17e68ec51e7bfd8a29aeda2e3fd7c46fbbfd2bdc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/vite.config.js",
+      "mode": "100644",
+      "blob": "56c3437d30b4d04877ce5fe812116d6ed61cad61"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/solid-node/vite.island.config.js",
+      "mode": "100644",
+      "blob": "c27ca3aa4cb2d20ec5db348f81c0462c630543f0"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/Dockerfile",
+      "mode": "100644",
+      "blob": "0e670829c7dbb57edc8109383a74a94dcb155c06"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/build.sh",
+      "mode": "100644",
+      "blob": "51f5d20b7ae7c2e61197e54e946c11963122c988"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/package-lock.json",
+      "mode": "100644",
+      "blob": "3c8cc9bcfc48c6c26d99766ef510b42d2b482488"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/package.json",
+      "mode": "100644",
+      "blob": "31f9e6024b87ea1a4b6665e4ec6f23f42264dff3"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/Island.svelte",
+      "mode": "100644",
+      "blob": "d58368239390fb5fbf3d141696660868380124a5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/Page.svelte",
+      "mode": "100644",
+      "blob": "e4dfce2d0b1ecc2e32352f6300542ed41703c355"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/island-client.mjs",
+      "mode": "100644",
+      "blob": "4539ac35a3f39811637906e80f6751ba29b8af3f"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/island-server.mjs",
+      "mode": "100644",
+      "blob": "3addcf59519e580572370b768d5ce6b83733ef1f"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/render.mjs",
+      "mode": "100644",
+      "blob": "754eee2d3e03ae81d477bd1917644011c20159ef"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/src/server.mjs",
+      "mode": "100644",
+      "blob": "17e68ec51e7bfd8a29aeda2e3fd7c46fbbfd2bdc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/vite.config.js",
+      "mode": "100644",
+      "blob": "5071733b42a9438749c547a23f722700dfa69d1a"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/svelte-node/vite.island.config.js",
+      "mode": "100644",
+      "blob": "c7dd062b0ac8c773268592d913aa34fb018288e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/sync-shared.sh",
+      "mode": "100755",
+      "blob": "52325b197561fd16872f893e30343f6e149bd21e"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/Dockerfile",
+      "mode": "100644",
+      "blob": "bf33789864612f9fe17e9def171f49a29e2e2fb9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/build.sh",
+      "mode": "100644",
+      "blob": "d9f1d8a7e167b368c8a5269dd1e9dd7c138c8621"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/package.json",
+      "mode": "100644",
+      "blob": "2fd586e166ea3c195c59fa1fab8ea817bb1f7c3b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/src/page.vanilla.mjs",
+      "mode": "100644",
+      "blob": "4b86437dc476fb3981986a8dab5abb18a6bf176c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/src/render.mjs",
+      "mode": "100644",
+      "blob": "2e33898b7e0934effec3cae5cc03e60705cac461"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-bun/src/server.mjs",
+      "mode": "100644",
+      "blob": "c5ecc4eea62621a8d8cfe82804cc4f82b30800e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/Dockerfile",
+      "mode": "100644",
+      "blob": "b0f320337af6f8cde1fbc1897e09217ac23c4ab8"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/build.sh",
+      "mode": "100644",
+      "blob": "36f89ff8b7e71f39de4cfdf40048b781c2dd3ae9"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/deno.json",
+      "mode": "100644",
+      "blob": "0967ef424bce6791893e9a57bb952f80fd536e93"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/src/page.vanilla.mjs",
+      "mode": "100644",
+      "blob": "4b86437dc476fb3981986a8dab5abb18a6bf176c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/src/render.mjs",
+      "mode": "100644",
+      "blob": "2e33898b7e0934effec3cae5cc03e60705cac461"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/src/server.mjs",
+      "mode": "100644",
+      "blob": "22c98cd5fed0b792356713462e3c056d8b8d2363"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-deno/start.sh",
+      "mode": "100644",
+      "blob": "423594c3d6b98a491decb3675c84633539b1cd6b"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/Dockerfile",
+      "mode": "100644",
+      "blob": "0e670829c7dbb57edc8109383a74a94dcb155c06"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/build.sh",
+      "mode": "100644",
+      "blob": "6486f4f12a50e55800b8a302bec9ef0f16261224"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/package-lock.json",
+      "mode": "100644",
+      "blob": "a1dc3f1101702dd6cf8b061e7633108fdba515bf"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/package.json",
+      "mode": "100644",
+      "blob": "bd6dca17cf8dedacd45cca0d7af35ed0898bcfdd"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/src/page.vanilla.mjs",
+      "mode": "100644",
+      "blob": "4b86437dc476fb3981986a8dab5abb18a6bf176c"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/src/render.mjs",
+      "mode": "100644",
+      "blob": "2e33898b7e0934effec3cae5cc03e60705cac461"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vanilla-node/src/server.mjs",
+      "mode": "100644",
+      "blob": "0124c97a52d0828eded402621fb10ddff99548bb"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/.dockerignore",
+      "mode": "100644",
+      "blob": "81e5e2e9bf54c85db46c8bddb41f3175734ecbc1"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/Dockerfile",
+      "mode": "100644",
+      "blob": "0e670829c7dbb57edc8109383a74a94dcb155c06"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/build.sh",
+      "mode": "100644",
+      "blob": "51f5d20b7ae7c2e61197e54e946c11963122c988"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/package-lock.json",
+      "mode": "100644",
+      "blob": "388c3bf38a8ab0a9dd6d589ba64960aec68949bf"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/package.json",
+      "mode": "100644",
+      "blob": "6b45f990a05679944bd810a6abe1bcc9ec6ebb93"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/Island.vue",
+      "mode": "100644",
+      "blob": "1d2f935b3d16e728c4f706d4158c348db735b1ff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/Page.vue",
+      "mode": "100644",
+      "blob": "f7f5b16bcf8852f7c9e1a7d085f208300c9cb88a"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/island-client.mjs",
+      "mode": "100644",
+      "blob": "bfe282c899e65283c138640e2cdb7384cf008aa2"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/island-ready.mjs",
+      "mode": "100644",
+      "blob": "5960800825abc95c0390eda5328045f3d1f0caae"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/island-route.mjs",
+      "mode": "100644",
+      "blob": "5732ed45031b53f6a46eea1477c9eca5806704c5"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/island-server.mjs",
+      "mode": "100644",
+      "blob": "bdde128f2a9c7ebe8446202c312661c0e905c388"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/render.mjs",
+      "mode": "100644",
+      "blob": "f6d631e1b1742e79229ea83dec4d1686593e6c75"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/rows.mjs",
+      "mode": "100644",
+      "blob": "4259a85e4ca1274ec484c3b8978e8f86b025c576"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/src/server.mjs",
+      "mode": "100644",
+      "blob": "17e68ec51e7bfd8a29aeda2e3fd7c46fbbfd2bdc"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/vite.config.js",
+      "mode": "100644",
+      "blob": "5c4337abd644392e18f5903f83b6e3b85394602d"
+    },
+    {
+      "path": "benchmarks/grand-prix/contestants/vue-node/vite.island.config.js",
+      "mode": "100644",
+      "blob": "202c1cfffd98a737ac3a1082e4c67680d6db1b48"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/README.md",
+      "mode": "100644",
+      "blob": "42a0eb23aab36a5399e34450fa1419df10fdb4ec"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/SHA256SUMS.json",
+      "mode": "100644",
+      "blob": "e5c5b96309815fdbc4fe762a01d71566906f04c9"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/archives.json",
+      "mode": "100644",
+      "blob": "a021c54508b03d52f1b90554dcb20e42a4441b8d"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/assemble-report.py",
+      "mode": "100644",
+      "blob": "9fb23822cc19d001b94aa338e0897df803f4380d"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-dashboard-cold/artifact.zip",
+      "mode": "100644",
+      "blob": "8cdcffac91dd56693c081b894e997eafede62632"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-dashboard-warm/artifact.zip",
+      "mode": "100644",
+      "blob": "4ec69f47151d338796293323aa32670315fd9edc"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-minimal-cold/artifact.zip",
+      "mode": "100644",
+      "blob": "734954e78fb9cad45cfc1825e7f245db4811e395"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-minimal-cold/github-artifacts.json",
+      "mode": "100644",
+      "blob": "754cf2fb9dea740c633a3237af4fcba088581975"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-minimal-cold/manifest.json",
+      "mode": "100644",
+      "blob": "9ce5ad871e4e7922c44e589870f02d0d952c580e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-minimal-cold/summary.json",
+      "mode": "100644",
+      "blob": "addca234888c64e9f3450ca789f81bcf346c09f6"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/cache-minimal-warm/artifact.zip",
+      "mode": "100644",
+      "blob": "cdcfe54d16c4de05fab4bf47d55567cc75a31219"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/AUTHENTICATED.json",
+      "mode": "100644",
+      "blob": "a55703294b05e9e00f825e6036e127f5133878ee"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/README.md",
+      "mode": "100644",
+      "blob": "ce9f7979cb41c913c9f379e974493c20386e2f0a"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/artifact.zip",
+      "mode": "100644",
+      "blob": "1a20acc41f7469b502f798c873c00a372ad380a4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/PRODUCT-ASSESSMENT.md",
+      "mode": "100644",
+      "blob": "7d391f8980d6d043a6af065e960b7605accb0353"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/SHA256SUMS.json",
+      "mode": "100644",
+      "blob": "f664ec58de0dfcbc9a86def5c3536253decf5293"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/count-correction.txt",
+      "mode": "100644",
+      "blob": "1e57d1d92b5cce277be89eefaf9f7ddec270c605"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/recompute-initial-count-assumption.py",
+      "mode": "100644",
+      "blob": "01f894be70d7eb76f3f4c2368c656560aa666d3f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/recompute.py",
+      "mode": "100644",
+      "blob": "6f62025323b0170d3dba64c6097f8f3eed4bc62d"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/recomputed.json",
+      "mode": "100644",
+      "blob": "0d3e345b11fa3b40980a6936b3dea504f87ddb45"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/recomputed.txt",
+      "mode": "100644",
+      "blob": "ed2817ab81187fc1135cb7a5cad0d15c0a47ebac"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/effects-review/source-provenance.json",
+      "mode": "100644",
+      "blob": "34aba00cad96232bf097be57215ccb0276772d21"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/independent/root-comparison.json",
+      "mode": "100644",
+      "blob": "453083a86ddef69061f07682bcdb6aac90e1f914"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/independent/scored-analysis.json",
+      "mode": "100644",
+      "blob": "03cbb40357222d48654f86f75eba337be57d8b94"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/independent/scored-analysis.py",
+      "mode": "100644",
+      "blob": "c296789752ee9d29140ad2be9910927be73ac247"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/privacy-scan.json",
+      "mode": "100644",
+      "blob": "b7a90af9eed4bbd0bede8800f87febd4597ec9aa"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/privacy_scan.py",
+      "mode": "100644",
+      "blob": "f7abcdb52a1b7d5b97e9597df88fe909b74d9f7f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/provider-artifacts.json",
+      "mode": "100644",
+      "blob": "855f1fa2115142339ab14e1f2c2e154ccc77234e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/publication-summary.json",
+      "mode": "100644",
+      "blob": "ec08bbe31faf192926177c3394702f89e2aa6406"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/verify.py",
+      "mode": "100644",
+      "blob": "8c8feceb942fd92fa8bdcf28722a57f881078380"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-rollback/archive-authentication.json",
+      "mode": "100644",
+      "blob": "2a441a42a7aba181420c5b40852c8ec05ed4646f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-rollback/artifact.zip",
+      "mode": "100644",
+      "blob": "3b9bc9fc6db53e14259c20e69ba46391e6f8c3d6"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-rollback/cross-campaign-source-consistency.json",
+      "mode": "100644",
+      "blob": "eaea491ac981e43020857a505c7035e0174133d9"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-rollback/dom-changes.json",
+      "mode": "100644",
+      "blob": "ae5d22885bd36cbe6da5727140bc8bada24d1f55"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-rollback/github-artifacts.json",
+      "mode": "100644",
+      "blob": "606b8595bfd55936f3227fb00e5e14241b588291"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-rollback/verified.json",
+      "mode": "100644",
+      "blob": "5e1d6fc01703627c470a66f46a605448f921a82e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-withdrawn/archive-authentication.json",
+      "mode": "100644",
+      "blob": "4a96507f5d033713e1742d0d995bca0632ea2885"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-withdrawn/artifact.zip",
+      "mode": "100644",
+      "blob": "e69bcaa9bfb97d397808e782e5c7a725867531cd"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-withdrawn/github-artifacts.json",
+      "mode": "100644",
+      "blob": "d59287ff45903e9d35ac6c2d3b36666b6639019a"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-withdrawn/verified.json",
+      "mode": "100644",
+      "blob": "5e16484df4f15a5c4a608a323d5e465ddd7eee1c"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-zero-diagnostic/artifact.zip",
+      "mode": "100644",
+      "blob": "0acd7d09055202156a573af59df9a0d19c3d1bee"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-zero-diagnostic/authentication.json",
+      "mode": "100644",
+      "blob": "d2c34a24f59f119c8a89fc26fcbbd19704a2a35c"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/client-zero-diagnostic/provider-artifacts.json",
+      "mode": "100644",
+      "blob": "862f37106a2b8f18085769c59491cad34695e259"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/compression/artifact.zip",
+      "mode": "100644",
+      "blob": "2edac2c8302b7d1a8fcbfbcefe3f52995a9a5424"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/compression/independent-verification.json",
+      "mode": "100644",
+      "blob": "3d1240f09b90acd7766be4f5d917dbbec44929b2"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/compression/provider-artifacts.json",
+      "mode": "100644",
+      "blob": "dba803bf24d9dcb1a75dc07d1cdbe1d7c1d2650c"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/index.html",
+      "mode": "100644",
+      "blob": "f5a0c3c102e1e1a98d77d81e6675e91822f8acb5"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/islands/artifact.zip",
+      "mode": "100644",
+      "blob": "7f1636761d2518fbf08c5fe48a19e81b277089da"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/islands/github-artifacts.json",
+      "mode": "100644",
+      "blob": "236f88362232102bd63028ada5f6cf4b71682a9a"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/islands/summary.json",
+      "mode": "100644",
+      "blob": "38d584985bd8e6ea32647096b61c9d9f53ac2b45"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/islands/validation.json",
+      "mode": "100644",
+      "blob": "d39bba15e9f37d1ba006aefb8247216f3e9cd8dc"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/candidate-dist/assets/index-LPPuY4Ij.css",
+      "mode": "100644",
+      "blob": "c133c102e84ac3aa2ca16431927d8e7c825a8186"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/candidate-dist/assets/index-u1Ahk4_J.js",
+      "mode": "100644",
+      "blob": "0e900dac36cdc7d5b365f565b569824e98f0956c"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/candidate-dist/index.html",
+      "mode": "100644",
+      "blob": "018acd03f4a049bda3eded746d03d16ac807b653"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/candidate-modules.json",
+      "mode": "100644",
+      "blob": "81379b36e67cfb6feacbece919b447d40a67c84b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/candidate.json",
+      "mode": "100644",
+      "blob": "ad22a29effad80c42ce28691592aa260ac26e327"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/extraction.json",
+      "mode": "100644",
+      "blob": "b76e08de8577a8c77b4694ce6ea6aeb63d4ff5b6"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/main-dist/assets/index-BOx50xR2.js",
+      "mode": "100644",
+      "blob": "24d2ed080643e51483e44569b33ebf3bba2ff0ee"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/main-dist/assets/index-LPPuY4Ij.css",
+      "mode": "100644",
+      "blob": "c133c102e84ac3aa2ca16431927d8e7c825a8186"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/main-dist/index.html",
+      "mode": "100644",
+      "blob": "29abb944ec04a89ebcb2517d0fdd9ce79e324aa9"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/main-modules.json",
+      "mode": "100644",
+      "blob": "ae994af229751057745202b5127f46345a159f0c"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/main.json",
+      "mode": "100644",
+      "blob": "509920b03a4d1d6cb9df826a67157d0e0e55d21b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/provenance.json",
+      "mode": "100644",
+      "blob": "3d2c927bbd88406296ddd48a0349e5122f05b612"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/verify.mjs",
+      "mode": "100644",
+      "blob": "1cf25e57b497a56dea3d7c2e856ae267179c826e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/paired-server/artifact.zip",
+      "mode": "100644",
+      "blob": "987508eb6494407ded78567a6325fd73b313237f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/paired-server/framework-source-identities.json",
+      "mode": "100644",
+      "blob": "0555e8a03c4cc3249e971b3170d017240dbb084f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/paired-server/github-artifacts.json",
+      "mode": "100644",
+      "blob": "9350e7cc2b2768f14f3b46332048b872ed193cb6"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/paired-server/summary.json",
+      "mode": "100644",
+      "blob": "61b795ad52347abf7806f681dcb51da7069ceb92"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/paired-server/validation.json",
+      "mode": "100644",
+      "blob": "a5ede632a55faf57e6e4d183e3302f5555ec956f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/render-report.py",
+      "mode": "100644",
+      "blob": "e302f769006885c0acc89909b4420188469e8b78"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+      "mode": "100644",
+      "blob": "e5e54cc82c5b0ef0e68f6fa92bcfe11e609d7eec"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/ANALYSIS.md",
+      "mode": "100644",
+      "blob": "bdf1a7c356f43e8423301311a40f2a951cdbf74e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/artifact-file-manifest.json",
+      "mode": "100644",
+      "blob": "5be0a193486704d104ab240505d3feca29f81236"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/artifact-metadata.json",
+      "mode": "100644",
+      "blob": "fceda78b644bfa2bada66acfba1424e660caf924"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/artifact-verification.json",
+      "mode": "100644",
+      "blob": "45d80cdee1c5369dab04ad6e27a63f4ea750ab28"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/artifact.zip",
+      "mode": "100644",
+      "blob": "bf0f92afee56a308b6706993fbbab975aebf785a"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source-manifest.json",
+      "mode": "100644",
+      "blob": "0aa79e85a439bcd76ec695edf242b22641c05698"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/PROTOCOL.md",
+      "mode": "100644",
+      "blob": "e4494c745a174c46c1142b8286a81b061a4a334f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/ROUND-2.md",
+      "mode": "100644",
+      "blob": "7bc259f571235afae26981a07fbe49e7377dd3ff"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/browser-sandbox.mjs",
+      "mode": "100644",
+      "blob": "b1bf112b8e99d3d9664c5688fd925848731a41e3"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/browser-sandbox.test.mjs",
+      "mode": "100644",
+      "blob": "5c326df94715a78bea557bc20836c1b2411e45d4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/budgets.mjs",
+      "mode": "100644",
+      "blob": "d9772a3b74ed05c848e339b4ad863c2825089403"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/budgets.test.mjs",
+      "mode": "100644",
+      "blob": "88b3c94341c8ddd1225f6d6c3751522e24b237be"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/campaign.mjs",
+      "mode": "100644",
+      "blob": "2d1e207759b23f66e35b542a2cd654a99798d017"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/campaign.test.mjs",
+      "mode": "100644",
+      "blob": "b19513dfa42903d1746f087960dc0e2010e61b23"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/candidate-lock.mjs",
+      "mode": "100644",
+      "blob": "e3452898bb08b49813e12211cc881b403eb97742"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/chromium-linux-lock.json",
+      "mode": "100644",
+      "blob": "5cf5ed903b12f8915e4e752af26f1ffcad649454"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/ci-run.mjs",
+      "mode": "100644",
+      "blob": "5c78d10fe35b2125e5708e1e6882fc2615c3f496"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/cleanup.mjs",
+      "mode": "100644",
+      "blob": "788771c8824c53f5a79e8ccbc97cca653d155f0e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/cleanup.sh",
+      "mode": "100644",
+      "blob": "fe8ced38ab5399442196ecf9351838d04e423f3b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/client-linux.mjs",
+      "mode": "100644",
+      "blob": "47dc0b45867aab4956e7893981c9a59683923848"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/client-signals-control.mjs",
+      "mode": "100644",
+      "blob": "5766323201d794f3a4155a9ca09fab6197319c9d"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/client-signals-control.test.mjs",
+      "mode": "100644",
+      "blob": "678b17763ffc43c28a746ae45124cd5669953c2b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/compare-runtime.mjs",
+      "mode": "100644",
+      "blob": "83c7496f6e53f0716da74ec4d2df7f3f8af6f599"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/compression-codecs.json",
+      "mode": "100644",
+      "blob": "813eae0476cd8977ffe473f90b896fb141e70714"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/compression-report.mjs",
+      "mode": "100644",
+      "blob": "99394ee58ac2396de7a0a923f82f336e57dd8e8d"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/compression-response.mjs",
+      "mode": "100644",
+      "blob": "63d348f046bfbbab363de1cdd0d35024301155b2"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/compression.test.mjs",
+      "mode": "100644",
+      "blob": "0a89f35500d19c146b5c36abbc2f812bb1f7ec58"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/install-linux-browser.mjs",
+      "mode": "100644",
+      "blob": "e3921276961e8d01a1b87a99623d20764122f072"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/islands-linux.mjs",
+      "mode": "100644",
+      "blob": "b68ca780881076abe3c5969e081a1cc4cde82dfd"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/islands-linux.test.mjs",
+      "mode": "100644",
+      "blob": "a2067358af7ad2a4eada44fff8cf03c90016d704"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/lib.mjs",
+      "mode": "100644",
+      "blob": "0b5ab51cd62b09843bfb4aa2df74e851f2ce7b11"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/linux-run.mjs",
+      "mode": "100644",
+      "blob": "9e3d3d110b7669e7f9c3569a0635bdb63f640a85"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/loadgen/Dockerfile",
+      "mode": "100644",
+      "blob": "475266f672a08f77bc1db5d3c10bedc6c2eeeac7"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/paired-server.mjs",
+      "mode": "100644",
+      "blob": "5af9da045116e7614a07543e85d5175a21b111e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/paired-server.test.mjs",
+      "mode": "100644",
+      "blob": "33cced5d848c39a0134211ff94707d98b761d093"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/prepare-car.mjs",
+      "mode": "100644",
+      "blob": "174b375acbe0d352932353e5b14033bbaf3d15ec"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/race.mjs",
+      "mode": "100644",
+      "blob": "ecad6cb9f75c7f0c31bf700c250d9e17d5305abb"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/render-counts-source.mjs",
+      "mode": "100644",
+      "blob": "f854356404df7c1eca69094ef4b10f2b6dfc0ec1"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/render-counts.mjs",
+      "mode": "100644",
+      "blob": "a5bd523b61cfe18217582ea8f66a831075edb126"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/render-counts.test.mjs",
+      "mode": "100644",
+      "blob": "aa7770dec921c351a17b4c07d3520fb07cff2187"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/report-views.js",
+      "mode": "100644",
+      "blob": "b1083e4066318b422d2541b556590c70c3bfb005"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/report.mjs",
+      "mode": "100644",
+      "blob": "c41c9e0685f0a8e380f5c269db3f7fbf00b9d0cc"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/resource-profile.mjs",
+      "mode": "100644",
+      "blob": "c15f2c96a0ab6f821bdd1c5387522e2de5dd0e04"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/resource-profile.test.mjs",
+      "mode": "100644",
+      "blob": "5a089e07ef187fb94a02b65378ca0cd8d6d9c9a2"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/score-profile.mjs",
+      "mode": "100644",
+      "blob": "3a573dd3bf551992cef048c3e347bf7743a23715"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/score-profile.test.mjs",
+      "mode": "100644",
+      "blob": "0ae1bf7989442d98b42843a611c573dad782f62f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/score.mjs",
+      "mode": "100644",
+      "blob": "c076f5c6c6f1642483c918cc3fc822e7c45a81a4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/smoke.mjs",
+      "mode": "100644",
+      "blob": "71d4e48e40e8aece3ef7e7882536b81a9142f1f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/transport.mjs",
+      "mode": "100644",
+      "blob": "7aa6b3da54eac960007a6ce735e15d58c950b7d5"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/harness/transport.test.mjs",
+      "mode": "100644",
+      "blob": "92556cf462bd20bc22b15f55b590ea2960e9668c"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/shared/PAGE-SPEC.md",
+      "mode": "100644",
+      "blob": "968a07107c6fe7afa7a742cefd50b3abb7a7b211"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/harness-source/benchmarks/grand-prix/shared/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/independent-verification.json",
+      "mode": "100644",
+      "blob": "6e92dd7226b3b025f1b15acc5f196840386ea19b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/privacy-scan.json",
+      "mode": "100644",
+      "blob": "1132e00b0910a889001b030ee984210282be8c6e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/privacy_scan.py",
+      "mode": "100644",
+      "blob": "f7abcdb52a1b7d5b97e9597df88fe909b74d9f7f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/publication-summary.json",
+      "mode": "100644",
+      "blob": "7417824f900422673508839823e839b8f690c16e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/supplementary-verification.json",
+      "mode": "100644",
+      "blob": "9b64ba2bd28b4b1650ea0607008f50dde5e42874"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/verify-supplementary.py",
+      "mode": "100644",
+      "blob": "aa94210b1460bce1fde573fb18c9c727a69c38fd"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/verify.mjs",
+      "mode": "100644",
+      "blob": "3d401ed76fed66292598a27710407986ce346005"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/ANALYSIS.md",
+      "mode": "100644",
+      "blob": "79608bf40dc33ab843bf3a77906c3a64061758fd"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/artifact-file-manifest.json",
+      "mode": "100644",
+      "blob": "589b86b4049c77cc1b598117f75d23c6b0add141"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/artifact-metadata.json",
+      "mode": "100644",
+      "blob": "de13648624d7e17f32349e79b33b07b5de50e21b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/artifact-verification.json",
+      "mode": "100644",
+      "blob": "b8025ab55a0f2c8dcc3a0b8bf3d009066d2352ee"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/artifact.zip",
+      "mode": "100644",
+      "blob": "36ff665b9ac26a4bb4fc006462b4f3d8bb322f06"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source-manifest.json",
+      "mode": "100644",
+      "blob": "6c7df117a55f3d96b9c92f9b848e05e0c74603eb"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/PROTOCOL.md",
+      "mode": "100644",
+      "blob": "e4494c745a174c46c1142b8286a81b061a4a334f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/ROUND-2.md",
+      "mode": "100644",
+      "blob": "7bc259f571235afae26981a07fbe49e7377dd3ff"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/browser-sandbox.mjs",
+      "mode": "100644",
+      "blob": "b1bf112b8e99d3d9664c5688fd925848731a41e3"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/browser-sandbox.test.mjs",
+      "mode": "100644",
+      "blob": "5c326df94715a78bea557bc20836c1b2411e45d4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/budgets.mjs",
+      "mode": "100644",
+      "blob": "d9772a3b74ed05c848e339b4ad863c2825089403"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/budgets.test.mjs",
+      "mode": "100644",
+      "blob": "88b3c94341c8ddd1225f6d6c3751522e24b237be"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/campaign.mjs",
+      "mode": "100644",
+      "blob": "2d1e207759b23f66e35b542a2cd654a99798d017"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/campaign.test.mjs",
+      "mode": "100644",
+      "blob": "b19513dfa42903d1746f087960dc0e2010e61b23"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/candidate-lock.mjs",
+      "mode": "100644",
+      "blob": "e3452898bb08b49813e12211cc881b403eb97742"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/chromium-linux-lock.json",
+      "mode": "100644",
+      "blob": "5cf5ed903b12f8915e4e752af26f1ffcad649454"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/ci-run.mjs",
+      "mode": "100644",
+      "blob": "5c78d10fe35b2125e5708e1e6882fc2615c3f496"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/cleanup.mjs",
+      "mode": "100644",
+      "blob": "788771c8824c53f5a79e8ccbc97cca653d155f0e"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/cleanup.sh",
+      "mode": "100755",
+      "blob": "fe8ced38ab5399442196ecf9351838d04e423f3b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/client-linux.mjs",
+      "mode": "100644",
+      "blob": "ee3f5fad29dd30c3099fca9f7b7152f120a944c7"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/compare-runtime.mjs",
+      "mode": "100644",
+      "blob": "83c7496f6e53f0716da74ec4d2df7f3f8af6f599"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/compression-codecs.json",
+      "mode": "100644",
+      "blob": "813eae0476cd8977ffe473f90b896fb141e70714"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/compression-report.mjs",
+      "mode": "100644",
+      "blob": "4eb40c549935e7f143bee5b818dc821bd841c4cc"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/compression-response.mjs",
+      "mode": "100644",
+      "blob": "63d348f046bfbbab363de1cdd0d35024301155b2"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/compression.test.mjs",
+      "mode": "100644",
+      "blob": "898db93bc3e15d2df498642f39ccb081698a35be"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/install-linux-browser.mjs",
+      "mode": "100644",
+      "blob": "e3921276961e8d01a1b87a99623d20764122f072"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/islands-linux.mjs",
+      "mode": "100644",
+      "blob": "b68ca780881076abe3c5969e081a1cc4cde82dfd"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/islands-linux.test.mjs",
+      "mode": "100644",
+      "blob": "a2067358af7ad2a4eada44fff8cf03c90016d704"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/lib.mjs",
+      "mode": "100644",
+      "blob": "199393d93ebb38069d5b357a02b8d988fa49b3f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/linux-run.mjs",
+      "mode": "100644",
+      "blob": "9e3d3d110b7669e7f9c3569a0635bdb63f640a85"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/loadgen/Dockerfile",
+      "mode": "100644",
+      "blob": "475266f672a08f77bc1db5d3c10bedc6c2eeeac7"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/paired-server.mjs",
+      "mode": "100644",
+      "blob": "5af9da045116e7614a07543e85d5175a21b111e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/paired-server.test.mjs",
+      "mode": "100644",
+      "blob": "33cced5d848c39a0134211ff94707d98b761d093"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/prepare-car.mjs",
+      "mode": "100644",
+      "blob": "174b375acbe0d352932353e5b14033bbaf3d15ec"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/race.mjs",
+      "mode": "100644",
+      "blob": "17c1b41c6e80a0b90aa2fefb6d57d2e6674d46cb"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/render-counts-source.mjs",
+      "mode": "100644",
+      "blob": "f854356404df7c1eca69094ef4b10f2b6dfc0ec1"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/render-counts.mjs",
+      "mode": "100644",
+      "blob": "a5bd523b61cfe18217582ea8f66a831075edb126"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/render-counts.test.mjs",
+      "mode": "100644",
+      "blob": "aa7770dec921c351a17b4c07d3520fb07cff2187"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/report-views.js",
+      "mode": "100644",
+      "blob": "b1083e4066318b422d2541b556590c70c3bfb005"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/report.mjs",
+      "mode": "100644",
+      "blob": "c41c9e0685f0a8e380f5c269db3f7fbf00b9d0cc"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/resource-profile.mjs",
+      "mode": "100644",
+      "blob": "c15f2c96a0ab6f821bdd1c5387522e2de5dd0e04"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/resource-profile.test.mjs",
+      "mode": "100644",
+      "blob": "5a089e07ef187fb94a02b65378ca0cd8d6d9c9a2"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/score-profile.mjs",
+      "mode": "100644",
+      "blob": "985fc6add644500bae5fb41786743407ce2c8a1b"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/score-profile.test.mjs",
+      "mode": "100644",
+      "blob": "7d1e0c22bbe118d5f5c3f4c1ad17d80d8bd0e071"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/score.mjs",
+      "mode": "100644",
+      "blob": "c076f5c6c6f1642483c918cc3fc822e7c45a81a4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/harness/smoke.mjs",
+      "mode": "100644",
+      "blob": "71d4e48e40e8aece3ef7e7882536b81a9142f1f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/shared/PAGE-SPEC.md",
+      "mode": "100644",
+      "blob": "968a07107c6fe7afa7a742cefd50b3abb7a7b211"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/harness-source/benchmarks/grand-prix/shared/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/independent-verification.json",
+      "mode": "100644",
+      "blob": "16ad3c09af8cbd9c7ed591709ede536649634ec8"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/privacy-scan.json",
+      "mode": "100644",
+      "blob": "35cb0a845e625f2955a7191bd375c23a98ddacd3"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/privacy_scan.py",
+      "mode": "100644",
+      "blob": "15bfebd074f5123318c9c11c8cf1fd75394343e4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/publication-summary.json",
+      "mode": "100644",
+      "blob": "6cad8891c4143ffb17de35fca2f54f7875d5fcf6"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/supplementary-verification.json",
+      "mode": "100644",
+      "blob": "b16970e92c74bc2fc50aa4322e4036d2d606eb9f"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/verify-supplementary.py",
+      "mode": "100644",
+      "blob": "9a643871a2f06f5007c26e1d1363819c35bc4ad4"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/server-unresolved/verify.mjs",
+      "mode": "100644",
+      "blob": "70594859f27e73430e47771cbbed4dc1ff197ae6"
+    },
+    {
+      "path": "benchmarks/grand-prix/evidence/2026-10-24/verify.py",
+      "mode": "100644",
+      "blob": "c0e20d42630b104c55de5693c6f75fefb1060783"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/browser-sandbox.mjs",
+      "mode": "100644",
+      "blob": "b1bf112b8e99d3d9664c5688fd925848731a41e3"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/browser-sandbox.test.mjs",
+      "mode": "100644",
+      "blob": "5c326df94715a78bea557bc20836c1b2411e45d4"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/budgets.mjs",
+      "mode": "100644",
+      "blob": "d9772a3b74ed05c848e339b4ad863c2825089403"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/budgets.test.mjs",
+      "mode": "100644",
+      "blob": "88b3c94341c8ddd1225f6d6c3751522e24b237be"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/campaign.mjs",
+      "mode": "100644",
+      "blob": "2d1e207759b23f66e35b542a2cd654a99798d017"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/campaign.test.mjs",
+      "mode": "100644",
+      "blob": "b19513dfa42903d1746f087960dc0e2010e61b23"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/candidate-lock.mjs",
+      "mode": "100644",
+      "blob": "e3452898bb08b49813e12211cc881b403eb97742"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/chromium-linux-lock.json",
+      "mode": "100644",
+      "blob": "5cf5ed903b12f8915e4e752af26f1ffcad649454"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/ci-run.mjs",
+      "mode": "100644",
+      "blob": "5c78d10fe35b2125e5708e1e6882fc2615c3f496"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/cleanup.mjs",
+      "mode": "100644",
+      "blob": "788771c8824c53f5a79e8ccbc97cca653d155f0e"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/cleanup.sh",
+      "mode": "100755",
+      "blob": "fe8ced38ab5399442196ecf9351838d04e423f3b"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/client-linux.mjs",
+      "mode": "100644",
+      "blob": "55107903cc4a52c64cb94ec7aa79742efcd7818b"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/client-signals-control.mjs",
+      "mode": "100644",
+      "blob": "5766323201d794f3a4155a9ca09fab6197319c9d"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/client-signals-control.test.mjs",
+      "mode": "100644",
+      "blob": "678b17763ffc43c28a746ae45124cd5669953c2b"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compare-runtime.mjs",
+      "mode": "100644",
+      "blob": "83c7496f6e53f0716da74ec4d2df7f3f8af6f599"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression-codecs.json",
+      "mode": "100644",
+      "blob": "813eae0476cd8977ffe473f90b896fb141e70714"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression-report.mjs",
+      "mode": "100644",
+      "blob": "99394ee58ac2396de7a0a923f82f336e57dd8e8d"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression-response.mjs",
+      "mode": "100644",
+      "blob": "63d348f046bfbbab363de1cdd0d35024301155b2"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/compression.test.mjs",
+      "mode": "100644",
+      "blob": "0a89f35500d19c146b5c36abbc2f812bb1f7ec58"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/install-linux-browser.mjs",
+      "mode": "100644",
+      "blob": "e3921276961e8d01a1b87a99623d20764122f072"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/islands-linux.mjs",
+      "mode": "100644",
+      "blob": "b68ca780881076abe3c5969e081a1cc4cde82dfd"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/islands-linux.test.mjs",
+      "mode": "100644",
+      "blob": "a2067358af7ad2a4eada44fff8cf03c90016d704"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/lib.mjs",
+      "mode": "100644",
+      "blob": "0b5ab51cd62b09843bfb4aa2df74e851f2ce7b11"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/linux-run.mjs",
+      "mode": "100644",
+      "blob": "9e3d3d110b7669e7f9c3569a0635bdb63f640a85"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/loadgen/Dockerfile",
+      "mode": "100644",
+      "blob": "475266f672a08f77bc1db5d3c10bedc6c2eeeac7"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/paired-server.mjs",
+      "mode": "100644",
+      "blob": "5af9da045116e7614a07543e85d5175a21b111e9"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/paired-server.test.mjs",
+      "mode": "100644",
+      "blob": "33cced5d848c39a0134211ff94707d98b761d093"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/prepare-car.mjs",
+      "mode": "100644",
+      "blob": "174b375acbe0d352932353e5b14033bbaf3d15ec"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/race.mjs",
+      "mode": "100644",
+      "blob": "ecad6cb9f75c7f0c31bf700c250d9e17d5305abb"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/render-counts-source.mjs",
+      "mode": "100644",
+      "blob": "f854356404df7c1eca69094ef4b10f2b6dfc0ec1"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/render-counts.mjs",
+      "mode": "100644",
+      "blob": "a5bd523b61cfe18217582ea8f66a831075edb126"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/render-counts.test.mjs",
+      "mode": "100644",
+      "blob": "aa7770dec921c351a17b4c07d3520fb07cff2187"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/report-views.js",
+      "mode": "100644",
+      "blob": "b1083e4066318b422d2541b556590c70c3bfb005"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/report.mjs",
+      "mode": "100644",
+      "blob": "2e11101f8fa576ef701fa1ba46acc87528eaad22"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/resource-profile.mjs",
+      "mode": "100644",
+      "blob": "c15f2c96a0ab6f821bdd1c5387522e2de5dd0e04"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/resource-profile.test.mjs",
+      "mode": "100644",
+      "blob": "5a089e07ef187fb94a02b65378ca0cd8d6d9c9a2"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/score-profile.mjs",
+      "mode": "100644",
+      "blob": "3a573dd3bf551992cef048c3e347bf7743a23715"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/score-profile.test.mjs",
+      "mode": "100644",
+      "blob": "0ae1bf7989442d98b42843a611c573dad782f62f"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/score.mjs",
+      "mode": "100644",
+      "blob": "c076f5c6c6f1642483c918cc3fc822e7c45a81a4"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/smoke.mjs",
+      "mode": "100644",
+      "blob": "71d4e48e40e8aece3ef7e7882536b81a9142f1f7"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/transport.mjs",
+      "mode": "100644",
+      "blob": "7aa6b3da54eac960007a6ce735e15d58c950b7d5"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/transport.test.mjs",
+      "mode": "100644",
+      "blob": "92556cf462bd20bc22b15f55b590ea2960e9668c"
+    },
+    {
+      "path": "benchmarks/grand-prix/island-race/README.md",
+      "mode": "100644",
+      "blob": "664e41df7e86ad7da201c246d4a87274eaccde0d"
+    },
+    {
+      "path": "benchmarks/grand-prix/island-race/package-lock.json",
+      "mode": "100644",
+      "blob": "0dd1fb560f1ff5bbaefd4fd32e6fd7b2e6334e3d"
+    },
+    {
+      "path": "benchmarks/grand-prix/island-race/package.json",
+      "mode": "100644",
+      "blob": "1488f95ee04b20e15f1e917293677a81ce0fadce"
+    },
+    {
+      "path": "benchmarks/grand-prix/island-race/run.mjs",
+      "mode": "100644",
+      "blob": "09eecab159ce8ea3810c5e620593d32216be2c0f"
+    },
+    {
+      "path": "benchmarks/grand-prix/island-race/verify-controls.mjs",
+      "mode": "100644",
+      "blob": "f5519030611609574c5f69495f98778bfeee2edf"
+    },
+    {
+      "path": "benchmarks/grand-prix/shared/PAGE-SPEC.md",
+      "mode": "100644",
+      "blob": "968a07107c6fe7afa7a742cefd50b3abb7a7b211"
+    },
+    {
+      "path": "benchmarks/grand-prix/shared/dataset.mjs",
+      "mode": "100644",
+      "blob": "c00743894c9d2a0e02b761674978eea4f5af2cff"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/.dockerignore",
+      "mode": "100644",
+      "blob": "42219771fd2057a487a230bffa657f6e1beb1345"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/Dockerfile",
+      "mode": "100644",
+      "blob": "9c94a06a82abdd0e8b909dd9a3d913773c27f219"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/SPEC.md",
+      "mode": "100644",
+      "blob": "f83de7ae669cae85f58c87172516e6ebbdf63bcd"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/adapters/alien-signals-3.1.2.mjs",
+      "mode": "100644",
+      "blob": "3d110e21f951e5c1fc248dda43e1639b22da6799"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/adapters/alien-signals.mjs",
+      "mode": "100644",
+      "blob": "f06086e136c03e46e2c7766dc81bdd2c4377e7fc"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/adapters/forma.mjs",
+      "mode": "100644",
+      "blob": "61916a849aa45ecb1ee2cf7f66a86dffe44bf450"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/adapters/preact-signals.mjs",
+      "mode": "100644",
+      "blob": "5aa42230a692b83adcbe98821a96fe6db2b2f706"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/adapters/solid.mjs",
+      "mode": "100644",
+      "blob": "f2569b8d4f161ba79fac16bf2d530549de1b6fac"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/adapters/vue-reactivity.mjs",
+      "mode": "100644",
+      "blob": "5f4787e828d3211a34b873ca795b8b7510999916"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/benchmarks.mjs",
+      "mode": "100644",
+      "blob": "e1040198ba1b15f1299b208352235bacb8907809"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/cars.mjs",
+      "mode": "100644",
+      "blob": "cd308c88d8d3835d6eec7b9b8c10e4677b4351b5"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/correctness.mjs",
+      "mode": "100644",
+      "blob": "2a50a3d4112562853c5545013cf9d41fb04b6830"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/package-lock.json",
+      "mode": "100644",
+      "blob": "303c3130e49b33a57e701a70bce2ef5d0cd07d36"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/package.json",
+      "mode": "100644",
+      "blob": "01dfa718915c46065234f1a62c0114efa8c00393"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/run.mjs",
+      "mode": "100644",
+      "blob": "a4193ade129950c2bf4377666c05549dafe5b0cc"
+    },
+    {
+      "path": "benchmarks/grand-prix/signals-race/worker.mjs",
+      "mode": "100644",
+      "blob": "ff1d5da8a3732a4dfc80fa25f46ca740d9d52c97"
     },
     {
       "path": "crates/CONTRIBUTING.md",
       "mode": "100644",
-      "blob": "10a77e347d0d8fb51470099f743f7090f35d2215"
+      "blob": "d4c65f94ff7f54106670f3c8d194a946309d1c2d"
     },
     {
       "path": "crates/README.md",
@@ -181,12 +2836,12 @@
     {
       "path": "crates/forma-ir-derive/CHANGELOG.md",
       "mode": "100644",
-      "blob": "713437b4fb1bc8eb196164aa0c61ae117c2529ea"
+      "blob": "6b86c89e4cc4b892319ca4a12f630063faa79920"
     },
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
       "mode": "100644",
-      "blob": "b55e1eda2b653fb4ba5b99698d2c0c506c7d75c5"
+      "blob": "2fc47a75fbff049a22bf54ac11fc72f33ef9c1e9"
     },
     {
       "path": "crates/forma-ir-derive/LICENSE",
@@ -196,7 +2851,7 @@
     {
       "path": "crates/forma-ir-derive/README.md",
       "mode": "100644",
-      "blob": "2b6ee6b6e999cb73f46c24fcc424117a9fe2995c"
+      "blob": "8ec6c4a6676e9eacea7ef1fb919c6909fce335df"
     },
     {
       "path": "crates/forma-ir-derive/src/lib.rs",
@@ -206,17 +2861,47 @@
     {
       "path": "crates/forma-ir/CHANGELOG.md",
       "mode": "100644",
-      "blob": "2dda4e6fb85401b3b895d731967459b36b4791f2"
+      "blob": "d7dbf80749fd8c1d9398f9ff54b4ff350e43af0c"
     },
     {
       "path": "crates/forma-ir/Cargo.toml",
       "mode": "100644",
-      "blob": "a245e19c96e89d108542059c1cda374bc3e299d7"
+      "blob": "2a14bae2e8518276e84cec012796a81234aa7fe9"
     },
     {
       "path": "crates/forma-ir/README.md",
       "mode": "100644",
-      "blob": "f2d94d38c8a77243e4327176f89b9b488ff7ea03"
+      "blob": "220bb9cab75efd7dda0d8a1470047301a3ad2090"
+    },
+    {
+      "path": "crates/forma-ir/benches/README.md",
+      "mode": "100644",
+      "blob": "2c990e4c303978d18e7f7968ee8f4576de428608"
+    },
+    {
+      "path": "crates/forma-ir/benches/fixtures/grand-prix/app.tsx",
+      "mode": "100644",
+      "blob": "fb4f5ad15cc1acba39490821546f38ecb1ec2241"
+    },
+    {
+      "path": "crates/forma-ir/benches/fixtures/grand-prix/emit.mjs",
+      "mode": "100644",
+      "blob": "2aff007add44b9ef49287cac460150742c4f3964"
+    },
+    {
+      "path": "crates/forma-ir/benches/fixtures/grand-prix/page.ir",
+      "mode": "100644",
+      "blob": "fcd8f50457d3fda062028958d332367008d5879b"
+    },
+    {
+      "path": "crates/forma-ir/benches/fixtures/grand-prix/props.rs",
+      "mode": "100644",
+      "blob": "b6c50fc257f0d24fd78a81cef5b44af6959cab34"
+    },
+    {
+      "path": "crates/forma-ir/benches/walker.rs",
+      "mode": "100644",
+      "blob": "b07ebc87a0bf487341fb7ca93957dbaa47f22eb3"
     },
     {
       "path": "crates/forma-ir/examples/island_state_roundtrip.rs",
@@ -286,7 +2971,7 @@
     {
       "path": "crates/forma-ir/src/format.rs",
       "mode": "100644",
-      "blob": "2636c4b78c7b63cd4169874b4d178f4fe1cb6b84"
+      "blob": "3b8b11dae5875a96b98d1e6ac8a673d4da45dfa3"
     },
     {
       "path": "crates/forma-ir/src/fuzz_support.rs",
@@ -306,7 +2991,7 @@
     {
       "path": "crates/forma-ir/src/lib.rs",
       "mode": "100644",
-      "blob": "fe5bf49d8a83e21eb42bbf5de8635afa2f940454"
+      "blob": "9c927b66f9c134cd296d519b412e5fc40fae1e19"
     },
     {
       "path": "crates/forma-ir/src/parser.rs",
@@ -336,7 +3021,7 @@
     {
       "path": "crates/forma-ir/src/slot.rs",
       "mode": "100644",
-      "blob": "0e3a0d8a4108c265462e40892eb38cb548e61f9b"
+      "blob": "1518e8e9429d321017dc17793ac3ac1bb4e2225f"
     },
     {
       "path": "crates/forma-ir/src/text.rs",
@@ -346,7 +3031,7 @@
     {
       "path": "crates/forma-ir/src/walker.rs",
       "mode": "100644",
-      "blob": "fac4586dcc7592c3c520ec936a7b33cd4824f9a7"
+      "blob": "49747f34aa0b7c14c8002b1b3f22898d1a93a64f"
     },
     {
       "path": "crates/forma-ir/tests/feature_isolation.rs",
@@ -1166,7 +3851,7 @@
     {
       "path": "crates/forma-ir/tests/fixtures/parity/inv1.json",
       "mode": "100644",
-      "blob": "e3fb4da14d11e581b2f6845acc85551992b48d29"
+      "blob": "7eb4c61ec9cd0d3a912faa618f76be7031c1bd95"
     },
     {
       "path": "crates/forma-ir/tests/fixtures/parity/keys.json",
@@ -1204,14 +3889,19 @@
       "blob": "cd14a71193b5a2831b275cab87e4041de894d8a1"
     },
     {
+      "path": "crates/forma-ir/tests/fixtures/parity/static-routes.json",
+      "mode": "100644",
+      "blob": "13cfe082be8f73ef48ec98d5b7ea5157014c8080"
+    },
+    {
       "path": "crates/forma-ir/tests/fmir_contract.rs",
       "mode": "100644",
-      "blob": "8284f30224822e07d7bded443c9a86332b35451e"
+      "blob": "35549b709b29381ccc1bae16533fbcf65ad8806a"
     },
     {
       "path": "crates/forma-ir/tests/fmir_v3.rs",
       "mode": "100644",
-      "blob": "eb637ca6d571e4f9b7ec9d7de1941e2ddd9018c2"
+      "blob": "52188e4c0e626b87fa9bdede0ec211810b4085a4"
     },
     {
       "path": "crates/forma-ir/tests/fuzz_regressions.rs",
@@ -1251,17 +3941,17 @@
     {
       "path": "crates/forma-server/CHANGELOG.md",
       "mode": "100644",
-      "blob": "ce24a19f8456afc5a0cd525e2e75c3ccbc8c5782"
+      "blob": "3d9b5087bd7d5e3cc25144f86c6a499071f42279"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
       "mode": "100644",
-      "blob": "92eefa94e6abcbd1c6d7d59f976e4c35a959b891"
+      "blob": "68c9a4eff7f9df204119502dfbaf283355a4548d"
     },
     {
       "path": "crates/forma-server/README.md",
       "mode": "100644",
-      "blob": "41acab8642d7b4d33548fa20233a34955bccec54"
+      "blob": "637fe56b34430de13dd74b37937ea0c49614d055"
     },
     {
       "path": "crates/forma-server/examples/parity_render.rs",
@@ -1276,7 +3966,7 @@
     {
       "path": "crates/forma-server/src/assets.rs",
       "mode": "100644",
-      "blob": "71e0d8f31831095bcd6c12b5d959bee8aa9cb792"
+      "blob": "529ed2861a0311e0065da5d59008c7acdbdb819a"
     },
     {
       "path": "crates/forma-server/src/csp.rs",
@@ -1291,7 +3981,7 @@
     {
       "path": "crates/forma-server/src/frame.rs",
       "mode": "100644",
-      "blob": "3cebe85ec57abcda12d1210a6eb0c2cb1a41187a"
+      "blob": "7a7268fe6ecd4099bfc916b5877e8649653a1bd8"
     },
     {
       "path": "crates/forma-server/src/head.rs",
@@ -1301,12 +3991,12 @@
     {
       "path": "crates/forma-server/src/ir.rs",
       "mode": "100644",
-      "blob": "654c51b9cb9d328d2c31661a67d50a79e39fe82b"
+      "blob": "2b440e50fa444c58e250a4139ed2f7c832e240af"
     },
     {
       "path": "crates/forma-server/src/lib.rs",
       "mode": "100644",
-      "blob": "5ae2174bbeb44edeaf4db06c6996d08253fcc0cf"
+      "blob": "561710906eee72c7b7bda04af7e519bcf432b1a3"
     },
     {
       "path": "crates/forma-server/src/pages.rs",
@@ -1321,12 +4011,22 @@
     {
       "path": "crates/forma-server/src/render.rs",
       "mode": "100644",
-      "blob": "4dad527627320d73f67658b5e4b21cba677bf1f5"
+      "blob": "1dd73805ce75d49c3bbf00e4fa6229963f484619"
     },
     {
       "path": "crates/forma-server/src/response.rs",
       "mode": "100644",
-      "blob": "e1244d2c8007c21411a3ecec5c3dc3bfa5e5b1f7"
+      "blob": "883db7b1291f22575e8d48dc31fb8b1862263e5f"
+    },
+    {
+      "path": "crates/forma-server/src/response/compression.rs",
+      "mode": "100644",
+      "blob": "0ff80ee330c5d1dc1f6f087ec912113e6157f121"
+    },
+    {
+      "path": "crates/forma-server/src/response/compression/tests.rs",
+      "mode": "100644",
+      "blob": "1db8cb4adccf216b06e904db87a052ca9a0281db"
     },
     {
       "path": "crates/forma-server/src/sw.rs",
@@ -1336,7 +4036,7 @@
     {
       "path": "crates/forma-server/src/template.rs",
       "mode": "100644",
-      "blob": "c80d31bea0b1823dfeddb4f7d32e5d9cb0e81d49"
+      "blob": "028489b7c8d5bea62ad930c695ad156c1449e1b2"
     },
     {
       "path": "crates/forma-server/src/types.rs",
@@ -1776,7 +4476,7 @@
     {
       "path": "crates/forma-server/tests/manifest_compatibility.rs",
       "mode": "100644",
-      "blob": "b1723211a923bae870b2ccc9d8e76ee869fa4801"
+      "blob": "c937f0064c1bf25e2fc0ce8c2d1d5f9ecaf416e4"
     },
     {
       "path": "crates/forma-server/tests/relaxation_log_bound.rs",
@@ -1806,12 +4506,12 @@
     {
       "path": "crates/forma-server/tests/static_routes.rs",
       "mode": "100644",
-      "blob": "a8bb952c6fed918f1c1bfddcb889446bbc689c47"
+      "blob": "f721c8bb943e659fa5c290fc91ea06779d5e872c"
     },
     {
       "path": "crates/forma-server/tests/strict_loader.rs",
       "mode": "100644",
-      "blob": "706e9ddf96dee7e79095a7ab013c2c62726cc3c4"
+      "blob": "6f8e1da4e30bbe63bd1dee9ef12385a0a2fa24b6"
     },
     {
       "path": "crates/forma-server/tests/support/mod.rs",
@@ -1826,7 +4526,7 @@
     {
       "path": "crates/forma-server/tests/typed_pages.rs",
       "mode": "100644",
-      "blob": "d12e7ddcdf298d561b0dd9634b192603c88ec88d"
+      "blob": "90602f830ba27cb5b8d4d95d940049483d8cb812"
     },
     {
       "path": "deny.toml",
@@ -1836,12 +4536,12 @@
     {
       "path": "docs/ARCHITECTURE-3.0.md",
       "mode": "100644",
-      "blob": "a29755c619038f12fa2d4e1b8ee777b8b46dbef2"
+      "blob": "e88965d32a069adc0a9526a1bc248dc677db0842"
     },
     {
       "path": "docs/ARCHITECTURE.md",
       "mode": "100644",
-      "blob": "e101035eeb3d12b8d1945f93447109901e3e1b7b"
+      "blob": "0d5cbf73b301b6e2475e2055c536ecd830dbce77"
     },
     {
       "path": "docs/DECLARED-PROPS.md",
@@ -1849,39 +4549,44 @@
       "blob": "00c02d34303f88c1b3454b16d534ee77b82e7291"
     },
     {
+      "path": "docs/DEPLOYMENT.md",
+      "mode": "100644",
+      "blob": "682c6469d2f944033b3ce5b4ce97bd3e8164caa7"
+    },
+    {
       "path": "docs/DIAGNOSTICS.md",
       "mode": "100644",
-      "blob": "94bc50bc6619df754554893572aa1f0b9989b2e8"
+      "blob": "f964c067ecdde7d6765a1508ec91aaf51256690f"
     },
     {
       "path": "docs/FMIR-FORMAT.md",
       "mode": "100644",
-      "blob": "ebeeb2952ff12740c42aaf43685e98b00855bac3"
-    },
-    {
-      "path": "docs/HANDOFF-imported-signal-defaults.md",
-      "mode": "100644",
-      "blob": "300777215941a0d493d4f83dfd554f4b7c71fbd1"
+      "blob": "bec9249c476a4bf266085d89a4aed289d5ad3ec4"
     },
     {
       "path": "docs/INV1.md",
       "mode": "100644",
-      "blob": "ea61c3e327777e5d2147a428755cf886aaa0f8a9"
+      "blob": "b20b457db4dc9b316e4b73d4e62bfbcd3589a7c6"
     },
     {
       "path": "docs/README.md",
       "mode": "100644",
-      "blob": "d80fd347bfbc031755e988030f9a98b3b80597a7"
+      "blob": "685f7990455fd38a079b32275c294eabf8a17ec1"
     },
     {
       "path": "docs/RELEASING.md",
       "mode": "100644",
-      "blob": "2cfa9c2dccb56dc04d67ccdc776b71f35bdfcdc9"
+      "blob": "a4416d770998f1e7d84fc10dc47f679aea94c41c"
+    },
+    {
+      "path": "docs/REPOSITORY-LAYOUT.md",
+      "mode": "100644",
+      "blob": "c31cfe78da1dcb586767e7c2a44df5c8a48b801f"
     },
     {
       "path": "docs/TESTING.md",
       "mode": "100644",
-      "blob": "e46c8d67cdbdfe80fb4dcc43ab67f93791fbb535"
+      "blob": "38f7f53d092b648844042555355452b2207f3499"
     },
     {
       "path": "docs/TRUSTED-TYPES.md",
@@ -1891,7 +4596,12 @@
     {
       "path": "docs/UPGRADING-3.0.md",
       "mode": "100644",
-      "blob": "affdfdee09c869fa8b2c88753e0286d69db3a9cf"
+      "blob": "c6f2fac4e0118650ce5bf82df0edefc9d84b5f3f"
+    },
+    {
+      "path": "docs/UPGRADING-3.1.md",
+      "mode": "100644",
+      "blob": "a1be5cf8760caa6d21d55111837745a459b36e2a"
     },
     {
       "path": "docs/archive/2026-10-15-FMIR-FORMAT-exact-stage.md",
@@ -9251,7 +11961,7 @@
     {
       "path": "docs/compatibility.md",
       "mode": "100644",
-      "blob": "3f40cd13d4795a1703bf742e4062b5d5e07c75c1"
+      "blob": "771a04bd9dd7b6f262aef874ad0dfc30fa6ac812"
     },
     {
       "path": "docs/evidence/dashboard-tooltip-2026-10-16/README.md",
@@ -10784,6 +13494,21 @@
       "blob": "31ea326f065cc2d14db30f220f81179b86d30645"
     },
     {
+      "path": "docs/evidence/forma-252/README.md",
+      "mode": "100644",
+      "blob": "fa356a75eb5aad1623e75ab3ed277bb914019a21"
+    },
+    {
+      "path": "docs/evidence/forma-252/failures.json",
+      "mode": "100644",
+      "blob": "d7155b0b8a642667c1f369c48bf643c0cabbeeff"
+    },
+    {
+      "path": "docs/evidence/forma-252/scaffold-lane-timings.csv",
+      "mode": "100644",
+      "blob": "464f388a764f1a4fb449006a56fc3d3099b7e43a"
+    },
+    {
       "path": "docs/evidence/frame-tcp-control-repair/README.md",
       "mode": "100644",
       "blob": "d063aed2862f2988a0ae76b5c8c304d0391fda74"
@@ -11106,7 +13831,7 @@
     {
       "path": "docs/governance/ROLLOUT.md",
       "mode": "100644",
-      "blob": "f4dd6980c5b11ad897b840e8ac9d1417e18437a8"
+      "blob": "30018c6d5c92baff481e82240007e43844b63104"
     },
     {
       "path": "docs/governance/main-protection.proposed.json",
@@ -11116,7 +13841,7 @@
     {
       "path": "docs/parity-rules.md",
       "mode": "100644",
-      "blob": "48b55d549a58e4c0b7c0a6a20d9640a25b5f4b45"
+      "blob": "13bc9ebd5f87733f2b2180d849a5b7bfbb23d749"
     },
     {
       "path": "docs/proposals/FORMA-103-STATE-WIRE.md",
@@ -11906,7 +14631,17 @@
     {
       "path": "docs/release/3.0-GATE-DISPOSITIONS.md",
       "mode": "100644",
-      "blob": "16bd9bc096f9556eabcba2fd79f278699d96877a"
+      "blob": "26a9e5c6bcc814932c77fe248ab5349e2e4805d5"
+    },
+    {
+      "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
+      "mode": "100644",
+      "blob": "5267e780ef049fef23afb1e4283a4ebc7baa040d"
+    },
+    {
+      "path": "docs/release/3.1-QUALIFICATION.md",
+      "mode": "100644",
+      "blob": "aeb606e465125426b636a91398a6462c5d02d897"
     },
     {
       "path": "docs/release/ALPHA-RUNBOOK.md",
@@ -11936,7 +14671,7 @@
     {
       "path": "docs/release/RC-BURN-IN.md",
       "mode": "100644",
-      "blob": "40fa97be8f0d17c37dc06fc2b79ada086596b8e2"
+      "blob": "ef4e465143611f30b3ae68c39011244197ba8603"
     },
     {
       "path": "docs/release/RC-QUALIFICATION.md",
@@ -11949,6 +14684,16 @@
       "blob": "6c5efa2240a663d70babb72969a60f9a9afdcf91"
     },
     {
+      "path": "docs/release/README.md",
+      "mode": "100644",
+      "blob": "d5060f0648be55ffb52c7066ff0bf858d5fb57aa"
+    },
+    {
+      "path": "docs/release/REGISTRY-RECONCILIATION.md",
+      "mode": "100644",
+      "blob": "e7429caf361653c23db89b8017b420b1ca4d3671"
+    },
+    {
       "path": "docs/release/SUPPORT-AND-RECALL.md",
       "mode": "100644",
       "blob": "d4dc68dc8a577b181fc74afd06162bde1488fb37"
@@ -11956,42 +14701,27 @@
     {
       "path": "docs/release/V3-AS-BUILT.md",
       "mode": "100644",
-      "blob": "3f9be5046b5ce7bb3ff81f06b2c45e3588bdf20a"
+      "blob": "c4093079e4a0039954f044af93b91a8b6688d126"
     },
     {
       "path": "docs/release/d14-input-manifest.json",
       "mode": "100644",
-      "blob": "7252cf3a067add2d301a1cdcd2600280cc2ab491"
+      "blob": "e85fc03b1c224e8533d3d94e38ff671cf39b68c1"
     },
     {
       "path": "docs/release/d14-report.json",
       "mode": "100644",
-      "blob": "abcb445d582822136bedb4850167f948df2cfaf9"
+      "blob": "00b3448eb89aac3c37c9be313d5d2d812cb2f06b"
     },
     {
       "path": "docs/release/d14-review-evidence.json",
       "mode": "100644",
-      "blob": "7f25914060ab3edbe5acc807f74dd056463d33c1"
+      "blob": "3460c635ab4e3f45992eeb8da5672d68778c5cb2"
     },
     {
-      "path": "docs/release/quota-handoff/INDEPENDENT-CLOSURE-REVIEW-72179d43.txt",
+      "path": "docs/release/post-release-soak.json",
       "mode": "100644",
-      "blob": "5c6bbe69643547cb2d0551bad0d8f1335f160aa8"
-    },
-    {
-      "path": "docs/release/quota-handoff/INTERIM-SUBSTANTIVE-REVIEW.md",
-      "mode": "100644",
-      "blob": "c254146175cc5c586473ce346638929579a3dc4f"
-    },
-    {
-      "path": "docs/release/quota-handoff/RESUMED-STATE.json",
-      "mode": "100644",
-      "blob": "f8b62e8dca63061f33163c1aa6ea9fbe2f8c4e85"
-    },
-    {
-      "path": "docs/release/quota-handoff/STATE.json",
-      "mode": "100644",
-      "blob": "f31cabd909d5bd46bda84a4579723b130878b2e8"
+      "blob": "345c7ad00a04834443297bbab082e996398a5f2f"
     },
     {
       "path": "docs/repository-merge/CUT.md",
@@ -12241,7 +14971,7 @@
     {
       "path": "e2e/Cargo.lock",
       "mode": "100644",
-      "blob": "1590faf1d52afae7cbba75b689e368c2f78b83d9"
+      "blob": "671741af102ec572ce0a0d9c317d300d4af39be2"
     },
     {
       "path": "e2e/Cargo.toml",
@@ -12251,7 +14981,7 @@
     {
       "path": "e2e/README.md",
       "mode": "100644",
-      "blob": "987885a4a11dde61e5f7a43fc4ac99e84e0a30ae"
+      "blob": "b5192cbaab881de37b47ef68906681b601cb7159"
     },
     {
       "path": "e2e/fixtures/apps/Cargo.toml",
@@ -12401,7 +15131,7 @@
     {
       "path": "e2e/fixtures/apps/fauth/src/tenant-login/page.tsx",
       "mode": "100644",
-      "blob": "3d49f1bd99b633180dbd2a84459495ee07ccc285"
+      "blob": "8600df1f66cc37db0c8a0aeb6a11ff24aa818ab8"
     },
     {
       "path": "e2e/fixtures/apps/ksx/src/check/app.tsx",
@@ -12446,7 +15176,7 @@
     {
       "path": "e2e/fixtures/apps/lib/behaviours.mjs",
       "mode": "100644",
-      "blob": "3213c96bb18b29d94f8d55950b6c27ac9c66eda3"
+      "blob": "ea431c7d0db716122d0ab643222dd72de4088c5c"
     },
     {
       "path": "e2e/fixtures/apps/lib/build-apps.mjs",
@@ -12456,7 +15186,7 @@
     {
       "path": "e2e/fixtures/apps/lib/check-identities.mjs",
       "mode": "100644",
-      "blob": "da4538725b823f735f4dd989ac0c518612976031"
+      "blob": "dff97df1219bb8b1556e19207ce15d17fb3c1265"
     },
     {
       "path": "e2e/fixtures/apps/lib/verify-page.mjs",
@@ -12626,17 +15356,17 @@
     {
       "path": "e2e/parity/src/boot.mts",
       "mode": "100644",
-      "blob": "68277ef6a39bf00b196066bd495dcd3b8fe3d477"
+      "blob": "85d0323e08ef0c94bb349da058a769039b171792"
     },
     {
       "path": "e2e/parity/src/browser.mts",
       "mode": "100644",
-      "blob": "217734eac59b4e889897d961db6dddf1aaecf0fd"
+      "blob": "ddf56cb182865bd0653a8f39e44521d59c6bb2fd"
     },
     {
       "path": "e2e/parity/src/bundle.mts",
       "mode": "100644",
-      "blob": "abaa2335ef0acc775389e2f83d322fee1537087c"
+      "blob": "c6e5234b0e0deb1c039419d494c49cc8042e5f00"
     },
     {
       "path": "e2e/parity/src/compare.mts",
@@ -12652,6 +15382,11 @@
       "path": "e2e/parity/src/expected.mts",
       "mode": "100644",
       "blob": "496b9444f98d995c271cf56548335ed4b39d336e"
+    },
+    {
+      "path": "e2e/parity/src/fmir-pair.mts",
+      "mode": "100644",
+      "blob": "80195832a7b7c96a69170ea385f908c4bc42d74f"
     },
     {
       "path": "e2e/parity/src/generate.mts",
@@ -12686,12 +15421,17 @@
     {
       "path": "e2e/parity/src/suite.mts",
       "mode": "100644",
-      "blob": "7efe8f480af50b9405d9e1dc636d755272bc68f3"
+      "blob": "fe593ab8949d51e015541350631c2c141c897d51"
     },
     {
       "path": "e2e/parity/src/test-utils.mts",
       "mode": "100644",
       "blob": "6545fc44354f57d69fc4261d5cb7425d3d903cdd"
+    },
+    {
+      "path": "e2e/parity/tests/activation-readiness.test.mts",
+      "mode": "100644",
+      "blob": "c881f8ca488787cf2af5d6029a947aca586cac2f"
     },
     {
       "path": "e2e/parity/tests/compare.test.mts",
@@ -12751,7 +15491,7 @@
     {
       "path": "e2e/parity/tests/step1.test.mts",
       "mode": "100644",
-      "blob": "5988c60c22477b8cd9d35f71c6f0b0b48118545b"
+      "blob": "4d420b9f2f6ce1e563277e99d39f0535d0190e3c"
     },
     {
       "path": "e2e/parity/tests/suite.test.mts",
@@ -12771,7 +15511,7 @@
     {
       "path": "e2e/performance/README.md",
       "mode": "100644",
-      "blob": "b6e98ba1ccd9ed737161255e445cae935d051437"
+      "blob": "f781ebfe3d5b016a6c5c2192304c76fedb36c698"
     },
     {
       "path": "e2e/performance/archive/8bd8b65/manifest.json",
@@ -13216,7 +15956,7 @@
     {
       "path": "e2e/ssr/regressions.spec.ts",
       "mode": "100644",
-      "blob": "25f9ad44db957a133a2b8d74cf37e099933e91f5"
+      "blob": "cab3ece8e2d454c7f1888b27b6481a73a57360bd"
     },
     {
       "path": "e2e/ssr/render/Cargo.toml",
@@ -13226,7 +15966,7 @@
     {
       "path": "e2e/ssr/render/src/main.rs",
       "mode": "100644",
-      "blob": "f5b36c6b5e359d167ac3edb685b2cb07ee60eb9a"
+      "blob": "da1257f7ba43bc680aa8d3d27f0fa06e46e37af6"
     },
     {
       "path": "e2e/ssr/sanitized-controls.spec.ts",
@@ -13291,7 +16031,7 @@
     {
       "path": "fuzz/Cargo.lock",
       "mode": "100644",
-      "blob": "9af21c2c1539a42e5f498e7080f0b42398b8e731"
+      "blob": "44e8d2961f09cf24689e2fb4ce623c55f3f879e8"
     },
     {
       "path": "fuzz/Cargo.toml",
@@ -13396,22 +16136,22 @@
     {
       "path": "package-lock.json",
       "mode": "100644",
-      "blob": "2651bca5c076b52dcf488a0a8349d104d94900fb"
+      "blob": "317b70c12794f488274b622f45c16c7a5e2a2248"
     },
     {
       "path": "package.json",
       "mode": "100644",
-      "blob": "f9e16b8ddad7af244a51b7fb2f7c83593be24f60"
+      "blob": "5566fc08588e04c568b77c82102a2b2eaa52a95d"
     },
     {
       "path": "packages/build/CHANGELOG.md",
       "mode": "100644",
-      "blob": "940a95afb659b298b0a9def7b29c3fa1cf8b2e70"
+      "blob": "91f5f457508c0d4e024a618994a77d18bc418405"
     },
     {
       "path": "packages/build/README.md",
       "mode": "100644",
-      "blob": "e7977bc21e894253c908f3ec4e6651f9d73b69f8"
+      "blob": "a4d172e9fd0c494dc0f203c16a1270d89524c7fc"
     },
     {
       "path": "packages/build/browser-tests/helpers/README.md",
@@ -13441,7 +16181,7 @@
     {
       "path": "packages/build/package.json",
       "mode": "100644",
-      "blob": "267fe9ecadfe5210d0ea2be375ad177ccacf29c6"
+      "blob": "1f06814b803daf409c3e7a7ae6690dfac21bd00f"
     },
     {
       "path": "packages/build/playwright.config.ts",
@@ -13456,7 +16196,7 @@
     {
       "path": "packages/build/src/build.ts",
       "mode": "100644",
-      "blob": "bde7b7c51c11f44f715b7ee47cb6348c182618a8"
+      "blob": "81e093c96416294fa4b6af3d5551898568578873"
     },
     {
       "path": "packages/build/src/compatibility-watch.ts",
@@ -13476,7 +16216,7 @@
     {
       "path": "packages/build/src/diagnostics.ts",
       "mode": "100644",
-      "blob": "1aaf8f19ccab5deb10567047d5eab5b5dfa6e446"
+      "blob": "1b8f2524fefe00cd3e413c8a2e86a7c90abdcdb9"
     },
     {
       "path": "packages/build/src/entry-products.ts",
@@ -13506,7 +16246,7 @@
     {
       "path": "packages/build/src/output.ts",
       "mode": "100644",
-      "blob": "4a555b85c64358476d41ca1fdc86665125ba92d2"
+      "blob": "f960eef6ef35141d2b117303e66cceb6e9e97b98"
     },
     {
       "path": "packages/build/src/preview-frame.ts",
@@ -13546,7 +16286,7 @@
     {
       "path": "packages/build/src/route-size.ts",
       "mode": "100644",
-      "blob": "265e5b7410fdb229dd044dcdf3ebf38e5c4d516b"
+      "blob": "de581b1e62656a40af9f3a1f07ee0c8498ebb744"
     },
     {
       "path": "packages/build/src/server-directives.ts",
@@ -13566,7 +16306,7 @@
     {
       "path": "packages/build/src/types.ts",
       "mode": "100644",
-      "blob": "f3ff08d5ec5090db031fdf1647cef76d3b6202ab"
+      "blob": "68f80c4c3767008bd37f4222498824af0124069c"
     },
     {
       "path": "packages/build/tests/alias-warning.test.ts",
@@ -13576,12 +16316,12 @@
     {
       "path": "packages/build/tests/build.test.ts",
       "mode": "100644",
-      "blob": "a0da0f492c14a4f66a1bd5416ec2eb40839d252c"
+      "blob": "ed5251bffd1d771de60da40793aba4a690ec604f"
     },
     {
       "path": "packages/build/tests/code-splitting.test.ts",
       "mode": "100644",
-      "blob": "c2fd976028c769e9ed7e56e3cce528fba9412838"
+      "blob": "5b776adb0144476e7932b158d8836b357b352b07"
     },
     {
       "path": "packages/build/tests/compatibility-watch.test.ts",
@@ -14071,7 +16811,7 @@
     {
       "path": "packages/build/tests/manifest-compatibility.test.ts",
       "mode": "100644",
-      "blob": "7c16e37ce86c569efbd7694546295e78be227461"
+      "blob": "4fd070dcfe35ee0b02ac90d79c374093fe476b35"
     },
     {
       "path": "packages/build/tests/mixed-entry.test.ts",
@@ -14086,7 +16826,7 @@
     {
       "path": "packages/build/tests/output.test.ts",
       "mode": "100644",
-      "blob": "6bbe39df807c9a0298ffb78f3e06e761491caafa"
+      "blob": "cd2a555cf885f498450912c383a2628c70799ea3"
     },
     {
       "path": "packages/build/tests/preview-frame-minified-check.test.ts",
@@ -14104,6 +16844,11 @@
       "blob": "7e02f4ecacab766e3e3214d6b448c7d32efbb99d"
     },
     {
+      "path": "packages/build/tests/report-write-failure.test.ts",
+      "mode": "100644",
+      "blob": "2693496ae98a99e065f300b2f97fab273454ad1e"
+    },
+    {
       "path": "packages/build/tests/retention.test.ts",
       "mode": "100644",
       "blob": "1df801769b4276b7747c2a4cf55fde25352d9d45"
@@ -14116,7 +16861,7 @@
     {
       "path": "packages/build/tests/route-size.test.ts",
       "mode": "100644",
-      "blob": "77859019ee952f5a88f772f1da678600bcbf2530"
+      "blob": "465081712ff1fb67f8937d8c63e1295a77df0fe0"
     },
     {
       "path": "packages/build/tests/server-functions-removed.test.ts",
@@ -14146,7 +16891,7 @@
     {
       "path": "packages/build/tests/static-product.test.ts",
       "mode": "100644",
-      "blob": "212ef0ac02abcd7248f993a1b1f9b6140e7a5beb"
+      "blob": "92b8ba743b5f7c68aac948123d13d6caf51aeb7c"
     },
     {
       "path": "packages/build/tests/static-publication.test.ts",
@@ -14156,7 +16901,7 @@
     {
       "path": "packages/build/tests/strict-compiler.test.ts",
       "mode": "100644",
-      "blob": "522f83f480dcdd396d00f6723149b2a7d6f7510a"
+      "blob": "fe5788a51cbb4e0bac02310d1ec66327606fa715"
     },
     {
       "path": "packages/build/tests/strict-only.test.ts",
@@ -14166,7 +16911,7 @@
     {
       "path": "packages/build/tests/strict.test.ts",
       "mode": "100644",
-      "blob": "df0273668964fa1221a9a7fdb2c6e307e9f34e72"
+      "blob": "ab675d4ecc929101565f7f6654824773933778a4"
     },
     {
       "path": "packages/build/tests/subset-select-ownership.test.ts",
@@ -14196,7 +16941,7 @@
     {
       "path": "packages/build/tests/worker-build-contract.test.ts",
       "mode": "100644",
-      "blob": "a635e0724cc54d824f419a49611d59dc6743f03a"
+      "blob": "a28c0809d19c43343e2dd6c59912b8d865f232f3"
     },
     {
       "path": "packages/build/tsconfig.json",
@@ -14211,22 +16956,22 @@
     {
       "path": "packages/compiler/CHANGELOG.md",
       "mode": "100644",
-      "blob": "2566d520499be7bd74acb1fb7fdd82393025eb7b"
+      "blob": "c31fe847b413f2a322aee848c47a7da29ecaeadd"
     },
     {
       "path": "packages/compiler/README.md",
       "mode": "100644",
-      "blob": "87f226d84e3b3d9e16ea484a6c993b64d9944676"
+      "blob": "bfc362dacdb6c7bdcbd9607f459accacf2fef60b"
     },
     {
       "path": "packages/compiler/docs/subset.md",
       "mode": "100644",
-      "blob": "e6e2bd39316de6634f1821bfb2d94a1c378b726b"
+      "blob": "a1ea024bde53b655502cdf364f2bbcfdc2639d41"
     },
     {
       "path": "packages/compiler/package.json",
       "mode": "100644",
-      "blob": "e97cd90a683f651f3631e95453c7a8c1da569bc2"
+      "blob": "9dc53ad8f5190ccaf0050b2177a6c4815fc139ad"
     },
     {
       "path": "packages/compiler/scripts/check-release-workflow.rb",
@@ -14241,7 +16986,7 @@
     {
       "path": "packages/compiler/scripts/emit-props-contract.mjs",
       "mode": "100644",
-      "blob": "0db9f98684e76d3770f216bdc5b00b418f6e6a4e"
+      "blob": "2948f4a49096adc2b2690fe621cbd96563d04ede"
     },
     {
       "path": "packages/compiler/scripts/release-artifacts.sh",
@@ -14286,7 +17031,7 @@
     {
       "path": "packages/compiler/src/diagnostics.ts",
       "mode": "100644",
-      "blob": "f3cb30bb4a105badcee8da4f4fd0f062269b24a7"
+      "blob": "2822b01ffdb3695bc5ebf8f1e1a7c27997099d45"
     },
     {
       "path": "packages/compiler/src/entry-policy.ts",
@@ -14466,7 +17211,7 @@
     {
       "path": "packages/compiler/tests/diagnostics-conformance.test.ts",
       "mode": "100644",
-      "blob": "bfa0ef79b6cc2128a9d0cd5f59ec4387501b1f56"
+      "blob": "7e5b499a9df96f1d7a1b4f920b6878e160ce8602"
     },
     {
       "path": "packages/compiler/tests/entry-await.test.ts",
@@ -15061,7 +17806,7 @@
     {
       "path": "packages/compiler/tests/fixtures/ir-corpus/README.md",
       "mode": "100644",
-      "blob": "001690ec01a1b69bd27169faeb37b42cdaabce7c"
+      "blob": "fcc8db0b0184acd34daf4cfbfc00a65cd3e90153"
     },
     {
       "path": "packages/compiler/tests/fixtures/ir-corpus/barrel-exports/app.ts",
@@ -15371,7 +18116,7 @@
     {
       "path": "packages/compiler/tests/fmir-v3.test.ts",
       "mode": "100644",
-      "blob": "d08700077cd792985de9656013fa813e6bef8fbf"
+      "blob": "96d5ac9814837dd8d4903ec1895c9a29781d8c16"
     },
     {
       "path": "packages/compiler/tests/foreign-attribute-names.test.ts",
@@ -15382,6 +18127,11 @@
       "path": "packages/compiler/tests/helpers/fmir.ts",
       "mode": "100644",
       "blob": "27f347d88377d2b5cdf5a394b90c0ba1a2097436"
+    },
+    {
+      "path": "packages/compiler/tests/helpers/frozen-fmir.ts",
+      "mode": "100644",
+      "blob": "e1d52d67e18787ed81514b060bb8ffe5e8094303"
     },
     {
       "path": "packages/compiler/tests/helpers/render.ts",
@@ -15396,7 +18146,7 @@
     {
       "path": "packages/compiler/tests/html-context.test.ts",
       "mode": "100644",
-      "blob": "7071cad69f59bcd730f3db6a1e6b7b630a86e6a1"
+      "blob": "739c14ed5b3a73934b95f3c06a3add86e750f5a3"
     },
     {
       "path": "packages/compiler/tests/indexed-eager-use.test.ts",
@@ -15411,7 +18161,7 @@
     {
       "path": "packages/compiler/tests/indexed-list.test.ts",
       "mode": "100644",
-      "blob": "5d26d787c2cd0a68fff8ccadbd6a4d7a503da793"
+      "blob": "369795d7c98b04b947eb651af17bb49f3c562436"
     },
     {
       "path": "packages/compiler/tests/indexed-product.test.ts",
@@ -15451,7 +18201,7 @@
     {
       "path": "packages/compiler/tests/island-emission.test.ts",
       "mode": "100644",
-      "blob": "e8d95919758a9613e72068a1464082e7d9552e44"
+      "blob": "11cc8738ecc42b9ba98813d7644bc9ac6b38a3f7"
     },
     {
       "path": "packages/compiler/tests/island-product.test.ts",
@@ -15646,7 +18396,7 @@
     {
       "path": "packages/compiler/tests/subset-select-ownership.test.ts",
       "mode": "100644",
-      "blob": "bbc558f6f8bab19c12c1b257dea2dac3fbda4767"
+      "blob": "6504b8174220dfa92e040a273bdf7a52276c933c"
     },
     {
       "path": "packages/compiler/tests/subset-server-data.test.ts",
@@ -15701,17 +18451,17 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "mode": "100644",
-      "blob": "e8092aadd4f8bf6486cf1362f1aae0b856f06cde"
+      "blob": "512f7f827be52d6fd7502429798589320ee8dc44"
     },
     {
       "path": "packages/core/CONTRIBUTING.md",
       "mode": "100644",
-      "blob": "de4f44bdc0b7043c4c99f5ca841af7a40808eda2"
+      "blob": "f12887a295c81c2a21edd2b2543f5a7152901fa0"
     },
     {
       "path": "packages/core/CSP.md",
       "mode": "100644",
-      "blob": "e0fc67f894299afb8a2a19cdaeb6183c24348130"
+      "blob": "dc0535f16c43f15e1e8d6a281c8a1a409b2d75bb"
     },
     {
       "path": "packages/core/LICENSE",
@@ -15721,12 +18471,12 @@
     {
       "path": "packages/core/README.md",
       "mode": "100644",
-      "blob": "3a0edb0c6eaf8bc53dc6b0ce9eb5752bf2f44980"
+      "blob": "8ada06bc2a54b8176609c9717bce884f8d3975af"
     },
     {
       "path": "packages/core/SECURITY.md",
       "mode": "100644",
-      "blob": "8bf322f0aad9cc4defcc52fe351db013e51279ed"
+      "blob": "886f14741f365e0bd45bcfc206ed93f32b373aaa"
     },
     {
       "path": "packages/core/bench/_support.ts",
@@ -15771,42 +18521,42 @@
     {
       "path": "packages/core/docs/ADOPTION-PREPARATION.md",
       "mode": "100644",
-      "blob": "96b5d87c2b2d4822423d9be4ec84fda36415c3c0"
+      "blob": "93b637edb28f42d128052bc25177f68c17c50781"
     },
     {
       "path": "packages/core/docs/API.md",
       "mode": "100644",
-      "blob": "f34800b1912e9250d5651ecf128de463cc18b732"
+      "blob": "b8b815e406958860703cf52535a9f974add55b24"
     },
     {
       "path": "packages/core/docs/CDN-AND-EXPORTS.md",
       "mode": "100644",
-      "blob": "d2cfb2f54df9ed202aa5e362e7cc7cc7b3664d9d"
+      "blob": "8d0b3c0fd09af17bc8de5d700cac224f21595624"
     },
     {
       "path": "packages/core/docs/COMPARISONS.md",
       "mode": "100644",
-      "blob": "5bf260df6efc1634a17e18415457c4c70ccf83ee"
+      "blob": "e72b5f141186a0c20001e5ef51e28b5e940375af"
     },
     {
       "path": "packages/core/docs/DOGFOOD.md",
       "mode": "100644",
-      "blob": "868fe1a25f0e5a663ea72d365508212076212f3a"
+      "blob": "4b4b69bbab311afe6668f07ca6d2d5d2341cbe1e"
     },
     {
       "path": "packages/core/docs/HTML-RUNTIME.md",
       "mode": "100644",
-      "blob": "d5f420fc5efddba9285fffe6cb4c12f0e2ee13fe"
+      "blob": "e4968765e2014c87ba8e431142f0d756f2321c22"
     },
     {
       "path": "packages/core/docs/ISLAND-STATE.md",
       "mode": "100644",
-      "blob": "b10e375affeaf8c1ef5d181ed194a1273ee54c96"
+      "blob": "8e9258b0f861c70dedecf986959acf871feddc91"
     },
     {
       "path": "packages/core/docs/ISLANDS.md",
       "mode": "100644",
-      "blob": "019bc4ecac8798f0359919bfb176b8d4e38d411a"
+      "blob": "c128729ead4d1dd995d7b502175f7a26288b98a1"
     },
     {
       "path": "packages/core/docs/PERFORMANCE.md",
@@ -15816,12 +18566,12 @@
     {
       "path": "packages/core/docs/README.md",
       "mode": "100644",
-      "blob": "4c15d2ee633c4f743778b625993de3f8cf188481"
+      "blob": "51118ead36e96c58968ea2767d0ecc88aea8e75c"
     },
     {
       "path": "packages/core/docs/STABILITY.md",
       "mode": "100644",
-      "blob": "69b3997d754fd4571710656a337f55c4eb9ad360"
+      "blob": "89840332bdcfa59a20e168f7591e866054448e92"
     },
     {
       "path": "packages/core/docs/TEST-SUITE-AUDIT.md",
@@ -16204,6 +18954,11 @@
       "blob": "fa29c3f20b0452ab825db75b28a8cba9b19badb6"
     },
     {
+      "path": "packages/core/e2e/computed-names.spec.ts",
+      "mode": "100644",
+      "blob": "e957707998888f588f6ae74f58fab29abdd458bb"
+    },
+    {
       "path": "packages/core/e2e/core-regressions.spec.ts",
       "mode": "100644",
       "blob": "cb9d5f0c1ff4502e9d0491f31fc3f4cd58fec359"
@@ -16229,9 +18984,19 @@
       "blob": "9ad5155d2fe6e363a6a45c98414a349ede45d654"
     },
     {
+      "path": "packages/core/e2e/effect-self-disposal.spec.ts",
+      "mode": "100644",
+      "blob": "2633b68e595a5aefa97514b6a8e4c0770339ae18"
+    },
+    {
+      "path": "packages/core/e2e/event-modifiers.spec.ts",
+      "mode": "100644",
+      "blob": "9a6791f095fa2bb5eba04225917f037179a3b28b"
+    },
+    {
       "path": "packages/core/e2e/expr-cost.spec.ts",
       "mode": "100644",
-      "blob": "63267da2fbad36d6627644e270add0b0cc42295c"
+      "blob": "bc8d44b5e357122673907e7e36a666b2fc3c8472"
     },
     {
       "path": "packages/core/e2e/fixtures/expr-cost.html",
@@ -16261,7 +19026,7 @@
     {
       "path": "packages/core/e2e/frame.spec.ts",
       "mode": "100644",
-      "blob": "20bb8006d93c8e0cac953b891d20b2ecde6da9ae"
+      "blob": "af43b67fa9d93b0927fdbdd180a385607e1d7f42"
     },
     {
       "path": "packages/core/e2e/helpers/owned-adoption.ts",
@@ -16271,12 +19036,12 @@
     {
       "path": "packages/core/e2e/hostile-widgets/README.md",
       "mode": "100644",
-      "blob": "d71d71a44697bfcf661e75288a37440647c02670"
+      "blob": "f0141e14bcf12ad65f27e5ed0747217f89fc91b1"
     },
     {
       "path": "packages/core/e2e/hostile-widgets/browser-case.mjs",
       "mode": "100644",
-      "blob": "9598ba6531156e616c4e7623f2238d4a7d64d835"
+      "blob": "94870a7c397224fc3e996bdb7ea9c7484faa6ee4"
     },
     {
       "path": "packages/core/e2e/hostile-widgets/capabilities.mjs",
@@ -16286,7 +19051,7 @@
     {
       "path": "packages/core/e2e/hostile-widgets/catalogue.mjs",
       "mode": "100644",
-      "blob": "dc826467107a9af832bda4afafdb7d4e19593bfc"
+      "blob": "06c8669bccac96fa4fa5e7a1bcc50d72b0c3bff2"
     },
     {
       "path": "packages/core/e2e/hostile-widgets/explicit-controls.mjs",
@@ -16301,7 +19066,7 @@
     {
       "path": "packages/core/e2e/hostile-widgets/probe-provenance.json",
       "mode": "100644",
-      "blob": "610a5242821b70f7dbdd5a94bbed8d72ae933d98"
+      "blob": "a350afb9fdc00e2a91b2d5937a54b4f155991b68"
     },
     {
       "path": "packages/core/e2e/hostile-widgets/qualify-guard.mjs",
@@ -16319,6 +19084,11 @@
       "blob": "94ec51320c0d9c7e107d36fa662a622f88ed3f53"
     },
     {
+      "path": "packages/core/e2e/if-branch.spec.ts",
+      "mode": "100644",
+      "blob": "edfb775b883d8cf304028945049fb48ff264d516"
+    },
+    {
       "path": "packages/core/e2e/inv1.spec.ts",
       "mode": "100644",
       "blob": "936b2989216e11a9444af2a6947f1784cc0f491c"
@@ -16327,6 +19097,21 @@
       "path": "packages/core/e2e/keyed-adoption.spec.ts",
       "mode": "100644",
       "blob": "c75c40648d652496c14d7ed5a2e6cea2d2d1c7d9"
+    },
+    {
+      "path": "packages/core/e2e/listener-cleanup.spec.ts",
+      "mode": "100644",
+      "blob": "dbb7abe6320fbf8f9170885bbf50d938e8724cf3"
+    },
+    {
+      "path": "packages/core/e2e/native-throw.spec.ts",
+      "mode": "100644",
+      "blob": "56d17752d82d94bb14f5abfa8ab427eebb6b53c0"
+    },
+    {
+      "path": "packages/core/e2e/nested-scope.spec.ts",
+      "mode": "100644",
+      "blob": "4bde79c032d97877e961d56a5b9e2d733ad9255f"
     },
     {
       "path": "packages/core/e2e/normalization.spec.ts",
@@ -16382,6 +19167,11 @@
       "path": "packages/core/e2e/trusted-types.spec.ts",
       "mode": "100644",
       "blob": "e9cc9410217714075e637f6dc845f5c7bd318f40"
+    },
+    {
+      "path": "packages/core/e2e/update-diff.spec.ts",
+      "mode": "100644",
+      "blob": "fdf351f862de1845221145f9750b7043424244a4"
     },
     {
       "path": "packages/core/e2e/value-rules.spec.ts",
@@ -16449,9 +19239,14 @@
       "blob": "8dc233c2e219fb0b5052a33cbf9c9c42b7dcf74b"
     },
     {
+      "path": "packages/core/licenses/alien-signals.txt",
+      "mode": "100644",
+      "blob": "03b085aac3b74e2fb503eca8e6ab19c9c14b9d19"
+    },
+    {
       "path": "packages/core/package.json",
       "mode": "100644",
-      "blob": "ade83889adb6e44a4e992916a80afc4fc1666f6b"
+      "blob": "2186dd52bd89d60afc01b1a80ec605bc5374879a"
     },
     {
       "path": "packages/core/playwright.config.ts",
@@ -16461,7 +19256,102 @@
     {
       "path": "packages/core/probes/corpus.json",
       "mode": "100644",
-      "blob": "413df611664d95bc991bf592448a2b32c7597fb2"
+      "blob": "080f709259c8f3c5707d06770b83d0a3b149a3ad"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/README.md",
+      "mode": "100644",
+      "blob": "849364472ea03dad591ff23019ade5b1cc1231d2"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter.ts",
+      "mode": "100644",
+      "blob": "d0a552e6aa8cc2c88d48e2ff2088e2dec4ec2022"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/computed.test.ts",
+      "mode": "100644",
+      "blob": "57897991d670454c06d9943c9a69eeb33e60da80"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/effect.test.ts",
+      "mode": "100644",
+      "blob": "74295dbd7ffda42a0abb1647c28d42f818ef351f"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/effectScope.test.ts",
+      "mode": "100644",
+      "blob": "a3fbdee36220b4cfc07a485e6bee82bbf1d7ca20"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/issue_48.test.ts",
+      "mode": "100644",
+      "blob": "12c827f43d661b0561f0ece8d7d019b4739bf331"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/topology.test.ts",
+      "mode": "100644",
+      "blob": "7d38425895a2ebb62e32090a89408fb09656c52b"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/trigger.test.ts",
+      "mode": "100644",
+      "blob": "291941e6b6dd2ef09016008f5d59ed48be650108"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/adapter/untrack.test.ts",
+      "mode": "100644",
+      "blob": "05f60f31e7dd7f8c4c74fd463819527375bd7b62"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/build.test.ts",
+      "mode": "100644",
+      "blob": "359215011241f1c593f8a4b4db408ce61d56c5ef"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/flags.ts",
+      "mode": "100644",
+      "blob": "81c1c413a935a02635fb110da878539233d073c9"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine.ts",
+      "mode": "100644",
+      "blob": "746571074d6ad4b99b6aa3f20c345bfd33b1fc70"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/computed.test.ts",
+      "mode": "100644",
+      "blob": "ba421682f4b296dbcc713ab4144e6dff956e80a2"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/effect.test.ts",
+      "mode": "100644",
+      "blob": "238fa0ec8b62f777cbc37214ed774fd61ffe7584"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/effectScope.test.ts",
+      "mode": "100644",
+      "blob": "64f6758b32aa4f6ec0b41967a6dcaf921af35c1b"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/issue_48.test.ts",
+      "mode": "100644",
+      "blob": "879acbdaf863659a696e12d05706da2704db63c2"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/topology.test.ts",
+      "mode": "100644",
+      "blob": "9a516274e1a73d43bdfb1a84219a72d019f77379"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/trigger.test.ts",
+      "mode": "100644",
+      "blob": "32a598715e909f89ac6bb7ce44fe1ded3ccff17d"
+    },
+    {
+      "path": "packages/core/probes/effect-node-upstream/pristine/untrack.test.ts",
+      "mode": "100644",
+      "blob": "a3ebd5aaab83a3467449a56e17c4385061eb614e"
     },
     {
       "path": "packages/core/probes/retired-a2-raw-warnings.json",
@@ -16521,7 +19411,7 @@
     {
       "path": "packages/core/scripts/check-size.mjs",
       "mode": "100644",
-      "blob": "5cac74936729bfeea9a204a05e58dea736bfb60f"
+      "blob": "0381be42f580225447265bade5ad8db6116d3320"
     },
     {
       "path": "packages/core/scripts/clean-dist.mjs",
@@ -16556,7 +19446,7 @@
     {
       "path": "packages/core/scripts/measure-task-budget.mjs",
       "mode": "100644",
-      "blob": "9f89543e95be5074e3395b74828c7102b48acb0e"
+      "blob": "8e97d40356a4435ea28abbe472f3df12d1a672f8"
     },
     {
       "path": "packages/core/scripts/post-build.mjs",
@@ -16566,12 +19456,12 @@
     {
       "path": "packages/core/scripts/probe-reporter.mjs",
       "mode": "100644",
-      "blob": "cc6e691f3cfb6dbc3402a1ceb4d1f5bbfe88578a"
+      "blob": "7667e56c6d283f2d0e31e681be055123ac60f96b"
     },
     {
       "path": "packages/core/scripts/probe-reporter.test.mjs",
       "mode": "100644",
-      "blob": "fbf0f509eac47e74a58f3391527e193eda80990e"
+      "blob": "4cf7553221788ee98284b38aabd8f69f1a146d4c"
     },
     {
       "path": "packages/core/scripts/probe-results.mjs",
@@ -16612,6 +19502,96 @@
       "path": "packages/core/scripts/runtime-mutation-errors.mjs",
       "mode": "100644",
       "blob": "46d4c5caea32750dd781ff2752d5f155fcafb196"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/README.md",
+      "mode": "100644",
+      "blob": "a2e9f6a62db73872a69a35abde2324d8adf967f1"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/benchmarks.mjs",
+      "mode": "100644",
+      "blob": "e1040198ba1b15f1299b208352235bacb8907809"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/correctness.mjs",
+      "mode": "100644",
+      "blob": "ef7f6f920018930fe63f0333bfd25916d5f82e94"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/island.mjs",
+      "mode": "100644",
+      "blob": "6d2ffac9bf524f28c87e6af6b2f46ae564bde7c6"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/README.md",
+      "mode": "100644",
+      "blob": "fb8578e432ab1107bcff0d163a58be1f82d65df5"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/bundle-baseline.json",
+      "mode": "100644",
+      "blob": "71a72f2c702c1fcbde5121f3ccf1b6fd01368db4"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/bundle.json",
+      "mode": "100644",
+      "blob": "5dae1004803091b9b4d7cfb47d218baa153d75f9"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/client-baseline-forma.json",
+      "mode": "100644",
+      "blob": "16631da7e380516939a68458a1f3c164f9419cf8"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/client-baseline-vanilla.json",
+      "mode": "100644",
+      "blob": "666038b929dfa6160e415d98542d923d5810453c"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/client-forma.json",
+      "mode": "100644",
+      "blob": "eeb0a1a35f039ee83a7ae7d508e67b54d8fbfa96"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/client-vanilla.json",
+      "mode": "100644",
+      "blob": "9664bcd5df4f0b36bce378d321c65f6dce9c022a"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/island-baseline.json",
+      "mode": "100644",
+      "blob": "22b5c39fee3b1ab106a25561325abe4a754ff50b"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/island.json",
+      "mode": "100644",
+      "blob": "82ea7c9e948ff4c386f3145ef9091dfb2e66012e"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/signals-baseline-node22.json",
+      "mode": "100644",
+      "blob": "3b90f184977b8a4497ce1f55ce6293d58b2cf259"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/signals-baseline-node24.json",
+      "mode": "100644",
+      "blob": "163d2315c983d2a302565a563feddc1befe2d338"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/signals-node22.json",
+      "mode": "100644",
+      "blob": "e621f3bd2b1d6694e9f6da7de1b64e725063969c"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/results/2026-10-24/signals-node24.json",
+      "mode": "100644",
+      "blob": "b1b2c6820c97d793cfcb87edefcafcd72ff12b00"
+    },
+    {
+      "path": "packages/core/scripts/signals-bench/run.mjs",
+      "mode": "100644",
+      "blob": "4e8377be0d70fe5cb9d8777a9af741a4e7276534"
     },
     {
       "path": "packages/core/scripts/test-release-artifacts.sh",
@@ -16661,7 +19641,7 @@
     {
       "path": "packages/core/src/__tests__/dev-fold-build.test.ts",
       "mode": "100644",
-      "blob": "5ded5f28e55ef78fb0992a44dde0d00a810c5343"
+      "blob": "8c2d207f3e3bdd076d132c01e65caabc20d94857"
     },
     {
       "path": "packages/core/src/__tests__/development-build.test.ts",
@@ -16682,6 +19662,11 @@
       "path": "packages/core/src/__tests__/failure-semantics.test.ts",
       "mode": "100644",
       "blob": "6a6414858aa6ad12f5b1778303be00f48c5aa9e7"
+    },
+    {
+      "path": "packages/core/src/__tests__/hostile-markup.ts",
+      "mode": "100644",
+      "blob": "3f59287a5f3b66c86650ad0b35a9103b922aabe6"
     },
     {
       "path": "packages/core/src/__tests__/http-integration.test.ts",
@@ -16731,17 +19716,22 @@
     {
       "path": "packages/core/src/__tests__/reconcile.test.ts",
       "mode": "100644",
-      "blob": "a0ef518d3f09118f7155491dd89e197b465232f7"
+      "blob": "6e7a9f18fffece4a266785d4b4a5400c23129639"
     },
     {
       "path": "packages/core/src/__tests__/renderer-contract.test.ts",
       "mode": "100644",
-      "blob": "e72f7f7c57f9e5421d178da55c5079477b76a2ab"
+      "blob": "55edec656feeb33fd2e481c4535ba0a780ae6393"
     },
     {
       "path": "packages/core/src/__tests__/runtime-bind-security.test.ts",
       "mode": "100644",
-      "blob": "3073a2c8f621135d6727950066ef0efb9a3f08b5"
+      "blob": "42a783a91ed0f10193eb904729656c4d93d6e985"
+    },
+    {
+      "path": "packages/core/src/__tests__/runtime-computed.test.ts",
+      "mode": "100644",
+      "blob": "1ed8d17e9fca0865c1763d879d7a9b3818915d01"
     },
     {
       "path": "packages/core/src/__tests__/runtime-csp-default.test.ts",
@@ -16752,6 +19742,11 @@
       "path": "packages/core/src/__tests__/runtime-datamodel-list-1.3.0.test.ts",
       "mode": "100644",
       "blob": "b63e276f72ca3adec3528f453404a10d1b90aa67"
+    },
+    {
+      "path": "packages/core/src/__tests__/runtime-event-modifiers.test.ts",
+      "mode": "100644",
+      "blob": "80c6883c31b455e6b8ec8d3364c0bb71b744deb5"
     },
     {
       "path": "packages/core/src/__tests__/runtime-explicit-mount.test.ts",
@@ -16781,7 +19776,7 @@
     {
       "path": "packages/core/src/__tests__/runtime-frame.test.ts",
       "mode": "100644",
-      "blob": "26b82eea8256de0074ebbb8e432f1acf3a8925d2"
+      "blob": "222fe390a57318ba4e7b45cda542f8d55e649a4c"
     },
     {
       "path": "packages/core/src/__tests__/runtime-hardening.test.ts",
@@ -16789,14 +19784,39 @@
       "blob": "4d34e4d0958cb7bfedfb96c3b80bb8eb3b4b7962"
     },
     {
+      "path": "packages/core/src/__tests__/runtime-if-branch.test.ts",
+      "mode": "100644",
+      "blob": "9c8b522658a0b5e845bf3b0b235d37238d729660"
+    },
+    {
+      "path": "packages/core/src/__tests__/runtime-list-cap.test.ts",
+      "mode": "100644",
+      "blob": "0f74b2f6c446f386ae41dc43de3caec61fc37c9e"
+    },
+    {
       "path": "packages/core/src/__tests__/runtime-list-template-snapshot.test.ts",
       "mode": "100644",
       "blob": "01af2bd6b3c808b1adfc1e08cc75789225e9a223"
     },
     {
+      "path": "packages/core/src/__tests__/runtime-magics-identity.test.ts",
+      "mode": "100644",
+      "blob": "b9ea5ed61e2caeff1a7f1de74ca3067872517718"
+    },
+    {
       "path": "packages/core/src/__tests__/runtime-mount-failure.test.ts",
       "mode": "100644",
-      "blob": "f5cab8b333d783191f0dc598da67d919133c2cf2"
+      "blob": "20b8e505fae5328e0872600a494b0321733a7ea6"
+    },
+    {
+      "path": "packages/core/src/__tests__/runtime-native-throw.test.ts",
+      "mode": "100644",
+      "blob": "9b1caf74a2daeff820845f6e5df0e80a72e86397"
+    },
+    {
+      "path": "packages/core/src/__tests__/runtime-nested-scope.test.ts",
+      "mode": "100644",
+      "blob": "c705e790b6e45fe440bf264014e4e47402c77ff1"
     },
     {
       "path": "packages/core/src/__tests__/runtime-performance.test.ts",
@@ -16821,17 +19841,22 @@
     {
       "path": "packages/core/src/__tests__/runtime-task-budget.test.ts",
       "mode": "100644",
-      "blob": "b58c8fd07488c3d503ce548d06f260c3826328ae"
+      "blob": "53b850b8a82b4ce9ad1a27402fe303dae545b12a"
     },
     {
       "path": "packages/core/src/__tests__/runtime-text-cost.test.ts",
       "mode": "100644",
-      "blob": "d078a7ae07deedbced53ab428de2f6321ec22ec3"
+      "blob": "299c6700ea2ae5c5e2e0eb87c8ed36c4cd24fc30"
+    },
+    {
+      "path": "packages/core/src/__tests__/runtime-throw-paths.test.ts",
+      "mode": "100644",
+      "blob": "50822fd1fe0396cd2150dd6daa128640b4dee9ba"
     },
     {
       "path": "packages/core/src/__tests__/runtime-tiered-mount.test.ts",
       "mode": "100644",
-      "blob": "02737232e7122424d2f3b5a8656424d96091db85"
+      "blob": "16dab513450e225ee3289052e32be1b4bf8a1e30"
     },
     {
       "path": "packages/core/src/__tests__/storage-integration.test.ts",
@@ -16902,6 +19927,11 @@
       "path": "packages/core/src/dom-utils/__tests__/query.test.ts",
       "mode": "100644",
       "blob": "4204e6d427774b0d642d61f618f137d7cab6a107"
+    },
+    {
+      "path": "packages/core/src/dom-utils/__tests__/set-style-undefined.test.ts",
+      "mode": "100644",
+      "blob": "c1913f3afc02413f160a06cb17c3e7ab5c763294"
     },
     {
       "path": "packages/core/src/dom-utils/__tests__/traverse.test.ts",
@@ -17141,7 +20171,7 @@
     {
       "path": "packages/core/src/dom/__tests__/element.test.ts",
       "mode": "100644",
-      "blob": "f397137fbe2792493064f0806fd2667e2a380a97"
+      "blob": "ee5d00dad17a4df2125736c47f9c8ecf8d0b1b65"
     },
     {
       "path": "packages/core/src/dom/__tests__/error-boundary.test.ts",
@@ -17254,6 +20284,11 @@
       "blob": "08f5f26208f14a181ed374ec8810c5fbe85c9591"
     },
     {
+      "path": "packages/core/src/dom/__tests__/list-dependency.test.ts",
+      "mode": "100644",
+      "blob": "60666452c80317a935c647df3d654bc36b46adf6"
+    },
+    {
       "path": "packages/core/src/dom/__tests__/list-disposal.test.ts",
       "mode": "100644",
       "blob": "629ca36c586950f9f28a60da0db9309dec1b424f"
@@ -17267,6 +20302,11 @@
       "path": "packages/core/src/dom/__tests__/list-keyed-reconciliation.test.ts",
       "mode": "100644",
       "blob": "468fb653914719fc814dcea6ea7dab5f5157a49e"
+    },
+    {
+      "path": "packages/core/src/dom/__tests__/list-lazy-index.test.ts",
+      "mode": "100644",
+      "blob": "cafd106361e6673abbec6468ad96c0fae6efdda5"
     },
     {
       "path": "packages/core/src/dom/__tests__/list-lis.test.ts",
@@ -17481,12 +20521,12 @@
     {
       "path": "packages/core/src/dom/activate.ts",
       "mode": "100644",
-      "blob": "4858eac08eca0a081c5c798424c18d156f6bd523"
+      "blob": "73c6926bc4674ad42ebb2f5eb165f8119b3941b6"
     },
     {
       "path": "packages/core/src/dom/adoption-attributes.ts",
       "mode": "100644",
-      "blob": "c1901e55c575e56c2f364f5563aac4a33b23a551"
+      "blob": "56a3bacf5e26b7a6e112c32539e992c21d5a066d"
     },
     {
       "path": "packages/core/src/dom/adoption-content.ts",
@@ -17551,7 +20591,7 @@
     {
       "path": "packages/core/src/dom/element.ts",
       "mode": "100644",
-      "blob": "b8c43d535c44ffa303400a43a1f80f0daaa7c516"
+      "blob": "0049cb8b01760b79abcf11f9abe578aee2c1fae4"
     },
     {
       "path": "packages/core/src/dom/error-boundary.ts",
@@ -17574,9 +20614,14 @@
       "blob": "95f132dea0e5c06baa485a178a4d5ad3b205ed3a"
     },
     {
+      "path": "packages/core/src/dom/island-disposal.ts",
+      "mode": "100644",
+      "blob": "c062bee956af6d459d27ef95f4fcb1016ab987eb"
+    },
+    {
       "path": "packages/core/src/dom/island-state.ts",
       "mode": "100644",
-      "blob": "73f8ff635ce7056a275b3b996d743036ff31b4f3"
+      "blob": "62a8f71c0489d458ff82b4d4d8b322b260dd8005"
     },
     {
       "path": "packages/core/src/dom/key-text.ts",
@@ -17591,7 +20636,7 @@
     {
       "path": "packages/core/src/dom/list.ts",
       "mode": "100644",
-      "blob": "82d2b209b3ecc40c57ef610026232486cec59f0e"
+      "blob": "ddaa6cf2fa47812d1885478d8b0fb8d59614f24b"
     },
     {
       "path": "packages/core/src/dom/mount.ts",
@@ -17616,7 +20661,7 @@
     {
       "path": "packages/core/src/dom/reconcile.ts",
       "mode": "100644",
-      "blob": "c537c20f4614f2d49d647983df5c0619c859cf00"
+      "blob": "1bcf760bf06adba61d54faac430d002ef90a3e67"
     },
     {
       "path": "packages/core/src/dom/runtime-parser.ts",
@@ -17759,6 +20804,11 @@
       "blob": "a0f8dab71013795f058bae68f0afb27a9dfd74be"
     },
     {
+      "path": "packages/core/src/expr/__tests__/host-values.test.ts",
+      "mode": "100644",
+      "blob": "14ba05bdd69049dab84fad472ac4d69fbe8770b4"
+    },
+    {
       "path": "packages/core/src/expr/__tests__/hostile-natives.ts",
       "mode": "100644",
       "blob": "300c3ad136952a69a908e03e1d06c64e4467b1cf"
@@ -17776,12 +20826,17 @@
     {
       "path": "packages/core/src/expr/__tests__/native-cost.test.ts",
       "mode": "100644",
-      "blob": "44ae8af3b185dbe37cb3b1aef288d963a858394a"
+      "blob": "f8d9964b602aa32eafef1204a6795267da681987"
     },
     {
       "path": "packages/core/src/expr/__tests__/native-preflight.test.ts",
       "mode": "100644",
       "blob": "6d76198b0932be002c3fb0c13ff4e7a2aac2cee3"
+    },
+    {
+      "path": "packages/core/src/expr/__tests__/native-throw.test.ts",
+      "mode": "100644",
+      "blob": "33a0b4bd23fab484ce3b13ad78c5530db7e77c41"
     },
     {
       "path": "packages/core/src/expr/__tests__/no-escape-hatch.test.ts",
@@ -17826,27 +20881,27 @@
     {
       "path": "packages/core/src/expr/cost.ts",
       "mode": "100644",
-      "blob": "2720461b66d34bf34fb7b4873d32321a12cc641a"
+      "blob": "d1fbe439e99a06dc4d576610f2a165b13fc51a13"
     },
     {
       "path": "packages/core/src/expr/errors.ts",
       "mode": "100644",
-      "blob": "14b76cace73e9988ace444160a3915934dc1f3e6"
+      "blob": "fab4b2d0c5ef7d97685eb5ad88a9a641c0dd876b"
     },
     {
       "path": "packages/core/src/expr/host.ts",
       "mode": "100644",
-      "blob": "bd9545f618b2c32e954ddbde8e302e8ee7c57804"
+      "blob": "9d9fa3698e1e0841de673df24d5f30fd2f92e164"
     },
     {
       "path": "packages/core/src/expr/index.ts",
       "mode": "100644",
-      "blob": "4a62109bbafebec7cc05a089caa5ac206695cf1c"
+      "blob": "aa7c79aa033f546f22175d39ec1302abbb5e27c4"
     },
     {
       "path": "packages/core/src/expr/interp.ts",
       "mode": "100644",
-      "blob": "72ac5bc47c80a81b2e111c78d212c6990d8acc5f"
+      "blob": "f2f7611bd41d175412e9adab227bd87689bf7dcf"
     },
     {
       "path": "packages/core/src/expr/lexer.ts",
@@ -17959,14 +21014,29 @@
       "blob": "07a72727d03ec86915e4a8a9f72aae205ca23833"
     },
     {
+      "path": "packages/core/src/reactive/__tests__/effect-anchor.test.ts",
+      "mode": "100644",
+      "blob": "8b5a3b98bb3f655d46964f484c3ea9de9b2d3471"
+    },
+    {
       "path": "packages/core/src/reactive/__tests__/effect-cleanup.test.ts",
       "mode": "100644",
       "blob": "ab7160f9e88ac04cd95ce48a3f0abf6ab825d8cc"
     },
     {
+      "path": "packages/core/src/reactive/__tests__/effect-context.test.ts",
+      "mode": "100644",
+      "blob": "cdf94df18273dc72bebee3e5f6ceb9448d93784b"
+    },
+    {
       "path": "packages/core/src/reactive/__tests__/effect-dependency.test.ts",
       "mode": "100644",
-      "blob": "5935c75ddd43709e8d4a1c69f6da5b8cc3a9cc6d"
+      "blob": "241470e337987337c9fc28d0ca664e505b830ef2"
+    },
+    {
+      "path": "packages/core/src/reactive/__tests__/effect-engine-contract.test.ts",
+      "mode": "100644",
+      "blob": "ef095b1bca466954267703f0830b7178bc7a5f78"
     },
     {
       "path": "packages/core/src/reactive/__tests__/effect-nested-owner.test.ts",
@@ -17974,9 +21044,19 @@
       "blob": "2abd737f34c089e0f5c05f14dce260dc5e860e98"
     },
     {
+      "path": "packages/core/src/reactive/__tests__/effect-node.test.ts",
+      "mode": "100644",
+      "blob": "963e2d1c31be0529f3529d041bef21dd04df0ce4"
+    },
+    {
       "path": "packages/core/src/reactive/__tests__/effect-reentrancy.test.ts",
       "mode": "100644",
       "blob": "1d922ebb8136795ec67e3daf2c7530ea5920c9a8"
+    },
+    {
+      "path": "packages/core/src/reactive/__tests__/effect-startup-disposal.test.ts",
+      "mode": "100644",
+      "blob": "37b8bb44e8a1c9ce2199748f7d86414cbed41013"
     },
     {
       "path": "packages/core/src/reactive/__tests__/effect.test.ts",
@@ -18054,6 +21134,11 @@
       "blob": "309b24d6189b0148aa89da81e391f7cc54e1d245"
     },
     {
+      "path": "packages/core/src/reactive/__tests__/signal-name-dependency.test.ts",
+      "mode": "100644",
+      "blob": "ca00ea0b82b13754355f4142565f4f18864b3d17"
+    },
+    {
       "path": "packages/core/src/reactive/__tests__/signal.test.ts",
       "mode": "100644",
       "blob": "0d8aabdd03329b4c885547e271cac67c2e092a60"
@@ -18086,7 +21171,7 @@
     {
       "path": "packages/core/src/reactive/adoption-hooks.ts",
       "mode": "100644",
-      "blob": "3d58599a0c188ddebaa5e9c2a5051e7a330e03f6"
+      "blob": "63d0ad6e25e3c59d3a3a67d6e0b6c7f47cff1277"
     },
     {
       "path": "packages/core/src/reactive/adoption-lifecycle.ts",
@@ -18106,7 +21191,7 @@
     {
       "path": "packages/core/src/reactive/cleanup.ts",
       "mode": "100644",
-      "blob": "8f7b9630871dd396e4d58e8cd622111e8503fe2e"
+      "blob": "ad63a393172a39da87cf92d9f33d63f1daeccb50"
     },
     {
       "path": "packages/core/src/reactive/computed.ts",
@@ -18119,9 +21204,14 @@
       "blob": "0d27eac8777baeb04c42cf9cff447789a87d1616"
     },
     {
+      "path": "packages/core/src/reactive/effect-node.ts",
+      "mode": "100644",
+      "blob": "3210deabe401399828226ac863db7b0d385a5467"
+    },
+    {
       "path": "packages/core/src/reactive/effect.ts",
       "mode": "100644",
-      "blob": "9dc060cb44e6cbb79447e0c9aef29c075898c0f9"
+      "blob": "a9b022f66718074fc74ea7b51e48efdb8e305ebe"
     },
     {
       "path": "packages/core/src/reactive/index.ts",
@@ -18156,12 +21246,12 @@
     {
       "path": "packages/core/src/reactive/root.ts",
       "mode": "100644",
-      "blob": "c7c728d1bd0165695ce3f08bb81b729e22b75b7a"
+      "blob": "0e2a6ac521e7e65982a88c4060c10b0038197bc5"
     },
     {
       "path": "packages/core/src/reactive/signal.ts",
       "mode": "100644",
-      "blob": "5f48d7c9406f2a025e088f8036160e6bca3e9bbd"
+      "blob": "efd2741a9f1eba0e0ae347fd1888594be2867605"
     },
     {
       "path": "packages/core/src/reactive/suspense-context.ts",
@@ -18186,17 +21276,17 @@
     {
       "path": "packages/core/src/runtime.ts",
       "mode": "100644",
-      "blob": "2919373b6536413968a3c07fe5a8d9e8569386b5"
+      "blob": "36b23f86b7fc46bcacebf1fb56b8485e71703904"
     },
     {
       "path": "packages/core/src/security/__tests__/url-safety.test.ts",
       "mode": "100644",
-      "blob": "a0db5395c4eab5ed4f357825a1c7c0072f49e22a"
+      "blob": "3775947c63f845bd50eb43cd2a9445a4401c2eda"
     },
     {
       "path": "packages/core/src/security/url-safety.ts",
       "mode": "100644",
-      "blob": "b2c8a5c82eebee618e1b8ddbd7b88dc2458094dd"
+      "blob": "865b9a2a77eddea276390852587f17e1d6692d8e"
     },
     {
       "path": "packages/core/src/state/__tests__/history.test.ts",
@@ -18301,7 +21391,7 @@
     {
       "path": "packages/core/tsup.config.ts",
       "mode": "100644",
-      "blob": "6ff5a6e39f32c126953e4f8f167af90d9c420166"
+      "blob": "5e2aa02ce0c76c9a11933046b47dcf4442288b12"
     },
     {
       "path": "packages/core/typedoc-theme.css",
@@ -18311,7 +21401,7 @@
     {
       "path": "packages/core/typedoc.json",
       "mode": "100644",
-      "blob": "352f8ec7aeb26bce291cdbc1bcadb634c9ce0afc"
+      "blob": "79194bfe5f4840ac73a06e709f1cdc9290f7d0e9"
     },
     {
       "path": "packages/core/vitest.bench.config.ts",
@@ -18322,6 +21412,11 @@
       "path": "packages/core/vitest.config.ts",
       "mode": "100644",
       "blob": "348ace7eb76bdf7f5800a52f4152a9d62a42e286"
+    },
+    {
+      "path": "packages/core/vitest.engine-probe.config.ts",
+      "mode": "100644",
+      "blob": "861f1f49b91953122501ee6797938f80d2f8fbce"
     },
     {
       "path": "packages/core/vitest.runtime-mutation.config.ts",
@@ -18336,12 +21431,12 @@
     {
       "path": "packages/create-app/CHANGELOG.md",
       "mode": "100644",
-      "blob": "ca01625c232dea2d6bb437788c210336b336f47d"
+      "blob": "4d4f8203aeecd4999fb674e61cca2922d0e9fb05"
     },
     {
       "path": "packages/create-app/CONTRIBUTING.md",
       "mode": "100644",
-      "blob": "ccc0491a4084b1e70e17027a459fed10aa97a09d"
+      "blob": "1d969fd9dd0bc0f5f22acc5318097c6a1de60576"
     },
     {
       "path": "packages/create-app/LICENSE",
@@ -18351,22 +21446,22 @@
     {
       "path": "packages/create-app/README.md",
       "mode": "100644",
-      "blob": "4d454f95adb834a35a985a1b0ec1077349de6c9b"
+      "blob": "68b2499739a298941d31334162a29c6ccb0b3386"
     },
     {
       "path": "packages/create-app/docs/README.md",
       "mode": "100644",
-      "blob": "a354b5a6312d4fa4468ab69e81f5f509492d88ec"
+      "blob": "6c3dc993fd40b0bd2fb9c949e8fb4d2113e6a180"
     },
     {
       "path": "packages/create-app/docs/RENDERING-PHASES.md",
       "mode": "100644",
-      "blob": "152e6e91e1fc185248c94df211a6a47b0f425f36"
+      "blob": "25a581843423693fcc11adf23f7ae2b31ec6b3d2"
     },
     {
       "path": "packages/create-app/docs/TEMPLATES.md",
       "mode": "100644",
-      "blob": "82cc8207dd2f43615518be9cb71b5ecc79a289a0"
+      "blob": "12a0b0d1c36001ed1c3f677560e4d0ea0528f35a"
     },
     {
       "path": "packages/create-app/docs/UPGRADING-3.0.md",
@@ -18381,7 +21476,7 @@
     {
       "path": "packages/create-app/package.json",
       "mode": "100644",
-      "blob": "70ac423f8d2d4c259250df20837d04ef2d0e423e"
+      "blob": "5250cf80a4fd9d0edca5d34fb0fe5be00370e0d1"
     },
     {
       "path": "packages/create-app/scripts/check-release-workflow.rb",
@@ -18411,22 +21506,27 @@
     {
       "path": "packages/create-app/template-lock-seeds.json",
       "mode": "100644",
-      "blob": "ec578aa68721cd99b6169eeefbe9b3f3eff60697"
+      "blob": "33ce95c4d07cea16b76690385ebee014700b4a3a"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/.github/workflows/build.yml",
+      "mode": "100644",
+      "blob": "57edcc23b0d2c897fe3d9d5596fdc4ff1f90215f"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
       "mode": "100644",
-      "blob": "bbe26e4290ab8dec22bded240c246a6e4eee77f1"
+      "blob": "cec6201565304e589de50463a8af627ec2823128"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
       "mode": "100644",
-      "blob": "dd1135e905baa393095e7f8e5f0beb9240a08bec"
+      "blob": "dcf9e2b163436325812514e6a9f07c42ca05e892"
     },
     {
       "path": "packages/create-app/templates/dashboard/README.md",
       "mode": "100644",
-      "blob": "80f8ef661f67e7793e845ee8b997e34ecf59b3ac"
+      "blob": "8678fc05be1a7e2a9ed28030a340cc5716f22084"
     },
     {
       "path": "packages/create-app/templates/dashboard/_gitignore",
@@ -18446,12 +21546,12 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
       "mode": "100644",
-      "blob": "0b9c2bae661e0accb077c8d4ebbcfb665b173dde"
+      "blob": "161a1353f40da613a00273bebce1aa281727fb6d"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
       "mode": "100644",
-      "blob": "982ebca9b7cb4d5d591a4a862a5a46c0310db6fe"
+      "blob": "a5765796b7341926a4ea5a12398cc47cadc39ad5"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/playwright.config.ts",
@@ -18539,19 +21639,24 @@
       "blob": "241b34eada0e8da72caa4fe5cc7f2e9fc9dbeeb4"
     },
     {
+      "path": "packages/create-app/templates/minimal/.github/workflows/build.yml",
+      "mode": "100644",
+      "blob": "91dbb1ac0ff7efcaf578ed6d5d821f3fd59a89cf"
+    },
+    {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
       "mode": "100644",
-      "blob": "7612e14514839bd0859c46532786fc18b4ccea84"
+      "blob": "bc87661f914df7dee5a9ebbab64d89eb5a6a74cc"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
       "mode": "100644",
-      "blob": "076c8787ec032226a05b491810937961540891d9"
+      "blob": "fff22d4ddf0da56dc35b0146437272cd016eeb18"
     },
     {
       "path": "packages/create-app/templates/minimal/README.md",
       "mode": "100644",
-      "blob": "b560b5b624f51b2b2ea8cbb56f0f668e30bb855f"
+      "blob": "274ffff8e62ea4979efc184ed0e0b9b5f525bc8d"
     },
     {
       "path": "packages/create-app/templates/minimal/_gitignore",
@@ -18571,12 +21676,12 @@
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
       "mode": "100644",
-      "blob": "6ea42d7d815d874d892988dd71c18e18c5ff9dee"
+      "blob": "7214780981ad493157cb03865c7b2cd974f322f4"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
       "mode": "100644",
-      "blob": "d124268ffd7fb46dbc2578a7e2c44867208a7016"
+      "blob": "f116271aa1450a151c2fe4f965a06f46b398e85e"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/src/about/app.tsx",
@@ -18602,6 +21707,11 @@
       "path": "packages/create-app/templates/minimal/src/main.rs",
       "mode": "100644",
       "blob": "a9e01b2ee44a5bb26fc5cf391780df5f05828e25"
+    },
+    {
+      "path": "packages/create-app/tests/diagnostics.test.ts",
+      "mode": "100644",
+      "blob": "0ea8225bd083239607bcb8780de2e392d5a29b4f"
     },
     {
       "path": "packages/create-app/tests/docs-truth.test.ts",
@@ -18636,7 +21746,7 @@
     {
       "path": "packages/create-app/tests/helpers.ts",
       "mode": "100644",
-      "blob": "4683562d7dbd128767ffa34779d434694f8ca44d"
+      "blob": "e277354437aaa9ef79c45a092657dabf80cade33"
     },
     {
       "path": "packages/create-app/tests/scaffold-lib.test.ts",
@@ -18646,7 +21756,7 @@
     {
       "path": "packages/create-app/tests/scaffold.test.ts",
       "mode": "100644",
-      "blob": "a0455b1c18671d76453b838f00c8b7dc21b4ee48"
+      "blob": "3be9977c8003a4dd9eb3ba37011e487120c57406"
     },
     {
       "path": "packages/create-app/tests/server-profile.test.ts",
@@ -18661,7 +21771,7 @@
     {
       "path": "packages/create-app/tests/templates.test.ts",
       "mode": "100644",
-      "blob": "4358accd400778735e2c057da26e19d906cc0ea7"
+      "blob": "03988ad9500dfc58bf454315014fbf73e37f0690"
     },
     {
       "path": "packages/create-app/tsconfig.json",
@@ -18696,12 +21806,12 @@
     {
       "path": "scripts/candidate-scaffold.mjs",
       "mode": "100644",
-      "blob": "27a3fe8d80ceb6ca2b1f315c52116cd05e52b095"
+      "blob": "0d1d29eb030773c4bf53c2bf6eb4e3eea216d97e"
     },
     {
       "path": "scripts/candidate-scaffold.test.mjs",
       "mode": "100644",
-      "blob": "e8741874194132c84d413f7c754946db08978edb"
+      "blob": "699e562a34db6050b9a0a06655a6897d28b06a7c"
     },
     {
       "path": "scripts/check-advisories.sh",
@@ -18722,6 +21832,11 @@
       "path": "scripts/check-core-browser.sh",
       "mode": "100644",
       "blob": "1abd0482021b8c2aa93ca48c9f5f551be9407fd8"
+    },
+    {
+      "path": "scripts/check-fmir-corpus.mjs",
+      "mode": "100644",
+      "blob": "2d2f8057ea364d7a12ce3f3c3832716cf8a897f2"
     },
     {
       "path": "scripts/check-forma-ir-requirement.sh",
@@ -18746,7 +21861,7 @@
     {
       "path": "scripts/check-release-qualification.mjs",
       "mode": "100644",
-      "blob": "f1f1d65ea243a13ee621270963127f76ba612c42"
+      "blob": "18a2759f42f779c3cbd40d8657c05afa97bd68e0"
     },
     {
       "path": "scripts/check-release-support.mjs",
@@ -18756,12 +21871,12 @@
     {
       "path": "scripts/check-release-workflow.rb",
       "mode": "100644",
-      "blob": "09eb2def4a3321c97243d29c7b0c6540fd03914b"
+      "blob": "3b8d101adccc87a35dd4dd9ba6e9941eb9f22be6"
     },
     {
       "path": "scripts/check-supply-chain.rb",
       "mode": "100755",
-      "blob": "6c05870152b224258238403e3e5fea0919812ecd"
+      "blob": "19f38f790f4df8aad70878f8967499d7362d402b"
     },
     {
       "path": "scripts/check-toolchain-policy.rb",
@@ -18771,7 +21886,7 @@
     {
       "path": "scripts/check.sh",
       "mode": "100755",
-      "blob": "ecb32ebdd535cfea3e6f444f1d336f615ad0d865"
+      "blob": "4d952f1bffc3080118319bbcf1d75fd641d6e715"
     },
     {
       "path": "scripts/compatibility-package.test.mjs",
@@ -18786,12 +21901,22 @@
     {
       "path": "scripts/core-raw-package.test.mjs",
       "mode": "100644",
-      "blob": "808f1602ab79941a439997e254dbc8ec61f46cdd"
+      "blob": "45184ac1206cc467a54477128e34a8a75b0f4317"
     },
     {
       "path": "scripts/decoder-compiler-package.test.mjs",
       "mode": "100644",
       "blob": "b4a37391ef181b025171b890e9adb3ebaad2e780"
+    },
+    {
+      "path": "scripts/dependabot-policy.mjs",
+      "mode": "100644",
+      "blob": "4936ba3bc69e0e6120e757da46130faf80dfa27b"
+    },
+    {
+      "path": "scripts/dependabot-policy.test.mjs",
+      "mode": "100644",
+      "blob": "48e41a2061b114b4d8dea223b93fb3144b87909f"
     },
     {
       "path": "scripts/fixtures/lighthouse-idle-check.txt",
@@ -18802,6 +21927,16 @@
       "path": "scripts/fixtures/parser-resource-trace.json",
       "mode": "100644",
       "blob": "908b8f1aefec104363896424cbfe42da06df0f46"
+    },
+    {
+      "path": "scripts/fixtures/release-contracts-3.0.0.json",
+      "mode": "100644",
+      "blob": "ad8b03e724a2f853b28844c3ece7bbd13a154f0c"
+    },
+    {
+      "path": "scripts/fixtures/release-contracts-3.0.0.md",
+      "mode": "100644",
+      "blob": "b97f7e3aeabcda44e7f39c87bed836dd19c58e48"
     },
     {
       "path": "scripts/fixtures/renderer-window/newer/manifest.json",
@@ -18849,6 +21984,21 @@
       "blob": "45ea21d87c40981184589ebad521bf196d0f1c90"
     },
     {
+      "path": "scripts/fmir-corpus.d.mts",
+      "mode": "100644",
+      "blob": "5657835d635a1fea0fec644a9a688734d10bf7da"
+    },
+    {
+      "path": "scripts/fmir-corpus.mjs",
+      "mode": "100644",
+      "blob": "9b61c0d1d57d83561e6c3a5b2ec14bbec3af7f16"
+    },
+    {
+      "path": "scripts/fmir-corpus.test.mjs",
+      "mode": "100644",
+      "blob": "0b11a337b98150d92d8c48f41d19be47a1315011"
+    },
+    {
       "path": "scripts/fmir-spec/README.md",
       "mode": "100644",
       "blob": "cfc368a70db276132f1d334055d0555071e5e4df"
@@ -18894,24 +22044,49 @@
       "blob": "0960881defdc795eedc9d2255a61eb8be98320ab"
     },
     {
+      "path": "scripts/n8-size-start.d.mts",
+      "mode": "100644",
+      "blob": "33af3f5c08b5cc5271a9a033978b0c2f077f9196"
+    },
+    {
+      "path": "scripts/n8-size-start.mjs",
+      "mode": "100644",
+      "blob": "276d26d92d430bf8986090f99cb08d4177cb0995"
+    },
+    {
+      "path": "scripts/n8-size-start.test.mjs",
+      "mode": "100644",
+      "blob": "5b5335190d3bb23ef0370b2c2c82acd33c169e96"
+    },
+    {
       "path": "scripts/owned-server.d.mts",
       "mode": "100644",
-      "blob": "a7ad335a515aa13f3d031c4f2aca7ada37e46ea0"
+      "blob": "ca0c71cd61c46f4ac297677eadd3a56c7286fde6"
     },
     {
       "path": "scripts/owned-server.mjs",
       "mode": "100644",
-      "blob": "938362ab13276678121aff20635467fd0f30c5b3"
+      "blob": "16dfece9b060e6267e408c778ed43a52f162fa3d"
     },
     {
       "path": "scripts/owned-server.test.mjs",
       "mode": "100644",
-      "blob": "2cfabdbd8e27c876685d76e249a30da622a1c317"
+      "blob": "abbdda14372a9b4dbc344060cfc4086596296eeb"
+    },
+    {
+      "path": "scripts/package-metadata.test.mjs",
+      "mode": "100644",
+      "blob": "caaaf3203f697ab992848ab50d26e8d471d9d1a8"
     },
     {
       "path": "scripts/packed-qualification-workflow.test.mjs",
       "mode": "100644",
-      "blob": "5075d06a9b3635bdcf545d72c081e402ad72f094"
+      "blob": "5d82e92bab6427380dbbd1c166fc3cf1ece2eeeb"
+    },
+    {
+      "path": "scripts/playwright-deps-timeout.test.py",
+      "mode": "100644",
+      "blob": "4213ac72fba5807eaf4bf15e31a9b1980adb03a3"
     },
     {
       "path": "scripts/portable-command.d.mts",
@@ -18929,19 +22104,59 @@
       "blob": "86f2ab570621767ca2df815d39324421e0413d3f"
     },
     {
+      "path": "scripts/prefer-ubuntu-archive.py",
+      "mode": "100644",
+      "blob": "4308318db52ea09b30019c912f57dc588a8975b0"
+    },
+    {
+      "path": "scripts/prefer-ubuntu-archive.test.py",
+      "mode": "100644",
+      "blob": "07fde7537d09e002bb376278774bebf0ba8f317e"
+    },
+    {
       "path": "scripts/published-scaffold.mjs",
       "mode": "100644",
-      "blob": "9736152ed94ac64effd7392c6a9ee7cd692f530f"
+      "blob": "34edc1787cedcd97341a6e1998ef46d6fb5488cc"
     },
     {
       "path": "scripts/published-scaffold.test.mjs",
       "mode": "100644",
-      "blob": "5612a46f22094bf0731d74051e56c7f6f10040f6"
+      "blob": "006cf1babfd68ef13bb20659241234c71576bb35"
     },
     {
       "path": "scripts/recall.mjs",
       "mode": "100644",
       "blob": "967633ef80e1bb951c295ce59e2772dbd51f2270"
+    },
+    {
+      "path": "scripts/registry-reconcile-policy.json",
+      "mode": "100644",
+      "blob": "ed0cc34459f5627be7394f48b0c027e2b28fb4a9"
+    },
+    {
+      "path": "scripts/registry-reconcile-workflow.test.mjs",
+      "mode": "100644",
+      "blob": "db51767482a22714f3ed60e37a0f81cc01061630"
+    },
+    {
+      "path": "scripts/registry-reconcile.mjs",
+      "mode": "100644",
+      "blob": "484f39be61fceaf8567991fe6af7ba092137384c"
+    },
+    {
+      "path": "scripts/registry-reconcile.test.mjs",
+      "mode": "100644",
+      "blob": "61061e381aa5b091c118f34674aa9f8eb4c9a5a8"
+    },
+    {
+      "path": "scripts/release-activation-observer.mjs",
+      "mode": "100644",
+      "blob": "0cf25c741cb168242d214e76ecda3948e1c247f2"
+    },
+    {
+      "path": "scripts/release-activation-observer.test.mjs",
+      "mode": "100644",
+      "blob": "e2a02b358e34ca99bb0421f9861eced419631a09"
     },
     {
       "path": "scripts/release-artifacts.sh",
@@ -18966,12 +22181,12 @@
     {
       "path": "scripts/release-burn-in-final.mjs",
       "mode": "100644",
-      "blob": "d82a3dcc2ba179d6047a2bcf7dd53647473f43c8"
+      "blob": "ad1f1a481095cceeff36a7b8774cbd154ef19b7b"
     },
     {
       "path": "scripts/release-burn-in-final.test.mjs",
       "mode": "100644",
-      "blob": "3e4dfab252e4292d59cac438d9b784c830c4b895"
+      "blob": "b2b020374ef152f983a0221fa89bdec86ab7f14d"
     },
     {
       "path": "scripts/release-burn-in-identities.mjs",
@@ -18981,22 +22196,22 @@
     {
       "path": "scripts/release-burn-in-inputs.mjs",
       "mode": "100644",
-      "blob": "2752aff1cf64d4bb8ad68630756f182e0f797a0c"
+      "blob": "395b604b4142c9375ad6dd77b966494e6f181186"
     },
     {
       "path": "scripts/release-burn-in-inputs.test.mjs",
       "mode": "100644",
-      "blob": "a60312c8ee3776ef6f214a702611abcc07065f90"
+      "blob": "c113a6ea3f2bde27bb4b82ca21b8a6b0489482c1"
     },
     {
       "path": "scripts/release-burn-in-report.mjs",
       "mode": "100644",
-      "blob": "cf88a86a28bc50dc2ebd2210f3d770fdf71a6427"
+      "blob": "7d9e604b1d74f288de8cbb1dad814b5a21608955"
     },
     {
       "path": "scripts/release-burn-in-report.test.mjs",
       "mode": "100644",
-      "blob": "096f171660c1dc7bda387513474e716fe7bbaa02"
+      "blob": "cb6097851d7299b19e53edc30929ae52d3c7111b"
     },
     {
       "path": "scripts/release-burn-in-setup.mjs",
@@ -19031,27 +22246,27 @@
     {
       "path": "scripts/release-burn-in-workflow.test.mjs",
       "mode": "100644",
-      "blob": "42a945dee2749b7ec004dad6137e90b28ca16791"
+      "blob": "e2636b1bc592247e0c61fb26be08fd7ac7e45317"
     },
     {
       "path": "scripts/release-burn-in.mjs",
       "mode": "100644",
-      "blob": "eb063d4fdbbfd0edf23a3bf91fb705a230826648"
+      "blob": "e1f2bd23b1a84a0173264208d839c264a8c33f94"
     },
     {
       "path": "scripts/release-cargo-closure.test.mjs",
       "mode": "100644",
-      "blob": "6417c0de9008d751d4922ff1e88a1453b19e4e71"
+      "blob": "324fac2e7c52bba4b781694151fd4888707dd550"
     },
     {
       "path": "scripts/release-cargo-lock.mjs",
       "mode": "100644",
-      "blob": "03a0c01007947ec9f036d68b6ea28a8974ffd073"
+      "blob": "e6c443252e764df281beadb172dc1b7ee85b1049"
     },
     {
       "path": "scripts/release-contracts.json",
       "mode": "100644",
-      "blob": "5c32c1ca7b462390d5333517de0d393f8412bcbd"
+      "blob": "69961bc2f9f5796f1ff903a08361505cefa614b2"
     },
     {
       "path": "scripts/release-corpus.test.mjs",
@@ -19082,6 +22297,11 @@
       "path": "scripts/release-integrity.test.mjs",
       "mode": "100644",
       "blob": "8827b989473b9d792f80be4692cd089a2cee3882"
+    },
+    {
+      "path": "scripts/release-line.mjs",
+      "mode": "100644",
+      "blob": "731aa3c836b3f784fc278fd7000d46adde0ab27b"
     },
     {
       "path": "scripts/release-measurements.mjs",
@@ -19136,7 +22356,7 @@
     {
       "path": "scripts/release-performance-baseline.mjs",
       "mode": "100644",
-      "blob": "52695c0f58f270502ffd511aabd4360a14e41bbb"
+      "blob": "dc18fb37ae317aa57bdb8bb5af8814bb3e0ffedb"
     },
     {
       "path": "scripts/release-performance-baseline.test.mjs",
@@ -19151,7 +22371,7 @@
     {
       "path": "scripts/release-performance-contract.mjs",
       "mode": "100644",
-      "blob": "6c39790ce62aef1560b4a2a132699e149b18c10f"
+      "blob": "dc23be65e16e8d253988670ab596cd108075e6ba"
     },
     {
       "path": "scripts/release-performance-contract.test.mjs",
@@ -19171,12 +22391,12 @@
     {
       "path": "scripts/release-performance-decoder.mjs",
       "mode": "100644",
-      "blob": "f7f4aefbe3588a4a8d8795d87d0f57864c597fc6"
+      "blob": "0c825665d0add9671f3eb77890df56d085375716"
     },
     {
       "path": "scripts/release-performance-decoder.test.mjs",
       "mode": "100644",
-      "blob": "39221d1052d7ace9236754b9a910591d47bc54fc"
+      "blob": "0082b51538a1298cb57241e6796cea85ecd7b2d7"
     },
     {
       "path": "scripts/release-performance-durability.test.mjs",
@@ -19186,12 +22406,12 @@
     {
       "path": "scripts/release-performance-evidence.test.mjs",
       "mode": "100644",
-      "blob": "857d48786089fdbd77f5d794eac9dfdd796d1bea"
+      "blob": "97ba8fb08c352bd3fe064edc07011db52142d2b5"
     },
     {
       "path": "scripts/release-performance-finalization.test.mjs",
       "mode": "100644",
-      "blob": "512db2e964e14339a5b9f974a8998e857c8540f2"
+      "blob": "8a3404458650bde6fe75db8ecb057bdf70838e83"
     },
     {
       "path": "scripts/release-performance-journal.mjs",
@@ -19221,7 +22441,7 @@
     {
       "path": "scripts/release-performance-mobile.mjs",
       "mode": "100644",
-      "blob": "b58ce95d5843bf4759b143523e26141c4edd2f1f"
+      "blob": "2dce1c251a7a2e9621e9c1a6f78ee7b5b2cd5dc8"
     },
     {
       "path": "scripts/release-performance-parser-attribution.test.mjs",
@@ -19231,12 +22451,22 @@
     {
       "path": "scripts/release-performance-spec.mjs",
       "mode": "100644",
-      "blob": "cdbc8fda829abba1681351698c678fe43ffdd377"
+      "blob": "55c5cbb079bc7621d71f27f74faf923f4f6b3716"
+    },
+    {
+      "path": "scripts/release-performance-startup.mjs",
+      "mode": "100644",
+      "blob": "93c4bd1224fa40be40effeda59f5e902ffe71e4a"
+    },
+    {
+      "path": "scripts/release-performance-startup.test.mjs",
+      "mode": "100644",
+      "blob": "c76cf0733d2906f1e945ba4eafc9dc314d89ae0e"
     },
     {
       "path": "scripts/release-performance-test-fixtures.mjs",
       "mode": "100644",
-      "blob": "08586ded3e074ad028086883355a3361d9a4f4c1"
+      "blob": "0a275c0c2541bc98c403e159ad95f7aba9f82c80"
     },
     {
       "path": "scripts/release-performance-trace-fixtures.mjs",
@@ -19246,7 +22476,7 @@
     {
       "path": "scripts/release-performance.mjs",
       "mode": "100644",
-      "blob": "a18ba73e31a597670d6132c2eb9c769c51cc705d"
+      "blob": "432c2bd98661b610070533d01d2717cdc700dcf4"
     },
     {
       "path": "scripts/release-plane-events.mjs",
@@ -19266,7 +22496,7 @@
     {
       "path": "scripts/release-props.test.mjs",
       "mode": "100644",
-      "blob": "e200e94d1c7807911644f0aa19a5b55a9cf05480"
+      "blob": "3465ea45aead072434b8731b9207a326f7077a40"
     },
     {
       "path": "scripts/release-publish.mjs",
@@ -19291,12 +22521,12 @@
     {
       "path": "scripts/release-record.mjs",
       "mode": "100644",
-      "blob": "96a7374a55897e4b47a27efa9408fc571a3e7b35"
+      "blob": "fbd3eb7c0b26feecb84a3cd8a46a3b833272c835"
     },
     {
       "path": "scripts/release-record.test.mjs",
       "mode": "100644",
-      "blob": "16f3818eb94c0ae405cf68bd6feba388740b1fbb"
+      "blob": "a80543c39c1304225db2fce90ccdcefeb90bb72e"
     },
     {
       "path": "scripts/release-security.mjs",
@@ -19306,7 +22536,7 @@
     {
       "path": "scripts/release-security.test.mjs",
       "mode": "100644",
-      "blob": "68856acea4c503d3b9dc8f34b8bf279a2f251fd9"
+      "blob": "6dc9ad83185862b4f57b87994fc97386c31b7e44"
     },
     {
       "path": "scripts/release-set.mjs",
@@ -19329,9 +22559,19 @@
       "blob": "74ba4224a513cfd2c6f2cd9c5f73519b01abf6b5"
     },
     {
+      "path": "scripts/release-soak-completion-v2.mjs",
+      "mode": "100644",
+      "blob": "e609f83e2d655e1ab2a21ee81f6a4376866a3476"
+    },
+    {
       "path": "scripts/release-soak-completion.mjs",
       "mode": "100644",
       "blob": "4d5333ed13f1bf8af1ef1df7385346518aadc3a1"
+    },
+    {
+      "path": "scripts/release-soak-context-v2.mjs",
+      "mode": "100644",
+      "blob": "91375866068b7ba6909aacdf9dc74429d5df97b5"
     },
     {
       "path": "scripts/release-soak-deferral.mjs",
@@ -19341,7 +22581,17 @@
     {
       "path": "scripts/release-soak-deferral.test.mjs",
       "mode": "100644",
-      "blob": "f34183316fad8f330a0f66a2bd0973c90760fdc3"
+      "blob": "38c96be693d72c8c84e96bd481c5d7e05b79d75b"
+    },
+    {
+      "path": "scripts/release-soak-v2.test.mjs",
+      "mode": "100644",
+      "blob": "5aed2ceef85548dce89e39f43aae76ba066f7286"
+    },
+    {
+      "path": "scripts/release-soak-worker-v2.mjs",
+      "mode": "100644",
+      "blob": "9286caf43581afe23464f36a764853326f58bd92"
     },
     {
       "path": "scripts/release-support-history.mjs",
@@ -19366,12 +22616,12 @@
     {
       "path": "scripts/release-template-islands.d.mts",
       "mode": "100644",
-      "blob": "f9e110768e10dd161e63e41441ca7064c30ced5e"
+      "blob": "e504254410c3a7a16aa49c46c14e62405603c71b"
     },
     {
       "path": "scripts/release-template-islands.mjs",
       "mode": "100644",
-      "blob": "9245b82923ac33705c2f64970bb8864b3460197c"
+      "blob": "a510305415ca1faedb86e9fd10f24e615cddb649"
     },
     {
       "path": "scripts/release-template-lock.test.mjs",
@@ -19409,6 +22659,11 @@
       "blob": "0365f61961b0d674b6c66a6b56cc859c1c99b3e4"
     },
     {
+      "path": "scripts/release-verification-check.test.mjs",
+      "mode": "100644",
+      "blob": "1cecc538cfef4d54e46df7e47dad9d40216b214d"
+    },
+    {
       "path": "scripts/release-workflow-evidence.test.mjs",
       "mode": "100644",
       "blob": "2b93afa857e205b50f9bf36453889fb4c297fc5c"
@@ -19416,7 +22671,7 @@
     {
       "path": "scripts/release.test.mjs",
       "mode": "100644",
-      "blob": "7230f46151d7a5ce9f580793fd90593386383121"
+      "blob": "f1667b15c8ea569f3ba49314bf4c3d8c3a10123a"
     },
     {
       "path": "scripts/reviewer-static-executable.test.mjs",
@@ -19429,6 +22684,26 @@
       "blob": "3f52666e9c9f92cc339a31da38492a9b4c4af99c"
     },
     {
+      "path": "scripts/scaffold-cache-measure.mjs",
+      "mode": "100644",
+      "blob": "ed5c7a953007911fd4d8dc2e4e1df323034fc953"
+    },
+    {
+      "path": "scripts/scaffold-diagnostics.d.mts",
+      "mode": "100644",
+      "blob": "74d208295153f476e1de231eb1820d311378e901"
+    },
+    {
+      "path": "scripts/scaffold-diagnostics.mjs",
+      "mode": "100644",
+      "blob": "a5fcc2da433ef44cda304482f8cf7e6015f18e51"
+    },
+    {
+      "path": "scripts/scaffold-diagnostics.test.mjs",
+      "mode": "100644",
+      "blob": "145bf8f556fa387394493c0850e1d0d020c7eb1e"
+    },
+    {
       "path": "scripts/security-md.mjs",
       "mode": "100644",
       "blob": "b710f9fc66028d6690584edc188cf1b398a2e493"
@@ -19436,7 +22711,7 @@
     {
       "path": "scripts/security-mutation-probes.py",
       "mode": "100644",
-      "blob": "7f9a33376d55e1684ba136dd59fff69ce0d999dc"
+      "blob": "8e5894d19d86673786b394b733699ce7bc036bcd"
     },
     {
       "path": "scripts/security-mutation-probes.test.py",
@@ -19456,7 +22731,7 @@
     {
       "path": "scripts/template-islands-browser.test.mjs",
       "mode": "100644",
-      "blob": "a16149c866acbbf83204a9649cf676221d4a126f"
+      "blob": "2ab371528dcc16ba8c6d851e3b34b6ef95a754f4"
     },
     {
       "path": "scripts/template-lock-seeds.mjs",
@@ -19491,7 +22766,7 @@
     {
       "path": "scripts/tests/supply-chain.test.mjs",
       "mode": "100644",
-      "blob": "61c52fae5c9108036a08ac9368eecdaa8336e388"
+      "blob": "b60f0762719c14da8157966a92d30792010f65b0"
     },
     {
       "path": "scripts/toolchain-matrix.mjs",
@@ -19506,7 +22781,7 @@
     {
       "path": "scripts/verify-release-set.mjs",
       "mode": "100644",
-      "blob": "d33bf0c67ad546c1e73725ec744496dbb55a50e8"
+      "blob": "a3f1070faa341eb0371c4827b6940d0a7d56e8bb"
     }
   ]
 }
