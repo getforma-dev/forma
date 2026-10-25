@@ -1,9 +1,10 @@
-# FORMA-299: cold adoption startup candidate
+# FORMA-299: cold adoption startup repair
 
 The RC3 packed rehearsal at `8ae49afa` failed startup acceptance: tenant-login
 tasks of 57.260 and 60.373 ms exceeded the 55 ms exception ceiling, with
 17.633 ms aggregate excess against 10 ms. That original run remains failed.
-This candidate requires fresh hosted qualification under the unchanged policy.
+The repaired candidate at `9f53f5ef` passes fresh hosted P17 under that unchanged
+policy. This is candidate qualification, not publication or whole-release acceptance.
 
 ## Selected change
 
@@ -70,12 +71,36 @@ All five package ceilings pass: main 49,845 B against 49,926 B, an increase of
 asset/SRI identities were independently checked. The startup attribution
 recognizer and all numeric thresholds are unchanged.
 
-## Remaining release conditions
+## Hosted qualification and remaining release conditions
 
-Fresh exact-source CI, package/scaffold checks, whole P17, full engines/parity,
-and all 328 actual mutation probes are required. Earlier d6 mutation and 8ae
-engine/P17 records retain their original source identities. Native and client
-evidence may be reused only with an explicit applicable input/output proof.
+Packed [run 40239821236](https://github.com/getforma-dev/forma/actions/runs/40239821236)
+passes 62/62 checks at `9f53f5ef9bcbd68ff6b5a41c7855b4f5e387d757`.
+All twenty cold visits on each of tenant-login and islands-100 require zero
+startup exceptions, with zero excess above 50 ms and p95 TBT of zero. All forty
+independent activation observations complete without errors or observer long
+tasks; maximum response after paint is 198.5 ms and 389.9 ms respectively,
+below 500 ms. The complete task and activation policy remains unchanged.
+Largest complete source-bound drain tasks are42.186 ms for tenant-login and
+40.343 ms for islands-100. The retained pre-application browser-layout tasks
+are not misrepresented as zero whole-page long tasks.
+The original failed run is not relabelled as passed. Artifact 12616263928 is
+60,608,620 B with SHA256
+`abaf953d3c0e93e86b98b74c0b9627e22fddf84fc1437225642f29f4785b51b9`.
+The original archive, all eleven producer hashes, journal, completion record,
+raw policy replay and owned-process cleanup are verified.
+
+All five full engine/parity jobs pass in run 40239823036. CI 40239814838 passes
+all nineteen applicable jobs, including both packed scaffold platforms; the
+registry scaffold skip is expected before RC3 publication. Its synthetic merge
+producer is `cf9ebf84332f8ee5fd5406183b1232489e40b465`, with the same tree as
+9f53; it is not relabelled as the manual packed run's source. The fresh Linux
+signal costs and original missed targets receive an explicit release-specific
+disposition in [the performance decisions](3.1-PERFORMANCE-TRADEOFFS.md).
+
+The full 328-probe campaign 40239819395 remains pending at this checkpoint.
+Earlier d6 mutation and 8ae engine/P17 records retain their original source
+identities. Scoped FMIR, SR14 and corrected native-resource reuse through 9f53
+is independently verified; it does not claim whole-package byte equivalence.
 Whole-release D14 acceptance, tagged publication, active RC burn-in and final
 release gates remain separate requirements. No release pass is asserted here.
 

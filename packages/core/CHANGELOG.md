@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-299: use parenthesized function expressions for five private adoption
+  functions, allowing supported engines to compile them eagerly. Their bodies,
+  scheduling and ownership behavior are unchanged. Fresh packed startup checks
+  pass under the existing50 ms target without using a55 ms exception. Main
+  adds 9 B gzip, within its existing limit. The release performance record
+  retains the current signal-workload costs and original missed targets.
+
 - FORMA-290: align small-list key matching with Map SameValueZero semantics
   (`NaN` matches itself; signed zeroes match). Track owners by actual row node
   so duplicate keys cannot overwrite cleanup records. Retain row identity on

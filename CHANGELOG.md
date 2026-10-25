@@ -7,6 +7,13 @@
 A fresh candidate includes the following reviewed changes and requires renewed
 whole-release qualification.
 
+- FORMA-299: hint eager compilation for five private adoption functions to
+  reduce cold island startup work. Function bodies, atomic adoption and all
+  startup limits are unchanged. Fresh packed qualification passes 62/62 with
+  no startup exceptions across twenty visits per route. Core adds 9 B gzip
+  within its existing limit. Retain and explicitly accept the measured signal
+  costs in the [current performance decision](docs/release/3.1-PERFORMANCE-TRADEOFFS.md#rc3-startup-repair-and-current-client-costs).
+
 - FORMA-290: use the same key equality for small and large component lists,
   retaining `NaN` rows through repeated updates. Track each row owner by its
   actual node so duplicate keys cannot overwrite another row's cleanup.

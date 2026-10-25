@@ -150,7 +150,7 @@
         },
         "FORMA-259": {
           "status": "done",
-          "scope": "Qualify the selected simpler supplied-node effects and initial-failure cleanup repair under docs/release/3.1-PERFORMANCE-TRADEOFFS.md: preserve adoption/ownership/cleanup/error semantics; retain fresh exact-source Linux results against published Forma and pristine alien-signals 3.1.2, all nine workloads and original 80%/85% target outcomes; explicitly accept the documented fan-out shortfall and delivery tradeoff with core 49,926 B (the separately reviewed FORMA-294 package allocation) and route 28,420 B gzip ceilings, leaving other budgets unchanged"
+          "scope": "Qualify the selected simpler supplied-node effects and initial-failure cleanup repair under docs/release/3.1-PERFORMANCE-TRADEOFFS.md: preserve adoption/ownership/cleanup/error semantics; retain fresh exact-source Linux results against published Forma and pristine alien-signals 3.1.2, all nine workloads and original 80%/85% target outcomes; explicitly accept the documented fan-out and effect-creation shortfalls, current workload costs and delivery tradeoff with core 49,926 B (the separately reviewed FORMA-294 package allocation) and route 28,420 B gzip ceilings, leaving other budgets unchanged"
         },
         "FORMA-260": {
           "status": "done",
