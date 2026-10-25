@@ -58,11 +58,41 @@ test('each route owns an independent twenty-visit budget',()=>{
  rows[1].p95TbtMs=5;finalizeMobileAttribution(rows);validateCurrentMobile(rows);
  assert(rows.every(row=>row.startupAcceptance.exceptionalTaskCount===2&&row.startupAcceptance.totalExcessMs===10));
 });
-test('new policy never changes strict observer/input ceiling',()=>{
- for(const duration of [50.00000000000001,51,55,110]){
-  const probe={expected:2,active:2,responded:2,firstPaintMs:100,lastResponseMs:100,longTasks:[{startTime:120,duration}],errors:[]};
-  assert.throws(()=>validateActivation(probe,{islands:2}),/over50ms/);
+test('the strict observer ceiling still governs history and controls; v2 bounds an observer task at 55 ms',()=>{
+ const probe=duration=>({expected:2,active:2,responded:2,firstPaintMs:100,lastResponseMs:100,longTasks:[{startTime:120,duration}],errors:[]});
+ for(const duration of [50.00000000000001,51,55,110])assert.throws(()=>validateActivation(probe(duration),{islands:2}),/over50ms/);
+ for(const duration of [55.00000000000001,110])assert.throws(()=>validateActivation(probe(duration),{islands:2,maxTaskMs:55}),/over55ms/);
+ for(const duration of [50,51,55])validateActivation(probe(duration),{islands:2,maxTaskMs:55});
+});
+test('an observer task within the allowance draws on the same route budget, by duration alone',()=>{
+ const rows=campaign([]);
+ rows[0].runs[1].activation.longTasks=[{startTime:120,duration:53}];
+ finalizeMobileAttribution(rows);validateCurrentMobile(rows);
+ const accepted=rows[0].startupAcceptance;
+ assert.equal(accepted.exceptionalTaskCount,1);assert.deepEqual(accepted.affectedVisits,[2]);
+ assert.equal(accepted.totalExcessMs,3);assert.equal(accepted.exceptions[0].source,'independent-observer');
+ assert.equal(Object.hasOwn(accepted.exceptions[0],'proof'),false);
+ assert.equal(rows[1].startupAcceptance.exceptionalTaskCount,0,'the other route keeps its own budget');
+ assert.throws(()=>validateMobile(rows),/over50ms/,'history still refuses it');
+ // Two proven Lighthouse exceptions plus one observer task are three tasks.
+ const combined=campaign([51,51]);combined[0].runs[2].activation.longTasks=[{startTime:120,duration:51}];
+ assert.throws(()=>validateCurrentMobile(finalizeMobileAttribution(combined)),/more than2/);
+ // Three visits with one exception each exceed the visit bound.
+ const visits=campaign([51]);for(const i of [1,2])visits[0].runs[i].activation.longTasks=[{startTime:120,duration:51}];
+ assert.throws(()=>validateCurrentMobile(finalizeMobileAttribution(visits)),/more than2/);
+ // Above the exceptional maximum it is refused before any budget is counted.
+ const over=campaign([]);over[0].runs[0].activation.longTasks=[{startTime:120,duration:55.00000000000001}];
+ assert.throws(()=>finalizeMobileAttribution(over),/over55ms/);
+ // A forged source or a missing observer exception does not validate.
+ for(const mutate of [s=>{s.exceptions[0].source='other';},s=>{s.exceptions.pop();s.exceptionalTaskCount=0;s.affectedVisits=[];s.totalExcessMs=0;s.maxExceptionalTaskMs=0;}]){
+  const copy=structuredClone(rows);mutate(copy[0].startupAcceptance);assert.throws(()=>validateCurrentMobile(copy));
  }
+});
+test('an admitted observer task still disables L-66 correlation',()=>{
+ // Correlation stays campaign-wide and strict: any observer long task, even
+ // one the v2 budget admits, leaves unattributed Lighthouse tasks counted.
+ const contract=readFileSync(new URL('./release-performance-contract.mjs',import.meta.url),'utf8');
+ assert(contract.includes('return rows.every(row=>row.runs.every(({activation:p})=>p.done===true && p.hosts===p.expected && p.lastResponseMs>=p.firstPaintMs && p.longTasks.length===0));'));
 });
 test('precise exceptional maximum, task count and aggregate are bounded without rounding',()=>{
  for(const durations of [[55.00000000000001],[51,51,51]])assert.throws(()=>validateCurrentMobile(campaign(durations)),/over55ms|more than2/);

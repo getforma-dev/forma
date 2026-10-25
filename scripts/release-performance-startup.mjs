@@ -172,7 +172,11 @@ export function summarizeStartupAcceptance(runs,{correlated=false}={}){
   const attribution=attributeMobileTasks(lhr,trace,{correlated});
   assert.deepEqual(run.lighthouse.attribution,attribution,'N3: task attribution differs from raw trace');
   for(const task of attribution.tasks.filter(t=>t.kind==='application-or-unattributed'&&t.duration>MOBILE_STARTUP_ACCEPTANCE.targetMs)){
-   exceptions.push({visit:run.run,index:task.index,startTime:task.startTime,duration:task.duration,excessMs:task.duration-MOBILE_STARTUP_ACCEPTANCE.targetMs,proof:proveColdStartupTask(lhr,trace,task,attribution,cache)});
+   exceptions.push({visit:run.run,source:'lighthouse',index:task.index,startTime:task.startTime,duration:task.duration,excessMs:task.duration-MOBILE_STARTUP_ACCEPTANCE.targetMs,proof:proveColdStartupTask(lhr,trace,task,attribution,cache)});
+  }
+  // Independent observer tasks carry no attribution: duration alone, same budget.
+  for(const task of run.activation.longTasks.filter(t=>t.duration>MOBILE_STARTUP_ACCEPTANCE.targetMs)){
+   exceptions.push({visit:run.run,source:'independent-observer',startTime:task.startTime,duration:task.duration,excessMs:task.duration-MOBILE_STARTUP_ACCEPTANCE.targetMs});
   }
  }
  return {policy:{...MOBILE_STARTUP_ACCEPTANCE},runs:runs.length,exceptionalTaskCount:exceptions.length,affectedVisits:[...new Set(exceptions.map(task=>task.visit))],totalExcessMs:exceptions.reduce((sum,task)=>sum+task.excessMs,0),maxExceptionalTaskMs:Math.max(0,...exceptions.map(task=>task.duration)),exceptions};
@@ -180,7 +184,8 @@ export function summarizeStartupAcceptance(runs,{correlated=false}={}){
 export function validateStartupAcceptance(summary){
  assert.deepEqual(summary.policy,MOBILE_STARTUP_ACCEPTANCE,'N3: current startup policy differs');
  assert.equal(summary.runs,MOBILE_STARTUP_ACCEPTANCE.runsPerRoute,'N3: startup acceptance requires20 visits');
- assert(summary.exceptions.every(task=>task.proof.qualified),'N3: application/unattributed task over50ms lacks positive cold-start proof');
+ assert(summary.exceptions.every(task=>['lighthouse','independent-observer'].includes(task.source)),'N3: unknown startup exception source');
+ assert(summary.exceptions.every(task=>task.source==='independent-observer'||task.proof.qualified),'N3: application/unattributed task over50ms lacks positive cold-start proof');
  assert(summary.maxExceptionalTaskMs<=MOBILE_STARTUP_ACCEPTANCE.maxExceptionalTaskMs,'N3: exceptional startup task over55ms');
  assert(summary.exceptionalTaskCount<=MOBILE_STARTUP_ACCEPTANCE.maxExceptionalTasks,'N3: more than2 exceptional startup tasks');
  assert(summary.affectedVisits.length<=MOBILE_STARTUP_ACCEPTANCE.maxAffectedVisits,'N3: more than2 affected startup visits');

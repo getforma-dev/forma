@@ -32,10 +32,12 @@ export const MOBILE_STARTUP_POLICY = Object.freeze({
 });
 
 // Classification and its historical strict summary above remain stable. This
-// separately versioned product allowance applies only to positively proven
-// cold-start tasks; independent observer/input tasks retain the strict ceiling.
+// separately versioned product allowance (v2, maintainer decision 2026-10-25)
+// admits positively proven cold-start Lighthouse tasks and, by duration alone,
+// independent observer tasks; both draw on one budget per route. The strict
+// observer ceiling still governs historical records and the injected controls.
 export const MOBILE_OBSERVER_MAX_TASK_MS = 50;
 export const MOBILE_STARTUP_ACCEPTANCE = Object.freeze({
- id:'N3-cold-start-bounded-v1',targetMs:50,maxExceptionalTaskMs:55,
+ id:'N3-cold-start-bounded-v2',targetMs:50,maxExceptionalTaskMs:55,
  maxExceptionalTasks:2,maxAffectedVisits:2,maxExcessMs:10,runsPerRoute:20,
 });
