@@ -7,7 +7,7 @@ the later completion receipt supplies the result without rewriting history.
 
 ## 3.1 preparation
 
-3.1.0-rc.1 is prepared, not published. [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md)
+3.1.0-rc.2 is being prepared; RC1 was stopped before publication. [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md)
 record the accepted tradeoffs and missed targets. [3.1 qualification](3.1-QUALIFICATION.md)
 binds each non-audit RC row to exact-source evidence. The upgrade guide is
 [UPGRADING-3.1](../UPGRADING-3.1.md).

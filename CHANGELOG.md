@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
-Changes after 3.1.0-rc.1 will be recorded here.
+Changes after 3.1.0-rc.2 will be recorded here.
 
-## [3.1.0-rc.1] - Prepared; publication pending
+## [3.1.0-rc.2] - Prepared; publication pending
+
+- Preserve seed rejection tests across the final version transition and verify
+  native error reporting without Chromium-specific assumptions in other engines.
+  Product behavior and the recorded performance tradeoffs are unchanged.
+- RC1 was stopped before publication; its tag and failed/cancelled evidence are
+  retained. RC2 requires its own review and release qualification.
+
+## [3.1.0-rc.1] - Superseded before publication
 
 Forma 3.1 is a minor release of all seven coordinated packages. The upgrade
 guide is [docs/UPGRADING-3.1.md](docs/UPGRADING-3.1.md); measured costs and

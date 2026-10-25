@@ -7,6 +7,7 @@ import { ROOT, stageTemplates, versionFiles } from './release-set.mjs';
 import { SEED_MARKER, readTemplateSeeds, validateSeedFiles, prepareTemplateSeeds } from './template-lock-seeds.mjs';
 
 const version = JSON.parse(readFileSync(join(ROOT, 'packages/create-app/package.json'))).version;
+const mismatchedVersion = version.includes('-') ? version.split('-')[0] : `${version}-dev`;
 const originals = readTemplateSeeds(ROOT, version);
 const externalNpm = files => Object.fromEntries(Object.entries(JSON.parse(files.get('admin/package-lock.json')).packages).filter(([path]) => path && !/^node_modules\/@getforma\/(core|compiler|build)$/.test(path)));
 const externalCargo = files => files.get('Cargo.lock').split(/(?=^\[\[package\]\])/m).filter(block => !/^name = "forma-(ir|ir-derive|server)"\r?$/m.test(block));
@@ -68,7 +69,7 @@ test('bundled entries must belong to an authenticated external parent archive', 
 
 test('source seeds refuse unknown or mixed internal npm packages and requirements', () => {
   for (const change of [
-    lock => {lock.packages['node_modules/@getforma/core'].version = '3.1.0';},
+    lock => {lock.packages['node_modules/@getforma/core'].version = mismatchedVersion;},
     lock => {lock.packages['node_modules/@getforma/core'].integrity = 'sha512-'+'A'.repeat(86)+'==';},
     lock => {lock.packages['node_modules/@getforma/unknown'] = lock.packages['node_modules/@getforma/core'];},
     lock => {lock.packages['node_modules/@getforma/compiler'].peerDependencies['@getforma/core'] = '^2.0.0';},
@@ -76,14 +77,14 @@ test('source seeds refuse unknown or mixed internal npm packages and requirement
     lock => {delete lock.packages['node_modules/@getforma/core'];},
   ]) assert.throws(changed('minimal',files => npm(files,change)), /internal|authenticate/);
   assert.throws(changed('minimal',files => {
-    const p=JSON.parse(files.get('admin/package.json'));p.dependencies['@getforma/core']='=3.1.0';files.set('admin/package.json',JSON.stringify(p));
+    const p=JSON.parse(files.get('admin/package.json'));p.dependencies['@getforma/core']='='+mismatchedVersion;files.set('admin/package.json',JSON.stringify(p));
   }), /mixed internal requirement/);
 });
 
 test('source seeds refuse unknown crates, mixed versions, stale internal hashes and invalid graph edges', () => {
   for (const change of [
     text => text.replace('name = "forma-ir"','name = "forma-unknown"'),
-    text => text.replace('name = "forma-ir"\nversion = "'+version+'"','name = "forma-ir"\nversion = "3.1.0"'),
+    text => text.replace('name = "forma-ir"\nversion = "'+version+'"','name = "forma-ir"\nversion = "'+mismatchedVersion+'"'),
     text => text.replace('name = "forma-ir"','name = "forma-ir"\nchecksum = "'+'a'.repeat(64)+'"'),
     text => text.replace(' "forma-ir",',' "missing-crate",'),
   ]) assert.throws(changed('minimal',files => cargo(files,change)), /internal|authenticate|crate|dependency|Cargo edge/);
@@ -97,10 +98,10 @@ test('seed identity and both templates are validated before staging writes or ar
       let candidate=packages;
       if(fault==='missing-marker') {rmSync(join(root,SEED_MARKER));files.delete(SEED_MARKER);}
       if(fault==='unknown-template'||fault==='mixed-marker') {
-        const marker=JSON.parse(files.get(SEED_MARKER)); if(fault==='unknown-template')marker.templates.push('unknown');else marker.version='3.1.0';
+        const marker=JSON.parse(files.get(SEED_MARKER)); if(fault==='unknown-template')marker.templates.push('unknown');else marker.version=mismatchedVersion;
         files.set(SEED_MARKER,JSON.stringify(marker));writeFileSync(join(root,SEED_MARKER),files.get(SEED_MARKER));
       }
-      if(fault==='mixed-candidate')candidate=packages.map((p,i)=>i?p:{...p,version:'3.1.0'});
+      if(fault==='mixed-candidate')candidate=packages.map((p,i)=>i?p:{...p,version:mismatchedVersion});
       if(fault==='missing-external'||fault==='missing-internal') {
         const path='packages/create-app/templates/dashboard/admin/package-lock.json';const lock=JSON.parse(files.get(path));
         if(fault==='missing-internal')delete lock.packages['node_modules/@getforma/core'];else delete lock.packages['node_modules/esbuild'].integrity;
