@@ -1,8 +1,8 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "eb322262b52517a8f3ad717ef51d7419c0fba1aa",
-  "reviewedTree": "7c20b763f0a3a9029bb93ed0db9166f6d60debeb",
-  "inputManifestSha256": "52965147b6fbd499f4bf00159cbdd1c6b0f32d6d12db594e3787071893816ac3",
+  "reviewedCommit": "9a7146f23e1524d0a104e3a5c15087914cdd3ee4",
+  "reviewedTree": "e4b4dfdc99a4ee403dae9a9e3c6553ffbf5d7817",
+  "inputManifestSha256": "a01beadb6af1594d6ba1dc0b9b7697825785f3d58b249a4a7e13c7e54aaeb5c7",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
@@ -18,24 +18,38 @@
     "decision": "L-65",
     "initializationEvidenceSha256": "dfec43ee8d8af7a56e4d38d508b6b183c875630b4e9561dc502fba001062d0a1"
   },
-  "reviewedAt": "2026-10-25T15:24:27.111Z",
+  "reviewedAt": "2026-10-25T16:34:51.039Z",
   "accepted": true,
   "findings": [
     {
       "id": "D14-STYLE-UNDEFINED",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Exact dbfb67ff additive test preserves the complete style attribute, important priority, color and opacity. Actual canonical selected mutant is caught by that completed assertion with no process error, crash or unfinished started record. Full before/restored baselines4216 preserve every original4215 identity/name/state plus exactly one new test. All4556 source snapshot files independently match Git and are restored. Corpus identities/order/targets/anchors/replacements/tags remain unchanged; false equivalent flags removed. Original full325caught/3declared-equivalent evidence is preserved, combined with this supplement to326/328caught and2survivors; expression98/98, unchanged85floors. This is not a new full328 campaign.",
+      "rationale": "Exact dbfb67ff additive test preserves the complete style attribute, important priority, color and opacity. Actual canonical selected mutant is caught by that completed assertion with no process error, crash or unfinished started record. Full before/restored baselines4216 preserve every original4215 identity/name/state plus exactly one new test. All4556 source snapshot files independently match Git and are restored. Corpus identities/order/targets/anchors/replacements/tags remain unchanged; false equivalent flags removed. Original full325caught/3declared-equivalent evidence is preserved, combined with this supplement to326/328caught and2survivors; expression98/98, unchanged85floors. This is not a new full328 campaign. The relevant core production, test, corpus and harness inputs remain byte-identical at frozen RC2 Y2; no new full campaign is claimed.",
       "evidenceSha256": "26481d19025e245e9259514e89fddf89ea2d621f02ed13c72189931e2a3d54e4"
     },
     {
       "id": "D14-LIST-NAN",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "The finite three-update8-row reproduction and64-row control reproduce identically in authenticated published3.0.0 and current packed3.1 bytes; reconciliation source is byte-identical. This is a historical medium lifecycle defect, not an established3.1 regression. The maintainer explicitly accepted this bounded nonblocking disposition, while publishing precise changelog/upgrade disclosure and stable unique string/finite-number validation workaround and tracking FORMA-290. No unsupported-input claim or retrospective public-domain narrowing is used. The two threshold mutants actually survived the corrected full-suite selected runs and count in the denominator, leaving two honest coverage gaps. Production repair remains open and is not represented as done.",
+      "rationale": "The finite three-update8-row reproduction and64-row control reproduce identically in authenticated published3.0.0 and current packed3.1 bytes; reconciliation source is byte-identical. This is a historical medium lifecycle defect, not an established3.1 regression. The maintainer explicitly accepted this bounded nonblocking disposition, while publishing precise changelog/upgrade disclosure and stable unique string/finite-number validation workaround and tracking FORMA-290. No unsupported-input claim or retrospective public-domain narrowing is used. The two threshold mutants actually survived the corrected full-suite selected runs and count in the denominator, leaving two honest coverage gaps. Production repair remains open and is not represented as done. RC2 changes no reconciliation/ownership implementation, and the disclosure and tracking remain unchanged.",
       "evidenceSha256": "de02a73be2a2bc02c10f6a479c1a48fbb0d873672526ccf3139052567fe3ec08"
+    },
+    {
+      "id": "D14-FINAL-SEED-FIXTURE",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "Five intentionally unequal values now derive a valid unequal version across prerelease and stable transitions. All original refusal assertions remain; exact-source focused RC/final controls pass seven each, and the full final candidate boundary passes105/105. All4556 snapshot inputs and21 canonical final version outputs were independently verified. The repaired test is exact frozen Y2 and fresh Y2 CI passes; no final-diff policy exception or late post-RC test drift is used.",
+      "evidenceSha256": "570ba1532979228e2ba5be9928c8b7c4ac86a15ce53f4a3d29fc4bf658b5d90b"
+    },
+    {
+      "id": "D14-NATIVE-ENGINE-FIXTURES",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "All seven original Firefox/WebKit failures reproduce and are preserved. Repaired controls retain exact Forma diagnostic semantics, native error classes, bad-element attribution and live neighbors, while admitting engine-owned prose and actual native throw/reject behavior. A separate deferred real-native case tests asynchronous rejection and catches the isolated missing-catch weakener in all three engines. Firefox pageerror delivery is awaited explicitly. All29 evidence files, exact source and one-expression mutation are verified;30 local controls pass and all five full hosted engine/parity jobs pass on frozen Y2. No product, timeout or skip change is used.",
+      "evidenceSha256": "a7514761dd3b24825302218f9bf528ab0485d7060f7c76f182b1fffda1fc1068"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "e3f1018574c593e4922780cd8fe7d72924fd96bcb6acd69541c9aa01f71ea806"
+  "acceptanceEvidenceSha256": "f606c6f33464d83a117ed2855f026341d673e1e2f6e833e41ff10cada32719f6"
 }

@@ -21,7 +21,7 @@ categories = ["web-programming::http-server"]
 [dependencies]
 brotli = { version = "8", optional = true }
 flate2 = { version = "1", default-features = false, features = ["rust_backend"], optional = true }
-forma-ir = { version = "=3.1.0-rc.1", path = "../forma-ir" }
+forma-ir = { version = "=3.1.0-rc.2", path = "../forma-ir" }
 axum = "0.8"
 rust-embed = "8"
 serde = { version = "1", features = ["derive"] }
@@ -40,7 +40,7 @@ tokio = { version = "1", features = ["macros", "rt"] }
 tower = { version = "0.5", features = ["util"] }
 # Fixture encoders and the stand-in panicking component, for the server's own
 # tests only (dev-dependency features never reach a consumer's build).
-forma-ir = { version = "=3.1.0-rc.1", path = "../forma-ir", features = ["test-helpers", "__fault-injection"] }
+forma-ir = { version = "=3.1.0-rc.2", path = "../forma-ir", features = ["test-helpers", "__fault-injection"] }
 
 [lints]
 workspace = true

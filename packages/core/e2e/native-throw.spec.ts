@@ -9,19 +9,19 @@ import { HOSTILE_VALUES, hostileModule } from '../src/__tests__/hostile-markup';
  * Before, `{JSON.parse('{')}` and its kind threw out of `mountMarkup` and
  * left the module unbound, and in a handler they were uncaught page errors
  * with no diagnostic. The `classList` methods here throw only in a browser:
- * happy-dom's `classList.add('')` does not, Chromium's does.
+ * happy-dom's `classList.add('')` does not; the native engines do.
  *
  * FORMA-274 closed what was left: the runtime's own DOM writes, values nested
  * too deep or with a `toString` that is not a function, event-time property
- * writes, a DOM method's rejected promise (Chromium 156's
- * `scrollIntoView({behavior: 'bad'})` rejects instead of throwing), and
+ * writes, a DOM method's rejected promise (the native scroll call is also
+ * deferred explicitly so every engine exercises asynchronous rejection), and
  * evaluations nested past the stack. Each is a coded diagnostic, and no
  * markup in the FORMA-274 matrix throws out of `mountMarkup` or raises an
  * uncaught page error or an unhandled rejection.
  */
 test.use({ channel: process.env.FORMA_TEST_BROWSER_CHANNEL || undefined });
 
-interface Outcome { mountError: string | null; codes: Array<[string, string, string]>; marked: string[]; ok: string | null }
+interface Outcome { mountError: string | null; codes: Array<[string, string, string]>; kinds: string[]; marked: string[]; ok: string | null }
 
 async function mount(page: Page, body: string, click: string[] = []): Promise<Outcome> {
   return page.evaluate(async ({ body, click }) => {
@@ -40,10 +40,18 @@ async function mount(page: Page, body: string, click: string[] = []): Promise<Ou
     return {
       mountError,
       codes: (rt.getDiagnostics() as Array<{ code: string; expr: string; reason: string }>).map((d) => [d.code, d.expr, d.reason] as [string, string, string]),
+      kinds: (rt.getDiagnostics() as Array<{ kind: string }>).map((d) => d.kind),
       marked: [...root.querySelectorAll('[data-forma-expr-error],[data-forma-handler-error]')].map((e) => e.id),
       ok: root.querySelector('#ok')?.textContent ?? null,
     };
   }, { body, click });
+}
+
+// Browser-owned message prose varies; Forma's operation and native error
+// class must still match exactly, and the native message must not disappear.
+function expectReason(actual: string, prefix: string): void {
+  expect(actual.startsWith(prefix), actual).toBe(true);
+  if (prefix.endsWith(': ')) expect(actual.length, actual).toBeGreaterThan(prefix.length);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -68,7 +76,8 @@ test('a value binding whose native throws is reported on its element, and the mo
     const r = await mount(page, `<p id="bad" data-text="{${expr}}">kept</p>`);
     expect(r.mountError, expr).toBeNull();
     expect(r.codes.map(([code, e]) => [code, e]), expr).toEqual([['FORMA_E_CALL_FAILED', expr]]);
-    expect(r.codes[0]![2].startsWith(reason), r.codes[0]![2]).toBe(true);
+    expectReason(r.codes[0]![2], reason);
+    expect(r.kinds, expr).toEqual(['expression-unsupported']);
     expect(r.marked, expr).toEqual(['bad']);
     expect(r.ok, expr).toBe('2');
   }
@@ -79,65 +88,113 @@ test('a handler whose DOM method throws is reported on its element, not an uncau
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(String(err)));
   const cases: Array<[string, string]> = [
-    [`$el.classList.add('')`, "$el.classList.add() threw SyntaxError: Failed to execute 'add' on 'DOMTokenList'"],
-    [`$el.classList.add('a b')`, "$el.classList.add() threw InvalidCharacterError: Failed to execute 'add' on 'DOMTokenList'"],
-    ['$el.classList.toggle(cls)', "$el.classList.toggle() threw SyntaxError: Failed to execute 'toggle' on 'DOMTokenList'"],
-    [`$el.classList.replace('', 'x')`, "$el.classList.replace() threw SyntaxError: Failed to execute 'replace' on 'DOMTokenList'"],
+    [`$el.classList.add('')`, "$el.classList.add() threw SyntaxError: "],
+    [`$el.classList.add('a b')`, "$el.classList.add() threw InvalidCharacterError: "],
+    ['$el.classList.toggle(cls)', "$el.classList.toggle() threw SyntaxError: "],
+    [`$el.classList.replace('', 'x')`, "$el.classList.replace() threw SyntaxError: "],
     [`x = JSON.parse('{')`, 'JSON.parse() threw SyntaxError: '],
   ];
   for (const [handler, reason] of cases) {
     const r = await mount(page, `<button id="bad" data-on:click="{${handler}}">b</button><button id="inc" data-on:click="{n++}">+</button>`, ['bad', 'inc']);
     expect(r.mountError, handler).toBeNull();
     expect(r.codes.map(([code, e]) => [code, e]), handler).toEqual([['FORMA_E_CALL_FAILED', handler]]);
-    expect(r.codes[0]![2].startsWith(reason), r.codes[0]![2]).toBe(true);
+    expectReason(r.codes[0]![2], reason);
+    expect(r.kinds, handler).toEqual(['handler-unsupported']);
     expect(r.marked, handler).toEqual(['bad']);
     expect(r.ok, `${handler}: the handler beside it still runs`).toBe('3');
   }
   expect(errors).toEqual([]);
 });
 
-test("what used to throw in Chromium is coded: the runtime's own writes, event-time property writes, a rejected promise", async ({ page }) => {
+test("the runtime's own writes and event-time property writes retain coded native failures", async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(String(err)));
-  const cases: Array<[body: string, click: string[], code: string, reason: string]> = [
-    ['<p id="bad" data-class:="{true}">x</p>', [], 'FORMA_E_UNSUPPORTED', 'data-class: has no name'],
-    ['<p id="bad" data-bind:="{1}">x</p>', [], 'FORMA_E_UNSUPPORTED', 'data-bind: has no name'],
-    [`<input id="bad" type="file" data-model="{raw}">`, [], 'FORMA_E_CALL_FAILED', "data-model write threw InvalidStateError: Failed to set the 'value' property on 'HTMLInputElement'"],
-    [`<progress id="bad" data-model="{raw}"></progress>`, [], 'FORMA_E_CALL_FAILED', "data-model write threw TypeError: Failed to set the 'value' property on 'HTMLProgressElement'"],
-    [`<p id="bad" data-on:click="{$el.dataset['a-b'] = 1}">x</p><button id="inc" data-on:click="{n++}">+</button>`, ['bad', 'inc'], 'FORMA_E_CALL_FAILED', "$el.dataset.a-b = … threw SyntaxError: Failed to set a named property 'a-b' on 'DOMStringMap'"],
-    [`<input id="bad" type="file" data-on:custom="{$el.value = 'x'}"><button id="inc" data-on:click="{n++}">+</button>`, ['inc'], 'FORMA_E_CALL_FAILED', "$el.value = … threw InvalidStateError: Failed to set the 'value' property on 'HTMLInputElement'"],
-    [`<meter id="bad" data-on:click="{$el.value = 'abc'}"></meter><button id="inc" data-on:click="{n++}">+</button>`, ['bad', 'inc'], 'FORMA_E_CALL_FAILED', "$el.value = … threw TypeError: Failed to set the 'value' property on 'HTMLMeterElement'"],
+  const cases: Array<[body: string, click: string[], code: string, reason: string, expr: string]> = [
+    ['<p id="bad" data-class:="{true}">x</p>', [], 'FORMA_E_UNSUPPORTED', 'data-class: has no name', 'data-class:="{true}"'],
+    ['<p id="bad" data-bind:="{1}">x</p>', [], 'FORMA_E_UNSUPPORTED', 'data-bind: has no name', 'data-bind:="{1}"'],
+    [`<input id="bad" type="file" data-model="{raw}">`, [], 'FORMA_E_CALL_FAILED', 'data-model write threw InvalidStateError: ', 'raw'],
+    [`<progress id="bad" data-model="{raw}"></progress>`, [], 'FORMA_E_CALL_FAILED', 'data-model write threw TypeError: ', 'raw'],
+    [`<p id="bad" data-on:click="{$el.dataset['a-b'] = 1}">x</p><button id="inc" data-on:click="{n++}">+</button>`, ['bad', 'inc'], 'FORMA_E_CALL_FAILED', "$el.dataset.a-b = … threw SyntaxError: ", "$el.dataset['a-b'] = 1"],
+    [`<input id="bad" type="file" data-on:custom="{$el.value = 'x'}"><button id="inc" data-on:click="{n++}">+</button>`, ['inc'], 'FORMA_E_CALL_FAILED', "$el.value = … threw InvalidStateError: ", "$el.value = 'x'"],
+    [`<meter id="bad" data-on:click="{$el.value = 'abc'}"></meter><button id="inc" data-on:click="{n++}">+</button>`, ['bad', 'inc'], 'FORMA_E_CALL_FAILED', "$el.value = … threw TypeError: ", "$el.value = 'abc'"],
   ];
-  for (const [body, click, code, reason] of cases) {
+  for (const [body, click, code, reason, expr] of cases) {
     const r = await mount(page, body, click);
     if (body.includes('data-on:custom')) {
       // A file input's click opens a chooser: its handler runs on an event of its own.
       await page.evaluate(() => { document.querySelector('#bad')!.dispatchEvent(new Event('custom')); });
-      r.codes = await page.evaluate(() => (window as unknown as { FormaRuntime: any }).FormaRuntime.getDiagnostics().map((d: { code: string; expr: string; reason: string }) => [d.code, d.expr, d.reason]));
+      const later = await page.evaluate(() => {
+        const diagnostics = (window as unknown as { FormaRuntime: any }).FormaRuntime.getDiagnostics();
+        return {
+          codes: diagnostics.map((d: { code: string; expr: string; reason: string }) => [d.code, d.expr, d.reason] as [string, string, string]),
+          kinds: diagnostics.map((d: { kind: string }) => d.kind),
+          marked: [...document.querySelectorAll('[data-forma-expr-error],[data-forma-handler-error]')].map((el) => el.id),
+        };
+      });
+      Object.assign(r, later);
     }
     expect(r.mountError, body).toBeNull();
-    expect(r.codes.map(([c]) => c), body).toEqual([code]);
-    expect(r.codes[0]![2].startsWith(reason), r.codes[0]![2]).toBe(true);
+    expect(r.codes.map(([c, e]) => [c, e]), body).toEqual([[code, expr]]);
+    expect(r.kinds, body).toEqual([body.includes('data-on:') ? 'handler-unsupported' : 'expression-unsupported']);
+    expect(r.marked, body).toEqual(['bad']);
+    expectReason(r.codes[0]![2], reason);
     expect(r.ok, body).toBe(click.includes('inc') ? '3' : '2');
   }
   expect(errors).toEqual([]);
 });
 
-test('a rejected promise from a DOM method is reported on its element, never unhandled', async ({ page }) => {
-  const rejections: string[] = [];
-  page.on('pageerror', (err) => rejections.push(String(err)));
+// Invalid scroll options throw synchronously in some engines and reject in
+// others. Match the real engine's native failure, and separately defer that
+// same native call to require Promise rejection handling on every engine.
+for (const deferred of [false, true]) test(`a native scroll failure is coded on its handler, never unhandled (deferred: ${deferred})`, async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (err) => errors.push(String(err)));
+  const native = await page.evaluate(async () => {
+    const el = document.createElement('p');
+    try {
+      let result: unknown;
+      try { result = el.scrollIntoView({ behavior: 'bad' as ScrollBehavior }); }
+      catch (e) { return { mode: 'threw', name: (e as Error).name, message: (e as Error).message }; }
+      await result;
+    } catch (e) { return { mode: 'rejected', name: (e as Error).name, message: (e as Error).message }; }
+    throw new Error('native invalid scroll options did not fail');
+  });
+  expect(native.name).toBe('TypeError');
+  expect(native.message.length).toBeGreaterThan(0);
   await page.evaluate(() => {
     (window as unknown as { __rejected: string[] }).__rejected = [];
     window.addEventListener('unhandledrejection', (e) => { (window as unknown as { __rejected: string[] }).__rejected.push(String(e.reason)); });
   });
-  const r = await mount(page, `<p id="bad" data-on:click="{$el.scrollIntoView({behavior: 'bad'})}">x</p>`, ['bad']);
-  await page.waitForTimeout(50);
-  const codes = await page.evaluate(() => (window as unknown as { FormaRuntime: any }).FormaRuntime.getDiagnostics().map((d: { kind: string; code: string; reason: string }) => [d.kind, d.code, d.reason]));
+  const expr = "$el.scrollIntoView({behavior: 'bad'})";
+  const r = await mount(page, `<p id="bad" data-on:custom="{${expr}}">x</p><button id="inc" data-on:click="{n++}">+</button>`);
+  const initial = await page.evaluate((deferred) => {
+    const rt = (window as unknown as { FormaRuntime: any }).FormaRuntime;
+    const el = document.querySelector('#bad') as HTMLElement;
+    if (deferred) {
+      const nativeScroll = el.scrollIntoView;
+      // This is a controlled async boundary around the real native operation,
+      // not a mocked diagnostic or acceptance of a synchronous throw.
+      el.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
+        return Promise.resolve().then(() => nativeScroll.call(this, options));
+      };
+    }
+    el.dispatchEvent(new Event('custom'));
+    const codesBeforeMicrotask = rt.getDiagnostics().map((d: { code: string }) => d.code);
+    (document.querySelector('#inc') as HTMLElement).click();
+    return { codesBeforeMicrotask, ok: document.querySelector('#ok')?.textContent };
+  }, deferred);
   expect(r.mountError).toBeNull();
-  expect(codes).toEqual([['handler-unsupported', 'FORMA_E_CALL_FAILED',
-    "$el.scrollIntoView() rejected TypeError: Failed to execute 'scrollIntoView' on 'Element': Failed to read the 'behavior' property from 'ScrollOptions': The provided value 'bad' is not a valid enum value of type ScrollBehavior."]]);
+  expect(initial.ok).toBe('3');
+  if (deferred) expect(initial.codesBeforeMicrotask).toEqual([]);
+  const expected = [['handler-unsupported', 'FORMA_E_CALL_FAILED', expr,
+    `$el.scrollIntoView() ${deferred ? 'rejected' : native.mode} ${native.name}: ${native.message}`]];
+  await expect.poll(() => page.evaluate(() => (window as unknown as { FormaRuntime: any }).FormaRuntime.getDiagnostics()
+    .map((d: { kind: string; code: string; expr: string; reason: string }) => [d.kind, d.code, d.expr, d.reason]))).toEqual(expected);
+  expect(await page.locator('[data-forma-handler-error]').evaluateAll((els) => els.map((el) => el.id))).toEqual(['bad']);
+  expect(await page.locator('[data-forma-expr-error]').count()).toBe(0);
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
   expect(await page.evaluate(() => (window as unknown as { __rejected: string[] }).__rejected)).toEqual([]);
-  expect(rejections).toEqual([]);
+  expect(errors).toEqual([]);
 });
 
 test('values nested too deep, an own toString that is not a function, and evaluations nested past the stack are coded, never a page error', async ({ page }) => {
@@ -234,9 +291,12 @@ test('the deepest stack the caps allow fits: 31 handlers relayed by $dispatch, t
   expect(errors).toEqual([]);
 });
 
-test('happy-dom hands a listener exception back to click(); Chromium reports it as the page error it is and the handler that clicked is not blamed', async ({ page }) => {
+test('a native listener exception is delivered as a page error and the Forma handler that clicked is not blamed', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(err.message));
+  // Firefox can deliver this after evaluate's timer has completed. Arm before
+  // dispatch, and await the actual browser event instead of a time delay.
+  const delivered = page.waitForEvent('pageerror');
   const codes = await page.evaluate(async () => {
     const rt = (window as unknown as { FormaRuntime: any }).FormaRuntime;
     rt.clearDiagnostics();
@@ -248,6 +308,9 @@ test('happy-dom hands a listener exception back to click(); Chromium reports it 
     await new Promise((r) => setTimeout(r, 0));
     return rt.getDiagnostics().map((d: { code: string }) => d.code);
   });
+  const error = await delivered;
+  expect(error.name).toBe('RangeError');
+  expect(error.message).toBe('an application listener');
   expect(codes).toEqual([]);
   expect(errors).toEqual(['an application listener']);
 });

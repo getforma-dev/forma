@@ -8,7 +8,7 @@ exclude = ["e2e", "benchmarks/grand-prix/contestants/forma"]
 resolver = "2"
 
 [workspace.package]
-version = "3.1.0-rc.1"
+version = "3.1.0-rc.2"
 edition = "2021"
 license = "MIT"
 authors = ["Forma <victor@getforma.dev>"]
