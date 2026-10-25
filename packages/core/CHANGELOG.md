@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- FORMA-290: align small-list key matching with Map SameValueZero semantics
+  (`NaN` matches itself; signed zeroes match). Track owners by actual row node
+  so duplicate keys cannot overwrite cleanup records. Retain row identity on
+  same-key updates and dispose each removed, rerendered or cleared generation.
+  Parent disposal also drains every remaining row owner.
+
 - FORMA-294: add the optional `./compiled` entry for compiler-generated cached
   templates with staged bindings, delegated clicks and owner cleanup. Main
   excludes the helper, but splitting its shared dependencies increases the

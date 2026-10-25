@@ -222,7 +222,9 @@ function reconcileSmall<T>(
     const key = keyFn(newItems[i]!);
     let found = -1;
     for (let j = 0; j < oldLen; j++) {
-      if (!oldUsed[j] && oldKeys[j] === key) {
+      // SameValueZero, as in the large-path Map: NaN matches itself and
+      // signed zeroes identify the same key.
+      if (!oldUsed[j] && (oldKeys[j] === key || (key !== key && oldKeys[j] !== oldKeys[j]))) {
         found = j;
         oldUsed[j] = 1;
         break;
@@ -574,8 +576,9 @@ function createArrayList<T>(
   // one being built in when createList was called (SVG inside svg()).
   let ns = getNamespace();
 
-  // Cache: key -> { element, item, setIndex }
-  let cache = new Map<string | number, CachedItem<T>>();
+  // Own each actual row occurrence. Key matching belongs to the reconciler;
+  // a key-to-owner Map would overwrite earlier duplicate-key row roots.
+  let cache = new Map<Node, CachedItem<T>>();
   let currentNodes: Node[] = [];
   let currentItems: T[] = [];
   const updateOnItemChange = options?.updateOnItemChange ?? 'none';
@@ -662,9 +665,8 @@ function createArrayList<T>(
     }
 
     const updateRow = updateOnItemChange === 'rerender'
-      ? (_node: Node, item: T): Node | void => {
-        const key = keyFn(item);
-        const cached = cache.get(key);
+      ? (node: Node, item: T): Node | void => {
+        const cached = cache.get(node);
         if (!cached) return;
         if (cached.item === item) return;
         const next = renderOwned(item, cached.getIndex);
@@ -672,11 +674,12 @@ function createArrayList<T>(
         cached.item = item;
         cached.element = next.element;
         cached.dispose = next.dispose;
+        cache.delete(node);
+        cache.set(next.element, cached);
         return next.element;
       }
-      : (_node: Node, item: T): void => {
-        const key = keyFn(item);
-        const cached = cache.get(key);
+      : (node: Node, item: T): void => {
+        const cached = cache.get(node);
         if (cached) cached.item = item;
       };
     (updateRow as { [REPLACES_ROW]?: boolean })[REPLACES_ROW] = updateOnItemChange === 'rerender';
@@ -694,10 +697,9 @@ function createArrayList<T>(
       // effects are owned by the item's root (not the parent), and are
       // disposed when the item is removed from the list.
       (item) => {
-        const key = keyFn(item);
         const [getIndex, setIndex] = createSignal(0);
         const rendered = renderOwned(item, getIndex);
-        cache.set(key, { ...rendered, item, getIndex, setIndex });
+        cache.set(rendered.element, { ...rendered, item, getIndex, setIndex });
         return rendered.element;
       },
       updateRow,
@@ -707,19 +709,19 @@ function createArrayList<T>(
 
     // Rebuild cache + update index signals in a single pass.
     // Avoids .map() array allocation + Set construction from the previous approach.
-    const newCache = new Map<string | number, CachedItem<T>>();
-    for (let i = 0; i < cleanItems.length; i++) {
-      const key = keyFn(cleanItems[i]!);
-      const cached = oldCache.get(key);
+    const newCache = new Map<Node, CachedItem<T>>();
+    for (let i = 0; i < result.nodes.length; i++) {
+      const node = result.nodes[i]!;
+      const cached = oldCache.get(node);
       if (cached) {
         cached.setIndex(i);
-        newCache.set(key, cached);
+        newCache.set(node, cached);
       }
     }
 
     // Dispose removed items' reactive roots
-    for (const [key, cached] of oldCache) {
-      if (!newCache.has(key)) {
+    for (const [node, cached] of oldCache) {
+      if (!newCache.has(node)) {
         cached.dispose();
       }
     }
