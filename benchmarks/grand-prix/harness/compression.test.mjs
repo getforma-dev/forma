@@ -12,10 +12,18 @@ import { profileConfiguration } from './resource-profile.mjs';
 const codecs = JSON.parse(readFileSync(new URL('./compression-codecs.json', import.meta.url))).packages;
 const original = readFileSync(new URL('../contestants/forma/Cargo.lock', import.meta.url), 'utf8');
 const blocks = records => records.map(record => '\n[[package]]\n' + Object.entries(record).map(([key, value]) => `${key} = "${value}"`).join('\n') + '\n').join('');
+const formaNames = ['forma-ir', 'forma-ir-derive', 'forma-server'];
+const candidate = original.replace(/^\[\[package\]\]\n[\s\S]*?(?=^\[\[|$(?![\s\S]))/gm, block =>
+  formaNames.some(name => block.includes(`name = "${name}"\n`))
+    ? block.replace(/^source = .*\n/m, '').replace(/^checksum = .*\n/m, '') : block);
+const metadata = { packages: [{ id: 'root', manifest_path: '/app/Cargo.toml' },
+  ...formaNames.map(name => ({ name, version: '3.0.0', id: name, source: null, manifest_path: `/candidate/crates/${name}/Cargo.toml` }))],
+  resolve: { root: 'root', nodes: [{ id: 'root', dependencies: formaNames }, ...formaNames.map(id => ({ id, dependencies: [] }))] } };
+const verify = (after, codecs = []) => checkCandidateLock(original, after, codecs, { version: '3.0.0', metadata });
 test('default lock guard permits no new dependencies; compression adds only the nine pinned codecs', () => {
-  checkCandidateLock(original, original);
-  assert.throws(() => checkCandidateLock(original, original + blocks(codecs)));
-  checkCandidateLock(original, original + blocks(codecs), codecs);
+  verify(candidate);
+  assert.throws(() => verify(candidate + blocks(codecs)));
+  verify(candidate + blocks(codecs), codecs);
 });
 for (const [name, mutate] of [
   ['unrelated addition', text => text + blocks([{ name: 'unreviewed', version: '1.0.0', source: 'registry+x', checksum: 'a'.repeat(64) }])],
@@ -23,7 +31,7 @@ for (const [name, mutate] of [
   ['codec checksum drift', text => text.replace(codecs[0].checksum, '0'.repeat(64))],
   ['missing codec', text => text.replace(blocks([codecs[0]]), '')],
   ['duplicate codec', text => text + blocks([codecs[0]])],
-]) test(`codec closure refuses ${name}`, () => assert.throws(() => checkCandidateLock(original, mutate(original + blocks(codecs)), codecs)));
+]) test(`codec closure refuses ${name}`, () => assert.throws(() => verify(mutate(candidate + blocks(codecs)), codecs)));
 
 test('all three representations decode exactly; false headers and corrupt bodies fail', () => {
   const body = Buffer.from('<table>' + 'row'.repeat(1000) + '</table>');

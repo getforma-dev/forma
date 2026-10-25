@@ -95,8 +95,11 @@ try {
       const bytes = execFileSync('docker', ['run', '--rm', '--label', label, imageName('forma-build'),
         'stat', '-c', '%s', '/app/target/release/grandprix-forma'], { encoding: 'utf8' }).trim();
       report.releaseBinaryBytes = Number(bytes);
-      if (formaRef) writeFileSync(join(results, `${id}-forma-Cargo.lock`),
-        execFileSync('docker', ['run', '--rm', '--label', label, imageName('forma-build'), 'cat', '/app/Cargo.lock']));
+      if (formaRef) for (const file of ['Cargo.lock', 'candidate-source.json', 'candidate-metadata.json']) {
+        writeFileSync(join(results, `${id}-forma-${file}`),
+          execFileSync('docker', ['run', '--rm', '--label', label, imageName('forma-build'), 'cat', `/app/${file}`],
+            { maxBuffer: 16 * 1024 * 1024 }));
+      }
     }
     await quiet();
     const before = { car, at: new Date().toISOString(), load: os.loadavg(), freeBytes: free() };
