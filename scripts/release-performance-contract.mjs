@@ -43,11 +43,11 @@ export function validateNative(report,baseline=null) {
  assert.equal(b.onePastIteration.limit,b.exactIterations-1);assert.equal(b.onePastOutput.limit,b.exactBytes-1);
  return report;
 }
-export function validateActivation(probe,{islands}) {
+export function validateActivation(probe,{islands,maxTaskMs=MOBILE_OBSERVER_MAX_TASK_MS}) {
  assert.equal(probe.expected,islands);assert.equal(probe.active,islands,'N3: islands did not activate');assert.equal(probe.responded,islands,'N3: islands did not respond to real events');
  finite(probe.firstPaintMs,'N3 first paint');finite(probe.lastResponseMs,'N3 last response');
  const afterPaint=Math.max(0,probe.lastResponseMs-probe.firstPaintMs);assert(afterPaint<=MOBILE_STARTUP_POLICY.responseAfterPaintMs,'N3: islands respond later than500ms after first paint');
- assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=MOBILE_OBSERVER_MAX_TASK_MS),'N3: task over50ms');
+ assert(Array.isArray(probe.longTasks),'N3: no long-task observation');assert(probe.longTasks.every(t=>finite(t.startTime,'N3 task start')>=0 && finite(t.duration,'N3 long task')<=maxTaskMs),`N3: task over${maxTaskMs}ms`);
  assert.deepEqual(probe.errors,[],'N3: browser errors');return afterPaint;
 }
 export const INPUT_PROTOCOL='separate-input-tasks-v1';
@@ -80,7 +80,7 @@ export function validateMobileControls(observations,{inputProtocol=INPUT_PROTOCO
  }
  return {deadActivationRefused:true,longTaskRefused:true,...(current?{longInputRefused:true}:{})};
 }
-function validateMobileObservations(rows) {
+function validateMobileObservations(rows,{observerMaxTaskMs=MOBILE_OBSERVER_MAX_TASK_MS}={}) {
  exactKeys(rows?.map(row=>row.id)??[],['tenant-login','islands-100'],'N3 routes');
  for(const row of rows){assert.equal(row.pilot,false,'N3: pilot cannot qualify a release');assert.deepEqual(row.profile,MOBILE_PROFILE,'N3: actual mobile profile differs');assert.equal(row.runs?.length,20,'N3: require20 cold runs');
   for(const [index,run] of row.runs.entries()){
@@ -98,7 +98,7 @@ function validateMobileObservations(rows) {
    assert.equal(run.lighthouse.version,'13.5.0');assert.equal(run.lighthouse.throttlingMethod,'devtools');assert(run.lighthouse.benchmarkIndex>0,'N3: Lighthouse benchmarkIndex missing');
    sha(run.lighthouse.sha256);finite(run.lighthouse.tbtMs,'N3 TBT');finite(run.lighthouse.lcpMs,'N3 LCP');
    assert(Array.isArray(run.lighthouse.longTasks));for(const task of run.lighthouse.longTasks){finite(task.duration,'Lighthouse long task');finite(task.startTime,'Lighthouse task start');}
-   validateActivation(run.activation,{islands:row.id==='islands-100'?100:2});
+   validateActivation(run.activation,{islands:row.id==='islands-100'?100:2,maxTaskMs:observerMaxTaskMs});
   }
   const tbt=percentile(row.runs.map(run=>run.lighthouse.tbtMs),.95);assert(tbt<MOBILE_STARTUP_POLICY.p95TbtMs,'N3: p95 TBT at or above200ms');assert.equal(row.p95TbtMs,tbt);
  }
@@ -106,8 +106,11 @@ function validateMobileObservations(rows) {
  // existing activation/response/profile/raw-report checks above run first.
  return rows.every(row=>row.runs.every(({activation:p})=>p.done===true && p.hosts===p.expected && p.lastResponseMs>=p.firstPaintMs && p.longTasks.length===0));
 }
+// The current policy bounds each observer task at its exceptional maximum and
+// counts it in the route's startup budget; history keeps the strict ceiling.
+const CURRENT_OBSERVATIONS={observerMaxTaskMs:MOBILE_STARTUP_ACCEPTANCE.maxExceptionalTaskMs};
 export function finalizeMobileAttribution(rows){
- const correlated=validateMobileObservations(rows);
+ const correlated=validateMobileObservations(rows,CURRENT_OBSERVATIONS);
  for(const row of rows){
   for(const run of row.runs)run.lighthouse.attribution=attributeMobileTasks(JSON.parse(run.lighthouse.rawLhr),decodeMobileTrace(run.lighthouse.trace),{correlated});
   row.startup=summarizeMobileStartup(row.runs,{correlated});
@@ -125,7 +128,7 @@ export function validateMobile(rows) {
  return rows;
 }
 export function validateCurrentMobile(rows) {
- const correlated=validateMobileObservations(rows);
+ const correlated=validateMobileObservations(rows,CURRENT_OBSERVATIONS);
  for(const row of rows){
   const startup=summarizeMobileStartup(row.runs,{correlated});
   assert.deepEqual(row.startup,startup,'N3: startup summary differs from raw evidence');

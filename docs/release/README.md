@@ -5,6 +5,13 @@
 The original publication record correctly retains its then-deferred soak status;
 the later completion receipt supplies the result without rewriting history.
 
+## 3.1 preparation
+
+3.1.0-rc.1 is prepared, not published. [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md)
+record the accepted tradeoffs and missed targets. [3.1 qualification](3.1-QUALIFICATION.md)
+binds each non-audit RC row to exact-source evidence. The upgrade guide is
+[UPGRADING-3.1](../UPGRADING-3.1.md).
+
 ## Maintainer procedures
 
 - [Release guide](../RELEASING.md): version preparation, packed verification and trusted publishing.
@@ -22,8 +29,10 @@ the later completion receipt supplies the result without rewriting history.
 those stages. Pending work described in a dated checkpoint is not the current
 release status. Earlier failures remain failures.
 
-The D14 JSON records and `post-release-soak.json` bind specific historical
-commits, reviewed deltas and the original deferral. Preserve their bytes. The
+The published 3.0 D14 assets and `post-release-soak.json` bind specific historical
+commits, reviewed deltas and the original deferral. Preserve those historical
+receipts. The current D14 source files advance only with a new actual review;
+their earlier versions remain in Git and the published assets. The
 [final release](https://github.com/getforma-dev/forma/releases/tag/v3.0.0) carries
 publication, P17 and separate post-release completion/review assets.
 

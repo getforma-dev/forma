@@ -37,7 +37,9 @@ for(const kind of ['Lighthouse task','activation task'])test(`actual N3 ${kind} 
  if(kind==='Lighthouse task'){
   const {lhr,trace}=traceFixture({duration:69,startTime:100,scriptAt:100});
   rows[1].runs[9].lighthouse=traceMeasurement(lhr,trace);
- }else rows[0].runs[9].activation.longTasks=[{startTime:1339.5,duration:53}];
+ // v2 admits an observer task up to 55 ms within the route budget; 56 ms is refused outright.
+ }else rows[0].runs[9].activation.longTasks=[{startTime:1339.5,duration:56}];
+ const refused=kind==='Lighthouse task'?/task over50ms/:/task over55ms/;
  try{
   const source=readFileSync(new URL('./release-performance.mjs',import.meta.url),'utf8');
   const body=source.slice(source.indexOf('export async function verifyPackedPerformance')).replace('export ','');
@@ -50,13 +52,13 @@ for(const kind of ['Lighthouse task','activation task'])test(`actual N3 ${kind} 
    mobileControls:async()=>({controls:{deadActivationRefused:true,longTaskRefused:true,longInputRefused:true},observations:controlObservations()}),
    machineProfile:()=>({node:'test',cpuModel:'test'}),completePerformance};
   const verify=new Function(...Object.keys(dependencies),`return (${body.trim()});`)(...Object.values(dependencies));
-  await assert.rejects(verify({staged:{project:'/controlled-project',targetDir:'/controlled-target'},set:{commit:'a'.repeat(40)},test:(name,fn)=>recordVerificationCheck(report,name,fn),target:{tag:'v3.0.0-beta.3',rehearsal:true},before:'2026-10-17T00:00:00Z',report,evidenceDirectory:parent}),/task over50ms/);
+  await assert.rejects(verify({staged:{project:'/controlled-project',targetDir:'/controlled-target'},set:{commit:'a'.repeat(40)},test:(name,fn)=>recordVerificationCheck(report,name,fn),target:{tag:'v3.0.0-beta.3',rehearsal:true},before:'2026-10-17T00:00:00Z',report,evidenceDirectory:parent}),refused);
   assert.equal(clientCalls,1,'mobile refusal must not discard the final independent measurement');
   assert.equal(report.performanceAttempt.client,client);
   assert.equal(report.performanceAttempt.mobile[1].runs.length,20);
   assert.equal(report.passed,false);
   assert.equal(report.tests.at(-1).passed,false);
-  assert.match(report.tests.at(-1).error.message,/task over50ms/);
+  assert.match(report.tests.at(-1).error.message,refused);
   const [name]=readdirSync(parent),state=readPerformanceJournal(join(parent,name));
   assert(!state.entries.some(entry=>entry.kind==='complete'),'N3 refusal still forbids completion');
  }finally{rmSync(parent,{recursive:true,force:true});}

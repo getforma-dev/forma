@@ -20,6 +20,7 @@ import { lowLevelDocument, LOW_LEVEL_POLICY, ParityPage, type PageRun, type Serv
 import { bundleEntry, bundlePage, type PageComponent, type Transition } from './bundle.mts';
 import { compareTrees, makeReport, stripTransport, type CanonNode, type Difference, type Report } from './compare.mts';
 import { generate, type Json } from './generate.mts';
+import { pairDifference } from './fmir-pair.mts';
 import { materialize, readEmitterCases } from './island-emitter.mts';
 import { BOOT_FILE, synthesizeManifest } from './manifest.mts';
 import { describeModule, renderStates, renderTyped, REPO, type Described, type Refusal, type TypedRender } from './server.mts';
@@ -152,7 +153,7 @@ export async function prepare(entry: CorpusEntry, options: PlanOptions): Promise
   try {
     const product = await bundleEntry(entry.name, entry.entry, entry.transition);
     if (entry.ir) {
-      if (Buffer.compare(Buffer.from(product.ir), readFileSync(irPath)) !== 0) {
+      if (pairDifference(entry.name, product.ir, readFileSync(irPath)) !== null) {
         failure ??= `the compiler's .ir for ${entry.entry} is not ${entry.ir}: the browser entry and the served module are not a pair (run the FMIR contract step)`;
       }
     } else {

@@ -80,11 +80,16 @@ describe('a data-list pass past an absolute cap is refused (FORMA-172)', () => {
 
   it('a list of 250,000 items is refused before any item is read', async () => {
     // `<li>{item}</li>` weighs 2: 250,000 rows are 500,000, over the cap. A
-    // proxy counts the reads of the items: none, and no row is built.
+    // proxy counts the reads of the items: none, and no row is built. A read
+    // also throws, so a missing cap fails here at its first item rather than
+    // building 250,000 rows for the teardown to remove.
     const reads = { n: 0 };
     const list = new Proxy(items(250_000), {
       get(target, key, receiver) {
-        if (typeof key === 'string' && /^\d+$/.test(key)) reads.n++;
+        if (typeof key === 'string' && /^\d+$/.test(key)) {
+          reads.n++;
+          throw new Error('an item was read past the cap');
+        }
         return Reflect.get(target, key, receiver);
       },
     });

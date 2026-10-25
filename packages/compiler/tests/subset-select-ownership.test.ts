@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -8,6 +7,7 @@ import { collectDiagnostics } from '../src/diagnostics';
 import { generateRealIr } from '../src/esbuild-ssr-plugin';
 import { PropsSchemaError } from '../src/props-schema';
 import { getIslands, parseOpcodeList } from './helpers/fmir';
+import { expectFrozenFmirHash } from './helpers/frozen-fmir';
 
 const roots: string[] = [];
 afterEach(() => { vi.restoreAllMocks(); roots.splice(0).forEach(root => rmSync(root, { recursive: true, force: true })); });
@@ -74,6 +74,6 @@ it('preserves canonical bytes captured from the pre-617 compiler for admitted ne
     const {result, diagnostics, error} = emit(row.source);
     expect(error, row.name).toBeUndefined(); expect(diagnostics, row.name).toEqual([]);
     expect(result!.binary.length, row.name).toBe(row.bytes);
-    expect(createHash('sha256').update(result!.binary).digest('hex'), row.name).toBe(row.sha256);
+    expectFrozenFmirHash(row.name, result!.binary, row.sha256);
   }
 });

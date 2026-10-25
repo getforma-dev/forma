@@ -7,7 +7,7 @@ import {attributeMobileTasks} from './release-performance-attribution.mjs';
 import {proveColdStartupTask,validateStartupAcceptance} from './release-performance-startup.mjs';
 import {validateActivation,validateCurrentMobile,validateMobile,finalizeMobileAttribution,validatePerformanceRecord,validateHistorical30BaselinePerformance} from './release-performance-contract.mjs';
 import {mobile,performanceRecord} from './release-performance-test-fixtures.mjs';
-import {traceMeasurement} from './release-performance-trace-fixtures.mjs';
+import {traceFixture,traceMeasurement} from './release-performance-trace-fixtures.mjs';
 import {validateBaselineRecord} from './release-performance-baseline.mjs';
 
 // Invented minimal traces for refusal controls, never release measurements.
@@ -58,11 +58,70 @@ test('each route owns an independent twenty-visit budget',()=>{
  rows[1].p95TbtMs=5;finalizeMobileAttribution(rows);validateCurrentMobile(rows);
  assert(rows.every(row=>row.startupAcceptance.exceptionalTaskCount===2&&row.startupAcceptance.totalExcessMs===10));
 });
-test('new policy never changes strict observer/input ceiling',()=>{
- for(const duration of [50.00000000000001,51,55,110]){
-  const probe={expected:2,active:2,responded:2,firstPaintMs:100,lastResponseMs:100,longTasks:[{startTime:120,duration}],errors:[]};
-  assert.throws(()=>validateActivation(probe,{islands:2}),/over50ms/);
+test('the strict observer ceiling still governs history and controls; v2 bounds an observer task at 55 ms',()=>{
+ const probe=duration=>({expected:2,active:2,responded:2,firstPaintMs:100,lastResponseMs:100,longTasks:[{startTime:120,duration}],errors:[]});
+ for(const duration of [50.00000000000001,51,55,110])assert.throws(()=>validateActivation(probe(duration),{islands:2}),/over50ms/);
+ for(const duration of [55.00000000000001,110])assert.throws(()=>validateActivation(probe(duration),{islands:2,maxTaskMs:55}),/over55ms/);
+ for(const duration of [50,51,55])validateActivation(probe(duration),{islands:2,maxTaskMs:55});
+});
+test('an observer task within the allowance draws on the same route budget, by duration alone',()=>{
+ const rows=campaign([]);
+ rows[0].runs[1].activation.longTasks=[{startTime:120,duration:53}];
+ finalizeMobileAttribution(rows);validateCurrentMobile(rows);
+ const accepted=rows[0].startupAcceptance;
+ assert.equal(accepted.exceptionalTaskCount,1);assert.deepEqual(accepted.affectedVisits,[2]);
+ assert.equal(accepted.totalExcessMs,3);assert.equal(accepted.exceptions[0].source,'independent-observer');
+ assert.equal(Object.hasOwn(accepted.exceptions[0],'proof'),false);
+ assert.equal(rows[1].startupAcceptance.exceptionalTaskCount,0,'the other route keeps its own budget');
+ assert.throws(()=>validateMobile(rows),/over50ms/,'history still refuses it');
+ // Two proven Lighthouse exceptions plus one observer task are three tasks.
+ const combined=campaign([51,51]);combined[0].runs[2].activation.longTasks=[{startTime:120,duration:51}];
+ assert.throws(()=>validateCurrentMobile(finalizeMobileAttribution(combined)),/more than2/);
+ // Three visits with one exception each exceed the visit bound.
+ const visits=campaign([51]);for(const i of [1,2])visits[0].runs[i].activation.longTasks=[{startTime:120,duration:51}];
+ assert.throws(()=>validateCurrentMobile(finalizeMobileAttribution(visits)),/more than2/);
+ // Above the exceptional maximum it is refused before any budget is counted.
+ const over=campaign([]);over[0].runs[0].activation.longTasks=[{startTime:120,duration:55.00000000000001}];
+ assert.throws(()=>finalizeMobileAttribution(over),/over55ms/);
+ // A forged source or a missing observer exception does not validate.
+ for(const mutate of [s=>{s.exceptions[0].source='other';},s=>{s.exceptions.pop();s.exceptionalTaskCount=0;s.affectedVisits=[];s.totalExcessMs=0;s.maxExceptionalTaskMs=0;}]){
+  const copy=structuredClone(rows);mutate(copy[0].startupAcceptance);assert.throws(()=>validateCurrentMobile(copy));
  }
+});
+// An injected-script task that only L-66 correlation can exclude (no application frames).
+function correlatedTask(){
+ const {lhr,trace}=traceFixture({duration:99.342,startTime:7000,scriptAt:200});
+ const events=trace.traceEvents,origin=events[0].ts,frame=events[0].args.frame,url=lhr.requestedUrl;
+ const event=(name,ms,cat,args={},dur=1)=>({name,ts:origin+ms*1000,pid:10,tid:20,ph:'X',dur:dur*1000,cat,args});
+ const request=event('ResourceSendRequest',50,'devtools.timeline',{data:{frame,resourceType:'Script',url:`${url}app.js`}});request.ph='I';delete request.dur;
+ const text='function isolatedWork() {}';
+ events.push(request,
+  event('v8.compileModule',200,'v8,devtools.timeline',{data:{scriptId:5,url:`${url}app.js`}}),
+  event('ScriptCatchup',202,'disabled-by-default-devtools.v8-source-rundown',{data:{isolate:'isolate',scriptId:5,executionContextId:1,isModule:true,url:`${url}app.js`}}),
+  event('EvaluateScript',7001,'devtools.timeline',{data:{frame,scriptId:0,url:''}},85),
+  event('v8.compile',7002,'v8,devtools.timeline',{data:{scriptId:12,url:''},fileName:'',worldId:4},10),
+  event('ScriptCatchup',7012,'disabled-by-default-devtools.v8-source-rundown',{data:{isolate:'isolate',scriptId:12,executionContextId:8,isModule:false,url:''}},.1),
+  event('ScriptCatchup',7012.5,'disabled-by-default-devtools.v8-source-rundown-sources',{data:{isolate:'isolate',scriptId:12,length:text.length,sourceText:text}},.1),
+  event('ScriptCompiled',7013,'disabled-by-default-devtools.target-rundown',{data:{isolate:'isolate',scriptId:12,contextType:'isolated',isDefault:false,frameType:'page',frame,url,origin:new URL(url).origin,v8context:'isolated-context'}},70),
+  event('v8.run',7014,'v8',{fileName:'',worldId:4},65));
+ events.find(e=>e.name==='Layout').name='UnlistedBrowserWork';
+ return {lhr,trace};
+}
+test('an admitted observer task still disables L-66 correlation',()=>{
+ // Correlation stays campaign-wide and strict: any observer long task, even
+ // one the v2 budget admits, leaves unattributed Lighthouse tasks counted.
+ const correlatedCampaign=()=>{
+  const rows=mobile();
+  for(const row of rows)for(const run of row.runs){
+   const {lhr,trace}=correlatedTask();run.lighthouse=traceMeasurement(lhr,trace);
+   Object.assign(run.activation,{done:true,hosts:run.activation.expected,hostStatuses:Array(run.activation.expected).fill('pending')});
+  }
+  return rows;
+ };
+ const clean=finalizeMobileAttribution(correlatedCampaign());validateCurrentMobile(clean);
+ assert(clean.every(row=>row.runs.every(run=>run.lighthouse.attribution.tasks.every(task=>task.kind!=='application-or-unattributed'))));
+ const observed=correlatedCampaign();observed[1].runs[19].activation.longTasks=[{startTime:150,duration:53}];
+ assert.throws(()=>validateCurrentMobile(finalizeMobileAttribution(observed)),/over55ms|more than2|lacks positive/);
 });
 test('precise exceptional maximum, task count and aggregate are bounded without rounding',()=>{
  for(const durations of [[55.00000000000001],[51,51,51]])assert.throws(()=>validateCurrentMobile(campaign(durations)),/over55ms|more than2/);

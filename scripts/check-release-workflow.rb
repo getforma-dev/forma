@@ -220,11 +220,18 @@ if ARGV.include?('--self-test') && errors.empty?
     seeded = Marshal.load(Marshal.dump(contracts)); mutate.call(seeded)
     errors << "self-test failed to reject contract #{name} with #{rule}" unless contract_violations(seeded).any? { |v| v.start_with?(rule) }
   end
+  # L-66-QUOTA belongs to the 3.0.0 contract alone, so the accepted case names
+  # that release whatever line the live contract is written for.
   deferred = Marshal.load(Marshal.dump(contracts))
+  deferred['version'] = '3.0.0'
   deferred['milestones']['final']['gates']['FORMA-145 soak'].merge!('status' => 'deferred', 'deferral' => {
     'decision' => 'L-66-QUOTA', 'finalVersion' => '3.0.0', 'reference' => 'docs/release/post-release-soak.json'
   })
   errors << 'self-test rejected explicit 3.0.0 post-release soak policy' unless contract_violations(deferred).empty?
+  if contracts['version'] != '3.0.0'
+    live = Marshal.load(Marshal.dump(deferred)); live['version'] = contracts['version']
+    errors << "self-test accepted the 3.0.0 soak deferral on the #{contracts['version']} contract" if contract_violations(live).empty?
+  end
   deferral_seeds = [
     ['wrong release', ->(c) { c['version'] = '3.0.1' }],
     ['wrong gate', ->(c) { c['milestones']['final']['gates']['FORMA-191'] = c['milestones']['final']['gates'].delete('FORMA-145 soak') }],

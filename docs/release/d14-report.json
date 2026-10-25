@@ -1,125 +1,41 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "d549642104d8d56ecc05737e697080d7b803f36b",
-  "reviewedTree": "4e9f9b2a60d67d3db1ec9694dbce181747d38ff3",
-  "inputManifestSha256": "472272b6981d8f0c237b630b37216bd90517e68276a15af16a6d5e473afff3be",
+  "reviewedCommit": "eb322262b52517a8f3ad717ef51d7419c0fba1aa",
+  "reviewedTree": "7c20b763f0a3a9029bb93ed0db9166f6d60debeb",
+  "inputManifestSha256": "52965147b6fbd499f4bf00159cbdd1c6b0f32d6d12db594e3787071893816ac3",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "faf15dd645b113f1539757e6c1ec2c6618725db8acb581b0c5ec4e5009bac344"
+    "sessionEvidenceSha256": "b02859879a322c5a250986e06b034c74d1eebce136a521fc474c0bae256e943f"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "61018c16f39c9ca2f1841ee3ab22342e90b51c28083f9ca8bf55c7915d0128fd"
+    "sessionEvidenceSha256": "98c150e5b489b938f37d7af01df4e8057815e6128245ba6093814646e5857671"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "5d59226e737afbf643d125da01e526a4036dae99ba98937945ce2d62bdb3d058"
+    "initializationEvidenceSha256": "dfec43ee8d8af7a56e4d38d508b6b183c875630b4e9561dc502fba001062d0a1"
   },
-  "reviewedAt": "2026-10-20T01:38:40.518Z",
+  "reviewedAt": "2026-10-25T15:24:27.111Z",
   "accepted": true,
   "findings": [
     {
-      "id": "D14-001",
+      "id": "D14-STYLE-UNDEFINED",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The retained correction separates the P17 hard limit, outer release wall-clock target and human maintainer effort; the original outer-clock miss remains a miss.",
-      "evidenceSha256": "7c33f5a0baacc20428d82e3f9b080f19397a2ecbad0d3d639fc1927d64f4d631"
+      "rationale": "Exact dbfb67ff additive test preserves the complete style attribute, important priority, color and opacity. Actual canonical selected mutant is caught by that completed assertion with no process error, crash or unfinished started record. Full before/restored baselines4216 preserve every original4215 identity/name/state plus exactly one new test. All4556 source snapshot files independently match Git and are restored. Corpus identities/order/targets/anchors/replacements/tags remain unchanged; false equivalent flags removed. Original full325caught/3declared-equivalent evidence is preserved, combined with this supplement to326/328caught and2survivors; expression98/98, unchanged85floors. This is not a new full328 campaign.",
+      "evidenceSha256": "26481d19025e245e9259514e89fddf89ea2d621f02ed13c72189931e2a3d54e4"
     },
     {
-      "id": "D14-002",
+      "id": "D14-LIST-NAN",
       "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The supported post-final verifier authenticates the immutable deferred final record, same published RC and later hosted workload, retaining zero credit in the original final record.",
-      "evidenceSha256": "1a3b38cb38dbda6a17538180bea7f37ad4f4de9786aaf369a3d083365319c3ae"
-    },
-    {
-      "id": "D14-003",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The actual Actions archive HTTP 415 was reproduced and fixed with API media negotiation while preserving binary release-asset handling and all provenance checks. Corrected authentication verified the immutable RC.1 artifacts; corrected RC.2 remains required for the hosted soak runner.",
-      "evidenceSha256": "4c25e8308993a3511e8defd8f78446cb452a307d19a40bb839647ddae46478c6"
-    },
-    {
-      "id": "D14-004",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The RC.2 README now correctly identifies RC.1 as the published prerelease, while retaining the pending publication status of RC.2.",
-      "evidenceSha256": "2d7ecca4b78ae8c56788bc65797322af2458ba2b0daa9bd4e810a12fe24abe02"
-    },
-    {
-      "id": "RC3-001",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. Synthetic done/pending milestone fixtures now clone source and remove only incompatible deferral metadata. Ordinary/deferred controls pass while production rejection remains unchanged; original final CI failure remains retained.",
-      "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
-    },
-    {
-      "id": "RC3-002",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The alpha notes fixture now explicitly seeds alpha done and later milestones pending, including ordinary/deferred inputs. Existing assertions remain; the added finite R17 case is disclosed, not claimed to have an unchanged twenty-run timing distribution.",
-      "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
-    },
-    {
-      "id": "RC3-003",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The reviewed README now identifies actually published RC.2 and retains RC.3 publication-pending wording; earlier stale-copy findings remain historical.",
-      "evidenceSha256": "faba0349c192a144d37e7d2b102fcc6c1dec77fb91a9f4b51239da80ce450cea"
-    },
-    {
-      "id": "RC4-001",
-      "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The19 raw Lighthouse tasks over50ms and whole-page target miss remain retained; actual same-navigation traces classify pre-application browser layout, all40 independent observers are zero, and no application/unresolved task exceeds the unchanged50ms gate.",
-      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
-    },
-    {
-      "id": "RC4-002",
-      "severity": "info",
-      "disposition": "nonblocking",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. The source-bound prospective separate-input protocol has mandatory slow-input refusal and fresh complete qualification. OriginalRC3 and329d failed runs remain failed; no retroactive waiver or cap-alone causal claim.",
-      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
-    },
-    {
-      "id": "RC4-003",
-      "severity": "info",
-      "disposition": "nonblocking",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. Completed252-mutation evidence retains actual329d producer with explicit unchanged-subject/corpus/test/dependency/workflow applicability to0365; the fresh0365 R17 distribution and P17 are independently reviewed.",
-      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
-    },
-    {
-      "id": "RC4-004",
-      "severity": "info",
-      "disposition": "nonblocking",
-      "rationale": "Historical retained finding; original producer and date remain in its evidence. N6 partly-met coverage, whole-page/outer-clock and other target limits, L60 governance deferrals and L66-QUOTA zero-credit deferred-final policy remain explicit. No completed soak, main publication gate or final package qualification is invented.",
-      "evidenceSha256": "8563748a700dbc2b52a62ed56eabe760570ded6cb4bb501031fbc352ab61fc29"
-    },
-    {
-      "id": "RC5-001",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "Exact d549 includes seven corrected maintained READMEs and actual RC.4 publication wording; all reviewed source is covered by the new input manifest.",
-      "evidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
-    },
-    {
-      "id": "RC5-002",
-      "severity": "medium",
-      "disposition": "resolved",
-      "rationale": "The synthetic rehearsal fixture now seeds its own milestone shape and preserves correct production refusal; fresh exact-source CI passes, with the original final failure retained.",
-      "evidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
-    },
-    {
-      "id": "RC5-003",
-      "severity": "info",
-      "disposition": "nonblocking",
-      "rationale": "Fresh original P17, CI and SR14 evidence passes; actual5c9 and synthetic eaa producers remain explicit, with complete archive-member and source applicability to exact d549. Historical mutation/R17 producer identities and all remaining operational/soak limits remain preserved.",
-      "evidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
+      "rationale": "The finite three-update8-row reproduction and64-row control reproduce identically in authenticated published3.0.0 and current packed3.1 bytes; reconciliation source is byte-identical. This is a historical medium lifecycle defect, not an established3.1 regression. The maintainer explicitly accepted this bounded nonblocking disposition, while publishing precise changelog/upgrade disclosure and stable unique string/finite-number validation workaround and tracking FORMA-290. No unsupported-input claim or retrospective public-domain narrowing is used. The two threshold mutants actually survived the corrected full-suite selected runs and count in the denominator, leaving two honest coverage gaps. Production repair remains open and is not represented as done.",
+      "evidenceSha256": "de02a73be2a2bc02c10f6a479c1a48fbb0d873672526ccf3139052567fe3ec08"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "208d98c747939c0bb852e3f2bf67b0a91f43fe448f114abd089c36be754bd3a3"
+  "acceptanceEvidenceSha256": "e3f1018574c593e4922780cd8fe7d72924fd96bcb6acd69541c9aa01f71ea806"
 }

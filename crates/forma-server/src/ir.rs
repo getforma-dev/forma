@@ -968,9 +968,11 @@ mod reload_tests {
 
                 // Valid JSON with an incompatible writer is refused by the
                 // same validator as startup, retaining the last good modules.
+                // One minor newer than this reader, whatever version it is.
+                let [major, minor, _] = forma_ir::format::reader_version();
                 let mut incompatible: serde_json::Value =
                     serde_json::from_slice(&manifest_json(&[("/", Some("page.2.ir"))])).unwrap();
-                incompatible["writer"] = "3.1.0".into();
+                incompatible["writer"] = format!("{major}.{}.0", minor + 1).into();
                 disk.write("manifest.json", incompatible.to_string().into_bytes());
                 assert_eq!(html(modules.get("/", &read)), "<p>renamed</p>");
                 assert_eq!(html(modules.get("/late", &read)), "<p>late</p>");
