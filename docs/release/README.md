@@ -29,8 +29,10 @@ binds each non-audit RC row to exact-source evidence. The upgrade guide is
 those stages. Pending work described in a dated checkpoint is not the current
 release status. Earlier failures remain failures.
 
-The D14 JSON records and `post-release-soak.json` bind specific historical
-commits, reviewed deltas and the original deferral. Preserve their bytes. The
+The published 3.0 D14 assets and `post-release-soak.json` bind specific historical
+commits, reviewed deltas and the original deferral. Preserve those historical
+receipts. The current D14 source files advance only with a new actual review;
+their earlier versions remain in Git and the published assets. The
 [final release](https://github.com/getforma-dev/forma/releases/tag/v3.0.0) carries
 publication, P17 and separate post-release completion/review assets.
 
