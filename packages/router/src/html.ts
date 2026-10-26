@@ -46,7 +46,7 @@ export function createHtmlAdapter(options: HtmlAdapterOptions): RouteAdapter {
         function validate() { checkRoot(); if (context.signal.aborted || disposed) throw new NavigationError('ROUTER_CANCELLED'); }
         return {
           title: page.title, validate,
-          commit() { validate(); cleanup(root); root.replaceChildren(node); committed = true; },
+          commit() { validate(); cleanup(root); validate(); root.replaceChildren(node); committed = true; },
           async activate() {},
           dispose() { if (disposed || committed) return; disposed = true; cleanup(node); },
         };

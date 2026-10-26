@@ -1,5 +1,6 @@
 import { cleanup, createUnownedRoot } from '@getforma/core';
 import { NavigationError, type RouteAdapter, type NavigationContext, type PreparedView } from './types';
+function native(node: HTMLElement) { const claims = '[data-forma-ssr],[data-forma-island],[data-forma-state]'; return node.matches(claims) || node.querySelector(claims); }
 type Owner = { id: string; key: string; node: HTMLElement; outlet: HTMLElement; release: () => void };
 function release(owners: Owner[]) {
   const errors: unknown[] = [];
@@ -14,6 +15,7 @@ export function createBrowserAdapter(): RouteAdapter {
       let live: Owner[] = [], closed = false;
       function prepare(context: NavigationContext): PreparedView {
         if (closed || context.signal.aborted) throw new NavigationError('ROUTER_CANCELLED');
+        if (native(container)) throw new NavigationError('ROUTER_BROWSER_NATIVE_ROOT');
         const keys = context.matches.map(match => JSON.stringify([match.id, match.params, match.definition.reuseKey?.(match) ?? '']));
         let keep = 0;
         while (keep < live.length && keep < context.matches.length && live[keep].id === context.matches[keep].id && live[keep].key === keys[keep] && !(context.revalidate && keep === context.matches.length - 1)) keep++;
@@ -29,7 +31,7 @@ export function createBrowserAdapter(): RouteAdapter {
               if (!(element instanceof container.ownerDocument.defaultView!.HTMLElement)) throw new NavigationError('ROUTER_RENDER_ROOT');
               return element as HTMLElement;
             });
-            if (node.isConnected || node.hasAttribute('data-forma-ssr') || node.querySelector('[data-forma-ssr]')) { stop(); throw new NavigationError('ROUTER_BROWSER_NATIVE_ROOT'); }
+            if (node.isConnected || native(node)) { stop(); throw new NavigationError('ROUTER_BROWSER_NATIVE_ROOT'); }
             if (i < context.matches.length - 1 && !node.contains(outlet)) { stop(); throw new NavigationError('ROUTER_OUTLET'); }
             let released = false;
             fresh.push({ id: match.id, key: keys[i], node, outlet, release() { if (released) return; released = true; try { stop(); } finally { cleanup(node); } } });
@@ -38,6 +40,7 @@ export function createBrowserAdapter(): RouteAdapter {
         } catch (error) { release(fresh); throw error; }
         function validate() {
           if (closed || disposed || context.signal.aborted) throw new NavigationError('ROUTER_CANCELLED');
+          if (native(container)) throw new NavigationError('ROUTER_BROWSER_NATIVE_ROOT');
           if (live.some(owner => !container.contains(owner.node))) throw new NavigationError('ROUTER_OWNER_MOVED', true);
           for (let i = 0; i < fresh.length - 1; i++) if (fresh[i].outlet.children.length !== 1 || fresh[i].outlet.firstElementChild !== fresh[i + 1].node) throw new NavigationError('ROUTER_OUTLET');
         }
