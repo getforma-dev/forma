@@ -1,0 +1,16 @@
+✔ only a successful build in this shell authorizes reuse, including sourced subshells (77.990333ms)
+✔ an npm failure inside a conditional retains its status and cannot mark the package built (65.59575ms)
+✔ a successful command with missing output cannot authorize reuse (67.005917ms)
+✔ a removed current output fails rather than accepting stale state or rebuilding silently (40.252417ms)
+✔ standalone core npm scripts still build, copy the fresh runtime and preserve engine arguments (183.665292ms)
+✔ sourced core runner reuses only the parent build and isolates cwd while preserving test failure (193.573916ms)
+✔ standalone core build failure cannot copy a stale runtime or reach Playwright (39.644125ms)
+✔ fixture sync retains full build failure output for standalone and sourced external core paths (84.908125ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 813.655084

@@ -1,0 +1,216 @@
+
+> @getforma/core@3.1.0 check:pack
+> publint && attw --pack . && node scripts/check-pack-development.mjs
+
+Running publint v0.3.25 for @getforma/core...
+Packing files with `npm pack`...
+Linting...
+All good!
+
+@getforma/core v3.1.0
+
+Build tools:
+- @arethetypeswrong/cli@^0.18.5
+- typescript@^5.9.3
+- esbuild@^0.28.1
+- tsup@^8.5.1
+
+ No problems found 🌟
+
+
+"@getforma/core"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-hardened"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-csp"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/tc39"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/http"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/storage"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/package.json"
+
+node10: 🟢 (JSON)
+node16 (from CJS): 🟢 (JSON)
+node16 (from ESM): 🟢 (JSON)
+bundler: 🟢 (JSON)
+
+***********************************
+
+"@getforma/core/compiled"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/navigation"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+check-pack-development: publint over the development build (18 leaves promoted)
+Running publint v0.3.25 for @getforma/core...
+Packing files with `npm pack`...
+Linting...
+All good!
+check-pack-development: attw over the development build (18 leaves promoted)
+
+@getforma/core v3.1.0
+
+Build tools:
+- @arethetypeswrong/cli@^0.18.5
+- typescript@^5.9.3
+- esbuild@^0.28.1
+- tsup@^8.5.1
+
+ No problems found 🌟
+
+
+"@getforma/core"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-hardened"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-csp"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/tc39"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/http"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/storage"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/package.json"
+
+node10: 🟢 (JSON)
+node16 (from CJS): 🟢 (JSON)
+node16 (from ESM): 🟢 (JSON)
+bundler: 🟢 (JSON)
+
+***********************************
+
+"@getforma/core/compiled"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/navigation"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************

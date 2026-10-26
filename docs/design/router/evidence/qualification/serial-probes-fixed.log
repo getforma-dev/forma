@@ -1,0 +1,41 @@
+✔ other component kills cannot hide an expression survivor below its floor (0.775875ms)
+✔ missing, stale, duplicated and unobserved process failures never count as expression kills (0.848792ms)
+✔ real executed assertion is caught; passing and restored executions are clean (1118.980542ms)
+✔ a real pre-existing assertion failure aborts before any mutant (329.1935ms)
+✔ serial bail completes its assertion with multiple modules and concurrent tests (1236.304333ms)
+✔ real parse error cannot count as a kill (977.665542ms)
+✔ real collection assertion cannot count as a kill (976.869292ms)
+✔ real beforeEach assertion cannot count as a kill (991.831709ms)
+✔ real plain body Error cannot count as a kill (974.959584ms)
+✔ real test timeout cannot count as a kill (981.598541ms)
+✔ real unhandled rejection beside passing assertion cannot count as a kill (1007.191084ms)
+✔ a hook whose end is reported before its start is complete (0.992958ms)
+✔ a hook that starts and never ends is incomplete, whatever else is reordered (1.145375ms)
+✔ a key that starts twice needs two ends, in either order (1.202375ms)
+✔ actual campaign continues after clean recovery but remains failed despite a later assertion kill (1908.335791ms)
+✔ actual campaign stops on a collection error without trying recovery or the next mutant (1023.807375ms)
+✔ actual campaign stops on a completed test timeout without trying the next mutant (1044.83625ms)
+✔ actual campaign requires a clean recovery baseline before running a later mutant (1480.02175ms)
+✔ only an executed assertion in a previously passing test qualifies as a kill (2.945417ms)
+✔ a dirty or all-skipped baseline cannot qualify any mutant (1.298916ms)
+✔ compiler, collection and unhandled errors cannot masquerade as an assertion kill (0.263292ms)
+✔ plain runtime errors and test timeout errors never count (0.212042ms)
+✔ timeouts, signals, unexpected exits and missing/invalid reports cannot count (0.329958ms)
+✔ reported failure needs actual execution, completion, timing and no retry (0.339125ms)
+✔ a completed assertion does not excuse a second interrupted assertion (0.598375ms)
+✔ missing tests, unknown identities and a previously skipped test cannot kill (0.391417ms)
+✔ inconsistent exit/report states and duplicate tests are rejected (0.2345ms)
+✔ only observed test-failure bail can interrupt a qualifying assertion run (0.334541ms)
+✔ a completed body exception allows recovery but still cannot count as a kill (0.287ms)
+✔ recovery rejects process, timeout, collection, hook and unhandled failures (0.986333ms)
+✔ recovery requires every started test to have completed and failed tests to pass in baseline (0.1645ms)
+✔ P17 refuses partial, stale, duplicated, disconnected and unsafe hostile proof (79.674417ms)
+✔ P17 requires full current-source campaigns and a numerical, bounded real-row mutant (5.307708ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14123.557666

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/create-app
+
+
+ Test Files  1 passed (1)
+      Tests  50 passed | 24 skipped (74)
+   Start at  15:27:17
+   Duration  2.69s (transform 94ms, setup 0ms, import 311ms, tests 2.29s, environment 0ms)
+

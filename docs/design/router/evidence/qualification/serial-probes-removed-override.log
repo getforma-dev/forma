@@ -1,0 +1,37 @@
+✖ actual campaign continues after clean recovery but remains failed despite a later assertion kill (1156.874917ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1219.86325
+
+✖ failing tests:
+
+test at packages/core/scripts/probe-reporter.test.mjs:150:1
+✖ actual campaign continues after clean recovery but remains failed despite a later assertion kill (1156.874917ms)
+  AssertionError [ERR_ASSERTION]: clean baseline: 2 executed tests; /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-probe-campaign-uEPtch/probes/runs/run-Bh5VBO
+  first                                        UNQUALIFIED
+  mutation campaign is unqualified; raw evidence: /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-probe-campaign-uEPtch/probes/runs/run-Bh5VBO
+  
+  + actual - expected
+  
+    [
+      'UNQUALIFIED',
+  -   'CAUGHT'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-reporter.test.mjs:157:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'UNQUALIFIED' ],
+    expected: [ 'UNQUALIFIED', 'CAUGHT' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

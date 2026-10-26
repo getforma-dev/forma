@@ -1,0 +1,155 @@
+
+added 3 packages in 316ms
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/create-app
+
+ ✓ tests/diagnostics.test.ts (7 tests) 2021ms
+     ✓ a failed removal is added to the body failure instead of replacing it  2013ms
+ ✓ tests/templates.test.ts (76 tests) 1957ms
+     ✓ packs the install policy under _npmrc so npm does not silently drop it  321ms
+     ✓ packs the install policy under _npmrc so npm does not silently drop it  303ms
+     ✓ packs the install policy under _npmrc so npm does not silently drop it  322ms
+     ✓ carries every template's lockfiles in the npm tarball  338ms
+     ✓ compiles each actual scaffolded owner with independent declared props and island registrations  400ms
+stdout | tests/template-islands.test.ts > minimal declared island source > pairs actual Counter metadata with its native module and never mounts the native page in JavaScript
+   IR emitted (real): home.ir (766 bytes, 1 islands)
+
+stdout | tests/template-islands.test.ts > minimal declared island source > classifies the actual About source as static and removes its native selector
+   IR emitted (real): about.ir (409 bytes, 0 islands)
+
+ ✓ tests/template-islands.test.ts (4 tests) 1427ms
+     ✓ scaffolds a declared Counter and a separate truly static native page  349ms
+     ✓ pairs actual Counter metadata with its native module and never mounts the native page in JavaScript  560ms
+ ✓ tests/scaffold-lib.test.ts (52 tests) 41ms
+ ✓ tests/docs-truth.test.ts (1 test) 37ms
+ ✓ tests/server-profile.test.ts (4 tests) 7ms
+ ❯ tests/scaffold.test.ts (70 tests | 2 failed) 127853ms
+       ✓ produces exactly the template tree, with configuration dotfiles restored 3ms
+       ✓ restores the scripts-off npm policy and never leaves _npmrc in a scaffold 0ms
+       ✓ leaves no unreplaced placeholder anywhere 2ms
+       ✓ names the crate after the project 0ms
+       ✓ puts the project's own Cargo.lock entry where cargo sorts it 1ms
+       ✓ tells an npm user to install with npm ci, which leaves the shipped lockfile as it is 190ms
+       ✓ writes a .gitignore and no _gitignore 0ms
+       ✓ refuses to scaffold over the directory it just created 40ms
+       ✓ produces exactly the template tree, with configuration dotfiles restored 3ms
+       ✓ restores the scripts-off npm policy and never leaves _npmrc in a scaffold 0ms
+       ✓ leaves no unreplaced placeholder anywhere 3ms
+       ✓ names the crate after the project 0ms
+       ✓ puts the project's own Cargo.lock entry where cargo sorts it 0ms
+       ✓ tells an npm user to install with npm ci, which leaves the shipped lockfile as it is 203ms
+       ✓ writes a .gitignore and no _gitignore 0ms
+       ✓ refuses to scaffold over the directory it just created 42ms
+       ✓ produces exactly the template tree, with configuration dotfiles restored 2ms
+       ✓ restores the scripts-off npm policy and never leaves _npmrc in a scaffold 0ms
+       ✓ leaves no unreplaced placeholder anywhere 2ms
+       ✓ names the crate after the project 0ms
+       ✓ puts the project's own Cargo.lock entry where cargo sorts it 0ms
+       ✓ tells an npm user to install with npm ci, which leaves the shipped lockfile as it is 199ms
+       ✓ writes a .gitignore and no _gitignore 0ms
+       ✓ refuses to scaffold over the directory it just created 40ms
+       ✓ refuses ../escape (path traversal) before writing anything, naming the rule 67ms
+       ✓ refuses .. (parent directory) before writing anything, naming the rule 59ms
+       ✓ refuses a/b (forward slash) before writing anything, naming the rule 60ms
+       ✓ refuses a\b (backslash) before writing anything, naming the rule 57ms
+       ✓ refuses /abs (absolute path) before writing anything, naming the rule 63ms
+       ✓ refuses C:tricky (drive-relative path) before writing anything, naming the rule 60ms
+       ✓ refuses My-App (upper case) before writing anything, naming the rule 57ms
+       ✓ refuses 0app (leading digit) before writing anything, naming the rule 61ms
+       ✓ refuses -leading (leading hyphen) before writing anything, naming the rule 61ms
+       ✓ refuses _leading (leading underscore) before writing anything, naming the rule 64ms
+       ✓ refuses fn (Rust keyword) before writing anything, naming the rule 58ms
+       ✓ refuses build (cargo's build directory) before writing anything, naming the rule 65ms
+       ✓ refuses test (Rust's test library) before writing anything, naming the rule 67ms
+       ✓ refuses con (Windows device name) before writing anything, naming the rule 62ms
+       ✓ refuses xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (over-long name) before writing anything, naming the rule 63ms
+       ✓ rejects an unknown template without touching the filesystem 61ms
+       ✓ rejects --template with no value 44ms
+       ✓ rejects --template followed by another flag 50ms
+       ✓ accepts a project name that happens to equal the template name 46ms
+       ✓ --dry-run creates nothing 65ms
+       ✓ refuses to scaffold onto a dangling symlink 47ms
+       ✓ --version prints the package version 51ms
+     ✓ minimal: npm ci, frontend build, cargo check --locked  18227ms
+     ✓ dashboard: npm ci, frontend build, cargo check --locked  5004ms
+     ✓ native-router: npm ci, frontend build, cargo check --locked  5761ms
+     ✓ minimal: build:ssr emits real IR, not a placeholder  12295ms
+     ✓ minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell  3845ms
+     ✓ minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line  4175ms
+     ✓ minimal: declared count reaches SSR and invalid bindings refuse before listening  5261ms
+     ✓ minimal: packed native island adopts without writes and static route requests no code in all engines  35204ms
+     × native-router: typed navigation preserves its layout and works without JavaScript in all engines 60ms
+     ✓ dashboard: serves each page as its browser shell, by declaration (ssr: false)  3524ms
+     ✓ dashboard: chart tooltip keeps API values as text under enforced policy in all engines  12116ms
+     ✓ minimal: no locked crate needs a newer Rust than the template declares  335ms
+     ✓ dashboard: no locked crate needs a newer Rust than the template declares 259ms
+     ✓ native-router: no locked crate needs a newer Rust than the template declares 252ms
+     ✓ minimal: a user's own cargo update keeps every crate within the template's rust-version  1763ms
+     ✓ dashboard: a user's own cargo update keeps every crate within the template's rust-version  886ms
+     ✓ native-router: a user's own cargo update keeps every crate within the template's rust-version  743ms
+     ✓ minimal scaffolded as tracing, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it  312ms
+     ✓ dashboard scaffolded as serde, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it  348ms
+     ✓ minimal: build:ssr reads ssrEntryPoints by page name  1905ms
+     ✓ minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker  4887ms
+     ✓ dashboard: every page answers no-store with a fresh nonce per fetch, and registers no service worker  2480ms
+     × native-router: every page answers no-store with a fresh nonce per fetch, and registers no service worker 954ms
+     ✓ cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses  1267ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scaffold.test.ts > scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: typed navigation preserves its layout and works without JavaScript in all engines
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/scaffold.test.ts:543:73
+    541|     it('native-router: typed navigation preserves its layout and works…
+    542|       const name = 'e2e-native-router';
+    543|       expect(runCli([name, '--template', 'native-router'], tmp).status…
+       |                                                                         ^
+    544|       const dest = path.join(tmp, name), admin = path.join(dest, 'admi…
+    545|       const install = run('npm', ['ci', '--ignore-scripts', '--no-audi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/scaffold.test.ts > scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: every page answers no-store with a fresh nonce per fetch, and registers no service worker
+AssertionError: no page route found in main.rs: expected 0 to be greater than 0
+ ❯ tests/scaffold.test.ts:765:62
+    763|
+    764|       const pages = pageRoutes(fs.readFileSync(path.join(dest, 'src', …
+    765|       expect(pages.length, 'no page route found in main.rs').toBeGreat…
+       |                                                              ^
+    766|       if (template === 'dashboard') expect(pages).toHaveLength(5);
+    767|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  2 failed | 212 passed (214)
+   Start at  15:23:20
+   Duration  128.25s (transform 454ms, setup 0ms, import 1.03s, tests 133.34s, environment 0ms)
+
+JSON report written to /tmp/forma-301-candidate-scaffold/vitest.json
+scaffold timings (darwin): scaffold CLI: cli n=60 p50=125ms p90=149ms max=174ms/25.0s, staging n=34 p50=71ms p90=80ms max=84ms/25.0s; owned server: listening n=9 p50=15ms p90=19ms max=25ms/30.0s, ready n=9 p50=55ms p90=59ms max=65ms; browser chromium: launch n=2 p50=274ms p90=327ms max=340ms, checks n=2 p50=1.5s p90=1.8s max=1.9s; browser firefox: launch n=2 p50=897ms p90=1.2s max=1.2s, checks n=2 p50=2.3s p90=2.4s max=2.4s; browser webkit: launch n=2 p50=378ms p90=497ms max=527ms, checks n=2 p50=2.0s p90=2.1s max=2.2s
+AssertionError [ERR_ASSERTION]: scaffold suite command failed
+
+1 !== 0
+
+    at runCandidate (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/candidate-scaffold.mjs:159:51)
+    at main (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/candidate-scaffold.mjs:189:5)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/candidate-scaffold.mjs:197:85
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

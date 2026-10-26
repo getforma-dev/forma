@@ -1,0 +1,7 @@
+{
+  "previousLog": "/tmp/forma-301-full-check-v4.log",
+  "previousFailedGate": "step \"e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications\"",
+  "scriptSha256": "e8627155256ade5032f1e2ec5b5ae976d090f7e99c15fe90db067563a5c5f5ea",
+  "unchangedTailSha256": "f7eb1e764b1bf98b2fb1044ef7eed45a1cb070224a3ace011d1710830f8de6c3",
+  "scope": "Exact remaining check.sh gates, fresh private build state; prior passed stages retained with source bindings."
+}

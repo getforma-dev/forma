@@ -1,0 +1,288 @@
+{
+  "schema": 1,
+  "status": "pre-callback-fix-candidate-qualified-with-scope",
+  "scope": "Local source qualification and historical eight-package33ae development candidate. P17 passed75/75 and corrected scaffold passed218/218. Callback audit then found runtime defects, so these results are not final acceptance; a successor candidate must be qualified.",
+  "sourceCommit": "33ae2bcea038f6797e2fc46d3b7433ff56242c6a",
+  "packageSet": "forma-router-v1",
+  "sourceVersion": "3.1.0",
+  "publishedRelease": "Existing published 3.1.0 has seven packages. These are locally packed development candidates, not published 3.1.0 bytes.",
+  "archiveRecordSha256": "7764c6c3c3f9a1d53f3518b3b7424af0ebb3bf4c5afb43a3018ffe560d379eed",
+  "sourceChecks": {
+    "command": "npm run check",
+    "node": "24.22.1",
+    "maxVitestWorkers": 2,
+    "cargoBuildJobs": 3,
+    "attempts": [
+      {
+        "log": "check-attempt-1.log",
+        "passed": false,
+        "failure": "Archive renderer-window check could not read then-untracked router package.json.",
+        "correction": "Root committed package sources before retry; archive gate unchanged."
+      },
+      {
+        "log": "check-attempt-2.log",
+        "passed": false,
+        "failure": "Development core pack checker assumed package-local publint; workspace now hoisted it.",
+        "correction": "Resolve installed tool through normal Node package search; production lint/type gates retained.",
+        "verification": "core-pack-hoisting.log"
+      },
+      {
+        "log": "check-attempt-3.log",
+        "passed": false,
+        "failure": "Inherited VITEST_MAX_WORKERS=2 overrode --maxWorkers=1 in Vitest4, breaking serial mutation evidence.",
+        "correction": "Set the serial probe child environment to1; unchanged assertion-evidence oracle.",
+        "verification": "serial-probes-fixed.log",
+        "removedFixControl": "serial-probes-removed-override.log"
+      },
+      {
+        "log": "check-attempt-4.log",
+        "passed": false,
+        "failure": "Unchanged baseline fixture test compared /var and canonical /private/var cwd paths on macOS.",
+        "correction": "Canonicalize newly created test fixture root, keeping exact cwd/isolation assertions.",
+        "verification": "check-builds-canonical.log",
+        "remainingGates": "check-remaining.log"
+      }
+    ],
+    "remaining": {
+      "passed": true,
+      "seconds": 647,
+      "command": "check-remaining-command.sh",
+      "provenance": "check-resume-original.json",
+      "note": "Resumed exact unchanged remaining check.sh gates with fresh private build state after the fixture test failure. Original resume metadata names the next e2e stage; actual failure was check-builds.test.mjs immediately before that stage. Later process-helper test and corrected native launcher ran independently."
+    },
+    "finalDelta": {
+      "routerTests": 121,
+      "runtimeCommit": "6c19d2eb",
+      "routerTypecheck": "router-final-types.log",
+      "routerPack": "router-final-pack.log",
+      "nativeLauncher": "native-owned-final.log",
+      "processHelper": "native-owned-processes.log",
+      "packageBuild": "final-build.log",
+      "routerSuiteEvidence": "../initial-owner-disposal.json"
+    }
+  },
+  "packedQualification": {
+    "packPassed": true,
+    "archiveVerifyPassed": true,
+    "dryRun": true,
+    "performanceTargetTag": "v3.1.0",
+    "targetReason": "Rehearsal target must match unchanged release-contracts.json version; no3.2 version bump or release authorization.",
+    "attempts": [
+      {
+        "path": "p17-attempt-1/p17.json",
+        "log": "p17-attempt-1/p17.log",
+        "passed": false,
+        "failure": "Expression security sourceClean gate detected a newly written untracked benchmark log.",
+        "correction": "Moved owned benchmark log outside checkout; preserved same source commit/archive bytes; all checkout writes frozen before full retry."
+      },
+      {
+        "path": "p17-attempt-2/p17-summary.json",
+        "log": "p17-attempt-2/p17.log",
+        "passed": true,
+        "tests": 75,
+        "elapsedSeconds": 1222.075,
+        "timeLimitSeconds": 1800,
+        "scope": "Clean33ae archived candidate, before subsequent callback corrections.",
+        "rawReport": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/attempt-33ae2bce/p17-attempt-2/p17.json"
+      }
+    ],
+    "candidateScaffold": [
+      {
+        "path": "candidate-scaffold-attempt-1/forma-301-candidate-scaffold-report.json",
+        "log": "candidate-scaffold-attempt-1/forma-301-candidate-scaffold.log",
+        "passed": false,
+        "passedTests": 212,
+        "failedTests": 2,
+        "failure": "New native proof reused a generic temporary project name; existing header-discovery helper only recognized direct render calls.",
+        "correctionCommit": "27d0602f",
+        "focusedVerification": "scaffold-gate-focused.log",
+        "initialTestExpectationCorrection": "scaffold-gate-initial-expectation-failure.log"
+      },
+      {
+        "path": "candidate-scaffold-attempt-2/forma-301-candidate-scaffold-v2-report.json",
+        "log": "candidate-scaffold-attempt-2/forma-301-candidate-scaffold-v2.log",
+        "passed": true,
+        "tests": 218,
+        "requiredHeavy": 24,
+        "elapsedSeconds": 145.57,
+        "platform": "darwin",
+        "scope": "Same33ae archives with corrected27d0602f harness; no Linux N8/Windows claim."
+      }
+    ]
+  },
+  "files": {
+    "check-remaining.log": {
+      "sha256": "5a2c19287b6d7c3aed46ea47b925aa75b1cbcfc19baaf4b0a4421d92ffd1a077"
+    },
+    "serial-probes-fixed.log": {
+      "sha256": "c6a959fc3b9980871b910a5686b53d91c32d01710cdc961d8f82e082e72933bd"
+    },
+    "router-final-pack.log": {
+      "sha256": "31dfa80f93274f57e132898260336f495a6652ea970f0b98cfb780caf3981d07"
+    },
+    "core-pack-hoisting.log": {
+      "sha256": "936eb037482ca17eac3207a85542f7269948464edacb0dcdeab774f6abe02497"
+    },
+    "ds11-durable-verify.log": {
+      "sha256": "dc86ff40e48ac781153790ce8cbfa89c31d15d1251029db3c08f7eb4f99d110f"
+    },
+    "native-owned-final.log": {
+      "sha256": "91879790a3cac59afc0ffd1365d3dcc7e5aafcf7a75fac094828c7a3395f8f8a"
+    },
+    "scaffold-gate-initial-expectation-failure.log": {
+      "sha256": "9c857cb81e72ae6143f946fd2279375e39f0592b073f0a4d5b68581e60fb38bf"
+    },
+    "check-remaining-command.sh": {
+      "sha256": "736dc41cc6965482177b74d3a474d12568fb4ff94d69fbce6f9e5bba677d986f"
+    },
+    "scaffold-gate-focused.log": {
+      "sha256": "c75b682a3b4078ca20eff63078ce4c208f95b88c03cdcef017b026b3aefa171f"
+    },
+    "check-attempt-4.log": {
+      "sha256": "236738c8965292da63f2da8679cebbdbbf58d02a46c494dca9918af463dc281f"
+    },
+    "ds11-verify.log": {
+      "sha256": "dc86ff40e48ac781153790ce8cbfa89c31d15d1251029db3c08f7eb4f99d110f"
+    },
+    "check-attempt-1.log": {
+      "sha256": "3a3eea97074f6bee6c6751811f81f08dfa296c8a4ec0d522189eb44457e0d062"
+    },
+    "check-attempt-3.log": {
+      "sha256": "cf4179b70a1bf6b11a9538dbdc8e8f2eaf083a90063a5ab9e3440bf13685c693"
+    },
+    "check-attempt-2.log": {
+      "sha256": "1a49999934bf63a94aedd79c7e77968760340df868e2200aa52319108e836950"
+    },
+    "README.md": {
+      "sha256": "a751003db82165c7ef2768b6a8587c8d7e681467af041b0e588fa7fb97e41a25"
+    },
+    "final-build.log": {
+      "sha256": "2bfc18f7425c666a3831cebeb1e7dbb7ce7b35edb47880bc2e391a3603726f05"
+    },
+    "check-builds-canonical.log": {
+      "sha256": "a872ae715a108256b663db70d12744d55483b840af09b43de4ca786cdfb696c2"
+    },
+    "native-owned-processes.log": {
+      "sha256": "899af81cd580dcb3789600ceaad803ff39a7ba279fa9dd56dad6a9d88103b22b"
+    },
+    "router-final-types.log": {
+      "sha256": "ec7c2956a0e82c3740fe311636edc297640d2513640bbf0c645803be84af70f2"
+    },
+    "retained-raw-files.json": {
+      "sha256": "ed0dc9d003f88df9bf96edcc3080247f8033c5f4675cd18916bd381283ff3c74"
+    },
+    "serial-probes-removed-override.log": {
+      "sha256": "5bbbdeaee4ba1b709a7a3d64f9a179acafdcb9f64874dea432f20d14087403da"
+    },
+    "ds11-pack.log": {
+      "sha256": "c33ab8adda8810d44676864ccd2a9715e9e99504acfd9609631c4538adb85d1e"
+    },
+    "SHA256SUMS": {
+      "sha256": "7764c6c3c3f9a1d53f3518b3b7424af0ebb3bf4c5afb43a3018ffe560d379eed"
+    },
+    "release-set.json": {
+      "sha256": "e922d6eeaf91a7feea80e2f36ae015be18a88d2e2630960a5e3c3605ea80183d"
+    },
+    "check-resume-original.json": {
+      "sha256": "b4cf91876f8484f98186d6349b1312073ad4e457b925a67286470a66b04bde2f"
+    },
+    "candidate-scaffold-attempt-1/preparation.json": {
+      "sha256": "9e034195f5ef893ab7f6ae84a96a67925399c91e9ab9796188e7191e65f0b393"
+    },
+    "candidate-scaffold-attempt-1/observations.jsonl": {
+      "sha256": "6c2decfb32ba52e9947517647ee7f1300881a5dfb4152fce720171979b303a61"
+    },
+    "candidate-scaffold-attempt-1/vitest.json": {
+      "sha256": "033d8d0260ce64b9afd2ba67c150d3c7259fdd689dfa92f68e6a5b3edd49b861"
+    },
+    "candidate-scaffold-attempt-1/forma-301-candidate-scaffold-report.json": {
+      "sha256": "bf629c939a9537277a812896bba13f1ded63220773a570cbcd0e59b3d8dd7f5b"
+    },
+    "candidate-scaffold-attempt-1/forma-301-candidate-scaffold.log": {
+      "sha256": "e9b18c723668767e1942e6ab16155f18522f6eed5943ea1bb79c30b12ed93465"
+    },
+    "p17-attempt-1/p17.json": {
+      "sha256": "3953445a43684371c5e499563be024f0a6e5871bab330ca8980bf0054f36a507"
+    },
+    "p17-attempt-1/p17.log": {
+      "sha256": "0ff4666caaedcd511ed0e64e0a27b6516456885f0ecc294cf62876a198bc126b"
+    },
+    "p17-attempt-1/security/guard-qualification.json": {
+      "sha256": "16eabfa765beb397c6e697ec4c13bda2da51794080163edef4cb532c0931e95a"
+    },
+    "p17-attempt-1/security/mutation-corrected.json": {
+      "sha256": "296267471f593761cc5850294d91874a9092219d644233b746cafed9400164a4"
+    },
+    "p17-attempt-1/security/guard-mutant.json": {
+      "sha256": "5daa422411870b1d27318d9531ee580dfb97f6c4ff0920355e39bca3827cc818"
+    },
+    "p17-attempt-1/security/guard-corrected.json": {
+      "sha256": "c78e56ac89b0111e90343e00952619f2eb814a503da6975b38a99c0ed4169469"
+    },
+    "p17-attempt-1/security/hostile-widgets.json": {
+      "sha256": "f13e62fa27729d40745a42db1b6f23438454ddade668aef199677fc321759a4d"
+    },
+    "p17-attempt-1/security/guard-before.json": {
+      "sha256": "c05f2a3db8700a7e6a5008d92b7f9872b56c205fb35d950b059d17cd6896b9dc"
+    },
+    "p17-attempt-1/security/mutation-qualification.json": {
+      "sha256": "752147f69f872cd239a48cb9f1f9ff7eb254ba354f82c631fb819f57005ffc90"
+    },
+    "p17-attempt-1/security/mutation-mutant.json": {
+      "sha256": "c6e2a20c7b0f96d4827154a8559ecbdbdb71869bdc8ec6f0a40a22e1e8a25ba6"
+    },
+    "p17-attempt-1/security/mutation-before.json": {
+      "sha256": "b21ef067340dd191b53f59933fda8352a390078d2cf23728b23aa801dd5dbb2b"
+    },
+    "callback-review/connect.json": {
+      "sha256": "0f297e34cc1c2b82eb122cdb4cd3cb3e418c24fd41cccebbd58731e67495e153"
+    },
+    "callback-review/observable.mjs": {
+      "sha256": "e49eb3ca1732d7bf87d004d3f39afe54cbb128ef568a5d8bfe8835ecfaef3466"
+    },
+    "callback-review/identity.json": {
+      "sha256": "085e3c3c937da9cbc0c512042ab9b437f737b387399b01f09aba7418682f6d00"
+    },
+    "callback-review/observable.json": {
+      "sha256": "5fbb152d7113fd17257993d087d4e94c46025ae07fb0b0d60e7b25f9676b79e2"
+    },
+    "callback-review/connect.mjs": {
+      "sha256": "d820738104cfaa3d14dea57beb54ad1a621144998043e7867dda1f713a46f87b"
+    },
+    "candidate-scaffold-attempt-2/preparation.json": {
+      "sha256": "9e034195f5ef893ab7f6ae84a96a67925399c91e9ab9796188e7191e65f0b393"
+    },
+    "candidate-scaffold-attempt-2/forma-301-candidate-scaffold-v2-report.json": {
+      "sha256": "d08cca94967ee1003a3b26eacf15879cbcf3ab33d9aa827eece2dc46d37002b1"
+    },
+    "candidate-scaffold-attempt-2/observations.jsonl": {
+      "sha256": "c183dd8dde74ebf31eb24b6b11799ded6302484e88eb397cc5013d8197175365"
+    },
+    "candidate-scaffold-attempt-2/vitest.json": {
+      "sha256": "8cbff6b659ef698fd8ac7d0253aee811d579c93d5626c3925f2361686160340d"
+    },
+    "candidate-scaffold-attempt-2/forma-301-candidate-scaffold-v2.log": {
+      "sha256": "d2900b4373a2996710388b2b7c51b51f2defeb413177281fe35e6e851acfd2a1"
+    },
+    "p17-attempt-2/p17-summary.json": {
+      "sha256": "866a446ff1a62cfeeaddd635f9adb665451a6c5434f83d5181328ebb22219646"
+    },
+    "p17-attempt-2/p17.log": {
+      "sha256": "5e15aacfe9e2e7d6f879bde06ea1871e8e294ebebcbe21eb7b7277a8c98d02ec"
+    }
+  },
+  "durableDirectory": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/attempt-33ae2bce",
+  "supersededBecause": {
+    "scope": "Confirmed against extracted33ae packed core/router with exact archive hashes.",
+    "identity": "callback-review/identity.json",
+    "observations": "callback-review/observable.json",
+    "adapterBoundary": "callback-review/connect.json",
+    "findings": [
+      "Revalidating mutation observer navigation can be overridden by older POST settlement.",
+      "Title callback disposal still permits stale title assignment and activation.",
+      "Custom adapter connect disposal still allows subsequent initialize before eventual session cleanup."
+    ],
+    "additionalParentAudit": "onError reentrancy and pre-transmission persistence addressed by owning coordinator agent; retained separately."
+  },
+  "retainedRawInventory": "retained-raw-files.json"
+}

@@ -1,0 +1,2636 @@
+
+> check
+> bash scripts/check.sh
+
+
+### npm ci --ignore-scripts (0s)
+
+added 427 packages, and audited 433 packages in 6s
+
+81 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+### npm advisory gate (fails closed) (6s)
+found 0 vulnerabilities
+
+### npm audit signatures (6s)
+audited 422 packages in 3s
+
+422 packages have verified registry signatures
+
+107 packages have verified attestations
+(use --json --include-attestations to view attestation details)
+
+
+### router design and reverse-engineering provenance are complete (10s)
+Router research:49 exact input hashes,105 complete questions,57 acceptance IDs verified. Execution qualification is separate.
+
+### FMIR shared constants are current (10s)
+
+### cargo fmt --all --check (10s)
+
+### cargo clippy --locked --workspace --all-targets --all-features -- -D warnings (10s)
+    Checking forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.10s
+
+### cargo test --locked --workspace (13s)
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.23s
+     Running unittests src/lib.rs (target/debug/deps/forma_ir-3aed13680f398cea)
+
+running 264 tests
+test contracts::native_tests::fixed_binding_lexical_and_capture_refusals ... ok
+test contracts::native_tests::explicit_constants_preserve_null_keys_without_schema_projection ... ok
+test contracts::native_tests::branch_temporary_does_not_dominate_a_join_or_sibling ... ok
+test contracts::native_tests::branch_join_cannot_erase_date_number_provenance_behind_one_number_hint ... ok
+test contracts::native_tests::list_row_coalesce_uses_current_row_and_restores_scratch ... ok
+test contracts::native_tests::archived_precontract_island_requires_rebuild_and_archived_static_still_loads ... ok
+test contracts::native_tests::coalesce_refuses_wrong_fallback_hint_ownership_and_multiple_definition ... ok
+test contracts::native_tests::nonisland_old_module_survives_but_new_opcode_requires_contract_section ... ok
+test contracts::native_tests::list_occurrences_own_row_snapshots_before_the_next_iteration ... ok
+test contracts::native_tests::full_type_checks_enums_dates_and_recursive_aggregate_fallbacks ... ok
+test contracts::native_tests::nested_island_snapshots_precede_children_and_repeat_ordered_inputs ... ok
+test contracts::native_tests::real_reader_and_walker_coalesce_null_but_keep_zero_false_and_empty_string ... ok
+test contracts::native_tests::state_projects_only_declared_nested_fields_and_preserves_unused_disclosure ... ok
+test contracts::native_tests::state_has_one_owned_envelope_new_host_markers_and_no_legacy_channel ... ok
+test contracts::tests::canonical_schema_rejects_duplicate_shapes_unreachable_and_cycles ... ok
+test contracts::tests::count_limits_precede_truncation ... ok
+test contracts::tests::constants_keep_empty_and_null_distinct_and_require_finite_canonical_numbers ... ok
+test contracts::native_tests::repeated_ordered_input_is_valid_and_contract_schema_must_match_global ... ok
+test format::compatibility_tests::frozen_examples_keep_their_explicit_historical_reader_results ... ok
+test format::compatibility_tests::shared_version_pairs_pass_through_the_actual_header_reader ... ok
+test contracts::native_tests::state_refuses_bad_runtime_values_and_preserves_optional_array_positions ... ok
+test contracts::tests::independent_paper_vectors_parse_exactly ... ok
+test js_emitter_contract::closed_list_defaults_render_real_rows_in_both_projections ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::strict_corpus_near_misses_render_their_real_defaults ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test keys::tests::the_budget_check_counts_normalized_bytes_and_stops_at_the_budget ... ok
+test keys::tests::every_shared_collision_vector_agrees_on_whether_two_values_share_a_key ... ok
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test keys::tests::the_path_refuses_exactly_the_reasons_the_catalogue_names ... ok
+test parser::tests::island_table_rejects_count_the_section_cannot_hold ... ok
+test keys::tests::every_shared_path_vector_resolves_against_the_row_as_the_file_says ... ok
+test parser::tests::duplicate_slot_names_resolve_first_wins_everywhere ... ok
+test keys::tests::every_shared_key_vector_maps_or_refuses_as_the_file_says ... ok
+test parser::tests::parse_ir_rejects_bad_section_bounds ... ok
+test parser::tests::parse_ir_rejects_truncated ... ok
+test parser::tests::parse_ir_with_islands ... ok
+test parser::tests::parse_ir_with_slots ... ok
+test parser::tests::parse_island_table ... ok
+test parser::tests::parse_island_table_empty ... ok
+test parser::tests::parse_island_table_with_slot_ids ... ok
+test parser::tests::parse_minimal_ir_file ... ok
+test parser::tests::parse_slot_table ... ok
+test parser::tests::parse_slot_table_empty ... ok
+test parser::tests::parse_string_table ... ok
+test parser::tests::parse_string_table_empty ... ok
+test parser::tests::parse_string_table_truncated ... ok
+test parser::tests::parse_string_table_unicode ... ok
+test parser::tests::slot_table_rejects_count_the_section_cannot_hold ... ok
+test parser::tests::string_table_rejects_count_the_section_cannot_hold ... ok
+test parser::tests::slot_and_island_lookups_are_indexed ... ok
+test parser::tests::validate_catches_bad_island_str_idx ... ok
+test parser::tests::validate_catches_bad_slot_str_idx ... ok
+test parser::tests::validate_rejects_duplicate_island_ids ... ok
+test parser::tests::validate_rejects_duplicate_slot_ids ... ok
+test parser::tests::validate_rejects_island_offset_landing_mid_operand ... ok
+test parser::tests::validate_rejects_island_slot_id_absent_from_slot_table ... ok
+test parser::tests::validate_rejects_island_start_missing_from_table ... ok
+test parser::tests::validate_rejects_list_item_slot_not_in_table ... ok
+test parser::tests::validate_rejects_opcode_slot_id_absent_from_slot_table ... ok
+test props::value::tests::date_conversion_checks_both_signed_bounds_without_system_time_limits ... ok
+test slot::tests::as_bool_matches_javascript_tobool ... ok
+test slot::tests::borrowed_scalar_text_preserves_ecmascript_conversion ... ok
+test slot::tests::from_json_array ... ok
+test slot::tests::from_json_basic ... ok
+test slot::tests::from_json_bool_values ... ok
+test slot::tests::from_json_missing_key_uses_default ... ok
+test slot::tests::from_json_invalid_json ... ok
+test slot::tests::from_json_nested_object ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ok
+test slot::tests::from_json_null_value ... ok
+test slot::tests::from_json_unknown_key_ignored ... ok
+test slot::tests::number_to_json_non_finite_is_null_matching_js ... ok
+test slot::tests::number_to_json_round_trips_by_value_not_by_text ... ok
+test slot::tests::number_to_text_matches_javascript_string ... ok
+test slot::tests::number_to_text_never_saturates_above_i64 ... ok
+test slot::tests::slot_data_new_from_defaults_basic ... ok
+test slot::tests::set_grows_instead_of_silently_dropping ... ok
+test slot::tests::slot_data_get_text ... ok
+test slot::tests::slot_data_new_from_defaults_bool_true ... ok
+test slot::tests::slot_data_new_from_defaults_empty_table ... ok
+test slot::tests::slot_data_new_from_defaults_no_default_bytes ... ok
+test slot::tests::slot_data_new_from_defaults_number ... ok
+test slot::tests::slot_data_nonempty_object_default_is_refused_at_load ... ok
+test slot::tests::slot_data_out_of_bounds ... ok
+test slot::tests::slot_data_set_and_get ... ok
+test slot::tests::slot_value_as_array ... ok
+test slot::tests::slot_value_bool_to_text ... ok
+test slot::tests::slot_value_null_to_text ... ok
+test slot::tests::slot_value_number_float ... ok
+test slot::tests::slot_value_number_integer ... ok
+test slot::tests::slot_value_text_to_text ... ok
+test slot::tests::to_text_matches_javascript_string_for_containers ... ok
+test text::tests::a_crlf_split_across_two_values_is_two_line_feeds ... ok
+test text::tests::the_iterator_reports_no_exact_size_and_the_byte_count_is_the_normalized_one ... ok
+test walker::tests::a_bound_select_overrides_authored_selected_on_its_options ... ok
+test walker::tests::a_list_exactly_at_the_remaining_budget_still_renders ... ok
+test walker::tests::a_multiple_select_selects_every_option_in_an_array_value ... ok
+test text::tests::every_shared_value_vector_maps_through_the_iterator_and_the_collector ... ok
+test walker::tests::a_list_longer_than_the_remaining_budget_fails_before_its_first_row ... ok
+test walker::tests::a_null_member_of_a_multiple_value_compares_as_null ... ok
+test walker::tests::a_nested_list_is_checked_against_what_its_parents_left ... ok
+test walker::tests::a_select_value_binding_compares_as_the_client_string ... ok
+test walker::tests::a_select_value_binding_matches_an_option_without_a_value_by_its_text ... ok
+test walker::tests::a_select_binding_ends_with_its_select ... ok
+test walker::tests::a_single_select_selects_only_the_first_matching_option ... ok
+test walker::tests::a_static_select_value_attribute_selects_its_option ... ok
+test walker::tests::a_select_value_binding_selects_the_matching_option ... ok
+test walker::tests::a_textarea_value_binding_wins_over_its_children ... ok
+test walker::tests::a_textarea_doubles_a_leading_line_feed ... ok
+test walker::tests::an_empty_value_in_a_text_only_parent_writes_nothing ... ok
+test walker::tests::an_options_first_value_attribute_is_its_value ... ok
+test walker::tests::a_textarea_value_binding_is_written_as_its_text ... ok
+test walker::tests::a_select_value_binding_reaches_options_rendered_by_a_list ... ok
+test walker::tests::an_option_ends_at_the_next_option_or_optgroup ... ok
+test walker::tests::counted_walk_names_no_component_for_a_failure_outside_every_island ... ok
+test walker::tests::counted_walk_names_every_island_around_a_failure_outermost_first ... ok
+test walker::tests::counted_walk_writes_what_walk_to_html_writes_and_counts_it ... ok
+test walker::tests::counted_walk_returns_the_counts_reached_when_a_budget_stops_it ... ok
+test walker::tests::diagnostic_fragment_does_not_restore_an_inline_state_channel ... ok
+test walker::tests::declared_props_are_separate_from_body_html ... ok
+test walker::tests::dyn_attr_bool_matches_the_client_renderer ... ok
+test walker::tests::dyn_attr_emits_attribute_with_value ... ok
+test walker::tests::duplicate_slot_names_do_not_invent_declared_island_props ... ok
+test walker::tests::dyn_attr_multiple_on_same_element ... ok
+test walker::tests::dyn_attr_empty_string_and_zero_follow_boolean_presence ... ok
+test js_emitter_contract::state_snapshots_match_golden ... ok
+test walker::tests::dyn_attr_on_void_tag ... ok
+test walker::tests::dyn_attr_skips_when_slot_null ... ok
+test walker::tests::counted_walk_catches_a_panic_and_names_its_island ... ok
+test walker::tests::empty_declared_inputs_do_not_emit_inline_props ... ok
+test walker::tests::dyn_text_outside_the_text_only_parents_keeps_its_markers ... ok
+test walker::tests::dyn_text_in_a_text_only_parent_is_written_without_markers ... ok
+test walker::tests::keyed_rows::a_diagnostic_path_quotes_a_segment_a_dot_would_make_ambiguous ... ok
+test walker::tests::keyed_rows::a_key_is_charged_to_the_output_budget_before_it_is_built ... ok
+test walker::tests::keyed_rows::a_keyed_list_writes_each_rows_canonical_key_once_on_its_root ... ok
+test walker::tests::keyed_rows::a_refused_row_leaves_the_slot_journal_keyed_rows_and_list_depth_as_found ... ok
+test walker::tests::keyed_rows::a_registered_child_envelope_enclosing_the_root_puts_the_key_on_the_host ... ok
+test walker::tests::keyed_rows::a_keyed_row_renders_exactly_one_balanced_root_and_nothing_beside_it ... ok
+test walker::tests::keyed_rows::a_void_root_carries_the_key_and_admits_nothing_beside_it ... ok
+test walker::tests::keyed_rows::a_row_without_an_identity_at_the_path_refuses_with_its_reason ... ok
+test walker::tests::keyed_rows::an_island_envelope_that_does_not_wholly_enclose_the_root_refuses ... ok
+test walker::tests::keyed_rows::an_unkeyed_list_renders_byte_identically_with_no_key_and_no_key_rules ... ok
+test walker::tests::keyed_rows::each_execution_of_a_list_is_its_own_duplicate_scope ... ok
+test walker::tests::keyed_rows::keys_collide_on_their_canonical_text_not_on_their_type_or_spelling ... ok
+test walker::tests::keyed_rows::static_mode_omits_row_keys_but_keeps_key_and_shape_refusals ... ok
+test walker::tests::keyed_rows::an_authored_data_forma_key_on_the_root_refuses_and_on_a_descendant_renders ... ok
+test walker::tests::keyed_rows::the_iteration_budget_refuses_a_keyed_list_before_any_key_is_read ... ok
+test walker::tests::multiple_islands_share_one_owned_envelope ... ok
+test walker::tests::keyed_rows::every_shared_key_vector_is_written_as_its_served_markup ... ok
+test walker::tests::inv1_vectors::ordinary_payloads_are_escaped_in_both_output_contexts ... ok
+test walker::tests::larger_props_use_the_same_owned_state_channel ... ok
+test walker::tests::nested_diagnostic_fragment_has_occurrence_markers ... ok
+test walker::tests::multiple_counts_only_when_the_attribute_is_written ... ok
+test walker::tests::no_marker_kind_is_written_inside_a_text_only_parent ... ok
+test contracts::native_tests::state_exact_escaped_utf8_ceiling_passes_and_one_byte_more_refuses ... ok
+test walker::tests::normalization_vectors::adjacent_values_normalize_each_before_composition ... ok
+test walker::tests::normalization_vectors::the_pre_boundary_is_consumed_by_any_token_but_not_by_a_value_only_opcode ... ok
+test walker::tests::normalization_vectors::the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written ... ok
+test walker::tests::normalization_vectors::pre_children_protect_only_an_initial_normalized_line_feed ... ok
+test walker::tests::obsolete_mode_cannot_restore_fragment_inline_props ... ok
+test walker::tests::normalization_vectors::static_and_dynamic_attributes_write_each_value_normalized ... ok
+test walker::tests::owned_state_escapes_existing_comment_script_regression ... ok
+test walker::tests::normalization_vectors::url_attributes_are_checked_as_the_normalized_string_that_is_written ... ok
+test walker::tests::parse_accepts_zero_length_else_branch_known_residual ... ok
+test walker::tests::parse_rejects_show_if_then_len_past_the_stream ... ok
+test walker::tests::parse_rejects_list_body_len_past_the_stream ... ok
+test walker::tests::parse_rejects_show_if_marker_byte_that_is_not_show_else ... ok
+test walker::tests::owned_state_has_no_raw_script_openers ... ok
+test walker::tests::normalization_vectors::text_and_dyn_text_write_each_value_normalized ... ok
+test walker::tests::roundtrip_conditional_content ... ok
+test walker::tests::roundtrip_dynamic_greeting ... ok
+test walker::tests::normalization_vectors::textarea_children_protect_only_an_initial_normalized_line_feed ... ok
+test walker::tests::roundtrip_list_rendering ... ok
+test walker::tests::roundtrip_nested_structure ... ok
+test walker::tests::roundtrip_page_structure ... ok
+test walker::tests::security_probe_bounded_attribute_escaping ... ok
+test walker::tests::security_probe_bounded_text_escaping ... ok
+test walker::tests::slot_value_to_json_all_types ... ok
+test walker::tests::small_props_use_the_owned_state_channel ... ok
+test walker::tests::static_routes::static_mode_refuses_declared_islands_before_any_output ... ok
+test walker::tests::static_routes::static_limits_charge_actual_bytes_and_list_iterations ... ok
+test walker::tests::show_text_branch_vectors::a_dyn_text_branch_is_written_between_the_conditional_markers ... ok
+test walker::tests::static_routes::static_conditionals_lists_and_text_only_parents_keep_visible_values ... ok
+test walker::tests::the_fault_trigger_is_armed_only_by_the_counted_walk ... ok
+test walker::tests::static_routes::static_dynamic_text_preserves_initial_line_feeds_across_empty_ranges ... ok
+test walker::tests::static_routes::static_vectors_omit_markers_and_holders_but_keep_value_rules ... ok
+test walker::tests::the_context_rules_hold_in_an_island_fragment ... ok
+test walker::tests::the_per_row_check_still_stops_a_list_whose_nested_rows_spend_the_budget ... ok
+test walker::tests::value_rule_vectors::rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits ... ok
+test walker::tests::value_rule_vectors::rule_5_null_writes_nothing_as_text_attribute_and_textarea_child ... ok
+test walker::tests::value_rule_vectors::rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range ... ok
+test walker::tests::walk_attr_escaping ... ok
+test walker::tests::walk_blocks_svg_data_url_outside_image_context ... ok
+test walker::tests::walk_boolean_attr ... ok
+test walker::tests::value_rule_vectors::rule_7_a_boolean_condition_selects_the_branch ... ok
+test walker::tests::walk_drops_event_handler_attributes ... ok
+test walker::tests::walk_drops_hostile_attribute_names ... ok
+test walker::tests::walk_drops_hostile_boolean_attribute_name ... ok
+test walker::tests::walk_drops_hostile_dyn_attr_name ... ok
+test walker::tests::value_rule_vectors::rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute ... ok
+test walker::tests::walk_drops_javascript_url_in_dyn_attr ... ok
+test walker::tests::walk_drops_javascript_url_in_static_attr ... ok
+test walker::tests::walk_dyn_text ... ok
+test walker::tests::walk_dyn_text_empty_string_emits_zwsp ... ok
+test walker::tests::walk_dyn_text_escaping ... ok
+test walker::tests::walk_dyn_text_null_emits_zwsp ... ok
+test walker::tests::walk_empty_element ... ok
+test walker::tests::walk_island_attrs_do_not_leak_past_the_island_end ... ok
+test walker::tests::walk_island_attrs_match_walk_to_html ... ok
+test walker::tests::walk_island_attrs_on_void_tag ... ok
+test walker::tests::walk_island_attrs_survive_an_empty_show_if_before_the_root ... ok
+test walker::tests::walk_island_attrs_with_existing_attrs ... ok
+test walker::tests::walk_island_attrs_on_open_tag ... ok
+test walker::tests::walk_island_byte_offset_out_of_bounds ... ok
+test walker::tests::walk_island_markers ... ok
+test walker::tests::walk_island_nested_inside_another_islands_root_is_fine ... ok
+test walker::tests::walk_island_not_found ... ok
+test walker::tests::walk_island_basic ... ok
+test walker::tests::walk_island_no_entry_in_table ... ok
+test walker::tests::walk_keeps_safe_urls_and_data_images ... ok
+test walker::tests::walk_island_with_dyn_text ... ok
+test walker::tests::walk_list_nested ... ok
+test walker::tests::walk_list_empty_array ... ok
+test walker::tests::walk_list_depth_exceeded ... ok
+test walker::tests::walk_list_null_slot ... ok
+test walker::tests::walk_list_renders_items ... ok
+test walker::tests::walk_list_with_elements ... ok
+test walker::tests::walk_multiple_attrs ... ok
+test walker::tests::walk_nested_elements ... ok
+test walker::tests::walk_nested_island_start_before_a_root_element_is_an_error ... ok
+test walker::tests::walk_output_limit_trips_on_a_single_dyn_text_value ... ok
+test walker::tests::walk_nested_show_if_within_limit ... ok
+test walker::tests::walk_prop_in_list_body ... ok
+test walker::tests::walk_prop_multiple_properties ... ok
+test walker::tests::walk_prop_on_non_object ... ok
+test walker::tests::walk_real_benchmark_ir ... ignored, requires admin/dist IR files — run in monorepo or after `npm run build`
+test walker::tests::walk_rejects_hostile_close_tag_name ... ok
+test walker::tests::walk_rejects_hostile_tag_name ... ok
+test walker::tests::walk_show_if_false_branch ... ok
+test walker::tests::walk_show_if_falsy_null ... ok
+test walker::tests::walk_show_if_nested ... ok
+test walker::tests::value_rule_vectors::rule_6_attribute_values_follow_one_table ... ok
+test walker::tests::walk_prop_missing_property ... ok
+test walker::tests::walk_show_if_no_else ... ok
+test walker::tests::walk_show_if_true_branch ... ok
+test walker::tests::walk_static_div ... ok
+test walker::tests::walk_show_if_truthy_text ... ok
+test walker::tests::walk_show_if_with_elements ... ok
+test walker::tests::walk_void_tag ... ok
+test walker::tests::walk_text_escaping ... ok
+test contracts::native_tests::fixed_constant_depth_and_node_boundaries_are_checked_iteratively ... ok
+test walker::tests::walk_drops_a_script_url_in_an_svg_animation_value ... ok
+test walker::tests::walk_list_budget_exceeded ... ok
+test walker::tests::inv1_vectors::names_and_urls_agree_for_static_and_dynamic_attributes ... ok
+test walker::tests::walk_output_limit_trips_inside_one_opcode ... ok
+test contracts::native_tests::state_cap_is_cumulative_and_a_refused_entry_is_not_retained ... ok
+test walker::tests::bulk_escaping_matches_character_reference_at_every_output_boundary ... ok
+
+test result: ok. 263 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.73s
+
+     Running tests/feature_isolation.rs (target/debug/deps/feature_isolation-0f07e3a4a8b5d412)
+
+running 1 test
+test test_helpers_alone_does_not_compile_the_fault_trigger_in ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/fmir_contract.rs (target/debug/deps/fmir_contract-17e25b2cba2099d6)
+
+running 3 tests
+test legacy_and_newer_minor_are_rebuild_errors ... ok
+test variable_sections_tile_exactly_and_reserved_fields_fail_closed ... ok
+test frozen_header_layout_matches_document_and_package_version ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fmir_v3.rs (target/debug/deps/fmir_v3-ff2086984e2245c6)
+
+running 8 tests
+test an_available_section_count_is_checked_before_the_missing_reserved_prefix ... ok
+test crc_standard_vector_and_example_match ... ok
+test every_removed_opcode_is_reserved_and_refused_at_load ... ok
+test all_bytecode_string_operand_shapes_are_validated_before_render ... ok
+test canonical_dump_losslessly_rebuilds_every_accepted_review_fixture ... ok
+test reviewed_v3_fixture_codes_are_exact ... ok
+test recursive_inputs_are_bounded_at_the_contract_and_at_ten_thousand_levels ... ok
+test module_ceiling_is_checked_before_decoding_but_includes_its_boundary ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+
+     Running tests/fuzz_regressions.rs (target/debug/deps/fuzz_regressions-a54e9d1b7c06097c)
+
+running 6 tests
+test malformed_and_oversized_input_never_looks_like_a_successful_replay ... ok
+test slot_adapter_uses_declared_order_bounded_lengths_and_null_for_truncation ... ok
+test fault_corpus_is_total_and_accepted_cases_walk ... ok
+test seeded_decoder_defects_are_caught_deterministically ... ok
+test replay_every_committed_regression_with_its_real_adapter ... ok
+test frozen_modules_reach_all_four_adapters_and_the_bounded_walker ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/island_emitter.rs (target/debug/deps/island_emitter-6956e921d5f51f1a)
+
+running 16 tests
+test closed_aggregate_projection_preserves_array_positions_and_strips_extras ... ok
+test closed_nested_optional_projection_folds_without_inventing_native_type ... ok
+test browser_only_contract_renders_only_its_empty_host_and_declared_state ... ok
+test closed_optional_inputs_fold_before_native_coalesce_type_validation ... ok
+test closed_rows_project_each_registered_input_at_the_current_occurrence ... ok
+test closed_local_aggregate_defaults_render_rows_without_handler_slots ... ok
+test declared_coalesce_only_replaces_null_and_keeps_original_input_state ... ok
+test declared_aggregate_fallback_keeps_empty_arrays_and_scalar_row_hints ... ok
+test repeated_fields_keep_the_ordered_input_mapping ... ok
+test declared_aggregate_fallback_keeps_empty_arrays_and_keyed_object_rows ... ok
+test repeated_list_entries_snapshot_the_current_nested_row ... ok
+test optional_root_access_keeps_the_handler_value_and_only_defaults_null ... ok
+test keyed_shapes_compiler_output_writes_every_rows_key_on_its_own_root ... ok
+test keyed_shapes_compiler_output_refuses_a_duplicate_in_the_list_execution_that_has_it ... ok
+test keyed_fixtures_refuse_duplicate_missing_and_non_identity_keys_as_render_503 ... ok
+test keyed_fixtures_render_their_unkeyed_originals_plus_exactly_the_row_keys ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/json_float_roundtrip.rs (target/debug/deps/json_float_roundtrip-52be1dee34c407d5)
+
+running 2 tests
+test public_json_import_accepts_the_exact_integer_spelling ... ok
+test public_json_import_preserves_fixed_finite_decimal_values ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/list_scaling.rs (target/debug/deps/list_scaling-adcd9434cb816426)
+
+running 4 tests
+test list_row_writes_do_not_escape_the_row ... ok
+test list_row_scope_is_restored_when_the_walk_aborts ... ok
+test list_walk_allocations_are_linear_in_row_count ... ok
+test list_walk_time_is_linear_in_row_count ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
+
+     Running tests/namespace_vectors.rs (target/debug/deps/namespace_vectors-5791ab24e77923f9)
+
+running 1 test
+test frozen_namespace_trees_are_written_by_the_real_native_walker ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/page_props.rs (target/debug/deps/page_props-961a47731c67d93b)
+
+running 12 tests
+test recursive_rust_shapes_are_refused_and_empty_objects_are_valid ... ok
+test errors_retain_route_path_and_both_actual_declarations ... ok
+test raw_identifiers_and_leading_underscores_have_stable_camel_case_names ... ok
+test nested_value_error_has_indexed_path_and_declaration_sources ... ok
+test missing_optional_field_fails_but_present_option_none_omits ... ok
+test bound_props_derives_once_and_keeps_its_verified_module ... ok
+test dates_are_signed_epoch_milliseconds_truncated_toward_zero ... ok
+test enum_literal_sets_must_be_exact_but_order_is_irrelevant ... ok
+test integer_checks_happen_before_rounding_and_floats_must_be_finite ... ok
+test name_comparison_and_projection_do_not_leak_extra_rust_fields ... ok
+test value_rule_vectors::date_vectors_are_epoch_milliseconds_truncated_toward_zero ... ok
+test value_rule_vectors::integer_vectors_are_admitted_or_refused_in_the_integer_domain ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/page_props_compile.rs (target/debug/deps/page_props_compile-213ab4829fe1c076)
+
+running 1 test
+test derive_refuses_unsupported_shapes_at_the_offending_declaration ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running unittests src/lib.rs (target/debug/deps/forma_ir_derive-378dcbe9077fa92b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/forma_server-a30445e960565c04)
+
+running 114 tests
+test assets::tests::denied_names_are_never_served ... ok
+test assets::tests::mime_covers_images_fonts_and_maps ... ok
+test assets::tests::mime_default_stays_fail_closed ... ok
+test assets::tests::mime_matching_is_case_insensitive ... ok
+test assets::tests::mime_reads_the_extension_after_the_last_separator ... ok
+test assets::tests::mime_wasm_is_pinned ... ok
+test assets::tests::higher_qvalue_wins ... ok
+test assets::tests::falls_through_to_the_next_candidate_when_a_sibling_is_missing ... ok
+test assets::tests::manifest_and_compressed_siblings_are_not_directly_servable ... ok
+test assets::tests::missing_asset_is_404 ... ok
+test assets::tests::an_embedded_size_report_is_not_served_through_the_route ... ok
+test assets::tests::falls_back_to_gzip_when_only_a_gz_sibling_exists ... ok
+test assets::tests::qvalue_zero_is_a_rejection_not_an_acceptance ... ok
+test assets::tests::metadata_is_required_for_immutable_caching ... ok
+test assets::tests::tokens_match_exactly_not_by_substring ... ok
+test assets::tests::negotiation_honours_qvalue_zero_end_to_end ... ok
+test assets::tests::wildcard_identity_and_absent_headers_serve_raw ... ok
+test assets::tests::serves_a_hashed_asset_immutable_with_an_etag ... ok
+test csp::tests::csp_contains_nonce ... ok
+test assets::tests::filename_aliases_404_in_debug_just_like_release ... ok
+test assets::tests::conditional_request_gets_304_without_a_body ... ok
+test csp::tests::extension_sources_accept_what_consumers_add ... ok
+test csp::tests::csp_is_strict ... ok
+test csp::tests::endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest ... ok
+test csp::tests::failed_draw_returns_no_nonce_even_after_a_partial_fill ... ok
+test csp::tests::extension_sources_refuse_injection_and_loosening ... ok
+test csp::tests::nonce_is_base64 ... ok
+test csp::tests::frame_and_form_targets_refuse_data_and_filesystem ... ok
+test csp::tests::parse_rejects_attribute_and_directive_breakout ... ok
+test csp::tests::nonce_is_unique ... ok
+test csp::tests::strict_base_preserves_existing_directives_and_adds_enforced_trusted_types ... ok
+test csp::tests::parse_accepts_a_generated_nonce ... ok
+test assets::tests::un_hashed_assets_are_revalidated_not_pinned_for_a_year ... ok
+test csp::tests::successful_draw_encodes_all_32_bytes_once ... ok
+test csp::tests::try_generate_draws_distinct_44_character_nonces ... ok
+test frame::tests::frame_201_a_failed_nonce_draw_is_no_frame ... ok
+test frame::tests::frame_202_a_policy_that_is_no_header_value_is_no_frame ... ok
+test head::tests::script_urls_are_recognised_as_a_browser_reads_them ... ok
+test ir::reload_tests::the_reload_loads_through_the_strict_loader_at_start ... ok
+test ir::tests::a_load_error_s_code_is_read_from_the_start_of_its_reason ... ok
+test ir::tests::a_declared_but_unembedded_ir_file_is_reported_not_swallowed ... ok
+test ir::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads ... ok
+test ir::tests::a_route_with_no_ir_field_is_not_an_error ... ok
+test ir::reload_tests::development::a_module_that_fails_to_load_keeps_the_previous_one_and_is_logged_once_with_its_code ... ok
+test pages::tests::a_same_named_client_slot_never_becomes_a_handler_target ... ok
+test render::tests::a_keyed_row_refusal_is_render_503_and_other_walk_refusals_stay_render_102 ... ok
+test render::tests::an_invalid_extension_fails_before_the_walk ... ok
+test render::tests::display_names_code_route_component_and_counts ... ok
+test render::tests::render_202_a_failed_nonce_draw ... ok
+test render::tests::static_island_mismatch_refuses_before_nonce_or_walk ... ok
+test render::tests::a_panic_outside_the_walk_is_still_a_fault ... ok
+test head::tests::a_preload_must_be_one_of_the_builds_files ... ok
+test ir::reload_tests::development::the_manifest_can_rename_a_module_or_name_a_new_one_and_a_bad_one_changes_nothing ... ok
+test render_contract::checked_render::render_101_a_server_render_without_its_module ... ok
+test render_contract::checked_render::render_102_a_module_the_walk_refuses_names_its_island ... ok
+test render_contract::checked_render::render_201_an_invalid_policy_extension ... ok
+test render_contract::checked_render::a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders ... ok
+test render_contract::checked_render::a_component_failing_on_one_tenants_branding_fails_that_request_alone ... ok
+test render_contract::checked_render::render_301_the_output_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::render_302_the_list_budget_with_the_counts_reached ... ok
+test pages::tests::root_bindings_reject_missing_duplicate_unknown_defaulted_and_wrong_type_slots ... ok
+test render_contract::checked_render::render_399_a_panic_inside_the_walk ... ok
+test render_contract::checked_render::try_render_never_serves_a_shell_in_place_of_a_failure ... ok
+test render_contract::checked_render::render_303_nesting_past_the_walker_s_depth ... ok
+test render_contract::checked_render::try_render_writes_the_document_and_counts_the_walk ... ok
+test render_contract::island_state::empty_ssr_still_has_one_envelope_but_browser_shell_has_none ... ok
+test render_contract::checked_render::render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers ... ok
+test render_contract::island_state::complete_document_limit_is_exact_and_counts_the_escaped_state_and_tags ... ok
+test render_contract::island_state::one_head_state_block_precedes_body_and_preserves_the_checked_values ... ok
+test render_contract::island_state::reviewer_browser_shell_counts_escaped_metadata_at_the_exact_request_limit ... ok
+test render_contract::page_response::a_page_response_counts_its_walk ... ok
+test render_contract::island_state::head_and_state_can_exceed_budget_without_body_growth_and_override_is_local ... ok
+test assets::tests::more_embed_types_than_cache_slots_each_serve_their_own_assets ... ok
+test render_contract::page_response::extensions_add_sources_to_their_own_directive_only ... ok
+test render_contract::page_response::into_parts_unchecked_returns_exactly_what_the_response_writes ... ok
+test render_contract::page_response::page_response_writes_no_store_the_policy_and_the_document_headers ... ok
+test render_contract::page_response::two_fetches_get_no_store_and_two_different_nonces ... ok
+test render_contract::preview_frame::the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch ... ok
+test render_contract::raw_html::a_raw_html_body_prefix_is_written_verbatim_on_every_retained_path ... ok
+test render_contract::preview_frame::the_frame_policy_replaces_exactly_its_nine_directives ... ok
+test render_contract::raw_html::the_documented_body_prefix_form_compiles_on_the_msrv_and_renders ... ok
+test render_contract::page_response::an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy ... ok
+test render_contract::typed_homes::a_head_link_carries_only_the_listed_link_types ... ok
+test render_contract::typed_homes::a_head_link_refuses_a_script_url_and_keeps_every_other ... ok
+test render_contract::preview_frame::a_frame_without_its_runtime_is_a_coded_error_at_start ... ok
+test render_contract::typed_homes::metadata_normalization_preserves_transport_and_url_refusals ... ok
+test render_contract::typed_homes::a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table ... ok
+test render_contract::typed_homes::head_links_are_written_escaped_in_the_head_in_the_order_added ... ok
+test sw::tests::application_names_are_what_a_cache_name_can_carry ... ok
+test sw::tests::serve_sw_sets_nosniff_and_no_store ... ok
+test render_contract::typed_homes::try_render_writes_the_routes_manifest_modulepreload_links_nonced ... ok
+test template::tests::a_legacy_manifest_is_refused_before_removed_wasm_fields_can_be_used ... ok
+test template::tests::body_class_with_quotes_is_escaped ... ok
+test template::tests::asset_filename_xss_is_escaped ... ok
+test template::tests::config_json_emits_no_raw_angle_brackets ... ok
+test template::tests::escape_html_basic_entities ... ok
+test render_contract::island_state::state_failures_have_distinct_codes_route_component_and_field_path ... ok
+test template::tests::named_parts_expose_the_nonce_bound_to_the_document ... ok
+test template::tests::page_response_headers_are_no_store ... ok
+test template::tests::personality_css_round_trips_legitimate_values ... ok
+test template::tests::personality_css_style_breakout_prevented ... ok
+test template::tests::phase1_renders_empty_app_div ... ok
+test template::tests::phase2_renders_ssr_content_with_data_attr ... ok
+test render_contract::typed_homes::ordinary_metadata_uses_the_shared_rule_one_vectors_on_both_render_paths ... ok
+test template::tests::phase2_ssr_preserves_head_content ... ok
+test template::tests::phase2_with_slot_data ... ok
+test template::tests::the_root_carries_the_manifests_build_escaped_on_both_forms ... ok
+test template::tests::style_attributes_rendered_by_the_walker_are_permitted_by_the_csp ... ok
+test render_contract::preview_frame::page_response_frame_is_the_only_response_that_rewrites_the_policy ... ok
+test render_contract::checked_render::render_302_a_60_000_row_list_fails_before_its_first_row_in_under_a_millisecond ... ok
+test sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s ... ok
+test render_contract::page_response::no_policy_extension_yields_a_response_without_the_policy ... ok
+test render_contract::island_state::default_eight_mib_limit_includes_large_head_metadata_exactly ... ok
+test render_contract::raw_html::a_search_finds_one_raw_constructor ... ok
+
+test result: ok. 114 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+
+     Running tests/asset_integrity.rs (target/debug/deps/asset_integrity-055e46408d2a2559)
+
+running 3 tests
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/asset_sets.rs (target/debug/deps/asset_sets-8ae15852b2990193)
+
+running 1 test
+test two_embed_types_each_serve_their_own_assets ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/dev_reload.rs (target/debug/deps/dev_reload-9b07c02467a8cd33)
+
+running 1 test
+test an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/feature_isolation.rs (target/debug/deps/feature_isolation-ff7bfdd99e6aeaa4)
+
+running 1 test
+test a_consumer_with_test_helpers_never_resolves_the_fault_injection_feature ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/island_state.rs (target/debug/deps/island_state-a478fdb186d10aeb)
+
+running 3 tests
+test finalized_typed_handle_emits_only_declared_state_in_the_head ... ok
+test public_state_and_document_refusals_are_distinct_and_request_limits_do_not_persist ... ok
+test public_page_handle_accepts_exactly_one_mib_of_escaped_state_and_refuses_one_more_byte ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/loader_refusal_logs.rs (target/debug/deps/loader_refusal_logs-4d172ea66b4eb31b)
+
+running 1 test
+test the_default_loader_logs_no_fallback_it_does_not_take ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/manifest_cache.rs (target/debug/deps/manifest_cache-8b50c1bcd7c9758e)
+
+running 3 tests
+test development_cache_policy_rereads_rebuilt_metadata ... ok
+test metadata_cache_overflow_falls_back_without_crossing_embed_types ... ok
+test each_embed_type_uses_its_metadata_for_raw_compressed_retained_and_304_responses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/manifest_compatibility.rs (target/debug/deps/manifest_compatibility-a7207fc3edf15ddd)
+
+running 3 tests
+test checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok
+test a_retained_asset_must_be_immutable ... ok
+test schema_writer_and_mode_refusals_happen_before_binding ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation.rs (target/debug/deps/navigation-80d7b5668b6ad93c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation_capability.rs (target/debug/deps/navigation_capability-30fb7d32e76a0712)
+
+running 2 tests
+test ordinary_routes_and_unrelated_forward_fields_remain_compatible ... ok
+test disabled_reader_refuses_reserved_navigation_before_binding_instead_of_dropping_it ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation_owners.rs (target/debug/deps/navigation_owners-a5aeee9296e67e7c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/relaxation_log_bound.rs (target/debug/deps/relaxation_log_bound-8f7a580358ccd854)
+
+running 1 test
+test the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/service_worker_named_off.rs (target/debug/deps/service_worker_named_off-af2ac23ffb311a25)
+
+running 1 test
+test a_named_application_s_retiring_worker_also_deletes_its_own_caches ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_off.rs (target/debug/deps/service_worker_off-1931ec1ed2032231)
+
+running 3 tests
+test configuring_after_the_first_use_is_refused ... ok
+test by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedded ... ok
+test by_default_no_page_registers_a_worker ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_on.rs (target/debug/deps/service_worker_on-050397790ee646b2)
+
+running 4 tests
+test the_setting_is_configured_once ... ok
+test an_enabled_application_s_js_pages_register_the_worker ... ok
+test an_enabled_application_serves_its_built_worker ... ok
+test an_enabled_application_with_no_built_worker_is_told_once ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/startup_results.rs (target/debug/deps/startup_results-4b354fd7ee85715b)
+
+running 3 tests
+test text_asset_results_preserve_bytes_and_read_errors ... ok
+test valid_manifest_and_compatibility_alias_keep_the_same_values ... ok
+test manifest_refusals_propagate_before_startup ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/static_routes.rs (target/debug/deps/static_routes-d48a196ebbb1cbe3)
+
+running 9 tests
+test an_explicit_browser_shell_keeps_request_configuration_without_native_state ... ok
+test empty_js_is_explicit_and_static_module_preloads_are_refused ... ok
+test javascript_routes_without_islands_keep_the_existing_adoption_output ... ok
+test static_ssr_refuses_a_stale_preload_table_even_when_the_asset_is_retained ... ok
+test a_static_page_does_not_remove_the_enabled_worker_delivery_endpoint ... ok
+test static_ssr_omits_adoption_state_and_keeps_css_fonts_headers_and_exact_response_budget ... ok
+test explicit_config_refuses_static_ssr_but_remains_supported_with_a_js_entry ... ok
+test startup_refuses_islands_without_js_and_accepts_both_valid_products ... ok
+test reload_keeps_the_good_pair_and_retries_same_bytes_after_route_policy_changes ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/strict_loader.rs (target/debug/deps/strict_loader-4f2517bb8faf2f62)
+
+running 9 tests
+test regenerate_module_fixtures ... ignored, writes the fixtures; run by hand after changing the generator
+test a_truncated_module_fails_the_default_loader_naming_route_file_and_code ... ok
+test an_unbound_ssr_route_refuses_before_the_fixture_listener ... ok
+test a_flipped_byte_fails_the_default_loader_naming_route_file_and_code ... ok
+test with_a_bad_module_the_fixture_server_binds_no_port ... ok
+test module_fixtures_are_what_their_generator_writes ... ok
+test a_route_declared_ssr_false_needs_no_module ... ok
+test the_same_server_binds_and_serves_after_all_handlers_finalize ... ok
+test every_reviewed_v3_refusal_happens_before_bind ... ok
+
+test result: ok. 8 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/trusted_types_report_only.rs (target/debug/deps/trusted_types_report_only-7921299647c68a12)
+
+running 4 tests
+test trusted_types_are_enforced_without_an_endpoint_in_every_build ... ok
+test a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints ... ok
+test a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason ... ok
+test an_invalid_endpoint_fails_the_page_on_every_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/typed_pages.rs (target/debug/deps/typed_pages-5c9f3ef1511d6c1a)
+
+running 18 tests
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test finalization_refuses_a_bind_already_comparing_on_another_thread ... ok
+test finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs ... ok
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503 ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders ... ok
+test bind_limits_inherit_and_request_overrides_never_change_sibling_defaults ... ok
+test two_routes_sharing_an_alias_need_two_successful_exact_bindings ... ok
+test typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks ... ok
+test reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test a_sixty_thousand_row_typed_request_refuses_before_its_first_row ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+   Doc-tests forma_ir
+
+running 4 tests
+test crates/forma-ir/src/lib.rs - (line 11) - compile fail ... ok
+test crates/forma-ir/src/lib.rs - (line 14) - compile fail ... ok
+test crates/forma-ir/src/lib.rs - (line 8) - compile fail ... ok
+test crates/forma-ir/src/lib.rs - (line 18) - compile fail ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+   Doc-tests forma_ir_derive
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests forma_server
+
+running 35 tests
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 102) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 93) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 90) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 87) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 105) - compile fail ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions (line 302) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 108) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_uri (line 453) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::relax_trusted_types (line 489) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadIrModules (line 79) - compile fail ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_to (line 427) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 99) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 96) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 59) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 42) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 69) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 21) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 72) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 64) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 24) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 15) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 18) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 27) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 30) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 33) ... ok
+test crates/forma-server/src/frame.rs - frame (line 170) - compile ... ok
+test crates/forma-server/src/lib.rs - (line 8) - compile ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 43) - compile ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx::with_module_preloads (line 150) - compile ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 38) - compile fail ... ok
+test crates/forma-server/src/sw.rs - sw (line 8) - compile ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 6) ... ok
+test crates/forma-server/src/raw.rs - raw::RawHtml (line 10) ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx (line 19) ... ok
+test crates/forma-server/src/head.rs - head::HeadLink (line 121) ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.31s
+
+
+### cargo test --locked -p forma-server --all-features (23s)
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.46s
+     Running unittests src/lib.rs (target/debug/deps/forma_server-5b2bf517dba9b8ec)
+
+running 122 tests
+test assets::tests::denied_names_are_never_served ... ok
+test assets::tests::mime_default_stays_fail_closed ... ok
+test assets::tests::mime_covers_images_fonts_and_maps ... ok
+test assets::tests::mime_matching_is_case_insensitive ... ok
+test assets::tests::manifest_and_compressed_siblings_are_not_directly_servable ... ok
+test assets::tests::mime_reads_the_extension_after_the_last_separator ... ok
+test assets::tests::falls_through_to_the_next_candidate_when_a_sibling_is_missing ... ok
+test assets::tests::higher_qvalue_wins ... ok
+test assets::tests::mime_wasm_is_pinned ... ok
+test assets::tests::qvalue_zero_is_a_rejection_not_an_acceptance ... ok
+test assets::tests::missing_asset_is_404 ... ok
+test assets::tests::tokens_match_exactly_not_by_substring ... ok
+test assets::tests::wildcard_identity_and_absent_headers_serve_raw ... ok
+test assets::tests::filename_aliases_404_in_debug_just_like_release ... ok
+test assets::tests::an_embedded_size_report_is_not_served_through_the_route ... ok
+test assets::tests::falls_back_to_gzip_when_only_a_gz_sibling_exists ... ok
+test assets::tests::un_hashed_assets_are_revalidated_not_pinned_for_a_year ... ok
+test assets::tests::serves_a_hashed_asset_immutable_with_an_etag ... ok
+test csp::tests::csp_contains_nonce ... ok
+test csp::tests::extension_sources_accept_what_consumers_add ... ok
+test assets::tests::metadata_is_required_for_immutable_caching ... ok
+test csp::tests::csp_is_strict ... ok
+test csp::tests::failed_draw_returns_no_nonce_even_after_a_partial_fill ... ok
+test assets::tests::conditional_request_gets_304_without_a_body ... ok
+test csp::tests::endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest ... ok
+test csp::tests::extension_sources_refuse_injection_and_loosening ... ok
+test assets::tests::negotiation_honours_qvalue_zero_end_to_end ... ok
+test csp::tests::frame_and_form_targets_refuse_data_and_filesystem ... ok
+test csp::tests::nonce_is_base64 ... ok
+test csp::tests::nonce_is_unique ... ok
+test csp::tests::parse_accepts_a_generated_nonce ... ok
+test csp::tests::parse_rejects_attribute_and_directive_breakout ... ok
+test csp::tests::strict_base_preserves_existing_directives_and_adds_enforced_trusted_types ... ok
+test csp::tests::successful_draw_encodes_all_32_bytes_once ... ok
+test csp::tests::try_generate_draws_distinct_44_character_nonces ... ok
+test frame::tests::frame_201_a_failed_nonce_draw_is_no_frame ... ok
+test frame::tests::frame_202_a_policy_that_is_no_header_value_is_no_frame ... ok
+test head::tests::script_urls_are_recognised_as_a_browser_reads_them ... ok
+test ir::tests::a_load_error_s_code_is_read_from_the_start_of_its_reason ... ok
+test ir::reload_tests::the_reload_loads_through_the_strict_loader_at_start ... ok
+test ir::tests::a_declared_but_unembedded_ir_file_is_reported_not_swallowed ... ok
+test navigation::owners::tests::marker_inspection_and_reindex_ignore_quoted_values_text_and_comments ... ok
+test navigation::owners::tests::sealed_fragment_profile_rejects_policy_resources_upgrades_and_unsafe_urls ... ok
+test ir::tests::a_route_with_no_ir_field_is_not_an_error ... ok
+test render::tests::a_keyed_row_refusal_is_render_503_and_other_walk_refusals_stay_render_102 ... ok
+test ir::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads ... ok
+test head::tests::a_preload_must_be_one_of_the_builds_files ... ok
+test ir::reload_tests::development::a_module_that_fails_to_load_keeps_the_previous_one_and_is_logged_once_with_its_code ... ok
+test render::tests::an_invalid_extension_fails_before_the_walk ... ok
+test pages::tests::a_same_named_client_slot_never_becomes_a_handler_target ... ok
+test render::tests::display_names_code_route_component_and_counts ... ok
+test render::tests::render_202_a_failed_nonce_draw ... ok
+test ir::reload_tests::development::the_manifest_can_rename_a_module_or_name_a_new_one_and_a_bad_one_changes_nothing ... ok
+test render::tests::static_island_mismatch_refuses_before_nonce_or_walk ... ok
+test render::tests::a_panic_outside_the_walk_is_still_a_fault ... ok
+test render_contract::checked_render::render_102_a_module_the_walk_refuses_names_its_island ... ok
+test render_contract::checked_render::render_201_an_invalid_policy_extension ... ok
+test render_contract::checked_render::render_301_the_output_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::a_component_failing_on_one_tenants_branding_fails_that_request_alone ... ok
+test render_contract::checked_render::render_302_the_list_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::render_303_nesting_past_the_walker_s_depth ... ok
+test render_contract::checked_render::render_101_a_server_render_without_its_module ... ok
+test render_contract::checked_render::render_399_a_panic_inside_the_walk ... ok
+test pages::tests::root_bindings_reject_missing_duplicate_unknown_defaulted_and_wrong_type_slots ... ok
+test render_contract::checked_render::render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers ... ok
+test render_contract::checked_render::a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders ... ok
+test render_contract::checked_render::try_render_never_serves_a_shell_in_place_of_a_failure ... ok
+test render_contract::checked_render::try_render_writes_the_document_and_counts_the_walk ... ok
+test render_contract::island_state::empty_ssr_still_has_one_envelope_but_browser_shell_has_none ... ok
+test render_contract::island_state::complete_document_limit_is_exact_and_counts_the_escaped_state_and_tags ... ok
+test render_contract::island_state::one_head_state_block_precedes_body_and_preserves_the_checked_values ... ok
+test render_contract::island_state::reviewer_browser_shell_counts_escaped_metadata_at_the_exact_request_limit ... ok
+test render_contract::page_response::a_page_response_counts_its_walk ... ok
+test render_contract::page_response::into_parts_unchecked_returns_exactly_what_the_response_writes ... ok
+test render_contract::page_response::page_response_writes_no_store_the_policy_and_the_document_headers ... ok
+test assets::tests::more_embed_types_than_cache_slots_each_serve_their_own_assets ... ok
+test render_contract::page_response::two_fetches_get_no_store_and_two_different_nonces ... ok
+test render_contract::island_state::head_and_state_can_exceed_budget_without_body_growth_and_override_is_local ... ok
+test render_contract::page_response::extensions_add_sources_to_their_own_directive_only ... ok
+test render_contract::preview_frame::the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch ... ok
+test render_contract::preview_frame::the_frame_policy_replaces_exactly_its_nine_directives ... ok
+test render_contract::raw_html::a_raw_html_body_prefix_is_written_verbatim_on_every_retained_path ... ok
+test render_contract::raw_html::the_documented_body_prefix_form_compiles_on_the_msrv_and_renders ... ok
+test render_contract::typed_homes::a_head_link_refuses_a_script_url_and_keeps_every_other ... ok
+test render_contract::typed_homes::a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table ... ok
+test render_contract::page_response::an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy ... ok
+test render_contract::typed_homes::head_links_are_written_escaped_in_the_head_in_the_order_added ... ok
+test render_contract::typed_homes::metadata_normalization_preserves_transport_and_url_refusals ... ok
+test render_contract::typed_homes::a_head_link_carries_only_the_listed_link_types ... ok
+test render_contract::typed_homes::try_render_writes_the_routes_manifest_modulepreload_links_nonced ... ok
+test response::compression::tests::compression_levels ... ignored, manual per-request compression timing; use a representative HTML fixture
+test render_contract::preview_frame::a_frame_without_its_runtime_is_a_coded_error_at_start ... ok
+test response::compression::tests::enabling_the_feature_does_not_compress_an_ordinary_page_or_change_raw_parts ... ok
+test response::compression::tests::identity_threshold_and_all_refused_paths_keep_headers_and_exact_body_rules ... ok
+test response::compression::tests::negotiation_honors_quality_refusals_wildcards_identity_and_field_lines ... ok
+test render_contract::island_state::state_failures_have_distinct_codes_route_component_and_field_path ... ok
+test sw::tests::application_names_are_what_a_cache_name_can_carry ... ok
+test sw::tests::serve_sw_sets_nosniff_and_no_store ... ok
+test template::tests::a_legacy_manifest_is_refused_before_removed_wasm_fields_can_be_used ... ok
+test template::tests::asset_filename_xss_is_escaped ... ok
+test template::tests::body_class_with_quotes_is_escaped ... ok
+test template::tests::config_json_emits_no_raw_angle_brackets ... ok
+test template::tests::escape_html_basic_entities ... ok
+test template::tests::named_parts_expose_the_nonce_bound_to_the_document ... ok
+test template::tests::page_response_headers_are_no_store ... ok
+test response::compression::tests::encoded_bodies_decode_to_the_same_page_with_all_policy_headers_intact ... ok
+test template::tests::personality_css_round_trips_legitimate_values ... ok
+test template::tests::phase1_renders_empty_app_div ... ok
+test template::tests::personality_css_style_breakout_prevented ... ok
+test response::compression::tests::axum_head_has_get_headers_and_no_body_for_every_negotiated_representation ... ok
+test template::tests::phase2_ssr_preserves_head_content ... ok
+test template::tests::phase2_with_slot_data ... ok
+test template::tests::phase2_renders_ssr_content_with_data_attr ... ok
+test template::tests::style_attributes_rendered_by_the_walker_are_permitted_by_the_csp ... ok
+test template::tests::the_root_carries_the_manifests_build_escaped_on_both_forms ... ok
+test render_contract::typed_homes::ordinary_metadata_uses_the_shared_rule_one_vectors_on_both_render_paths ... ok
+test render_contract::preview_frame::page_response_frame_is_the_only_response_that_rewrites_the_policy ... ok
+test render_contract::checked_render::render_302_a_60_000_row_list_fails_before_its_first_row_in_under_a_millisecond ... ok
+test sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s ... ok
+test render_contract::page_response::no_policy_extension_yields_a_response_without_the_policy ... ok
+test render_contract::island_state::default_eight_mib_limit_includes_large_head_metadata_exactly ... ok
+test render_contract::raw_html::a_search_finds_one_raw_constructor ... ok
+
+test result: ok. 121 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/asset_integrity.rs (target/debug/deps/asset_integrity-7990a950306b620d)
+
+running 3 tests
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/asset_sets.rs (target/debug/deps/asset_sets-967e9a156c5e091b)
+
+running 1 test
+test two_embed_types_each_serve_their_own_assets ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/dev_reload.rs (target/debug/deps/dev_reload-29dd1e4da84531db)
+
+running 1 test
+test an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/feature_isolation.rs (target/debug/deps/feature_isolation-c459195bfbb33f62)
+
+running 1 test
+test a_consumer_with_test_helpers_never_resolves_the_fault_injection_feature ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/island_state.rs (target/debug/deps/island_state-1c45c50ae6b71c96)
+
+running 3 tests
+test finalized_typed_handle_emits_only_declared_state_in_the_head ... ok
+test public_state_and_document_refusals_are_distinct_and_request_limits_do_not_persist ... ok
+test public_page_handle_accepts_exactly_one_mib_of_escaped_state_and_refuses_one_more_byte ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/loader_refusal_logs.rs (target/debug/deps/loader_refusal_logs-d591f62dc9cbec3d)
+
+running 1 test
+test the_default_loader_logs_no_fallback_it_does_not_take ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/manifest_cache.rs (target/debug/deps/manifest_cache-a8a5f86021c2e796)
+
+running 3 tests
+test development_cache_policy_rereads_rebuilt_metadata ... ok
+test metadata_cache_overflow_falls_back_without_crossing_embed_types ... ok
+test each_embed_type_uses_its_metadata_for_raw_compressed_retained_and_304_responses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/manifest_compatibility.rs (target/debug/deps/manifest_compatibility-93e337986335ad7a)
+
+running 3 tests
+test checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok
+test a_retained_asset_must_be_immutable ... ok
+test schema_writer_and_mode_refusals_happen_before_binding ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation.rs (target/debug/deps/navigation-48521129a76127c8)
+
+running 9 tests
+test identities_are_bounded_and_not_arbitrary_markup_or_empty_context ... ok
+test non_opted_in_document_remains_unchanged_and_has_no_router_metadata ... ok
+test a_faulting_application_action_serializer_returns_no_partial_outcome ... ok
+test native_response_shares_checked_state_and_stable_policy_with_fresh_nonce_documents ... ok
+test actions_carry_bound_admission_and_actual_status_before_data_can_be_used ... ok
+test every_typed_document_policy_change_changes_admission_identity ... ok
+test action_context_refuses_unfinalized_handles_missing_opt_in_bad_policy_and_ambiguous_endpoints ... ok
+test navigation_requires_opt_in_and_preserves_binding_and_representation_budget_refusals ... ok
+test enhanced_actions_keep_validation_status_and_represent_post_redirect_get_without_following ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/navigation_capability.rs (target/debug/deps/navigation_capability-de1b09e93d3ed8d6)
+
+running 2 tests
+test ordinary_routes_and_unrelated_forward_fields_remain_compatible ... ok
+test enabled_reader_admits_valid_capability_but_keeps_schema_and_writer_guards ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation_owners.rs (target/debug/deps/navigation_owners-73740471b5432447)
+
+running 9 tests
+test manifest_rejects_unverified_owner_identifiers_and_multiple_bootstraps ... ok
+test action_endpoints_are_declared_canonical_and_bound_to_sealed_policy ... ok
+test combined_response_budget_is_charged_after_successful_owner_walks ... ok
+test compressed_native_documents_preserve_the_typed_error_status ... ok
+test props_and_security_context_determine_reuse_identity_but_extra_rust_fields_do_not ... ok
+test full_document_reindexes_only_real_occurrences_and_native_owners_remain_local ... ok
+test malformed_outlet_claims_and_unsealed_policy_fail_before_owner_issuance ... ok
+test branch_rejects_duplicate_incomplete_or_incompatible_owners ... ok
+test typed_errors_preserve_http_status_and_redirects_preserve_admission ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/relaxation_log_bound.rs (target/debug/deps/relaxation_log_bound-5be662c8867d728c)
+
+running 1 test
+test the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/service_worker_named_off.rs (target/debug/deps/service_worker_named_off-d404cacf9552a7bf)
+
+running 1 test
+test a_named_application_s_retiring_worker_also_deletes_its_own_caches ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_off.rs (target/debug/deps/service_worker_off-12091a549c9ea201)
+
+running 3 tests
+test configuring_after_the_first_use_is_refused ... ok
+test by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedded ... ok
+test by_default_no_page_registers_a_worker ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_on.rs (target/debug/deps/service_worker_on-048b4579a6aa41f0)
+
+running 4 tests
+test the_setting_is_configured_once ... ok
+test an_enabled_application_serves_its_built_worker ... ok
+test an_enabled_application_s_js_pages_register_the_worker ... ok
+test an_enabled_application_with_no_built_worker_is_told_once ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/startup_results.rs (target/debug/deps/startup_results-53cf9be030534d27)
+
+running 3 tests
+test text_asset_results_preserve_bytes_and_read_errors ... ok
+test valid_manifest_and_compatibility_alias_keep_the_same_values ... ok
+test manifest_refusals_propagate_before_startup ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/static_routes.rs (target/debug/deps/static_routes-3c740c57f964d564)
+
+running 9 tests
+test an_explicit_browser_shell_keeps_request_configuration_without_native_state ... ok
+test empty_js_is_explicit_and_static_module_preloads_are_refused ... ok
+test javascript_routes_without_islands_keep_the_existing_adoption_output ... ok
+test a_static_page_does_not_remove_the_enabled_worker_delivery_endpoint ... ok
+test static_ssr_omits_adoption_state_and_keeps_css_fonts_headers_and_exact_response_budget ... ok
+test static_ssr_refuses_a_stale_preload_table_even_when_the_asset_is_retained ... ok
+test explicit_config_refuses_static_ssr_but_remains_supported_with_a_js_entry ... ok
+test startup_refuses_islands_without_js_and_accepts_both_valid_products ... ok
+test reload_keeps_the_good_pair_and_retries_same_bytes_after_route_policy_changes ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/strict_loader.rs (target/debug/deps/strict_loader-c4ede59f90f930f4)
+
+running 9 tests
+test regenerate_module_fixtures ... ignored, writes the fixtures; run by hand after changing the generator
+test a_truncated_module_fails_the_default_loader_naming_route_file_and_code ... ok
+test an_unbound_ssr_route_refuses_before_the_fixture_listener ... ok
+test with_a_bad_module_the_fixture_server_binds_no_port ... ok
+test a_flipped_byte_fails_the_default_loader_naming_route_file_and_code ... ok
+test a_route_declared_ssr_false_needs_no_module ... ok
+test the_same_server_binds_and_serves_after_all_handlers_finalize ... ok
+test module_fixtures_are_what_their_generator_writes ... ok
+test every_reviewed_v3_refusal_happens_before_bind ... ok
+
+test result: ok. 8 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/trusted_types_report_only.rs (target/debug/deps/trusted_types_report_only-1859be67bc22dbb8)
+
+running 4 tests
+test trusted_types_are_enforced_without_an_endpoint_in_every_build ... ok
+test a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints ... ok
+test a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason ... ok
+test an_invalid_endpoint_fails_the_page_on_every_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/typed_pages.rs (target/debug/deps/typed_pages-9dfa45f12c9e5815)
+
+running 18 tests
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders ... ok
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test finalization_refuses_a_bind_already_comparing_on_another_thread ... ok
+test finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs ... ok
+test a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503 ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test bind_limits_inherit_and_request_overrides_never_change_sibling_defaults ... ok
+test two_routes_sharing_an_alias_need_two_successful_exact_bindings ... ok
+test typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks ... ok
+test reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test a_sixty_thousand_row_typed_request_refuses_before_its_first_row ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+   Doc-tests forma_server
+
+running 37 tests
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 93) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 87) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 102) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 90) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 105) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 108) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_to (line 427) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions (line 302) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_uri (line 453) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::relax_trusted_types (line 489) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 99) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 59) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadIrModules (line 79) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 96) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 42) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 64) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 69) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 72) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 24) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 15) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 18) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 21) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 27) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 30) - compile fail ... ok
+test crates/forma-server/src/frame.rs - frame (line 170) - compile ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 33) ... ok
+test crates/forma-server/src/navigation.rs - navigation::ActionContext (line 495) - compile fail ... ok
+test crates/forma-server/src/navigation.rs - navigation::ActionResponse (line 576) - compile fail ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx::with_module_preloads (line 150) - compile ... ok
+test crates/forma-server/src/lib.rs - (line 8) - compile ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 6) ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 38) - compile fail ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 43) - compile ... ok
+test crates/forma-server/src/sw.rs - sw (line 8) - compile ... ok
+test crates/forma-server/src/head.rs - head::HeadLink (line 121) ... ok
+test crates/forma-server/src/raw.rs - raw::RawHtml (line 10) ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx (line 19) ... ok
+
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+
+
+### actual renderer 3.1 accepts older writers and refuses 3.2 before bind (30s)
+actual 3.1 renderer: older/same/patch accepted; 3.2 module and manifest refused before bind; locked graph unchanged
+
+### cargo doc --locked --workspace --no-deps (35s)
+ Documenting forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.84s
+   Generated /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/target/doc/forma_ir/index.html and 2 other files
+
+### npm run build (compiler, build, core, router, create-app) (36s)
+
+> @getforma/compiler@3.1.0 build
+> tsup src/index.ts --format esm --dts
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 442.93 KB
+ESM ⚡️ Build success in 65ms
+DTS Build start
+DTS ⚡️ Build success in 2831ms
+DTS dist/index.d.ts 19.12 KB
+
+> @getforma/build@3.1.0 build
+> tsup src/index.ts src/raw-lint-cli.ts --format esm --dts --external @getforma/compiler
+
+CLI Building entry: src/index.ts, src/raw-lint-cli.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js        123.98 KB
+ESM dist/raw-lint-cli.js 102.05 KB
+ESM ⚡️ Build success in 23ms
+DTS Build start
+DTS ⚡️ Build success in 1251ms
+DTS dist/raw-lint-cli.d.ts 20.00 B
+DTS dist/index.d.ts        22.66 KB
+
+> @getforma/core@3.1.0 build
+> node scripts/clean-dist.mjs && tsup && node scripts/post-build.mjs && node scripts/verify-dist.mjs
+
+clean-dist: emptied dist/
+CLI Building entry: {"index":"src/index.ts","compiled":"src/compiled.ts","navigation":"src/navigation.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"forma.esm":"src/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-frame":"src/runtime-frame.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"index":"src/index.ts","compiled":"src/compiled.ts","navigation":"src/navigation.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+If you do not supply "output.name", you may not be able to access the exports of an IIFE bundle.
+DTS Build start
+DTS Build start
+IIFE dist/formajs-frame.global.js 159.54 KB
+IIFE ⚡️ Build success in 365ms
+IIFE dist/formajs-runtime.global.js     164.86 KB
+IIFE dist/formajs-runtime.global.js.map 535.94 KB
+IIFE ⚡️ Build success in 424ms
+IIFE dist/formajs-runtime-hardened.global.js     162.23 KB
+IIFE dist/formajs-runtime-hardened.global.js.map 602.39 KB
+IIFE ⚡️ Build success in 437ms
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.cjs".
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.cjs".
+CJS dist/dev/runtime-hardened.cjs 148.06 KB
+CJS ⚡️ Build success in 725ms
+CJS dist/runtime-hardened.cjs     145.39 KB
+CJS dist/runtime-hardened.cjs.map 577.09 KB
+CJS ⚡️ Build success in 729ms
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.js".
+ESM dist/runtime-hardened.js     145.11 KB
+ESM dist/runtime-hardened.js.map 577.05 KB
+ESM ⚡️ Build success in 1228ms
+ESM dist/navigation.js         9.71 KB
+ESM dist/index.js              32.96 KB
+ESM dist/http.js               5.34 KB
+ESM dist/chunk-RRZJ6XRE.js     12.95 KB
+ESM dist/chunk-46JRMM2Y.js     3.22 KB
+ESM dist/compiled.js           4.23 KB
+ESM dist/chunk-TY4YU4W6.js     24.79 KB
+ESM dist/chunk-2CJY5HA5.js     107.28 KB
+ESM dist/storage.js            5.23 KB
+ESM dist/runtime.js            132.09 KB
+ESM dist/tc39-compat.js        574.00 B
+ESM dist/chunk-NTW6E4KC.js     13.40 KB
+ESM dist/navigation.js.map     23.50 KB
+ESM dist/index.js.map          128.90 KB
+ESM dist/chunk-RRZJ6XRE.js.map 48.34 KB
+ESM dist/chunk-46JRMM2Y.js.map 25.03 KB
+ESM dist/http.js.map           19.14 KB
+ESM dist/storage.js.map        16.91 KB
+ESM dist/chunk-TY4YU4W6.js.map 110.58 KB
+ESM dist/compiled.js.map       12.22 KB
+ESM dist/tc39-compat.js.map    2.41 KB
+ESM dist/chunk-2CJY5HA5.js.map 281.41 KB
+ESM dist/chunk-NTW6E4KC.js.map 58.74 KB
+ESM dist/runtime.js.map        461.31 KB
+ESM ⚡️ Build success in 1233ms
+DTS ⚡️ Build success in 1304ms
+DTS dist/runtime-hardened.d.ts  10.94 KB
+DTS dist/runtime-hardened.d.cts 10.94 KB
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.js".
+ESM dist/dev/navigation.js     9.63 KB
+ESM dist/dev/chunk-JO4VSDXG.js 13.18 KB
+ESM dist/dev/compiled.js       4.16 KB
+ESM dist/dev/index.js          33.22 KB
+ESM dist/dev/http.js           5.27 KB
+ESM dist/dev/chunk-NIJKWI5L.js 13.31 KB
+ESM dist/dev/chunk-QF55J27D.js 4.17 KB
+ESM dist/dev/storage.js        5.16 KB
+ESM dist/dev/tc39-compat.js    495.00 B
+ESM dist/dev/chunk-RSLLCAKG.js 26.76 KB
+ESM dist/dev/chunk-3FR6OLHS.js 107.24 KB
+ESM dist/dev/runtime.js        133.29 KB
+ESM ⚡️ Build success in 1847ms
+ESM dist/dev/runtime-hardened.js 147.78 KB
+ESM ⚡️ Build success in 1886ms
+CJS dist/compiled.cjs           4.43 KB
+CJS dist/tc39-compat.cjs        640.00 B
+CJS dist/index.cjs              39.49 KB
+CJS dist/http.cjs               5.59 KB
+CJS dist/chunk-J7XVXJ7C.cjs     3.64 KB
+CJS dist/navigation.cjs         10.03 KB
+CJS dist/chunk-MZNVTNKN.cjs     25.95 KB
+CJS dist/chunk-2RYUWROU.cjs     13.33 KB
+CJS dist/storage.cjs            5.32 KB
+CJS dist/chunk-ZUWTXXVD.cjs     14.87 KB
+CJS dist/chunk-RG5ALIDX.cjs     108.96 KB
+CJS dist/runtime.cjs            132.87 KB
+CJS dist/compiled.cjs.map       12.41 KB
+CJS dist/http.cjs.map           19.19 KB
+CJS dist/tc39-compat.cjs.map    2.45 KB
+CJS dist/chunk-J7XVXJ7C.cjs.map 25.07 KB
+CJS dist/chunk-2RYUWROU.cjs.map 48.57 KB
+CJS dist/index.cjs.map          129.45 KB
+CJS dist/storage.cjs.map        16.91 KB
+CJS dist/chunk-MZNVTNKN.cjs.map 110.67 KB
+CJS dist/navigation.cjs.map     23.73 KB
+CJS dist/chunk-ZUWTXXVD.cjs.map 58.99 KB
+CJS dist/chunk-RG5ALIDX.cjs.map 282.30 KB
+CJS dist/runtime.cjs.map        461.65 KB
+CJS ⚡️ Build success in 1948ms
+CJS dist/dev/compiled.cjs       4.36 KB
+CJS dist/dev/tc39-compat.cjs    559.00 B
+CJS dist/dev/navigation.cjs     9.95 KB
+CJS dist/dev/chunk-WES3Y5XN.cjs 14.79 KB
+CJS dist/dev/http.cjs           5.53 KB
+CJS dist/dev/chunk-ONSU5VQQ.cjs 4.59 KB
+CJS dist/dev/chunk-7TITUI4X.cjs 27.95 KB
+CJS dist/dev/storage.cjs        5.24 KB
+CJS dist/dev/chunk-GZMXARPM.cjs 13.56 KB
+CJS dist/dev/index.cjs          39.74 KB
+CJS dist/dev/chunk-YYBQPUNB.cjs 108.91 KB
+CJS dist/dev/runtime.cjs        134.06 KB
+CJS ⚡️ Build success in 1945ms
+ESM dist/forma.esm.js     200.92 KB
+ESM dist/forma.esm.js.map 680.39 KB
+ESM ⚡️ Build success in 2068ms
+DTS ⚡️ Build success in 3550ms
+DTS dist/index.d.ts                  58.34 KB
+DTS dist/compiled.d.ts               894.00 B
+DTS dist/navigation.d.ts             1.23 KB
+DTS dist/runtime.d.ts                8.12 KB
+DTS dist/tc39-compat.d.ts            1.21 KB
+DTS dist/http.d.ts                   4.26 KB
+DTS dist/storage.d.ts                2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.ts  2.98 KB
+DTS dist/signal-B5ZKb9uL.d.ts        2.51 KB
+DTS dist/index.d.cts                 58.35 KB
+DTS dist/compiled.d.cts              895.00 B
+DTS dist/navigation.d.cts            1.23 KB
+DTS dist/runtime.d.cts               8.12 KB
+DTS dist/tc39-compat.d.cts           1.21 KB
+DTS dist/http.d.cts                  4.26 KB
+DTS dist/storage.d.cts               2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.cts 2.98 KB
+DTS dist/signal-B5ZKb9uL.d.cts       2.51 KB
+post-build: collapsed duplicate sourceMappingURL footers in 28 file(s)
+post-build: copied dist/formajs-runtime.global.js → dist/forma-runtime.js
+post-build: copied dist/formajs-runtime-hardened.global.js → dist/forma-runtime-csp.js
+post-build: jsx.d.ts copied and referenced in type declarations
+verify-dist: ok (58 JS artifacts checked)
+
+> @getforma/router@3.1.0 build
+> tsup src/index.ts --format esm,cjs --dts --external @getforma/core --external @getforma/core/navigation
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+CJS Build start
+ESM dist/index.js 62.61 KB
+ESM ⚡️ Build success in 19ms
+CJS dist/index.cjs 64.20 KB
+CJS ⚡️ Build success in 19ms
+DTS Build start
+DTS ⚡️ Build success in 739ms
+DTS dist/index.d.ts  6.84 KB
+DTS dist/index.d.cts 6.84 KB
+
+> @getforma/create-app@3.1.0 build
+> tsup src/index.ts --format esm
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 13.19 KB
+ESM ⚡️ Build success in 13ms
+
+### npm test --workspaces (48s)
+
+> @getforma/core@3.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core
+
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at Object.write (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/__tests__/renderer-contract.test.ts:330:18)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/__tests__/renderer-contract.test.ts:537:27
+    at Proxy.assertThrows (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/chai/index.js:2877:5)
+    at Proxy.methodWrapper (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/chai/index.js:1737:25)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at Object.write (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/__tests__/renderer-contract.test.ts:330:18)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/__tests__/renderer-contract.test.ts:538:28
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:407:22)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at ParentNodeUtility.append (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/parent-node/ParentNodeUtility.js:19:28)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:407:22)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLLIElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLUListElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLDivElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:407:22)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLLIElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLUListElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at reconcileList (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/list.ts:364:16)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/runtime.ts:2440:24
+    at runAdoptionCallback (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/reactive/adoption-hooks.ts:62:65)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLParser.parseEndOfStartTag (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/html-parser/HTMLParser.js:497:57)
+    at HTMLParser.parse (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/html-parser/HTMLParser.js:213:34)
+    at HTMLDivElement.set innerHTML [as innerHTML] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:359:53)
+    at write (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/reconcile.ts:535:22)
+    at reconcile (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/reconcile.ts:544:9)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:407:22)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at ParentNodeUtility.append (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/parent-node/ParentNodeUtility.js:19:28)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:407:22)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLDivElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLDivElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLBodyElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLBodyElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLBodyElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at ParentNodeUtility.append (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/parent-node/ParentNodeUtility.js:19:28)
+    at HTMLBodyElement.append (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:510:27)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLDivElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLParser.parseEndOfStartTag (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/html-parser/HTMLParser.js:497:57)
+    at HTMLParser.parse (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/html-parser/HTMLParser.js:213:34)
+    at HTMLDivElement.set innerHTML [as innerHTML] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:359:53)
+    at write (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/reconcile.ts:535:22)
+    at reconcile (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/reconcile.ts:544:9)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLLIElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLUListElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at reconcileList (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/list.ts:364:16)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/runtime.ts:2440:24
+    at runAdoptionCallback (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/reactive/adoption-hooks.ts:62:65)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLLIElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLUListElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at reconcileList (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/list.ts:364:16)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/runtime.ts:2440:24
+    at runAdoptionCallback (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/reactive/adoption-hooks.ts:62:65)
+DOMException [NotSupportedError]: Failed to load iframe page "about:blank". Iframe page loading is disabled.
+    at HTMLIFrameElement.#loadPage (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:334:27)
+    at HTMLIFrameElement.[connectedToDocument] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/html-iframe-element/HTMLIFrameElement.js:230:23)
+    at HTMLIFrameElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:801:53)
+    at HTMLLIElement.[connectedToNode] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:793:58)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:421:45)
+    at HTMLUListElement.[appendChild] (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/element/Element.js:1102:62)
+    at HTMLUListElement.appendChild (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/happy-dom/lib/nodes/node/Node.js:314:48)
+    at reconcileList (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/dom/list.ts:364:16)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/runtime.ts:2440:24
+    at runAdoptionCallback (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/src/reactive/adoption-hooks.ts:62:65)
+
+ Test Files  245 passed (245)
+      Tests  4326 passed (4326)
+   Start at  14:23:43
+   Duration  40.77s (transform 2.04s, setup 0ms, import 8.48s, tests 22.00s, environment 32.12s)
+
+
+> @getforma/router@3.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+
+
+ Test Files  3 passed (3)
+      Tests  90 passed (90)
+   Start at  14:24:24
+   Duration  630ms (transform 232ms, setup 0ms, import 317ms, tests 94ms, environment 392ms)
+
+
+> @getforma/compiler@3.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/compiler
+
+
+ Test Files  74 passed (74)
+      Tests  1775 passed (1775)
+   Start at  14:24:25
+   Duration  13.14s (transform 1.00s, setup 0ms, import 7.55s, tests 12.93s, environment 4ms)
+
+
+> @getforma/build@3.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build
+
+✘ [ERROR] Unexpected ";"
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-retention-H28gR1/src/later.ts:1:21:
+      1 │ export const later = ;
+        ╵                      ^
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-6jo85N/shell.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:1:8:
+      1 │ import {__formaNavigationRegistry as r0} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-6jo85N/a.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:2:8:
+      2 │ import {__formaNavigationRegistry as r1} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-6jo85N/b.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:3:8:
+      3 │ import {__formaNavigationRegistry as r2} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-F6Aaqf/shell.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:1:8:
+      1 │ import {__formaNavigationRegistry as r0} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-F6Aaqf/a.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:2:8:
+      2 │ import {__formaNavigationRegistry as r1} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-F6Aaqf/b.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:3:8:
+      3 │ import {__formaNavigationRegistry as r2} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-Fn4i4X/shell.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:1:8:
+      1 │ import {__formaNavigationRegistry as r0} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-Fn4i4X/a.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:2:8:
+      2 │ import {__formaNavigationRegistry as r1} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-Fn4i4X/b.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:3:8:
+      3 │ import {__formaNavigationRegistry as r2} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-RTvakl/shell.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:1:8:
+      1 │ import {__formaNavigationRegistry as r0} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-RTvakl/a.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:2:8:
+      2 │ import {__formaNavigationRegistry as r1} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-RTvakl/b.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:3:8:
+      3 │ import {__formaNavigationRegistry as r2} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-9HCaP1/shell.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:1:8:
+      1 │ import {__formaNavigationRegistry as r0} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-9HCaP1/a.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:2:8:
+      2 │ import {__formaNavigationRegistry as r1} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-9HCaP1/b.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:3:8:
+      3 │ import {__formaNavigationRegistry as r2} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] BUILD-827 navigation bootstrap cannot contain a dynamic import expression or require expression in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-erWjec/client.ts; use a literal bundled import [plugin forma-navigation-closed-imports]
+
+    src/navigation.ts:103:16:
+      103 │           throw new Error(`BUILD-827 navigation bootstrap cannot ...
+          ╵                 ^
+
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:103:17)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at Array.forEach (<anonymous>)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:98:43)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at Array.forEach (<anonymous>)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:98:43)
+
+  This error came from the "onLoad" callback registered here:
+
+    src/navigation.ts:88:12:
+      88 │     builder.onLoad({ filter: /\.[cm]?[jt]sx?$/, namespace: 'file' ...
+         ╵             ~~~~~~
+
+    at setup (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:88:13)
+    at handlePlugins (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:1422:21)
+    at buildOrContextImpl (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:1135:5)
+    at Object.buildOrContext (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:961:5)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:2316:15
+    at new Promise (<anonymous>)
+    at Object.build (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:2315:25)
+    at Proxy.build (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:2166:51)
+    at buildInto (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/build.ts:1092:40)
+
+  The plugin "forma-navigation-closed-imports" was triggered by this import
+
+    forma-navigation-app.js:4:23:
+      4 │ ...alize from "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/for...
+        ╵               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] BUILD-827 navigation bootstrap cannot contain a dynamic import expression or require expression in /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-U3IkbC/client.ts; use a literal bundled import [plugin forma-navigation-closed-imports]
+
+    src/navigation.ts:103:16:
+      103 │           throw new Error(`BUILD-827 navigation bootstrap cannot ...
+          ╵                 ^
+
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:103:17)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at Array.forEach (<anonymous>)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:98:43)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:105:108)
+    at Array.forEach (<anonymous>)
+    at visit (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:98:43)
+
+  This error came from the "onLoad" callback registered here:
+
+    src/navigation.ts:88:12:
+      88 │     builder.onLoad({ filter: /\.[cm]?[jt]sx?$/, namespace: 'file' ...
+         ╵             ~~~~~~
+
+    at setup (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/navigation.ts:88:13)
+    at handlePlugins (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:1422:21)
+    at buildOrContextImpl (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:1135:5)
+    at Object.buildOrContext (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:961:5)
+    at /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:2316:15
+    at new Promise (<anonymous>)
+    at Object.build (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:2315:25)
+    at Proxy.build (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/node_modules/esbuild/lib/main.js:2166:51)
+    at buildInto (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/src/build.ts:1092:40)
+
+  The plugin "forma-navigation-closed-imports" was triggered by this import
+
+    forma-navigation-app.js:4:23:
+      4 │ ...alize from "/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/for...
+        ╵               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-0gKb2e/shell.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:1:8:
+      1 │ import {__formaNavigationRegistry as r0} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-0gKb2e/a.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:2:8:
+      2 │ import {__formaNavigationRegistry as r1} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-public-navigation-0gKb2e/b.ts" has no exports [import-is-undefined]
+
+    forma-navigation-app.js:3:8:
+      3 │ import {__formaNavigationRegistry as r2} from "/var/folders/rh/_w3b...
+        ╵         ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] Unexpected ";"
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-worker-contract-3eqUdp/later.ts:1:21:
+      1 │ export const value = ;
+        ╵                      ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-hPXPnF/app.ts:1:0:
+      1 │ "use server"; export const secret = "private";
+        ╵ ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-i2iJFm/app.ts:1:33:
+      1 │ export async function action() { "use server"; return "private"; }
+        ╵                                  ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-mAesh1/app.ts:1:36:
+      1 │ export const action = async () => { 'use server'; return 'private'; };
+        ╵                                     ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-xfOmiO/action.ts:1:33:
+      1 │ export async function action() { "use server"; return "private"; }
+        ╵                                  ^
+
+  The plugin "forma-no-server-functions" was triggered by this import
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-xfOmiO/app.ts:1:23:
+      1 │ export { action } from "./action";
+        ╵                        ~~~~~~~~~~
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-F4fV0v/app.ts:1:0:
+      1 │ "use server"; export const secret = "private";
+        ╵ ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-gLdMpv/page.ts:2:2:
+      2 │   "use server";
+        ╵   ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-h2ykXm/app.ts:1:0:
+      1 │ "use server"; export const secret = "private";
+        ╵ ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-8XtJiE/app.ts:1:33:
+      1 │ export async function action() { "use server"; return "private"; }
+        ╵                                  ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-Ux0inf/app.ts:1:36:
+      1 │ export const action = async () => { 'use server'; return 'private'; };
+        ╵                                     ^
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-LkoYzF/action.ts:1:33:
+      1 │ export async function action() { "use server"; return "private"; }
+        ╵                                  ^
+
+  The plugin "forma-no-server-functions" was triggered by this import
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-LkoYzF/app.ts:1:23:
+      1 │ export { action } from "./action";
+        ╵                        ~~~~~~~~~~
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-kENTbt/app.ts:1:0:
+      1 │ "use server"; export const secret = "private";
+        ╵ ^
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-navigation-group-vBAe4x/a.ts" has no exports [import-is-undefined]
+
+    ../../../../../../../../../var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-navigation-group-vBAe4x/forma-router-proof-group.ts:1:9:
+      1 │ import { __formaNavigationRegistry as r0 } from "/var/folders/rh/_w...
+        ╵          ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "__formaNavigationRegistry" will always be undefined because the file "../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-navigation-group-vBAe4x/b.ts" has no exports [import-is-undefined]
+
+    ../../../../../../../../../var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-navigation-group-vBAe4x/forma-router-proof-group.ts:2:9:
+      2 │ import { __formaNavigationRegistry as r1 } from "/var/folders/rh/_w...
+        ╵          ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✘ [ERROR] BUILD-808: Server functions ("use server") were removed. Move this operation to a Rust route and call it with fetch. [plugin forma-no-server-functions]
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-no-server-functions-kZ9GSp/page.ts:2:2:
+      2 │   "use server";
+        ╵   ^
+
+✘ [ERROR] Could not resolve "formajs"
+
+    ../../../../../../../../../private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-alias-warning-MLsLrM/app.ts:1:20:
+      1 │ import {value} from 'formajs'; export const result=value;
+        ╵                     ~~~~~~~~~
+
+  You can mark the path "formajs" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+
+ Test Files  41 passed (41)
+      Tests  435 passed (435)
+   Start at  14:24:38
+   Duration  30.43s (transform 842ms, setup 0ms, import 2.41s, tests 55.10s, environment 2ms)
+
+
+> @getforma/create-app@3.1.0 test
+> npm run build && vitest run
+
+
+> @getforma/create-app@3.1.0 build
+> tsup src/index.ts --format esm
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 13.19 KB
+ESM ⚡️ Build success in 13ms
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/create-app
+
+
+ Test Files  7 passed (7)
+      Tests  190 passed | 24 skipped (214)
+   Start at  14:25:09
+   Duration  4.80s (transform 385ms, setup 0ms, import 876ms, tests 6.76s, environment 0ms)
+
+
+### declared props: compiler bytes match the native typed-handler fixtures (139s)
+
+### packed compiler API and actual optional-compiler compatibility (139s)
+✔ the actual packed compiler exposes documented runtime and declaration entries only (2669.080458ms)
+✔ a real versioned packed build refuses npm optional-compiler skew before writes and permits browser absence (4360.164958ms)
+✔ packed core declarations enforce raw markup and callable island boundaries in a strict JSX consumer (NodeNext: module NodeNext, moduleResolution NodeNext) (4969.915667ms)
+✔ packed core declarations enforce raw markup and callable island boundaries in a strict JSX consumer (bundler: module ESNext, moduleResolution Bundler) (4307.846708ms)
+✔ packed core declarations enforce raw markup and callable island boundaries in a strict JSX consumer (node16: module Node16, moduleResolution Node16) (4736.85975ms)
+✔ packed core declarations enforce raw markup and callable island boundaries in a strict JSX consumer (node10: module CommonJS, moduleResolution Node10) (4402.987583ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19628.311875
+
+### packed integrity gate: resource observations and mandatory native checks (159s)
+   Compiling forma-packed-integrity v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-jfje7m)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-jfje7m/target/debug/deps/asset_integrity-d91923b9b56850c6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-jfje7m/target/debug/deps/asset_integrity-d91923b9b56850c6)
+
+running 3 tests
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling forma-packed-integrity v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-yubom5)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-yubom5/target/debug/deps/asset_integrity-d91923b9b56850c6)
+   Compiling forma-packed-integrity v0.0.0 (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-ek21lG)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-ek21lG/target/debug/deps/asset_integrity-d91923b9b56850c6)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running tests/asset_integrity.rs (/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-integrity-ek21lG/target/debug/deps/asset_integrity-d91923b9b56850c6)
+
+running 3 tests
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ignored
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+✔ packed resource observations require exact digests and preserved nonce/crossorigin (1.928042ms)
+✔ packed native integrity checks execute and refuse missing or skipped coverage (940.978291ms)
+✔ packed worker reports require every named browser control to execute (0.95275ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1019.532708
+✔ published packages identify the canonical monorepo for source and bug reports (2.081875ms)
+✔ consumer engines floors track the oldest supported line, not the development pin (0.5325ms)
+✔ development guidance agrees with the pinned workspace toolchain (0.32375ms)
+✔ complete paginated history authenticates published DS12 and original publication (16.805541ms)
+✔ unreadable, missing, substituted and malformed prior history all refuse (2.226666ms)
+✔ first final and rerun use real publication metadata; preflight can recover an unfinished current DS12 (0.760416ms)
+✔ rerunning a first final after a published patch retains the original support start (0.399583ms)
+✔ prospective release guard rejects too-close next majors before publication without printing a provisional date (0.434583ms)
+✔ acknowledged publication waits for complete inventory visibility without redownloading prior DS12 (1.674209ms)
+✔ persistent current absence stops after three additional complete inventories (0.572917ms)
+✔ visibility deadline includes request time and refuses late visibility without another request (0.617584ms)
+✔ default preflight and current-history reads do not enable a visibility wait (0.496333ms)
+✔ visibility polling immediately refuses transport, malformed, draft, contradictory and changed history (11.532459ms)
+✔ invalid current publication and incomplete prior stable history refuse before visibility polling (1.334834ms)
+✔ exact set recall covers every registry version and has no shell interpolation (1.763ms)
+✔ record authentication and identity refuse incomplete, duplicate, dry, failed and mismatched sets (1.448958ms)
+✔ publication comes from matching non-draft GitHub metadata, never the DS12 generation time (1.082209ms)
+✔ six calendar months clamp month ends and preserve UTC time including leap years (0.132792ms)
+✔ prereleases start no window; patch records never restart it (0.363167ms)
+✔ missing history and too-close unified majors refuse; exact six-month boundary admits (0.313584ms)
+✔ generated support block preserves reviewed threat policy and refuses ambiguous marker ownership (0.189584ms)
+✔ complete published inventory cannot hide an advertised stable record or change its first publication (0.332416ms)
+✔ omitted unified inventory entries are validated before draft and prerelease filtering (0.295083ms)
+✔ N8 adds Node 26 at its exact UTC boundary, with no unsupported older line (1.697291ms)
+✔ actual workflow and manifests agree; seeded claim, matrix and execution drift fail (994.648625ms)
+✔ maintenance pin drift refuses without replacing published compatibility lines (2201.209416ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3244.129584
+Toolchain policy: maintenance Node 24.22.0, private range, four published floors, dated matrix, and three locked/fresh MSRV checks agree.
+
+### P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188) (163s)
+✔ the inert-module control changes only its exact native entry script/preload integrity (2.1265ms)
+✔ the pruned lock keeps what the crate reaches in the committed order, with checksums untouched and the Forma packages at the packed version (0.992333ms)
+✔ the pruned lock refuses a dependency the committed lock does not hold, an ambiguous one, and a Forma crate with a registry source (0.376125ms)
+✔ the committed fixture crate prunes against the committed e2e lock to exactly the crate's graph (4.227333ms)
+✔ the fixture manifest names the crates exactly and patches DS11's extracted crates; anything else refuses (0.814125ms)
+✔ the npm install is the three libraries from DS11's bytes, locked, with every external package copied from the tagged tree's own lock (186.858916ms)
+✔ an import resolves inside the packed install, and one that would reach the checkout's workspace link is refused (the alpha.1 failure) (10.3135ms)
+✔ the expectations come from the index: hosts by island name, the state as occurrences, a prefix kept as a prefix (0.222833ms)
+✔ N2 reads the emitted JSON policy and each route ceiling without reading bundle source (5.005209ms)
+✔ N2 requires both route verdicts, and checks JavaScript excess separately from Forma code (1.884958ms)
+✔ N2: a route over the report ceiling fails naming the app, the route and both numbers (12.104042ms)
+✔ N2: missing routes, ceilings, or bytes fail instead of substituting a default (0.324708ms)
+✔ P17 time: inside thirty minutes passes, one second over fails with both numbers (0.2795ms)
+✔ shape rows come from the walker's own counts and refuse a missing header (0.257459ms)
+✔ the machine block names the platform, the processors and the profile, and the notes line reads the worst route (0.242625ms)
+✔ L-64 report admits 28100 bytes and refuses 28101 without a reader constant (4.125583ms)
+✔ only exact isolated pinned Lighthouse idle checks are excluded, independently of time (15.738208ms)
+✔ proven audit exclusion retains all raw costs and the independent57ms refusal (40.675042ms)
+✔ only complete same-navigation browser layout before observed script is excluded (1.280833ms)
+✔ same-frame image layout metadata is excluded only with its exact parser request provenance (0.930875ms)
+✔ only exact pre-application document commit and pinned audit bootstrap are excluded (6.62275ms)
+✔ native navigation lifecycle origin is independent of duration, but mixed and unbound work counts (2.20925ms)
+✔ instant native lifecycle records require thread scope and the complete navigation proof (1.563916ms)
+✔ native BeginMainThreadFrame sequence is not mistaken for a document frame (0.649875ms)
+✔ missing, malformed or ambiguous trace identity refuses instead of inventing attribution (0.809375ms)
+✔ authenticated trace decoding rejects corruption, hostile expansion and oversized metadata (95.690833ms)
+✔ strict startup requires twenty runs with every counted task at most50ms (31.638709ms)
+✔ one task above50ms refuses even when the twenty-run p95 is50ms (37.970375ms)
+✔ historical L63 policy evidence cannot stand in for a fresh strict campaign (41.237833ms)
+✔ pure layout attribution never erases whole-page TBT, independent observations or mixed tasks (16.234709ms)
+✔ the110ms negative control still requires its actual interval, independently of response latency (0.922334ms)
+✔ only authenticated alpha history establishes the first published beta baseline (4.099625ms)
+✔ prior chronology, exact set and successful P17 are mandatory (1.143916ms)
+✔ claimed unknown or incomplete performance never becomes bootstrap (0.9005ms)
+✔ release ordering uses numeric versions and prerelease counters (0.09225ms)
+✔ reader verifies GitHub metadata digest and refuses transport or asset faults (5.440834ms)
+✔ a failed beta tag without a Release can recover; a published beta cannot disappear behind alpha (4.957792ms)
+✔ malformed newer unified inventory cannot fall back to an older bootstrap record (1.256916ms)
+✔ N1 exactfloor passes; belowfloor and equality at half previous fail (33.214542ms)
+✔ pilot, dropped samples, invented rate, quadratic allocation, and swallowed budgets refuse (57.873375ms)
+✔ actual response and every long task matter independently of TBT (0.677458ms)
+✔ missing comparison engines are failures, not an empty timing pass (0.286791ms)
+✔ rehearsals require explicit target; live target is immutable (0.55675ms)
+✔ actual P17 refuses unknown performance contracts before package access; legacy remains readable (10.211708ms)
+✔ current compiler proof retains actual versioned bytes and the unchanged historical full-binary contract (351.302ms)
+✔ a repaired CRC or matching claimed digest cannot hide current decoder body/header drift (368.111333ms)
+✔ current decoder proof rejects absent bytes, stale hashes, mismatched package versions and a legacy downgrade (365.888125ms)
+✔ both finite payload shapes pin the complete UTF-8 envelope to exactly one MiB (18.442417ms)
+✔ nearest-rank p95 accepts the exact 30 ms boundary, retaining all forty durations and the maximum (94.309209ms)
+✔ old every-sample policies and changed p95 identities cannot qualify (93.8765ms)
+✔ a passing p95 cannot hide later incorrect values, invalid durations or broken refusal controls (139.194875ms)
+✔ both shapes and refusal controls are validated before rejecting an excessive p95 (58.268167ms)
+✔ raw sample provenance cannot be replaced by claimed passing summaries (299.743083ms)
+✔ profile, public artifact, machine, actual CSP and compiler registration are mandatory (262.757709ms)
+✔ real activation must enter once with no mutations, errors or policy violations (160.523625ms)
+✔ oversize and malformed controls need actual refusal observations before component entry (276.889541ms)
+✔ killing an interrupted producer retains its flushed observation outside disposable fixtures (126.202166ms)
+✔ complete failing evidence is flushed before the timing validator refuses (86.229875ms)
+✔ only historical baseline validation can admit the original input-control protocol (136.271042ms)
+✔ complete restored comparison samples pass; missing, nonfinite and forged values refuse (16.410167ms)
+✔ comparison records detached HEAD truthfully while retaining required Git metadata (22.848708ms)
+✔ raw Lighthouse bytes and actual profile agree with every extracted figure (31.908166ms)
+✔ a comparable DS12 must contain the same complete evidence required of the new release (167.81975ms)
+✔ release metadata checks import without any optional browser tooling installed (96.3545ms)
+✔ new and previous DS12 require all public decoder observations and enforce the raw p95 (323.506791ms)
+✔ paired mobile controls require the injected task itself and durable raw observations (319.426292ms)
+✔ known initial module timer proves full task, preserving strict target miss (203.668459ms)
+✔ each route owns an independent twenty-visit budget (19.588834ms)
+✔ the strict observer ceiling still governs history and controls; v2 bounds an observer task at 55 ms (0.448791ms)
+✔ an observer task within the allowance draws on the same route budget, by duration alone (54.791209ms)
+✔ an admitted observer task still disables L-66 correlation (42.671583ms)
+✔ precise exceptional maximum, task count and aggregate are bounded without rounding (33.202417ms)
+✔ every task counts even when multiple exceptions share one visit (19.989042ms)
+✔ positive startup proof refuses unknown function body (0.453458ms)
+✔ positive startup proof refuses changed four-work bound (0.341333ms)
+✔ positive startup proof refuses wrong callback coordinate (0.4245ms)
+✔ positive startup proof refuses wrong scheduling coordinate (0.28925ms)
+✔ positive startup proof refuses delayed timer (0.115375ms)
+✔ positive startup proof refuses repeating timer (0.100958ms)
+✔ positive startup proof refuses timer cancelled (0.1285ms)
+✔ positive startup proof refuses duplicate timer installation (0.137417ms)
+✔ positive startup proof refuses duplicate task (0.100166ms)
+✔ positive startup proof refuses wrong scheduling source (0.103583ms)
+✔ positive startup proof refuses unbound module world (0.087459ms)
+✔ positive startup proof refuses foreign module frame (0.091125ms)
+✔ positive startup proof refuses foreign module filename (0.081542ms)
+✔ positive startup proof refuses foreign module script (0.289125ms)
+✔ positive startup proof refuses foreign timer installation context (0.272459ms)
+✔ positive startup proof refuses foreign timer installation isolate (0.273708ms)
+✔ positive startup proof refuses foreign nested timer installation frame (0.280708ms)
+✔ positive startup proof refuses foreign request context (0.263541ms)
+✔ positive startup proof refuses foreign request isolate (0.282167ms)
+✔ positive startup proof refuses foreign nested request frame (0.281ms)
+✔ positive startup proof refuses foreign compilation frame (0.105625ms)
+✔ positive startup proof refuses foreign compilation filename (0.101833ms)
+✔ positive startup proof refuses foreign metadata frame (0.09625ms)
+✔ positive startup proof refuses foreign source frame (0.082292ms)
+✔ positive startup proof refuses incorrect metadata phase (0.130292ms)
+✔ positive startup proof refuses incorrect source phase (0.084792ms)
+✔ positive startup proof refuses source length mismatch (0.073375ms)
+✔ positive startup proof refuses oversized source (0.378375ms)
+✔ positive startup proof refuses source missing (0.106ms)
+✔ positive startup proof refuses source duplicated (0.113625ms)
+✔ positive startup proof refuses ambiguous module context (0.101875ms)
+✔ positive startup proof refuses foreign execution context (0.337792ms)
+✔ positive startup proof refuses foreign isolate (0.10375ms)
+✔ positive startup proof refuses foreign timer frame (0.084375ms)
+✔ positive startup proof refuses callback crossing task (0.079708ms)
+✔ positive startup proof refuses callback begins before task (0.071417ms)
+✔ positive startup proof refuses second callback (0.11225ms)
+✔ positive startup proof refuses mixed click (0.329375ms)
+✔ positive startup proof refuses input before startup (0.247667ms)
+✔ positive startup proof refuses input timing (0.263833ms)
+✔ positive startup proof refuses unknown executable (0.304708ms)
+✔ positive startup proof refuses later navigation (0.11375ms)
+✔ positive startup proof refuses not initial evaluation (0.092916ms)
+✔ known engine ancestry permits callback engine work and its native microtask tail (0.25725ms)
+✔ source-less executable sibling refuses RunMicrotasks (0.310333ms)
+✔ source-less executable sibling refuses v8.callFunction (0.0895ms)
+✔ source-less executable sibling refuses v8.newInstance (0.257917ms)
+✔ source-less executable sibling refuses V8.HandleInterrupts (0.247625ms)
+✔ wrapper and engine containment refuse missing, duplicate and crossing spans (0.816125ms)
+✔ nested executable frame binding refuses foreign frame (0.507333ms)
+✔ nested executable frame binding refuses foreign frameId (0.434459ms)
+✔ nested executable frame binding refuses foreign frameID (0.503166ms)
+✔ nested executable frame binding refuses foreign page (0.428292ms)
+✔ async script markers bind to the known timer callback, including reused IDs (2.034458ms)
+✔ paired animation endpoints outside the task retain recursive source and frame binding (2.024667ms)
+✔ source AST refuses comment lookalike (0.472875ms)
+✔ source AST refuses string lookalike (0.414625ms)
+✔ source AST refuses template lookalike (0.439ms)
+✔ source AST refuses nested declaration lookalike (0.389416ms)
+✔ source AST refuses duplicate declaration lookalike (1.849334ms)
+✔ current records require explicit policy while authenticated3.0 history remains strict (138.781708ms)
+✔ published3.1 predecessor cannot use missing historical acceptance (71.072167ms)
+✔ collector, observer and classification are not edited by this policy (0.202208ms)
+✔ missing parser refuses exceptions while no-exception imports stay independent (130.555166ms)
+✔ both published readers accept authenticated evidence larger than the old32MiB limit (227.827333ms)
+✔ both readers reject oversized asset metadata before downloading and authenticate before parsing (1.963833ms)
+✔ DS12 has its own128MiB bound and stream counts exact bytes without trusting headers (24.679958ms)
+✔ interrupted streams reject and release their reader instead of returning a truncated record (5.873708ms)
+✔ DS12 names the actual authenticated nested P17 artifact without requiring D14 for beta (181.10975ms)
+✔ DS12 refuses absent, malformed or mismatched workflow and manifest identities (114.970292ms)
+✔ RC emits all four actual D14 assets and hashes their exact bytes (286.408916ms)
+✔ RC cannot record without a real audit, nor with changed production after review (400.854292ms)
+✔ the GitHub Release names the milestone, channel and later gates (deferred input: false) (13.349666ms)
+✔ the GitHub Release names the milestone, channel and later gates (deferred input: true) (0.501958ms)
+✔ release notes retain paragraphs, bullets and subheadings up to the next release (0.247708ms)
+✔ last release extends to true EOF and an unbracketed version is accepted (0.046791ms)
+✔ stable tags cannot select prereleases or other version prefixes (0.1325ms)
+✔ the Release notes carry one line of P17's measurements when it took them, and nothing otherwise (0.152417ms)
+✔ final DS12 retains the exact reviewed hosted burn-in pointer, never inventing a run (139.540292ms)
+✔ DS12 byte limit applies to the exact pretty UTF-8 bytes written, including newline (0.234542ms)
+✔ the standalone deployment lock preserves pinned dependencies without unrelated workspace features (2.64375ms)
+✔ P17 refuses unknown deployment contracts before inspecting packages (4.053334ms)
+✔ the actual final packed call sequence finishes skew before a mandatory performance refusal (3.015625ms)
+✔ only the observed same-target intentional reload interruption reaches the unchanged drill oracle (3.025542ms)
+ℹ tests 157
+ℹ suites 0
+ℹ pass 157
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2603.799209
+
+### packed decoder: actual built compiler regenerates the timed contracts (166s)
+✔ actual client producer retains the completed metric before its next operation fails (99.718334ms)
+✔ malformed child JSON and failed native validation retain originals without a complete marker (67.96825ms)
+P17: performance: the previous published DS12 is authentic, complete and earlier than this run
+P17: performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown
+P17: performance: ordinary release binaries use the same exact packed crate lock
+P17: performance: N1 twenty thousand walks per consumer shape, N5 and public budget boundaries
+P17: performance: tenant-login twenty cold Lighthouse mobile and real activation runs
+P17: performance: islands-100 twenty cold Lighthouse mobile and real activation runs
+P17: performance: founder client comparison completes in all three engines over packed core
+P17: performance: final attribution, acceptance and complete evidence
+P17: performance: the previous published DS12 is authentic, complete and earlier than this run
+P17: performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown
+P17: performance: ordinary release binaries use the same exact packed crate lock
+P17: performance: N1 twenty thousand walks per consumer shape, N5 and public budget boundaries
+P17: performance: tenant-login twenty cold Lighthouse mobile and real activation runs
+P17: performance: islands-100 twenty cold Lighthouse mobile and real activation runs
+P17: performance: founder client comparison completes in all three engines over packed core
+P17: performance: final attribution, acceptance and complete evidence
+P17: performance: the previous published DS12 is authentic, complete and earlier than this run
+P17: performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown
+P17: performance: ordinary release binaries use the same exact packed crate lock
+P17: performance: N1 twenty thousand walks per consumer shape, N5 and public budget boundaries
+P17: performance: tenant-login twenty cold Lighthouse mobile and real activation runs
+P17: performance: islands-100 twenty cold Lighthouse mobile and real activation runs
+P17: performance: founder client comparison completes in all three engines over packed core
+P17: performance: final attribution, acceptance and complete evidence
+✔ actual performance producer retains attempt and writes no complete marker when final metadata fails (94.489375ms)
+✔ actual N3 Lighthouse task refusal retains client evidence and a failed check, without a complete marker (117.496292ms)
+✔ actual N3 activation task refusal retains client evidence and a failed check, without a complete marker (50.997042ms)
+✔ sequential owners resume the same limits and immutable exact byte hashes (143.066417ms)
+✔ unsafe, oversized, unindexed and truncated records refuse without overwrite (43.984292ms)
+✔ same-length corruption cannot receive a completed manifest (28.501833ms)
+✔ real SIGKILL preserves acknowledged raw LHR and completed native/client checkpoints (84.703541ms)
+✔ a Lighthouse capture error preserves its original report and trace, refuses, and closes Chrome (112.220917ms)
+✔ a complete Lighthouse result is delivered before a failing activation loses the pair (0.325625ms)
+✔ a failing trace proof still leaves completed raw Lighthouse and trace checkpoints (0.1965ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 351.629625
+✔ L66 correlates a source-bound isolated task without a browser-feature allowlist (57.487166ms)
+✔ bundle URLs, inline IDs and nested application stacks always prevent correlation (0.480125ms)
+✔ missing or ambiguous source coverage and unreadable traces never imply absence (1.070959ms)
+✔ all forty complete correct probes are required; one observed task vetoes the new category (111.240208ms)
+✔ a single application task, whole-page TBT and the original paired negative controls remain blocking (21.643542ms)
+✔ the slow input control must reject its own task, not lateness or an unrelated task (0.60025ms)
+✔ document and parser request URLs are metadata, while nested initiator execution remains blocking (2.471292ms)
+✔ only exact pinned bootstrap rundown pairs avoid inference of application execution (0.829042ms)
+✔ unknown inline, mismatched bootstrap sources and ambiguous metadata remain blocking (2.156708ms)
+✔ pinned bootstrap source identity does not exempt real execution in the task (0.782125ms)
+✔ loading documents do not poll or click before their one DOMContentLoaded start (2.477708ms)
+✔ login responses require separate input frames and retain absolute latency (0.742958ms)
+✔ a partial login response does not starve its sibling or pass completion (0.953209ms)
+✔ spacing login inputs does not reset or relax the 500 ms response limit (0.577875ms)
+✔ missing login targets or outputs remain incomplete without false responses (0.87875ms)
+✔ dead login inputs retain all raw tasks and errors and fail the original deadline (0.545791ms)
+✔ interactive and complete documents start immediately without a later duplicate (0.767208ms)
+✔ the absolute timeout is terminal if DOMContentLoaded arrives later (0.435375ms)
+✔ an already queued response frame does no work after the absolute timeout (0.418208ms)
+✔ early long tasks and errors remain observed before response polling starts (0.461583ms)
+✔ response latency keeps the original first-paint and absolute response timestamps (1.445625ms)
+✔ dead responses and the original DOMContentLoaded slow-task controls remain effective (2.488333ms)
+✔ each early island input is its own task and timeout cancels queued inputs (0.48075ms)
+✔ task-separated island inputs still fail late responses and retain all raw tasks (0.717166ms)
+✔ native stylesheet and isolated SVG ancestry prove only the three retained pre-script tasks (4.522042ms)
+✔ stylesheet exclusion requires complete parser resource identity and ordering (10.347292ms)
+✔ SVG resource proof requires its unique blank frame, causal flows and later exact paint bridge (10.460958ms)
+✔ native resource categories cannot bypass application boundary or navigation proof (1.243167ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 259.979292
+✔ the actual candidate compiler regenerates the frozen source/IR/registration proof (109.5065ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172.639375
+
+### core: typecheck, size gate, packaging lint, probe anchors (167s)
+
+> @getforma/core@3.1.0 typecheck
+> tsc --noEmit
+
+
+> @getforma/core@3.1.0 check:size
+> node scripts/check-size.mjs
+
+dist/index.js
+  49165 B gzipped (limit 49926, 98%) — core ESM entry + every shared chunk it imports
+  files: chunk-2CJY5HA5.js, chunk-46JRMM2Y.js, chunk-NTW6E4KC.js, chunk-RRZJ6XRE.js, chunk-TY4YU4W6.js, index.js
+  external (not weighed): alien-signals, alien-signals/system
+dist/formajs-runtime.global.js
+  41131 B gzipped (limit 41500, 99%) — CDN runtime bundle (single self-contained IIFE)
+  files: formajs-runtime.global.js
+dist/forma.esm.js
+  48876 B gzipped (limit 49136, 99%) — CDN browser ESM bundle (self-contained, inlines alien-signals)
+  files: forma.esm.js
+dist/formajs-frame.global.js
+  39882 B gzipped (limit 40000, 100%) — preview frame runtime (one classic script, inlined by the server)
+  files: formajs-frame.global.js
+dist/formajs-runtime-hardened.global.js
+  40399 B gzipped (limit 40500, 100%) — CDN hardened runtime bundle (single self-contained IIFE)
+  files: formajs-runtime-hardened.global.js
+
+> @getforma/core@3.1.0 check:pack
+> publint && attw --pack . && node scripts/check-pack-development.mjs
+
+Running publint v0.3.25 for @getforma/core...
+Packing files with `npm pack`...
+Linting...
+All good!
+
+@getforma/core v3.1.0
+
+Build tools:
+- @arethetypeswrong/cli@^0.18.5
+- typescript@^5.9.3
+- esbuild@^0.28.1
+- tsup@^8.5.1
+
+ No problems found 🌟
+
+
+"@getforma/core"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-hardened"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-csp"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/tc39"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/http"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/storage"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/package.json"
+
+node10: 🟢 (JSON)
+node16 (from CJS): 🟢 (JSON)
+node16 (from ESM): 🟢 (JSON)
+bundler: 🟢 (JSON)
+
+***********************************
+
+"@getforma/core/compiled"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/navigation"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+check-pack-development: publint over the development build (18 leaves promoted)
+Running publint v0.3.25 for @getforma/core...
+Packing files with `npm pack`...
+Linting...
+All good!
+check-pack-development: attw over the development build (18 leaves promoted)
+
+@getforma/core v3.1.0
+
+Build tools:
+- @arethetypeswrong/cli@^0.18.5
+- typescript@^5.9.3
+- esbuild@^0.28.1
+- tsup@^8.5.1
+
+ No problems found 🌟
+
+
+"@getforma/core"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-hardened"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/runtime-csp"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/tc39"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/http"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/storage"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/package.json"
+
+node10: 🟢 (JSON)
+node16 (from CJS): 🟢 (JSON)
+node16 (from ESM): 🟢 (JSON)
+bundler: 🟢 (JSON)
+
+***********************************
+
+"@getforma/core/compiled"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+
+"@getforma/core/navigation"
+
+node10: 🟢 
+node16 (from CJS): 🟢 (CJS)
+node16 (from ESM): 🟢 (ESM)
+bundler: 🟢 
+
+***********************************
+328/328 probes still apply
+
+### expression qualification:100000 generated cases, removed-charge control and independent nightly floor (177s)
+✔ other component kills cannot hide an expression survivor below its floor (0.605ms)
+✔ missing, stale, duplicated and unobserved process failures never count as expression kills (0.784375ms)
+✔ real executed assertion is caught; passing and restored executions are clean (1132.72475ms)
+✔ a real pre-existing assertion failure aborts before any mutant (352.336ms)
+✖ serial bail completes its assertion with multiple modules and concurrent tests (707.353958ms)
+✔ real parse error cannot count as a kill (1041.853958ms)
+✔ real collection assertion cannot count as a kill (1028.90325ms)
+✔ real beforeEach assertion cannot count as a kill (1050.979084ms)
+✔ real plain body Error cannot count as a kill (1049.647541ms)
+✔ real test timeout cannot count as a kill (1056.244458ms)
+✔ real unhandled rejection beside passing assertion cannot count as a kill (1043.553083ms)
+✔ a hook whose end is reported before its start is complete (1.046333ms)
+✔ a hook that starts and never ends is incomplete, whatever else is reordered (1.017417ms)
+✔ a key that starts twice needs two ends, in either order (1.21025ms)
+✔ actual campaign continues after clean recovery but remains failed despite a later assertion kill (1792.57575ms)
+✔ actual campaign stops on a collection error without trying recovery or the next mutant (1100.890167ms)
+✔ actual campaign stops on a completed test timeout without trying the next mutant (1088.905667ms)
+✔ actual campaign requires a clean recovery baseline before running a later mutant (1400.315416ms)
+✔ only an executed assertion in a previously passing test qualifies as a kill (1.762125ms)
+✔ a dirty or all-skipped baseline cannot qualify any mutant (0.820834ms)
+✔ compiler, collection and unhandled errors cannot masquerade as an assertion kill (0.314833ms)
+✔ plain runtime errors and test timeout errors never count (0.275958ms)
+✔ timeouts, signals, unexpected exits and missing/invalid reports cannot count (0.366875ms)
+✔ reported failure needs actual execution, completion, timing and no retry (0.344792ms)
+✔ a completed assertion does not excuse a second interrupted assertion (0.1845ms)
+✔ missing tests, unknown identities and a previously skipped test cannot kill (0.371417ms)
+✔ inconsistent exit/report states and duplicate tests are rejected (0.236458ms)
+✔ only observed test-failure bail can interrupt a qualifying assertion run (0.338417ms)
+✔ a completed body exception allows recovery but still cannot count as a kill (0.290833ms)
+✔ recovery rejects process, timeout, collection, hook and unhandled failures (0.963875ms)
+✔ recovery requires every started test to have completed and failed tests to pass in baseline (0.160792ms)
+✔ P17 refuses partial, stale, duplicated, disconnected and unsafe hostile proof (74.809708ms)
+✔ P17 requires full current-source campaigns and a numerical, bounded real-row mutant (3.282875ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 32
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13905.344375
+
+✖ failing tests:
+
+test at packages/core/scripts/probe-reporter.test.mjs:53:1
+✖ serial bail completes its assertion with multiple modules and concurrent tests (707.353958ms)
+  AssertionError [ERR_ASSERTION]: process failed without an assertion
+  
+  1 !== 0
+  
+      at inspectProbeReport (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-results.mjs:61:12)
+      at readProbeReport (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-results.mjs:70:10)
+      at classifyProbe (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-results.mjs:104:18)
+      at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-reporter.test.mjs:58:20
+      at runFixture (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-reporter.test.mjs:33:44)
+      at TestContext.<anonymous> (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/scripts/probe-reporter.test.mjs:56:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

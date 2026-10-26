@@ -1,0 +1,251 @@
+
+> build
+> npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/router && npm run build -w packages/create-app
+
+
+> @getforma/compiler@3.1.0 build
+> tsup src/index.ts --format esm --dts
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 442.93 KB
+ESM ⚡️ Build success in 76ms
+DTS Build start
+DTS ⚡️ Build success in 2824ms
+DTS dist/index.d.ts 19.12 KB
+
+> @getforma/build@3.1.0 build
+> tsup src/index.ts src/raw-lint-cli.ts --format esm --dts --external @getforma/compiler
+
+CLI Building entry: src/index.ts, src/raw-lint-cli.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js        123.98 KB
+ESM dist/raw-lint-cli.js 102.05 KB
+ESM ⚡️ Build success in 24ms
+DTS Build start
+DTS ⚡️ Build success in 1212ms
+DTS dist/raw-lint-cli.d.ts 20.00 B
+DTS dist/index.d.ts        22.66 KB
+
+> @getforma/core@3.1.0 build
+> node scripts/clean-dist.mjs && tsup && node scripts/post-build.mjs && node scripts/verify-dist.mjs
+
+clean-dist: emptied dist/
+CLI Building entry: {"index":"src/index.ts","compiled":"src/compiled.ts","navigation":"src/navigation.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"forma.esm":"src/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"formajs-frame":"src/runtime-frame.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"index":"src/index.ts","compiled":"src/compiled.ts","navigation":"src/navigation.ts","runtime":"src/runtime.ts","tc39-compat":"src/reactive/tc39-compat.ts","http":"src/http/index.ts","storage":"src/storage/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI Building entry: {"runtime-hardened":"src/runtime.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI tsup v8.5.1
+CLI Using tsup config: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/core/tsup.config.ts
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+ESM Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CLI Target: es2022
+IIFE Build start
+CLI Target: es2022
+ESM Build start
+CJS Build start
+If you do not supply "output.name", you may not be able to access the exports of an IIFE bundle.
+DTS Build start
+DTS Build start
+IIFE dist/formajs-frame.global.js 159.54 KB
+IIFE ⚡️ Build success in 365ms
+IIFE dist/formajs-runtime.global.js     164.86 KB
+IIFE dist/formajs-runtime.global.js.map 535.94 KB
+IIFE ⚡️ Build success in 424ms
+IIFE dist/formajs-runtime-hardened.global.js     162.23 KB
+IIFE dist/formajs-runtime-hardened.global.js.map 602.39 KB
+IIFE ⚡️ Build success in 443ms
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.cjs".
+CJS dist/dev/runtime-hardened.cjs 148.06 KB
+CJS ⚡️ Build success in 562ms
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/dev/runtime-hardened.js".
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.cjs".
+"isSignal", "isComputed", "isEffect", "isEffectScope" and "getBatchDepth" are imported from external module "alien-signals" but never used in "dist/runtime-hardened.js".
+ESM dist/dev/runtime-hardened.js 147.78 KB
+ESM ⚡️ Build success in 1270ms
+DTS ⚡️ Build success in 1251ms
+DTS dist/runtime-hardened.d.ts  10.94 KB
+DTS dist/runtime-hardened.d.cts 10.94 KB
+CJS dist/runtime-hardened.cjs     145.39 KB
+CJS dist/runtime-hardened.cjs.map 577.09 KB
+CJS ⚡️ Build success in 1556ms
+ESM dist/runtime-hardened.js     145.11 KB
+ESM dist/runtime-hardened.js.map 577.05 KB
+ESM ⚡️ Build success in 1557ms
+ESM dist/navigation.js         9.71 KB
+ESM dist/index.js              32.96 KB
+ESM dist/compiled.js           4.23 KB
+ESM dist/chunk-RRZJ6XRE.js     12.95 KB
+ESM dist/chunk-2CJY5HA5.js     107.28 KB
+ESM dist/tc39-compat.js        574.00 B
+ESM dist/http.js               5.34 KB
+ESM dist/chunk-TY4YU4W6.js     24.79 KB
+ESM dist/storage.js            5.23 KB
+ESM dist/chunk-NTW6E4KC.js     13.40 KB
+ESM dist/runtime.js            132.09 KB
+ESM dist/chunk-46JRMM2Y.js     3.22 KB
+ESM dist/index.js.map          128.90 KB
+ESM dist/navigation.js.map     23.50 KB
+ESM dist/chunk-RRZJ6XRE.js.map 48.34 KB
+ESM dist/compiled.js.map       12.22 KB
+ESM dist/http.js.map           19.14 KB
+ESM dist/tc39-compat.js.map    2.41 KB
+ESM dist/storage.js.map        16.91 KB
+ESM dist/chunk-TY4YU4W6.js.map 110.58 KB
+ESM dist/chunk-2CJY5HA5.js.map 281.41 KB
+ESM dist/chunk-NTW6E4KC.js.map 58.74 KB
+ESM dist/runtime.js.map        461.31 KB
+ESM dist/chunk-46JRMM2Y.js.map 25.03 KB
+ESM ⚡️ Build success in 1561ms
+CJS dist/compiled.cjs           4.43 KB
+CJS dist/index.cjs              39.49 KB
+CJS dist/navigation.cjs         10.03 KB
+CJS dist/chunk-2RYUWROU.cjs     13.33 KB
+CJS dist/http.cjs               5.59 KB
+CJS dist/tc39-compat.cjs        640.00 B
+CJS dist/chunk-RG5ALIDX.cjs     108.96 KB
+CJS dist/chunk-MZNVTNKN.cjs     25.95 KB
+CJS dist/chunk-J7XVXJ7C.cjs     3.64 KB
+CJS dist/chunk-ZUWTXXVD.cjs     14.87 KB
+CJS dist/storage.cjs            5.32 KB
+CJS dist/runtime.cjs            132.87 KB
+CJS dist/compiled.cjs.map       12.41 KB
+CJS dist/navigation.cjs.map     23.73 KB
+CJS dist/index.cjs.map          129.45 KB
+CJS dist/http.cjs.map           19.19 KB
+CJS dist/chunk-2RYUWROU.cjs.map 48.57 KB
+CJS dist/tc39-compat.cjs.map    2.45 KB
+CJS dist/chunk-MZNVTNKN.cjs.map 110.67 KB
+CJS dist/chunk-RG5ALIDX.cjs.map 282.30 KB
+CJS dist/chunk-J7XVXJ7C.cjs.map 25.07 KB
+CJS dist/chunk-ZUWTXXVD.cjs.map 58.99 KB
+CJS dist/storage.cjs.map        16.91 KB
+CJS dist/runtime.cjs.map        461.65 KB
+CJS ⚡️ Build success in 1752ms
+CJS dist/dev/navigation.cjs     9.95 KB
+CJS dist/dev/compiled.cjs       4.36 KB
+CJS dist/dev/tc39-compat.cjs    559.00 B
+CJS dist/dev/chunk-GZMXARPM.cjs 13.56 KB
+CJS dist/dev/index.cjs          39.74 KB
+CJS dist/dev/chunk-7TITUI4X.cjs 27.95 KB
+CJS dist/dev/http.cjs           5.53 KB
+CJS dist/dev/chunk-WES3Y5XN.cjs 14.79 KB
+CJS dist/dev/storage.cjs        5.24 KB
+CJS dist/dev/chunk-ONSU5VQQ.cjs 4.59 KB
+CJS dist/dev/chunk-YYBQPUNB.cjs 108.91 KB
+CJS dist/dev/runtime.cjs        134.06 KB
+CJS ⚡️ Build success in 1748ms
+ESM dist/dev/tc39-compat.js    495.00 B
+ESM dist/dev/chunk-JO4VSDXG.js 13.18 KB
+ESM dist/dev/compiled.js       4.16 KB
+ESM dist/dev/chunk-RSLLCAKG.js 26.76 KB
+ESM dist/dev/http.js           5.27 KB
+ESM dist/dev/storage.js        5.16 KB
+ESM dist/dev/chunk-NIJKWI5L.js 13.31 KB
+ESM dist/dev/index.js          33.22 KB
+ESM dist/dev/chunk-QF55J27D.js 4.17 KB
+ESM dist/dev/navigation.js     9.63 KB
+ESM dist/dev/chunk-3FR6OLHS.js 107.24 KB
+ESM dist/dev/runtime.js        133.29 KB
+ESM ⚡️ Build success in 2024ms
+ESM dist/forma.esm.js     200.92 KB
+ESM dist/forma.esm.js.map 680.39 KB
+ESM ⚡️ Build success in 2026ms
+DTS ⚡️ Build success in 3219ms
+DTS dist/index.d.ts                  58.34 KB
+DTS dist/compiled.d.ts               894.00 B
+DTS dist/navigation.d.ts             1.23 KB
+DTS dist/runtime.d.ts                8.12 KB
+DTS dist/tc39-compat.d.ts            1.21 KB
+DTS dist/http.d.ts                   4.26 KB
+DTS dist/storage.d.ts                2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.ts  2.98 KB
+DTS dist/signal-B5ZKb9uL.d.ts        2.51 KB
+DTS dist/index.d.cts                 58.35 KB
+DTS dist/compiled.d.cts              895.00 B
+DTS dist/navigation.d.cts            1.23 KB
+DTS dist/runtime.d.cts               8.12 KB
+DTS dist/tc39-compat.d.cts           1.21 KB
+DTS dist/http.d.cts                  4.26 KB
+DTS dist/storage.d.cts               2.12 KB
+DTS dist/trusted-html-CQ4YBquI.d.cts 2.98 KB
+DTS dist/signal-B5ZKb9uL.d.cts       2.51 KB
+post-build: collapsed duplicate sourceMappingURL footers in 28 file(s)
+post-build: copied dist/formajs-runtime.global.js → dist/forma-runtime.js
+post-build: copied dist/formajs-runtime-hardened.global.js → dist/forma-runtime-csp.js
+post-build: jsx.d.ts copied and referenced in type declarations
+verify-dist: ok (58 JS artifacts checked)
+
+> @getforma/router@3.1.0 build
+> tsup src/index.ts --format esm,cjs --dts --external @getforma/core --external @getforma/core/navigation
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+CJS Build start
+CJS dist/index.cjs 64.60 KB
+CJS ⚡️ Build success in 20ms
+ESM dist/index.js 63.01 KB
+ESM ⚡️ Build success in 20ms
+DTS Build start
+DTS ⚡️ Build success in 722ms
+DTS dist/index.d.ts  6.92 KB
+DTS dist/index.d.cts 6.92 KB
+
+> @getforma/create-app@3.1.0 build
+> tsup src/index.ts --format esm
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Target: es2022
+ESM Build start
+ESM dist/index.js 13.19 KB
+ESM ⚡️ Build success in 14ms
