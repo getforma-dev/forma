@@ -154,10 +154,13 @@ source/assets/server hashes, host/browser versions, power and cleanup evidence
 are saved, including failures. `NATIVE_PERF_CELLS=chromium-desktop` and `--smoke`
 are diagnostic subsets, never substitutes for the full campaign.
 
-`bench-client.ts` wraps the public native adapter's complete `PreparedView.commit`
-call without changing router code. Preparation, preparation-to-history interval,
-history write, synchronous commit and immediate island readiness are separate.
-Two animation-frame callbacks provide a scheduling proxy; they do not measure
+`bench-client.ts` wraps public adapter boundaries without changing router code.
+The N5 interval conservatively covers the final post-permit validation through
+entry to activation, including history write, the complete owner commit and
+synchronous coordinator signal/title/scroll bookkeeping. `ownerCommitMs` also
+reports the narrower `PreparedView.commit` call. Preparation, preparation-to-history
+interval, history write, island readiness and navigation settlement stay separate.
+Two in-page animation-frame callbacks provide a scheduling proxy; they do not measure
 the compositor's actual paint. The control uses the same typed owners and public
 initial hydration, with a new document for each transition. Its browser readiness
 timing is separate from driver-inclusive wall time.

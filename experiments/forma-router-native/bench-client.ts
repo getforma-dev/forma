@@ -9,9 +9,15 @@ export default function initialize(bootstrap: NavigationBootstrap) {
       const prepared = await session.prepare(context);
       if (active) active.preparedAt = performance.now();
       if ('redirect' in prepared) return prepared;
-      return { ...prepared, commit() {
+      return { ...prepared, validate() {
+        if (active) active.finalValidationStart = performance.now();
+        prepared.validate();
+      }, commit() {
         const start = performance.now();
         try { prepared.commit(); } finally { if (active) { active.commitStart = start; active.commitEnd = performance.now(); } }
+      }, activate() {
+        if (active) active.activationStart = performance.now();
+        return prepared.activate().then(() => { if (active) active.islandReadyAt = performance.now(); });
       } };
     } };
   } };
@@ -30,7 +36,8 @@ export default function initialize(bootstrap: NavigationBootstrap) {
   }
   const documentIdentity = document;
   const ready = router.ready.then(() => ({ at: performance.now(), build: bootstrap.build }));
-  (window as any).__bench = { ready, build:bootstrap.build, async navigate(path: string) {
+  const frame = ready.then(() => new Promise<number>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now())))));
+  (window as any).__bench = { ready, frame, build:bootstrap.build, async navigate(path: string) {
     await ready;
     const sample: any = { from: location.pathname, to: path, intent:performance.now() }; active = sample;
     const outcome = await router.navigate(path);
@@ -39,9 +46,12 @@ export default function initialize(bootstrap: NavigationBootstrap) {
     if (document !== documentIdentity || !document.querySelector('#layout-counter') || !document.querySelector('[id^="counter-"]')) throw Error('Native sample changed document or lost islands');
     sample.frameAt = await new Promise<number>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now()))));
     active = undefined;
-    if (![sample.preparedAt,sample.commitStart,sample.commitEnd,sample.historyStart,sample.historyEnd].every(Number.isFinite)) throw Error('Missing preparation/commit timing marks');
+    if (![sample.preparedAt,sample.finalValidationStart,sample.commitStart,sample.commitEnd,sample.activationStart,sample.islandReadyAt,sample.historyStart,sample.historyEnd].every(Number.isFinite)) throw Error('Missing preparation/commit timing marks');
     return { from:sample.from,to:sample.to,prepareMs:sample.preparedAt-sample.intent,
       preparedToHistoryMs:sample.historyStart-sample.preparedAt,historyWriteMs:sample.historyEnd-sample.historyStart,
-      commitMs:sample.commitEnd-sample.commitStart,readyMs:sample.readyAt-sample.intent,frameMs:sample.frameAt-sample.intent };
+      preparedToCommitMs:sample.finalValidationStart-sample.preparedAt,
+      commitMs:sample.activationStart-sample.finalValidationStart,ownerCommitMs:sample.commitEnd-sample.commitStart,
+      postOwnerBookkeepingMs:sample.activationStart-sample.commitEnd,islandReadyMs:sample.islandReadyAt-sample.intent,
+      readyMs:sample.readyAt-sample.intent,frameMs:sample.frameAt-sample.intent };
   } };
 }

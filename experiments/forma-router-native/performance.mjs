@@ -58,7 +58,7 @@ const result = {startedAt:started,command:process.argv,node:process.version,sour
     frame:'Two requestAnimationFrame callbacks after immediate island readiness; scheduling proxy, not a measured compositor paint.',
     preparation:'Public native session.prepare wrapper completion: validated response/assets/prepared owners ready.',
     history:'Preparation-to-history-start observed interval includes coordinator checks and any history permit wait; history write measured separately.',
-    commit:'Full public PreparedView.commit call, after history write and before readiness await.',
+    commit:'Conservative synchronous interval from final public validate start (after history permit) through entry to activate. Includes final validation, history write, full PreparedView.commit, signal/title/scroll bookkeeping. ownerCommitMs separately times only PreparedView.commit. islandReadyMs precedes final navigation positioning; readyMs includes complete navigation settlement.',
     documentControl:'Same compiled owner templates/props, public activateIslands only. Every transition is an actual new document with a retained browser cache. Node wall time includes browser driver overhead; browser readiness is separately navigation-start-relative.',
     smoke,scope:'Source integration on this host; no physical device, compositor paint, assistive technology, or packed release claim.'},
   packageArchives,artifacts:await artifacts(),sourceFiles:await sources(),serverBinarySha256:hash(await readFile(binary)),serverBuildProfile:'release',cells:[],failures:[],heap:[]};
@@ -121,7 +121,7 @@ async function warm(browser,cell,mode,origin) {
         const before=performance.now();const response=await page.goto(origin+to);assert.equal(response.status(),200);
         const ready=await readiness(page,mode),nodeReadyMs=performance.now()-before;
         const timing=await page.evaluate(async()=>{
-          const frameAt=await new Promise(resolveFrame=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolveFrame(performance.now()))));
+          const frameAt=await window.__documentBench.frame;
           return {timeOrigin:performance.timeOrigin,frameAt,navigation:performance.getEntriesByType('navigation')[0].toJSON()};
         });
         assert.notEqual(timing.timeOrigin,timeOrigin,'Control sample must load a new document');timeOrigin=timing.timeOrigin;
@@ -130,7 +130,7 @@ async function warm(browser,cell,mode,origin) {
       await assertContent(page,to);assert.deepEqual(errors,[],'No browser runtime errors');row={index,direction,...row};
       if(index<2*result.protocol.warmupsPerDirection)warmups.push(row);else samples.push(row);
     }
-    const summary=summarize(samples,mode==='candidate'?['prepareMs','preparedToHistoryMs','historyWriteMs','commitMs','readyMs','frameMs']:['readyMs','frameMs','nodeReadyMs','nodeFrameMs']);
+    const summary=summarize(samples,mode==='candidate'?['prepareMs','preparedToHistoryMs','preparedToCommitMs','historyWriteMs','commitMs','ownerCommitMs','postOwnerBookkeepingMs','islandReadyMs','readyMs','frameMs']:['readyMs','frameMs','nodeReadyMs','nodeFrameMs']);
     const budget=cell.profile==='mobile'?50:16;
     return {mode,warmups,samples,summary,...(mode==='candidate'?{commitBudgetMs:budget,commitPassed:Object.values(summary).every(direction=>direction.commitMs.p95<=budget)}:{})};
   }catch(error){error.partial={mode,warmups,samples};throw error;}finally{await context.close();}
@@ -142,7 +142,7 @@ async function cold(browser,cell,mode,origin) {
     try{
       const before=performance.now();const response=await page.goto(origin+path);assert.equal(response.status(),200);
       const ready=await readiness(page,mode),nodeReadyMs=performance.now()-before;
-      const timing=await page.evaluate(async()=>{const frameMs=await new Promise(resolveFrame=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolveFrame(performance.now()))));return {frameMs,navigation:performance.getEntriesByType('navigation')[0].toJSON()};});
+      const timing=await page.evaluate(async mode=>{const frameMs=await (mode==='candidate'?window.__bench:window.__documentBench).frame;return {frameMs,navigation:performance.getEntriesByType('navigation')[0].toJSON()};},mode);
       await assertContent(page,path);assert.deepEqual(errors,[]);samples.push({path,index,readyMs:ready.at,nodeReadyMs,nodeFrameMs:performance.now()-before,...timing});
     }catch(error){error.partial={mode,samples};throw error;}finally{await context.close();}
   }
