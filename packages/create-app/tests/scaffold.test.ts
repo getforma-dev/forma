@@ -5,7 +5,7 @@ import { chromium, firefox, webkit } from '@playwright/test';
 import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
 import { verifyNativeRouterTemplate } from '../../../scripts/release-template-navigation.mjs';
 import { validateProjectName } from '../src/scaffold';
-import { CLI_TEMPLATES as TEMPLATES, E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
+import { CLI_TEMPLATES as TEMPLATES, CLI, CANDIDATE_CONTEXT, E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -63,9 +63,12 @@ describe('scaffolding', () => {
     });
 
     it('emits the authenticated template workflow without changing its dependency gates', () => {
-      // Historical published templates retain their own bytes; current candidate
-      // workflow security is exercised independently in supply-chain.test.mjs.
-      const expectedRoot = process.env.FORMA_SCAFFOLD_PUBLISHED_TEMPLATES || TEMPLATES_DIR;
+      // Compare candidate output with the authenticated CLI archive, not a
+      // Windows source checkout whose Git policy may have converted LF to CRLF.
+      // Keep strict bytes; source security is checked in supply-chain.test.mjs.
+      const expectedRoot = CANDIDATE_CONTEXT
+        ? path.resolve(path.dirname(CLI), '..', 'templates')
+        : process.env.FORMA_SCAFFOLD_PUBLISHED_TEMPLATES || TEMPLATES_DIR;
       const workflow = path.join('.github', 'workflows', 'build.yml');
       expect(fs.readFileSync(path.join(dest, workflow), 'utf8')).toBe(
         fs.readFileSync(path.join(expectedRoot, template, workflow), 'utf8'),
@@ -655,7 +658,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(response.headers.get('content-security-policy-report-only')).toBeNull();
       for (const [engine, launcher] of Object.entries({ chromium, firefox, webkit })) {
         await withEngine(engine, launcher, async (browser) => {
-          const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin);
+          const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin, { router: TEMPLATES.includes('native-router') });
           recordObservation(`dashboard: ${engine} tooltip text and policy`, { engine, profile: 'release', ...observation });
         });
       }
