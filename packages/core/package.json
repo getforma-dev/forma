@@ -2,7 +2,7 @@
   "name": "@getforma/core",
   "author": "Forma <victor@getforma.dev>",
   "version": "3.1.0",
-  "description": "Real DOM reactive library — fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. The CDN HTML runtime uses a CSP-safe allowlist expression interpreter with zero eval. Bundle sizes are measured by scripts/check-size.mjs.",
+  "description": "Real DOM reactive library \u2014 fine-grained signals, islands architecture, SSR hydration. No virtual DOM, no diffing. The CDN HTML runtime uses a CSP-safe allowlist expression interpreter with zero eval. Bundle sizes are measured by scripts/check-size.mjs.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -104,6 +104,18 @@
         "development": "./dist/dev/compiled.cjs",
         "default": "./dist/compiled.cjs"
       }
+    },
+    "./navigation": {
+      "import": {
+        "types": "./dist/navigation.d.ts",
+        "development": "./dist/dev/navigation.js",
+        "default": "./dist/navigation.js"
+      },
+      "require": {
+        "types": "./dist/navigation.d.cts",
+        "development": "./dist/dev/navigation.cjs",
+        "default": "./dist/navigation.cjs"
+      }
     }
   },
   "typesVersions": {
@@ -128,6 +140,9 @@
       ],
       "compiled": [
         "dist/compiled.d.ts"
+      ],
+      "navigation": [
+        "dist/navigation.d.ts"
       ]
     }
   },

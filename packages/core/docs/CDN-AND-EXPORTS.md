@@ -131,6 +131,7 @@ so a bundler never pulls them into an app that does not ask for them.
 |---|---|
 | `@getforma/core` | Signals, `h()`, mount, lists, stores, components, islands, events, DOM utils |
 | `@getforma/core/compiled` | Compiler-generated list templates; optional internal entry sharing the main entry's ownership graph |
+| `@getforma/core/navigation` | Native owner preparation and activation for the coordinated router; shares the main entry's island registry |
 | `@getforma/core/http` | `createFetch`, `fetchJSON`, `createSSE`, `createWebSocket` |
 | `@getforma/core/storage` | `createLocalStorage`, `createSessionStorage`, `createIndexedDB` |
 | `@getforma/core/runtime` | HTML runtime — `mountMarkup()`, handle `update()`/`unmount()`, `trustedHtml()`, `getDiagnostics()`; explicit tier and grants |
@@ -143,6 +144,14 @@ version. Its construction and event rules are described in the compiler's
 Applications without compiled rows do not import this helper. Its markup
 callback must return `trustedHtml()`; direct authored uses are covered by the
 raw-entry lint. It is not a separate self-contained CDN build.
+
+The navigation entry is an internal integration surface for the coordinated
+`@getforma/router` package. It exports `prepareNativeOwner`,
+`prepareInitialNativeOwners`, `validateNativeOwnerTree`, and the admitted server
+parser sink `navigationHTML`. Application code normally uses the router. The
+entry has ESM, CJS, declaration and development artifacts; it has no standalone
+CDN artifact. See [ISLANDS.md](ISLANDS.md#native-navigation-owners) for its owner
+lifecycle and initial document state contract.
 
 ```ts
 // Core — zero network code

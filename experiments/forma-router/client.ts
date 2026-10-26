@@ -1,7 +1,7 @@
 // Local native feasibility client, not the proposed public router implementation.
 // Real compiler registrations and Rust responses are required; no hand-built claims.
 import { activateIslands, deactivateAllIslands } from '../../packages/core/src/dom/activate';
-import { __prepareNavigationIslands } from '../../packages/core/src/dom/activate';
+import { __prepareNavigationIslands } from '../../packages/core/src/dom/navigation-experiment';
 import { trustedHtml, rawHtml } from '../../packages/core/src/dom/trusted-html';
 
 type Boot = { registrations: Record<string, any>; app: string; build: string; group: string };

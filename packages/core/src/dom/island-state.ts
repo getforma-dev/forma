@@ -157,37 +157,25 @@ function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boo
 }
 interface Entry { h: string; p: Record<string, unknown> }
 interface Claim { boundary: string | null; component: string | null; h: string | null; occurrence: number | null; duplicate: boolean }
-interface DocumentState {
+export interface DocumentState {
   entries: (Entry | null)[];
   claims: WeakMap<Element, Claim>;
   error?: IslandStateError;
 }
 const documents = new WeakMap<Document, DocumentState>();
-interface IslandAuthority {
-  readonly root: Document | HTMLElement;
-  readonly document: Document;
+export interface IslandAuthority {
   readonly state: DocumentState;
+  readonly contains: (host: HTMLElement) => boolean;
   active: boolean;
 }
-const validatedAuthorities = new WeakMap<ValidatedIsland, IslandAuthority>();
+export const validatedAuthorities = new WeakMap<ValidatedIsland, IslandAuthority>();
 
-/** Experimental navigation authority. Never replaces the original Document snapshot. */
-interface NavigationState extends IslandAuthority {
-  readonly root: HTMLElement;
-  readonly checked: readonly IslandPreflight[];
-  phase: 'prepared' | 'active' | 'disposed';
-}
-const navigationRoots = new WeakSet<HTMLElement>();
-const navigationHandles = new WeakMap<object, NavigationState>();
-/** @internal Opaque proof handle; callers cannot mint validated island claims. */
-export interface NavigationIslandState { readonly kind: 'forma-navigation-islands'; }
-
-function occurrenceOf(text: string | null): number | null {
+export function occurrenceOf(text: string | null): number | null {
   if (text === null || !/^(0|[1-9][0-9]*)$/.test(text)) return null;
   const index = Number(text);
   return Number.isSafeInteger(index) ? index : null;
 }
-function readDocument(doc: Document): DocumentState {
+export function readDocument(doc: Document): DocumentState {
   const cached = documents.get(doc);
   if (cached) return cached;
   const state: DocumentState = { entries: [], claims: new WeakMap() };
@@ -214,7 +202,7 @@ function readDocument(doc: Document): DocumentState {
   return state;
 }
 
-function readStateEntries(text: string): (Entry | null)[] {
+export function readStateEntries(text: string): (Entry | null)[] {
   // A UTF-16 code unit needs at least one encoded byte, so reject before
   // allocation when that lower bound exceeds the ceiling. encodeInto writes
   // only to this capped buffer and reports incomplete input on overflow.
@@ -306,7 +294,7 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
   }
   return output;
 }
-function originalClaim(host: HTMLElement, state: DocumentState): Claim {
+export function originalClaim(host: HTMLElement, state: DocumentState): Claim {
   const claim = state.claims.get(host);
   if (!claim || claim.duplicate || claim.occurrence === null
     || host.getAttribute('data-forma-island') !== claim.boundary
@@ -321,7 +309,7 @@ function originalClaim(host: HTMLElement, state: DocumentState): Claim {
 export function checkIslandClaim(value: ValidatedIsland): void {
   const authority = validatedAuthorities.get(value);
   // Containment also proves ownerDocument: DOM adoption moves an entire subtree.
-  if (!authority?.active || !authority.document.contains(authority.root) || !authority.root.contains(value.host)) {
+  if (!authority?.active || !authority.contains(value.host)) {
     refuse('FORMA_E_ISLAND_IDENTITY', 'island is outside its validated document');
   }
   const claim = originalClaim(value.host, authority.state);
@@ -330,7 +318,7 @@ export function checkIslandClaim(value: ValidatedIsland): void {
   }
 }
 
-function validateHost(registry: Record<string, (...args: never[]) => unknown>, host: HTMLElement, state: DocumentState): ValidatedIsland {
+export function validateHost(registry: Record<string, (...args: never[]) => unknown>, host: HTMLElement, state: DocumentState): ValidatedIsland {
   const claim = originalClaim(host, state);
   const entry = state.entries[claim.occurrence!];
   if (entry === undefined) refuse('FORMA_E_ISLAND_IDENTITY', 'state occurrence is out of range');
@@ -349,7 +337,7 @@ export function preflightIslands(registry: Record<string, (...args: never[]) => 
   const doc = (root as Node).nodeType === 9 ? root as Document : (root as Node).ownerDocument;
   if (!doc) return [];
   const state = readDocument(doc);
-  const authority: IslandAuthority = { root: doc, document: doc, state, active: true };
+  const authority: IslandAuthority = { state, active: true, contains: host => doc.contains(host) };
   const results: IslandPreflight[] = [];
   for (const host of root.querySelectorAll<HTMLElement>('[data-forma-island]')) {
     try {
@@ -362,83 +350,6 @@ export function preflightIslands(registry: Record<string, (...args: never[]) => 
     }
   }
   return results;
-}
-
-/**
- * @internal Experimental FORMA-301 feasibility boundary, not a supported public
- * transport. The caller must first validate response app/build/policy and import
- * inert markup into the destination document. Root must be a detached non-island
- * wrapper owned by that document. No component executes and no DOM write occurs.
- *
- * Unlike initial Document preflight, an invalid navigation candidate fails as a
- * unit before the router can replace the committed view. A handle is single-use.
- */
-export function prepareNavigationIslandState(
-  registry: Record<string, (...args: never[]) => unknown>, root: HTMLElement,
-  stateJson: string, document: Document = root.ownerDocument,
-): NavigationIslandState {
-  if (root.ownerDocument !== document || root.isConnected || document.contains(root)
-    || root.hasAttribute('data-forma-island') || navigationRoots.has(root)) {
-    refuse('FORMA_E_ISLAND_IDENTITY', 'navigation requires a fresh detached route wrapper');
-  }
-  const state: DocumentState = { entries: readStateEntries(stateJson), claims: new WeakMap() };
-  const hosts = Array.from(root.querySelectorAll<HTMLElement>('[data-forma-island]'));
-  if (hosts.length > 1024) refuse('FORMA_E_ISLAND_STATE', 'navigation exceeds 1024 islands');
-  const occurrences = new Set<number>();
-  for (const host of hosts) {
-    const occurrence = occurrenceOf(host.getAttribute('data-forma-state'));
-    if (occurrence === null || occurrences.has(occurrence)) {
-      refuse('FORMA_E_ISLAND_IDENTITY', 'invalid or duplicate navigation occurrence');
-    }
-    occurrences.add(occurrence);
-    state.claims.set(host, {
-      boundary: host.getAttribute('data-forma-island'), component: host.getAttribute('data-forma-component'),
-      h: host.getAttribute('data-forma-h'), occurrence, duplicate: false,
-    });
-  }
-  const checked = hosts.map(host => {
-    const value = validateHost(registry, host, state);
-    if (value.registration.mode !== 0) {
-      refuse('FORMA_E_ISLAND_REGISTRATION', 'native navigation requires adopting registrations');
-    }
-    return { host, value };
-  });
-  const scope: NavigationState = { root, document, state, checked, phase: 'prepared', active: false };
-  const handle: NavigationIslandState = Object.freeze({ kind: 'forma-navigation-islands' });
-  for (const result of checked) validatedAuthorities.set(result.value, scope);
-  navigationRoots.add(root);
-  navigationHandles.set(handle, scope);
-  return handle;
-}
-
-/** @internal Admission of the exact prepared subtree, once the router inserts it. */
-export function activateNavigationIslandState(handle: NavigationIslandState): readonly IslandPreflight[] {
-  const scope = navigationHandles.get(handle);
-  if (!scope || scope.phase !== 'prepared' || scope.root.ownerDocument !== scope.document
-    || !scope.document.contains(scope.root)) {
-    refuse('FORMA_E_ISLAND_IDENTITY', 'navigation scope cannot activate');
-  }
-  const hosts = scope.root.querySelectorAll<HTMLElement>('[data-forma-island]');
-  if (hosts.length !== scope.checked.length || scope.checked.some((result, index) => hosts[index] !== result.host)) {
-    refuse('FORMA_E_ISLAND_IDENTITY', 'navigation host set changed after preparation');
-  }
-  // Validate all claims before changing the scope to active or arming any work.
-  for (const result of scope.checked) {
-    const claim = originalClaim(result.host, scope.state);
-    if ('value' in result && (claim.occurrence !== result.value.occurrence || claim.h !== result.value.registration.h)) {
-      refuse('FORMA_E_ISLAND_IDENTITY', 'navigation claim changed after preparation');
-    }
-  }
-  scope.phase = 'active'; scope.active = true;
-  return scope.checked;
-}
-
-/** @internal Revoke first, then let the caller dispose every captured host. */
-export function revokeNavigationIslandState(handle: NavigationIslandState): readonly HTMLElement[] {
-  const scope = navigationHandles.get(handle);
-  if (!scope || scope.phase === 'disposed') return [];
-  scope.phase = 'disposed'; scope.active = false;
-  return scope.checked.map(result => result.host);
 }
 
 function mismatch(): never { throw new AdoptionDomError('FORMA_E_HYDRATE_VALUE'); }

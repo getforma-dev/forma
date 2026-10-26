@@ -1,8 +1,10 @@
 /** FORMA-301 experimental scope proof: this is not native transport qualification. */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { h } from '../element.js';
-import { activateIslands, __prepareNavigationIslands } from '../activate.js';
-import { __islandRegistration, prepareNavigationIslandState, activateNavigationIslandState, checkIslandClaim, matchAdoptionChild } from '../island-state.js';
+import { activateIslands } from '../activate.js';
+import { __prepareNavigationIslands } from '../navigation-experiment.js';
+import { prepareNavigationIslandState, activateNavigationIslandState } from '../navigation-state.js';
+import { __islandRegistration, checkIslandClaim, matchAdoptionChild } from '../island-state.js';
 import { __adoptionChild, withAdoptionDescription, type ComponentDescription } from '../adoption-description.js';
 import { compiled, FIXTURE_HASH, installState, useFreshDocument } from './helpers/compiled-island.js';
 

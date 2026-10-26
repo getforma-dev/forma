@@ -55,6 +55,10 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
     load: () => import('../compiled'),
     exports: ['__createCompiledTemplate'],
   },
+  './navigation': {
+    load: () => import('../navigation'),
+    exports: ['navigationHTML', 'prepareInitialNativeOwners', 'prepareNativeOwner', 'validateNativeOwnerTree'],
+  },
   './http': {
     load: () => import('../http/index'),
     exports: ['createFetch', 'createSSE', 'createWebSocket', 'fetchJSON'],
