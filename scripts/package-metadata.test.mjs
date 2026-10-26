@@ -9,7 +9,7 @@ import { nodeLines } from './toolchain-matrix.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const json = (file) => JSON.parse(readFileSync(resolve(root, file), 'utf8'));
-const published = ['core', 'compiler', 'build', 'create-app'];
+const published = ['core', 'compiler', 'build', 'router', 'create-app'];
 const canonical = 'https://github.com/getforma-dev/forma';
 
 test('published packages identify the canonical monorepo for source and bug reports', () => {

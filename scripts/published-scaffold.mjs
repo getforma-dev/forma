@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { setTimeout as sleepFor } from 'node:timers/promises';
 import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, packedRuntimeLock } from './release-set.mjs';
+import { npmPackagesForVersion } from './release-package-inventory.mjs';
 import { runCandidate } from './candidate-scaffold.mjs';
 
 export function sourceVersion(root = ROOT) {
@@ -33,8 +34,8 @@ export async function publishedStatus(version, request = fetch, { sleep = sleepF
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3);
   if (version.endsWith('-dev')) return {ready:false, version, missing:['development versions are not published'], packages:[]};
   const packages = [], missing = [];
-  // Two retries across the entire seven-record lookup, not per package. Even
-  // nine 20-second timeouts plus 1s/2s backoff total at most 183s of network
+  // Two retries across the entire coordinated-set lookup, not per package. Even
+  // ten 20-second timeouts plus 1s/2s backoff total at most 203s of network
   // waits, leaving room for setup within the five-minute preflight job.
   let retries = 0;
   async function readRecord(url, name) {
@@ -61,7 +62,7 @@ export async function publishedStatus(version, request = fetch, { sleep = sleepF
       await sleep(delay);
     }
   }
-  for (const [registry, names] of [['npm', NPM.map(n=>`@getforma/${n}`)], ['crates', CRATES]]) {
+  for (const [registry, names] of [['npm', npmPackagesForVersion(version).map(n=>`@getforma/${n}`)], ['crates', CRATES]]) {
     for (const name of names) {
       const url = registry === 'npm' ? `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}` : `https://crates.io/api/v1/crates/${name}/${version}`;
       const { response, metadata } = await readRecord(url, name);

@@ -68,7 +68,7 @@ export function finalDiffBinding(reference, finalCommit, root = ROOT) {
         } else { assert.equal(y.milestones.final.gates[name].status, 'done'); gate.status = 'done'; }
       }
       assert.deepEqual(x, y, 'final changes release contract beyond final gate completion');
-    } else assert(/^(?:docs\/(?!archive\/|evidence\/).+\.md|(?:README|CHANGELOG)\.md|(?:packages\/(?:core|compiler|build|create-app)|crates\/(?:forma-ir|forma-ir-derive|forma-server))\/(?:README|CHANGELOG)\.md|packages\/core\/(?:CSP|SECURITY)\.md)$/.test(path), `final product/harness drift: ${path}`);
+    } else assert(/^(?:docs\/(?!archive\/|evidence\/).+\.md|(?:README|CHANGELOG)\.md|(?:packages\/(?:core|compiler|build|router|create-app)|crates\/(?:forma-ir|forma-ir-derive|forma-server))\/(?:README|CHANGELOG)\.md|packages\/core\/(?:CSP|SECURITY)\.md)$/.test(path), `final product/harness drift: ${path}`);
     changes.push({ path, before: a.blob, afterSha256: sha256(bytes) });
   }
   for (const [path, text] of versions) assert.equal(run('git', ['show', `${finalCommit}:${path}`], root), text, `final version file not prepared: ${path}`);

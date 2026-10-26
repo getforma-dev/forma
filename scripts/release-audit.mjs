@@ -32,7 +32,7 @@ function independence(report) {
   hash(report.independence.initializationEvidenceSha256, 'D14 actual fresh-context initialization evidence');
   assert(![report.authorModel.sessionEvidenceSha256, report.reviewerModel.sessionEvidenceSha256, report.acceptanceEvidenceSha256].includes(report.independence.initializationEvidenceSha256), 'D14: initialization must have its own actual evidence');
 }
-const documentation = path => /^(?:docs\/(?!archive\/|evidence\/).+\.md|docs\/release\/d14-(?:report|input-manifest|review-evidence)\.json|CHANGELOG\.md|packages\/(?:core|compiler|build|create-app)\/CHANGELOG\.md|crates\/(?:forma-ir|forma-ir-derive|forma-server)\/CHANGELOG\.md)$/.test(path);
+const documentation = path => /^(?:docs\/(?!archive\/|evidence\/).+\.md|docs\/release\/d14-(?:report|input-manifest|review-evidence)\.json|CHANGELOG\.md|packages\/(?:core|compiler|build|router|create-app)\/CHANGELOG\.md|crates\/(?:forma-ir|forma-ir-derive|forma-server)\/CHANGELOG\.md)$/.test(path);
 
 /** An input manifest covers every tracked blob, including modes. */
 export function auditInputManifest(commit, root = ROOT) {

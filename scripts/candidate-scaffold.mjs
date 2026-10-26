@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { candidateNpmPackages } from './release-package-inventory.mjs';
 // The candidate gate consumes DS11 bytes. It never resolves unpublished Forma versions.
 import assert from 'node:assert/strict';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -24,7 +25,7 @@ export function validateCandidate(dir, expectedHash, expectedCommit) {
   assert(['declared-v1', 'islands-v1'].includes(set.contracts?.sourceTemplates), 'candidate must carry a supported source template contract');
   assert([undefined, null, 'plain-v1'].includes(set.contracts.staticHtml), 'candidate must carry a supported static HTML contract');
   if (set.contracts.sourceTemplates === 'islands-v1') assert.equal(set.contracts.stateBlock, 'declared-v1', 'islands candidate requires declared state');
-  const expected = [...CRATES.map(name => ({name, registry:'crates', path:`crates/${name}`})), ...NPM.map(name => ({name:`@getforma/${name}`, registry:'npm', path:`packages/${name}`}))];
+  const expected = [...CRATES.map(name => ({name, registry:'crates', path:`crates/${name}`})), ...candidateNpmPackages(set).map(name => ({name:`@getforma/${name}`, registry:'npm', path:`packages/${name}`}))];
   assert(Array.isArray(set.packages)); assert.equal(set.packages.length, expected.length);
   const version = set.packages[0].version; assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3);
   for (const identity of expected) {

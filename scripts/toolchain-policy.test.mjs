@@ -10,7 +10,7 @@ const policyFiles = ['.github/workflows/ci.yml', '.github/workflows/e2e-engines.
   '.github/workflows/nightly-probes.yml', '.github/workflows/value-rules.yml', '.github/workflows/advisories.yml',
   '.github/workflows/release-plane-observe.yml', '.github/workflows/rc-burn-in.yml',
   '.node-version', 'package.json', 'scripts/toolchain-matrix.mjs',
-  ...['core','compiler','build','create-app'].map(n => `packages/${n}/package.json`),
+  ...['core','compiler','build','router','create-app'].map(n => `packages/${n}/package.json`),
   ...['forma-ir','forma-ir-derive','forma-server'].map(n => `crates/${n}/Cargo.toml`)];
 function copyPolicy(scratch) {
   for (const file of policyFiles) {

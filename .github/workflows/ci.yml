@@ -267,8 +267,8 @@ jobs:
       # copies core's built distribution as the fixture's installed dependency,
       # as R17's command has it after `npm run build`. Core is built here for
       # that fixture only; its own suite still runs on Linux.
-      - run: npm run build -w packages/core
-      - run: npm test -w packages/compiler -w packages/build
+      - run: npm run build -w packages/core -w packages/router
+      - run: npm test -w packages/compiler -w packages/build -w packages/router
       # SR8 through the package as an application installs it (FORMA-126),
       # through npm's .cmd shim.
       - run: node packages/build/scripts/test-raw-lint-bin.mjs
@@ -717,7 +717,7 @@ jobs:
           retention-days: 14
 
   # Registry coverage remains distinct: it consumes the exact published CLI's
-  # sealed templates after all seven coordinated packages exist. A 404 means
+  # sealed templates after all versioned coordinated packages exist. A 404 means
   # unpublished; an unreadable registry is an error. Neither skips candidates.
   preflight:
     permissions:

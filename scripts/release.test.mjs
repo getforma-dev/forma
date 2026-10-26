@@ -228,10 +228,10 @@ test('a live tag cannot publish mixed A2 versions, dev versions or a partial set
   assert.throws(() => assertReleaseSet(packages.map((p, i) => i ? p : { ...p, version: '2.1.0' }), 'v3.0.0-alpha.1'));
   for (const tag of ['main', 'v3.0.0-dev', 'v2.0.0', 'v3.0.0;echo pwned', 'v03.0.0']) assert.throws(() => assertReleaseSet(packages, tag));
 });
-test('version preparation changes seven manifests, exact internal requirements and repositories without publishing', () => {
+test('version preparation changes eight manifests, exact internal requirements and repositories without publishing', () => {
   const before = json(join(ROOT, 'packages/core/package.json')).version;
   const files = versionFiles(ROOT, '3.0.0-alpha.1');
-  for (const name of ['core', 'compiler', 'build', 'create-app']) {
+  for (const name of ['core', 'compiler', 'build', 'router', 'create-app']) {
     const p = JSON.parse(files.get(`packages/${name}/package.json`));
     assert.equal(p.version, '3.0.0-alpha.1');
     assert.equal(p.repository.url, 'git+https://github.com/getforma-dev/forma.git');
@@ -412,7 +412,7 @@ test('version preparation keeps the window peers and exact packed crate pins dis
   ]) {
     assert.equal(compatibilityPeer(version), expected);
     const files = versionFiles(ROOT, version);
-    for (const [member, peer] of [['compiler', '@getforma/core'], ['build', '@getforma/compiler']]) {
+    for (const [member, peer] of [['compiler', '@getforma/core'], ['router', '@getforma/core'], ['build', '@getforma/compiler']]) {
       const manifest = JSON.parse(files.get(`packages/${member}/package.json`));
       const locked = JSON.parse(files.get('package-lock.json')).packages[`packages/${member}`];
       assert.equal(manifest.peerDependencies[peer], expected);

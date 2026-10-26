@@ -14,7 +14,7 @@ test('candidate authentication refuses changed record, changed archive, other so
       const file=`${p.name.replace('@','').replace('/','-')}-${version}.${p.registry==='npm'?'tgz':'crate'}`;
       writeFileSync(join(dir,file),p.name); return {...p,version,file,sha256:digest(join(dir,file))};
     });
-    const set={schema:1,commit,contracts:{sourceTemplates:'declared-v1'},packages}, record=join(dir,'release-set.json');
+    const set={schema:1,packageSet:'forma-router-v1',commit,contracts:{sourceTemplates:'declared-v1'},packages}, record=join(dir,'release-set.json');
     save(record,set); const hash=digest(record);
     assert.deepEqual(validateCandidate(dir,hash,commit),set);
     save(record,{...set,contracts:{sourceTemplates:'islands-v1',stateBlock:'declared-v1'}});

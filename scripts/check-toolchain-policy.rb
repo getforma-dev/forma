@@ -49,7 +49,7 @@ end
   options = (setup.first || {}).fetch('with', {})
   failures << "#{file}/#{name}: literal maintenance Node differs from the pin" unless setup.length == 1 && options['node-version'] == pin && !options.key?('node-version-file')
 end
-%w[core compiler build create-app].each do |name|
+%w[core compiler build router create-app].each do |name|
   pkg = JSON.parse(File.read(File.join(root, "packages/#{name}/package.json")))
   failures << "#{name}: engines.node must equal the tested floor" unless pkg.dig('engines', 'node') == ">=#{lines.min}"
 end

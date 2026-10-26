@@ -2,13 +2,14 @@
 // P17 skeleton. Package code comes from DS11; the test harness and third-party tools come
 // from the tagged tree's committed lock. No OIDC permission is needed here.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync, symlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import net from 'node:net';
+import {createRequire} from 'node:module';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { verifyMinimalIsland, verifyStaticTemplate, interactDashboard } from './release-template-islands.mjs';
@@ -22,6 +23,33 @@ import { completeMeasurements, machineProfile } from './release-measurements.mjs
 import { verifyPackedSecurity } from './release-security.mjs';
 import { assertCurrentCorpus, assertCurrentFmir, packageWriter, withStagedCorpus } from './fmir-corpus.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
+
+/** Executed only after packed dependency resolution has been authenticated. */
+export async function verifyPackedRouter(scratch) {
+  // Core's exact third-party signal library is installed from the committed
+  // harness lock. Link that dependency, never a workspace Forma implementation.
+  const require = createRequire(join(ROOT, 'packages/core/package.json'));
+  let signals = dirname(require.resolve('alien-signals'));
+  while (!existsSync(join(signals, 'package.json'))) {
+    const parent = dirname(signals); assert.notEqual(parent, signals, 'locked signals package root missing'); signals = parent;
+  }
+  const signalPackage = json(join(signals, 'package.json'));
+  assert.equal(signalPackage.name, 'alien-signals');
+  const corePackage = json(join(scratch, 'packages/core/package.json'));
+  assert.equal(signalPackage.version, corePackage.dependencies['alien-signals'], 'packed core requires another signal-library version');
+  const target = join(scratch, 'node_modules/alien-signals');
+  if (!existsSync(target)) symlinkSync(signals, target, process.platform === 'win32' ? 'junction' : 'dir');
+  const router = await import(pathToFileURL(join(scratch, 'packages/router/dist/index.js')).href);
+  for (const name of ['defineRoutes', 'matchRoutes', 'createRouter', 'createBrowserAdapter', 'createNativeAdapter', 'createHtmlAdapter', 'Link', 'Outlet']) {
+    assert.equal(typeof router[name], 'function', `packed router is missing ${name}`);
+  }
+  const routes = router.defineRoutes([{ id: 'users', path: 'users', children: [{ id: 'user', path: ':id' }] }]);
+  const matches = router.matchRoutes(routes, '/users/a%2Fb');
+  assert.deepEqual(matches.map(match => match.id), ['users', 'user']);
+  assert.equal(matches.at(-1).params.id, 'a/b');
+  assert.equal(Object.getPrototypeOf(matches.at(-1).params), null);
+  assert.throws(() => router.defineRoutes([{id:'a',path:':a'},{id:'b',path:':b'}]), /ROUTER_AMBIGUOUS/);
+}
 
 async function freePort() {
   const server = net.createServer();
@@ -308,6 +336,8 @@ export async function verify(dir, reportPath) {
       report.packedResolution = assertPackedResolution(scratch, set.packages);
       assert(report.packedResolution.some(edge => edge.package === '@getforma/build' && edge.specifier === '@getforma/compiler'), 'the packed build no longer imports its compiler peer; update this check');
     });
+    if (set.packages.some(item => item.name === '@getforma/router')) await test(
+      'packed optional router matches nested owners using only packed core dependencies', () => verifyPackedRouter(scratch));
     report.security = {};
     await verifyPackedSecurity({ set, scratch, test, evidenceDir: join(dirname(reportPath), 'security'), result: report.security });
     if (set.contracts.sourceTemplates) await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {

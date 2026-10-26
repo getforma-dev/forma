@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       target_tag:
-        description: Intended release tag; all seven checked-out versions must match
+        description: Intended release tag; all coordinated checked-out versions must match
         required: true
         default: v3.0.0-beta.3
         type: string
@@ -43,7 +43,7 @@ jobs:
           toolchain: '1.93.1'
       # `check` validates coordinated versions, not milestone readiness. An RC
       # with pending gates must be able to collect its dry-run evidence first.
-      - name: Check the seven source versions against the intended tag
+      - name: Check the coordinated source versions against the intended tag
         run: node scripts/release-set.mjs check "$FORMA_PERFORMANCE_TARGET_TAG"
       - run: bash scripts/install-deps.sh
       - run: npm audit signatures

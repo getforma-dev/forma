@@ -1,6 +1,8 @@
 # Unified releases
 
-The unified repository publishes seven coordinated packages. **3.0.0 is already
+The source workspace contains eight coordinated packages, including the optional
+`@getforma/router` introduced for the next minor release. Published 3.0 and 3.1
+records retain their original seven-package inventory. **3.0.0 is already
 published**; its [as-built summary](release/V3-AS-BUILT.md) records qualification
 and completed post-release verification. This document explains the release
 mechanisms and retains historical 3.0 examples. Never reuse an existing tag or
@@ -34,7 +36,7 @@ bash scripts/install-deps.sh
 npm run check
 ```
 
-The version command changes seven manifests, their exact internal requirements,
+The version command changes eight manifests, their exact internal requirements,
 the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `-dev` version also aligns the current
 template source seeds; it names no publishable milestone.
@@ -42,6 +44,22 @@ Replace the placeholder with the next unpublished version for the intended miles
 CHANGELOG heading (for example `## [3.0.0]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
+
+### Adding the optional router to the coordinated release
+
+The feature branch retains the published 3.1.0 source version until ordinary release
+preparation. `release-set.mjs version` updates the router manifest and lock together,
+including its core peer range. The next 3.2-or-later release requires all eight
+packages; an eight-package live 3.1 tag is refused. No existing tag is reused.
+
+Feature dry packs declare `packageSet: "forma-router-v1"` and include the router
+archive even before the version bump. Authenticated historical 3.0/3.1 records
+and RC evidence remain seven-package records. The versioned inventory reader in
+`scripts/release-package-inventory.mjs` keeps those records valid while requiring
+the new package for subsequent releases. P17 resolves the packed router against
+the packed core navigation entry and exercises nested parameter matching. The
+source gate builds/tests the router and checks its types and packed exports.
+The current templates keep navigation opt-in and do not gain a router dependency.
 
 ### Hosted packed rehearsal
 
@@ -52,7 +70,7 @@ branch, dispatch it on a reviewed immutable preparation ref, for example:
 gh workflow run packed-qualification.yml --ref 'codex/forma-beta3-qualification-<commit>' -f target_tag=v3.0.0-beta.3
 ```
 
-The read-only workflow builds and dry-packs all seven packages from that run's
+The read-only workflow builds and dry-packs all eight source packages from that run's
 exact commit, then passes the original candidate artifact to a separate clean
 Linux checkout. It checks the producer's DS11 digest, source commit, run,
 archive bytes, coordinated versions and Cargo lock before running the unchanged
@@ -61,7 +79,7 @@ reports, raw observations and cleanup results are retained as run artifacts.
 Its 60-minute job and 45-minute verification step allow setup and cleanup;
 P17's independent 1,800-second acceptance limit remains unchanged.
 
-`target_tag` must match all seven prepared versions. Use `v3.0.0-rc.1` for an RC
+`target_tag` must match all eight prepared versions. Use `v3.0.0-rc.1` for an RC
 preparation: pending milestone gates remain recorded, so the rehearsal can
 collect evidence before they close. The normal baseline reader still requires
 an actual comparable DS12 from the newest published predecessor for RC
@@ -142,14 +160,14 @@ predecessor archive and verifies the packed source-commit metadata; shared build
 targets and failed release artifacts remain untouched.
 
 Source template locks cannot contain a future registry checksum before that
-artifact has been packed. Pack first creates the three crates and three library
+artifact has been packed. Pack first creates the three crates and four library
 npm tarballs, then stages internal package versions, dependency metadata,
 registry URLs and checksums into the create-app templates. For the finalized 3.0.x
 candidate contract, an authenticated source adapter also stages the reviewed
 typed startup API; historical A2 source stays unchanged. Third-party resolutions
 remain unchanged. It packs create-app last and restores all source template files,
 including after a staging/write failure. Packed template `_npmrc` files are kept
-and restored to `.npmrc` by the CLI. DS11 contains seven archives, the exact source
+and restored to `.npmrc` by the CLI. DS11 contains eight archives, the exact source
 Cargo.lock and release-set.json with commit, run, toolchain, contract versions and
 archive hashes. SHA256SUMS covers every file; its own hash travels separately as a
 job output, so replacing both an archive and its manifest fails verification.

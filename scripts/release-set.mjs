@@ -13,8 +13,9 @@ import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template
 import { SOAK_GATE, validateSoakGate } from './release-soak-deferral.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const NPM = ['core', 'compiler', 'build', 'create-app'];
-export const CRATES = ['forma-ir', 'forma-ir-derive', 'forma-server'];
+import { NPM_PACKAGES, CRATE_PACKAGES, npmPackagesForVersion, ROUTER_PACKAGE_SET } from './release-package-inventory.mjs';
+export const NPM = NPM_PACKAGES;
+export const CRATES = CRATE_PACKAGES;
 // Pre-release counters start at 1: the first alpha is -alpha.1, never -alpha.0.
 export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.[1-9]\d*))?$/;
 export const json = path => JSON.parse(readFileSync(path, 'utf8'));
@@ -48,7 +49,7 @@ export function assertReleaseSet(packages, tag) {
   const version = tag?.replace(/^v/, '');
   assert(tag?.startsWith('v') && SEMVER.test(version) && !version.endsWith('-dev'), 'release requires vX.Y.Z[-alpha.N|-beta.N|-rc.N]');
   assert(Number(version.split('.')[0]) >= 3, 'the unified workflow first publishes 3.0.0');
-  assert.equal(packages.length, 7);
+  assert.equal(packages.length, CRATES.length + npmPackagesForVersion(version).length, 'release package inventory does not match this version line');
   for (const p of packages) assert.equal(p.version, version, `${p.name}: manifest disagrees with ${tag}`);
   return version;
 }
@@ -116,7 +117,7 @@ function updateRequirements(p, version, owner = p.name) {
   for (const kind of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
     for (const name of Object.keys(p[kind] ?? {})) if (internal(name)) p[kind][name] = `=${version}`;
   }
-  const peer = owner === '@getforma/compiler' ? '@getforma/core' : owner === '@getforma/build' ? '@getforma/compiler' : null;
+  const peer = ['@getforma/compiler', '@getforma/router'].includes(owner) ? '@getforma/core' : owner === '@getforma/build' ? '@getforma/compiler' : null;
   if (peer) p.peerDependencies = { ...p.peerDependencies, [peer]: compatibilityPeer(version) };
 }
 
@@ -277,7 +278,7 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
       if (packed[kind]) entry[kind] = packed[kind]; else delete entry[kind];
     }
     if (sourceLock) {
-      // Candidate peers are supplied by the seven-package release set. External
+      // Candidate peers are supplied by the coordinated release set. External
       // edges resolve through the exact workspace graph, including transitive peers.
       const external = structuredClone(packed);
       for (const kind of [...dependencyKinds, 'peerDependencies', 'peerDependenciesMeta']) {
@@ -436,7 +437,7 @@ export function pack(out, dryRun = false) {
   assertModuleTrustPolicy(policy);
   packCargoWorkspace(ROOT, packages, out, { dryRun });
   copyFileSync(join(ROOT, 'Cargo.lock'), join(out, 'Cargo.lock'));
-  for (const name of NPM.slice(0, 3)) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));
+  for (const name of NPM.filter(name => name !== 'create-app')) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));
   const preliminary = recordPackages(packages.filter(p => p.name !== '@getforma/create-app'), out);
   withStagedTemplates(ROOT, preliminary, out, () => run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages/create-app')));
   const cli = packages.find(p => p.name === '@getforma/create-app');
@@ -444,7 +445,7 @@ export function pack(out, dryRun = false) {
   for (const template of ['minimal', 'dashboard']) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
   const recorded = recordPackages(packages, out);
   save(join(out, 'release-set.json'), {
-    schema: 1, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
+    schema: 1, packageSet: ROUTER_PACKAGE_SET, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
     commit: run('git', ['rev-parse', 'HEAD']).trim(),
     run: process.env.GITHUB_RUN_ID ?? null, toolchain: run('rustc', ['--version']).trim(),
     node: process.version, npm: run('npm', ['--version']).trim(), contracts, milestone, packages: recorded,
@@ -457,7 +458,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (cmd === 'version') {
       const files = versionFiles(ROOT, arg);
       for (const [path, text] of files) writeFileSync(join(ROOT, path), text);
-      console.log(`Set seven packages to ${arg}. Review locks and template ranges, test, then commit; no tag was created.`);
+      console.log(`Set ${CRATES.length + NPM.length} packages to ${arg}. Review locks and template ranges, test, then commit; no tag was created.`);
     } else if (cmd === 'check') {
       console.log(assertReleaseSet(setVersions(), arg));
     } else if (cmd === 'pack') {

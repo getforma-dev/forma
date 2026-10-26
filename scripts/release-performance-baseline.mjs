@@ -2,12 +2,13 @@
 // release API. A transport/parse/contract error is never an absent baseline.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {SEMVER, NPM, CRATES} from './release-set.mjs';
+import {SEMVER} from './release-set.mjs';
 import {RELEASE_RECORD_MAX_BYTES,readBoundedBody} from './release-record-limits.mjs';
 
 import {PERFORMANCE_CONTRACT} from './release-performance-spec.mjs';
 export {PERFORMANCE_CONTRACT,N1_SHAPES} from './release-performance-spec.mjs';
 import {validatePerformanceRecord,validateHistorical30BaselinePerformance} from './release-performance-contract.mjs';
+import {packageIdentitiesForVersion} from './release-package-inventory.mjs';
 const API = 'https://api.github.com/repos/getforma-dev/forma';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -34,9 +35,9 @@ export function validateBaselineRecord(record, {tag, currentTag, publishedAt, be
   assert.equal(record.measurements?.commit, record.commit, 'DS12: P17 source differs from release');
   assert.equal(record.measurements?.passed, true, 'DS12: previous P17 did not pass');
   assert(record.contracts && typeof record.contracts === 'object', 'DS12: missing contracts');
-  const expected = [...CRATES.map(name => `crates:${name}`), ...NPM.map(name => `npm:@getforma/${name}`)].sort();
+  const expected = packageIdentitiesForVersion(tag.slice(1));
   assert(Array.isArray(record.packages), 'DS12: missing packed set');
-  assert.deepEqual(record.packages.map(p => `${p.registry}:${p.name}`).sort(), expected, 'DS12: expected exact seven-package set');
+  assert.deepEqual(record.packages.map(p => `${p.registry}:${p.name}`).sort(), expected, 'DS12: expected exact versioned package set');
   for (const p of record.packages) {
     assert.equal(p.version, tag.slice(1), 'DS12: package version differs from release');
     assert(/^[a-f0-9]{64}$/.test(p.sha256), 'DS12: package hash absent');

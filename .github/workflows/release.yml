@@ -72,7 +72,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: '1.93.1'
-      - name: Check all seven manifests against the tag
+      - name: Check all coordinated manifests against the tag
         run: node scripts/release-set.mjs check "$GITHUB_REF_NAME"
       - name: Install the committed graph with scripts off
         run: bash scripts/install-deps.sh
