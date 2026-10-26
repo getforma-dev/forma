@@ -59,7 +59,12 @@ and RC evidence remain seven-package records. The versioned inventory reader in
 the new package for subsequent releases. P17 resolves the packed router against
 the packed core navigation entry and exercises nested parameter matching. The
 source gate builds/tests the router and checks its types and packed exports.
-The current templates keep navigation opt-in and do not gain a router dependency.
+The `native-router` starter opts into the router dependency and Rust navigation feature.
+`minimal` and `dashboard` keep their existing dependency graphs. Current candidate
+qualification includes all three starters; authenticated historical seven-package
+records select only their two original starters. The new starter adds five heavy
+cases, including native navigation and persistent shell state in all three browser
+engines, and a Linux N8 row at the existing 3 MB / 100 ms limits.
 
 Before the first router publication, complete the package's npm trusted-publisher
 enrollment and enroll it in the operational registry monitor inventories
@@ -185,7 +190,7 @@ job output, so replacing both an archive and its manifest fails verification.
 `verify`, without OIDC permission, checks DS11 and the recorded lock, installs
 locked tools with scripts off, checks fresh advisories against the root lock and
 each crate archive’s own lock (only internal sources substituted), and checks npm registry signatures,
-then runs the packed compiler/reader corpus and both packed templates. Before any
+then runs the packed compiler/reader corpus and every template in the authenticated package set. Before any
 packed code runs, P17 writes a `node_modules/@getforma` beside the unpacked libraries,
 linking each packed one, and proves with Node's resolver that every bare `@getforma/*`
 specifier in every packed dist resolves inside the packed set
@@ -345,7 +350,7 @@ Rehearse it as the runner sees it: commit, `pack` a dry-run DS11, delete `packag
 ## Staged response contract (FORMA-109)
 
 The DS11 contract records `trustedTypes: "enforced-v1"`. P17 reads the actual
-HTTP and browser-navigation enforcement headers for both packed templates,
+HTTP and browser-navigation enforcement headers for all selected packed templates,
 requires the two intended policy names, and records native Trusted Types support,
 all `securitypolicyviolation` events and page errors across positive interaction.
 A passing result requires zero events and errors; separate native browser controls
@@ -354,9 +359,9 @@ not evidence of zero CSP reports.
 
 The current `sourceTemplates: "islands-v1"` contract packs the checked-in
 Rust and TypeScript template sources unchanged. `stageTemplates()` seals the
-eight dependency manifests/locks against the six runtime candidates and retains
-the two Rust main files in its ten-file restoration record. It validates both
-templates before writing and restores the originals after packaging. The older
+twelve dependency manifests/locks against the seven runtime candidates and retains
+the three Rust main files in its fifteen-file restoration record. It validates all
+three templates before writing and restores the originals after packaging. The older
 candidate source adapters belong to historical evidence; they are not the
 current source-template path. FORMA-144 slice 2 is accepted by the
 [beta qualification](release/BETA-QUALIFICATION.md); final slice 3 remains open.
@@ -365,7 +370,7 @@ current source-template path. FORMA-144 slice 2 is accepted by the
 
 The `finalized-v1` bound-render contract requires the packed server's external
 finalization, budget, typed document-home, browser-mode, panic and topology
-snapshot checks. Both current source templates finalize before opening a
+snapshot checks. All current source templates finalize before opening a
 listener. P17 authenticates the packed source inventory against the exact
 source commit and verifies the generated templates. Beta acceptance does not
 close FORMA-144's final-version cleanup gate.

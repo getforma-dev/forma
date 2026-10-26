@@ -43,7 +43,7 @@ test('candidate authentication refuses changed record, changed archive, other so
 test('candidate gate refuses omitted, skipped and failed existing heavy cases even if the process reports success', () => {
   const cases=REQUIRED_HEAVY.map(title=>({title,status:'passed',ancestorTitles:['scaffolded projects build (FORMA_SCAFFOLD_E2E=1)']}));
   const report=assertionResults=>({success:true,testResults:[{assertionResults}]});
-  assert.equal(requireHeavyResults(report(cases)).heavy,19);
+  assert.equal(requireHeavyResults(report(cases)).heavy,24);
   for(const status of ['pending','skipped','failed']) assert.throws(()=>requireHeavyResults(report(cases.map((p,i)=>i? p:{...p,status}))));
   assert.throws(()=>requireHeavyResults(report(cases.slice(1))),/did not run/);
   assert.throws(()=>requireHeavyResults(report([...cases,cases[0]])),/exactly once/);
@@ -66,4 +66,16 @@ test('the report verdict holds N8 on Linux: a missing template, an over-ceiling 
   for(const platform of ['win32','darwin']) assert.equal(judgeCandidate(report(platform,[]),raw).passed,true);
   // The heavy cases still decide first.
   assert.throws(()=>judgeCandidate(report('linux',good),{...raw,success:false}),/suite failed/);
+});
+
+test('native starter qualification is additive while historical candidates retain their original nineteen cases', () => {
+  const cases = REQUIRED_HEAVY.map(title => ({title, status:'passed', ancestorTitles:['scaffolded projects build (FORMA_SCAFFOLD_E2E=1)']}));
+  const historical = cases.filter(row => !row.title.startsWith('native-router:'));
+  const report = assertionResults => ({success:true,testResults:[{assertionResults}]});
+  assert.equal(requireHeavyResults(report(historical), ['minimal','dashboard']).heavy, 19);
+  assert.throws(() => requireHeavyResults(report(historical)), /native-router.*did not run|did not run.*native-router/);
+  for (const row of cases.filter(item => item.title.startsWith('native-router:'))) {
+    assert.throws(() => requireHeavyResults(report(cases.filter(item => item !== row))), /did not run/);
+  }
+  assert.throws(() => requireHeavyResults(report(cases), ['minimal']), /template inventory/);
 });

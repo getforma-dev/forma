@@ -18,7 +18,7 @@ const observation = (template, patch = {}) => ({ name: n8Name(template), ...eval
 test('the ceilings are N8\'s: 3 MB and 100 ms', () => {
   assert.equal(N8_MAX_ADDED_BYTES, 3_000_000);
   assert.equal(N8_MAX_ADDED_START_MS, 100);
-  assert.deepEqual(N8_TEMPLATES, ['minimal', 'dashboard']);
+  assert.deepEqual(N8_TEMPLATES, ['minimal', 'dashboard', 'native-router']);
 });
 
 test('readiness is only a bound 127.0.0.1 port on its own line, through colour codes', () => {
@@ -79,7 +79,7 @@ test('a broken measurement is refused, not passed: missing, non-positive or inve
 
 test('the report must carry one re-derived N8 row per template on Linux and nothing elsewhere', () => {
   const both = N8_TEMPLATES.map(template => observation(template));
-  assert.equal(requireN8Observations(both, 'linux').length, 2);
+  assert.equal(requireN8Observations(both, 'linux').length, 3);
   assert.deepEqual(requireN8Observations([], 'win32'), []);
   assert.deepEqual(requireN8Observations([], 'darwin'), []);
   assert.throws(() => requireN8Observations([], 'linux'), /N8 minimal: .*found 0/);
@@ -169,4 +169,12 @@ test('a failed baseline build leaves no directory behind, so the next template m
     assert.throws(() => buildBaseline({ dir: work, lockFile: lock, targetDir: join(dir, 'target'), env }), /N8 baseline build failed \(status 101\):\nerror: could not compile n8-baseline/);
     assert.equal(existsSync(work), false);
   }
+});
+
+test('native router N8 cannot be omitted by current qualification, while historical template sets still use two rows', () => {
+  const historical = ['minimal', 'dashboard'].map(template => observation(template));
+  assert.throws(() => requireN8Observations(historical, 'linux'), /N8 native-router: .*found 0/);
+  assert.equal(requireN8Observations(historical, 'linux', ['minimal','dashboard']).length, 2);
+  const forged = {...observation('native-router', {formaBytes:9_000_000}), passed:true, sizeOk:true};
+  assert.throws(() => requireN8Observations([...historical,forged], 'linux'), /size: Forma adds/);
 });

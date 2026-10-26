@@ -25,10 +25,11 @@
 //
 // The measurement runs in create-app's scaffold suite (packages/create-app/tests/scaffold.test.ts)
 // right after each template's `cargo build --release`, on Linux only, and records one observation per
-// template; candidate-scaffold.mjs refuses a Linux report without both. Nothing here compiles Rust
+// template; candidate-scaffold.mjs refuses a Linux report without every selected template. Nothing here compiles Rust
 // unless asked to (`buildBaseline`); the threshold and parse logic is covered by
 // n8-size-start.test.mjs without a toolchain.
 import assert from 'node:assert/strict';
+import { SEED_TEMPLATES } from './template-lock-seeds.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -37,7 +38,7 @@ import { fileURLToPath } from 'node:url';
 /** N8's two ceilings. Bytes are decimal megabytes: 3 MB = 3,000,000. */
 export const N8_MAX_ADDED_BYTES = 3_000_000;
 export const N8_MAX_ADDED_START_MS = 100;
-export const N8_TEMPLATES = ['minimal', 'dashboard'];
+export const N8_TEMPLATES = SEED_TEMPLATES;
 export const N8_RUNS = 15;
 export const N8_WARMUP = 3;
 

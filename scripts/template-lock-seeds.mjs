@@ -4,8 +4,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const SEED_MARKER = 'packages/create-app/template-lock-seeds.json';
-export const SEED_TEMPLATES = ['minimal', 'dashboard'];
-const NPM = ['@getforma/core', '@getforma/compiler', '@getforma/build'];
+export const LEGACY_SEED_TEMPLATES = ['minimal', 'dashboard'];
+export const SEED_TEMPLATES = [...LEGACY_SEED_TEMPLATES, 'native-router'];
+// Historical releases carry only their two original templates. The router is opt-in.
+export const templatesForPackages = packages => packages.some(p => p.registry === 'npm' && p.name === '@getforma/router') ? [...SEED_TEMPLATES] : [...LEGACY_SEED_TEMPLATES];
+const NPM = ['@getforma/core', '@getforma/compiler', '@getforma/build', '@getforma/router'];
 const CARGO = ['forma-ir', 'forma-ir-derive', 'forma-server'];
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.(?:0|[1-9]\d*)))?$/;
 const REGISTRY = 'registry+https://github.com/rust-lang/crates.io-index';
@@ -92,8 +95,16 @@ export function validateSeedFiles(files, v, label = 'template') {
   const rootEdges = [...root.raw.matchAll(/^\s+"([^"\r\n]+)",\r?$/gm)].map(m => m[1].split(' ')[0]).sort();
   assert.deepEqual(declarations.map(m => m[1]).sort(), rootEdges, `${label}: Cargo manifest and seed root dependencies differ`);
   for (const [, name, value] of declarations) assert(!/\b(?:package|path|git)\s*=/.test(value), `${label}: unsupported source override for ${name}`);
-  for (const [, name, value] of cargo.matchAll(/^(forma-[\w-]+)\s*=\s*(.+)\r?$/gm)) assert(CARGO.includes(name) && value.trim() === `"=${v}"`, `${label}: unknown or mixed Cargo requirement ${name}@${value}`);
+  for (const [, name, value] of cargo.matchAll(/^(forma-[\w-]+)\s*=\s*(.+)\r?$/gm)) {
+    const requirement = value.trim();
+    const navigation = /^\{\s*version\s*=\s*"([^"]+)"\s*,\s*features\s*=\s*\[\s*"navigation"\s*\]\s*\}$/.exec(requirement);
+    assert(CARGO.includes(name) && (requirement === `"=${v}"` || (name === 'forma-server' && navigation?.[1] === `=${v}`)), `${label}: unknown or mixed Cargo requirement ${name}@${value}`);
+  }
   return files;
+}
+export function replaceTemplateCargoRequirements(text, requirement) {
+  return text.replace(/^((forma-(?:ir|ir-derive|server))\s*=\s*(?:\{\s*version\s*=\s*)?")[^"]+"/gm,
+    (_, prefix, name) => `${prefix}${requirement(name)}"`);
 }
 export function readTemplateSeeds(root, expectedVersion) {
   version(expectedVersion);
@@ -118,7 +129,7 @@ export function prepareTemplateSeeds(root, oldVersion, nextVersion) {
       for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) for (const name of Object.keys(entry[kind] ?? {})) if (NPM.includes(name)) entry[kind][name] = kind === 'peerDependencies' ? peerWindow(nextVersion) : `=${nextVersion}`;
     }
     files.set('admin/package.json', JSON.stringify(manifest,null,2)+'\n'); files.set('admin/package-lock.json', JSON.stringify(lock,null,2)+'\n');
-    files.set('Cargo.toml', files.get('Cargo.toml').replace(/^(forma-(?:ir|ir-derive|server) = ")[^"]+"/gm, `$1=${nextVersion}"`));
+    files.set('Cargo.toml', replaceTemplateCargoRequirements(files.get('Cargo.toml'), () => `=${nextVersion}`));
     files.set('Cargo.lock', blocks(files.get('Cargo.lock')).map(raw => CARGO.includes(scalar(raw,'name')) ? raw.replace(/^version = "[^"]+"/m, `version = "${nextVersion}"`) : raw).join('').replace(/"(forma-(?:ir|ir-derive|server)) ([^" ]+)([^"]*)"/g, (_,name,prior,suffix) => { assert.equal(prior,oldVersion,'mixed internal Cargo edge version'); return `"${name} ${nextVersion}${suffix}"`; }));
     validateSeedFiles(files,nextVersion,template);
     for (const [path,text] of files) output.set(`packages/create-app/templates/${template}/${path}`,text);

@@ -10,7 +10,9 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import net from 'node:net';
 import {createRequire} from 'node:module';
-import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
+import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertInstalledTemplateCandidates, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
+import { templatesForPackages } from './template-lock-seeds.mjs';
+import { verifyNativeRouterTemplate } from './release-template-navigation.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { verifyMinimalIsland, verifyStaticTemplate, interactDashboard } from './release-template-islands.mjs';
 import { withOwnedServer } from './owned-server.mjs';
@@ -437,7 +439,7 @@ export async function verify(dir, reportPath) {
           report.workerLifecycle = { ...requireWorkerChecks(await verifyWorkerLifecycle({ ...options, retiringWorkerSource }), WORKER_LIFECYCLE_CHECKS, app), retiringWorkerSha256: digest(sourcePath) };
         });
       }
-      for (const template of ['minimal', 'dashboard']) {
+      for (const template of templatesForPackages(set.packages)) {
         await test(`${template}: packed CLI, locked install, signatures, build, serve and interaction`, async () => {
           const name = `release-${template}`;
           run(process.execPath, [join(cli, 'dist/index.js'), name, '--template', template], scratch, { env: { ...process.env, NODE_PATH: '' } });
@@ -448,17 +450,14 @@ export async function verify(dir, reportPath) {
           run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin, { stdio: 'inherit' });
           const signatures = auditCandidateSignatures(admin, set.packages, dir);
           report.tests.push({ name: `${template}: registry signatures and DS11 candidate authentication`, passed: true, ...signatures });
-          for (const p of set.packages.filter(p => p.registry === 'npm' && p.name !== '@getforma/create-app')) {
-            const manifest = join(admin, 'node_modules', p.name, 'package.json');
-            if (existsSync(manifest)) assert.equal(json(manifest).version, p.version, `${template} installed another ${p.name}`);
-          }
+          assertInstalledTemplateCandidates(admin, set.packages);
           run('npm', ['run', template === 'minimal' ? 'build:ssr' : 'build'], admin, { stdio: 'inherit' });
           assert.equal(digest(join(admin, 'package-lock.json')), npmHash, 'npm changed the candidate lock');
           if (set.contracts.manifest === 2) {
             const manifest = json(join(admin, 'dist/manifest.json'));
             const buildVersion = set.packages.find(p => p.name === '@getforma/build').version.split('-')[0];
             assert.equal(manifest.version, 2); assert.equal(manifest.writer, buildVersion);
-            assert.equal(manifest.app, name); assert.equal(manifest.routes['/'].mode, template === 'minimal' ? 'ssr' : 'browser');
+            assert.equal(manifest.app, name); assert.equal(manifest.routes['/'].mode, template === 'dashboard' ? 'browser' : 'ssr');
             for (const [file, metadata] of Object.entries(manifest.assets)) {
               assert.equal(typeof metadata.immutable, 'boolean', `${template}: ${file} has no cache metadata`);
               assert.equal(metadata.integrity, `sha384-${digest(join(admin, 'dist', file), 'sha384', 'base64')}`, `${template}: ${file} digest is not its uncompressed bytes`);
@@ -517,7 +516,7 @@ export async function verify(dir, reportPath) {
               if (template === 'minimal') {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
-              } else {
+              } else if (template === 'dashboard') {
                 dashboardTooltip = await interactDashboard(page, { violationKey: '__formaP17Violations' });
               }
               // Historical activation removed status markers. Strict adoption keeps
@@ -559,6 +558,21 @@ export async function verify(dir, reportPath) {
                     const island = await verifyMinimalIsland(actual, releaseOrigin, manifest);
                     const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest, '/about', { staticHtml: set.contracts.staticHtml ?? 'legacy-v1' });
                     report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, profile: 'release', island, staticRoute });
+                  } finally { if (actual !== browser) await actual.close(); }
+                }
+              });
+            }
+            if (template === 'native-router') {
+              const manifest = json(join(admin, 'dist/manifest.json'));
+              run('cargo', ['build', '--locked', '--release'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+              const releaseBinary = join(scratch, 'target/release', process.platform === 'win32' ? `${name}.exe` : name);
+              await server(releaseBinary, project, null, async (releaseResponse, releaseOrigin) => {
+                assert.equal(releaseResponse.headers.get('content-security-policy-report-only'), null, 'strict native router release has an unexpected diagnostic policy');
+                for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
+                  const actual = engine === 'chromium' ? browser : await launcher.launch();
+                  try {
+                    const navigation = await verifyNativeRouterTemplate(actual, releaseOrigin, manifest);
+                    report.tests.push({ name: `native-router: ${engine} packed typed navigation`, passed: true, engine, profile: 'release', navigation });
                   } finally { if (actual !== browser) await actual.close(); }
                 }
               });

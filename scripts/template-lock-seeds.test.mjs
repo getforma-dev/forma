@@ -4,12 +4,12 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { ROOT, stageTemplates, versionFiles } from './release-set.mjs';
-import { SEED_MARKER, readTemplateSeeds, validateSeedFiles, prepareTemplateSeeds } from './template-lock-seeds.mjs';
+import { SEED_MARKER, SEED_TEMPLATES, templatesForPackages, replaceTemplateCargoRequirements, readTemplateSeeds, validateSeedFiles, prepareTemplateSeeds } from './template-lock-seeds.mjs';
 
 const version = JSON.parse(readFileSync(join(ROOT, 'packages/create-app/package.json'))).version;
 const mismatchedVersion = version.includes('-') ? version.split('-')[0] : `${version}-dev`;
 const originals = readTemplateSeeds(ROOT, version);
-const externalNpm = files => Object.fromEntries(Object.entries(JSON.parse(files.get('admin/package-lock.json')).packages).filter(([path]) => path && !/^node_modules\/@getforma\/(core|compiler|build)$/.test(path)));
+const externalNpm = files => Object.fromEntries(Object.entries(JSON.parse(files.get('admin/package-lock.json')).packages).filter(([path]) => path && !/^node_modules\/@getforma\/(core|compiler|build|router)$/.test(path)));
 const externalCargo = files => files.get('Cargo.lock').split(/(?=^\[\[package\]\])/m).filter(block => !/^name = "forma-(ir|ir-derive|server)"\r?$/m.test(block));
 function changed(template, change) { const files = new Map(originals.get(template)); change(files); return () => validateSeedFiles(files, version, template); }
 function npm(files, change) { const lock = JSON.parse(files.get('admin/package-lock.json')); change(lock); files.set('admin/package-lock.json', JSON.stringify(lock)); }
@@ -25,7 +25,7 @@ function isolated() {
 test('identified source seeds preserve every external resolution across dev, alpha, beta and stable preparation', () => {
   for (const next of ['3.0.1-dev', '3.0.0-alpha.1', '3.0.0-beta.2', '3.0.0-rc.1', '3.0.0', '3.1.0']) {
     const output = prepareTemplateSeeds(ROOT, version, next);
-    assert.equal(output.size, 9);
+    assert.equal(output.size, 1 + 4 * SEED_TEMPLATES.length);
     for (const [template, before] of originals) {
       const after = new Map([...before].map(([path]) => [path, output.get(`packages/create-app/templates/${template}/${path}`)]));
       validateSeedFiles(after,next,template);
@@ -90,8 +90,8 @@ test('source seeds refuse unknown crates, mixed versions, stale internal hashes 
   ]) assert.throws(changed('minimal',files => cargo(files,change)), /internal|authenticate|crate|dependency|Cargo edge/);
 });
 
-test('seed identity and both templates are validated before staging writes or archive access', () => {
-  const packages = ['forma-ir','forma-ir-derive','forma-server','@getforma/core','@getforma/compiler','@getforma/build'].map(name=>({name,version,registry:name.startsWith('@')?'npm':'crates'}));
+test('seed identity and every template are validated before staging writes or archive access', () => {
+  const packages = ['forma-ir','forma-ir-derive','forma-server','@getforma/core','@getforma/compiler','@getforma/build','@getforma/router'].map(name=>({name,version,registry:name.startsWith('@')?'npm':'crates'}));
   for (const fault of ['missing-marker','unknown-template','mixed-marker','mixed-candidate','missing-external','missing-internal']) {
     const {root,files}=isolated();
     try {
@@ -111,4 +111,31 @@ test('seed identity and both templates are validated before staging writes or ar
       for(const [path,text]of files) assert.equal(readFileSync(join(root,path),'utf8'),text,`${fault}: ${path}`);
     }finally{rmSync(root,{recursive:true,force:true});}
   }
+});
+
+// Historic records must never require an archive or starter that did not ship.
+test('template inventory follows authenticated router presence, independent of retained source version', () => {
+  assert.deepEqual(templatesForPackages([]), ['minimal', 'dashboard']);
+  assert.deepEqual(templatesForPackages([{registry:'npm', name:'@getforma/router'}]), SEED_TEMPLATES);
+  assert.deepEqual(templatesForPackages([{registry:'crates', name:'@getforma/router'}]), ['minimal', 'dashboard']);
+});
+
+test('the router is declared only by its native starter and its seed never invents archive integrity', () => {
+  for (const [template, files] of originals) {
+    const manifest = JSON.parse(files.get('admin/package.json'));
+    assert.equal(Object.hasOwn(manifest.dependencies, '@getforma/router'), template === 'native-router');
+  }
+  const router = JSON.parse(originals.get('native-router').get('admin/package-lock.json')).packages['node_modules/@getforma/router'];
+  assert.throws(changed('minimal', files => npm(files, lock => { lock.packages['node_modules/@getforma/router'] = router; })), /omits or adds/);
+  assert.throws(changed('native-router', files => npm(files, lock => { lock.packages['node_modules/@getforma/router'].integrity = 'sha512-'+'A'.repeat(86)+'=='; })), /must not pretend/);
+  assert.throws(changed('native-router', files => npm(files, lock => { lock.packages['node_modules/@getforma/router'].peerDependencies['@getforma/core'] = '^2.0.0'; })), /mixed internal peer/);
+});
+
+test('Cargo navigation feature survives source versioning and sealed requirements without accepting arbitrary inline tables', () => {
+  const before = originals.get('native-router').get('Cargo.toml');
+  assert.match(replaceTemplateCargoRequirements(before, () => '^3.2.0'), /forma-server = \{ version = "\^3\.2\.0", features = \["navigation"\] \}/);
+  for (const replacement of ['features = ["other"]', 'features = ["navigation", "other"]', 'features = ["navigation"], default-features = false']) {
+    assert.throws(changed('native-router', files => files.set('Cargo.toml', before.replace('features = ["navigation"]', replacement))), /Cargo requirement/);
+  }
+  assert.throws(changed('native-router', files => files.set('Cargo.toml', before.replace('forma-ir = "='+version+'"', 'forma-ir = { version = "='+version+'", features = ["navigation"] }'))), /Cargo requirement/);
 });

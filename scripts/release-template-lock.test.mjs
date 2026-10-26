@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { digest, run, save, stageNpmLock, stageCargoLock, packedRuntimeLock } from './release-set.mjs';
+import { digest, run, save, stageNpmLock, stageCargoLock, packedRuntimeLock, assertInstalledTemplateCandidates } from './release-set.mjs';
 
 function archive(dir, name, manifest, files = {}) {
   const source = join(dir, name);
@@ -123,4 +123,39 @@ test('candidate runtime additions use a recorded nested closure without changing
     const unpinned = structuredClone(source); delete unpinned.packages['node_modules/forma-test-leaf'].integrity;
     assert.throws(() => stageNpmLock(manifest, lock, packages, dir, false, unpinned), /integrity-pinned archive/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the optional router seals only a declared starter from real archive bytes and installed candidates cannot disappear', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-router-template-lock-'));
+  try {
+    const version = '3.2.0';
+    for (const name of ['core','router']) archive(dir, name, {name:`@getforma/${name}`,version,...(name==='router'?{peerDependencies:{'@getforma/core':'^3.2.0'}}:{})});
+    const packages = ['core','router'].map(name => ({registry:'npm',name:`@getforma/${name}`,version,file:`${name}.tgz`}));
+    const seed = names => {
+      const manifest = {dependencies:Object.fromEntries(names.map(name=>[`@getforma/${name}`,'='+version]))};
+      return {manifest,lock:{lockfileVersion:3,packages:{'':manifest,...Object.fromEntries(names.map(name=>[`node_modules/@getforma/${name}`,{version}]))}}};
+    };
+    for (const names of [['core'],['core','router']]) {
+      const original = seed(names);
+      const sealed = stageNpmLock(original.manifest,original.lock,packages,dir);
+      const router = sealed.lock.packages['node_modules/@getforma/router'];
+      assert.equal(Boolean(router), names.includes('router'));
+      if (router) {
+        assert.equal(router.integrity, 'sha512-'+digest(join(dir,'router.tgz'),'sha512','base64'));
+        assert.deepEqual(router.peerDependencies, {'@getforma/core':'^3.2.0'});
+      }
+      const local = stageNpmLock(sealed.manifest,sealed.lock,packages,dir,true);
+      const admin = join(dir,'installed-'+names.join('-')); mkdirSync(admin); save(join(admin,'package.json'),local.manifest);
+      for (const name of names) { const path=join(admin,'node_modules/@getforma',name); mkdirSync(path,{recursive:true}); save(join(path,'package.json'),{name:`@getforma/${name}`,version}); }
+      assert.deepEqual(assertInstalledTemplateCandidates(admin,packages),names.map(name=>`@getforma/${name}`));
+      if (names.includes('router')) {
+        const path=join(admin,'node_modules/@getforma/router/package.json');
+        save(path,{name:'@getforma/router',version:'3.1.0'});
+        assert.throws(()=>assertInstalledTemplateCandidates(admin,packages),/candidate version/);
+        rmSync(path); assert.throws(()=>assertInstalledTemplateCandidates(admin,packages),/was not installed/);
+        const corrupt=structuredClone(sealed);delete corrupt.lock.packages['node_modules/@getforma/router'].integrity;
+        assert.throws(()=>stageNpmLock(corrupt.manifest,corrupt.lock,packages,dir,true),/integrity/);
+      }
+    }
+  } finally {rmSync(dir,{recursive:true,force:true});}
 });

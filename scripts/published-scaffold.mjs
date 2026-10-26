@@ -2,6 +2,7 @@
 // The optional registry lane tests the exact coordinated published release. The
 // required candidate lane is independent of its publication/readiness result.
 import assert from 'node:assert/strict';
+import { templatesForPackages } from './template-lock-seeds.mjs';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -114,7 +115,7 @@ export async function preparePublished(work, request = fetch, version = sourceVe
   run('npm',['audit','signatures'],work,{stdio:'inherit'});
   const cli=join(work,location);
   assert(!existsSync(join(cli,'template-lock-seeds.json')),'published CLI must not carry source seed identity');
-  for(const template of ['minimal','dashboard']) {
+  for (const template of templatesForPackages(status.packages)) {
     const project=join(cli,'templates',template), npm=json(join(project,'admin/package-lock.json'));
     for(const [path,entry] of Object.entries(npm.packages)) {
       const name=/(?:^|\/)node_modules\/(@getforma\/[^/]+)$/.exec(path)?.[1];if(!name)continue;
@@ -129,7 +130,7 @@ export async function preparePublished(work, request = fetch, version = sourceVe
     }
   }
   save(join(work,'published-record.json'),status);
-  return {mode:'published',commit:run('git',['rev-parse','HEAD']).trim(),recordSha256:digest(join(work,'published-record.json')),staticHtml:publishedStaticHtml(status.version),work,cli:join(cli,'dist/index.js'),target:join(work,'target')};
+  return {mode:'published',templates:templatesForPackages(status.packages),commit:run('git',['rev-parse','HEAD']).trim(),recordSha256:digest(join(work,'published-record.json')),staticHtml:publishedStaticHtml(status.version),work,cli:join(cli,'dist/index.js'),target:join(work,'target')};
 }
 
 async function main() {

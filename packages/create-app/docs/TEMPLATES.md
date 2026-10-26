@@ -1,30 +1,30 @@
 # Maintaining source templates
 
-Both templates use the current typed Pages API. Minimal declares a numeric
+All three templates use the current typed Pages API. Minimal declares a numeric
 count in TypeScript and Rust, binds its home and empty-props About handles,
 and finalizes before listening. Only Counter is registered for activation;
 About has no islands and its native build publishes no JavaScript.
-Dashboard explicitly remains browser-rendered. Preserve the PageResponse
+Dashboard explicitly remains browser-rendered. Native-router opts into typed native navigation with a persistent shell and two route owners. Preserve the PageResponse
 boundary, strict compiler diagnostics, worker-off default, consumer MSRV and
-scripts-off npm policy when changing either template.
+scripts-off npm policy when changing a template.
 
 ## Source lock seeds and sealed packages
 
-`template-lock-seeds.json` identifies exactly `minimal` and `dashboard` at the
+`template-lock-seeds.json` identifies exactly `minimal`, `dashboard` and `native-router` at the
 coordinated source version. Their source locks retain all external registry
 checksums. Only the known Forma runtime package entries omit checksums: a
 commit cannot include the checksum of the archive containing that commit.
 The marker is outside the distributed `templates/` tree and is never packed.
 
 Use `scripts/release-set.mjs version <version>` from the repository root to
-prepare development, alpha, beta or stable versions. It validates both seeds
+prepare development, alpha, beta or stable versions. It validates all three seeds
 before producing changes, keeps exact internal requirements coordinated and
 preserves external records. Do not delete locks or resolve a fresh graph to
 make an unpublished candidate install.
 
-The release packer creates all six runtime archives, reads their actual
-metadata and hashes, and seals both template locks before packing create-app.
-It never substitutes Rust source. All ten source files restore on success or
+The release packer creates all seven runtime archives, reads their actual
+metadata and hashes, and seals all three template locks before packing create-app.
+It never substitutes Rust source. All fifteen source files restore on success or
 failure. Packed/installed lock validation remains strict: missing hashes,
 mixed versions and mismatched internal metadata refuse before installation.
 External runtime additions, when needed, come from the reviewed workspace
@@ -33,7 +33,7 @@ requirements use `^X.Y.Z`; prereleases keep `=X.Y.Z-beta.N` (or alpha/rc).
 Source seeds remain exact in every version. These manifest ranges do not
 relax the shipped locks' exact candidate versions and archive hashes.
 
-The candidate scaffold gate consumes the actual seven-archive set. A direct
+The candidate scaffold gate consumes the actual eight-archive set. A direct
 copy of a source seed is not an installable unpublished candidate. Published
 consumer projects receive sealed locks and use `npm ci` / `cargo --locked`.
 
@@ -95,3 +95,25 @@ Packed acceptance checks the integrated strict adopter, actual handler
 navigation with no script/worker requests. These controls shipped with the
 qualified 3.0.0 set and must pass again for a new candidate. Preserve the earlier
 raw-HTTP-only reports as historical evidence; they do not prove these claims.
+
+## Optional native router starter
+
+`native-router` alone declares `@getforma/router` and enables the `forma-server`
+`navigation` feature. Its exact source seeds omit only internal archive checksums;
+sealing reads the real candidate router archive and preserves the Rust feature.
+Minimal and dashboard retain their existing dependency graphs. The native starter
+serves ordinary HTML without JavaScript and enhances same-group links through typed
+owner responses; the shell island persists while the leaf owner changes.
+
+Candidate qualification requires its locked install/build, consumer MSRV, unlocked
+update compatibility and fresh-nonce/no-store checks alongside the original cases.
+The actual release server is exercised in Chromium, Firefox and WebKit for native
+navigation, retained shell state, Back/Forward and no-JavaScript links. Linux N8
+requires a third measured row at the unchanged 3 MB / 100 ms limits. Historical
+seven-package 3.0/3.1 records still select only their two shipped templates and
+nineteen heavy cases; current router candidates require all three and twenty-four.
+
+Verified by: `scripts/template-lock-seeds.test.mjs`,
+`scripts/release-template-lock.test.mjs`, `scripts/candidate-scaffold.test.mjs`,
+`scripts/n8-size-start.test.mjs` and the native-router case in
+`tests/scaffold.test.ts`.

@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { ROOT, digest, run, stageCargoLock, stageNpmLock, withStagedTemplates, versionFiles } from './release-set.mjs';
-import { SEED_MARKER, readTemplateSeeds } from './template-lock-seeds.mjs';
+import { SEED_MARKER, SEED_TEMPLATES, readTemplateSeeds } from './template-lock-seeds.mjs';
 
 const SOURCE_VERSION = JSON.parse(readFileSync(join(ROOT, 'packages/create-app/package.json'))).version;
 function fixture(version = SOURCE_VERSION) {
@@ -21,7 +21,7 @@ function fixture(version = SOURCE_VERSION) {
     for(const [file,text] of files){const path=join(root,'packages/create-app/templates',template,file);write(path,text);before.set(path,readFileSync(path));}
   }
   const packages=[];
-  for(const name of ['core','compiler','build']) {
+  for(const name of ['core','compiler','build','router']) {
     const dir=join(root,'npm',name);write(join(dir,'package/package.json'),prepared.get(`packages/${name}/package.json`));
     const file=`${name}.tgz`;run('tar',['-czf',join(root,file),'-C',dir,'package']);
     packages.push({registry:'npm',name:`@getforma/${name}`,version,file,sha256:digest(join(root,file))});
@@ -30,7 +30,7 @@ function fixture(version = SOURCE_VERSION) {
     const packageDir=`${name}-${version}`, dir=join(root,'crates');
     const dependency=name==='forma-ir'?`forma-ir-derive = "=${version}"\n`:name==='forma-server'?`forma-ir = "=${version}"\n`:'';
     // Only dependency metadata and checksums are under test here. The release
-    // acceptance separately compiles both templates against real packed crates.
+    // acceptance separately compiles every template against real packed crates.
     write(join(dir,packageDir,'Cargo.toml'),`[package]\nname = "${name}"\nversion = "${version}"\nedition = "2021"\n[dependencies]\n${dependency}`);
     write(join(dir,packageDir,'src/lib.rs'),'');
     const file=`${packageDir}.crate`;run('tar',['-czf',join(root,file),'-C',dir,packageDir]);
@@ -45,7 +45,7 @@ for (const version of [SOURCE_VERSION, '3.0.0-beta.1', '3.0.0']) test(`${version
     let visited=false;
     withStagedTemplates(root,packages,root,()=>{
       visited=true;
-      for(const template of ['minimal','dashboard']) {
+      for(const template of SEED_TEMPLATES) {
         const dir=join(root,'packages/create-app/templates',template), source=join(dir,'src/main.rs');
         const main=readFileSync(source,'utf8');
         assert.deepEqual(readFileSync(source),before.get(source));
@@ -58,8 +58,13 @@ for (const version of [SOURCE_VERSION, '3.0.0-beta.1', '3.0.0']) test(`${version
         assert.equal(lock.packages['node_modules/@getforma/core'].version, version);
         const cargoManifest=readFileSync(join(dir,'Cargo.toml'),'utf8');
         const directForma = [...cargoManifest.matchAll(/^(forma-[\w-]+) = "([^"]+)"$/gm)];
-        assert.deepEqual(directForma.map(match => match[1]), template === 'minimal' ? ['forma-ir', 'forma-server'] : ['forma-server']);
+        assert.deepEqual(directForma.map(match => match[1]), template === 'minimal' ? ['forma-ir', 'forma-server'] : template === 'native-router' ? ['forma-ir'] : ['forma-server']);
         for (const [line, name, requirement] of directForma) assert.equal(requirement, expected, `${template}: ${name}`);
+        if (template === 'native-router') {
+          assert(cargoManifest.includes(`forma-server = { version = "${expected}", features = ["navigation"] }`));
+          assert.equal(manifest.dependencies['@getforma/router'], expected);
+          assert.equal(lock.packages['node_modules/@getforma/router'].version, version);
+        }
         stageNpmLock(manifest,lock,packages,root,true); // Existing strict shipped-lock validator.
         const cargo=readFileSync(join(dir,'Cargo.lock'),'utf8');
         stageCargoLock(cargo,packages,true);
@@ -70,12 +75,12 @@ for (const version of [SOURCE_VERSION, '3.0.0-beta.1', '3.0.0']) test(`${version
       }
     });
     assert(visited);
-    assert.equal(before.size,10);
+    assert.equal(before.size,15);
     for(const [path,bytes]of before)assert.deepEqual(readFileSync(path),bytes,path);
   }finally{rmSync(root,{recursive:true,force:true});}
 });
 
-test('all ten source, manifest and lock files restore after a packaging callback fails',()=>{
+test('all fifteen source, manifest and lock files restore after a packaging callback fails',()=>{
   const {root,before,packages}=fixture();
   try{
     assert.throws(()=>withStagedTemplates(root,packages,root,()=>{

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
 import { commandInvocation } from './portable-command.mjs';
-import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
+import { SEED_MARKER, SEED_TEMPLATES, templatesForPackages, replaceTemplateCargoRequirements, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
 import { SOAK_GATE, validateSoakGate } from './release-soak-deferral.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -197,6 +197,22 @@ export function assertNpmTemplateLock(manifest, lock, packages, artifactDir) {
     for (const kind of packedMetadata) assert.deepEqual(entry[kind], packed[kind], `${name}: shipped template lock ${kind}`);
   }
 }
+// Declared optional router dependencies are mandatory in their selected starter.
+// Checking only packages that happened to install could conceal a missing candidate.
+export function assertInstalledTemplateCandidates(admin, packages) {
+  const manifest = json(join(admin, 'package.json'));
+  const names = [...new Set(dependencyKinds.flatMap(kind => Object.keys(manifest[kind] ?? {}).filter(name => name.startsWith('@getforma/'))))];
+  for (const name of names) {
+    const candidate = packages.find(p => p.registry === 'npm' && p.name === name);
+    assert(candidate, `installed template has no release candidate for ${name}`);
+    const path = join(admin, 'node_modules', name, 'package.json');
+    assert(existsSync(path), `declared template candidate was not installed: ${name}`);
+    const installed = json(path);
+    assert.equal(installed.name, name, `${name}: installed template candidate identity`);
+    assert.equal(installed.version, candidate.version, `${name}: installed template candidate version`);
+  }
+  return names;
+}
 export function assertCargoCandidateLock(text, packages, rootName) {
   for (const block of text.split(/(?=\[\[package\]\])/)) {
     const name = /^name = "([^"]+)"/m.exec(block)?.[1];
@@ -347,24 +363,29 @@ export function withStagedTemplates(root, packages, out, callback) {
 export function stageTemplates(root, packages, out) {
   const originals = new Map();
   const stagedFiles = new Map();
+  const templates = templatesForPackages(packages);
   if (existsSync(join(root, 'packages/create-app/package.json'))) assert(existsSync(join(root, SEED_MARKER)), 'source templates require their explicit lock-seed identity');
   if (existsSync(join(root, SEED_MARKER))) {
     const expected = json(join(root, 'packages/create-app/package.json')).version;
-    const known = [...CRATES, ...NPM.slice(0,3).map(name => `@getforma/${name}`)].sort();
-    assert.deepEqual(packages.map(p => p.name).sort(), known, 'source seeds require all six runtime candidates');
+    const seeds = readTemplateSeeds(root, expected); // Validate every seed before writes or archive inspection.
+    const runtime = new Set([...seeds.values()].flatMap(files => {
+      const manifest = JSON.parse(files.get('admin/package.json'));
+      return dependencyKinds.flatMap(kind => Object.keys(manifest[kind] ?? {}).filter(name => name.startsWith('@getforma/')));
+    }));
+    const known = [...CRATES, ...runtime].sort();
+    assert.deepEqual(packages.map(p => p.name).sort(), known, 'source seeds require every declared runtime candidate');
     for (const p of packages) {
       assert.equal(p.version, expected, `${p.name}: mixed source seed/candidate version`);
       assert.equal(p.registry, CRATES.includes(p.name) ? 'crates' : 'npm', `${p.name}: unexpected candidate registry`);
     }
-    readTemplateSeeds(root, expected); // Validate both templates before writes or archive inspection.
     assert(existsSync(join(root, 'Cargo.lock')), 'source seeds require the committed candidate Cargo graph');
   } else {
     // Low-level historical fixtures may be already sealed. A recorded Cargo
     // graph must never turn an unidentified missing hash into a source seed.
-    for (const template of ['minimal', 'dashboard']) {
+    for (const template of templates) {
       const dir = join(root, 'packages/create-app/templates', template);
       for (const [path, entry] of Object.entries(json(join(dir, 'admin/package-lock.json')).packages)) {
-        if (/^node_modules\/@getforma\/(core|compiler|build)$/.test(path)) assert(/^sha512-[A-Za-z0-9+/]{86}==$/.test(entry.integrity ?? ''), 'unidentified template: missing checksum for internal npm package');
+        if (/^node_modules\/@getforma\/(core|compiler|build|router)$/.test(path)) assert(/^sha512-[A-Za-z0-9+/]{86}==$/.test(entry.integrity ?? ''), 'unidentified template: missing checksum for internal npm package');
       }
       for (const block of readFileSync(join(dir, 'Cargo.lock'), 'utf8').split(/(?=^\[\[package\]\])/m)) {
         if (/^name = "forma-(ir|ir-derive|server)"\r?$/m.test(block)) assert(/^checksum = "[a-f0-9]{64}"\r?$/m.test(block), 'unidentified template: missing checksum for internal crate');
@@ -372,9 +393,9 @@ export function stageTemplates(root, packages, out) {
     }
   }
   const cargoGraph = existsSync(join(root, 'Cargo.lock')) ? packedCargoGraph(root, packages, out) : undefined;
-  // Compute every replacement before touching the tree, so a malformed second template
-  // cannot leave the first template staged when packing fails.
-  for (const template of ['minimal', 'dashboard']) {
+  // Compute every replacement before touching the tree, so a malformed template
+  // cannot leave another template staged when packing fails.
+  for (const template of templates) {
     const dir = join(root, 'packages/create-app/templates', template);
     for (const name of ['admin/package.json', 'admin/package-lock.json', 'Cargo.toml', 'Cargo.lock']) originals.set(join(dir, name), readFileSync(join(dir, name)));
     const source = join(dir, 'src/main.rs');
@@ -382,11 +403,10 @@ export function stageTemplates(root, packages, out) {
     const staged = stageNpmLock(json(join(dir, 'admin/package.json')), json(join(dir, 'admin/package-lock.json')), packages, out, false, existsSync(join(root, 'package-lock.json')) ? json(join(root, 'package-lock.json')) : undefined);
     stagedFiles.set(join(dir, 'admin/package.json'), JSON.stringify(staged.manifest, null, 2) + '\n');
     stagedFiles.set(join(dir, 'admin/package-lock.json'), JSON.stringify(staged.lock, null, 2) + '\n');
-    const cargo = readFileSync(join(dir, 'Cargo.toml'), 'utf8').replace(/^(forma-(?:ir|ir-derive|server) = ")[^"]+"/gm, (line, prefix) => {
-      const name = prefix.split(' ')[0];
+    const cargo = replaceTemplateCargoRequirements(readFileSync(join(dir, 'Cargo.toml'), 'utf8'), name => {
       const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
       assert(candidate, `template has no release candidate for ${name}`);
-      return `${prefix}${templateRequirement(candidate.version)}"`;
+      return templateRequirement(candidate.version);
     });
     stagedFiles.set(join(dir, 'Cargo.toml'), cargo);
     stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages, false, undefined, cargoGraph));
@@ -442,7 +462,7 @@ export function pack(out, dryRun = false) {
   withStagedTemplates(ROOT, preliminary, out, () => run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages/create-app')));
   const cli = packages.find(p => p.name === '@getforma/create-app');
   const packedPaths = run('tar', ['-tzf', join(out, `getforma-create-app-${cli.version}.tgz`)]);
-  for (const template of ['minimal', 'dashboard']) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
+  for (const template of SEED_TEMPLATES) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
   const recorded = recordPackages(packages, out);
   save(join(out, 'release-set.json'), {
     schema: 1, packageSet: ROUTER_PACKAGE_SET, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
