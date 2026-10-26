@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- FORMA-301: Build explicit native navigation groups into one integrity-checked executable bootstrap with separate owner FMIR, immutable initialization metadata, shared-island provenance checks, outlet capabilities and unchanged default/static behavior. Preserve existing identity, atomic publication, retention and size gates; refuse unsupported watch/split groups and unbounded imports.
+
 - FORMA-294: add `clientTemplates: true` for explicitly selected builds with a
   supporting compiler/core set. Off by default; split, ordinary and watch builds
   keep the same choice and all route size gates. Refuse unsupported compiler

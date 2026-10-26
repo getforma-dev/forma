@@ -903,3 +903,13 @@ minimum does not replace the compiler's current peer dependency requirement.
 **Build result.** Error: publication is refused.
 
 [Lifecycle tests](../../build/tests/build.test.ts).
+
+### BUILD-827 — Navigation group is not a closed native product
+
+**Why.** The navigation group has ambiguous owners, incompatible assets, unsupported output mode, conflicting island declarations, or executable imports outside its verified bootstrap.
+
+**Fix.** Use distinct native owner entries, one initialization module, identical route CSS/fonts, literal bundled imports and a production build without watch or code splitting.
+
+**Build result.** Error: publication is refused.
+
+[Navigation group tests](../../build/tests/navigation-groups.test.ts).

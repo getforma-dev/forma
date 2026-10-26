@@ -13,6 +13,8 @@ export type { BuildTimes, ByteSizes, FileSize, FrameSize, RouteCeilings, RouteCl
 
 export type {
   BuildConfig,
+  NavigationGroup,
+  NavigationBootstrap,
   BuildEntry,
   BuildResult,
   CssEntry,

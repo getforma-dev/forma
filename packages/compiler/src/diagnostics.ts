@@ -327,6 +327,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
     "outputDir itself (not a directory above it) is a symbolic link, or a junction on Windows, to a directory or to nothing. The build replaces outputDir whole: a production build renames a real staging directory over it and watch mode empties it first, so either would turn the link into a directory and leave the previous build in the link's old target, where whatever serves the link keeps reading it. The build refuses before it writes or deletes anything, and names the link and where it points.",
     "Set outputDir to the directory the link points at, or build into a real directory and copy it where the link points. A symbolic link above outputDir (a symlinked parent directory) is followed and is not this error. Remove a link that points at nothing."),
 
+  entry('BUILD-827', 'Navigation group is not a closed native product',
+    'The navigation group has ambiguous owners, incompatible assets, unsupported output mode, conflicting island declarations, or executable imports outside its verified bootstrap.',
+    'Use distinct native owner entries, one initialization module, identical route CSS/fonts, literal bundled imports and a production build without watch or code splitting.'),
+
   // ── 9xx: the compiler's own deprecated entry points ──────────────────────
 ]);
 

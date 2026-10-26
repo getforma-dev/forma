@@ -117,6 +117,13 @@ function route(name: string, routeClass: RouteClass, { forma = 0, application = 
 }
 
 describe('the size report per route (FORMA-021, FORMA-190)', () => {
+  it('holds optional router code to the same Forma ceiling as core', async () => {
+    const {root,config}=fixture();
+    standIn(root, '@getforma/router', padding(50_000, 7));
+    writeFileSync(join(root,'src/home.ts'), 'import {PAD} from "@getforma/router"; globalThis.routerCode=PAD;');
+    await expect(build(config)).rejects.toThrow(/BUILD-819.*Forma code/);
+  });
+
   it('reports each route\'s Forma code beside its own, in gzip -9 and Brotli, from the bundler\'s metafile', async () => {
     const { dist, config } = fixture();
     const lines: string[] = [];
@@ -400,6 +407,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
       writeFileSync(join(root, dir, 'package.json'), JSON.stringify({ name }));
     };
     pkg('node_modules/@getforma/core', '@getforma/core');
+    pkg('node_modules/@getforma/router', '@getforma/router');
     pkg('node_modules/@getforma/core/dist', '@getforma/core'); // a nested manifest keeps the name
     pkg('node_modules/alien-signals', 'alien-signals');
     pkg('node_modules/other', 'other');
@@ -411,6 +419,7 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
     expect(isFormaInput(join(root, 'node_modules/@getforma/core/dist/chunk-ABC.js'), cache)).toBe(true);
     expect(isFormaInput(join(root, 'node_modules/@getforma/core/index.js'), cache)).toBe(true);
     expect(isFormaInput(join(root, 'node_modules/alien-signals/esm/index.mjs'), cache)).toBe(true);
+    expect(isFormaInput(join(root, 'node_modules/@getforma/router/dist/index.js'), cache)).toBe(true);
     expect(isFormaInput(join(root, 'vendor/forma/packages/core/dist/index.js'), cache)).toBe(true);
     expect(isFormaInput(join(root, 'node_modules/other/index.js'), cache)).toBe(false);
     expect(isFormaInput(join(root, 'src/app.ts'), cache)).toBe(false);

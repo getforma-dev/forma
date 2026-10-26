@@ -52,7 +52,8 @@ export function generateManifest(
     if (serverRendered && (!product || product.mode !== 'ssr')) {
       throw new Error(`BUILD-817 route ${route} has no accepted native product for its configured SSR owner`);
     }
-    const staticRoute = serverRendered && product?.browserRequired === false;
+    const navigationGroup = config.navigationGroups?.find(group => group.owners.includes(mapping.js[0]));
+    const staticRoute = serverRendered && product?.browserRequired === false && !navigationGroup;
     if (staticRoute && (mapping.js.length !== 1 || config.serverInlined?.includes(entry!.outfile))) {
       throw new Error(`BUILD-611 static route ${route} cannot request extra scripts or an executable server-inlined owner`);
     }
@@ -92,6 +93,9 @@ export function generateManifest(
 
     const routeEntry: RouteManifest = {
       mode: serverRendered ? 'ssr' : 'browser',
+      ...(navigationGroup && product?.mode === 'ssr' ? { navigation: {
+        group: navigationGroup.id, owner: mapping.js[0], outlet: product.navigationOutlet ?? null,
+      } } : {}),
       js: jsFiles,
       ...(modulepreload.length ? { modulepreload } : {}),
       css: cssFiles,

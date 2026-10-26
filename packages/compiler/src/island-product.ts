@@ -35,7 +35,7 @@ export type EntrySourceEdit = SourceEdit;
  * Module initialization/capture identity stays in place; only the authenticated
  * compile-time mount and unreachable literal activation entries are omitted.
  */
-export function collectIslandEntryEdits(file:string,server:IslandRegistry,result:IrResult|null,sourceEntry=file,registrationOnly=false):readonly EntrySourceEdit[] {
+export function collectIslandEntryEdits(file:string,server:IslandRegistry,result:IrResult|null,sourceEntry=file,registrationOnly=false,allowEmptyRegistry=false):readonly EntrySourceEdit[] {
   const source=readSourceFile(file),browser=createIslandRegistry(file);
   const fail=(message:string):never=>{throw new PropsSchemaError(file,1,1,message);};
   const native=new Map(server.entries().map(entry=>[entry.island.name,entry.island]));
@@ -49,9 +49,9 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
       'the browser mount must select the same original native page declaration; otherwise use an activation-only browser entry');
   }
   const names=new Set<string>();traverse(ast,{Identifier(path){names.add(path.node.name);}});
-  // FORMA-301 feasibility product: export the already authenticated registry,
+  // FORMA-301 navigation product: export the already authenticated registry,
   // never execute a page entry merely to collect its islands. Ordinary entry
-  // policy remains unchanged when this internal opt-in is absent.
+  // policy remains unchanged when this explicit opt-in is absent.
   if(registrationOnly) {
     if(names.has('__formaNavigationRegistry'))refuseEntry(file,ast.program,
       'registration-only entry reserves __formaNavigationRegistry');
@@ -122,7 +122,9 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
         :{start:statement.node.start!,end:statement.node.end!,text:''});
     }
   }});
-  if(registrationOnly&&registrationCalls!==1)refuseEntry(file,ast.program,'registration-only entry requires a declared activateIslands registry');
+  if(registrationOnly&&registrationCalls===0&&allowEmptyRegistry&&native.size===0) {
+    edits.push({start:source.length,end:source.length,text:'\nexport const __formaNavigationRegistry = Object.freeze({});\n'});
+  } else if(registrationOnly&&registrationCalls!==1)refuseEntry(file,ast.program,'registration-only entry requires a declared activateIslands registry');
   if(replacements.size) {
     const offset=ast.program.interpreter?.end??0;
     edits.push({start:offset,end:offset,text:`\nimport {__islandRegistration as ${helper}} from "@getforma/core";\n`});

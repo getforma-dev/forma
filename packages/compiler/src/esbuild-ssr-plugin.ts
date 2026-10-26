@@ -60,6 +60,9 @@ export interface SsrPluginOptions {
   /** @internal FORMA-301 experiment: export the checked registry instead of
    * activating it. Not a supported application entry mode or release claim. */
   experimentalRegistrationOnly?: boolean;
+  /** Compile an independently rendered navigation owner. Exports its checked
+   * registration table and validates the optional empty child outlet. */
+  navigationOwner?: boolean;
   /** Private entry aliases supplied by the shared build graph for this same
    * physical client entry in explicit Browser mode. Dependencies remain shared. */
   browserEntryPoints?: readonly { path: string; entryPoint: string }[];
@@ -87,6 +90,7 @@ const PARSE_OPTS = {
 export interface IrResult {
   binary: Uint8Array;
   islands: ReturnType<IrEmitContext['getIslands']>;
+  navigationOutlet?: string | null;
 }
 
 /**
@@ -219,11 +223,11 @@ export function generateRealIr(entryPointPath: string): IrResult | null {
   return generateWithRegistry(entryPointPath);
 }
 
-function generateWithRegistry(entryPointPath: string, registry?: IslandRegistry): IrResult | null {
+function generateWithRegistry(entryPointPath: string, registry?: IslandRegistry, navigationOwner = false): IrResult | null {
   let failure: Error | undefined;
   const { result, diagnostics } = collectDiagnostics(() => {
     try {
-      return emitRealIr(entryPointPath, registry);
+      return emitRealIr(entryPointPath, registry, navigationOwner);
     } catch (err) {
       failure = err as Error;
       return null;
@@ -251,7 +255,7 @@ function generateWithRegistry(entryPointPath: string, registry?: IslandRegistry)
 }
 
 /** {@link generateRealIr}'s work; throws where the page cannot be emitted. */
-function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult | null {
+function emitRealIr(entryPointPath: string, registry?: IslandRegistry, navigationOwner = false): IrResult | null {
   entryPointPath=realpathSync(entryPointPath);
   const listProofs=createListProofs();
   // 1. Read the entry point file. A .tsx/.jsx entry has its JSX turned into
@@ -293,7 +297,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
 
   // ── Handle inline return from block-body mount() (Pattern 3) ──
   if (entryInfo.componentName === '__inline__' && entryInfo.inlineReturnNode) {
-    const ctx = new IrEmitContext();
+    const ctx = new IrEmitContext(navigationOwner);
     const signalRegistry = newSignalRegistry();
 
     const { resolveComponent, importOf, findBrowserOnly } = createComponentResolver([
@@ -399,7 +403,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
     const binary = ctx.toBinary();
     const islands = ctx.getIslands();
 
-    return { binary, islands };
+    return { binary, islands, ...(navigationOwner ? { navigationOutlet: ctx.navigationOutlet } : {}) };
   }
 
   // ── Original code continues for Pattern 1 & 2 (named component) ──
@@ -461,7 +465,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   // sub-component scopes are NOT gathered here — the walk pushes each one as
   // it inlines that component, which is what makes a scope the walk learns
   // to inline later work without a matching extractor being written for it.
-  const ctx = new IrEmitContext();
+  const ctx = new IrEmitContext(navigationOwner);
   const declaredProps = readPageProps(componentPath, exportedName);
   ctx.setPropsSchema(declaredProps.schema);
   listProofs.component(rootPath,componentInfo.fn);
@@ -536,6 +540,7 @@ function emitRealIr(entryPointPath: string, registry?: IslandRegistry): IrResult
   return {
     binary: ctx.toBinary(),
     islands: ctx.getIslands(),
+    ...(navigationOwner ? { navigationOutlet: ctx.navigationOutlet } : {}),
   };
 }
 
@@ -575,19 +580,19 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
         });
       }
 
-      let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,product:IrResult|null;
+      let snapshot:SourceSnapshot,bytes:Uint8Array|undefined,product:IrResult|null,registry:IslandRegistry|undefined;
       let diagnostics:Diagnostic[]=[],fatal:Error|undefined;
       build.onStart(()=>{
         compilation.begin();
         snapshot=new SourceSnapshot();bytes=undefined;fatal=undefined;product=null;
-        let registry:IslandRegistry|undefined,edits:readonly SourceEdit[]=[];
+        registry=undefined;let edits:readonly SourceEdit[]=[];
         const collected=collectDiagnostics(()=>{
           try {
             withSourceSnapshot(snapshot,()=>{
               registry=entry?createIslandRegistry(entry):undefined;
-              product=entry?generateWithRegistry(entry,registry):null;
+              product=entry?generateWithRegistry(entry,registry,options.navigationOwner===true):null;
               bytes=product?.binary;
-              if(client&&registry)edits=collectIslandEntryEdits(client,registry,product,entry,options.experimentalRegistrationOnly===true);
+              if(client&&registry)edits=collectIslandEntryEdits(client,registry,product,entry,options.navigationOwner===true||options.experimentalRegistrationOnly===true,options.navigationOwner===true);
               if(product&&bytes)console.log(`   IR emitted (real): ${options.page}.ir (${bytes.length} bytes, ${product.islands.length} islands)`);
             });
           } catch(error) {
@@ -620,7 +625,10 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
         const output:OutputFile={path:resolve(options.outDir,`${options.page}.ir`),contents,hash:createHash('sha256').update(contents).digest('hex'),get text(){return Buffer.from(contents).toString('utf8');}};
         result.outputFiles.push(output);
         recordSsrEntryProduct(result,output,{page:options.page,sourceEntry:entry,browserEntry:client,
-          islands:product.islands.map(island=>({name:island.name,mode:island.contract!.mode}))});
+          ...(options.navigationOwner ? { navigationOutlet: product.navigationOutlet ?? null } : {}),
+          islands:product.islands.map(island=>({name:island.name,mode:island.contract!.mode,
+            ...(options.navigationOwner ? { declaration: registry!.entries().find(item=>item.island.name===island.name)!.island.identity,
+              contract: JSON.stringify(island.contract) } : {})}))});
       });
     },
   };

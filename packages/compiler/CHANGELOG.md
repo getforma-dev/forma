@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- FORMA-301: Add supported navigation-owner registry emission and compiler checks for one literal empty child outlet outside island scopes. Attach outlet and original declaration/contract provenance to accepted native products without changing ordinary products or FMIR.
+
 - FORMA-294: expose `formaClientPlugin` and `transformClientTemplates` for
   closed HTML subtrees in direct inline core `createList` render callbacks.
   Staged initializers preserve expression/effect order; original JSX supplies

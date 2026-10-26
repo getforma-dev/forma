@@ -41,6 +41,10 @@ function literalTooLong(message: string): Error {
 // ---------------------------------------------------------------------------
 
 export class IrEmitContext {
+  /** Navigation owners are separately compiled trees with one optional child slot. */
+  constructor(readonly navigationOwner = false) {}
+  navigationOutlet: string | null = null;
+
   /** String interning map: string -> index */
   private stringMap: Map<string, number> = new Map();
   /** Interned strings in order */

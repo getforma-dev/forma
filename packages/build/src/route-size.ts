@@ -6,7 +6,7 @@
  * `BuildResult.sizeReport`, and writes it beside the manifest as
  * `size-report.json`.
  *
- * N2 as restated by L-55 and raised by L-58, L-59, L-64 and the 3.1 decision: Forma's own browser code, `@getforma/core` and its
+ * N2 as restated by L-55 and raised by L-58, L-59, L-64 and the 3.1 decision: Forma's own browser code, `@getforma/core`, optional `@getforma/router`, and the
  * signal library `alien-signals` as the route's bundles carry them, is at most
  * 28,420 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
  * reported beside it; the application's own code is outside that ceiling. The
@@ -88,7 +88,7 @@ export const PAGE_JAVASCRIPT_CEILING_GZIP = 75 * 1024;
 export const CANVAS_JAVASCRIPT_CEILING_GZIP = 365 * 1024;
 
 /** The packages whose bundled bytes are Forma's code under N2. */
-export const FORMA_PACKAGES: ReadonlySet<string> = new Set(['@getforma/core', 'alien-signals']);
+export const FORMA_PACKAGES: ReadonlySet<string> = new Set(['@getforma/core', '@getforma/router', 'alien-signals']);
 
 /** The generated service worker, a file of every production build. */
 export const WORKER_FILE = 'sw.js';
@@ -136,7 +136,7 @@ export interface RouteSize extends ByteSizes {
   canvas: boolean;
   /** The files the route loads cold: its `js` and `modulepreload` lists. Empty for a route with no JavaScript. */
   files: RouteSizeFile[];
-  /** `@getforma/core` and `alien-signals` as bundled: N2's figure is `forma.gzip`. */
+  /** `@getforma/core`, `@getforma/router`, and `alien-signals` as bundled: N2's figure is `forma.gzip`. */
   forma: ByteSizes;
   /** Everything else in the route's files: the application's own code and its other dependencies. */
   application: ByteSizes;
@@ -221,7 +221,7 @@ export function packageNameOf(file: string, cache: Map<string, string | undefine
 }
 
 /**
- * Whether a metafile input is Forma's code: a file inside `@getforma/core` or
+ * Whether a metafile input is Forma's code: a file inside `@getforma/core`, `@getforma/router` or
  * `alien-signals`, however the bundle reached it (`formaAlias`, a workspace
  * link, a nested `node_modules`). The compatibility guard's virtual inputs are
  * nobody's bytes.
@@ -436,7 +436,7 @@ export function formatSizeReport(report: SizeReport): string[] {
   const classWidth = Math.max(1, ...routes.map((size) => classOf(size).length));
   const label = (name: string): string => `   ${name.padEnd(14)}   `;
   const lines = [
-    '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;',
+    '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;',
     `   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
   ];
   for (const size of routes) {

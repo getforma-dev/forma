@@ -47,7 +47,27 @@ export interface RouteMapping {
   canvas?: boolean;
 }
 
+/** Generated immutable initialization input; import createRouter/createNativeAdapter
+ * in the group's default-exported client callback. */
+export interface NavigationBootstrap {
+  readonly registrations: Readonly<Record<string, (element: HTMLElement, props: Record<string, unknown> | null) => unknown>>;
+  readonly app: string;
+  readonly build: string;
+  readonly group: string;
+  readonly owners: readonly string[];
+}
+export interface NavigationGroup {
+  readonly id: string;
+  /** Native entry outfile bases, each independently bound as a PageHandle. */
+  readonly owners: readonly string[];
+  /** Module default-exporting a callback accepting NavigationBootstrap. */
+  readonly client: string;
+}
+
 export interface BuildConfig {
+  /** Opt in to one closed executable bundle per native navigation group.
+   * Production SSR only; ordinary routes retain their existing no-JS behavior. */
+  navigationGroups?: readonly NavigationGroup[];
   /** JavaScript entry points to build */
   entryPoints: BuildEntry[];
   /** Route-to-asset mapping for manifest generation */
@@ -158,6 +178,8 @@ export interface BuildConfig {
 // ---------------------------------------------------------------------------
 
 export interface RouteManifest {
+  /** Compiler-checked owner capability; absent for ordinary routes. */
+  navigation?: { group: string; owner: string; outlet: string | null };
   mode: 'ssr' | 'browser';
   js: string[];
   /** Static ESM dependencies only; dynamic import() chunks are intentionally excluded. */
@@ -239,7 +261,7 @@ export interface BuildResult {
   /**
    * The size report's routes (FORMA-021, FORMA-190): per route, its class, what
    * it loads cold in raw, gzip -9 and Brotli bytes, Forma's code
-   * (`@getforma/core` and `alien-signals` as bundled) beside the application's,
+   * (`@getforma/core`, `@getforma/router` and `alien-signals` as bundled) beside the application's,
    * the service worker it registers, and its ceilings. A production build fails
    * with `BUILD-819` before writing its output when a route is over one:
    * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (28,420 B under the 3.1

@@ -682,6 +682,8 @@ export interface WalkContext {
   visited?: Set<string>;
   /** Active registered declarations, independent of local/import spellings. */
   islandStack?: ReadonlySet<string>;
+  /** An outlet must exist once independently of request-data control flow. */
+  navigationDynamic?: boolean;
   /** Registered activation owner, preserved through ordinary helpers. */
   islandOwner?: { identity: string; name: string };
   /** Nearest select's native value belongs to this activation owner. */
@@ -1046,6 +1048,22 @@ export function walkHTree(
   const dynAttrs: Array<{ keyIdx: number; slotId: number }> = [];
 
   const propsArg = args.length > 1 ? args[1] : undefined;
+  if (ctx.navigationOwner && t.isObjectExpression(propsArg)) {
+    for (const prop of propsArg.properties) {
+      if (!t.isObjectProperty(prop) || prop.computed) continue;
+      const key = t.isStringLiteral(prop.key) ? prop.key.value : t.isIdentifier(prop.key) ? prop.key.name : '';
+      if (key !== 'data-forma-outlet') continue;
+      const file = walkCtx.sourceFile ?? '';
+      const at = originalPosition(file, prop.loc?.start ?? { line: 1, column: 0 });
+      if (tag !== 'div' || args.length !== 2 || !t.isStringLiteral(prop.value)
+        || !/^[A-Za-z][A-Za-z0-9_-]{0,127}$/.test(prop.value.value)
+        || walkCtx.islandOwner || walkCtx.navigationDynamic || walkCtx.listItemBindings || ctx.navigationOutlet !== null) {
+        throw new PropsSchemaError(file, at.line, at.column,
+          'navigation owner requires at most one empty div with a literal data-forma-outlet identifier outside every island; duplicate, nested, dynamic, or island-owned outlets are forbidden');
+      }
+      ctx.navigationOutlet = prop.value.value;
+    }
+  }
   const hasProps = propsArg !== undefined
     && !t.isNullLiteral(propsArg)
     && !isUndefinedIdentifier(propsArg);
@@ -2138,7 +2156,7 @@ function emitTernaryShowIf(
   // Emit then-branch
   const thenStart = ctx.opcodeLen();
   const htmlChoice=Symbol('conditional');
-  emitBranchContent(cond.consequent, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)}, childIndex);
+  emitBranchContent(cond.consequent, hName, ctx, {...walkCtx,navigationDynamic:true,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)}, childIndex);
   const thenLen = ctx.opcodeLen() - thenStart;
 
   // SHOW_ELSE marker
@@ -2146,7 +2164,7 @@ function emitTernaryShowIf(
 
   // Emit else-branch
   const elseStart = ctx.opcodeLen();
-  emitBranchContent(cond.alternate, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)}, childIndex);
+  emitBranchContent(cond.alternate, hName, ctx, {...walkCtx,navigationDynamic:true,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)}, childIndex);
   const elseLen = ctx.opcodeLen() - elseStart;
 
   // Back-patch lengths
@@ -2186,7 +2204,7 @@ function emitCreateShow(
   if (node.arguments.length > 1) {
     const thenArg = node.arguments[1];
     if (thenArg && !t.isSpreadElement(thenArg)) {
-      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)});
+      emitCreateShowBranch(thenArg as t.Expression, hName, ctx, {...walkCtx,navigationDynamic:true,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,true)});
     }
   }
   const thenLen = ctx.opcodeLen() - thenStart;
@@ -2199,7 +2217,7 @@ function emitCreateShow(
   if (node.arguments.length > 2) {
     const elseArg = node.arguments[2];
     if (elseArg && !t.isSpreadElement(elseArg)) {
-      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, {...walkCtx,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)});
+      emitCreateShowBranch(elseArg as t.Expression, hName, ctx, {...walkCtx,navigationDynamic:true,htmlContext:htmlBranch(walkCtx.htmlContext,htmlChoice,false)});
     }
   }
   const elseLen = ctx.opcodeLen() - elseStart;

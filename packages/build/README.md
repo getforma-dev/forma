@@ -59,6 +59,63 @@ the helper and the fallback description; all size gates remain in force. Adopted
 lists use the original JSX description even for rows added after adoption, so
 this option currently accelerates client-created lists, not server-adopted lists.
 
+### Optional native navigation groups
+
+`navigationGroups` coordinates separately rendered native owners with the optional
+`@getforma/router` package. Each owner names an existing native entry outfile base;
+its route mapping remains the source of its typed Rust `PageHandle` and FMIR module.
+
+```ts
+await build({
+  app: "my-app",
+  ssr: true,
+  entryPoints: [
+    { entry: "src/shell.tsx", outfile: "shell.js" },
+    { entry: "src/catalog.tsx", outfile: "catalog.js" },
+    { entry: "src/detail.tsx", outfile: "detail.js" },
+  ],
+  routes: {
+    "/_owners/shell": { js: ["shell"], css: [] },
+    "/catalog": { js: ["catalog"], css: [] },
+    "/catalog/:id": { js: ["detail"], css: [] },
+  },
+  navigationGroups: [{
+    id: "shop", owners: ["shell", "catalog", "detail"], client: "src/navigation.ts",
+  }],
+  outputDir: "dist",
+});
+```
+
+The client module default-exports a callback receiving `NavigationBootstrap`:
+immutable `registrations`, `app`, `build`, `group`, and `owners`. It configures the
+public router and native adapter; see the [router contract](../router/README.md).
+The build rewrites each owner's literal `activateIslands` declaration into a
+checked registry, removing compile-time mounts and automatic activation. Static
+owners need no empty activation call. Entry modules accept declarations and
+standalone mount/activation calls; initialization belongs in the callback.
+
+An owner with children declares one empty `<div data-forma-outlet="child" />`.
+The outlet name is a literal ASCII identifier, 1–128 characters, beginning with a
+letter. Duplicate, nested, nonempty, dynamic, and island-owned outlets fail the
+build. Leaf owners omit the outlet. All owners remain independently compiled
+native modules; the server composes their typed render products and the router
+retains only owners whose server-issued identity and contracts still match.
+
+Each group emits one hashed script containing all registration code and executable
+dependencies. Literal `import()` dependencies are included in it; variable imports,
+external imports, browser-only islands, and conflicting registration names fail.
+The same original island declaration and matching contract may appear in multiple
+owners. Each group's routes must share CSS/font sets and request no extra scripts.
+Manifest route metadata records `navigation: { group, owner, outlet }`; script SRI,
+deployment identity, atomic output replacement, retention and existing size gates
+apply normally. Optional router bytes count as Forma code under the existing N2 ceiling. Every owner and the initialization module affect build identity.
+
+Groups currently require production SSR (`watch` and `codeSplitting` are refused).
+Navigation is explicit: an ungrouped static route still emits no JavaScript, and
+ordinary watch/split configurations retain their existing behavior. A grouped
+static owner intentionally receives the group bootstrap. No response can introduce
+an additional script into that group.
+
 ### Optional shared ESM graph
 
 Set `codeSplitting: true` to share one runtime across entries and preserve native
