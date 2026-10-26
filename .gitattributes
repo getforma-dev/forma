@@ -260,3 +260,8 @@ docs/release-evidence/forma-199/** -text
 
 # Historical release-policy fixture is authenticated byte-for-byte on every OS.
 scripts/fixtures/release-contracts-3.0.0.json -text
+
+# FORMA-301 frozen source/license snapshots and raw receipts retain their exact
+# original bytes, including upstream license whitespace and test-log endings.
+docs/design/router/research/** -text -whitespace
+docs/design/router/evidence/*.log -text -whitespace

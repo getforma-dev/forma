@@ -1,0 +1,14 @@
+{
+  "basename": "/",
+  "future": {
+    "unstable_customRouteDiscovery": false,
+    "unstable_enableNodeReadableStream": false,
+    "unstable_optimizeDeps": true
+  },
+  "routeDiscovery": {
+    "mode": "initial"
+  },
+  "ssr": true,
+  "isSpaMode": false,
+  "unstable_apiOnly": false
+}

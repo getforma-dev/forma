@@ -1,0 +1,2819 @@
+[
+  {
+    "run": "react-router-doc-chunks",
+    "evidence_id": "ev_2216001df0e3f74322608fb6bc6b68ba083dc16566857260a7b1485ed677d1d3",
+    "statistics": {
+      "relevant_files": 7,
+      "nested_asar_containers": 0,
+      "text_bytes_read": 16979,
+      "invalid_utf8_files": 0,
+      "parsed_javascript_files": 4,
+      "skipped_javascript_files": 0,
+      "visited_ast_nodes": 3425,
+      "findings": 80,
+      "modules": 0,
+      "parse_failures": 0
+    },
+    "graph_coverage": {
+      "status": "partial",
+      "truncated": false,
+      "omitted_count": null,
+      "limits": []
+    },
+    "selected_observations": [
+      {
+        "node_id": "jag_node_01c2d78c71b1b6743890ede8c3669e6648a1bd7a8b9cae8e2c1a7f799f109bf4",
+        "observation_id": "jag_observation_a9e699ade961246e11672f1ead9f287e59df38afe1f2ebedf78f388b8073ab5e",
+        "label": "utils-CTsB3O1x.js",
+        "properties": {
+          "semantic_role": "source-module",
+          "file_occurrence": {
+            "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+            "path": "utils-CTsB3O1x.js",
+            "sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425"
+          },
+          "source_sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425",
+          "path": "utils-CTsB3O1x.js",
+          "logical_module_key": "utils-CTsB3O1x.js",
+          "module_format": "esm",
+          "import_relationships": 4,
+          "type_relationships": 0,
+          "export_relationships": 3,
+          "export_names": [
+            "n",
+            "r",
+            "t"
+          ],
+          "type_export_names": [],
+          "omitted_export_names": 0
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425",
+            "sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 2048
+              },
+              "kind": "source-range",
+              "source": "utils-CTsB3O1x.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "recover-source-module",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "AST coverage is incomplete; omitted or dynamic facts must not be interpreted as absence.",
+            "Cross-function mutation and dynamic property resolution remain unknown.",
+            "Local call, argument, return, and closure relations are static candidates and do not prove runtime invocation.",
+            "Local returned-reference projections were conservatively widened; effects include additional source-local candidates.",
+            "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+            "Return sites include only direct callable returns; nested callable returns remain separate.",
+            "Values and aliases were recovered from inert syntax only; no JavaScript was executed."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_10fda5918805b6fc83a1b17c6228a9c1bc4c5cea45b738b0a4db0f684f66c6b2",
+        "observation_id": "jag_observation_1bc01c83899a43dfafe965b8d1f5e9362e9a9d13e4069a0d8bcadc5d52e71c1b",
+        "label": "e",
+        "properties": {
+          "endpoint_kind": "network",
+          "value": "e",
+          "mechanism": "call:fetch",
+          "resolution": "partial"
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 2223
+              },
+              "end": {
+                "line": 1,
+                "column": 2231
+              },
+              "kind": "source-range",
+              "source": "doc-CVbegNQE.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "discover-static-endpoint",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "AST coverage is incomplete; omitted or dynamic facts must not be interpreted as absence.",
+            "The request target is not an exact literal; the endpoint value retains the unresolved source expression."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_173e8b0e1759e21a14a57dc69a5a93d09ab0afd9cd632d29b2e771c5a9dbcd87",
+        "observation_id": "jag_observation_1519dbc4ea8ed380cab48b96faaf6ce93c79043e4f9a9dae2f0255740c62ee48",
+        "label": "./icons--1X-E2OM.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./icons--1X-E2OM.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 135
+              },
+              "end": {
+                "line": 1,
+                "column": 175
+              },
+              "kind": "source-range",
+              "source": "doc-CVbegNQE.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_2657d4b7ce5df04be7b524d4372a49365cc926036f8fefa17d4d9200eeab84b1",
+        "observation_id": "jag_observation_bdf8fb3bc1b85d6490f8fd7f7c0dc87685519f5558293812b943da5724722175",
+        "label": "/brand",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "/brand",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 1007
+              },
+              "end": {
+                "line": 1,
+                "column": 1022
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_34448e467c4333199fb2fd97a51dc3dcb853ef0e4e4017826ea43212405a2c55",
+        "observation_id": "jag_observation_80a51f11cd39d22c886df0596956b3ad8d49e331cc7598d7db062311b477e2ee",
+        "label": null,
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 201
+              },
+              "end": {
+                "line": 1,
+                "column": 210
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_34448e467c4333199fb2fd97a51dc3dcb853ef0e4e4017826ea43212405a2c55",
+        "observation_id": "jag_observation_e8056032e64ab5d483eaa5ccfdb69fd24bb4a6f11ccda0e3fa4224c990cdb14a",
+        "label": null,
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 1981
+              },
+              "end": {
+                "line": 1,
+                "column": 1990
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_5a2d1ecdffc1dc616c9c790f29b44b5ba4251f62a0be3aef11ed1bca628e4457",
+        "observation_id": "jag_observation_aa8be41c8c8a23ffb0ddb3e2c66549b8a89b07864718c90896dc192acfeca9d6",
+        "label": "/color-scheme",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "/color-scheme",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 1699
+              },
+              "end": {
+                "line": 1,
+                "column": 1721
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_6449ca3f7f30781bf9920ae919b29ace066cb03019027362f657eb38ea3b905c",
+        "observation_id": "jag_observation_d3430a0982725242d1b2b6bb3f1421c670eb26853396f83f3646d56bc95098c0",
+        "label": "*",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "*",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 4271
+              },
+              "end": {
+                "line": 1,
+                "column": 4281
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_67c0b333356e5ead88c6856869a664ffbe6651f5c39bf78a91e6dc419a29db15",
+        "observation_id": "jag_observation_c28868f8b884b1d209b3ab54d8f33e3ca7e6603fec3b57ccdfb19a7ac5fb6e9c",
+        "label": "./docsearch-Kqbc9BYb.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./docsearch-Kqbc9BYb.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+            "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 140
+              },
+              "end": {
+                "line": 1,
+                "column": 198
+              },
+              "kind": "source-range",
+              "source": "root-CmiqwOFp.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_7b0ecd02a21807f1452507361af7dbd7295312351b44bf07c23c6c20c991799b",
+        "observation_id": "jag_observation_ed34cba92fcd4bba04d409036d744b7db7626b8c8c0b4cda067526fb4bf3310a",
+        "label": "changelog.md",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "changelog.md",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 3362
+              },
+              "end": {
+                "line": 1,
+                "column": 3383
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_81a59228fafd4a6c9fa7e2f60871ca62606da071aba930ac9450324af1a4e85b",
+        "observation_id": "jag_observation_daf625c6038e9af89d94dee0c1fdc6a9e378557b86a5c2ede990d0dd42f2ef91",
+        "label": "./jsx-runtime-C-dPSQ1O.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./jsx-runtime-C-dPSQ1O.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425",
+            "sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 69
+              },
+              "kind": "source-range",
+              "source": "utils-CTsB3O1x.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_89d738564a81a5f2861bc74347c36a9c86dafd014cfe5675c04bcf5f2b84a901",
+        "observation_id": "jag_observation_1977af167a1dd7bb1a0d9b62a7a8caf320f6ab72edd0fa372a644cf61fd970e2",
+        "label": "home",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "home",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 2908
+              },
+              "end": {
+                "line": 1,
+                "column": 2921
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_8c651ad01bd9a5dd19125d96996b30b0cbf69a7c986658bd95b9141d6d98e486",
+        "observation_id": "jag_observation_e7b554f7e228c56f998304a8f93dcaba916561c319afc06a541db2fc62195c9e",
+        "label": "changelog",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "changelog",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 3818
+              },
+              "end": {
+                "line": 1,
+                "column": 3836
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_9f4f41fc03fed8a80c2ea98faf7c30a9d6b84044b9fd310de763eeed1ddb5ecf",
+        "observation_id": "jag_observation_3f2509ad8ba1fa80287ac611845916e04059b76a005a0d49af1bffd8655b7e4c",
+        "label": "./meta-gvL3GBOC.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./meta-gvL3GBOC.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 261
+              },
+              "end": {
+                "line": 1,
+                "column": 314
+              },
+              "kind": "source-range",
+              "source": "doc-CVbegNQE.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_a346fb7b15d512f4355f4bec1e35f8add46f96904abdc15fe0db49d1fe7d2722",
+        "observation_id": "jag_observation_60092375b9eaa0630c2839ef91a3634405ee4520b4c96585d0670382ec3a0ce1",
+        "label": "root-CmiqwOFp.js",
+        "properties": {
+          "semantic_role": "source-module",
+          "file_occurrence": {
+            "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+            "path": "root-CmiqwOFp.js",
+            "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254"
+          },
+          "source_sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+          "path": "root-CmiqwOFp.js",
+          "logical_module_key": "root-CmiqwOFp.js",
+          "module_format": "esm",
+          "import_relationships": 14,
+          "type_relationships": 0,
+          "export_relationships": 4,
+          "export_names": [
+            "ErrorBoundary",
+            "Layout",
+            "default",
+            "meta"
+          ],
+          "type_export_names": [],
+          "omitted_export_names": 0
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+            "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 1755
+              },
+              "kind": "source-range",
+              "source": "root-CmiqwOFp.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "recover-source-module",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Cross-function mutation and dynamic property resolution remain unknown.",
+            "Local call, argument, return, and closure relations are static candidates and do not prove runtime invocation.",
+            "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+            "Return sites include only direct callable returns; nested callable returns remain separate.",
+            "Values and aliases were recovered from inert syntax only; no JavaScript was executed."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_be4cda27095213c3c411e471b0980049e1422ba81ec648deadcdb1366620754d",
+        "observation_id": "jag_observation_c8b70e2bab497b5474986f2f80871a1b3d265600c557fb710828e5fbc0183430",
+        "label": "./clsx-Dm0G8HgT.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./clsx-Dm0G8HgT.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 175
+              },
+              "end": {
+                "line": 1,
+                "column": 214
+              },
+              "kind": "source-range",
+              "source": "doc-CVbegNQE.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_d17dbb5ed2102683dfed24f8be08c38d5be2a49d0af608e1fcbe71e48ced9bd5",
+        "observation_id": "jag_observation_ff43bdc70fbfe5d30866e2dd010aed129a7db3d4dcab85f26ffa95c115f64765",
+        "label": "manifest-b63cec8d.js",
+        "properties": {
+          "semantic_role": "source-module",
+          "file_occurrence": {
+            "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+            "path": "manifest-b63cec8d.js",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "source_sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+          "path": "manifest-b63cec8d.js",
+          "logical_module_key": "manifest-b63cec8d.js",
+          "module_format": "unknown",
+          "import_relationships": 0,
+          "type_relationships": 0,
+          "export_relationships": 0,
+          "export_names": [],
+          "type_export_names": [],
+          "omitted_export_names": 0
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 5647
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "recover-source-module",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Cross-function mutation and dynamic property resolution remain unknown.",
+            "Local call, argument, return, and closure relations are static candidates and do not prove runtime invocation.",
+            "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+            "Return sites include only direct callable returns; nested callable returns remain separate.",
+            "Values and aliases were recovered from inert syntax only; no JavaScript was executed."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_d9b5fc7d8521461e6628fd121da01776a851b20f21534ed5762dfa0f589f55c1",
+        "observation_id": "jag_observation_5b64e6954354fa59a219a13159674b50f632d4ad058ec556db292a5d94179f25",
+        "label": "./icons--1X-E2OM.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./icons--1X-E2OM.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+            "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 198
+              },
+              "end": {
+                "line": 1,
+                "column": 238
+              },
+              "kind": "source-range",
+              "source": "root-CmiqwOFp.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_d9edfce5a59290b037d0ab75267ec6f3d9f547b09a46fbcc187865ae9309b51c",
+        "observation_id": "jag_observation_6845c9e440b4eb636bfab791cda3b77d037cc52fb3a059c03cf624c21644ea22",
+        "label": "/:ref",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "/:ref",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 4728
+              },
+              "end": {
+                "line": 1,
+                "column": 4742
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_da6a7bb4156254c3203af36d74c2e0bbf4830a53dd222d36844a63b1d48132b3",
+        "observation_id": "jag_observation_67694a5c74954cf1a91e8a5727b03290bca32c2b0e4227f9e56c533649b85817",
+        "label": "./jsx-runtime-C-dPSQ1O.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./jsx-runtime-C-dPSQ1O.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 97
+              },
+              "kind": "source-range",
+              "source": "doc-CVbegNQE.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_e6da5fac839899ca9bd690d2a43d0fdd5284f84c4590da5e2779881062716c28",
+        "observation_id": "jag_observation_52570f59acf394087c06e60110dbacae358c536ee4674eba65f41a5074af8f18",
+        "label": "./jsx-runtime-C-dPSQ1O.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./jsx-runtime-C-dPSQ1O.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+            "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 95
+              },
+              "kind": "source-range",
+              "source": "root-CmiqwOFp.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_f083652c304a3c90032f21a29cc823075e95e0cd16758a351d089cb38c429180",
+        "observation_id": "jag_observation_252b70833ef0d97c599f2b4d55aa56e09cf625bb0f56f9e3ce1c57f6d187bb30",
+        "label": "doc-CVbegNQE.js",
+        "properties": {
+          "semantic_role": "source-module",
+          "file_occurrence": {
+            "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+            "path": "doc-CVbegNQE.js",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "source_sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+          "path": "doc-CVbegNQE.js",
+          "logical_module_key": "doc-CVbegNQE.js",
+          "module_format": "esm",
+          "import_relationships": 16,
+          "type_relationships": 0,
+          "export_relationships": 3,
+          "export_names": [
+            "ErrorBoundary",
+            "default",
+            "meta"
+          ],
+          "type_export_names": [],
+          "omitted_export_names": 0
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+            "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 7529
+              },
+              "kind": "source-range",
+              "source": "doc-CVbegNQE.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "recover-source-module",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "AST coverage is incomplete; omitted or dynamic facts must not be interpreted as absence.",
+            "Cross-function mutation and dynamic property resolution remain unknown.",
+            "Local call, argument, return, and closure relations are static candidates and do not prove runtime invocation.",
+            "Local returned-reference projections were conservatively widened; effects include additional source-local candidates.",
+            "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+            "Return sites include only direct callable returns; nested callable returns remain separate.",
+            "Values and aliases were recovered from inert syntax only; no JavaScript was executed."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_fdbe096eb80eccd4fcbda188f3331544b44f661b5358aadec44646d450f41495",
+        "observation_id": "jag_observation_d080958e374aae95448ec041b46ab3879eb048e5630d1c9f8eed711713d38867",
+        "label": "/healthcheck",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "/healthcheck",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 1368
+              },
+              "end": {
+                "line": 1,
+                "column": 1389
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_fe9df9a6b88e0536a227a729e8f1e21af5ba12c293f19325a64d8cbdd565d372",
+        "observation_id": "jag_observation_e6529e5ea1a6939abc1d086e4d93f940add7682d336dd8c3d63bff7f318573ef",
+        "label": "home.md",
+        "properties": {
+          "endpoint_kind": "route",
+          "value": "home.md",
+          "mechanism": "property:path",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+            "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 2467
+              },
+              "end": {
+                "line": 1,
+                "column": 2483
+              },
+              "kind": "source-range",
+              "source": "manifest-b63cec8d.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "complete",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "Only the property name suggests a route; the enclosing object has no router fields.",
+            "Static syntax does not prove that this relationship executes at runtime."
+          ],
+          "evidence_ids": []
+        }
+      }
+    ],
+    "route_inventory": {
+      "inventory_id": "jsri:d7e41c1b1c3957b02e4c5edaafd76020c5e1ca2d36739cc6ef37303458d209b6",
+      "source_manifest_sha256": "064e0172090f8c97afd992b49917dfa9a36184af48b35dd34914343d726cf214",
+      "sources": [
+        {
+          "id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "key": "doc-CVbegNQE.js",
+          "path": "doc-CVbegNQE.js",
+          "url": null,
+          "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "complete",
+          "reported_route_capacity": null,
+          "reason": null,
+          "base_path": null
+        },
+        {
+          "id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "key": "docs-layout-CTqBlNNw.js",
+          "path": "docs-layout-CTqBlNNw.js",
+          "url": null,
+          "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:6d283a35db94e61b58d8599100e9c8ea",
+          "key": "entry.client-BVIS7KF3.js",
+          "path": "entry.client-BVIS7KF3.js",
+          "url": null,
+          "sha256": "7b9df5a4d77e04d5bc1d0d2551f9a4d9e6ba1043c579028c52d6e6c0ac900ad9",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:44923830fa5a272d5e682a29a40656cb",
+          "key": "lib-w1Rxlh47.js",
+          "path": "lib-w1Rxlh47.js",
+          "url": null,
+          "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:1e6f20bbfd6a9cbecd3395799dcc88d6",
+          "key": "manifest-b63cec8d.js",
+          "path": "manifest-b63cec8d.js",
+          "url": null,
+          "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "complete",
+          "reported_route_capacity": null,
+          "reason": null,
+          "base_path": null
+        },
+        {
+          "id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "key": "root-CmiqwOFp.js",
+          "path": "root-CmiqwOFp.js",
+          "url": null,
+          "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "complete",
+          "reported_route_capacity": null,
+          "reason": null,
+          "base_path": null
+        },
+        {
+          "id": "jss:5ce73a74900d7433510bf78ca4b17f84",
+          "key": "utils-CTsB3O1x.js",
+          "path": "utils-CTsB3O1x.js",
+          "url": null,
+          "sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "complete",
+          "reported_route_capacity": null,
+          "reason": null,
+          "base_path": null
+        }
+      ],
+      "routes": [
+        {
+          "id": "jsr:422cbd9347f19109ff0d43948e5e94d5",
+          "path": "/favicon-dark.png",
+          "classification": "unknown",
+          "classification_basis": "unknown",
+          "confidence": "low",
+          "mechanisms": [
+            "navigation-target",
+            "route-string-constant"
+          ],
+          "occurrence_count": 2,
+          "source_count": 1,
+          "primary_occurrence_id": "jso:75106e95bf80b052210b99b45d1177d9"
+        },
+        {
+          "id": "jsr:69672ec81e48cdef6ff386c728c162ac",
+          "path": "/favicon-light.png",
+          "classification": "unknown",
+          "classification_basis": "unknown",
+          "confidence": "low",
+          "mechanisms": [
+            "navigation-target",
+            "route-string-constant"
+          ],
+          "occurrence_count": 2,
+          "source_count": 1,
+          "primary_occurrence_id": "jso:8ddcdbf9700dda68979b4ebec41fc10a"
+        }
+      ],
+      "occurrences": [
+        {
+          "id": "jso:75106e95bf80b052210b99b45d1177d9",
+          "route_id": "jsr:422cbd9347f19109ff0d43948e5e94d5",
+          "source_id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "mechanism": "navigation-target",
+          "confidence": "low",
+          "derivation": "inferred",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 798
+            },
+            "end": {
+              "line": 1,
+              "column": 817
+            }
+          },
+          "origin": "source-syntax",
+          "unprefixed_path": "/favicon-dark.png",
+          "inferred_base_path": null,
+          "segments": [
+            {
+              "value": "/favicon-dark.png",
+              "location": {
+                "start": {
+                  "line": 1,
+                  "column": 798
+                },
+                "end": {
+                  "line": 1,
+                  "column": 817
+                }
+              },
+              "origin": "literal"
+            }
+          ]
+        },
+        {
+          "id": "jso:8ddcdbf9700dda68979b4ebec41fc10a",
+          "route_id": "jsr:69672ec81e48cdef6ff386c728c162ac",
+          "source_id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "mechanism": "navigation-target",
+          "confidence": "low",
+          "derivation": "inferred",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 686
+            },
+            "end": {
+              "line": 1,
+              "column": 706
+            }
+          },
+          "origin": "source-syntax",
+          "unprefixed_path": "/favicon-light.png",
+          "inferred_base_path": null,
+          "segments": [
+            {
+              "value": "/favicon-light.png",
+              "location": {
+                "start": {
+                  "line": 1,
+                  "column": 686
+                },
+                "end": {
+                  "line": 1,
+                  "column": 706
+                }
+              },
+              "origin": "literal"
+            }
+          ]
+        },
+        {
+          "id": "jso:99e1222ee371dff1f6781616d27ddc73",
+          "route_id": "jsr:69672ec81e48cdef6ff386c728c162ac",
+          "source_id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "mechanism": "route-string-constant",
+          "confidence": "low",
+          "derivation": "inferred",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 686
+            },
+            "end": {
+              "line": 1,
+              "column": 706
+            }
+          },
+          "origin": "source-syntax",
+          "unprefixed_path": "/favicon-light.png",
+          "inferred_base_path": null,
+          "segments": [
+            {
+              "value": "/favicon-light.png",
+              "location": {
+                "start": {
+                  "line": 1,
+                  "column": 686
+                },
+                "end": {
+                  "line": 1,
+                  "column": 706
+                }
+              },
+              "origin": "literal"
+            }
+          ]
+        },
+        {
+          "id": "jso:9b790796c60abcf62beca72659cb43a4",
+          "route_id": "jsr:422cbd9347f19109ff0d43948e5e94d5",
+          "source_id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "mechanism": "route-string-constant",
+          "confidence": "low",
+          "derivation": "inferred",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 798
+            },
+            "end": {
+              "line": 1,
+              "column": 817
+            }
+          },
+          "origin": "source-syntax",
+          "unprefixed_path": "/favicon-dark.png",
+          "inferred_base_path": null,
+          "segments": [
+            {
+              "value": "/favicon-dark.png",
+              "location": {
+                "start": {
+                  "line": 1,
+                  "column": 798
+                },
+                "end": {
+                  "line": 1,
+                  "column": 817
+                }
+              },
+              "origin": "literal"
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        {
+          "id": "jsg:12e48e8165edeb9795ef71bc51f4dd29",
+          "source_id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 914
+            },
+            "end": {
+              "line": 1,
+              "column": 915
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:afc5077b34ab4705a3d1a84219c4e1e2",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:c937142a056b8e33d707626f788982eb",
+          "source_id": "jss:44923830fa5a272d5e682a29a40656cb",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:24d351f54586754a66f05e3e5f80cc5e",
+          "source_id": "jss:6d283a35db94e61b58d8599100e9c8ea",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:b953adeca60eb7e1d3232387831df20d",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 924
+            },
+            "end": {
+              "line": 1,
+              "column": 935
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:02ce17851f145c552612bc51e012ea24",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 1334
+            },
+            "end": {
+              "line": 1,
+              "column": 1356
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:3a52bf2fa7bd6a5140a473b5c0f53757",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 1795
+            },
+            "end": {
+              "line": 1,
+              "column": 1796
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:4c11677c27fa28cb488c7179994cc94d",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 2653
+            },
+            "end": {
+              "line": 1,
+              "column": 2654
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:1ad3d565b01870b76cd4205d6da5fa74",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 2898
+            },
+            "end": {
+              "line": 1,
+              "column": 2909
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:385b734f25d6fb546fe5bbc87d46b12e",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 4786
+            },
+            "end": {
+              "line": 1,
+              "column": 4802
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:5514a2522191772327240a32a0f6c0eb",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 4916
+            },
+            "end": {
+              "line": 1,
+              "column": 4932
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:e569a5ace011e0eac178567db3ab8ace",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 6541
+            },
+            "end": {
+              "line": 1,
+              "column": 6542
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        }
+      ],
+      "coverage": {
+        "scope": "provided-code-sources",
+        "source_parsing": "partial",
+        "candidate_enumeration": "partial",
+        "application_routes": "unknown"
+      },
+      "statistics": {
+        "sources_seen": 7,
+        "sources_retained": 7,
+        "route_patterns": 2,
+        "occurrences": 4,
+        "unanchored_literals_excluded": 0
+      },
+      "capacity": null,
+      "limitations": [
+        "Routes are static candidates from the provided code sources. Reachability, permissions, server-only routes and the complete application route set are unverified.",
+        "Pattern IDs are exact path identities within this inventory. Occurrence and source IDs retain source/content identity and precise syntax ranges; metadata-only discoveries have no AST range.",
+        "System classification is a path-name heuristic. Asset URL prefixes can differ from routing bases; inferred prefixes retain the original unprefixed path.",
+        "Unbound path strings require a top-level segment supported by structural routes or navigation candidates. Unknown or missing source facts do not establish route absence."
+      ]
+    }
+  },
+  {
+    "run": "react-router-layout-chunks",
+    "evidence_id": "ev_b8951a4ad0b7cc6f223daf847efd7b78c6c38646f3f75e8f901ff082a45799c0",
+    "statistics": {
+      "relevant_files": 7,
+      "nested_asar_containers": 0,
+      "text_bytes_read": 24353,
+      "invalid_utf8_files": 0,
+      "parsed_javascript_files": 2,
+      "skipped_javascript_files": 0,
+      "visited_ast_nodes": 6200,
+      "findings": 71,
+      "modules": 0,
+      "parse_failures": 0
+    },
+    "graph_coverage": {
+      "status": "partial",
+      "truncated": false,
+      "omitted_count": null,
+      "limits": []
+    },
+    "selected_observations": [
+      {
+        "node_id": "jag_node_00501259e09b491216b69a811b2ef340d928a1dd9a5efd8e79cecfbdfaa79f8b",
+        "observation_id": "jag_observation_dfa01ea7097a5f8d26e02ee33c425aed73020f9ae34d2a791a9d0623436cec55",
+        "label": "./jsx-runtime-C-dPSQ1O.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./jsx-runtime-C-dPSQ1O.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+            "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 118
+              },
+              "kind": "source-range",
+              "source": "docs-layout-CTqBlNNw.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_256cdd0f86329572d662f88c064ad55535699bc64aaa9bdafbebcdf7ac042765",
+        "observation_id": "jag_observation_00b132fdc753d85f9cded4430457bfdb890fdbf074ea8233bed2dab7bc3dea56",
+        "label": "lib-w1Rxlh47.js",
+        "properties": {
+          "semantic_role": "source-module",
+          "file_occurrence": {
+            "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+            "path": "lib-w1Rxlh47.js",
+            "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7"
+          },
+          "source_sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+          "path": "lib-w1Rxlh47.js",
+          "logical_module_key": "lib-w1Rxlh47.js",
+          "module_format": "esm",
+          "import_relationships": 30,
+          "type_relationships": 0,
+          "export_relationships": 3,
+          "export_names": [
+            "n",
+            "r",
+            "t"
+          ],
+          "type_export_names": [],
+          "omitted_export_names": 0
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+            "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 10353
+              },
+              "kind": "source-range",
+              "source": "lib-w1Rxlh47.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "recover-source-module",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "AST coverage is incomplete; omitted or dynamic facts must not be interpreted as absence.",
+            "Cross-function mutation and dynamic property resolution remain unknown.",
+            "Local call, argument, return, and closure relations are static candidates and do not prove runtime invocation.",
+            "Local returned-reference projections were conservatively widened; effects include additional source-local candidates.",
+            "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+            "Return sites include only direct callable returns; nested callable returns remain separate.",
+            "Values and aliases were recovered from inert syntax only; no JavaScript was executed."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_437f57cb006892603dd46ae11adbb872b3c7c97d66c656e765e658f9b1192db3",
+        "observation_id": "jag_observation_9e1c680d4c90226bb5bfdfa09857ba99c5e14ff256a6c827610490c8dad0d89f",
+        "label": "./icons--1X-E2OM.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./icons--1X-E2OM.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+            "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 214
+              },
+              "end": {
+                "line": 1,
+                "column": 254
+              },
+              "kind": "source-range",
+              "source": "docs-layout-CTqBlNNw.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_711048041cfdf0709e039ec1c380bece62b71f9c254194a02cf94e69d2141346",
+        "observation_id": "jag_observation_b34798048de081c3f5aeb43feb18df08ec10a36912e1d2ab714d8a4832d52bd0",
+        "label": "./clsx-Dm0G8HgT.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./clsx-Dm0G8HgT.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+            "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 254
+              },
+              "end": {
+                "line": 1,
+                "column": 293
+              },
+              "kind": "source-range",
+              "source": "docs-layout-CTqBlNNw.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_7dee3d3c2615ac0bd674c358b0d48119bcf61d44f9cd0b45c3c8cd40cd798937",
+        "observation_id": "jag_observation_c89753542584d9b60df997e1732b6cf8dcb3161db7abd59340ec61a2ad761137",
+        "label": "docs-layout-CTqBlNNw.js",
+        "properties": {
+          "semantic_role": "source-module",
+          "file_occurrence": {
+            "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+            "path": "docs-layout-CTqBlNNw.js",
+            "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326"
+          },
+          "source_sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+          "path": "docs-layout-CTqBlNNw.js",
+          "logical_module_key": "docs-layout-CTqBlNNw.js",
+          "module_format": "esm",
+          "import_relationships": 19,
+          "type_relationships": 0,
+          "export_relationships": 1,
+          "export_names": [
+            "default"
+          ],
+          "type_export_names": [],
+          "omitted_export_names": 0
+        },
+        "evidence": {
+          "authority": "ast-static-analysis",
+          "state": "observed",
+          "confidence": "exact",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+            "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 13992
+              },
+              "kind": "source-range",
+              "source": "docs-layout-CTqBlNNw.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "recover-source-module",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": 0,
+            "limits": []
+          },
+          "limitations": [
+            "AST coverage is incomplete; omitted or dynamic facts must not be interpreted as absence.",
+            "Cross-function mutation and dynamic property resolution remain unknown.",
+            "Local call, argument, return, and closure relations are static candidates and do not prove runtime invocation.",
+            "Local returned-reference projections were conservatively widened; effects include additional source-local candidates.",
+            "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+            "Return sites include only direct callable returns; nested callable returns remain separate.",
+            "Values and aliases were recovered from inert syntax only; no JavaScript was executed."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_d2b1f3c49b61d386ea69247f85f34790b0194caddb76f33968c69fe818f4a42a",
+        "observation_id": "jag_observation_c18f1a8d0cbed2bd70913ed651aa32e928fd113f050c2fcc48eb73c941bd933b",
+        "label": "index",
+        "properties": {
+          "endpoint_kind": "network",
+          "value": "index",
+          "mechanism": "call:e.delete",
+          "interpretation": "candidate"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+            "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 7725
+              },
+              "end": {
+                "line": 1,
+                "column": 7742
+              },
+              "kind": "source-range",
+              "source": "lib-w1Rxlh47.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "classify-static-endpoint-candidate",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The unbound method-like argument is only a candidate; its receiver does not establish a network call."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_eba6204c23b5489d48113d5263c217b77dda3f36866c27ec98e0a9ebae419901",
+        "observation_id": "jag_observation_b61601d58affe87be0a87e22e2f46bee0fdd2c1bf920ad299859019a95a37ee3",
+        "label": "./jsx-runtime-C-dPSQ1O.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./jsx-runtime-C-dPSQ1O.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+            "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 0
+              },
+              "end": {
+                "line": 1,
+                "column": 260
+              },
+              "kind": "source-range",
+              "source": "lib-w1Rxlh47.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      },
+      {
+        "node_id": "jag_node_ff52fbe7527f29e6a51da681f86e59605d74773f74c97a4c61993183c3102a79",
+        "observation_id": "jag_observation_35288e32edb54d6e07901bec30019be5a633c11375cf8240ee615d0d4818f146",
+        "label": "./docsearch-Kqbc9BYb.js",
+        "properties": {
+          "reference_kind": "static-import",
+          "specifier": "./docsearch-Kqbc9BYb.js",
+          "expression": null,
+          "resolution": "unresolved",
+          "resolution_status": "not-found"
+        },
+        "evidence": {
+          "authority": "static-relationship-inference",
+          "state": "inferred",
+          "confidence": "low",
+          "artifact": {
+            "available": true,
+            "artifact_id": "art_dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+            "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326"
+          },
+          "location": {
+            "available": true,
+            "value": {
+              "start": {
+                "line": 1,
+                "column": 163
+              },
+              "end": {
+                "line": 1,
+                "column": 214
+              },
+              "kind": "source-range",
+              "source": "docs-layout-CTqBlNNw.js"
+            }
+          },
+          "extractor": {
+            "name": "rea-javascript-artifact-reconstruction",
+            "version": "1",
+            "operation": "resolve-static-reference",
+            "executable_sha256": null
+          },
+          "coverage": {
+            "status": "partial",
+            "truncated": false,
+            "omitted_count": null,
+            "limits": []
+          },
+          "limitations": [
+            "No extension, directory package, or index candidate exists in the inventoried artifact container.",
+            "Static syntax does not prove that this relationship executes at runtime.",
+            "The static reference could not be resolved within the inventoried artifact."
+          ],
+          "evidence_ids": []
+        }
+      }
+    ],
+    "route_inventory": {
+      "inventory_id": "jsri:3c5b49c216eea9ace764df98498774d6f54f6afc23c4cb5517f508ea745efa81",
+      "source_manifest_sha256": "064e0172090f8c97afd992b49917dfa9a36184af48b35dd34914343d726cf214",
+      "sources": [
+        {
+          "id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "key": "doc-CVbegNQE.js",
+          "path": "doc-CVbegNQE.js",
+          "url": null,
+          "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "key": "docs-layout-CTqBlNNw.js",
+          "path": "docs-layout-CTqBlNNw.js",
+          "url": null,
+          "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "complete",
+          "reported_route_capacity": null,
+          "reason": null,
+          "base_path": null
+        },
+        {
+          "id": "jss:6d283a35db94e61b58d8599100e9c8ea",
+          "key": "entry.client-BVIS7KF3.js",
+          "path": "entry.client-BVIS7KF3.js",
+          "url": null,
+          "sha256": "7b9df5a4d77e04d5bc1d0d2551f9a4d9e6ba1043c579028c52d6e6c0ac900ad9",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:44923830fa5a272d5e682a29a40656cb",
+          "key": "lib-w1Rxlh47.js",
+          "path": "lib-w1Rxlh47.js",
+          "url": null,
+          "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "complete",
+          "reported_route_capacity": null,
+          "reason": null,
+          "base_path": null
+        },
+        {
+          "id": "jss:1e6f20bbfd6a9cbecd3395799dcc88d6",
+          "key": "manifest-b63cec8d.js",
+          "path": "manifest-b63cec8d.js",
+          "url": null,
+          "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "key": "root-CmiqwOFp.js",
+          "path": "root-CmiqwOFp.js",
+          "url": null,
+          "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        },
+        {
+          "id": "jss:5ce73a74900d7433510bf78ca4b17f84",
+          "key": "utils-CTsB3O1x.js",
+          "path": "utils-CTsB3O1x.js",
+          "url": null,
+          "sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425",
+          "container_sha256": "308570ce54106db8f50152dbec332b22e2e628e0dd6e0278d506b8ce119d8d4f",
+          "status": "unavailable",
+          "reported_route_capacity": null,
+          "reason": "outside-analysis-scope",
+          "base_path": null
+        }
+      ],
+      "routes": [
+        {
+          "id": "jsr:ff4deebb950542c5d38825233931d734",
+          "path": "/assets/icons-DI88m4Yf.svg",
+          "classification": "unknown",
+          "classification_basis": "unknown",
+          "confidence": "low",
+          "mechanisms": [
+            "navigation-target"
+          ],
+          "occurrence_count": 1,
+          "source_count": 1,
+          "primary_occurrence_id": "jso:f8eb8fe5d6d92a71a43a58be723d0568"
+        }
+      ],
+      "occurrences": [
+        {
+          "id": "jso:f8eb8fe5d6d92a71a43a58be723d0568",
+          "route_id": "jsr:ff4deebb950542c5d38825233931d734",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "mechanism": "navigation-target",
+          "confidence": "low",
+          "derivation": "inferred",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 12895
+            },
+            "end": {
+              "line": 1,
+              "column": 12934
+            }
+          },
+          "origin": "source-syntax",
+          "unprefixed_path": "/assets/icons-DI88m4Yf.svg",
+          "inferred_base_path": null,
+          "segments": [
+            {
+              "value": "/assets/icons-DI88m4Yf.svg#arrow-path",
+              "location": {
+                "start": {
+                  "line": 1,
+                  "column": 12895
+                },
+                "end": {
+                  "line": 1,
+                  "column": 12934
+                }
+              },
+              "origin": "literal"
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        {
+          "id": "jsg:a3e72ddbe7fc07f7c82202552e7d81a4",
+          "source_id": "jss:0bb07f7889a4af4e6acbd99a885a2039",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:662313eaefffe04e5c89e8fe5bdc6c5b",
+          "source_id": "jss:1e6f20bbfd6a9cbecd3395799dcc88d6",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:2c22738b69682a4dce478e49ffc3fe95",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 1136
+            },
+            "end": {
+              "line": 1,
+              "column": 1147
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:6c4ca72b84992b240bf3cf541b78b84d",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 1242
+            },
+            "end": {
+              "line": 1,
+              "column": 1252
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:53411cc320e5c917362d8c33d6dc37b2",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 2094
+            },
+            "end": {
+              "line": 1,
+              "column": 2105
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:d51f2623d4a3a03885129c2d024dc3bb",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 3401
+            },
+            "end": {
+              "line": 1,
+              "column": 3423
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:ba78e3d6716622cda7c6bfe4d79c4d46",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 4231
+            },
+            "end": {
+              "line": 1,
+              "column": 4232
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:4287ec3127782b86006c98baace367d6",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 6169
+            },
+            "end": {
+              "line": 1,
+              "column": 6180
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:749feef87087e90c1010733618b6c228",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 6611
+            },
+            "end": {
+              "line": 1,
+              "column": 6612
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:a96df7297e0e912dfd05a3b667b57d97",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 6700
+            },
+            "end": {
+              "line": 1,
+              "column": 6701
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:5e8df4dc5fdbe4ab2f0521caf0a63f5e",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 6931
+            },
+            "end": {
+              "line": 1,
+              "column": 6942
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:2fb6dda6fc734532fe82cc7c483c85e2",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 7795
+            },
+            "end": {
+              "line": 1,
+              "column": 7811
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:0a19f67c9fd48cb0603ab0a2e13347ec",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 7914
+            },
+            "end": {
+              "line": 1,
+              "column": 7925
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:2746592a17a5f5bcda39947643b31f45",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 9270
+            },
+            "end": {
+              "line": 1,
+              "column": 9286
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:eae8244e3d6c2204b3b4279d59cbd82e",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 9394
+            },
+            "end": {
+              "line": 1,
+              "column": 9410
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:a9422ed55cf4783d5dd7a468f90f4f05",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 10473
+            },
+            "end": {
+              "line": 1,
+              "column": 10489
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:6fb51f4ef2a87b5f142f5117cd18ed70",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 10597
+            },
+            "end": {
+              "line": 1,
+              "column": 10613
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:ff470fac5c9af031419689edcbb18db0",
+          "source_id": "jss:30a079a547f0d4a86f12e65f8f9672ec",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 13211
+            },
+            "end": {
+              "line": 1,
+              "column": 13212
+            }
+          },
+          "reason": "The navigation destination may be dynamic, mutated, projected or cyclic."
+        },
+        {
+          "id": "jsg:7b8f1b3f22a74560ab6ff5252c97fc04",
+          "source_id": "jss:44923830fa5a272d5e682a29a40656cb",
+          "kind": "interpretation",
+          "source_range": {
+            "start": {
+              "line": 1,
+              "column": 3279
+            },
+            "end": {
+              "line": 1,
+              "column": 3309
+            }
+          },
+          "reason": "The recognized navigation destination is not a supported literal."
+        },
+        {
+          "id": "jsg:9f8c5038257734da1d48504dd6a15315",
+          "source_id": "jss:5ce73a74900d7433510bf78ca4b17f84",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:24d351f54586754a66f05e3e5f80cc5e",
+          "source_id": "jss:6d283a35db94e61b58d8599100e9c8ea",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        },
+        {
+          "id": "jsg:cae64b28a9f13819186bbf804a5fb62d",
+          "source_id": "jss:cabc8e5ba9b24577f9e4c8863b4ec735",
+          "kind": "source-unavailable",
+          "source_range": null,
+          "reason": "outside-analysis-scope"
+        }
+      ],
+      "coverage": {
+        "scope": "provided-code-sources",
+        "source_parsing": "partial",
+        "candidate_enumeration": "partial",
+        "application_routes": "unknown"
+      },
+      "statistics": {
+        "sources_seen": 7,
+        "sources_retained": 7,
+        "route_patterns": 1,
+        "occurrences": 1,
+        "unanchored_literals_excluded": 0
+      },
+      "capacity": null,
+      "limitations": [
+        "Routes are static candidates from the provided code sources. Reachability, permissions, server-only routes and the complete application route set are unverified.",
+        "Pattern IDs are exact path identities within this inventory. Occurrence and source IDs retain source/content identity and precise syntax ranges; metadata-only discoveries have no AST range.",
+        "System classification is a path-name heuristic. Asset URL prefixes can differ from routing bases; inferred prefixes retain the original unprefixed path.",
+        "Unbound path strings require a top-level segment supported by structural routes or navigation candidates. Unknown or missing source facts do not establish route absence."
+      ]
+    }
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "probes": [
+    {
+      "probe": "cleanup-revocation",
+      "source": "packages/router/src/browser.ts",
+      "test": "cannot repopulate the root",
+      "exitCode": 1,
+      "restoredSha256": "e0da6f921d7654a573a021fd7f44bc206740d8cb9d80465db3345578ed2f4197"
+    },
+    {
+      "probe": "late-disposal",
+      "source": "packages/router/src/router.ts",
+      "test": "cancels ignored aborts promptly",
+      "exitCode": 1,
+      "restoredSha256": "5e8bbca936e6424a043bb9037a29eaa459ce42f7b707180828990e05f5e1b5e3"
+    }
+  ],
+  "restoredTestsExitCode": 0
+}

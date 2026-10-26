@@ -1,0 +1,30 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+
+ ❯ tests/router.test.ts (32 tests | 1 failed | 31 skipped) 11ms
+     × cancels ignored aborts promptly and disposes their late prepared view 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/router.test.ts > ownership and coordination > cancels ignored aborts promptly and disposes their late prepared view
+AssertionError: expected [] to deeply equal [ '/b' ]
+
+- Expected
++ Received
+
+- [
+-   "/b",
+- ]
++ []
+
+ ❯ tests/router.test.ts:52:394
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 31 skipped (32)
+   Start at  13:44:04
+   Duration  364ms (transform 120ms, setup 0ms, import 150ms, tests 11ms, environment 130ms)
+

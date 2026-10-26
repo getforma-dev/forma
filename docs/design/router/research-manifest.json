@@ -1,0 +1,252 @@
+{
+  "source": "companion client-side-routing-research project; historical paths in the frozen reports are retained",
+  "snapshot_at_utc": "2026-10-26T15:31:08.609485+00:00",
+  "scope": "Reports, attributed snippets and concise evidence copied unchanged. Raw pinned repos, captures and REA graphs retained in source .local; paths in copied reports remain historical.",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "b3fd12f31e6777094dbe304821851fbf74ee12cae4746089343a8d9e9e038b93",
+      "bytes": 6055
+    },
+    {
+      "path": "COMPARISON.md",
+      "sha256": "b03179854832a85aed067ccf46623d238c421b6519dc21607a6fef51b67b16df",
+      "bytes": 10708
+    },
+    {
+      "path": "REBUILD-BLUEPRINT.md",
+      "sha256": "c60ce8e6db45833f1788da3028cd9d371e9ce60439a6ca6a3615f0a68ad0bed4",
+      "bytes": 13329
+    },
+    {
+      "path": "FORMA-IMPLICATIONS.md",
+      "sha256": "c62303868a5103e9bc2adbdf02c015539c98c2a45c397b050a0f134ba7c61021",
+      "bytes": 7463
+    },
+    {
+      "path": "METHODS.md",
+      "sha256": "5cef7fcc0e645568995eccd1fe16087e30435ec0740cd2decb0dad0fa1574876",
+      "bytes": 6795
+    },
+    {
+      "path": "QUESTIONS.md",
+      "sha256": "ccde6570da8f324d4544a5c5a1730c8acab64e470c25e90c6bc07ba3c7306410",
+      "bytes": 5575
+    },
+    {
+      "path": "VALIDATION.md",
+      "sha256": "fc1c252cb218559e63a10d76f7cb1d58177722ea9fe6aab29051b9d5bd2efd5c",
+      "bytes": 3881
+    },
+    {
+      "path": "evidence/index.json",
+      "sha256": "23ed1c85720226048e99e2605dac05775fea19e84f31f7114a12d5e6735033ee",
+      "bytes": 10460
+    },
+    {
+      "path": "research/angular/sources.json",
+      "sha256": "5be35d1de11d8d0d598d990639e3c3fd49e3b4c02fbe1f68a3f92cad0fd6a6fe",
+      "bytes": 34224
+    },
+    {
+      "path": "research/angular/build-evidence-index.py",
+      "sha256": "e114ed8474b057c9e97c1337cfbd8dd876bcc5e95b4a140ceeb5fc707b3f8729",
+      "bytes": 7078
+    },
+    {
+      "path": "research/angular/report.md",
+      "sha256": "b0b7f8d8e4cd854b425390e1c4b981c7783dc6e08f71f9bd779e641d594b9277",
+      "bytes": 33730
+    },
+    {
+      "path": "research/angular/LICENSE.angular.txt",
+      "sha256": "15e77c4692114f87c2020353626c868472c23954a4ed37ecc4c1522d14be1eb7",
+      "bytes": 1105
+    },
+    {
+      "path": "research/angular/rea-summary.json",
+      "sha256": "2cd610b071e35766adb87687bafafaa5c3534d42b71a6ca06f73306b28a3299d",
+      "bytes": 16143
+    },
+    {
+      "path": "research/angular/source-index.md",
+      "sha256": "200872dfabf045cc92c53e00d479de3a46fd88a57fb2194ea36ba9853378af2e",
+      "bytes": 8339
+    },
+    {
+      "path": "research/angular/validation.json",
+      "sha256": "acb52722bc2919f2e3ad4fa06d5cef1f30ee4a450679f9b43af7b09ca0b28202",
+      "bytes": 664
+    },
+    {
+      "path": "research/angular/questions.md",
+      "sha256": "fd5e67c238fdc3f3a0f109da2f44375f8dee39d5015094bacb2a02ae95723b00",
+      "bytes": 22865
+    },
+    {
+      "path": "research/angular/snippets/reconstruction-pseudocode.md",
+      "sha256": "aca5ffd00179b1a20372dcff1898ee29082e9ab267371b3b42ec41d1de06db82",
+      "bytes": 4637
+    },
+    {
+      "path": "research/angular/snippets/first-successful-recognition.excerpt.ts",
+      "sha256": "734fc3a9bbb6d39e1d080943e86e269e2ca6f98bc0437245a5531107058254f7",
+      "bytes": 1169
+    },
+    {
+      "path": "research/angular/snippets/content-promise-cache.excerpt.ts",
+      "sha256": "0836d8469e15401f926c42ddbdc38997480272c80594bf25e0f193674d3aad3d",
+      "bytes": 1197
+    },
+    {
+      "path": "research/angular/snippets/navigation-ownership.excerpt.ts",
+      "sha256": "1b957fde84f1a9a72c7c0eae6bdddd9ae3957a5fa53ba82183dff0d0d0e02d23",
+      "bytes": 723
+    },
+    {
+      "path": "research/angular/snippets/url-parser-host-alignment.excerpt.ts",
+      "sha256": "f045185245ca796a7546b3df8aa049227f5700a7e97ef80c6c4522192be2cb5b",
+      "bytes": 776
+    },
+    {
+      "path": "research/astro/sources.json",
+      "sha256": "5010c15677b78aed129075663dc0bf02212817ec54b7e7f99ed3f2b5e0df64e2",
+      "bytes": 198060
+    },
+    {
+      "path": "research/astro/report.md",
+      "sha256": "c34e151b599348601bf81b4442fa3251dffe283beb624f05d9e1a4fb0192501f",
+      "bytes": 24634
+    },
+    {
+      "path": "research/astro/rea-findings.json",
+      "sha256": "582ccd9f5f61d1dcc6e826a770989a0b3dbd95c0fc4d1c1f084f5e897481720a",
+      "bytes": 169867
+    },
+    {
+      "path": "research/astro/questions.md",
+      "sha256": "c86c82189ae39b12b56069561fb94112d8e9dc1b1c08c93e5685fb222f84b5ad",
+      "bytes": 15601
+    },
+    {
+      "path": "research/astro/snippets/reconstruction-pseudocode.md",
+      "sha256": "31b0984d238766aaca93ef261c5a595a68c3952cd63a467f01bbf60e0d2da1e5",
+      "bytes": 6200
+    },
+    {
+      "path": "research/astro/snippets/README.md",
+      "sha256": "ed2618213fe4d170989e17943c69b393d5de6cb93f21e2afef8e38d0ff84eacc",
+      "bytes": 832
+    },
+    {
+      "path": "research/astro/snippets/navigation-ownership.ts",
+      "sha256": "cb24039f8130a931d0229a0e93d7c624b801f46c1fe28746554279e033274224",
+      "bytes": 1311
+    },
+    {
+      "path": "research/astro/snippets/island-unmount.ts",
+      "sha256": "1e548581e77fe696b9c850e9c44c6a879e28aaa4ad7c0c57bfcd4b4d7934c6d1",
+      "bytes": 514
+    },
+    {
+      "path": "research/astro/snippets/serialized-swap.ts",
+      "sha256": "05b1f5e74fcdb0f6f42448a34d19aa145d1a0db0c5bc30e2340d118aa987bc9c",
+      "bytes": 1394
+    },
+    {
+      "path": "research/astro/snippets/default-swap.ts",
+      "sha256": "f9440ea70f2d34154073ac929580017251852f3f3908b44723da80fdeec0aba3",
+      "bytes": 582
+    },
+    {
+      "path": "research/astro/licenses/framework-LICENSE.txt",
+      "sha256": "4aa72be797aad0e5e21827eaae6a1df9e122d7a401f07d2c308a6b9a5f0e1278",
+      "bytes": 3628
+    },
+    {
+      "path": "research/astro/licenses/starlight-LICENSE.txt",
+      "sha256": "a0ee39c239b80f632b663fc02a44893be6c8489815a776e231a2fff17c12ef42",
+      "bytes": 1137
+    },
+    {
+      "path": "research/astro/licenses/docs-LICENSE.txt",
+      "sha256": "db2b3af934943220a2abee7757ee964dbe7dca1b4798ed673833ce3d96ac7934",
+      "bytes": 1066
+    },
+    {
+      "path": "research/react-router/sources.json",
+      "sha256": "79c763b59eb9ed69ceee7e60933003da7fef2dce0b89ab3c5eb9f35166c7cd80",
+      "bytes": 21109
+    },
+    {
+      "path": "research/react-router/site-context.json",
+      "sha256": "c6be496efe05775a3f9ca4b799483494ab5a56375759542045121710570aaadd",
+      "bytes": 282
+    },
+    {
+      "path": "research/react-router/report.md",
+      "sha256": "ebb54b872b195b8fab79db567d4943df2689b09c99cb246a67395dba33026e5c",
+      "bytes": 37205
+    },
+    {
+      "path": "research/react-router/README.md",
+      "sha256": "0f8f04e4d53ae3741658f7c532b2971018a63d92f812c08e3a05daeede77ecff",
+      "bytes": 3232
+    },
+    {
+      "path": "research/react-router/rea-observations.json",
+      "sha256": "ebf9263859f616be9e80f1cd14cc49fc526572a2bd8310d72b9ec46b5e05460e",
+      "bytes": 101923
+    },
+    {
+      "path": "research/react-router/validation.json",
+      "sha256": "7d80a58201235e4a55b97d0c7f4de0be18a6a231b8106d3a344403fa0a49a1dd",
+      "bytes": 471
+    },
+    {
+      "path": "research/react-router/questions.md",
+      "sha256": "195c48bba94cff8f25b43aa6de945ffc089d62d9952adbd58c8959d2c19dc2f9",
+      "bytes": 16751
+    },
+    {
+      "path": "research/react-router/site-manifest-summary.json",
+      "sha256": "ff3cbfda92b4095b0ef51c072f21a2ef830067e6dfc29eb630e3511b50a433b7",
+      "bytes": 3156
+    },
+    {
+      "path": "research/react-router/snippets/transaction-pattern.mjs",
+      "sha256": "871dd755b0feaf8359028f5f49501cc05285a990bf490471c1fe3d21d2ddbbfc",
+      "bytes": 1683
+    },
+    {
+      "path": "research/react-router/snippets/upstream-excerpts.md",
+      "sha256": "f84e9d45e0f24ee50abf2ab394a6f17e77585a37021f35e6c24bb07788116ccc",
+      "bytes": 6126
+    },
+    {
+      "path": "research/react-router/snippets/README.md",
+      "sha256": "09470fed11b8cdda08626cff052a2cd4eaf3c4ef2e71a238703a1fa1e331bbe4",
+      "bytes": 1440
+    },
+    {
+      "path": "research/react-router/snippets/test-results.tap",
+      "sha256": "51d8e93756b27fda5769c2720cd30da368f72ab239f12e7fa1c29fc9792e0aeb",
+      "bytes": 886
+    },
+    {
+      "path": "research/react-router/snippets/transaction-pattern.test.mjs",
+      "sha256": "96c102cc4e967bf6a17ac667bca6b16e5b2bbbac2362972345a2aefa8cdf4bb3",
+      "bytes": 2730
+    },
+    {
+      "path": "research/react-router/licenses/LICENSE-website.md",
+      "sha256": "63c49bb12bc97aa1be7b58e3e2d841d0b2210a1afc3fbb85aeec644f0a88536b",
+      "bytes": 1119
+    },
+    {
+      "path": "research/react-router/licenses/LICENSE-react-router.md",
+      "sha256": "77c9ee6a9c5d5782fb0c50b50d101189116314c14f7df0a1b0d385fc96a7ba49",
+      "bytes": 1161
+    }
+  ]
+}

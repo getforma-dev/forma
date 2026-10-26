@@ -1,0 +1,54 @@
+{
+  "name": "@getforma/router",
+  "version": "3.1.0",
+  "description": "Optional owned navigation, persistent layouts and typed native transitions for Forma",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --external @getforma/core --external @getforma/core/navigation",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check:pack": "publint && attw --pack ."
+  },
+  "peerDependencies": {
+    "@getforma/core": "^3.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.11",
+    "happy-dom": "^21.0.4",
+    "publint": "^0.3.23",
+    "@arethetypeswrong/cli": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "author": "Forma <victor@getforma.dev>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getforma-dev/forma.git",
+    "directory": "packages/router"
+  },
+  "module": "./dist/index.js"
+}

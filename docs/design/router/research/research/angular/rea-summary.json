@@ -1,0 +1,444 @@
+[
+  {
+    "name": "angular-history",
+    "run": {
+      "name": "angular-history",
+      "input": "/Users/victorvillacis/dev/client-side-routing-research/.local/captures/angular/assets",
+      "command": [
+        "/Users/victorvillacis/.local/bin/rea",
+        "analyze-javascript-application",
+        "/Users/victorvillacis/dev/client-side-routing-research/.local/captures/angular/assets",
+        "--analysis-timeout-ms",
+        "15000",
+        "--max-heap-mb",
+        "512",
+        "--max-semantic-nodes",
+        "10000",
+        "--max-semantic-nodes-per-file",
+        "2000",
+        "--max-semantic-unknowns",
+        "10000",
+        "--max-semantic-unknowns-per-file",
+        "2000",
+        "--json",
+        "--source-path",
+        "chunk-BOHxeupa.js"
+      ],
+      "selected_sources": [
+        "chunk-BOHxeupa.js"
+      ],
+      "inventory": [
+        {
+          "path": "chunk-B-X8MTbm.js",
+          "bytes": 11425,
+          "sha256": "2574091bfce49d98890dcd3dcd7fff67a166faead21eb5f87a3fb906ccb2e9ee"
+        },
+        {
+          "path": "chunk-BOHxeupa.js",
+          "bytes": 15600,
+          "sha256": "2b0d48bf9774b38d7888dad4f83abd1f49a0e1b50daf074c24804cdc6de19a00"
+        },
+        {
+          "path": "chunk-Bf_6ndTT.js",
+          "bytes": 1940,
+          "sha256": "4cd33eaaa65968cba845d8c184756f8da208a5ebf96efeab4d87aa99ca23bac8"
+        },
+        {
+          "path": "chunk-BlZAhgZ5.js",
+          "bytes": 355432,
+          "sha256": "a95526cf010458cc915dd648346c34e1951bf3293bdd94b2123880b14667ff1f"
+        },
+        {
+          "path": "chunk-C0FaT-It.js",
+          "bytes": 15875,
+          "sha256": "3625eb3486f5fbb6d76bb638b2cc4bc6ef97eef9b00e8f52811f5a1275150ffa"
+        },
+        {
+          "path": "chunk-CJ67U7VT.js",
+          "bytes": 25163,
+          "sha256": "670754e3da332143c41bfd299b2318fda1b3fb5892b31a0ff36e7e8e2ea0c9c0"
+        },
+        {
+          "path": "chunk-CK-MGa8p.js",
+          "bytes": 116,
+          "sha256": "16718bdb6ac5b5eaa2bd23aeeeeb532ec1f78cf79b36f47a08107bceb729bf47"
+        },
+        {
+          "path": "chunk-CrmKEisR.js",
+          "bytes": 36249,
+          "sha256": "19180e45c7c83a932306ec915b2e6bd30d94c54250c0ab7d721af5086dd9be63"
+        },
+        {
+          "path": "chunk-DiscwNkY.js",
+          "bytes": 253,
+          "sha256": "6f5cc18d1932a84f7d8ee4eb82beeec98d6947c47cc8a9d9ac6cf68f286bf34b"
+        },
+        {
+          "path": "chunk-NtOoTFZ6.js",
+          "bytes": 5571,
+          "sha256": "32dab93e0fc17cd541a4e3db9c1bf5d0f513a8f1d737ac1b2f5464693bbde9a5"
+        },
+        {
+          "path": "chunk-OiM2P69I.js",
+          "bytes": 572,
+          "sha256": "f8ebadad18735fa60f563d7c2c23cd31baae54939f55ff5f63175cd262a441bf"
+        },
+        {
+          "path": "main-NXB5WAJL.js",
+          "bytes": 621355,
+          "sha256": "c7ee9eb44123776a1f898f28fa314710dec387564a47f0f1f4dabdbb0f723c59"
+        }
+      ],
+      "rea_version": "6.8.0",
+      "queued_at_utc": "2026-10-26T14:13:53.202372+00:00",
+      "total_deadline_seconds": 120,
+      "started_at_utc": "2026-10-26T14:13:53.203050+00:00",
+      "outer_timeout": false,
+      "exit_code": 0,
+      "elapsed_seconds": 3.861,
+      "evidence_id": "ev_5dc13d49d68b5c31d1f9fd263b08bd6e28ae51ce576d04ddb1f28eed4ad68844",
+      "statistics": {
+        "relevant_files": 12,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 15600,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 1,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 4107,
+        "findings": 54,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "limitations": [
+        "Caller-selected source analysis leaves 11 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ],
+      "error": null,
+      "evidence_sha256": "2e55f84aeb03bcf13c06c651873a089f18171b8c7a430f32b2f496ffe5412294"
+    },
+    "evidence_id": "ev_5dc13d49d68b5c31d1f9fd263b08bd6e28ae51ce576d04ddb1f28eed4ad68844",
+    "statistics": {
+      "relevant_files": 12,
+      "nested_asar_containers": 0,
+      "text_bytes_read": 15600,
+      "invalid_utf8_files": 0,
+      "parsed_javascript_files": 1,
+      "skipped_javascript_files": 0,
+      "visited_ast_nodes": 4107,
+      "findings": 54,
+      "modules": 0,
+      "parse_failures": 0
+    },
+    "route_inventory": {
+      "statistics": {
+        "sources_seen": 12,
+        "sources_retained": 12,
+        "route_patterns": 0,
+        "occurrences": 0,
+        "unanchored_literals_excluded": 0
+      },
+      "coverage": {
+        "scope": "provided-code-sources",
+        "source_parsing": "partial",
+        "candidate_enumeration": "partial",
+        "application_routes": "unknown"
+      },
+      "routes": []
+    },
+    "semantic_coverage": {
+      "status": "partial",
+      "truncated": true,
+      "omitted_nodes": null,
+      "omitted_relations": null,
+      "limits": [
+        {
+          "name": "max_semantic_nodes",
+          "value": 10000,
+          "unit": "items"
+        },
+        {
+          "name": "max_semantic_nodes_per_file",
+          "value": 2000,
+          "unit": "items"
+        },
+        {
+          "name": "semantic_graph_file_node_ceiling",
+          "value": 2000,
+          "unit": "items"
+        },
+        {
+          "name": "semantic_graph_node_ceiling",
+          "value": 10000,
+          "unit": "items"
+        }
+      ]
+    },
+    "graph_relation_counts": {
+      "null": 78
+    },
+    "limitations": [
+      "Caller-selected source analysis leaves 11 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+      "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+      "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+      "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+      "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+      "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+      "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+    ]
+  },
+  {
+    "name": "angular-main",
+    "run": {
+      "name": "angular-main",
+      "input": "/Users/victorvillacis/dev/client-side-routing-research/.local/captures/angular/assets",
+      "command": [
+        "/Users/victorvillacis/.local/bin/rea",
+        "analyze-javascript-application",
+        "/Users/victorvillacis/dev/client-side-routing-research/.local/captures/angular/assets",
+        "--analysis-timeout-ms",
+        "15000",
+        "--max-heap-mb",
+        "512",
+        "--max-semantic-nodes",
+        "10000",
+        "--max-semantic-nodes-per-file",
+        "2000",
+        "--max-semantic-unknowns",
+        "10000",
+        "--max-semantic-unknowns-per-file",
+        "2000",
+        "--json",
+        "--source-path",
+        "main-NXB5WAJL.js"
+      ],
+      "selected_sources": [
+        "main-NXB5WAJL.js"
+      ],
+      "inventory": [
+        {
+          "path": "chunk-B-X8MTbm.js",
+          "bytes": 11425,
+          "sha256": "2574091bfce49d98890dcd3dcd7fff67a166faead21eb5f87a3fb906ccb2e9ee"
+        },
+        {
+          "path": "chunk-BOHxeupa.js",
+          "bytes": 15600,
+          "sha256": "2b0d48bf9774b38d7888dad4f83abd1f49a0e1b50daf074c24804cdc6de19a00"
+        },
+        {
+          "path": "chunk-Bf_6ndTT.js",
+          "bytes": 1940,
+          "sha256": "4cd33eaaa65968cba845d8c184756f8da208a5ebf96efeab4d87aa99ca23bac8"
+        },
+        {
+          "path": "chunk-BlZAhgZ5.js",
+          "bytes": 355432,
+          "sha256": "a95526cf010458cc915dd648346c34e1951bf3293bdd94b2123880b14667ff1f"
+        },
+        {
+          "path": "chunk-C0FaT-It.js",
+          "bytes": 15875,
+          "sha256": "3625eb3486f5fbb6d76bb638b2cc4bc6ef97eef9b00e8f52811f5a1275150ffa"
+        },
+        {
+          "path": "chunk-CJ67U7VT.js",
+          "bytes": 25163,
+          "sha256": "670754e3da332143c41bfd299b2318fda1b3fb5892b31a0ff36e7e8e2ea0c9c0"
+        },
+        {
+          "path": "chunk-CK-MGa8p.js",
+          "bytes": 116,
+          "sha256": "16718bdb6ac5b5eaa2bd23aeeeeb532ec1f78cf79b36f47a08107bceb729bf47"
+        },
+        {
+          "path": "chunk-CrmKEisR.js",
+          "bytes": 36249,
+          "sha256": "19180e45c7c83a932306ec915b2e6bd30d94c54250c0ab7d721af5086dd9be63"
+        },
+        {
+          "path": "chunk-DiscwNkY.js",
+          "bytes": 253,
+          "sha256": "6f5cc18d1932a84f7d8ee4eb82beeec98d6947c47cc8a9d9ac6cf68f286bf34b"
+        },
+        {
+          "path": "chunk-NtOoTFZ6.js",
+          "bytes": 5571,
+          "sha256": "32dab93e0fc17cd541a4e3db9c1bf5d0f513a8f1d737ac1b2f5464693bbde9a5"
+        },
+        {
+          "path": "chunk-OiM2P69I.js",
+          "bytes": 572,
+          "sha256": "f8ebadad18735fa60f563d7c2c23cd31baae54939f55ff5f63175cd262a441bf"
+        },
+        {
+          "path": "main-NXB5WAJL.js",
+          "bytes": 621355,
+          "sha256": "c7ee9eb44123776a1f898f28fa314710dec387564a47f0f1f4dabdbb0f723c59"
+        }
+      ],
+      "rea_version": "6.8.0",
+      "queued_at_utc": "2026-10-26T14:14:09.081016+00:00",
+      "total_deadline_seconds": 120,
+      "started_at_utc": "2026-10-26T14:14:09.081490+00:00",
+      "outer_timeout": false,
+      "exit_code": 0,
+      "elapsed_seconds": 8.554,
+      "evidence_id": "ev_bbb808bd5f34a90446bd7fc5379afb826afc6de07bf47c97fa49f58bff4f63d3",
+      "statistics": {
+        "relevant_files": 12,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 621355,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 1,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 118111,
+        "findings": 1039,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "limitations": [
+        "Alias selection expansion was conservatively bounded (maximum 512 additional selector states); selected paths remain unknown.",
+        "Caller-selected source analysis leaves 11 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ],
+      "error": null,
+      "evidence_sha256": "f6f5f03a1f583b938b8b1c13d5415b33244f0e8fde120adc38e56081d51853ed"
+    },
+    "evidence_id": "ev_bbb808bd5f34a90446bd7fc5379afb826afc6de07bf47c97fa49f58bff4f63d3",
+    "statistics": {
+      "relevant_files": 12,
+      "nested_asar_containers": 0,
+      "text_bytes_read": 621355,
+      "invalid_utf8_files": 0,
+      "parsed_javascript_files": 1,
+      "skipped_javascript_files": 0,
+      "visited_ast_nodes": 118111,
+      "findings": 1039,
+      "modules": 0,
+      "parse_failures": 0
+    },
+    "route_inventory": {
+      "statistics": {
+        "sources_seen": 12,
+        "sources_retained": 12,
+        "route_patterns": 1,
+        "occurrences": 2,
+        "unanchored_literals_excluded": 0
+      },
+      "coverage": {
+        "scope": "provided-code-sources",
+        "source_parsing": "partial",
+        "candidate_enumeration": "partial",
+        "application_routes": "unknown"
+      },
+      "routes": [
+        {
+          "id": "jsr:df7e940f72aa93cbcb6d70cc35124b07",
+          "path": "/",
+          "classification": "page",
+          "classification_basis": "router-configuration",
+          "confidence": "low",
+          "mechanisms": [
+            "nested-route-object"
+          ],
+          "occurrence_count": 2,
+          "source_count": 1,
+          "primary_occurrence_id": "jso:5c8b7ae3dc5f813d7ff5e08cea05d853"
+        }
+      ]
+    },
+    "semantic_coverage": {
+      "status": "partial",
+      "truncated": true,
+      "omitted_unknown_occurrences": [
+        {
+          "family": "call-flow",
+          "reason": "dynamic-call",
+          "occurrences": 6164
+        },
+        {
+          "family": "object-flow",
+          "reason": "ambiguous-target",
+          "occurrences": 4101
+        },
+        {
+          "family": "object-flow",
+          "reason": "dynamic-property",
+          "occurrences": 330
+        },
+        {
+          "family": "timer",
+          "reason": "ambiguous-target",
+          "occurrences": 22
+        }
+      ],
+      "omitted_nodes": null,
+      "omitted_relations": null,
+      "limits": [
+        {
+          "name": "max_semantic_nodes",
+          "value": 10000,
+          "unit": "items"
+        },
+        {
+          "name": "max_semantic_nodes_per_file",
+          "value": 2000,
+          "unit": "items"
+        },
+        {
+          "name": "max_semantic_unknowns",
+          "value": 10000,
+          "unit": "items"
+        },
+        {
+          "name": "max_semantic_unknowns_per_file",
+          "value": 2000,
+          "unit": "items"
+        },
+        {
+          "name": "semantic_graph_file_node_ceiling",
+          "value": 2000,
+          "unit": "items"
+        },
+        {
+          "name": "semantic_graph_file_unknown_ceiling",
+          "value": 2000,
+          "unit": "items"
+        },
+        {
+          "name": "semantic_graph_node_ceiling",
+          "value": 10000,
+          "unit": "items"
+        },
+        {
+          "name": "semantic_graph_unknown_ceiling",
+          "value": 10000,
+          "unit": "items"
+        }
+      ]
+    },
+    "graph_relation_counts": {
+      "null": 1063
+    },
+    "limitations": [
+      "Alias selection expansion was conservatively bounded (maximum 512 additional selector states); selected paths remain unknown.",
+      "Caller-selected source analysis leaves 11 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+      "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+      "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+      "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+      "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+      "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+      "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+    ]
+  }
+]

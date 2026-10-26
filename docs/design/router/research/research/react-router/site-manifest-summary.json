@@ -1,0 +1,131 @@
+{
+  "version": "b63cec8d",
+  "url": "/assets/manifest-b63cec8d.js",
+  "entry": {
+    "module": "/assets/entry.client-BVIS7KF3.js",
+    "imports": [
+      "/assets/jsx-runtime-C-dPSQ1O.js",
+      "/assets/react-dom-BRBZS0sB.js"
+    ],
+    "css": []
+  },
+  "routes": {
+    "root": {
+      "id": "root",
+      "parentId": null,
+      "path": "",
+      "index": null,
+      "module": "/assets/root-CmiqwOFp.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "pages/splash": {
+      "id": "pages/splash",
+      "parentId": "root",
+      "path": null,
+      "index": true,
+      "module": "/assets/splash-ByzNsLdJ.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "pages/brand": {
+      "id": "pages/brand",
+      "parentId": "root",
+      "path": "/brand",
+      "index": null,
+      "module": "/assets/brand-tpPzyX8T.js",
+      "hasLoader": false,
+      "hasAction": false
+    },
+    "pages/healthcheck": {
+      "id": "pages/healthcheck",
+      "parentId": "root",
+      "path": "/healthcheck",
+      "index": null,
+      "module": "/assets/healthcheck-DTeLFzJr.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "actions/color-scheme/route": {
+      "id": "actions/color-scheme/route",
+      "parentId": "root",
+      "path": "/color-scheme",
+      "index": null,
+      "module": "/assets/route-DRJ61MuW.js",
+      "hasLoader": false,
+      "hasAction": true
+    },
+    "docs": {
+      "id": "docs",
+      "parentId": "root",
+      "path": "",
+      "index": null,
+      "module": "/assets/docs-layout-CTqBlNNw.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "home-md": {
+      "id": "home-md",
+      "parentId": "docs",
+      "path": "home.md",
+      "index": null,
+      "module": "/assets/doc-CVbegNQE.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "home": {
+      "id": "home",
+      "parentId": "docs",
+      "path": "home",
+      "index": null,
+      "module": "/assets/doc-CVbegNQE.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "changelog-md": {
+      "id": "changelog-md",
+      "parentId": "docs",
+      "path": "changelog.md",
+      "index": null,
+      "module": "/assets/doc-CVbegNQE.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "changelog": {
+      "id": "changelog",
+      "parentId": "docs",
+      "path": "changelog",
+      "index": null,
+      "module": "/assets/doc-CVbegNQE.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "pages/doc": {
+      "id": "pages/doc",
+      "parentId": "docs",
+      "path": "*",
+      "index": null,
+      "module": "/assets/doc-CVbegNQE.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "v6-index-layout": {
+      "id": "v6-index-layout",
+      "parentId": "root",
+      "path": "/:ref",
+      "index": null,
+      "module": "/assets/docs-layout-CTqBlNNw.js",
+      "hasLoader": true,
+      "hasAction": false
+    },
+    "v6-index": {
+      "id": "v6-index",
+      "parentId": "v6-index-layout",
+      "path": null,
+      "index": true,
+      "module": "/assets/docs-v6-index-BGNNz-Ba.js",
+      "hasLoader": false,
+      "hasAction": false
+    }
+  }
+}

@@ -1,0 +1,286 @@
+{
+  "checked_at_utc": "2026-10-26T14:55:46.992437+00:00",
+  "rea_runs": [
+    {
+      "name": "angular-history",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:13:53.203050+00:00",
+      "elapsed_seconds": 3.861,
+      "exit_code": 0,
+      "outer_timeout": false,
+      "evidence_id": "ev_5dc13d49d68b5c31d1f9fd263b08bd6e28ae51ce576d04ddb1f28eed4ad68844",
+      "statistics": {
+        "relevant_files": 12,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 15600,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 1,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 4107,
+        "findings": 54,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error": null,
+      "json_error": null,
+      "selected_sources": [
+        "chunk-BOHxeupa.js"
+      ],
+      "receipt": ".local/rea/angular-history/run.json",
+      "full_evidence": ".local/rea/angular-history/evidence.json",
+      "evidence_sha256": "2e55f84aeb03bcf13c06c651873a089f18171b8c7a430f32b2f496ffe5412294",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    },
+    {
+      "name": "angular-main",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:14:09.081490+00:00",
+      "elapsed_seconds": 8.554,
+      "exit_code": 0,
+      "outer_timeout": false,
+      "evidence_id": "ev_bbb808bd5f34a90446bd7fc5379afb826afc6de07bf47c97fa49f58bff4f63d3",
+      "statistics": {
+        "relevant_files": 12,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 621355,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 1,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 118111,
+        "findings": 1039,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error": null,
+      "json_error": null,
+      "selected_sources": [
+        "main-NXB5WAJL.js"
+      ],
+      "receipt": ".local/rea/angular-main/run.json",
+      "full_evidence": ".local/rea/angular-main/evidence.json",
+      "evidence_sha256": "f6f5f03a1f583b938b8b1c13d5415b33244f0e8fde120adc38e56081d51853ed",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    },
+    {
+      "name": "astro-docs-prefetch-v2",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:15:25.370701+00:00",
+      "elapsed_seconds": 4.534,
+      "exit_code": 0,
+      "outer_timeout": false,
+      "evidence_id": "ev_3c715a1acb91eabc3a8586596ee9a218bf9699d0d66c7712ca00af72228cb278",
+      "statistics": {
+        "relevant_files": 6,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 5146,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 4,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 1491,
+        "findings": 10,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error": null,
+      "json_error": null,
+      "selected_sources": [
+        "page.LAbJoB63.js",
+        "MobileTableOfContents.astro_astro_type_script_index_0_lang.kgentfrr.js",
+        "TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js",
+        "starlight-toc.CTCQXEge.js"
+      ],
+      "receipt": ".local/rea/astro-docs-prefetch-v2/run.json",
+      "full_evidence": ".local/rea/astro-docs-prefetch-v2/evidence.json",
+      "evidence_sha256": "16b260b8e829a7b1e5dc96025f428aee6d87a3fabcaf49cc5d022290b9ad5940",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    },
+    {
+      "name": "astro-published-transitions",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:14:26.236284+00:00",
+      "elapsed_seconds": 3.732,
+      "exit_code": 0,
+      "outer_timeout": false,
+      "evidence_id": "ev_311fe8aa9432486815122f52b2ab2e6c6a8379d03ffb56d5db63b21a91d71440",
+      "statistics": {
+        "relevant_files": 9,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 37761,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 4,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 5340,
+        "findings": 41,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error": null,
+      "json_error": null,
+      "selected_sources": [
+        "dist/transitions/router.js",
+        "dist/transitions/events.js",
+        "dist/transitions/swap-functions.js",
+        "dist/prefetch/index.js"
+      ],
+      "receipt": ".local/rea/astro-published-transitions/run.json",
+      "full_evidence": ".local/rea/astro-published-transitions/evidence.json",
+      "evidence_sha256": "bd4fbb44a0916d72386df60d53dac079eeb266926d7ec62f1d82c3be289b7751",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    },
+    {
+      "name": "react-router-doc-chunks",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:14:17.635781+00:00",
+      "elapsed_seconds": 2.553,
+      "exit_code": 0,
+      "outer_timeout": false,
+      "evidence_id": "ev_2216001df0e3f74322608fb6bc6b68ba083dc16566857260a7b1485ed677d1d3",
+      "statistics": {
+        "relevant_files": 7,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 16979,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 4,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 3425,
+        "findings": 80,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error": null,
+      "json_error": null,
+      "selected_sources": [
+        "manifest-b63cec8d.js",
+        "root-CmiqwOFp.js",
+        "doc-CVbegNQE.js",
+        "utils-CTsB3O1x.js"
+      ],
+      "receipt": ".local/rea/react-router-doc-chunks/run.json",
+      "full_evidence": ".local/rea/react-router-doc-chunks/evidence.json",
+      "evidence_sha256": "72f6ac55fce468a170cb09a3da9f67085cd26a5c73e2db25a46aac174565aa96",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    },
+    {
+      "name": "react-router-entry",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:14:46.614940+00:00",
+      "elapsed_seconds": 18.011,
+      "exit_code": 1,
+      "outer_timeout": false,
+      "evidence_id": null,
+      "statistics": null,
+      "error": "JavaScript application analysis failed",
+      "json_error": null,
+      "selected_sources": [
+        "entry.client-BVIS7KF3.js"
+      ],
+      "receipt": ".local/rea/react-router-entry/run.json",
+      "full_evidence": ".local/rea/react-router-entry/evidence.json",
+      "evidence_sha256": "30d62da47d2218768bc41f28954db47cf24498207bcc1cc32345ecd9af6a07e6",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    },
+    {
+      "name": "react-router-layout-chunks",
+      "rea_version": "6.8.0",
+      "started_at_utc": "2026-10-26T14:15:49.514688+00:00",
+      "elapsed_seconds": 4.363,
+      "exit_code": 0,
+      "outer_timeout": false,
+      "evidence_id": "ev_b8951a4ad0b7cc6f223daf847efd7b78c6c38646f3f75e8f901ff082a45799c0",
+      "statistics": {
+        "relevant_files": 7,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 24353,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 2,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 6200,
+        "findings": 71,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error": null,
+      "json_error": null,
+      "selected_sources": [
+        "docs-layout-CTqBlNNw.js",
+        "lib-w1Rxlh47.js"
+      ],
+      "receipt": ".local/rea/react-router-layout-chunks/run.json",
+      "full_evidence": ".local/rea/react-router-layout-chunks/evidence.json",
+      "evidence_sha256": "bf7063312b840dfcffed1795ade404690d0eda9186c5d08b942abed3986153c0",
+      "scope": "Bounded selected-source static analysis; exit 0 does not imply complete graph coverage."
+    }
+  ],
+  "browser_observations": [
+    {
+      "target": "angular",
+      "javascript": true,
+      "browser": "155.0.8059.85",
+      "before": "https://angular.dev/guide/routing",
+      "after": "https://angular.dev/guide/routing/define-routes",
+      "same_document": true,
+      "back_heading": "Angular Routing",
+      "document_requests_on_click": 0,
+      "evidence": "evidence/browser-angular.json"
+    },
+    {
+      "target": "angular",
+      "javascript": false,
+      "browser": "155.0.8059.85",
+      "before": "https://angular.dev/guide/routing",
+      "after": "https://angular.dev/guide/routing/define-routes",
+      "same_document": false,
+      "back_heading": "Angular Routing",
+      "document_requests_on_click": 1,
+      "evidence": "evidence/browser-angular.json"
+    },
+    {
+      "target": "astro",
+      "javascript": true,
+      "browser": "155.0.8059.85",
+      "before": "https://docs.astro.build/en/guides/routing/",
+      "after": "https://docs.astro.build/en/guides/view-transitions/",
+      "same_document": false,
+      "back_heading": "Routing",
+      "document_requests_on_click": 1,
+      "evidence": "evidence/browser-astro.json"
+    },
+    {
+      "target": "astro",
+      "javascript": false,
+      "browser": "155.0.8059.85",
+      "before": "https://docs.astro.build/en/guides/routing/",
+      "after": "https://docs.astro.build/en/guides/view-transitions/",
+      "same_document": false,
+      "back_heading": "Routing",
+      "document_requests_on_click": 1,
+      "evidence": "evidence/browser-astro.json"
+    },
+    {
+      "target": "react-router",
+      "javascript": true,
+      "browser": "155.0.8059.85",
+      "before": "https://reactrouter.com/home",
+      "after": "https://reactrouter.com/start/modes",
+      "same_document": true,
+      "back_heading": "React Router Home",
+      "document_requests_on_click": 0,
+      "evidence": "evidence/browser-react-router.json"
+    },
+    {
+      "target": "react-router",
+      "javascript": false,
+      "browser": "155.0.8059.85",
+      "before": "https://reactrouter.com/home",
+      "after": "https://reactrouter.com/start/modes",
+      "same_document": false,
+      "back_heading": "React Router Home",
+      "document_requests_on_click": 1,
+      "evidence": "evidence/browser-react-router.json"
+    }
+  ],
+  "local_links_checked": 177,
+  "input_receipts_checked": 62,
+  "errors": [],
+  "scope": "Local target existence and saved bytes/receipts only; not a semantic proof or upstream conformance suite."
+}
