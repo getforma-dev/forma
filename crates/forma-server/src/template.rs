@@ -244,7 +244,7 @@ pub(crate) fn write_document(
     #[cfg(feature = "navigation")]
     let navigation_metadata = crate::navigation::initial_metadata(config, ctx)?;
     #[cfg(not(feature = "navigation"))]
-    let navigation_metadata = "";
+    let navigation_metadata = String::new();
     write_document_parts(
         config,
         nonce,
@@ -253,7 +253,7 @@ pub(crate) fn write_document(
         ctx,
         max_output_bytes,
         counts,
-        navigation_metadata.as_ref(),
+        &navigation_metadata,
         false,
     )
 }

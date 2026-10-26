@@ -1,0 +1,33 @@
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+warning: unused variable: `offset`
+   --> crates/forma-server/src/navigation/owners.rs:723:58
+    |
+723 | fn reindex(body: &str, states: &[(Range<usize>, usize)], offset: usize) -> String {
+    |                                                          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_offset`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `forma-server` (lib) generated 1 warning (run `cargo fix --lib -p forma-server` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.46s
+     Running tests/navigation_owners.rs (target/debug/deps/navigation_owners-889dd5353521f4e1)
+
+running 1 test
+test full_document_reindexes_only_real_occurrences_and_native_owners_remain_local ... FAILED
+
+failures:
+
+---- full_document_reindexes_only_real_occurrences_and_native_owners_remain_local stdout ----
+
+thread 'full_document_reindexes_only_real_occurrences_and_native_owners_remain_local' (40131769) panicked at crates/forma-server/tests/navigation_owners.rs:206:5:
+assertion `left == right` failed
+  left: 4
+ right: 3
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    full_document_reindexes_only_real_occurrences_and_native_owners_remain_local
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p forma-server --test navigation_owners`

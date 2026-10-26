@@ -1,0 +1,21 @@
+[package]
+name = "forma-router-native-fixture"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+forma-server = { path = "../../../crates/forma-server", features = ["navigation"] }
+forma-ir = { path = "../../../crates/forma-ir" }
+axum = "0.8"
+base64 = "0.22"
+rust-embed = "8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "time"] }
+
+[patch.crates-io]
+forma-ir = { path = "../../../crates/forma-ir" }
+forma-ir-derive = { path = "../../../crates/forma-ir-derive" }

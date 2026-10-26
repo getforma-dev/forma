@@ -1,0 +1,257 @@
+{
+  "at": "2026-10-26T17:38:01.581Z",
+  "command": [
+    "/Users/victorvillacis/dev/tools/rea/.local-runtime/node-v24.22.1-darwin-arm64/bin/node",
+    "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs",
+    "http://127.0.0.1:62253",
+    "experiments/forma-router-native/evidence/browser-chromium-first.json"
+  ],
+  "node": "v24.22.1",
+  "source": "0d904dee4904770bcc8c19dfb597d19067a94cdc",
+  "dirty": " M experiments/forma-router/client.ts\n M packages/build/src/manifest.ts\n M packages/build/src/route-size.ts\n M packages/build/tests/navigation-groups.test.ts\n M packages/build/tests/route-size.test.ts\n M packages/core/docs/CDN-AND-EXPORTS.md\n M packages/core/docs/ISLANDS.md\n M packages/core/package.json\n M packages/core/scripts/build-defines.mjs\n M packages/core/src/__tests__/index-surface.test.ts\n M packages/core/src/__tests__/package-exports.test.ts\n M packages/core/src/dom/__tests__/navigation-adoption.test.ts\n M packages/core/src/dom/__tests__/trusted-html.test.ts\n M packages/core/src/dom/activate.ts\n M packages/core/src/dom/island-state.ts\n M packages/core/tsup.config.ts\n?? experiments/forma-router-native/\n?? packages/core/scripts/readable-javascript.mjs\n?? packages/core/src/__tests__/readable-javascript.test.ts\n?? packages/core/src/dom/__tests__/native-owner.test.ts\n?? packages/core/src/dom/navigation-experiment.ts\n?? packages/core/src/dom/navigation-state.ts\n?? packages/core/src/navigation.ts\n?? packages/router/\n",
+  "diffSha256": "c5259f17beb81496cd81751a2326a1f37338be9ba5c4f1731ca4a63ef5242ad7",
+  "artifacts": {
+    "dist/a.f3a81322.ir": "f3a813221c798aaedb732b1c76b1f7af4be116e646325308f02f7a89a1dc2158",
+    "dist/b.f055b3a4.ir": "f055b3a410f034942de80fd1f79c33cc738095c50e4fccd2f76315ed98b9729f",
+    "dist/forma-navigation-native.14b864c0.js": "14b864c06a7e82571d8fe827fc767af4a51202e0ebc34b9121e9e1eeededbd89",
+    "dist/forma-navigation-native.14b864c0.js.br": "99489b88bb294f93908d0ef958644a6ffbf0004a8071df6e58d683f05c811989",
+    "dist/forma-navigation-native.14b864c0.js.gz": "902be98d64b00155dede58976da47ec382829ba2701b3a4a52345995fed48794",
+    "dist/manifest.json": "c637494ed3dcf2aff06482ca185c133112b270fc63f51b580cdd04a670b12e61",
+    "dist/shell.73e5b69f.ir": "73e5b69fd7f6f0e8be306301edea0dc7076fcf0a0d3bdf25a4fb7f6152e32c45",
+    "dist/size-report.json": "5d5c1c9031b8868507e8beed58644b702a9af062bcd229d594383e0f5e296af1",
+    "dist/sw.js": "90175360330eff0d8cd0debe7a543fd513664ababbd39b9fbad204f8e8ed4583",
+    "dist-next/a.f3a81322.ir": "f3a813221c798aaedb732b1c76b1f7af4be116e646325308f02f7a89a1dc2158",
+    "dist-next/b.f055b3a4.ir": "f055b3a410f034942de80fd1f79c33cc738095c50e4fccd2f76315ed98b9729f",
+    "dist-next/forma-navigation-native.82f9dbf9.js": "82f9dbf95dd62d0e506b47c8b3a9701b66fb28320d32035aa4fa77ed6a228001",
+    "dist-next/forma-navigation-native.82f9dbf9.js.br": "bc5f4fd72131532dd2708e3fb96b025d3601e954bf7c57870935b9b468fe31c9",
+    "dist-next/forma-navigation-native.82f9dbf9.js.gz": "33ae2f1ed3c79ffbc89977bbeeac35873a86217f30bd0dfae8d7e8046c08487d",
+    "dist-next/manifest.json": "855e8a597d6cbc85c9cf72106fcb0b5176ddb81bd183f3d8c3d47a71e1dc077b",
+    "dist-next/shell.73e5b69f.ir": "73e5b69fd7f6f0e8be306301edea0dc7076fcf0a0d3bdf25a4fb7f6152e32c45",
+    "dist-next/size-report.json": "4415cf99200d47d8b1df1f7411e39c87a41fd5e5ecd81d12e8d9f14a7aae9943",
+    "dist-next/sw.js": "d64176a5a30420cceeeddf427a21c1eab33ab28b268e6038d325c0d72d3439a1"
+  },
+  "scope": "Source integration of actual public compiler/build/core/router/server; not packed release, deployment or manual accessibility qualification.",
+  "browsers": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4"
+    }
+  ],
+  "results": [
+    {
+      "engine": "chromium",
+      "name": "native nested owner A-B-A retains layout island and disposes departing leaf",
+      "ids": [
+        "RT-N01",
+        "RT-O01",
+        "RT-N04"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "scheduled island readiness preserves original served nodes",
+      "ids": [
+        "RT-C04",
+        "RT-N04"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "latest held GET wins and stale response cannot change title URL or layout",
+      "ids": [
+        "RT-C01",
+        "RT-C02"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "hash query revalidation Back Forward and replace preserve history ownership",
+      "ids": [
+        "RT-H01",
+        "RT-U05",
+        "RT-A02"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "validation preserves form values and accessible summary without push",
+      "ids": [
+        "RT-F03",
+        "RT-A01"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "successful typed POST refreshes props and replaces leaf while retaining layout",
+      "ids": [
+        "RT-F01",
+        "RT-F05",
+        "RT-O03"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "managed GET form preserves query serialization without POST",
+      "ids": [
+        "RT-F01",
+        "RT-F02"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "navigation during delayed POST revalidates newer current route",
+      "ids": [
+        "RT-F05",
+        "RT-F06"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "competing submissions are busy and never queue a second send",
+      "ids": [
+        "RT-F04"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "lost action result remains uncertain across GET and reload with one POST",
+      "ids": [
+        "RT-F07"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "real CSRF refusal prevents mutation and undeclared endpoint never transmits",
+      "ids": [
+        "RT-F08",
+        "RT-F09"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "explicit POST redirect becomes one admitted GET and preserves document",
+      "ids": [
+        "RT-F09"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "real changed policy makes one explicit document boundary",
+      "ids": [
+        "RT-S01",
+        "RT-X02"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "actual second compiled build cannot mix owners and requires document boundary",
+      "ids": [
+        "RT-S02",
+        "RT-X02"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "malformed scoped state refuses before replacing or activating destination",
+      "ids": [
+        "RT-N02",
+        "RT-N03"
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'document-navigation'\n- 'failed'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:118:94\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:26:11)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:116:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "custom element and slash-is markup cannot execute constructors",
+      "ids": [
+        "RT-S04"
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'document-navigation'\n- 'failed'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:124:96\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:26:11)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:120:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "typed404 and GET redirect preserve status semantics and one final history entry",
+      "ids": [
+        "RT-X01",
+        "RT-H04"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "direct refresh and no-JavaScript native forms render fresh typed HTML",
+      "ids": [
+        "RT-N05",
+        "RT-F01"
+      ],
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "100 retained-layout route cycles leave departing click handlers inactive",
+      "ids": [
+        "RT-O02",
+        "RT-M03"
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:140:77\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:26:11)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:137:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "retained focus and layout input selection survive sibling transition",
+      "ids": [
+        "RT-A01"
+      ],
+      "status": "passed"
+    }
+  ],
+  "failures": [
+    {
+      "engine": "chromium",
+      "name": "malformed scoped state refuses before replacing or activating destination",
+      "ids": [
+        "RT-N02",
+        "RT-N03"
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'document-navigation'\n- 'failed'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:118:94\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:26:11)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:116:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "custom element and slash-is markup cannot execute constructors",
+      "ids": [
+        "RT-S04"
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'document-navigation'\n- 'failed'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:124:96\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:26:11)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:120:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "100 retained-layout route cycles leave departing click handlers inactive",
+      "ids": [
+        "RT-O02",
+        "RT-M03"
+      ],
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:140:77\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:26:11)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:137:3"
+    }
+  ],
+  "finishedAt": "2026-10-26T17:38:16.132Z",
+  "finalDiffSha256": "c5259f17beb81496cd81751a2326a1f37338be9ba5c4f1731ca4a63ef5242ad7",
+  "sourceChangedDuringRun": false
+}

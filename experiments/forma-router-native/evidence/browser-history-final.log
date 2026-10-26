@@ -1,0 +1,10 @@
+PASS chromium revalidation repairs a held POP cursor before current-view data refresh
+PASS chromium valid foreground context verification restores the cancelled POP cursor
+PASS chromium POST during a held POP restores the committed cursor and refreshes that branch
+PASS firefox revalidation repairs a held POP cursor before current-view data refresh
+PASS firefox valid foreground context verification restores the cancelled POP cursor
+PASS firefox POST during a held POP restores the committed cursor and refreshes that branch
+PASS webkit revalidation repairs a held POP cursor before current-view data refresh
+PASS webkit valid foreground context verification restores the cancelled POP cursor
+PASS webkit POST during a held POP restores the committed cursor and refreshes that branch
+{"passed":9,"failed":0,"output":"experiments/forma-router-native/evidence/browser-history-final.json","sourceChangedDuringRun":false}

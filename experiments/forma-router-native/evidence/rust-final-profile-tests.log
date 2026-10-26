@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.36s
+     Running unittests src/lib.rs (target/debug/deps/forma_server-cbd29ce6a6cd7c37)
+
+running 2 tests
+test navigation::owners::tests::sealed_fragment_profile_rejects_policy_resources_upgrades_and_unsafe_urls ... ok
+test navigation::owners::tests::marker_inspection_and_reindex_ignore_quoted_values_text_and_comments ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 114 filtered out; finished in 0.00s
+

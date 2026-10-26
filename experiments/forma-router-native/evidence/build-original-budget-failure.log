@@ -1,0 +1,29 @@
+SSR mode enabled — emitting IR files
+   IR emitted (real): shell.ir (897 bytes, 1 islands)
+   IR emitted (real): a.ir (1158 bytes, 1 islands)
+   IR emitted (real): b.ir (1158 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist/forma-navigation-native.fc0ae249.js  108.1kb
+
+   7 assets hashed
+   1 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /native/_shell  islands  Forma 36,628 of 28,420 B  JavaScript 38,802 of 76,800 B  (Brotli: Forma 32,663, JavaScript 34,535)  forma-navigation-native.fc0ae249.js  OVER: Forma code by 8,208 B
+   /native/a       islands  Forma 36,628 of 28,420 B  JavaScript 38,802 of 76,800 B  (Brotli: Forma 32,663, JavaScript 34,535)  forma-navigation-native.fc0ae249.js  OVER: Forma code by 8,208 B
+   /native/b       islands  Forma 36,628 of 28,420 B  JavaScript 38,802 of 76,800 B  (Brotli: Forma 32,663, JavaScript 34,535)  forma-navigation-native.fc0ae249.js  OVER: Forma code by 8,208 B
+   Service worker   sw.js  3,138 B raw, 1,458 B gzip, 1,234 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       437 ms: bundle 311 ms, hash 1 ms, compress 124 ms, manifest 1 ms
+file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/dist/index.js:1833
+  return new Error(
+         ^
+
+Error: BUILD-819 3 routes are over their size ceilings (gzip -9; DR-35 and the 3.1 performance decision; 1 KB = 1,000 B, 1 KiB = 1,024 B): /native/_shell (islands) Forma code 36,628 B against 28,420 B (forma-navigation-native.fc0ae249.js); /native/a (islands) Forma code 36,628 B against 28,420 B (forma-navigation-native.fc0ae249.js); /native/b (islands) Forma code 36,628 B against 28,420 B (forma-navigation-native.fc0ae249.js). Trim what the route imports or ships, split it, or declare a heavy page's route `canvas: true` (365 KiB of JavaScript instead of 75 KiB); the ceilings are policy and not configurable.
+    at routeSizeFailure (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/dist/index.js:1833:10)
+    at buildInto (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/dist/index.js:2679:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async build4 (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/build/dist/index.js:2267:14)
+    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/build.mjs:7:16
+
+Node.js v24.22.1

@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-26T17:50:33.465653+00:00",
+  "status": "terminated-known-harness-timing-failure",
+  "reason": "Assertions queried the current page after replacement navigation had entered a provisional document while its GET was held. Stop repeated 30-second timeouts; revise to capture original-root revocation synchronously before navigation. This is not a product pass.",
+  "passedLines": [
+    "PASS chromium native nested owner A-B-A retains layout island and disposes departing leaf",
+    "PASS chromium scheduled island readiness preserves original served nodes",
+    "PASS chromium latest held GET wins and stale response cannot change title URL or layout",
+    "PASS chromium hash query revalidation Back Forward and replace preserve history ownership",
+    "PASS chromium validation preserves form values and accessible summary without push",
+    "PASS chromium successful typed POST refreshes props and replaces leaf while retaining layout",
+    "PASS chromium managed GET form preserves query serialization without POST",
+    "PASS chromium navigation during delayed POST revalidates newer current route",
+    "PASS chromium competing submissions are busy and never queue a second send",
+    "PASS chromium lost action result remains uncertain across GET and reload with one POST",
+    "PASS chromium explicit POST redirect becomes one admitted GET and preserves document",
+    "PASS chromium formdata reentrant submission reserves one POST and dispose transmits none",
+    "PASS chromium late validation settlement cannot discard the newer held GET destination",
+    "PASS chromium foreground context check and persisted pageshow each use a fresh document boundary",
+    "PASS chromium real changed policy makes one explicit document boundary",
+    "PASS chromium actual second compiled build cannot mix owners and requires document boundary"
+  ],
+  "failedLines": [
+    "FAIL chromium real CSRF refusal revokes safely and undeclared endpoint never transmits locator.innerHTML: Timeout 30000ms exceeded.",
+    "FAIL chromium explicit context revocation clears owners before recovery and stale GET cannot reactivate locator.innerHTML: Timeout 30000ms exceeded.",
+    "FAIL chromium malformed scoped state refuses destination activation before one document recovery locator.innerText: Timeout 30000ms exceeded."
+  ],
+  "rawLog": "browser-three-engine-first.log"
+}
