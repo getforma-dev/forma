@@ -213,6 +213,8 @@ describe('the size report per route (FORMA-021, FORMA-190)', () => {
   });
 
   it('gives each class its ceilings: none for a route without an interactive region, N2 and 75 KiB for islands and a whole-page mount, 365 KiB for a declared canvas', () => {
+    expect(routeCeilings('navigation-group')).toEqual({ forma: 40_708, javascript: 65_536 });
+    expect(routeCeilings('navigation-group',true)).toEqual({ forma: 40_708, javascript: 65_536 });
     expect(routeCeilings('no-interactive-region')).toEqual({ forma: 0, javascript: 0 });
     // A canvas declaration gives no JavaScript to a route that has no interactive region.
     expect(routeCeilings('no-interactive-region', true)).toEqual({ forma: 0, javascript: 0 });

@@ -61,6 +61,16 @@ the packed core navigation entry and exercises nested parameter matching. The
 source gate builds/tests the router and checks its types and packed exports.
 The current templates keep navigation opt-in and do not gain a router dependency.
 
+Before the first router publication, complete the package's npm trusted-publisher
+enrollment and enroll it in the operational registry monitor inventories
+(`scripts/registry-reconcile-policy.json` and `scripts/release-plane-events.mjs`).
+These are release-preparation blockers; the live inventories currently describe
+the four actually published npm packages. Do not invent an existing registry
+package, suppress a 404 or claim that local package tests established enrollment.
+Their 3.0/3.1 historical records must retain their seven-package identities when
+those monitors gain the new package. Publication remains a separately reviewed
+release operation with exact-source CI, packed qualification and its own gates.
+
 ### Hosted packed rehearsal
 
 After `.github/workflows/packed-qualification.yml` is present on the default

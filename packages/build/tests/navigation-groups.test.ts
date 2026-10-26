@@ -39,7 +39,7 @@ it('publishes separately compiled native owners with one closed, integrity-check
   expect(routes.every(route=>route.js.length===1&&!route.modulepreload)).toBe(true);
   expect(manifest.routes['/shell'].navigation).toEqual({group:'app',owner:'shell',outlet:'child'});
   expect(manifest.routes['/a'].navigation).toEqual({group:'app',owner:'a',outlet:null});
-  expect(sizes.every(size=>size.class==='islands')).toBe(true);
+  expect(sizes.every(size=>size.class==='navigation-group')).toBe(true);
   const js=readFileSync(join(config.outputDir,routes[0].js[0]));
   expect(manifest.assets[routes[0].js[0]].integrity).toBe(`sha384-${createHash('sha384').update(js).digest('base64')}`);
   expect(readdirSync(config.outputDir).filter(name=>name.endsWith('.js')&&name!=='sw.js')).toEqual(routes[0].js);
@@ -108,4 +108,20 @@ it('refuses an outlet whose presence depends on request data',async()=>{
   const {root,config}=fixture();
   writeFileSync(join(root,'shell.ts'), `import {h,mount} from '@getforma/core'; function Shell(props:{show:boolean}){return h('main',null,props.show ? h('div',{'data-forma-outlet':'child'}) : null)} mount(()=>Shell({show:true}),'#app');`);
   await expect(build(config)).rejects.toThrow(/navigation owner requires/);
+});
+
+const opaquePadding = (length:number):string => {
+  let seed=137;const alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from({length},()=>{seed=(Math.imul(seed,1103515245)+12345)&0x7fffffff;return alphabet[seed%alphabet.length]}).join('');
+};
+it('holds a verified navigation group to its fixed 64 KiB total even if canvas is declared',async()=>{
+  const {root,config}=fixture();for(const route of Object.values(config.routes))route.canvas=true;
+  writeFileSync(join(root,'client.ts'), `export default function initialize(group){globalThis.__navigationGroup=group;globalThis.largeApplication=${JSON.stringify(opaquePadding(100_000))}}`);
+  await expect(build(config)).rejects.toThrow(/navigation group.*JavaScript.*against 65,536/);
+});
+it('holds a verified group to the core ceiling plus the fixed 12 KiB prospective increment',async()=>{
+  const {root,config}=fixture(),core=join(root,'node_modules/@getforma/core/index.js');
+  writeFileSync(core,readFileSync(core,'utf8')+`export const extra=${JSON.stringify(opaquePadding(65_000))};`);
+  writeFileSync(join(root,'client.ts'), `import {extra} from '@getforma/core';export default function initialize(group){globalThis.__navigationGroup=group;globalThis.extra=extra}`);
+  await expect(build(config)).rejects.toThrow(/navigation group.*Forma code.*against 40,708/);
 });

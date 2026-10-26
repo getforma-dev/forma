@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- FORMA-301: enforce the reviewed explicit navigation-group class (64 KiB total and 40,708 B aggregate Forma); ordinary ceilings stay unchanged. Attribute optional-router bytes and report core/router breakdown. Paired consumer qualification separately holds the incremental 12 KiB limit.
+
 - FORMA-301: Build explicit native navigation groups into one integrity-checked executable bootstrap with separate owner FMIR, immutable initialization metadata, shared-island provenance checks, outlet capabilities and unchanged default/static behavior. Preserve existing identity, atomic publication, retention and size gates; refuse unsupported watch/split groups and unbounded imports.
 
 - FORMA-294: add `clientTemplates: true` for explicitly selected builds with a

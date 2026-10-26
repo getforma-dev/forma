@@ -265,7 +265,7 @@ export interface BuildResult {
    * the service worker it registers, and its ceilings. A production build fails
    * with `BUILD-819` before writing its output when a route is over one:
    * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (28,420 B under the 3.1
-   * performance decision), all of its JavaScript over its class's (none for a
+   * performance decision; authenticated navigation groups use 40,708 B), all of its JavaScript over its class's (64 KiB for a group, none for a
    * route without an interactive region, 75 KiB, 365 KiB for a canvas). Empty in watch mode,
    * whose unminified bytes are not what a route ships. The same objects as
    * `sizeReport.routes`.
