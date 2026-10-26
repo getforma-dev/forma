@@ -143,6 +143,7 @@ node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.te
 npx playwright test --grep-invert 'indexed products: complete public set'
 (source scripts/check-core-browser.sh --project=chromium)
 step "native router: real compiled owners, server and Chromium navigation controls"
+node --test scripts/router-proof-process.test.mjs
 node scripts/run-router-native-proof.mjs --engines chromium --skip-package-build
 
 step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
