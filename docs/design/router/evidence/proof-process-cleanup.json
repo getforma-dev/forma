@@ -1,0 +1,14 @@
+{
+  "recordedAt": "2026-10-26T18:52:17.134403+00:00",
+  "platform": "Darwin",
+  "scope": "Local process-ownership and portable invocation controls. The Windows invocation branch is tested through existing injected platform tests; a real Windows process cancellation run remains CI qualification. Explicitly detached processes outside a POSIX owned group require their own owner cleanup.",
+  "sourceSha256": {
+    "scripts/run-router-native-proof.mjs": "f2bf96a3579d071a0300f59a7e3d73c62fd4fe8bbb0cd17833531bf78a54e870",
+    "scripts/router-proof-process.mjs": "19350f3575a8300c01a952779e1ba9648a1619766e12765a1c447a21f2b680e4",
+    "scripts/router-proof-process.test.mjs": "7b4fd6209b97d7e8c358c47a7d82e61c901c3f931785900f12861fcef2cf04d7"
+  },
+  "command": "node --test scripts/router-proof-process.test.mjs scripts/portable-command.test.mjs",
+  "passed": true,
+  "negativeControl": "Direct parent SIGKILL left a real descendant HTTP listener serving; subsequent owned group cancellation removed it and closed inherited output.",
+  "log": "\u2714 Windows npm and npx use the current Node executable and preserve every argument (1.934167ms)\n\u2714 npm_execpath is supported and a missing CLI refuses without a shell fallback (1.4305ms)\n\u2714 native commands and non-Windows npm preserve executable argument arrays (0.103666ms)\n\u2714 normal completion and spawn refusal close their streams without claiming a live tree (36.062916ms)\n\u2714 cancellation closes a real owned descendant listener and inherited output (242.244375ms)\n\u2714 negative control: direct parent exit leaves its descendant alive until group cleanup (207.868041ms)\n\u2139 tests 6\n\u2139 suites 0\n\u2139 pass 6\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 558.385958\n"
+}
