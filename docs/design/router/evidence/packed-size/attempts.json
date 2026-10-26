@@ -1,0 +1,94 @@
+[
+  {
+    "attempt": 1,
+    "passed": false,
+    "scope": "preflight",
+    "reasonAndCorrection": "Archive-owned file authentication initially also counted npm-installed nested dependencies; replay binds those separately to the original consumer lock and freezes their files.",
+    "raw": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final/packed-size.json",
+      "bytes": 6447,
+      "sha256": "59356289acc71ae0491b95cb6088017291929b5eec6eda85f225811196e8ec9a"
+    },
+    "runner": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final/runner.mjs",
+      "sha256": "bf30afe01e5a2e1988504d0649be009d962040aa74827c7c79011c81ea691aa6"
+    },
+    "error": "AssertionError [ERR_ASSERTION]: installed core differs from archive\n+ actual - expected\n... Skipped lines\n\n  {\n    'README.md': '5dbc4cd13c597963988a82dfc96bd324ff4908eda1f89de663caa4becfc5c9ab',\n    'dist/chunk-2CJY5HA5.js': 'c03b09d09f9df1fb50d004e80a3287db014f9320e0c030fbdf8e536c539f34cb',\n    'dist/chunk-2CJY5HA5.js.map': 'dc931cb04b03f7180438972e9a378b32a6fe09c6372daf40c32a4e2390ee36e1',\n    'dist/chunk-2RYUWROU.cjs': 'c15af615ff1e3f41a7fb779e8e283689bc07e8fd127572d71cb570b538c93310',\n...\n    'licenses/alien-signals.txt': '75863f712f8f0603b0dba33edf4b725bab80fc858a51756e5905a3c4c8087169',\n+   'node_modules/alien-signals/LICENSE': '75863f712f8f0603b0dba33edf4b725bab80fc858a51756e5905a3c4c8087169',\n+   'node_modules/alien-signals/README.md': '0062f1aff73f2a2bc7428c71b1368eb79ea1d955b5da11b0b1a9bbb1538acb4f',\n+   'node_modules/alien-signals/cjs/index.cjs': '82e581e64b9a6c02553bae18dfa71d449b1c50ebee11d2a7557613d7db40981f',\n+   'node_modules/alien-signals/cjs/system.cjs': '7018369194136f70044009dc9e5e4905d09849e7b1f2d25d9bc7549a00bc5014',\n+   'node_modules/alien-signals/esm/index.mjs': '90c6c82f407aa8bde7dc9db24c5e3100019a3a29e1163892eb3091bb5d89c0a7',\n+   'node_modules/alien-signals/esm/system.mjs': 'e8b51483df69ef48690c2596bd05d4a4a4433a3a814359bf18b2d8c17cda0d52',\n+   'node_modules/alien-signals/package.json': '7b760e1e4e0f52ce30484f4a2e49a63d5fb58567238efa780d0ff06977a66edc',\n+   'node_modules/alien-signals/types/index.d.ts': 'dcc478d52218d02262ead2d0dc08e5b9974af2179b799aa31c9624053b51fd77',\n+   'node_modules/alien-signals/types/system.d.ts': '6e35a82a0a036a183138775e1681bc607873918c9bc3666516c6f76c78af5319',\n    'package.json': 'd1162092c8a4c6720ed6009561d0437ead5b06dc52efa7a75b174c3330f1301f',\n    LICENSE: 'ccdffef8595a31b8a2df96f430920d62411fae72c6eeb420ebf0f8194fab0dc1'\n  }\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:51:47\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)",
+    "verdict": null
+  },
+  {
+    "attempt": 2,
+    "passed": false,
+    "scope": "preflight",
+    "reasonAndCorrection": "Authentication initially rejected legitimate nested .bin symlinks; replay records their link text, target path and hash and rejects escapes from the isolated consumer.",
+    "raw": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v2/packed-size.json",
+      "bytes": 6143,
+      "sha256": "f4f9f4f1d791a430842e9f584e9c1dec453aa734c938ea93c7d99d80431adc56"
+    },
+    "runner": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v2/runner.mjs",
+      "sha256": "a80aadfbd02931f44b5faefdee85b2128bea6801083fedc6427cc368d11f8a1e"
+    },
+    "error": "AssertionError [ERR_ASSERTION]: unexpected linked product /Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/compiler/node_modules/.bin/parser\n    at visit (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:27:59)\n    at visit (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:27:28)\n    at visit (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:27:28)\n    at walk (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:28:7)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:52:67\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)",
+    "verdict": null
+  },
+  {
+    "attempt": 3,
+    "passed": false,
+    "scope": "preflight",
+    "reasonAndCorrection": "The wrapper initially probed a non-exported core/jsx-runtime name; replay uses actual public compiled/navigation entries and resolves dependencies from their consuming package.",
+    "raw": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v3/packed-size.json",
+      "bytes": 476329,
+      "sha256": "250e360bdba1b4ac0b9a94c1485a4190a251d8cbe1a142d528b84e2d1e45c10a"
+    },
+    "runner": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v3/runner.mjs",
+      "sha256": "799a7feb5ecad60cb440ca4e512d2e7d7132c3ced9a66792e474c91015ec6399"
+    },
+    "error": "Error: Command failed: /Users/victorvillacis/dev/tools/rea/.local-runtime/node-v24.22.1-darwin-arm64/bin/node --input-type=module --eval console.log(JSON.stringify(Object.fromEntries([\"@getforma/core\",\"@getforma/core/navigation\",\"@getforma/core/jsx-runtime\",\"@getforma/router\",\"@getforma/compiler\",\"@getforma/build\",\"alien-signals\",\"esbuild\"].map(name=>[name,import.meta.resolve(name)]))))\nnode:internal/modules/esm/resolve:315\n  return new ERR_PACKAGE_PATH_NOT_EXPORTED(\n         ^\n\nError [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './jsx-runtime' is not defined by \"exports\" in /Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v3/view/node_modules/@getforma/core/package.json imported from /Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v3/view/[eval1]\n    at exportsNotFound (node:internal/modules/esm/resolve:315:10)\n    at packageExportsResolve (node:internal/modules/esm/resolve:663:9)\n    at packageResolve (node:internal/modules/esm/resolve:792:12)\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\n    at Object.resolve (node:internal/modules/esm/initialize_import_meta:37:25)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v3/view/[eval1]:1:235 {\n  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'\n}\n\nNode.js v24.22.1\n\n    at genericNodeError (node:internal/errors:986:15)\n    at wrappedFn (node:internal/errors:540:14)\n    at checkExecSyncError (node:child_process:943:11)\n    at execFileSync (node:child_process:979:15)\n    at command (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:21:35)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:86:31\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)",
+    "verdict": null
+  },
+  {
+    "attempt": 4,
+    "passed": true,
+    "scope": "paired measurement with missing metadata warning",
+    "reasonAndCorrection": "Paired size passed; minimal staging omitted root Cargo.lock, producing an unrelated compatibility warning. Final replay adds unchanged authored Cargo.toml/Cargo.lock metadata and proves generated asset identity.",
+    "raw": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v4/packed-size.json",
+      "bytes": 479533,
+      "sha256": "eeb26129e0869adbd1786b7010483723c608500642c6f0a06fc481243599f924"
+    },
+    "runner": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v4/runner.mjs",
+      "sha256": "0eef0d4180229f205cc784cd094f884a3387d7686e6708d234cd7ecebbe979e2"
+    },
+    "error": null,
+    "verdict": {
+      "comparisons": [
+        {
+          "route": "/native/a",
+          "previousPlainGzip": 28457,
+          "currentPlainGzip": 28432,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12281
+        },
+        {
+          "route": "/native/b",
+          "previousPlainGzip": 28457,
+          "currentPlainGzip": 28433,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12280
+        }
+      ],
+      "incrementGzip": 12281,
+      "groupGzip": 40713,
+      "ceilings": {
+        "increment": 12288,
+        "group": 65536
+      },
+      "passed": true
+    }
+  }
+]

@@ -1,0 +1,4 @@
+Cloning into '/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v5/view'...
+done.
+HEAD is now at 9d4aafee perf(router): simplify equivalent routing checks within fixed size budget
+{"output":"/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v5","passed":true,"verdict":{"comparisons":[{"route":"/native/a","previousPlainGzip":28457,"currentPlainGzip":28432,"positiveSharedDeltaGzip":0,"incrementGzip":12281},{"route":"/native/b","previousPlainGzip":28457,"currentPlainGzip":28433,"positiveSharedDeltaGzip":0,"incrementGzip":12280}],"incrementGzip":12281,"groupGzip":40713,"ceilings":{"increment":12288,"group":65536},"passed":true}}
