@@ -2,7 +2,17 @@
 
 ## [Unreleased]
 
-Changes after 3.1.0-rc.2 will be recorded here.
+## [3.1.0-rc.3] - Prepared; publication pending
+
+A fresh candidate includes the following reviewed changes and requires renewed
+whole-release qualification.
+
+- FORMA-299: hint eager compilation for five private adoption functions to
+  reduce cold island startup work. Function bodies, atomic adoption and all
+  startup limits are unchanged. Fresh packed qualification passes 62/62 with
+  no startup exceptions across twenty visits per route. Core adds 9 B gzip
+  within its existing limit. Retain and explicitly accept the measured signal
+  costs in the [current performance decision](docs/release/3.1-PERFORMANCE-TRADEOFFS.md#rc3-startup-repair-and-current-client-costs).
 
 - FORMA-290: use the same key equality for small and large component lists,
   retaining `NaN` rows through repeated updates. Track each row owner by its
@@ -25,13 +35,13 @@ Changes after 3.1.0-rc.2 will be recorded here.
   recorded. Fix root setup that disposes, creates later bindings, then throws:
   drain the engine scope before rethrowing the original value.
 
-## [3.1.0-rc.2] - Prepared; publication pending
+## [3.1.0-rc.2] - 2026-10-25
 
 - Preserve seed rejection tests across the final version transition and verify
   native error reporting without Chromium-specific assumptions in other engines.
   Product behavior and the recorded performance tradeoffs are unchanged.
 - RC1 was stopped before publication; its tag and failed/cancelled evidence are
-  retained. RC2 requires its own review and release qualification.
+  retained. RC2 passed its own review and tagged release qualification before publication.
 
 ## [3.1.0-rc.1] - Superseded before publication
 

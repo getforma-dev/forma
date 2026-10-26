@@ -1,7 +1,7 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "9a7146f23e1524d0a104e3a5c15087914cdd3ee4",
-  "tree": "e4b4dfdc99a4ee403dae9a9e3c6553ffbf5d7817",
+  "commit": "e3f90c4871a9be4e8f25db944479681f9355e560",
+  "tree": "c9fe1a360bc8fad69a84ace448812b0dc85c1ed2",
   "entries": [
     {
       "path": ".gitattributes",
@@ -56,12 +56,12 @@
     {
       "path": ".github/workflows/grand-prix-client.yml",
       "mode": "100644",
-      "blob": "aa55c66dc16224bb60a212f48e0e8ca64148de0e"
+      "blob": "8f2aa4a1d3cd7ff2f127ee625068784fa593ed2a"
     },
     {
       "path": ".github/workflows/grand-prix-compression.yml",
       "mode": "100644",
-      "blob": "fd9b0f68e27c73413b406df7d02757fbb3fb6e7f"
+      "blob": "b54e0bb91f65f48072fd50d58b2af8b545a98f2d"
     },
     {
       "path": ".github/workflows/grand-prix-islands.yml",
@@ -71,12 +71,12 @@
     {
       "path": ".github/workflows/grand-prix-paired.yml",
       "mode": "100644",
-      "blob": "b176523ecefa5845132f0a32486deba7c1d80b6d"
+      "blob": "8125f05ba8af5a2790e74c3437ce1e1ee2f4b591"
     },
     {
       "path": ".github/workflows/grand-prix.yml",
       "mode": "100644",
-      "blob": "5cc47359af69ec93dc3016dee9c07d21b5537567"
+      "blob": "cf60c2e8f6cd176eb74c808d53b5a8a3cf2b4ead"
     },
     {
       "path": ".github/workflows/n7-build-loop.yml",
@@ -151,7 +151,7 @@
     {
       "path": "CHANGELOG.md",
       "mode": "100644",
-      "blob": "9e7bb82bbb3d86b3b3d688fee76347883cd678a6"
+      "blob": "5c4a14d4b6c1425e13c51d0eab903826fc5af0e8"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -161,12 +161,12 @@
     {
       "path": "Cargo.lock",
       "mode": "100644",
-      "blob": "856250ad4f317518313b1e37ec2f81b6338f2ed9"
+      "blob": "662a414c7540e79ed701eafb4bba00d68191a70c"
     },
     {
       "path": "Cargo.toml",
       "mode": "100644",
-      "blob": "361593d89ee3064210952448afb457939c2c4342"
+      "blob": "1decc26956937a978fa8f4aa6c292a179f8776e1"
     },
     {
       "path": "LICENSE",
@@ -241,7 +241,7 @@
     {
       "path": "benchmarks/grand-prix/client-race/apps/forma/vite.config.js",
       "mode": "100644",
-      "blob": "08e0d2277863d19aa8b60aa738cb01ae9b38f0f1"
+      "blob": "6f71cf2f9734cb8d8fb066f194272a999bd16470"
     },
     {
       "path": "benchmarks/grand-prix/client-race/apps/preact/index.html",
@@ -357,6 +357,11 @@
       "path": "benchmarks/grand-prix/client-race/bundle.mjs",
       "mode": "100644",
       "blob": "5e873b64c65be92a3607e5a977d0966ceb6177ce"
+    },
+    {
+      "path": "benchmarks/grand-prix/client-race/compiler-plugin.mjs",
+      "mode": "100644",
+      "blob": "69ce452c8b4e7f44846eb7c8c3736d4d59c6c955"
     },
     {
       "path": "benchmarks/grand-prix/client-race/lib.mjs",
@@ -2531,7 +2536,12 @@
     {
       "path": "benchmarks/grand-prix/harness/candidate-lock.mjs",
       "mode": "100644",
-      "blob": "e3452898bb08b49813e12211cc881b403eb97742"
+      "blob": "3aa94c5557d52bfc312066792917750ca6757c72"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/candidate-lock.test.mjs",
+      "mode": "100644",
+      "blob": "5f26b55c195d2512ed29f01def5737dfe4968197"
     },
     {
       "path": "benchmarks/grand-prix/harness/chromium-linux-lock.json",
@@ -2556,7 +2566,7 @@
     {
       "path": "benchmarks/grand-prix/harness/client-linux.mjs",
       "mode": "100644",
-      "blob": "55107903cc4a52c64cb94ec7aa79742efcd7818b"
+      "blob": "ec79cd94185d05d0ce48963d4030493d4cdfc188"
     },
     {
       "path": "benchmarks/grand-prix/harness/client-signals-control.mjs",
@@ -2591,7 +2601,7 @@
     {
       "path": "benchmarks/grand-prix/harness/compression.test.mjs",
       "mode": "100644",
-      "blob": "0a89f35500d19c146b5c36abbc2f812bb1f7ec58"
+      "blob": "53044910f6c8a279d81df8775553c24c6134fd24"
     },
     {
       "path": "benchmarks/grand-prix/harness/install-linux-browser.mjs",
@@ -2616,7 +2626,7 @@
     {
       "path": "benchmarks/grand-prix/harness/linux-run.mjs",
       "mode": "100644",
-      "blob": "9e3d3d110b7669e7f9c3569a0635bdb63f640a85"
+      "blob": "75449306ffb84de246aa039c59f8ecef20292cb9"
     },
     {
       "path": "benchmarks/grand-prix/harness/loadgen/Dockerfile",
@@ -2636,7 +2646,12 @@
     {
       "path": "benchmarks/grand-prix/harness/prepare-car.mjs",
       "mode": "100644",
-      "blob": "174b375acbe0d352932353e5b14033bbaf3d15ec"
+      "blob": "69b0093929b96cc49a6094e1c3684d4ef8cef7af"
+    },
+    {
+      "path": "benchmarks/grand-prix/harness/prepare-car.test.mjs",
+      "mode": "100644",
+      "blob": "599da80727f3a9be283916164bbfb3a223146494"
     },
     {
       "path": "benchmarks/grand-prix/harness/race.mjs",
@@ -2841,7 +2856,7 @@
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
       "mode": "100644",
-      "blob": "1eb878a4323c2433be5da9a85224eb223f674624"
+      "blob": "4c6efbcceb5c943327a93f48624c7e06283f8e5d"
     },
     {
       "path": "crates/forma-ir-derive/LICENSE",
@@ -2866,7 +2881,7 @@
     {
       "path": "crates/forma-ir/Cargo.toml",
       "mode": "100644",
-      "blob": "526ed37a593ca641b5b6dc6fb793034d23bc9d43"
+      "blob": "ce554558fd38ce0c068ba7448b7a300933bbc9ad"
     },
     {
       "path": "crates/forma-ir/README.md",
@@ -3946,7 +3961,7 @@
     {
       "path": "crates/forma-server/Cargo.toml",
       "mode": "100644",
-      "blob": "4c8a0533495e743b357ed69e6e7a50637802904d"
+      "blob": "2e664f767a4e0b23e3460ac234dc256a83d35639"
     },
     {
       "path": "crates/forma-server/README.md",
@@ -4601,7 +4616,7 @@
     {
       "path": "docs/UPGRADING-3.1.md",
       "mode": "100644",
-      "blob": "a1be5cf8760caa6d21d55111837745a459b36e2a"
+      "blob": "4479aa33c6990ebfa1c4685e95feee120bc49f1d"
     },
     {
       "path": "docs/archive/2026-10-15-FMIR-FORMAT-exact-stage.md",
@@ -11961,7 +11976,7 @@
     {
       "path": "docs/compatibility.md",
       "mode": "100644",
-      "blob": "771a04bd9dd7b6f262aef874ad0dfc30fa6ac812"
+      "blob": "37f216a74394e64b75b30428bb785687a1384cd4"
     },
     {
       "path": "docs/evidence/dashboard-tooltip-2026-10-16/README.md",
@@ -14636,12 +14651,12 @@
     {
       "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
       "mode": "100644",
-      "blob": "5267e780ef049fef23afb1e4283a4ebc7baa040d"
+      "blob": "49b1b4030df4cf2378dfac4af09211e6b04b82e7"
     },
     {
       "path": "docs/release/3.1-QUALIFICATION.md",
       "mode": "100644",
-      "blob": "3bb4881c94be29a75b31e5577cc39b2878c28260"
+      "blob": "fcb6979bd3b1f12efa9fc25747343204e0bcd99a"
     },
     {
       "path": "docs/release/ALPHA-RUNBOOK.md",
@@ -14652,6 +14667,21 @@
       "path": "docs/release/BETA-QUALIFICATION.md",
       "mode": "100644",
       "blob": "0934f66d904a14619d3169698e738c8b27809bcd"
+    },
+    {
+      "path": "docs/release/FORMA-290-OWNERSHIP.md",
+      "mode": "100644",
+      "blob": "cae0790edd85095a53e568967b179803ce39789e"
+    },
+    {
+      "path": "docs/release/FORMA-294-COMPILER-CANDIDATE.md",
+      "mode": "100644",
+      "blob": "a7e101c8371de75c3a1a8970e6b4973de9c277a4"
+    },
+    {
+      "path": "docs/release/FORMA-299-STARTUP.md",
+      "mode": "100644",
+      "blob": "ee91895fc1d8435bb91530f70341067d1cc735c4"
     },
     {
       "path": "docs/release/L-66-QUOTA.md",
@@ -14686,7 +14716,7 @@
     {
       "path": "docs/release/README.md",
       "mode": "100644",
-      "blob": "80b25592716b1c15f6391bcba552729a757451eb"
+      "blob": "7527ca984ad8de8e6dc8243d2e2b7632e6fe4617"
     },
     {
       "path": "docs/release/REGISTRY-RECONCILIATION.md",
@@ -14706,17 +14736,17 @@
     {
       "path": "docs/release/d14-input-manifest.json",
       "mode": "100644",
-      "blob": "1e0e3831ff629460d61a8992f5098372cc47ef6b"
+      "blob": "de798263a8fec79b8840d1a894d139ab4618992c"
     },
     {
       "path": "docs/release/d14-report.json",
       "mode": "100644",
-      "blob": "9b51aa4ce223f712bdba5ec26d301c597bda76e7"
+      "blob": "ea5a5089ed5c51d670517944aa3b4209d99042f8"
     },
     {
       "path": "docs/release/d14-review-evidence.json",
       "mode": "100644",
-      "blob": "79efbf23b6d70ebb0f640b22a5aa6eae115c16a2"
+      "blob": "2c34c49e8cc07479b231b8b74c72b061d51f031a"
     },
     {
       "path": "docs/release/post-release-soak.json",
@@ -14971,7 +15001,7 @@
     {
       "path": "e2e/Cargo.lock",
       "mode": "100644",
-      "blob": "2b89b0bacef93c4cf9ef3370ac5974acd374fe74"
+      "blob": "80cfe9cc9e2a4a1cd183437d0752ace142a7125f"
     },
     {
       "path": "e2e/Cargo.toml",
@@ -16031,7 +16061,7 @@
     {
       "path": "fuzz/Cargo.lock",
       "mode": "100644",
-      "blob": "3d41914facd42b52cc134451489d499d62891caa"
+      "blob": "a779213802f8cf7947b843b4b532f793c9efe650"
     },
     {
       "path": "fuzz/Cargo.toml",
@@ -16136,7 +16166,7 @@
     {
       "path": "package-lock.json",
       "mode": "100644",
-      "blob": "951ae0f4908dc0a06bd7f47af9a50a84b0593a28"
+      "blob": "14685f4dc91085de0ae992bc823f8a1478e21bf8"
     },
     {
       "path": "package.json",
@@ -16146,12 +16176,12 @@
     {
       "path": "packages/build/CHANGELOG.md",
       "mode": "100644",
-      "blob": "91f5f457508c0d4e024a618994a77d18bc418405"
+      "blob": "5c010ba88c86f0e5d39ecc32946cd11c9c5c92c7"
     },
     {
       "path": "packages/build/README.md",
       "mode": "100644",
-      "blob": "a4d172e9fd0c494dc0f203c16a1270d89524c7fc"
+      "blob": "066161d6c012f7266f7ad538c446dd07eb2d68f5"
     },
     {
       "path": "packages/build/browser-tests/helpers/README.md",
@@ -16181,7 +16211,7 @@
     {
       "path": "packages/build/package.json",
       "mode": "100644",
-      "blob": "f2d7e6c0bf4833658ef8e0b0148f89748570f37e"
+      "blob": "95df3efeda0c6fe27f08f06cf570d1f501f8154c"
     },
     {
       "path": "packages/build/playwright.config.ts",
@@ -16196,7 +16226,7 @@
     {
       "path": "packages/build/src/build.ts",
       "mode": "100644",
-      "blob": "81e093c96416294fa4b6af3d5551898568578873"
+      "blob": "dc34aa94d439ff6326a285f0a4d11c7ec5389bae"
     },
     {
       "path": "packages/build/src/compatibility-watch.ts",
@@ -16261,7 +16291,7 @@
     {
       "path": "packages/build/src/raw-lint-exits.ts",
       "mode": "100644",
-      "blob": "b291cd0d47b61b7e8246dad8b40526e577e205ba"
+      "blob": "39a065f79caf8d54d043c38e7d68c1ebb5b2b723"
     },
     {
       "path": "packages/build/src/raw-lint-rust.ts",
@@ -16271,7 +16301,7 @@
     {
       "path": "packages/build/src/raw-lint-script.ts",
       "mode": "100644",
-      "blob": "2fbfca4292e0ee7800d998656569137d0914ecff"
+      "blob": "08d22c2f024504124318704af45ac00a61bd1615"
     },
     {
       "path": "packages/build/src/raw-lint.ts",
@@ -16306,7 +16336,7 @@
     {
       "path": "packages/build/src/types.ts",
       "mode": "100644",
-      "blob": "68f80c4c3767008bd37f4222498824af0124069c"
+      "blob": "0177e4543e7d9180aa42f0575524669025108bc6"
     },
     {
       "path": "packages/build/tests/alias-warning.test.ts",
@@ -16317,6 +16347,16 @@
       "path": "packages/build/tests/build.test.ts",
       "mode": "100644",
       "blob": "ed5251bffd1d771de60da40793aba4a690ec604f"
+    },
+    {
+      "path": "packages/build/tests/client-template-mixed.test.ts",
+      "mode": "100644",
+      "blob": "58979792bf3f1457aca18b24cc6823473007743a"
+    },
+    {
+      "path": "packages/build/tests/client-template.test.ts",
+      "mode": "100644",
+      "blob": "7f737c0e0b04e82f46f4fbe836e6a919d432f2c4"
     },
     {
       "path": "packages/build/tests/code-splitting.test.ts",
@@ -16392,6 +16432,16 @@
       "path": "packages/build/tests/fixtures/raw-lint/body_prefix/near-miss.rs",
       "mode": "100644",
       "blob": "614f8cff4b601f80d60808a606342bf6dbc15920"
+    },
+    {
+      "path": "packages/build/tests/fixtures/raw-lint/compiled-template/fail.ts",
+      "mode": "100644",
+      "blob": "a50631cae5208d8e713a85c5b6b805c0b2c98fd0"
+    },
+    {
+      "path": "packages/build/tests/fixtures/raw-lint/compiled-template/near-miss.ts",
+      "mode": "100644",
+      "blob": "93ad35771ef743efcbdc306474798e39a2aee9c8"
     },
     {
       "path": "packages/build/tests/fixtures/raw-lint/config_json/fail-writes.rs",
@@ -16956,12 +17006,12 @@
     {
       "path": "packages/compiler/CHANGELOG.md",
       "mode": "100644",
-      "blob": "c31fe847b413f2a322aee848c47a7da29ecaeadd"
+      "blob": "1ecd999acca05cf69bb3f4fcc5475aee5370a727"
     },
     {
       "path": "packages/compiler/README.md",
       "mode": "100644",
-      "blob": "bfc362dacdb6c7bdcbd9607f459accacf2fef60b"
+      "blob": "ae73285d4fb2e00f2c3064869288b3a9744bb3ac"
     },
     {
       "path": "packages/compiler/docs/subset.md",
@@ -16971,7 +17021,7 @@
     {
       "path": "packages/compiler/package.json",
       "mode": "100644",
-      "blob": "4c79362cdcfbec8a82f5e5487ee317466960f85f"
+      "blob": "a4e9d91d164bcb3af9d11d4fb153e0737615312b"
     },
     {
       "path": "packages/compiler/scripts/check-release-workflow.rb",
@@ -17012,6 +17062,11 @@
       "path": "packages/compiler/src/browser-only.ts",
       "mode": "100644",
       "blob": "5decfc569270868ad434da25578b5b4df98d25ce"
+    },
+    {
+      "path": "packages/compiler/src/client-template.ts",
+      "mode": "100644",
+      "blob": "38df11caf223e11586301f13b8b24d3dd3953632"
     },
     {
       "path": "packages/compiler/src/closed-bindings.ts",
@@ -17076,7 +17131,7 @@
     {
       "path": "packages/compiler/src/index.ts",
       "mode": "100644",
-      "blob": "e25ac4e0e1220fc5f8c6da6bae474c7128620a31"
+      "blob": "43467338c252f7dc47ef55fa8c9327ab00bf389a"
     },
     {
       "path": "packages/compiler/src/ir-analyze.ts",
@@ -17156,7 +17211,7 @@
     {
       "path": "packages/compiler/src/ssr-compilation.ts",
       "mode": "100644",
-      "blob": "43a4247d1293b7b85b3e5b2f8b319d176861d55f"
+      "blob": "ca57bd0f2420c976ef4acf7f81799a68ca01e94e"
     },
     {
       "path": "packages/compiler/src/ssr-product.ts",
@@ -17197,6 +17252,11 @@
       "path": "packages/compiler/tests/browser-only.test.ts",
       "mode": "100644",
       "blob": "b3cc162ef19fafc8ab8ca1a4b5509a215503e2ae"
+    },
+    {
+      "path": "packages/compiler/tests/client-template.test.ts",
+      "mode": "100644",
+      "blob": "a6637faf9cbf9018a0683e6e4349a3ca880584e2"
     },
     {
       "path": "packages/compiler/tests/closed-provenance.test.ts",
@@ -18406,7 +18466,7 @@
     {
       "path": "packages/compiler/tests/supported-surface.test.ts",
       "mode": "100644",
-      "blob": "19118955dcd0e155da5ede2a8e8f0fdd15e4889c"
+      "blob": "cca8f5349683a201af5eb7d081d9fbf948ded0d5"
     },
     {
       "path": "packages/compiler/tests/value-rule-4-dates.test.ts",
@@ -18451,7 +18511,7 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "mode": "100644",
-      "blob": "512f7f827be52d6fd7502429798589320ee8dc44"
+      "blob": "6443126225a1855d1590b99764216f800890123b"
     },
     {
       "path": "packages/core/CONTRIBUTING.md",
@@ -18461,7 +18521,7 @@
     {
       "path": "packages/core/CSP.md",
       "mode": "100644",
-      "blob": "dc0535f16c43f15e1e8d6a281c8a1a409b2d75bb"
+      "blob": "4d98fbcd1381c2d605be7cbe6c099cd5bad23015"
     },
     {
       "path": "packages/core/LICENSE",
@@ -18471,7 +18531,7 @@
     {
       "path": "packages/core/README.md",
       "mode": "100644",
-      "blob": "542f3ab540831d98083dd2f5392e257b3c0b83c1"
+      "blob": "350360acd7f95083626d05554bbd65293ac867e0"
     },
     {
       "path": "packages/core/SECURITY.md",
@@ -18531,7 +18591,7 @@
     {
       "path": "packages/core/docs/CDN-AND-EXPORTS.md",
       "mode": "100644",
-      "blob": "8d0b3c0fd09af17bc8de5d700cac224f21595624"
+      "blob": "3632834580ff97282259bf5ee279ee0ce782fc4b"
     },
     {
       "path": "packages/core/docs/COMPARISONS.md",
@@ -18954,6 +19014,11 @@
       "blob": "fa29c3f20b0452ab825db75b28a8cba9b19badb6"
     },
     {
+      "path": "packages/core/e2e/compiled-template-adoption.spec.ts",
+      "mode": "100644",
+      "blob": "822953bd0a32b946f11c585b95a16c8b634adc5f"
+    },
+    {
       "path": "packages/core/e2e/computed-names.spec.ts",
       "mode": "100644",
       "blob": "e957707998888f588f6ae74f58fab29abdd458bb"
@@ -19029,6 +19094,16 @@
       "blob": "af43b67fa9d93b0927fdbdd180a385607e1d7f42"
     },
     {
+      "path": "packages/core/e2e/helpers/compiled-template-fixtures.ts",
+      "mode": "100644",
+      "blob": "37ff65d71e4a5cd2c5e88e99ada678b0c65374ca"
+    },
+    {
+      "path": "packages/core/e2e/helpers/list-key-ownership-fixture.ts",
+      "mode": "100644",
+      "blob": "78776446469070ed119b46639aabe578ec2ce87d"
+    },
+    {
       "path": "packages/core/e2e/helpers/owned-adoption.ts",
       "mode": "100644",
       "blob": "e0cd0f42fddf49d5b64b2d7b4d0eb2d0efb52d6d"
@@ -19097,6 +19172,11 @@
       "path": "packages/core/e2e/keyed-adoption.spec.ts",
       "mode": "100644",
       "blob": "c75c40648d652496c14d7ed5a2e6cea2d2d1c7d9"
+    },
+    {
+      "path": "packages/core/e2e/list-key-ownership.spec.ts",
+      "mode": "100644",
+      "blob": "4b96c3ca824fdcc73ba9d338a19311155d6f23ca"
     },
     {
       "path": "packages/core/e2e/listener-cleanup.spec.ts",
@@ -19246,7 +19326,7 @@
     {
       "path": "packages/core/package.json",
       "mode": "100644",
-      "blob": "e99e449712dbe2dbe690ab4dd61655474b80de2f"
+      "blob": "9a0896cc41a7f7036a027a7311bad5fcac7dec71"
     },
     {
       "path": "packages/core/playwright.config.ts",
@@ -19391,7 +19471,7 @@
     {
       "path": "packages/core/scripts/build-defines.mjs",
       "mode": "100644",
-      "blob": "ad5ceb160e03d7ca8cb4b250d0f0f9589b8e3789"
+      "blob": "2e98784e0834a33eb60ab64d7d8feb0028850192"
     },
     {
       "path": "packages/core/scripts/check-build-identity.mjs",
@@ -19411,7 +19491,7 @@
     {
       "path": "packages/core/scripts/check-size.mjs",
       "mode": "100644",
-      "blob": "0381be42f580225447265bade5ad8db6116d3320"
+      "blob": "ca9af043e0f0cdb534c7b57298eefaefce5d5b45"
     },
     {
       "path": "packages/core/scripts/clean-dist.mjs",
@@ -19601,7 +19681,7 @@
     {
       "path": "packages/core/scripts/verify-dist.mjs",
       "mode": "100644",
-      "blob": "fd306040871b050779530fa47c38b66f8f88202e"
+      "blob": "e4db0aa22fdf173fd524b82eaa2f662d6c7d1bf0"
     },
     {
       "path": "packages/core/src/__tests__/build-artifacts.test.ts",
@@ -19681,7 +19761,7 @@
     {
       "path": "packages/core/src/__tests__/index-surface.test.ts",
       "mode": "100644",
-      "blob": "c0d3cddcb5b49bd0b0ef6a49a642cbbd746a2e5c"
+      "blob": "865d2041d3bf9bb5f868608af7b7b889fc0bc131"
     },
     {
       "path": "packages/core/src/__tests__/list-binding.test.ts",
@@ -19691,7 +19771,7 @@
     {
       "path": "packages/core/src/__tests__/package-exports.test.ts",
       "mode": "100644",
-      "blob": "268abee08d1d9ffd2bd7d5728c31a3a0f38b82d4"
+      "blob": "74775de4d08bef3c726f1b2e20845df12622e825"
     },
     {
       "path": "packages/core/src/__tests__/probe-corpus.test.ts",
@@ -19872,6 +19952,11 @@
       "path": "packages/core/src/__tests__/transition.test.ts",
       "mode": "100644",
       "blob": "b631161b03fb38cd5f208530e973ef791ca3b999"
+    },
+    {
+      "path": "packages/core/src/compiled.ts",
+      "mode": "100644",
+      "blob": "518d5f4302b8d8bdfec5282ff6ae680144cedd89"
     },
     {
       "path": "packages/core/src/component/__tests__/component-lifecycle.test.ts",
@@ -20149,6 +20234,16 @@
       "blob": "5f09d47de1d10f6ede7cfd109dd816a3d7edbc85"
     },
     {
+      "path": "packages/core/src/dom/__tests__/compiled-template-exception-probe.test.ts",
+      "mode": "100644",
+      "blob": "f93da73c0dba2268800650ce1e0c5e77bfdcf556"
+    },
+    {
+      "path": "packages/core/src/dom/__tests__/compiled-template.test.ts",
+      "mode": "100644",
+      "blob": "b145cb82d7fa95fd56b458fcfd67fa60e205b87b"
+    },
+    {
       "path": "packages/core/src/dom/__tests__/deactivate.test.ts",
       "mode": "100644",
       "blob": "6f06e7481597971afb046160973a790ec6a8d64f"
@@ -20297,6 +20392,11 @@
       "path": "packages/core/src/dom/__tests__/list-hydration.test.ts",
       "mode": "100644",
       "blob": "6c5fef12b4273bf1ac78a00602d72ef1c0414500"
+    },
+    {
+      "path": "packages/core/src/dom/__tests__/list-key-ownership.test.ts",
+      "mode": "100644",
+      "blob": "a14fbb0f584bed6f77a6e579fd7788ec73e0d00a"
     },
     {
       "path": "packages/core/src/dom/__tests__/list-keyed-reconciliation.test.ts",
@@ -20576,7 +20676,7 @@
     {
       "path": "packages/core/src/dom/adoption.ts",
       "mode": "100644",
-      "blob": "f3dd8f4c448a5939fe31882aafa5406a1647e8c1"
+      "blob": "5d7478040adb4e998ea238ddf13bddeb8ffb0c63"
     },
     {
       "path": "packages/core/src/dom/attribute-name.ts",
@@ -20589,9 +20689,14 @@
       "blob": "50ad935aa2ba7bb09909bea7c9cf314e0af6f054"
     },
     {
+      "path": "packages/core/src/dom/compiled-template.ts",
+      "mode": "100644",
+      "blob": "e2a3f0c1ecf3b29b7cd7e5fab9de0bf8d224771d"
+    },
+    {
       "path": "packages/core/src/dom/element.ts",
       "mode": "100644",
-      "blob": "0049cb8b01760b79abcf11f9abe578aee2c1fae4"
+      "blob": "e222502a5a07df5053cbfb27d7c6904bc91cc0e7"
     },
     {
       "path": "packages/core/src/dom/error-boundary.ts",
@@ -20636,7 +20741,7 @@
     {
       "path": "packages/core/src/dom/list.ts",
       "mode": "100644",
-      "blob": "ddaa6cf2fa47812d1885478d8b0fb8d59614f24b"
+      "blob": "883c3c88221ad9ce7ab2258467b3f57784bfb17b"
     },
     {
       "path": "packages/core/src/dom/mount.ts",
@@ -21124,6 +21229,11 @@
       "blob": "2283ef6860157e805445884aed09c3f0b27590bc"
     },
     {
+      "path": "packages/core/src/reactive/__tests__/root-setup-throw.test.ts",
+      "mode": "100644",
+      "blob": "b0ad4480413387b744c4abe9f43958fc7a8055de"
+    },
+    {
       "path": "packages/core/src/reactive/__tests__/root.test.ts",
       "mode": "100644",
       "blob": "6e98ea64d765d28268ec1ff2d80dedbb8da0b57d"
@@ -21246,7 +21356,7 @@
     {
       "path": "packages/core/src/reactive/root.ts",
       "mode": "100644",
-      "blob": "0e2a6ac521e7e65982a88c4060c10b0038197bc5"
+      "blob": "887db8ff669bbfa8a863f2b72f2db78553d3fc2e"
     },
     {
       "path": "packages/core/src/reactive/signal.ts",
@@ -21391,7 +21501,7 @@
     {
       "path": "packages/core/tsup.config.ts",
       "mode": "100644",
-      "blob": "5e2aa02ce0c76c9a11933046b47dcf4442288b12"
+      "blob": "6403f4f12915bf83a41c28ae3f8ec6ef90d0bd85"
     },
     {
       "path": "packages/core/typedoc-theme.css",
@@ -21476,7 +21586,7 @@
     {
       "path": "packages/create-app/package.json",
       "mode": "100644",
-      "blob": "5239ed2fbb7dc9aee205a02fffd43579224b2892"
+      "blob": "bb12d45161d7b07b6cc1f9cf8162167420cf0ab0"
     },
     {
       "path": "packages/create-app/scripts/check-release-workflow.rb",
@@ -21506,7 +21616,7 @@
     {
       "path": "packages/create-app/template-lock-seeds.json",
       "mode": "100644",
-      "blob": "bdd9d17742be30aa7887a0707d07c0fbc0bec1b7"
+      "blob": "76eedecf189463e43e9c940c5bc80ffffc2a30a2"
     },
     {
       "path": "packages/create-app/templates/dashboard/.github/workflows/build.yml",
@@ -21516,12 +21626,12 @@
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
       "mode": "100644",
-      "blob": "586a950e938c4308cd14085b88996ffa28e55c4c"
+      "blob": "5e4c4d641374077ab256924ac361ed6b0c4fe00b"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
       "mode": "100644",
-      "blob": "231b322f4d6d2f74c7daa1c259ed541cbfdc96e7"
+      "blob": "d81b187d5cdc92b8f319f3dceba6e562003e1d7f"
     },
     {
       "path": "packages/create-app/templates/dashboard/README.md",
@@ -21546,12 +21656,12 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
       "mode": "100644",
-      "blob": "22ff771944c47c763c659691796d625dfabf3782"
+      "blob": "aa13044917fe809726a25a8f119fb48e2714fa32"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
       "mode": "100644",
-      "blob": "ff7e723f3fb35fd380ac58d1656523611cdad6c9"
+      "blob": "e75179f6f779e03e716759dde723f55721bf6606"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/playwright.config.ts",
@@ -21646,12 +21756,12 @@
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
       "mode": "100644",
-      "blob": "dc47d2ed228f80df4db8397ef63d0934f75d2013"
+      "blob": "3e35efe0c2994230a84b09f8e2f35df22b2d6d00"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
       "mode": "100644",
-      "blob": "bcf4d9785888e77519be1ccfefe4e12cbf83117b"
+      "blob": "1e3133efa3f4d977c85d856850b0b0ba3862d2e8"
     },
     {
       "path": "packages/create-app/templates/minimal/README.md",
@@ -21676,12 +21786,12 @@
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
       "mode": "100644",
-      "blob": "b15368ec9b44f43761592c21a1308bcddb077fd8"
+      "blob": "5ac23a83f5580f0b2da24e62932bebbd3b59480d"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
       "mode": "100644",
-      "blob": "5e6f9adcf7730015927afe47a2cb483cd7981731"
+      "blob": "aef92cdfb4ef650c3a2b745d1ae86e757639c12e"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/src/about/app.tsx",
@@ -21891,7 +22001,7 @@
     {
       "path": "scripts/compatibility-package.test.mjs",
       "mode": "100644",
-      "blob": "5dfee39ce939ead24494e9d0038bded1f7896351"
+      "blob": "2392b3f35db39559697b87cea7b1c2d78dd9baec"
     },
     {
       "path": "scripts/controls/release-signatures.mjs",
@@ -22266,7 +22376,7 @@
     {
       "path": "scripts/release-contracts.json",
       "mode": "100644",
-      "blob": "69961bc2f9f5796f1ff903a08361505cefa614b2"
+      "blob": "d17a8942066d945be30078d735661078e8e8c1c2"
     },
     {
       "path": "scripts/release-corpus.test.mjs",

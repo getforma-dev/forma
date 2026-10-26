@@ -80,7 +80,8 @@ function listenerObject(value:unknown):value is EventListenerObject {
 
 /** Snapshot first, build once, then retain every prepared observation. The
  * returned object is private: no status write/event/activation occurs here. */
-export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
+// Parentheses preserve V8's eager startup-compile hint through bundling.
+export const prepareAdoption = (function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionOptions={}):PreparedAdoption {
   const dom=new AdoptionDom(host);
   const controls=new AdoptionControls(host);
   const children=new Set<ValidatedIsland>();
@@ -91,19 +92,19 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
   function rememberFailure(diagnostic:AdoptionDiagnostic|undefined):void {
     if(diagnostic&&!initialFailure){initialFailure=true;options.errorContext?.(diagnostic);}
   }
-  function at<T>(label:string,fn:()=>T):T {
+  const at = (function at<T>(label:string,fn:()=>T):T {
     const binding=nextBinding++,parent=currentAdoptionDiagnostic();
     const diagnostic=Object.freeze({binding,path:`${parent?.path??''}/${label}[${binding}]`});
     try{return withAdoptionDiagnostic(diagnostic,fn);}catch(error){
       rememberFailure(diagnostic);throw error;
     }
-  }
+  });
   const controlBindings=new Map<ControlToken,{read?:()=>unknown;skip?:{value:unknown};diagnostic?:AdoptionDiagnostic}>();
   const release=():void=>{dom.release();controls.release();controlBindings.clear();children.clear();};
   const dispose=():void=>{scope.abort();release();};
-  function construct<T>(fn:()=>T,ns:string|null):T {
+  const construct = (function construct<T>(fn:()=>T,ns:string|null):T {
     return scope.run(()=>withNamespace(ns,()=>withAdoptionDescription(fn)));
-  }
+  });
   function attribute(element:Element,key:string,value:unknown):void {
     let binding: ReturnType<typeof prepareAttribute>;
     const initial=typeof value==='function'?scope.observe(value as ()=>unknown,next=>binding.write(next)):value;
@@ -371,10 +372,10 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
         if(element.hasAttribute('data-forma-island'))deactivateIsland(element);deactivateAllIslands(element);
       }},{cache,ordered,tail,keyOwner});
   }
-  function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
+  const walk = (function walk(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
     at('node',()=>visit(value,cursor,ns,root));
-  }
-  function visit(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
+  });
+  const visit = (function visit(value:unknown,cursor:AdoptionCursor,ns:string|null,root=false):void {
     if(value==null||typeof value==='boolean'){
       if(cursor.rangeKind()==='t')cursor.textRange(text(value));return;
     }
@@ -437,7 +438,7 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       }
       default:return refuse();
     }
-  }
+  });
   try{
     const start=(value:unknown):void=>{
       if(options.target==='public'&&value&&typeof value==='object'&&(value as ComponentDescription).type==='component'){
@@ -484,4 +485,4 @@ export function prepareAdoption(host:Element,build:()=>unknown,options:AdoptionO
       }catch(error){dispose();throw error;}
     },
   };
-}
+});
