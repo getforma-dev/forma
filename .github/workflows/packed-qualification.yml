@@ -107,7 +107,15 @@ jobs:
       - run: npm audit signatures
       - name: Install the locked three-engine runners
         timeout-minutes: 5
-        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
+        run: |
+          # Keep the same signed Ubuntu suites/packages. The Azure mirror stalled
+          # the retained b071500c attempt before any P17 test could execute.
+          for apt_source in /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
+            if [[ -f "$apt_source" ]]; then
+              sudo sed -i 's|http://azure\.archive\.ubuntu\.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$apt_source"
+            fi
+          done
+          node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
       # 44 minutes plus the existing owner's 15-second cleanup fits the 45-minute
       # step. The verifier's separate G6/P17 <= 1800-second gate is unchanged.
       - name: Whole packed P17 under Linux process ownership

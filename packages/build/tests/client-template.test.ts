@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { build } from './helpers/named-build';
 import { watching } from './helpers/watch';
+const currentVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version as string;
+const currentWriter = currentVersion.split('-')[0].split('.').map(Number);
 const roots: string[] = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 function fixture() {
@@ -12,7 +14,7 @@ function fixture() {
   const src = join(root, 'src'), dist = join(root, 'dist'), core = join(root, 'node_modules/@getforma/core');
   mkdirSync(src); mkdirSync(core, { recursive: true });
   writeFileSync(join(root, 'package.json'), '{"type":"module"}');
-  writeFileSync(join(core, 'package.json'), JSON.stringify({ name:'@getforma/core',version:'3.1.0-rc.2',type:'module',exports:{'.':'./index.js','./compiled':'./compiled.js'} }));
+  writeFileSync(join(core, 'package.json'), JSON.stringify({ name:'@getforma/core',version:currentVersion,type:'module',exports:{'.':'./index.js','./compiled':'./compiled.js'} }));
   writeFileSync(join(core, 'index.js'), 'export function h(tag,props,...children){return {tag,props,children}};export const trustedHtml=value=>value;export const createList=(source,key,render)=>(render??key)(source()[0]);');
   writeFileSync(join(core, 'compiled.js'), 'export function __createCompiledTemplate(markup,bindings){return initialize=>{const values=[];initialize((i,value)=>{values[i]=value});return {compiled:true,html:markup(),bindings,values}}}');
   const entry = join(src, 'app.tsx');
@@ -43,9 +45,9 @@ it.each(['false',1,null])('rejects a nonboolean clientTemplates value %s before 
   await expect(build({...config,clientTemplates:value as unknown as boolean})).rejects.toThrow('clientTemplates');
   expect(existsSync(dist)).toBe(false);
 });
-it('refuses opt-in when a compatible older compiler lacks the client plugin', async () => {
+it('refuses opt-in when a compatible compiler lacks the client plugin', async () => {
   const {config,dist} = fixture();
-  vi.doMock('@getforma/compiler', () => ({COMPILER_WRITER_VERSION:[3,1,0],formaClientPlugin:undefined}));
+  vi.doMock('@getforma/compiler', () => ({COMPILER_WRITER_VERSION:currentWriter,formaClientPlugin:undefined}));
   try {
     await expect(build({...config,clientTemplates:true})).rejects.toThrow('BUILD-809 clientTemplates requires');
     expect(existsSync(dist)).toBe(false);

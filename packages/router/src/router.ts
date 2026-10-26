@@ -263,6 +263,13 @@ export function createRouter(input: RouterOptions): Router {
       if (generation !== mine || closed) return { kind: 'cancelled', reason: 'superseded' };
       if (error instanceof NavigationError && error.revoke) revoke();
       const recoveryGeneration = generation, recoveryMutation = mutationGeneration;
+      if (irreversible) {
+        // A committed view belongs to its session, including during readiness.
+        // Detach before cleanup so reentrant navigation can own a fresh session.
+        const failed = sessions.get(preparingAdapter); sessions.delete(preparingAdapter);
+        try { failed?.dispose(); } catch (cleanupError) { report(cleanupError); }
+        if (closed || generation !== recoveryGeneration || mutationGeneration !== recoveryMutation) return { kind: 'cancelled', reason: 'superseded' };
+      }
       report(error);
       if (closed || generation !== recoveryGeneration || mutationGeneration !== recoveryMutation) return { kind: 'cancelled', reason: 'superseded' };
       if (irreversible || (error instanceof NavigationError && error.documentRecovery) || opts.pop || preparingAdapter.kind !== 'browser') return recover(url, code(error), true);

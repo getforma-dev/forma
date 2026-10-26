@@ -16,9 +16,17 @@ original 9d4aafee products and do not qualify the new archives.
 New source regressions admit ordinary quoted accessibility labels while refusing
 upgrade-capable attributes before parsing, and recover a same-URL browser
 revalidation failure after irreversible commit. The latter was independently
-reported as D14-3.2-001. The updated source suite passes 218 cases. Its corrected
-before-fix controls fail four irreversible cases while the pre-commit preservation
-case passes. Fresh packed, platform and independent review gates remain pending.
+reported as D14-3.2-001. Follow-up review also found that committed scopes could
+remain active when readiness or title assignment failed. The coordinator now
+detaches and disposes the failed session before bounded recovery, including when
+the journal refuses another GET, and preserves cleanup-triggered newer work.
+The updated source suite passes 225 cases. Corrected counterfactual controls fail
+six scope-release cases without this cleanup; the six other recovery controls,
+including pre-commit preservation and superseded readiness, still pass. This
+includes actual native sibling-island adoption failure, not only adapter doubles.
+The [scope recovery receipt](evidence/recovery-scope-3.2.json) records source and
+log identities, the invalid early fixture attempt, and unchanged size ceilings.
+Fresh packed, platform and independent review gates remain pending.
 The [3.2 preparation receipt](evidence/ecosystem-3.2-preparation.json) separately
 records the dashboard and release-tooling checks. Manual/device and application
 acceptance remain open for stable release.
@@ -161,11 +169,17 @@ Historical CI failures and their scoped corrections remain in the
 [release-helper inventory receipt][CI] and [published-template boundary receipt][CT].
 Those records do not certify later Git heads or replace required platform lanes.
 
-Before publication, prepare the coordinated future minor version and rerun its
-actual archive/platform/P17/N8 gates; complete remaining scenarios and manual
-assistive-technology/device checks, consuming-application session/CSRF/proxy-policy
-review, publisher/monitor enrollment and the normal RC/soak decision. The current
-implementation is reviewable; not all 57 frozen acceptance rows are closed.
+Before RC publication, prepare the coordinated version and pass its actual
+archive/platform/P17/N8 gates, independent review and first-package publisher
+readiness. A prerelease RC supports further qualification with final gates open;
+it does not establish stable release or completed FORMA-301 acceptance.
+
+Before stable publication, complete the remaining scenarios, manual keyboard,
+reduced-motion, assistive-technology/device checks, consuming-application
+session/CSRF/proxy-policy review, real website rollout verification, actual
+trusted-publisher/monitor enrollment and the required hosted soak. These remain
+explicit pending final obligations, not waivers. The current implementation is
+reviewable; not all 57 frozen acceptance rows are closed.
 
 [R]: ../../../packages/router/tests/
 [RP]: ../../../packages/router/tests/platform-contracts.test.ts
