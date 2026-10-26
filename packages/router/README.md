@@ -54,6 +54,9 @@ commit, and a retained layout observes subsequent commits. Put effect cleanup in
 Parameters belonging to children do not invalidate their parent. A changed
 `reuseKey(match)` replaces that browser owner and its descendants. Explicit
 revalidation recreates the leaf. Children are disposed before their parent.
+`render({ signal })` receives the owner's lifetime signal. Cancelled preparation
+aborts detached owners; committed owners keep their signal until release, so a
+retained layout's work survives later navigation.
 
 Routes have unique ASCII `id`s, relative literal paths, `:parameters`, terminal
 `*`, pathless parents and explicit `index: true` leaves. `/` is an empty root
@@ -211,9 +214,13 @@ message and focus. Framework code does not echo secret inputs. Known completion
 invalidates older reads and revalidates the latest destination, including a newer
 pending GET. A late old form never redirects a newer page back.
 
-After transmission, timeout, unreadable/mismatched response or an authentication
-boundary means **unknown outcome**, not rollback. One bounded session latch
-survives GET recovery and blocks resubmission; no POST is automatically retried.
+Before transmission, the router writes one opaque attempt identifier to
+sessionStorage. An occupied slot or unavailable storage prevents another enhanced
+POST; the record contains no form data. Timeout, unreadable/mismatched response
+or an authentication boundary means **unknown outcome**, not rollback. The latch
+survives document recovery and blocks resubmission; no POST is automatically
+retried. Only an admitted response or explicit resolution for the same identifier
+can clear it; a late document cannot clear a newer attempt's latch.
 Use `await router.resolveUncertain(check)` only with application status/idempotency
 evidence that resolves the earlier transaction. A successful GET alone is not
 that evidence. The server remains responsible for authentication, CSRF,

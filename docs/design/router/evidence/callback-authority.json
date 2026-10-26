@@ -1,0 +1,188 @@
+{
+  "schema": "forma-301-callback-authority-v1",
+  "recordedAt": "2026-10-26T19:57:37.278682+00:00",
+  "scope": "Source lifecycle, observer/AbortSignal reentrancy and durable POST preflight controls; not packed/browser/P17 qualification. Old sealed33ae archives predate these fixes and must not be claimed final.",
+  "negativeSourceCommit": "108cedda8cf6e4491061f1acd262402bd63a0710",
+  "negativeMethod": "Copied HEAD router.ts to a temporary adjacent test module, rewrote its relative imports to the unchanged public source dependencies, ran identical29controls, removed both temporary files. No production source swapped.",
+  "negativeSourceSha256": "90078e02ec65eef1f52922d4d649250e0f6deaa9d295a60342e4f28e0266af62",
+  "sourceProducts": {
+    "packages/router/src/router.ts": "5d0c2746dbfee2bf0718ee563840b5c8619dce4f42496e28d9850a73323e99ac",
+    "packages/router/src/types.ts": "22815046fbfba02874b78bf390d6df033e131e465bb1b4298842d963b8549ebc",
+    "packages/router/tests/callback-authority.test.ts": "56d67b5a03c34b1dace6826d33e87623b1245d12f954967373e5b9f3004ef272"
+  },
+  "toolchain": {
+    "node": "24.22.1",
+    "test": "Vitest4.1.12",
+    "workers": 2
+  },
+  "before": {
+    "total": 29,
+    "passed": 1,
+    "failed": 28,
+    "rawJsonSha256": "285e1d257c4d2f8a55b1b643c75216bc32e858857a98fd6a087178d8787fcfe0"
+  },
+  "after": {
+    "total": 29,
+    "passed": 29,
+    "failed": 0,
+    "rawJsonSha256": "351ba104e5a998a186e2d69def4c912d4a1e13f0fddfb39d19fd4268471917cc"
+  },
+  "controls": [
+    {
+      "name": "does not recover an old navigation after onError calls dispose",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not recover an old navigation after onError calls navigate",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not recover an old navigation after onError calls invalidate",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "still performs one method-safe recovery for its own authentication revocation",
+      "before": "passed",
+      "after": "passed"
+    },
+    {
+      "name": "makes invalidation inert after disposal and repeated revocation",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not clear replacement content or recover after revocation cleanup reports an error that disposes",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not restore busy state after a pending subscriber disposes",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not assign a title or activate after the title callback disposes",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "preserves the new destination requested by a mutation-state subscriber",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "resolves a cleanup-queued revalidation from the newly committed URL",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "retains the Document reservation until every disposal callback finishes",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "disposes a session returned after connect revokes the coordinator without initializing it",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not scroll after destination focus synchronously disposes",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "aborts the one owned uncertainty resolver on disposal",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "persists uncertainty before sending and clears it only after an admitted outcome",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "fresh documents expose the uncertainty latch and cannot transmit another POST",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "refuses before transmission if the durable uncertainty marker cannot be written",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "rechecks the shared marker before transmission instead of overwriting another document attempt",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "a late known response cannot clear a newer document marker",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "disposal cannot replace a newer marker with an old in-flight attempt",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "a resolver cannot clear a marker replaced while its status check was pending",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "refuses before transmission if the uncertainty marker cannot be read",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not invoke a queued foreground check after disposal",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "refuses speculation when its attestation callback changes context",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "an abort listener owns its newer navigation instead of sharing the cancelled outer epoch",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "restores form busy ownership during disposal without writing over a later owner",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "does not abort a foreground checker that has already completed",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "a POST cancelled from an old navigation abort listener does not reconnect a disposed session",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "name": "reserves foreground verification before old abort listeners can start speculation",
+      "before": "failed",
+      "after": "passed"
+    }
+  ],
+  "integration": {
+    "routerSuitePassed": 168,
+    "testFilesPassed": 8,
+    "typecheckPassed": true,
+    "scope": "Includes contemporaneous browser lifetime and streaming body controls; final archives require resealing and separate qualification."
+  },
+  "limits": [
+    "One opaque sessionStorage marker, no private payload and no automatic POST retry. This is conservative client-side uncertainty tracking, not backend idempotency or a transactional cross-process lock.",
+    "Storage read/write failure refuses enhanced POST before transmission. Known response and explicit status resolution clear only a matching marker; legacy marker1 is recognized.",
+    "A genuinely missing storage marker does not imply server rollback; explicit application status evidence is still required for an uncertain current document."
+  ]
+}

@@ -24,6 +24,7 @@ export interface RenderContext {
   readonly location: Accessor<LocationState>;
   readonly params: Readonly<Record<string, string>>;
   readonly outlet: HTMLElement;
+  /** Aborts if preparation is cancelled or this owner is released; retained owners stay live. */
   readonly signal: AbortSignal;
 }
 export interface NavigationContext {
