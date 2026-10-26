@@ -262,7 +262,75 @@ impl<P: PageProps> PageHandle<P> {
         crate::render::guard(&self.inner.route, || self.render_inner(props, ctx))
     }
 
+    /// Render the unreleased navigation representation from the same verified
+    /// props and FMIR module. Requires `RenderCtx::with_navigation`.
+    #[cfg(feature = "experimental-router")]
+    pub fn render_navigation(
+        &self,
+        props: &P,
+        ctx: &RenderCtx,
+    ) -> Result<crate::NavigationResponse, RenderError> {
+        crate::render::guard(&self.inner.route, || {
+            self.with_render_input(props, ctx, |config, module, slots, limits| {
+                crate::render::render_bound_navigation(config, ctx, module, slots, limits)
+            })
+        })
+    }
+
+    /// Bind an enhanced action outcome to this finalized page's app/build and
+    /// document policy. `endpoint` must be an exact canonical pathname chosen
+    /// by the handler, not a URL copied from untrusted request input.
+    #[cfg(feature = "experimental-router")]
+    pub fn action_context(
+        &self,
+        ctx: &RenderCtx,
+        endpoint: &str,
+    ) -> Result<crate::ActionContext, RenderError> {
+        crate::render::guard(&self.inner.route, || {
+            self.with_bound_config(ctx, |config, _, _| {
+                crate::ActionContext::from_bound(config, ctx, endpoint)
+            })
+        })
+    }
+
     fn render_inner(&self, props: &P, ctx: &RenderCtx) -> Result<PageResponse, RenderError> {
+        self.with_render_input(props, ctx, |config, module, slots, limits| {
+            crate::render::render_bound(config, ctx, Some(module), Some(slots), limits)
+        })
+    }
+
+    fn with_render_input<T>(
+        &self,
+        props: &P,
+        ctx: &RenderCtx,
+        finish: impl FnOnce(
+            &PageConfig,
+            &forma_ir::IrModule,
+            &SlotData,
+            Limits,
+        ) -> Result<T, RenderError>,
+    ) -> Result<T, RenderError> {
+        self.with_bound_config(ctx, |config, binding, limits| {
+            let values = binding
+                .props
+                .encode(props)
+                .map_err(|cause| RenderError::Props { cause })?;
+            let mut slots = SlotData::new_from_defaults(&binding.props.module().slots);
+            for (name, id) in &binding.roots {
+                slots.set(
+                    *id,
+                    json_to_slot_value(values.get(name).unwrap_or(&serde_json::Value::Null)),
+                );
+            }
+            finish(config, binding.props.module(), &slots, limits)
+        })
+    }
+
+    fn with_bound_config<T>(
+        &self,
+        ctx: &RenderCtx,
+        finish: impl FnOnce(&PageConfig, &Binding<P>, Limits) -> Result<T, RenderError>,
+    ) -> Result<T, RenderError> {
         if !self.inner.pages.is_finalized() {
             return Err(RenderError::Unfinalized {
                 route: self.inner.route.clone(),
@@ -294,17 +362,6 @@ impl<P: PageProps> PageHandle<P> {
             }
             Arc::clone(&stored)
         };
-        let values = binding
-            .props
-            .encode(props)
-            .map_err(|cause| RenderError::Props { cause })?;
-        let mut slots = SlotData::new_from_defaults(&binding.props.module().slots);
-        for (name, id) in &binding.roots {
-            slots.set(
-                *id,
-                json_to_slot_value(values.get(name).unwrap_or(&serde_json::Value::Null)),
-            );
-        }
         #[allow(deprecated)]
         let config = PageConfig {
             title: ctx.title().unwrap_or(&self.inner.page),
@@ -315,13 +372,7 @@ impl<P: PageProps> PageHandle<P> {
             personality_css: ctx.personality_css(),
             body_prefix: ctx.body_prefix(),
         };
-        crate::render::render_bound(
-            &config,
-            ctx,
-            Some(binding.props.module()),
-            Some(&slots),
-            ctx.limits(self.inner.limits),
-        )
+        finish(&config, &binding, ctx.limits(self.inner.limits))
     }
 }
 

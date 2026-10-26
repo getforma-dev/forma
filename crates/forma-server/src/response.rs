@@ -53,6 +53,8 @@ pub struct PageResponse {
     nonce: CspNonce,
     policy: PagePolicy,
     counts: RenderCounts,
+    #[cfg(feature = "experimental-router")]
+    navigation: bool,
 }
 
 /// What one render did, for the application's own logs and metrics.
@@ -144,7 +146,15 @@ impl PageResponse {
             nonce,
             policy,
             counts,
+            #[cfg(feature = "experimental-router")]
+            navigation: false,
         }
+    }
+
+    #[cfg(feature = "experimental-router")]
+    pub(crate) fn with_navigation(mut self) -> Self {
+        self.navigation = true;
+        self
     }
 
     /// What the render did: nodes, bytes and list rows walked, and time spent.
@@ -177,6 +187,10 @@ impl PageResponse {
             HeaderValue::from_static("text/html; charset=utf-8"),
         ));
         headers.push((header::CACHE_CONTROL, HeaderValue::from_static("no-store")));
+        #[cfg(feature = "experimental-router")]
+        if self.navigation {
+            headers.push((header::VARY, HeaderValue::from_static("Accept")));
+        }
         headers.push((header::CONTENT_SECURITY_POLICY, self.policy.csp().clone()));
         if let Some(report_only) = self.policy.report_only() {
             headers.push((

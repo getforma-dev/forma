@@ -1,0 +1,44 @@
+{
+  "observed_at_utc": "2026-10-26T16:07:26.738147+00:00",
+  "origin": "http://127.0.0.1:54354",
+  "scope": "Real typed Rust handler HTTP smoke checks; not browser identity, resource, or packed release qualification.",
+  "results": [
+    {
+      "name": "direct typed document with admission metadata and native form",
+      "status": "passed"
+    },
+    {
+      "name": "negotiated typed destination keeps policy and asset identity",
+      "status": "passed"
+    },
+    {
+      "name": "policy/context mismatch is explicit in the representation",
+      "status": "passed"
+    },
+    {
+      "name": "same handler supports enhanced and no-JS validation",
+      "status": "passed"
+    },
+    {
+      "name": "CSRF and Origin refusal precede mutation",
+      "status": "passed"
+    },
+    {
+      "name": "confirmed action mutates once and returns explicit success",
+      "status": "passed"
+    },
+    {
+      "name": "enhanced redirect is a typed 303 decision; native form uses HTTP303",
+      "status": "passed"
+    },
+    {
+      "name": "all readable actions match bound app/build/group/layout/context/policy/endpoint and actual HTTP status",
+      "status": "passed"
+    },
+    {
+      "name": "unreadable POST remains unknown to client; fixture state independently confirms one mutation, without retry",
+      "status": "passed"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,308 @@
+{
+  "observedAt": "2026-10-26T16:02:24.745Z",
+  "origin": "http://127.0.0.1:51216",
+  "scope": "Experimental native two-route/static-shell proof; not nested-layout, packed-release or complete ticket qualification.",
+  "browsers": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4"
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0"
+    },
+    {
+      "engine": "webkit",
+      "version": "27.2"
+    }
+  ],
+  "results": [
+    {
+      "engine": "chromium",
+      "name": "typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "latest navigation wins when delayed A finishes after B",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "hash, Back and Forward retain owners and avoid additional push",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "enhanced validation preserves form and valid submission refreshes Rust props once",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "navigation during delayed POST keeps latest destination and revalidates it",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "busy competing submissions do not queue a second POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "lost mutation response is uncertain and never repeats POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "forged CSRF is rejected before any mutation",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "typed 303 action redirects through GET and preserves document",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "policy mismatch is an explicit document fallback",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "malformed native state is refused without replacing current route",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "dispose revokes route and restores scroll policy",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "direct entry and explicit refresh render complete native HTML",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "no-JavaScript links, validation and form mutation use same Rust handler",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "latest navigation wins when delayed A finishes after B",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "hash, Back and Forward retain owners and avoid additional push",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "enhanced validation preserves form and valid submission refreshes Rust props once",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "navigation during delayed POST keeps latest destination and revalidates it",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "busy competing submissions do not queue a second POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "lost mutation response is uncertain and never repeats POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "forged CSRF is rejected before any mutation",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "typed 303 action redirects through GET and preserves document",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "policy mismatch is an explicit document fallback",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "malformed native state is refused without replacing current route",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "dispose revokes route and restores scroll policy",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "direct entry and explicit refresh render complete native HTML",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "no-JavaScript links, validation and form mutation use same Rust handler",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "latest navigation wins when delayed A finishes after B",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "hash, Back and Forward retain owners and avoid additional push",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "enhanced validation preserves form and valid submission refreshes Rust props once",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "navigation during delayed POST keeps latest destination and revalidates it",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "busy competing submissions do not queue a second POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "lost mutation response is uncertain and never repeats POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "forged CSRF is rejected before any mutation",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "typed 303 action redirects through GET and preserves document",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "policy mismatch is an explicit document fallback",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "malformed native state is refused without replacing current route",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nundefined !== 1\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:116:12\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:18:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:113:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "dispose revokes route and restores scroll policy",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "direct entry and explicit refresh render complete native HTML",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "no-JavaScript links, validation and form mutation use same Rust handler",
+      "status": "passed"
+    }
+  ],
+  "failures": [
+    {
+      "engine": "webkit",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nundefined !== 1\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:116:12\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:18:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:113:3"
+    }
+  ],
+  "clientSha256": "2a3fb31c3bc752d4715154322dc5306fab598f0fc408ec865d4ebae5b50e0c99",
+  "manifest": {
+    "version": 2,
+    "writer": "3.1.0",
+    "app": "forma-router-proof",
+    "build": "3902e74a8f7c9804",
+    "aliases": {
+      "proof-group.js": "proof-group.f3a4761a849b.js",
+      "proof-a.ir": "proof-a.43f5de560348.ir",
+      "proof-b.ir": "proof-b.3b409ecab892.ir",
+      "proof-a.js": "proof-group.f3a4761a849b.js",
+      "proof-b.js": "proof-group.f3a4761a849b.js"
+    },
+    "assets": {
+      "proof-a.43f5de560348.ir": {
+        "immutable": true,
+        "integrity": "sha384-yhKqomMpUlrt3xGZb6gniVmclO5sm0VyXmIkuri5EcL5cTDK9fnhU6qoIwMHq3NN"
+      },
+      "proof-b.3b409ecab892.ir": {
+        "immutable": true,
+        "integrity": "sha384-C9xCXsx6WZAEKjB0SQICzGf8cm/Fk1bjJDDALsXgCMiTaGuFYyrXy5iW4LUAsuhm"
+      },
+      "proof-group.f3a4761a849b.js": {
+        "immutable": true,
+        "integrity": "sha384-BU5E5gSQMIEGDCpzeDD8lQfX1o/yei9/1NS2GSFQP6SagnDHVOpBTUmMMueetcXT"
+      }
+    },
+    "routes": {
+      "/proof/a": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.f3a4761a849b.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 28600,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-a.43f5de560348.ir"
+      },
+      "/proof/b": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.f3a4761a849b.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 28600,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-b.3b409ecab892.ir"
+      }
+    }
+  },
+  "passed": false
+}

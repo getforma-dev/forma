@@ -263,6 +263,10 @@ pub(crate) fn write_document(
         ctx.head_links(),
     );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
+    #[cfg(feature = "experimental-router")]
+    let navigation_metadata = crate::navigation::initial_metadata(config, ctx)?;
+    #[cfg(not(feature = "experimental-router"))]
+    let navigation_metadata = "";
     // The root names the build the manifest names (FORMA-186, DR-29): core compares it
     // with the identity compiled into the bundle before it activates anything. The
     // manifest is data, so it is escaped as any attribute value is, and no render input
@@ -297,6 +301,7 @@ pub(crate) fn write_document(
         } else {
             ""
         },
+        navigation_metadata.as_ref(),
         "</head>\n<body",
         parts.body_class_attr.as_str(),
         ">\n",

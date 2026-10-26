@@ -57,6 +57,9 @@ export interface SsrPluginOptions {
   entryPoint?: string;
   /** Browser entry whose literal registry receives the paired metadata. */
   clientEntryPoint?: string;
+  /** @internal FORMA-301 experiment: export the checked registry instead of
+   * activating it. Not a supported application entry mode or release claim. */
+  experimentalRegistrationOnly?: boolean;
   /** Private entry aliases supplied by the shared build graph for this same
    * physical client entry in explicit Browser mode. Dependencies remain shared. */
   browserEntryPoints?: readonly { path: string; entryPoint: string }[];
@@ -584,7 +587,7 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
               registry=entry?createIslandRegistry(entry):undefined;
               product=entry?generateWithRegistry(entry,registry):null;
               bytes=product?.binary;
-              if(client&&registry)edits=collectIslandEntryEdits(client,registry,product,entry);
+              if(client&&registry)edits=collectIslandEntryEdits(client,registry,product,entry,options.experimentalRegistrationOnly===true);
               if(product&&bytes)console.log(`   IR emitted (real): ${options.page}.ir (${bytes.length} bytes, ${product.islands.length} islands)`);
             });
           } catch(error) {

@@ -1,0 +1,40 @@
+PASS chromium security: lost mutation warning survives GET recovery without repeating POST
+PASS chromium security: slash attributes and custom markup are refused before import or constructors
+PASS chromium security: only the exact declared POST endpoint is enhanced and unsupported forms stay native
+PASS chromium security: recursive formdata submission from a distinct form reserves exactly one POST
+PASS chromium security: disposed or revoked formdata ownership sends no POST
+PASS chromium security: failed form serialization releases the reserved action slot
+PASS chromium security: native context mismatch revokes live owners and private DOM before recovery
+PASS chromium security: explicit context invalidation revokes captured deferred island callbacks
+PASS chromium security: persisted pageshow revokes private owners before document recovery
+PASS chromium security: action context mismatch accepts no data and recovers without repeating POST
+PASS chromium security: action endpoint mismatch accepts no data and recovers without repeating POST
+PASS chromium security: recovery loop storage omits query data and stops after 32 distinct attempts
+PASS chromium security: stale validation and error outcomes cannot announce over a newer route
+PASS firefox security: lost mutation warning survives GET recovery without repeating POST
+PASS firefox security: slash attributes and custom markup are refused before import or constructors
+PASS firefox security: only the exact declared POST endpoint is enhanced and unsupported forms stay native
+PASS firefox security: recursive formdata submission from a distinct form reserves exactly one POST
+PASS firefox security: disposed or revoked formdata ownership sends no POST
+PASS firefox security: failed form serialization releases the reserved action slot
+PASS firefox security: native context mismatch revokes live owners and private DOM before recovery
+PASS firefox security: explicit context invalidation revokes captured deferred island callbacks
+PASS firefox security: persisted pageshow revokes private owners before document recovery
+PASS firefox security: action context mismatch accepts no data and recovers without repeating POST
+PASS firefox security: action endpoint mismatch accepts no data and recovers without repeating POST
+PASS firefox security: recovery loop storage omits query data and stops after 32 distinct attempts
+PASS firefox security: stale validation and error outcomes cannot announce over a newer route
+PASS webkit security: lost mutation warning survives GET recovery without repeating POST
+PASS webkit security: slash attributes and custom markup are refused before import or constructors
+PASS webkit security: only the exact declared POST endpoint is enhanced and unsupported forms stay native
+PASS webkit security: recursive formdata submission from a distinct form reserves exactly one POST
+PASS webkit security: disposed or revoked formdata ownership sends no POST
+PASS webkit security: failed form serialization releases the reserved action slot
+PASS webkit security: native context mismatch revokes live owners and private DOM before recovery
+PASS webkit security: explicit context invalidation revokes captured deferred island callbacks
+PASS webkit security: persisted pageshow revokes private owners before document recovery
+PASS webkit security: action context mismatch accepts no data and recovers without repeating POST
+PASS webkit security: action endpoint mismatch accepts no data and recovers without repeating POST
+PASS webkit security: recovery loop storage omits query data and stops after 32 distinct attempts
+PASS webkit security: stale validation and error outcomes cannot announce over a newer route
+{"passed":true,"checks":39,"failures":0,"output":"experiments/forma-router/evidence/browser-security-third.json"}

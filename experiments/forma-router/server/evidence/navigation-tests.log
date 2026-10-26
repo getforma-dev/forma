@@ -1,0 +1,17 @@
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.04s
+     Running tests/navigation.rs (target/debug/deps/navigation-e889a9578eae0733)
+
+running 9 tests
+test identities_are_bounded_and_not_arbitrary_markup_or_empty_context ... ok
+test non_opted_in_document_remains_unchanged_and_has_no_router_metadata ... ok
+test a_faulting_application_action_serializer_returns_no_partial_outcome ... ok
+test native_response_shares_checked_state_and_stable_policy_with_fresh_nonce_documents ... ok
+test actions_carry_bound_admission_and_actual_status_before_data_can_be_used ... ok
+test every_typed_document_policy_change_changes_admission_identity ... ok
+test action_context_refuses_unfinalized_handles_missing_opt_in_bad_policy_and_ambiguous_endpoints ... ok
+test navigation_requires_opt_in_and_preserves_binding_and_representation_budget_refusals ... ok
+test enhanced_actions_keep_validation_status_and_represent_post_redirect_get_without_following ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+

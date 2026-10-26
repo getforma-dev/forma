@@ -32,6 +32,8 @@ tracing.workspace = true
 
 [features]
 default = []
+# Unreleased FORMA-301 feasibility surface; not a stable router capability.
+experimental-router = []
 # Explicitly enabled at compile time and per response; never a blanket layer.
 compression = ["dep:brotli", "dep:flate2"]
 

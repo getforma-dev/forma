@@ -11,7 +11,7 @@ import { isHydrateError, reportHydrateError } from './adoption-errors.js';
 import { prepareAdoption, type PreparedAdoption } from './adoption.js';
 import { AdoptionScope } from '../reactive/adoption-scope.js';
 import { currentAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
-import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland } from './island-state.js';
+import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland, type IslandPreflight, prepareNavigationIslandState, activateNavigationIslandState, revokeNavigationIslandState } from './island-state.js';
 import { skewed } from './skew.js';
 import { setIslandDisposal } from './island-disposal.js';
 
@@ -238,7 +238,10 @@ export function activateIslands(
   root: ParentNode = document,
 ): Promise<void> {
   if (skewed(root)) return Promise.resolve();
-  const checked = preflightIslands(registry, root);
+  return activateCheckedIslands(preflightIslands(registry, root));
+}
+
+function activateCheckedIslands(checked: readonly IslandPreflight[]): Promise<void> {
   const children = new Map<Element, ValidatedIsland>();
   for (const result of checked) if ('value' in result) children.set(result.host, result.value);
   const ready: Promise<void>[] = [];
@@ -304,6 +307,37 @@ export function activateIslands(
     scheduleLoads();
   }
   return Promise.all(ready).then(() => {});
+}
+
+/**
+ * @internal Experimental native-navigation feasibility API. Response transport
+ * policy and build admission belong to the router, not to this state decoder.
+ * Prepare a fresh detached wrapper; insert that same wrapper before activate().
+ * dispose() revokes deferred authority before tearing down captured route hosts.
+ * Existing activateIslands() continues to use only the original Document claims.
+ */
+export function __prepareNavigationIslands(
+  registry: Record<string, (...args: never[]) => unknown>, root: HTMLElement,
+  stateJson: string,
+): Readonly<{ activate(): Promise<void>; dispose(): void }> {
+  const handle = prepareNavigationIslandState(registry, root, stateJson);
+  let ready: Promise<void> | undefined;
+  let disposed = false;
+  return Object.freeze({
+    activate(): Promise<void> {
+      if (disposed) throw new IslandStateError('FORMA_E_ISLAND_IDENTITY', 'navigation scope was disposed');
+      if (!ready) ready = activateCheckedIslands(activateNavigationIslandState(handle));
+      return ready;
+    },
+    dispose(): void {
+      if (disposed) return;
+      disposed = true;
+      const hosts = revokeNavigationIslandState(handle);
+      for (const host of hosts) {
+        try { deactivateIsland(host); } catch (error) { reportActivationError(error); }
+      }
+    },
+  });
 }
 
 /**

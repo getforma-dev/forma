@@ -1,0 +1,5 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+   Compiling forma-router-native-proof v0.0.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.28s

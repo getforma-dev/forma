@@ -1,0 +1,124 @@
+{
+  "recordedAt": "2026-10-26T16:30:50.359315+00:00",
+  "sourceBase": "9a570afece5eb5091824422f00134a875310e857",
+  "command": "node experiments/forma-router/browser-proof.mjs http://127.0.0.1:51216 experiments/forma-router/evidence/browser-final.json",
+  "result": {
+    "passed": true,
+    "checks": 75,
+    "browsers": [
+      {
+        "engine": "chromium",
+        "version": "156.0.8078.4"
+      },
+      {
+        "engine": "firefox",
+        "version": "157.0"
+      },
+      {
+        "engine": "webkit",
+        "version": "27.2"
+      }
+    ]
+  },
+  "files": {
+    "experiments/forma-router/client.ts": {
+      "sha256": "0ea83acab906644b0727fecccc882b24d64cbf5de5f6f67e267775d2262ca3ad",
+      "bytes": 26629
+    },
+    "experiments/forma-router/browser-proof.mjs": {
+      "sha256": "25104344fca93dd95c49e37a56844e6d9639106b8474237a690e3f56c8d20299",
+      "bytes": 24909
+    },
+    "experiments/forma-router/build.mjs": {
+      "sha256": "baaf21ec07ad004b290c2c87f44ae299544b2f08bd3249fe8952ea7cc0369c8d",
+      "bytes": 1324
+    },
+    "experiments/forma-router/admin/a.tsx": {
+      "sha256": "6db029b7d38549d1510f32c09d84b0ef650557290edcca084d74d3a7391dcec4",
+      "bytes": 205
+    },
+    "experiments/forma-router/admin/b.tsx": {
+      "sha256": "4774d4c31a20bd18994d26ce389da09543a1c1d3ee456a030da001b66e27951b",
+      "bytes": 205
+    },
+    "experiments/forma-router/admin/page-a.tsx": {
+      "sha256": "bf8f967a0d756a0d9526edfee8105eeedd47becd3ed9bb368e4e878bddb980bb",
+      "bytes": 1490
+    },
+    "experiments/forma-router/admin/page-b.tsx": {
+      "sha256": "4fb9bb3aff196eb6976fca7f7b962e70d6d1922b94bdd2648233d30b329630b1",
+      "bytes": 1490
+    },
+    "experiments/forma-router/server/src/main.rs": {
+      "sha256": "605d9952684bd1e79b7343c0012a5dbc7ef34300c4adbd2de67e37b5990dd57d",
+      "bytes": 10664
+    },
+    "crates/forma-server/src/navigation.rs": {
+      "sha256": "3b12c09455b1cb922f09c3429b42472ebdcfd1aa8d144f255633ac8379d31a0b",
+      "bytes": 17958
+    },
+    "crates/forma-server/src/pages.rs": {
+      "sha256": "2219a7e47f438cbf86047809ab8cad74e5a75825a4c8c426e43d287e16c8ea4b",
+      "bytes": 19372
+    },
+    "packages/core/src/dom/activate.ts": {
+      "sha256": "3542cafcc843d786712d65e7cfaa3f47b3db979f9775dc531d48b35e1530178b",
+      "bytes": 21653
+    },
+    "packages/core/src/dom/island-state.ts": {
+      "sha256": "9e29a7976a0d8f94a3c573cccc94d33a9403604712041553808d30c27ecff799",
+      "bytes": 27006
+    },
+    "packages/compiler/src/esbuild-ssr-plugin.ts": {
+      "sha256": "53ae18f92dce100d6c87c832081c0ac41f17441d547dbcd32e8b5c203e7a4154",
+      "bytes": 27472
+    },
+    "packages/compiler/src/island-product.ts": {
+      "sha256": "80353ecb2769888abcd35b7107796d26afb9837eaeaf75d2f4f49609ae4f24cb",
+      "bytes": 9118
+    },
+    "packages/build/src/experimental-navigation.ts": {
+      "sha256": "cbfc573b46b539766cad454ea3a50c02963ec33b41c0bf5e15210656d3cd9094",
+      "bytes": 6955
+    },
+    "experiments/forma-router/dist/experimental-navigation.json": {
+      "sha256": "11e13d00680e02fdf1051c95df009e4a6f236724aca47639bf2e0890782277b5",
+      "bytes": 56087
+    },
+    "experiments/forma-router/dist/manifest.json": {
+      "sha256": "195b018547e21a00d719192f4bca1422f92e0caeb64efb61d74ac80cee6ca6b8",
+      "bytes": 1376
+    },
+    "experiments/forma-router/dist/proof-a.43f5de560348.ir": {
+      "sha256": "43f5de5603487302eb23513bc6426793ab41ce4ea9977168f5efdd6edf527cf6",
+      "bytes": 1480
+    },
+    "experiments/forma-router/dist/proof-b.3b409ecab892.ir": {
+      "sha256": "3b409ecab892791e076b1affa77261b4299e71179111dd8cf58ef34491b49827",
+      "bytes": 1483
+    },
+    "experiments/forma-router/dist/proof-group.792ecf5d458a.js": {
+      "sha256": "792ecf5d458a7dddf3914ab47141a65ee9b23688ba6edc2da1eb689351245236",
+      "bytes": 101600
+    },
+    "experiments/forma-router/dist/proof-group.792ecf5d458a.js.br": {
+      "sha256": "659799fb5178e33894f9d51538d2225bfca7bf84e72dc41e966ad4b040d00cde",
+      "bytes": 30237
+    },
+    "experiments/forma-router/dist/proof-group.792ecf5d458a.js.gz": {
+      "sha256": "5cd1227f14fdbb2774abd18d8efb217bc58cec924975dc1a02de4f44388e7838",
+      "bytes": 34014
+    }
+  },
+  "evidence": {
+    "browser-final.json": "59a76e5d3f6711cd5a3bbb3b25c42f8020a3b6f35e4a7a65c2c0cc58fc8c3dd7",
+    "browser-final.log": "5749b50469de7765d15ba8027a8214a8db392ceff8fe354993a4be716a7229ba"
+  },
+  "limitations": [
+    "Experimental local proof; no public router package, release, production auth orchestration or nested-layout qualification.",
+    "persisted pageshow case dispatches the event with persisted=true; does not establish actual BFCache eligibility across browser policies.",
+    "Unknown outcome survives document recovery only when sessionStorage is available; current-Document latch remains when storage is unavailable.",
+    "Revocation removes private rendered DOM and owners, but does not promise erasure of captured JavaScript references or all application caches.",
+    "Strict parser/profile checks are tailored to this bounded native fixture and are not a general HTML sanitizer."
+  ]
+}

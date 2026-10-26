@@ -28,6 +28,8 @@ use std::time::Instant;
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct RenderCtx {
+    #[cfg(feature = "experimental-router")]
+    navigation: Option<crate::navigation::NavigationConfig>,
     policy: PolicyExtensions,
     limits: Option<WalkLimits>,
     module_preloads: Option<ModulePreloads>,
@@ -43,6 +45,25 @@ impl RenderCtx {
     /// The strict policy with limits inherited from the bound page.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Opt into the unreleased native navigation proof. Ordinary responses remain
+    /// complete documents; this metadata does not authorize a client request.
+    #[cfg(feature = "experimental-router")]
+    #[must_use]
+    pub fn with_navigation(mut self, config: crate::navigation::NavigationConfig) -> Self {
+        self.navigation = Some(config);
+        self
+    }
+
+    #[cfg(feature = "experimental-router")]
+    pub(crate) fn navigation(&self) -> Option<&crate::navigation::NavigationConfig> {
+        self.navigation.as_ref()
+    }
+
+    #[cfg(feature = "experimental-router")]
+    pub(crate) fn policy_extensions(&self) -> &PolicyExtensions {
+        &self.policy
     }
 
     /// Override the bound page's document title for this request; escaped as text.
@@ -202,6 +223,15 @@ impl RenderCtx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
+    /// RENDER-601: an experimental navigation response is unsupported or malformed.
+    #[cfg(feature = "experimental-router")]
+    #[non_exhaustive]
+    Navigation {
+        /// The requested route.
+        route: String,
+        /// Refusal reason. No partial response is emitted.
+        message: String,
+    },
     /// RENDER-105: a static SSR route cannot execute or preload JavaScript.
     #[non_exhaustive]
     StaticRoute {
@@ -326,6 +356,8 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
+            #[cfg(feature = "experimental-router")]
+            RenderError::Navigation { .. } => "RENDER-601",
             RenderError::StaticRoute { .. } => "RENDER-105",
             RenderError::Manifest { .. } => "RENDER-104",
             RenderError::RouteMode { .. } => "RENDER-103",
@@ -358,6 +390,8 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
+            #[cfg(feature = "experimental-router")]
+            RenderError::Navigation { route, .. } => route,
             RenderError::StaticRoute { route, .. }
             | RenderError::Manifest { route, .. }
             | RenderError::RouteMode { route }
@@ -420,6 +454,8 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
+            #[cfg(feature = "experimental-router")]
+            RenderError::Navigation { message, .. } => write!(f, ": {message}"),
             RenderError::StaticRoute { message, .. } | RenderError::Manifest { message, .. } => {
                 write!(f, ": {message}")
             }
@@ -558,10 +594,10 @@ fn render_guarded(
 }
 
 /// Catch request-side unwinds, including user-defined props conversion.
-pub(crate) fn guard(
+pub(crate) fn guard<T>(
     route: &str,
-    render: impl FnOnce() -> Result<PageResponse, RenderError>,
-) -> Result<PageResponse, RenderError> {
+    render: impl FnOnce() -> Result<T, RenderError>,
+) -> Result<T, RenderError> {
     match catch_unwind(AssertUnwindSafe(render)) {
         Ok(result) => result,
         Err(payload) => Err(RenderError::Fault {
@@ -573,12 +609,12 @@ pub(crate) fn guard(
     }
 }
 
-fn render(
+fn render_content(
     config: &PageConfig,
     ctx: &RenderCtx,
     draw: impl FnOnce() -> Result<CspNonce, NonceError>,
     root: Root<'_>,
-) -> Result<PageResponse, RenderError> {
+) -> Result<RenderedContent, RenderError> {
     let route = || config.route_pattern.to_string();
     let static_route = config
         .manifest
@@ -685,6 +721,39 @@ fn render(
         }
     };
 
+    Ok(RenderedContent {
+        nonce,
+        policy,
+        ssr_body,
+        island_state,
+        counts,
+        output_limit,
+    })
+}
+
+struct RenderedContent {
+    nonce: CspNonce,
+    policy: csp::PagePolicy,
+    ssr_body: Option<String>,
+    island_state: Option<forma_ir::IslandState>,
+    counts: RenderCounts,
+    output_limit: usize,
+}
+
+fn render(
+    config: &PageConfig,
+    ctx: &RenderCtx,
+    draw: impl FnOnce() -> Result<CspNonce, NonceError>,
+    root: Root<'_>,
+) -> Result<PageResponse, RenderError> {
+    let RenderedContent {
+        nonce,
+        policy,
+        ssr_body,
+        island_state,
+        counts,
+        output_limit,
+    } = render_content(config, ctx, draw, root)?;
     let html = crate::template::write_document(
         config,
         &nonce,
@@ -697,7 +766,47 @@ fn render(
     if let Some(reason) = policy.relaxed() {
         csp::log_relaxation(config.route_pattern, reason);
     }
-    Ok(PageResponse::with_policy(html, nonce, policy, counts))
+    let response = PageResponse::with_policy(html, nonce, policy, counts);
+    #[cfg(feature = "experimental-router")]
+    let response = if ctx.navigation().is_some() {
+        response.with_navigation()
+    } else {
+        response
+    };
+    Ok(response)
+}
+
+/// The experimental representation uses the exact same checked walk as documents.
+#[cfg(feature = "experimental-router")]
+pub(crate) fn render_bound_navigation(
+    config: &PageConfig,
+    ctx: &RenderCtx,
+    module: &forma_ir::IrModule,
+    slots: &forma_ir::SlotData,
+    limits: WalkLimits,
+) -> Result<crate::navigation::NavigationResponse, RenderError> {
+    crate::navigation::validate_context(config, ctx)?;
+    let content = render_content(
+        config,
+        ctx,
+        CspNonce::try_generate,
+        Root::Walk {
+            module: Some(module),
+            slots: Some(slots),
+            limits,
+        },
+    )?;
+    if let Some(reason) = content.policy.relaxed() {
+        csp::log_relaxation(config.route_pattern, reason);
+    }
+    crate::navigation::NavigationResponse::from_render(
+        config,
+        ctx,
+        content.ssr_body.as_deref().unwrap_or(""),
+        content.island_state.as_ref(),
+        content.counts,
+        content.output_limit,
+    )
 }
 
 /// A panic payload's message: `panic!` with a literal gives a `&str`, with
