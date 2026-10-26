@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-26T18:24:45.442Z",
+  "sourceTag": "v3.1.0",
+  "sourceCommit": "9a570afece5eb5091824422f00134a875310e857",
+  "manifestSha256": "1c0ed5ee123b7ac5b5d2f16dac42662efdb7eb554d54da87f03428d4a9083a49",
+  "originalWriter": "3.1.0",
+  "scope": "Actual published reader manifest admission. Future writer is an explicit test mutation; no package versions or generated production outputs are changed.",
+  "passed": true,
+  "command": "CARGO_BUILD_JOBS=3 cargo test --locked --offline -p forma-server --test router_reader_probe",
+  "rustc": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+  "log": "\nrunning 3 tests\ntest real_published_reader_rejects_future_navigation_writer_before_binding ... ok\ntest same_version_development_labels_do_not_authenticate_new_capability_support ... ok\ntest real_published_reader_keeps_its_older_equal_and_patch_writer_rules ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n",
+  "cases": 3
+}

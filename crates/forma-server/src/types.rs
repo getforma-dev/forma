@@ -236,6 +236,19 @@ impl<'de> Deserialize<'de> for AssetManifest {
                 }
             }
         }
+        // The reserved navigation capability must not disappear as an unknown
+        // serde field when this reader was built without its feature. Ordinary
+        // forward-compatible fields retain their existing behavior.
+        #[cfg(not(feature = "navigation"))]
+        if let Some(routes) = value.get("routes").and_then(serde_json::Value::as_object) {
+            for (pattern, route) in routes {
+                if route.get("navigation").is_some() {
+                    return Err(serde::de::Error::custom(format!(
+                        "MANIFEST-103 route {pattern}: native navigation capability requires the forma-server navigation feature"
+                    )));
+                }
+            }
+        }
         #[derive(Deserialize)]
         struct Raw {
             version: u32,
