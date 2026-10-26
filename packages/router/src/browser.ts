@@ -13,12 +13,14 @@ export function createBrowserAdapter(): RouteAdapter {
     connect(container: HTMLElement) {
       let live: Owner[] = [], closed = false;
       function prepare(context: NavigationContext): PreparedView {
+        if (closed || context.signal.aborted) throw new NavigationError('ROUTER_CANCELLED');
         const keys = context.matches.map(match => JSON.stringify([match.id, match.params, match.definition.reuseKey?.(match) ?? '']));
         let keep = 0;
         while (keep < live.length && keep < context.matches.length && live[keep].id === context.matches[keep].id && live[keep].key === keys[keep] && !(context.revalidate && keep === context.matches.length - 1)) keep++;
         const fresh: Owner[] = []; let transferred = false, disposed = false;
         try {
           for (let i = keep; i < context.matches.length; i++) {
+            if (closed || context.signal.aborted) throw new NavigationError('ROUTER_CANCELLED');
             const match = context.matches[i], outlet = container.ownerDocument.createElement('div'); outlet.setAttribute('data-forma-outlet', 'child');
             let stop = () => {}; let node: HTMLElement;
             node = createUnownedRoot(dispose => {

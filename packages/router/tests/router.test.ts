@@ -191,3 +191,12 @@ it.each(['revalidate', 'foreground', 'submit'])('repairs a cancelled pending POP
   else { vi.stubGlobal('fetch', vi.fn(async () => response('validation', {}, 422))); await router.submit(form()); }
   held.resolve(false); await flush(); expect(history.go).toHaveBeenCalledWith(1); expect(window.location.pathname).toBe('/c'); expect(router.location().url.pathname).toBe('/c'); expect(router.location().key).toBe((c as any).__formaRouter.key);
 });
+it('does not start speculative resources after a permission callback disposes the router', async () => {
+  let router: Router; const prepare = vi.fn(async () => {}), f = fake(prepare);
+  router = make({ ...f.adapter, kind: 'html' }, { canPrefetch() { router.dispose(); return true; } }); await router.ready;
+  expect(await router.prefetch('/b')).toBe('skipped'); expect(prepare).not.toHaveBeenCalled();
+});
+it('does not speculate while offline', async () => {
+  const f = fake(), router = make({ ...f.adapter, kind: 'html' }, { canPrefetch: () => true }); await router.ready;
+  vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false); expect(await router.prefetch('/b')).toBe('skipped'); expect(f.disposals).toEqual([]);
+});

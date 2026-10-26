@@ -258,8 +258,8 @@ export function createRouter(input: RouterOptions): Router {
   }
   async function prefetch(raw: string | URL): Promise<'completed' | 'skipped' | 'cancelled'> {
     const url = eligible(raw);
-    if (closed || invalid || action || contextBarrier || !url || !options.canPrefetch?.(new URL(url)) || (win.navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || speculative.has(url.href) || speculative.size >= 2) return 'skipped';
-    const matched = matches(url); if (!matched) return 'skipped';
+    if (closed || invalid || action || contextBarrier || !url || !options.canPrefetch?.(new URL(url)) || win.navigator.onLine === false || (win.navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || speculative.has(url.href) || speculative.size >= 2) return 'skipped';
+    const matched = matches(url); if (!matched || closed || invalid) return 'skipped';
     const adapter = matched.at(-1)?.definition.adapter ?? options.adapter;
     if (adapter.kind === 'browser') return 'skipped';
     const controller = new AbortController();
