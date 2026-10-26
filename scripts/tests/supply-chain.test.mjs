@@ -415,3 +415,122 @@ test('published-crate polling bounds curl and sleep by one wall-clock deadline',
   assert.match(calls, /--max-time 2 /); assert.equal(calls.trim().split('\n').length, 1); assert.doesNotMatch(calls, /sleep/);
   assert.match(r.stdout, /not visible yet/);
 });
+
+// D14-3.2-004: these are consumer workflows, with no access to Forma's
+// monorepo scripts/config. Build-time JavaScript dependencies are audited too.
+const starterNames = ['minimal', 'dashboard', 'native-router'];
+const starterWorkflowPath = name => join(root, 'packages/create-app/templates', name, '.github/workflows/build.yml');
+const starterWorkflow = name => JSON.parse(execFileSync('ruby', ['-rjson', '-ryaml', '-e', 'puts JSON.generate(YAML.load(STDIN.read))'],
+  { input: readFileSync(starterWorkflowPath(name)), encoding: 'utf8' }));
+const starterNpmCommands = [
+  'npm ci --ignore-scripts --include=dev --include=optional --include=peer',
+  'npm audit signatures --include=dev --include=optional --include=peer',
+  'npm audit --include=dev --include=optional --include=peer',
+];
+const starterRustCommands = [
+  'cargo install cargo-deny --version 0.20.2 --locked',
+  'cargo deny --locked --manifest-path Cargo.toml fetch db',
+  'cargo deny --locked --manifest-path Cargo.toml check advisories',
+];
+const commandLines = step => (step.run ?? '').split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+const checkStarterSecurity = (workflow, name) => {
+  const job = workflow.jobs?.release, steps = job?.steps ?? [];
+  assert.ok(job && job.if === undefined && job['continue-on-error'] === undefined, 'consumer build must be unconditional and required');
+  assert.ok(workflow.defaults === undefined && job.defaults === undefined, 'consumer shell/working-directory defaults changed');
+  const runSteps = steps.filter(step => step.run !== undefined);
+  assert.equal(runSteps.length, 4, 'consumer security/build steps changed');
+  const [npm, rust, frontend, binary] = runSteps;
+  for (const step of runSteps) assert.ok(step.if === undefined && step['continue-on-error'] === undefined, 'consumer gate may be skipped or fail');
+  for (const step of [npm, rust]) {
+    // GitHub's explicit bash shell uses --noprofile --norc -e -o pipefail.
+    assert.equal(step.shell, 'bash', 'security commands require fail-fast bash');
+    assert.equal(step.env, undefined, 'security command environment override');
+  }
+  assert.equal(npm['working-directory'], 'admin');
+  assert.equal(rust['working-directory'], undefined, 'Rust gate must use the generated project root');
+  assert.deepEqual(commandLines(npm), starterNpmCommands, 'npm install/signature/full advisory gate changed');
+  assert.deepEqual(commandLines(rust), starterRustCommands, 'pinned live Rust advisory gate changed');
+  assert.deepEqual(commandLines(frontend), [name === 'dashboard' ? 'npm run build' : 'npm run build:ssr']);
+  assert.equal(frontend['working-directory'], 'admin');
+  assert.deepEqual(commandLines(binary), ['cargo build --release --locked --timings']);
+  assert.equal(binary['working-directory'], undefined);
+  const node = steps.findIndex(step => step.uses?.startsWith('actions/setup-node@'));
+  const toolchain = steps.findIndex(step => step.uses?.startsWith('dtolnay/rust-toolchain@'));
+  assert.ok(node >= 0 && node < steps.indexOf(npm));
+  assert.ok(toolchain >= 0 && toolchain < steps.indexOf(rust));
+};
+for (const name of starterNames) {
+  test(`SR2/SR4 consumer ${name}: required signatures and live advisories precede both builds`, () => {
+    checkStarterSecurity(starterWorkflow(name), name);
+  });
+  test(`SR2/SR4 consumer ${name}: removing or bypassing any dependency gate is refused`, () => {
+    const original = starterWorkflow(name);
+    const mutations = [
+      ['optional job', (_, job) => { job['continue-on-error'] = true; }],
+      ['conditional job', (_, job) => { job.if = 'false'; }],
+      ['shell default', (_, job) => { job.defaults = { run: { shell: 'bash {0}' } }; }],
+      ['optional audit', steps => { steps[0]['continue-on-error'] = true; }],
+      ['conditional audit', steps => { steps[1].if = 'false'; }],
+      ['non-failing shell', steps => { steps[0].shell = 'bash {0}'; }],
+      ['offline environment', steps => { steps[0].env = { npm_config_offline: 'true' }; }],
+      ['external Rust config directory', steps => { steps[1]['working-directory'] = '../../..'; }],
+      ['build before verification', (steps, job) => { const at = job.steps.indexOf(steps[0]); job.steps.splice(at, 0, job.steps.splice(job.steps.indexOf(steps[2]), 1)[0]); }],
+    ];
+    for (const command of [...starterNpmCommands, ...starterRustCommands]) {
+      const at = command.startsWith('npm') ? 0 : 1;
+      mutations.push([`missing ${command}`, steps => { steps[at].run = commandLines(steps[at]).filter(line => line !== command).join('\n'); }]);
+      mutations.push([`masked ${command}`, steps => { steps[at].run = steps[at].run.replace(command, `${command} || true`); }]);
+    }
+    for (const [before, after] of [
+      ['--include=dev', '--omit=dev'], ['--ignore-scripts', ''], ['audit signatures', 'audit'],
+      ['0.20.2', 'latest'], ['fetch db', 'fetch db --offline'], ['check advisories', 'check advisories --allow vulnerabilities'],
+    ]) mutations.push([`${before} weakened`, steps => { for (const step of steps.slice(0, 2)) step.run = step.run.replace(before, after); }]);
+    for (const [label, change] of mutations) {
+      const copy = structuredClone(original), job = copy.jobs.release;
+      change(job.steps.filter(step => step.run !== undefined), job);
+      assert.throws(() => checkStarterSecurity(copy, name), label);
+    }
+  });
+  test(`SR2/SR4 consumer ${name}: actual shell commands stop on install, signature, advisory or network failure`, t => {
+    const dir = scratch(t), bin = join(dir, 'bin'), admin = join(dir, 'admin');
+    mkdirSync(bin); mkdirSync(admin);
+    for (const tool of ['npm', 'cargo']) script(join(bin, tool), `command='${tool} '"$*"\necho "$command" >> "$PROBE_LOG"\nif [[ "$command" == "$PROBE_FAIL" ]]; then echo "$PROBE_DIAGNOSTIC" >&2; exit 23; fi`);
+    const workflow = starterWorkflow(name); checkStarterSecurity(workflow, name);
+    const steps = workflow.jobs.release.steps.filter(step => step.run !== undefined);
+    const expected = [...starterNpmCommands, ...starterRustCommands, ...commandLines(steps[2]), ...commandLines(steps[3])];
+    const modes = [
+      ['success', '', ''],
+      ['npm install failure', expected[0], 'lockfile unavailable'],
+      ['signature failure', expected[1], 'invalid package signature'],
+      ['npm advisory', expected[2], 'known build dependency vulnerability'],
+      ['npm outage', expected[2], 'ECONNREFUSED advisory service'],
+      ['cargo-deny install failure', expected[3], 'tool download failed'],
+      ['RustSec fetch outage with an existing cache', expected[4], 'advisory database fetch failed'],
+      ['Rust advisory', expected[5], 'known RustSec vulnerability'],
+      ['Rust database read failure', expected[5], 'advisory database unreadable'],
+    ];
+    for (const [label, fail, diagnostic] of modes) {
+      const log = join(dir, `calls-${modes.findIndex(mode => mode[0] === label)}`);
+      let result;
+      for (const step of steps) {
+        result = run('bash', ['--noprofile', '--norc', '-e', '-o', 'pipefail', '-c', step.run], step['working-directory'] === 'admin' ? admin : dir,
+          { PATH: `${bin}:${process.env.PATH}`, PROBE_LOG: log, PROBE_FAIL: fail, PROBE_DIAGNOSTIC: diagnostic });
+        if (result.status !== 0) break;
+      }
+      const calls = readFileSync(log, 'utf8').trim().split('\n');
+      if (!fail) { success(result); assert.deepEqual(calls, expected); }
+      else { assert.equal(result.status, 23, label); assert.ok(result.stderr.includes(diagnostic)); assert.deepEqual(calls, expected.slice(0, expected.indexOf(fail) + 1), label); }
+    }
+  });
+}
+
+test('SR2/SR4: npm ships the exact verified consumer workflow bytes for all three starters', t => {
+  const dir = scratch(t);
+  const result = run('npm', ['pack', '--ignore-scripts', '--offline', '--json', '--pack-destination', dir], join(root, 'packages/create-app'));
+  success(result);
+  const archive = JSON.parse(result.stdout)[0].filename;
+  for (const name of starterNames) {
+    const bytes = execFileSync('tar', ['-xOf', join(dir, archive), `package/templates/${name}/.github/workflows/build.yml`]);
+    assert.deepEqual(bytes, readFileSync(starterWorkflowPath(name)), name);
+  }
+});

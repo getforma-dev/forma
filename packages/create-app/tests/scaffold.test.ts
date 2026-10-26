@@ -62,6 +62,16 @@ describe('scaffolding', () => {
       expect(actual).toEqual(expected);
     });
 
+    it('emits the authenticated template workflow without changing its dependency gates', () => {
+      // Historical published templates retain their own bytes; current candidate
+      // workflow security is exercised independently in supply-chain.test.mjs.
+      const expectedRoot = process.env.FORMA_SCAFFOLD_PUBLISHED_TEMPLATES || TEMPLATES_DIR;
+      const workflow = path.join('.github', 'workflows', 'build.yml');
+      expect(fs.readFileSync(path.join(dest, workflow), 'utf8')).toBe(
+        fs.readFileSync(path.join(expectedRoot, template, workflow), 'utf8'),
+      );
+    });
+
     it('restores the scripts-off npm policy and never leaves _npmrc in a scaffold', () => {
       expect(fs.readFileSync(path.join(dest, 'admin', '.npmrc'), 'utf8')).toContain('ignore-scripts=true');
       expect(fs.existsSync(path.join(dest, 'admin', '_npmrc'))).toBe(false);
