@@ -2,6 +2,55 @@
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-26 (prepared; publication pending)
+
+A coordinated minor update to all seven Forma packages. Upgrade the renderer
+before deploying 3.1-generated output, and rebuild the browser/native deployment
+together. FMIR stays at version 3 and manifests at schema 2. See the
+[3.0 → 3.1 upgrade guide](docs/UPGRADING-3.1.md).
+
+- Render native routes without JavaScript or islands as plain HTML, omitting
+  hydration markers, injected row keys and empty island state. Native routes
+  with islands retain their adoption contract. Reduce temporary allocations in the server
+  walker and cache locked Cargo builds in generated-template CI.
+- Add opt-in rendered-response compression through
+  `PageResponse::with_compression`, preserving CSP and `no-store`. Compression
+  remains off by default; review the
+  [BREACH policy](SECURITY.md#opt-in-page-compression-forma-261) before enabling it.
+- Consolidate public-effect graph and lifecycle state while preserving cleanup,
+  synchronous updates, adoption and error reporting. The recorded gains have
+  workload-specific costs: original fan-out, effect-creation and row-creation
+  targets remain unmet. Use the
+  [current performance decision](docs/release/3.1-PERFORMANCE-TRADEOFFS.md#rc3-startup-repair-and-current-client-costs),
+  rather than historical RC measurements, for the accepted limits and results.
+- FORMA-290: match `NaN` keys consistently and track each component-list row's
+  owner by its actual node. Repeated updates preserve identity; removal,
+  rerendering, clear and parent disposal retire the corresponding effects and
+  compiled handlers. Stable unique keys remain recommended. This does not make
+  multi-row rendering transactional; the upgrade guide records the remaining
+  recovery limitation after a renderer throws.
+- FORMA-294: offer `clientTemplates: true` for eligible inline client-created
+  list rows. It is off by default; unsupported shapes and server-adopted lists,
+  including later insertions, keep ordinary JSX construction. Compiled clicks
+  use delegation with owner cleanup. Creation gains carry bundle and clear
+  costs; opted-in routes still have to pass unchanged route budgets. See the
+  [compiler scope and evidence](docs/release/FORMA-294-COMPILER-CANDIDATE.md).
+  Also drain later bindings when root setup disposes itself and then throws.
+- FORMA-299: enable eager compilation of five private adoption functions in
+  supporting engines. Function bodies, atomic adoption, scheduling and startup
+  limits are unchanged; the current decision records both startup improvement
+  and adverse client observations.
+- Keep nested HTML-runtime host values opaque while preserving supported
+  operations and grants. Report invalid runtime declarations with coded
+  diagnostics, refuse same-scope computed/state name collisions, and bound
+  `data-list` passes by the 24,000 row-weight cap. These directive-runtime
+  limits do not apply to component `createList` rows.
+- Harden build output and diagnostics paths, including refusing symbolic-link
+  `outputDir` values before writes. Retain explicit package-size tradeoffs;
+  optional compiler delivery does not raise route-size or startup limits.
+
+The dated release record establishes publication of this prepared package set.
+
 ## [3.1.0-rc.3] - Prepared; publication pending
 
 A fresh candidate includes the following reviewed changes and requires renewed

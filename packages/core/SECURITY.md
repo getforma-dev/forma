@@ -414,7 +414,8 @@ Stated here rather than left for a reader to discover:
 
 | Version | Supported |
 |---------|-----------|
-| 3.0.x | Current unified major; Critical and High security fixes under the stack policy. |
+| 3.1.x | Prepared coordinated line; support starts with its publication record under the stack policy. |
+| 3.0.x | Published unified line; Critical and High security fixes under the stack policy. |
 | 2.x | Maintenance line; Critical and High fixes through the date in the stack policy. |
 | < 2.0 | No |
 

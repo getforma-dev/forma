@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+Changes after the prepared 3.1.0 set will be recorded here.
+
+## [3.1.0] - Prepared; publication pending
+
+This heading describes prepared source, not registry availability. The release
+publication record establishes when the coordinated package set is published.
+
 - FORMA-299: use parenthesized function expressions for five private adoption
   functions, allowing supported engines to compile them eagerly. Their bodies,
   scheduling and ownership behavior are unchanged. Fresh packed startup checks
