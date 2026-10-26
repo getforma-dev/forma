@@ -105,7 +105,9 @@ function execute(label) {
   const reportPath = join(runDir, `${label}.json`);
   const r = spawnSync(process.execPath, [vitest, 'run', ...VITEST_ARGS], {
     cwd: ROOT, encoding: 'utf8', timeout: 15 * 60_000, maxBuffer: 16 * 1024 * 1024,
-    env: { ...process.env, FORMA_PROBE_REPORT: reportPath },
+    // Vitest applies this environment override after CLI maxWorkers. Keep the
+    // assertion evidence lane serial even under a broader workspace worker cap.
+    env: { ...process.env, VITEST_MAX_WORKERS: '1', FORMA_PROBE_REPORT: reportPath },
   });
   writeFileSync(join(runDir, `${label}.log`), `${r.stdout ?? ''}${r.stderr ?? ''}`);
   const processResult = { status: r.status, signal: r.signal, error: r.error?.message ?? null };

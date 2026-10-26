@@ -54,6 +54,7 @@ process.on('SIGINT', interrupt); process.on('SIGTERM', interrupt);
 try {
   if (!skipPackageBuild) await run('npm', ['run','build'], 'packages.log');
   await run(process.execPath, [join(fixture,'build.mjs')], 'fixture-build.log');
+  await run(process.execPath, [join(repo,'scripts/qualify-router-size.mjs'),join(runDir,'size')], 'paired-size.log');
   await run('cargo', ['build','--locked','--manifest-path',join(fixture,'server/Cargo.toml')], 'server-build.log');
   const binary = join(fixture, 'server/target/debug/forma-router-native-fixture');
   if (interrupted) throw Error('Proof run interrupted');

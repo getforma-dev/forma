@@ -46,9 +46,23 @@ source and built JavaScript hashes remain unchanged throughout the comparison.
 [`size-v3.json`](../../experiments/forma-router-native/evidence/size-v3.json)
 then measures the final pending-history repair: 40,538 bytes for the group and
 12,106 bytes worst-case increment, leaving 182 bytes within the unchanged N3 cap.
+After a clean dependency install, rebuilt packages and the final prefetch
+controls, [`size-v4.json`](../../experiments/forma-router-native/evidence/size-v4.json)
+records 40,552 bytes for the group and 12,120 bytes incremental (168 bytes spare).
+It additionally binds package manifests and the workspace lock during the run.
 These source measurements are marked dirty and are not whole-P17 or final-release
 qualification. Product changes require a fresh receipt; preserve prior results.
 
 Controls cover below/exactly/above 12 KiB incremental and 64 KiB total, shared-core
 changes, duplicate baseline runtimes, an ordinary router import over the ordinary
 28,420-byte cap, and actual verified groups exceeding either fixed class limit.
+
+The native qualification runner also executes
+[`qualify-router-size.mjs`](../../scripts/qualify-router-size.mjs) on every run.
+It obtains the exact published core 3.1.0 archive and verifies the committed
+[`baseline SHA-512/SHA-256 pin`](../../scripts/router-size-baseline.json) before
+extracting it. The runner preserves the download receipt, measurement output
+and verdict, and fails on unavailable or changed baseline bytes or either size
+limit. R17 runs this check with Chromium; the release engine matrix runs it
+alongside the same real native proof in each engine. No configurable limit or
+baseline-version override is exposed.

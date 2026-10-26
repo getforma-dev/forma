@@ -25,7 +25,7 @@ function runFixture(initial, changed, check, files = ['case.test.mjs']) {
       for (const file of files) writeFileSync(join(dir, file), source + body);
       const output = join(dir, `${label}.json`);
       const result = spawnSync(process.execPath, [vitest, 'run', '--config', join(dir, 'vitest.config.mjs'), '--maxWorkers=1', '--maxConcurrency=1', '--bail=1', '--reporter', reporter], {
-        cwd: dir, encoding: 'utf8', timeout: 25000, env: { ...process.env, FORMA_PROBE_REPORT: output },
+        cwd: dir, encoding: 'utf8', timeout: 25000, env: { ...process.env, VITEST_MAX_WORKERS: '1', FORMA_PROBE_REPORT: output },
       });
       return { text: existsSync(output) ? readFileSync(output, 'utf8') : '', processResult: { status: result.status, signal: result.signal, error: result.error?.message ?? null }, output: `${result.stdout}${result.stderr}` };
     };
@@ -114,7 +114,7 @@ test('a key that starts twice needs two ends, in either order', () => {
 });
 
 /** Run the actual campaign CLI, not a simulation of its continuation branch. */
-function runCampaign(firstReplacement, body = '', timeout = 5000) {
+function runCampaign(firstReplacement, body = '', timeout = 5000, files = ['case.test.mjs']) {
   const dir = mkdtempSync(join(tmpdir(), 'forma-probe-campaign-'));
   const original = 'export const mode = 0;\n';
   try {
@@ -123,7 +123,7 @@ function runCampaign(firstReplacement, body = '', timeout = 5000) {
     writeFileSync(join(dir, 'package.json'), '{"type":"module"}\n');
     writeFileSync(join(dir, 'vitest.config.mjs'), "export default {test:{environment:'node',include:['*.test.mjs']}};\n");
     writeFileSync(join(dir, 'subject.mjs'), original);
-    writeFileSync(join(dir, 'case.test.mjs'), `import {test,expect} from 'vitest';
+    for (const file of files) writeFileSync(join(dir, file), `import {test,expect} from 'vitest';
 import {existsSync,writeFileSync} from 'node:fs';
 import {mode} from './subject.mjs';
 test('mutation behavior', async()=>{
@@ -148,13 +148,22 @@ test('mutation behavior', async()=>{
 }
 
 test('actual campaign continues after clean recovery but remains failed despite a later assertion kill', () => {
-  const { results, recovery, output } = runCampaign('export const mode = 1;');
-  assert.deepEqual(results.map(row => row.status), ['UNQUALIFIED', 'CAUGHT'], output);
-  assert.equal(results[0].killedBy, null); assert.equal(results[0].recovery.passed, true);
-  assert.equal(recovery.reason, 'passed');
-  assert.equal(results[1].failedAssertions, 1);
-  assert.match(results[1].killedBy, /mutation behavior/);
-  assert.match(output, /mutation campaign is unqualified/);
+  const workers = process.env.VITEST_MAX_WORKERS;
+  try {
+    // The general workspace cap must not defeat this security lane's serial
+    // bail semantics. Vitest gives the env variable priority over CLI flags.
+    process.env.VITEST_MAX_WORKERS = '2';
+    const { results, recovery, output } = runCampaign('export const mode = 1;', '', 5000, ['case.test.mjs', 'other.test.mjs']);
+    assert.deepEqual(results.map(row => row.status), ['UNQUALIFIED', 'CAUGHT'], output);
+    assert.equal(results[0].killedBy, null); assert.equal(results[0].recovery.passed, true);
+    assert.equal(recovery.reason, 'passed');
+    assert.equal(results[1].failedAssertions, 1);
+    assert.match(results[1].killedBy, /mutation behavior/);
+    assert.match(output, /mutation campaign is unqualified/);
+  } finally {
+    if (workers === undefined) delete process.env.VITEST_MAX_WORKERS;
+    else process.env.VITEST_MAX_WORKERS = workers;
+  }
 });
 test('actual campaign stops on a collection error without trying recovery or the next mutant', () => {
   const { results, output } = runCampaign('export const mode = ;');

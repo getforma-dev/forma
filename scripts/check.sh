@@ -52,6 +52,9 @@ npm audit --omit=dev
 step "npm audit signatures"
 npm audit signatures
 
+step "router design and reverse-engineering provenance are complete"
+node scripts/check-router-research.mjs
+
 step "FMIR shared constants are current"
 node scripts/generate-fmir-constants.mjs --check
 
