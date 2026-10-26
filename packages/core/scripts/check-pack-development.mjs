@@ -14,8 +14,9 @@
  * Usage (after `npm run build`): node scripts/check-pack-development.mjs
  */
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEV_CONDITION } from './build-defines.mjs';
@@ -25,8 +26,16 @@ const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 
 /** The JavaScript file behind an installed devDependency's command. */
 function cli(name, command) {
-  const dir = join(ROOT, 'node_modules', name);
-  return join(dir, JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).bin[command]);
+  const resolver = createRequire(join(ROOT, 'package.json'));
+  // Workspaces may hoist shared tools; use Node's search order rather than
+  // assuming every declared dev dependency has a package-local physical copy.
+  const dir = resolver.resolve.paths(name)?.map(base => join(base, name))
+    .find(candidate => existsSync(join(candidate, 'package.json')));
+  if (!dir) throw new Error(`check-pack-development: missing installed tool ${name}`);
+  const metadata = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+  if (metadata.name !== name || typeof metadata.bin?.[command] !== 'string')
+    throw new Error(`check-pack-development: invalid installed command ${name}/${command}`);
+  return join(dir, metadata.bin[command]);
 }
 
 /** Replace each `{ …, development, default }` with `{ …, default: development }`. */

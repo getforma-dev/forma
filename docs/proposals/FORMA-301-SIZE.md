@@ -43,6 +43,9 @@ The later [`size-v2.json`](../../experiments/forma-router-native/evidence/size-v
 includes the reviewed router fixes and identical baseline CSS: 40,390 bytes for
 the group and 11,958 bytes worst-case increment. It verifies that the candidate
 source and built JavaScript hashes remain unchanged throughout the comparison.
+[`size-v3.json`](../../experiments/forma-router-native/evidence/size-v3.json)
+then measures the final pending-history repair: 40,538 bytes for the group and
+12,106 bytes worst-case increment, leaving 182 bytes within the unchanged N3 cap.
 These source measurements are marked dirty and are not whole-P17 or final-release
 qualification. Product changes require a fresh receipt; preserve prior results.
 

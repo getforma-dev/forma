@@ -61,8 +61,8 @@ step "cargo clippy --locked --workspace --all-targets --all-features -- -D warni
 cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 step "cargo test --locked --workspace"
 cargo test --locked --workspace
-step "cargo test --locked -p forma-server --features compression"
-cargo test --locked -p forma-server --features compression
+step "cargo test --locked -p forma-server --all-features"
+cargo test --locked -p forma-server --all-features
 step "actual renderer 3.1 accepts older writers and refuses 3.2 before bind"
 node scripts/test-renderer-window.mjs
 step "cargo doc --locked --workspace --no-deps"
@@ -139,6 +139,9 @@ node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.te
 # N3 timing runs as its own required serial phase after all other tests.
 npx playwright test --grep-invert 'indexed products: complete public set'
 (source scripts/check-core-browser.sh --project=chromium)
+step "native router: real compiled owners, server and Chromium navigation controls"
+node scripts/run-router-native-proof.mjs --engines chromium --skip-package-build
+
 step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
 node packages/core/e2e/hostile-widgets/run.mjs
 node packages/core/e2e/hostile-widgets/qualify-guard.mjs
