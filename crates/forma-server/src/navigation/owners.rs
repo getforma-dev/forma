@@ -599,9 +599,18 @@ fn inspect(body: &str, outlet: Option<&str>, occurrences: usize) -> Result<Marku
         for (attribute, range) in &attributes {
             let lower = attribute.to_ascii_lowercase();
             if lower.starts_with("on")
-                || matches!(lower.as_str(), "is" | "shadowrootmode" | "srcdoc" | "style")
+                || matches!(
+                    lower.as_str(),
+                    "is" | "shadowrootmode" | "srcdoc" | "style" | "background"
+                )
             {
                 return Err("native owner contains a forbidden executable or styling attribute");
+            }
+            if name == "input"
+                && lower == "type"
+                && body[range.clone()].eq_ignore_ascii_case("image")
+            {
+                return Err("native owner cannot contain image input resources");
             }
             if matches!(
                 lower.as_str(),
@@ -751,6 +760,8 @@ mod tests {
             "<a href=\"javascript:run()\"></a>",
             "<a href=\"//elsewhere.example\"></a>",
             "<div DATA-FORMA-OWNER=\"fake\"></div>",
+            "<input type=\"image\">",
+            "<div background=\"/resource\"></div>",
         ] {
             assert!(inspect(body, None, 0).is_err(), "accepted {body}");
         }
