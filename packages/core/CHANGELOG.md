@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Changes after the prepared 3.1.0 set will be recorded here.
+Changes after published 3.1.0 are recorded here. Earlier preparation entries
+retain their original evidence; [the coordinated release](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
+establishes publication on 2026-10-26.
 
 - FORMA-301: add the optional `@getforma/core/navigation` integration entry for
   captured native owner scopes, initial document partitioning, nested outlet

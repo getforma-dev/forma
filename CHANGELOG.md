@@ -2,7 +2,21 @@
 
 ## [Unreleased]
 
-## [3.1.0] - 2026-10-26 (prepared; publication pending)
+- FORMA-301: add optional `@getforma/router` for browser routes, verified
+  generated HTML and typed native SSR navigation. Compatible nested layouts
+  retain their DOM/state while departing owners dispose and destination islands
+  adopt fresh server HTML. Include bounded cancellation/history, typed actions,
+  mutation uncertainty, context revocation and explicit document fallbacks.
+- Add optional core native-owner APIs, compiler/build navigation groups and the
+  `native-router` starter. Prepare the eight-package coordinated future-minor
+  inventory and packed qualification without changing published 3.1.0 versions
+  or existing non-router size limits. Preserve the reverse-engineering studies,
+  negative controls and [qualification ledger](docs/design/router/qualification.md).
+  The new router is not part of the published release below.
+
+## [3.1.0] - 2026-10-26
+
+[Published release](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).
 
 A coordinated minor update to all seven Forma packages. Upgrade the renderer
 before deploying 3.1-generated output, and rebuild the browser/native deployment
@@ -49,7 +63,8 @@ together. FMIR stays at version 3 and manifests at schema 2. See the
   `outputDir` values before writes. Retain explicit package-size tradeoffs;
   optional compiler delivery does not raise route-size or startup limits.
 
-The dated release record establishes publication of this prepared package set.
+The dated release record establishes publication of this package set. Earlier
+candidate headings below retain their original preparation status and evidence.
 
 ## [3.1.0-rc.3] - Prepared; publication pending
 
