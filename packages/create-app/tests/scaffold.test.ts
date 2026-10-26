@@ -217,18 +217,44 @@ describe('scaffolding', () => {
 
 // ── The gate: does what we ship actually build? ────────────────────────
 
-/**
- * A template's page routes: those whose handler renders a page, through
- * `try_render` or `render_browser_shell`, read from its main.rs, so a page
- * added to a template is covered without editing the tests.
- */
+/** Read the templates' local handler/helper chain so every public page is checked. */
 function pageRoutes(main: string): string[] {
-  const rendersPage = (handler: string) =>
-    /\b(?:try_render|render_browser_shell)\(/.test(new RegExp(`async fn ${handler}\\b[\\s\\S]*?\\n}`).exec(main)?.[0] ?? '');
+  const functions = new Map([...main.matchAll(/(?:async\s+)?fn (\w+)\b[\s\S]*?\n}/g)]
+    .map(match => [match[1]!, match[0]]));
+  const rendersPage = (handler: string, seen = new Set<string>()): boolean => {
+    if (seen.has(handler)) return false;
+    seen.add(handler);
+    const body = functions.get(handler) ?? '';
+    if (/\b(?:try_render|render_browser_shell|into_document_response)\(/.test(body)) return true;
+    return [...functions.keys()].some(name =>
+      new RegExp(`(?<![.\\w])${name}\\(`).test(body) && rendersPage(name, seen));
+  };
   return [...main.matchAll(/\.route\("([^"]+)",\s*get\((\w+)\)\)/g)]
-    .filter((m) => rendersPage(m[2]!))
-    .map((m) => m[1]!);
+    .filter((match) => rendersPage(match[2]!))
+    .map((match) => match[1]!);
 }
+
+describe('page response gate discovery', () => {
+  it.each(TEMPLATES)('%s includes every actual public page and excludes asset handlers', template => {
+    const routes = pageRoutes(fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src/main.rs'), 'utf8'));
+    expect(routes).toEqual(template === 'dashboard'
+      ? ['/', '/overview', '/deployments', '/servers', '/settings'] : ['/', '/about']);
+  });
+  it('follows shared render helpers and refuses cycles without a page renderer', () => {
+    const source = `.route("/delegated", get(home))
+.route("/cycle", get(cycle))
+async fn home() {
+    render().await
+}
+async fn render() {
+    branch.into_document_response()
+}
+async fn cycle() {
+    cycle().await
+}`;
+    expect(pageRoutes(source)).toEqual(['/delegated']);
+  });
+});
 
 describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
   let tmp: string;
@@ -539,7 +565,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
 
   if (TEMPLATES.includes('native-router')) {
     it('native-router: typed navigation preserves its layout and works without JavaScript in all engines', async () => {
-      const name = 'e2e-native-router';
+      const name = 'e2e-native-navigation';
       expect(runCli([name, '--template', 'native-router'], tmp).status).toBe(0);
       const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
       const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
