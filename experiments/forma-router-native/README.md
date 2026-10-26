@@ -1,9 +1,10 @@
 # Native owner integration fixture
 
-This is the FORMA-301 source integration fixture for the public compiler, build,
-core navigation, router and typed server APIs. It preserves the earlier
-`../forma-router` experiment and its receipts. This fixture does not publish a
-package, qualify a packed release, or deploy an application.
+This is the FORMA-301 integration fixture for the public compiler, build, core
+navigation, router and typed server APIs. It preserves the earlier
+`../forma-router` experiment and its receipts. The default runner uses source-built
+products; the isolated packed runner below qualifies authenticated release archives.
+Neither runner publishes a package or deploys an application.
 
 The compiler emits three independent typed owners: `shell`, `a`, and `b`. The
 shell contains a real persistent layout island and a compiler-checked outlet.
@@ -68,6 +69,37 @@ layout nodes, layout island and live input/signal state. Recovery cases instead
 count one document request, inspect revocation or refused candidate activation
 before that request can return, and assert the resulting full document. A reload
 cannot satisfy a native-transition assertion.
+
+## Sealed packed products and final results
+
+The final [outer packed receipt](evidence/packed-native-final.json) records **90/90
+passing scenarios** across Chromium, Firefox and WebKit against sealed production
+commit `9d4aafee0c99cde4faff3f39a8fca2705e70a398`. It authenticates all eight npm/crate
+archives, installs the shipped template's integrity-locked npm graph, extracts
+the three crates unchanged, verifies resolution paths and checks installed bytes
+before and after the campaign. The app and browser harness remain unchanged.
+The [inner browser receipt](evidence/packed-native-final-browser.json) retains its
+original source-integration label; use the outer receipt for the packed execution
+claim and the inner receipt for individual scenarios and served artifact hashes.
+
+Reproduce that isolated boundary with a sealed candidate and a fresh output
+directory; substitute its authenticated record digest and producer commit:
+
+```sh
+node experiments/forma-router-native/packed-proof.mjs \
+  "$PWD" /absolute/candidate-directory RELEASE_SET_SHA256 PRODUCER_COMMIT \
+  /absolute/fresh-output-directory
+```
+
+The final [timing report](performance-report.md) and [raw receipt](evidence/performance-final.json)
+record four complete source-integration cells, 30 samples per direction/mode after
+five warmups. Worst directional synchronous-commit p95 was 0.90 ms Chromium,
+2.00 ms Firefox and 1.00 ms WebKit against the 16 ms desktop budget, and 3.30 ms
+for Chromium's specified 4× mobile emulation against 50 ms. Network-inclusive
+readiness, document controls, cold entries and heap observations remain separate.
+Its eight archive identities are provenance references; the outer packed receipt
+above establishes actual archive execution. Manual screen-reader and physical-device
+qualification remain pending release gates.
 
 ## Scope and limits
 
