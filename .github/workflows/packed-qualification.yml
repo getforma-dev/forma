@@ -108,9 +108,10 @@ jobs:
       - name: Install the locked three-engine runners
         timeout-minutes: 5
         run: |
-          # Keep the same signed Ubuntu suites/packages. The Azure mirror stalled
-          # the retained b071500c attempt before any P17 test could execute.
-          for apt_source in /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
+          # Keep the same signed Ubuntu suites/packages. Hosted Ubuntu also
+          # resolves deb822 mirror+file sources through apt-mirrors.txt; editing
+          # only the sources files left the 98889302 attempt on the Azure mirror.
+          for apt_source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
             if [[ -f "$apt_source" ]]; then
               sudo sed -i 's|http://azure\.archive\.ubuntu\.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$apt_source"
             fi
