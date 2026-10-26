@@ -56,6 +56,8 @@ pub(super) fn render_shell(
         .routes
         .entry(input.route_pattern.into())
         .or_insert_with(|| RouteAssets {
+            #[cfg(feature = "navigation")]
+            navigation: None,
             mode: RouteMode::Browser,
             modulepreload: vec![],
             js: vec![],

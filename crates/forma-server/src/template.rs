@@ -241,6 +241,35 @@ pub(crate) fn write_document(
     max_output_bytes: usize,
     counts: crate::RenderCounts,
 ) -> Result<String, RenderError> {
+    #[cfg(feature = "navigation")]
+    let navigation_metadata = crate::navigation::initial_metadata(config, ctx)?;
+    #[cfg(not(feature = "navigation"))]
+    let navigation_metadata = "";
+    write_document_parts(
+        config,
+        nonce,
+        ssr_body,
+        island_state.map(forma_ir::IslandState::as_json),
+        ctx,
+        max_output_bytes,
+        counts,
+        navigation_metadata.as_ref(),
+        false,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn write_document_parts(
+    config: &PageConfig,
+    nonce: &CspNonce,
+    ssr_body: Option<&str>,
+    island_state: Option<&str>,
+    ctx: &RenderCtx,
+    max_output_bytes: usize,
+    counts: crate::RenderCounts,
+    navigation_metadata: &str,
+    owner_branch: bool,
+) -> Result<String, RenderError> {
     // Defence in depth: CspNonce already rejects anything attribute- or
     // directive-significant, so this never changes a real nonce.
     let nonce_attr = escape_html(nonce.as_str());
@@ -263,10 +292,6 @@ pub(crate) fn write_document(
         ctx.head_links(),
     );
     let parts = build_body_parts(&nonce_attr, config, &assets.js_urls);
-    #[cfg(feature = "experimental-router")]
-    let navigation_metadata = crate::navigation::initial_metadata(config, ctx)?;
-    #[cfg(not(feature = "experimental-router"))]
-    let navigation_metadata = "";
     // The root names the build the manifest names (FORMA-186, DR-29): core compares it
     // with the identity compiled into the bundle before it activates anything. The
     // manifest is data, so it is escaped as any attribute value is, and no render input
@@ -295,19 +320,24 @@ pub(crate) fn write_document(
         } else {
             ""
         },
-        island_state.map_or("", forma_ir::IslandState::as_json),
+        island_state.unwrap_or(""),
         if island_state.is_some() {
             "</script>\n"
         } else {
             ""
         },
-        navigation_metadata.as_ref(),
+        navigation_metadata,
         "</head>\n<body",
         parts.body_class_attr.as_str(),
         ">\n",
         parts.body_prefix.as_str(),
         "<div id=\"app\"",
         build_attr.as_str(),
+        if owner_branch {
+            " data-forma-router-root"
+        } else {
+            ""
+        },
         if ssr_body.is_some() {
             if static_route {
                 ">"
@@ -610,6 +640,8 @@ mod tests {
         routes.insert(
             "/test".to_string(),
             RouteAssets {
+                #[cfg(feature = "navigation")]
+                navigation: None,
                 mode: crate::RouteMode::Browser,
                 modulepreload: Vec::new(),
                 js: vec!["\"><script>alert(1)</script>".to_string()],

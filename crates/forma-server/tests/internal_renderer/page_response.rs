@@ -22,6 +22,8 @@ fn manifest() -> AssetManifest {
     routes.insert(
         "/".to_string(),
         RouteAssets {
+            #[cfg(feature = "navigation")]
+            navigation: None,
             mode: forma_server::RouteMode::Browser,
             modulepreload: Vec::new(),
             js: vec!["app.a1b2c3d4.js".to_string()],

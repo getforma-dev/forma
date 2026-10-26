@@ -153,3 +153,90 @@ Schema2 manifests require a full canonical `sha384-` digest for every asset, inc
 Browser rendering revalidates a manually constructed manifest. A missing/invalid digest or a typed preload absent from the current manifest refuses the response with RENDER-104. A development preload table must be replaced when its files leave the accepted snapshot. The public-path controls in `tests/asset_integrity.rs` cover exact tag attributes, both rendering modes, canonical digest refusals and stale preload references. Resource byte verification in the optional worker is separate from tag SRI, including dynamically imported chunks that have no tag.
 
 Declared island inputs are projected at each native `ISLAND_START` into private owned state. Every SSR response includes exactly one head `<script type="application/json" data-island-state>` before the body, including the empty envelope when no island executes. Browser shells have no state block. Host `data-forma-state` occurrence indices and `data-forma-h` digests refer to those snapshots; the retired inline props and `__forma_islands` channels are not emitted. Invalid mapping/value returns `RENDER-501` with route, component and field path. The exact escaped state JSON limit is 1 MiB (`RENDER-502`); it is independently included in the complete response budget.
+
+## Native owner navigation — FORMA-301 (unreleased)
+
+Enable the additive `navigation` Cargo feature and a compiler/build navigation
+group. Every owner is an existing finalized `PageHandle<P>` with its own checked
+props and FMIR module. The build publishes `route.navigation = { group, owner,
+outlet }`, one shared bootstrap, and identical CSS/font assets for the group.
+An outlet is a single literal empty `<div data-forma-outlet="main"></div>` outside
+all island subtrees. The server checks that declaration again against rendered
+markup. Default rendering and routes without this feature remain unchanged.
+
+```rust,no_run
+use forma_server::{NavigationBranch, NavigationConfig, RenderCtx, SealedNavigationPolicy};
+# #[derive(forma_ir::PageProps)] struct Props { value: String }
+# fn example(shell: &forma_server::PageHandle<Props>, leaf: &forma_server::PageHandle<Props>, props: &Props) -> Result<forma_server::PageResponse, Box<dyn std::error::Error>> {
+let profile = SealedNavigationPolicy::page_response_only(["/save"])?;
+let ctx = RenderCtx::new().with_navigation(
+    NavigationConfig::new("account", "layout-v1", "session-generation-v1")?
+        .with_sealed_policy(profile),
+);
+let branch = NavigationBranch::new("/account/profile", vec![
+    shell.render_owner(props, &ctx, "account-shell")?,
+    leaf.render_owner(props, &ctx.with_title("Profile"), "profile")?,
+])?;
+// For the matching navigation Accept header, return into_navigation_response().
+// Ordinary GETs, reloads, and no-JavaScript requests receive the full document.
+let page = branch.into_document_response()?;
+# Ok(page) }
+```
+
+`SealedNavigationPolicy::page_response_only` is an explicit application
+attestation: the typed PageResponse must represent the **complete effective
+policy**. Middleware/proxies must not add unrepresented policy headers; pages
+must not add policy meta elements or use `into_parts_unchecked` to alter the
+response. The constructor cannot inspect hosting configuration. Applications
+that cannot guarantee this profile must use document navigation. Native owners
+reject raw prefixes, config scripts, inline styles, body classes, request head
+links/preloads and additional `form-action` destinations. The initial owner profile
+also excludes embedded resources/media, SVG/MathML, templates, custom elements,
+policy/head elements and executable/styling attributes. URL attributes must be
+relative (including root-relative/query/fragment) and cannot contain schemes,
+protocol-relative hosts, controls or backslashes. Applications needing broader
+markup use ordinary document navigation. The effective form
+policy must be exactly `form-action 'self'`. Typed CSP/reporting/COOP and ordinary
+document security headers all contribute to the admission fingerprint. Deployment
+qualification must verify the actual served headers and policy before opt-in.
+
+The application constructs the actual root-to-leaf branch on each request.
+Opaque owners cannot be constructed from raw HTML/state. The server hashes the
+actual module and all declared checked props; extra Rust fields are excluded.
+Reuse identity includes those digests, the server-owned lifetime key and security
+context generation. Never use secrets or user identifiers in context labels.
+Changing authentication/authorization context must change that opaque generation;
+these identities do not authenticate a request. The server still owns routing,
+authorization, loading and mutation validation.
+
+A branch has 1–32 unique owners, at most 200 island occurrences, and a maximum
+1 MiB complete representation (or a stricter handle limit), 10,000 markup tokens
+and 64 nesting levels. It rejects missing
+outlets, nested island-owned outlets, duplicate identities, mixed asset sets and
+policy/context mismatches. Native JSON keeps each owner's local island indices.
+Full HTML composes a stable `[data-forma-router-root]` container with owner
+wrappers and one initial `data-island-state` envelope whose occurrence indices
+are global. Initial metadata contains identities only. Core captures this
+original document authority once; later incoming owners have isolated scopes.
+
+`with_status` accepts 200, 404, 410, 500 or 503 and preserves that status in both
+JSON and full HTTP documents, including optional compression. Authentication
+401/403 responses use the document boundary and invalidate private owners.
+`into_redirect("/destination")` emits an admitted GET redirect as JSON with HTTP
+200; it never relies on Fetch following an HTTP redirect. The router limits
+redirect hops and commits one final history entry.
+
+Enhanced forms are restricted to the canonical same-origin pathnames declared
+in the profile (at most 128). Create a fresh
+`handle.action_context(&ctx, "/save")` from a finalized bound handle after the
+request's policy/authentication checks. `ActionResponse::{success, validation,
+error, redirect}` preserve admission and HTTP/outcome semantics. The framework
+does not execute or authorize mutations, provide CSRF/idempotency protection, or
+replay POST. An unreadable result after submission is an unknown outcome;
+applications must reconcile it explicitly. Ordinary forms keep normal document
+POST/redirect/GET behavior.
+
+The `experimental-router` feature remains a compatibility alias for the original
+local feasibility harness; its legacy single-fragment API is not the production
+owner protocol. Its historical receipts are evidence of that earlier boundary,
+not qualification of the new implementation.

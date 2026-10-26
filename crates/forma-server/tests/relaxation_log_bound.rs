@@ -64,6 +64,8 @@ fn the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once() {
         manifest.routes.insert(
             route.into(),
             forma_server::RouteAssets {
+                #[cfg(feature = "navigation")]
+                navigation: None,
                 mode: forma_server::RouteMode::Browser,
                 modulepreload: vec![],
                 js: vec![],

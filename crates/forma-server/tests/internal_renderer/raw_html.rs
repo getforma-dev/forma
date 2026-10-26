@@ -380,6 +380,8 @@ fn manifest() -> AssetManifest {
     routes.insert(
         ROUTE.to_string(),
         RouteAssets {
+            #[cfg(feature = "navigation")]
+            navigation: None,
             mode: forma_server::RouteMode::Ssr,
             modulepreload: Vec::new(),
             js: vec!["app.1.js".into()],

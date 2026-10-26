@@ -277,10 +277,29 @@ impl<P: PageProps> PageHandle<P> {
         })
     }
 
+    /// Render an opaque owner using this finalized typed binding. The compiler
+    /// supplies its identity/outlet; the server hashes all checked declared props.
+    /// `reuse_key` identifies a server-owned lifetime and is never an auth token.
+    #[cfg(feature = "navigation")]
+    pub fn render_owner(
+        &self,
+        props: &P,
+        ctx: &RenderCtx,
+        reuse_key: &str,
+    ) -> Result<crate::NavigationOwner, RenderError> {
+        crate::render::guard(&self.inner.route, || {
+            self.with_render_values(props, ctx, |config, module, slots, limits, values| {
+                crate::render::render_bound_owner(
+                    config, ctx, module, slots, limits, values, reuse_key,
+                )
+            })
+        })
+    }
+
     /// Bind an enhanced action outcome to this finalized page's app/build and
     /// document policy. `endpoint` must be an exact canonical pathname chosen
     /// by the handler, not a URL copied from untrusted request input.
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     pub fn action_context(
         &self,
         ctx: &RenderCtx,
@@ -310,6 +329,23 @@ impl<P: PageProps> PageHandle<P> {
             Limits,
         ) -> Result<T, RenderError>,
     ) -> Result<T, RenderError> {
+        self.with_render_values(props, ctx, |config, module, slots, limits, _| {
+            finish(config, module, slots, limits)
+        })
+    }
+
+    fn with_render_values<T>(
+        &self,
+        props: &P,
+        ctx: &RenderCtx,
+        finish: impl FnOnce(
+            &PageConfig,
+            &forma_ir::IrModule,
+            &SlotData,
+            Limits,
+            &serde_json::Value,
+        ) -> Result<T, RenderError>,
+    ) -> Result<T, RenderError> {
         self.with_bound_config(ctx, |config, binding, limits| {
             let values = binding
                 .props
@@ -322,7 +358,7 @@ impl<P: PageProps> PageHandle<P> {
                     json_to_slot_value(values.get(name).unwrap_or(&serde_json::Value::Null)),
                 );
             }
-            finish(config, binding.props.module(), &slots, limits)
+            finish(config, binding.props.module(), &slots, limits, &values)
         })
     }
 

@@ -1,7 +1,7 @@
 //! The page response: HTML that never leaves without its policy.
 
 use crate::csp::{CspNonce, PagePolicy};
-use axum::http::{header, HeaderName, HeaderValue};
+use axum::http::{header, HeaderName, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use std::time::Duration;
 
@@ -53,7 +53,8 @@ pub struct PageResponse {
     nonce: CspNonce,
     policy: PagePolicy,
     counts: RenderCounts,
-    #[cfg(feature = "experimental-router")]
+    status: StatusCode,
+    #[cfg(feature = "navigation")]
     navigation: bool,
 }
 
@@ -112,6 +113,8 @@ pub struct PageParts {
     pub headers: Vec<(HeaderName, HeaderValue)>,
     /// What the render did.
     pub counts: RenderCounts,
+    /// HTTP status that must be preserved when using this unchecked exit.
+    pub status: StatusCode,
 }
 
 impl PageResponse {
@@ -146,14 +149,21 @@ impl PageResponse {
             nonce,
             policy,
             counts,
-            #[cfg(feature = "experimental-router")]
+            status: StatusCode::OK,
+            #[cfg(feature = "navigation")]
             navigation: false,
         }
     }
 
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     pub(crate) fn with_navigation(mut self) -> Self {
         self.navigation = true;
+        self
+    }
+
+    #[cfg(feature = "navigation")]
+    pub(crate) fn with_status(mut self, status: StatusCode) -> Self {
+        self.status = status;
         self
     }
 
@@ -176,6 +186,7 @@ impl PageResponse {
             nonce: self.nonce,
             headers,
             counts: self.counts,
+            status: self.status,
         }
     }
 
@@ -187,7 +198,7 @@ impl PageResponse {
             HeaderValue::from_static("text/html; charset=utf-8"),
         ));
         headers.push((header::CACHE_CONTROL, HeaderValue::from_static("no-store")));
-        #[cfg(feature = "experimental-router")]
+        #[cfg(feature = "navigation")]
         if self.navigation {
             headers.push((header::VARY, HeaderValue::from_static("Accept")));
         }
@@ -224,6 +235,7 @@ impl IntoResponse for PageResponse {
     fn into_response(self) -> Response {
         let headers = self.headers();
         let mut response = Response::new(axum::body::Body::from(self.html));
+        *response.status_mut() = self.status;
         let map = response.headers_mut();
         for (name, value) in headers {
             map.append(name, value);

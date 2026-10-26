@@ -1,23 +1,24 @@
-//! Experimental FORMA-301 native navigation and action representations.
+//! Opt-in typed native owner navigation and enhanced action representations.
 //!
-//! Enabled only by `experimental-router`. This is a feasibility contract, not
-//! a stable router API. A fetched response cannot install document headers;
-//! clients must compare policy, app, build, group and context before adoption.
+//! A fetched response cannot install document headers. Adoption requires the
+//! sealed application policy profile and matching app, build, group and context.
+mod owners;
 use crate::{PageConfig, RenderCounts, RenderCtx, RenderError};
 use axum::{
     body::Body,
     http::{header, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
 };
+pub use owners::{NavigationBranch, NavigationOwner};
 use serde::Serialize;
 use std::{
     fmt,
     io::{self, Write},
 };
 
-/// Experimental native navigation response media type.
+/// Native navigation response media type.
 pub const NAVIGATION_MEDIA_TYPE: &str = "application/vnd.forma.navigation+json";
-/// Experimental enhanced action response media type.
+/// Enhanced action response media type.
 pub const ACTION_MEDIA_TYPE: &str = "application/vnd.forma.action+json";
 
 /// Application-owned admission identities, never authorization credentials.
@@ -26,6 +27,8 @@ pub struct NavigationConfig {
     group: String,
     layout: String,
     context: String,
+    #[serde(skip)]
+    sealed: Option<SealedNavigationPolicy>,
 }
 /// Invalid navigation identity or action response input.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,6 +52,7 @@ impl NavigationConfig {
             group: group.into(),
             layout: layout.into(),
             context: context.into(),
+            sealed: None,
         };
         for item in [&value.group, &value.layout, &value.context] {
             if item.is_empty()
@@ -64,6 +68,118 @@ impl NavigationConfig {
         }
         Ok(value)
     }
+
+    /// Attest that the typed page response represents the complete effective
+    /// document policy, and declare the only enhanced action endpoints.
+    pub fn with_sealed_policy(mut self, policy: SealedNavigationPolicy) -> Self {
+        self.sealed = Some(policy);
+        self
+    }
+}
+
+/// Explicit application attestation for the restricted native navigation profile.
+///
+/// The application must serve the typed PageResponse without adding policy in
+/// middleware, a proxy, meta elements or an unchecked raw response exit. This
+/// constructor cannot inspect a deployment. If that guarantee is unavailable,
+/// use ordinary document navigation. Enhanced forms support only these exact
+/// same-origin endpoints and an enforced `form-action 'self'` policy.
+#[derive(Debug, Clone)]
+pub struct SealedNavigationPolicy {
+    actions: Vec<String>,
+}
+impl SealedNavigationPolicy {
+    /// Declare the complete typed-policy profile and up to 128 canonical action
+    /// pathnames. Empty means no enhanced forms. Sorting makes identity stable.
+    pub fn page_response_only<I, S>(actions: I) -> Result<Self, NavigationInputError>
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        let mut result = Vec::new();
+        for action in actions {
+            let action = action.into();
+            if result.len() >= 128 || !canonical_endpoint(&action) {
+                return Err(NavigationInputError(
+                    "sealed navigation requires at most 128 canonical action pathnames",
+                ));
+            }
+            result.push(action);
+        }
+        result.sort();
+        result.dedup();
+        Ok(Self { actions: result })
+    }
+}
+const POLICY_PROFILE: &str = "page-response-only-v1";
+pub(crate) fn identifier(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value.as_bytes()[0].is_ascii_alphabetic()
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_'))
+}
+fn canonical_endpoint(endpoint: &str) -> bool {
+    !endpoint.is_empty()
+        && endpoint.len() <= 2048
+        && endpoint.starts_with('/')
+        && endpoint
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'-' | b'_' | b'.' | b'~'))
+        && (endpoint == "/"
+            || !endpoint[1..]
+                .split('/')
+                .any(|segment| segment.is_empty() || matches!(segment, "." | "..")))
+}
+pub(crate) fn validate_sealed(config: &PageConfig, ctx: &RenderCtx) -> Result<(), RenderError> {
+    validate_context(config, ctx)?;
+    let nav = ctx
+        .navigation()
+        .ok_or_else(|| refusal(config.route_pattern, "missing navigation context"))?;
+    if nav.sealed.is_none() {
+        return Err(refusal(
+            config.route_pattern,
+            "native owners require an explicit SealedNavigationPolicy attestation",
+        ));
+    }
+    if !identifier(&nav.group) || !ctx.module_preloads(config.route_pattern).is_empty() {
+        return Err(refusal(
+            config.route_pattern,
+            "native owner requires a compiler group and no request module preloads",
+        ));
+    }
+    let declaration = config
+        .manifest
+        .route(config.route_pattern)
+        .and_then(|route| route.navigation.as_ref());
+    if declaration.is_none_or(|declaration| declaration.group != nav.group) {
+        return Err(refusal(
+            config.route_pattern,
+            "sealed navigation requires matching compiler/build owner metadata",
+        ));
+    }
+    let nonce = crate::CspNonce::parse("FORMA_NAVIGATION_POLICY_NONCE_PLACEHOLDER")
+        .map_err(|_| refusal(config.route_pattern, "invalid policy placeholder"))?;
+    let policy = crate::csp::page_policy(&nonce, ctx.policy_extensions()).map_err(|cause| {
+        RenderError::Policy {
+            route: config.route_pattern.into(),
+            cause,
+        }
+    })?;
+    if !policy
+        .csp()
+        .to_str()
+        .unwrap_or("")
+        .split(';')
+        .any(|part| part.trim() == "form-action 'self'")
+    {
+        return Err(refusal(
+            config.route_pattern,
+            "sealed navigation requires form-action 'self' without additional destinations",
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Serialize)]
@@ -89,6 +205,7 @@ struct BootstrapMetadata<'a> {
     metadata: Metadata<'a>,
     assets: Vec<Asset<'a>>,
 }
+#[cfg(feature = "experimental-router")]
 #[derive(Debug, Serialize)]
 struct PageEnvelope<'a> {
     #[serde(flatten)]
@@ -136,7 +253,7 @@ pub(crate) fn validate_context(config: &PageConfig, ctx: &RenderCtx) -> Result<(
         || !ctx.head_links().is_empty()
         || config.body_class.is_some()
     {
-        return Err(refusal(config.route_pattern, "experimental navigation does not transfer executable configuration, inline styling, raw prefixes, body classes or request head links"));
+        return Err(refusal(config.route_pattern, "native navigation does not transfer executable configuration, inline styling, raw prefixes, body classes or request head links"));
     }
     Ok(())
 }
@@ -176,6 +293,13 @@ fn policy_identity(ctx: &RenderCtx, route: &str) -> Result<String, RenderError> 
         digest.update(&[0]);
         digest.update(bytes);
         digest.update(&[0]);
+    }
+    if let Some(sealed) = ctx.navigation().and_then(|nav| nav.sealed.as_ref()) {
+        digest.update(POLICY_PROFILE.as_bytes());
+        for action in &sealed.actions {
+            digest.update(&[0]);
+            digest.update(action.as_bytes());
+        }
     }
     Ok(digest
         .finish()
@@ -240,6 +364,12 @@ pub(crate) fn initial_metadata(
         return Ok(String::new());
     }
     validate_context(config, ctx)?;
+    if ctx.navigation().is_some_and(|nav| nav.sealed.is_some()) {
+        return Err(refusal(
+            config.route_pattern,
+            "sealed navigation documents must be rendered through NavigationBranch",
+        ));
+    }
     let value = serde_json::to_string(&BootstrapMetadata {
         metadata: metadata(config, ctx)?,
         assets: route_assets(config, ctx)?,
@@ -257,8 +387,10 @@ pub(crate) fn initial_metadata(
 pub struct NavigationResponse {
     bytes: Vec<u8>,
     counts: RenderCounts,
+    status: StatusCode,
 }
 impl NavigationResponse {
+    #[cfg(feature = "experimental-router")]
     pub(crate) fn from_render(
         config: &PageConfig,
         ctx: &RenderCtx,
@@ -294,7 +426,11 @@ impl NavigationResponse {
             counts,
             cause: forma_ir::IrError::OutputLimitExceeded { limit },
         })?;
-        Ok(Self { bytes, counts })
+        Ok(Self {
+            bytes,
+            counts,
+            status: StatusCode::OK,
+        })
     }
     /// Work performed by the checked native walk, excluding JSON serialization.
     pub fn counts(&self) -> RenderCounts {
@@ -303,7 +439,7 @@ impl NavigationResponse {
 }
 impl IntoResponse for NavigationResponse {
     fn into_response(self) -> Response {
-        json_response(self.bytes, NAVIGATION_MEDIA_TYPE, StatusCode::OK)
+        json_response(self.bytes, NAVIGATION_MEDIA_TYPE, self.status)
     }
 }
 
@@ -370,6 +506,10 @@ pub struct ActionContext {
     context: String,
     policy: String,
     endpoint: String,
+    #[serde(rename = "policyProfile", skip_serializing_if = "Option::is_none")]
+    policy_profile: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    actions: Option<Vec<String>>,
 }
 impl ActionContext {
     pub(crate) fn from_bound(
@@ -380,18 +520,26 @@ impl ActionContext {
         validate_context(config, ctx)?;
         // Deliberately narrow proof contract: never silently normalize an action
         // identity that the browser or HTTP stack might interpret differently.
-        if endpoint.is_empty()
-            || endpoint.len() > 2048
-            || !endpoint.starts_with('/')
-            || !endpoint
-                .bytes()
-                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'-' | b'_' | b'.' | b'~'))
-            || (endpoint != "/"
-                && endpoint[1..]
-                    .split('/')
-                    .any(|segment| segment.is_empty() || matches!(segment, "." | "..")))
-        {
-            return Err(refusal(config.route_pattern, "action endpoint requires an exact canonical ASCII pathname without queries, fragments, escapes or dot segments"));
+        if !canonical_endpoint(endpoint) {
+            return Err(refusal(
+                config.route_pattern,
+                "action endpoint requires an exact canonical ASCII pathname",
+            ));
+        }
+        let sealed = ctx.navigation().and_then(|nav| nav.sealed.as_ref());
+        if let Some(profile) = sealed {
+            validate_sealed(config, ctx)?;
+            if !profile.actions.iter().any(|action| action == endpoint) {
+                return Err(refusal(
+                    config.route_pattern,
+                    "action endpoint is not declared in the sealed profile",
+                ));
+            }
+        } else if !cfg!(feature = "experimental-router") {
+            return Err(refusal(
+                config.route_pattern,
+                "enhanced actions require a sealed navigation profile",
+            ));
         }
         let bound = metadata(config, ctx)?;
         Ok(Self {
@@ -403,6 +551,8 @@ impl ActionContext {
             context: bound.context.into(),
             policy: bound.policy,
             endpoint: endpoint.into(),
+            policy_profile: sealed.map(|_| POLICY_PROFILE),
+            actions: sealed.map(|profile| profile.actions.clone()),
         })
     }
 }
@@ -489,12 +639,13 @@ impl ActionResponse {
     }
     /// A confirmed POST/redirect/GET outcome, represented explicitly so Fetch
     /// cannot hide the redirect. For ordinary forms use an actual HTTP 303.
-    /// Only root-relative same-origin destinations are supported by this proof.
+    /// Only root-relative same-origin destinations are supported.
     pub fn redirect(
         admission: &ActionContext,
         location: &str,
     ) -> Result<Self, NavigationInputError> {
-        if !location.starts_with('/')
+        if location.len() > 2048
+            || !location.starts_with('/')
             || location.starts_with("//")
             || location
                 .bytes()

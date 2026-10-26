@@ -28,7 +28,7 @@ use std::time::Instant;
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct RenderCtx {
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     navigation: Option<crate::navigation::NavigationConfig>,
     policy: PolicyExtensions,
     limits: Option<WalkLimits>,
@@ -47,21 +47,21 @@ impl RenderCtx {
         Self::default()
     }
 
-    /// Opt into the unreleased native navigation proof. Ordinary responses remain
+    /// Opt into native owner navigation. Ordinary responses remain
     /// complete documents; this metadata does not authorize a client request.
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     #[must_use]
     pub fn with_navigation(mut self, config: crate::navigation::NavigationConfig) -> Self {
         self.navigation = Some(config);
         self
     }
 
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     pub(crate) fn navigation(&self) -> Option<&crate::navigation::NavigationConfig> {
         self.navigation.as_ref()
     }
 
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     pub(crate) fn policy_extensions(&self) -> &PolicyExtensions {
         &self.policy
     }
@@ -223,8 +223,8 @@ impl RenderCtx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderError {
-    /// RENDER-601: an experimental navigation response is unsupported or malformed.
-    #[cfg(feature = "experimental-router")]
+    /// RENDER-601: a native navigation response is unsupported or malformed.
+    #[cfg(feature = "navigation")]
     #[non_exhaustive]
     Navigation {
         /// The requested route.
@@ -356,7 +356,7 @@ impl RenderError {
     /// The stable code, such as `RENDER-301`.
     pub fn code(&self) -> &'static str {
         match self {
-            #[cfg(feature = "experimental-router")]
+            #[cfg(feature = "navigation")]
             RenderError::Navigation { .. } => "RENDER-601",
             RenderError::StaticRoute { .. } => "RENDER-105",
             RenderError::Manifest { .. } => "RENDER-104",
@@ -390,7 +390,7 @@ impl RenderError {
     /// The route pattern the render was for.
     pub fn route(&self) -> &str {
         match self {
-            #[cfg(feature = "experimental-router")]
+            #[cfg(feature = "navigation")]
             RenderError::Navigation { route, .. } => route,
             RenderError::StaticRoute { route, .. }
             | RenderError::Manifest { route, .. }
@@ -454,7 +454,7 @@ impl fmt::Display for RenderError {
             write!(f, " in {}", path.join(" > "))?;
         }
         match self {
-            #[cfg(feature = "experimental-router")]
+            #[cfg(feature = "navigation")]
             RenderError::Navigation { message, .. } => write!(f, ": {message}"),
             RenderError::StaticRoute { message, .. } | RenderError::Manifest { message, .. } => {
                 write!(f, ": {message}")
@@ -731,13 +731,13 @@ fn render_content(
     })
 }
 
-struct RenderedContent {
-    nonce: CspNonce,
-    policy: csp::PagePolicy,
-    ssr_body: Option<String>,
-    island_state: Option<forma_ir::IslandState>,
-    counts: RenderCounts,
-    output_limit: usize,
+pub(crate) struct RenderedContent {
+    pub(crate) nonce: CspNonce,
+    pub(crate) policy: csp::PagePolicy,
+    pub(crate) ssr_body: Option<String>,
+    pub(crate) island_state: Option<forma_ir::IslandState>,
+    pub(crate) counts: RenderCounts,
+    pub(crate) output_limit: usize,
 }
 
 fn render(
@@ -767,7 +767,7 @@ fn render(
         csp::log_relaxation(config.route_pattern, reason);
     }
     let response = PageResponse::with_policy(html, nonce, policy, counts);
-    #[cfg(feature = "experimental-router")]
+    #[cfg(feature = "navigation")]
     let response = if ctx.navigation().is_some() {
         response.with_navigation()
     } else {
@@ -807,6 +807,34 @@ pub(crate) fn render_bound_navigation(
         content.counts,
         content.output_limit,
     )
+}
+
+/// Owner output is created only after the ordinary checked render and policy path.
+#[cfg(feature = "navigation")]
+pub(crate) fn render_bound_owner(
+    config: &PageConfig,
+    ctx: &RenderCtx,
+    module: &forma_ir::IrModule,
+    slots: &forma_ir::SlotData,
+    limits: WalkLimits,
+    values: &serde_json::Value,
+    reuse_key: &str,
+) -> Result<crate::NavigationOwner, RenderError> {
+    crate::navigation::validate_sealed(config, ctx)?;
+    let content = render_content(
+        config,
+        ctx,
+        CspNonce::try_generate,
+        Root::Walk {
+            module: Some(module),
+            slots: Some(slots),
+            limits,
+        },
+    )?;
+    if let Some(reason) = content.policy.relaxed() {
+        csp::log_relaxation(config.route_pattern, reason);
+    }
+    crate::NavigationOwner::from_render(config, ctx, module, values, reuse_key, content)
 }
 
 /// A panic payload's message: `panic!` with a literal gives a `&str`, with
@@ -888,6 +916,8 @@ mod tests {
         manifest.routes.insert(
             "/seam".into(),
             crate::RouteAssets {
+                #[cfg(feature = "navigation")]
+                navigation: None,
                 mode: crate::RouteMode::Ssr,
                 js: vec![],
                 css: vec![],

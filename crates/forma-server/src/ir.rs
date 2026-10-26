@@ -574,6 +574,8 @@ mod tests {
         routes.insert(
             route.to_string(),
             RouteAssets {
+                #[cfg(feature = "navigation")]
+                navigation: None,
                 mode: if ir.is_some() {
                     crate::RouteMode::Ssr
                 } else {
