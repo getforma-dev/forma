@@ -1,0 +1,46 @@
+
+> @getforma/router@3.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+
+ ❯ tests/snapshot-boundary.test.ts (1 test | 1 failed) 8ms
+   × exposes only immutable, prototype-safe matches in independent location snapshots 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/snapshot-boundary.test.ts > exposes only immutable, prototype-safe matches in independent location snapshots
+AssertionError: expected { constructor: 'alice', …(1) } to deeply equal { constructor: 'alice' }
+
+- Expected
++ Received
+
+  {
++   "__proto__": "value",
+    "constructor": "alice",
+  }
+
+ ❯ tests/snapshot-boundary.test.ts:18:37
+     16|     expect(Object.keys(first.matches[0])).toEqual(['id', 'params']);
+     17|     expect(Object.getPrototypeOf(first.matches[0].params)).toBeNull();
+     18|     expect(first.matches[0].params).toEqual({ constructor: 'alice', __…
+       |                                     ^
+     19|     expect(Object.isFrozen(first)).toBe(true);
+     20|     expect(Object.isFrozen(first.matches)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 182 passed (183)
+   Start at  16:03:03
+   Duration  1.67s (transform 344ms, setup 0ms, import 589ms, tests 210ms, environment 1.52s)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+npm error workspace @getforma/router@3.1.0
+npm error location /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+npm error command failed
+npm error command sh -c vitest run

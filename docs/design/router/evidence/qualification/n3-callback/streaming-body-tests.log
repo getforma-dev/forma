@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  15:56:17
+   Duration  472ms (transform 235ms, setup 0ms, import 297ms, tests 38ms, environment 358ms)
+

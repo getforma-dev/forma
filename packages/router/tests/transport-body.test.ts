@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BODY_LIMIT, readBody } from '../src/transport';
+import { BODY_LIMIT, readBody, media } from '../src/transport';
 
 function body(chunks: Uint8Array[], close = true) {
   let index = 0, cancelled = 0;
@@ -67,5 +67,36 @@ describe('bounded streaming UTF-8 transport', () => {
     await expect(result).rejects.toBe(reason);
     expect(source.cancelled()).toBe(1);
     expect(source.response.body!.locked).toBe(false);
+  });
+});
+
+
+describe('exact transport media profile', () => {
+  const expected = 'application/vnd.forma.navigation+json';
+  it.each([
+    [expected, 'no-store', 'Accept', true],
+    [expected.toUpperCase() + '; CHARSET="UTF-8"', 'private, NO-STORE', 'Origin, ACCEPT', true],
+    [expected + '; charset=utf-8; other=value', ' no-store , private ', ' accept , origin ', true],
+    [expected, 'no-store,', 'Accept,', true],
+    [expected + '; charset=utf-16', 'no-store', 'Accept', false],
+    [expected + '; charset="utf8"', 'no-store', 'Accept', false],
+    [expected + '; charset=utf-8; charset=latin1', 'no-store', 'Accept', false],
+    ['text/html', 'no-store', 'Accept', false],
+    ['', 'no-store', 'Accept', false],
+    [expected, '', 'Accept', false],
+    [expected, 'private, no-store-extra', 'Accept', false],
+    [expected, 'no-store', '', false],
+    [expected, 'no-store', 'Accept-Language', false],
+  ])('checks type %s, cache %s and vary %s', (type, cache, vary, accepted) => {
+    const response = new Response('', { headers: { 'Content-Type': type, 'Cache-Control': cache, Vary: vary } });
+    if (accepted) expect(() => media(response, expected)).not.toThrow();
+    else expect(() => media(response, expected)).toThrow('ROUTER_MEDIA');
+  });
+  it('refuses missing required headers', () => {
+    for (const omitted of ['Content-Type', 'Cache-Control', 'Vary']) {
+      const headers = new Headers({ 'Content-Type': expected, 'Cache-Control': 'no-store', Vary: 'Accept' });
+      headers.delete(omitted);
+      expect(() => media(new Response('', { headers }), expected)).toThrow('ROUTER_MEDIA');
+    }
   });
 });

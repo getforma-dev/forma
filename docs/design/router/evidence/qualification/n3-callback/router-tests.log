@@ -1,0 +1,13 @@
+
+> @getforma/router@3.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+
+
+ Test Files  10 passed (10)
+      Tests  190 passed (190)
+   Start at  16:10:06
+   Duration  1.67s (transform 301ms, setup 0ms, import 584ms, tests 214ms, environment 1.69s)
+

@@ -135,8 +135,8 @@ export function createRouter(input: RouterOptions): Router {
       if (raw && raw.length > 4096) throw new Error();
       const stored = raw ? JSON.parse(raw) : { build: recoveryKey, entries: [] };
       if (!stored || typeof stored !== 'object' || typeof stored.build !== 'string' || !Array.isArray(stored.entries)) throw new Error();
-      const journal: unknown = stored.build === recoveryKey ? stored.entries : [];
-      if (!Array.isArray(journal) || journal.length >= 32 || !journal.every(x => typeof x === 'string' && /^[a-z0-9:]{1,32}$/.test(x)) || journal.includes(identity)) throw new Error();
+      const journal: unknown[] = stored.build === recoveryKey ? stored.entries : [];
+      if (journal.length >= 32 || !journal.every(x => typeof x === 'string' && /^[a-z0-9:]{1,32}$/.test(x)) || journal.includes(identity)) throw new Error();
       win.sessionStorage.setItem(key, JSON.stringify({ build: recoveryKey, entries: [...journal, identity] }));
     } catch { announce('Recovery stopped. Refresh this page'); return { kind: 'failed', code: 'ROUTER_RECOVERY_LIMIT' }; }
     replace ? win.location.replace(url.href) : win.location.assign(url.href);
@@ -296,11 +296,12 @@ export function createRouter(input: RouterOptions): Router {
     } finally { win.clearTimeout(timer); if (speculative.get(url.href) === task) speculative.delete(url.href); }
   }
   function formSpec(form: HTMLFormElement, submitter?: HTMLElement) {
-    const actionValue = submitter?.getAttribute('formaction') ?? form.getAttribute('action') ?? value().url.href;
-    const method = (submitter?.getAttribute('formmethod') ?? form.getAttribute('method') ?? 'get').toLowerCase();
+    const attribute = (name: string, fallback = '') => submitter?.getAttribute('form' + name) ?? form.getAttribute(name) ?? fallback;
+    const actionValue = attribute('action', value().url.href);
+    const method = attribute('method', 'get').toLowerCase();
     const url = eligible(actionValue, method === 'post');
-    const target = submitter?.getAttribute('formtarget') ?? form.getAttribute('target');
-    const enctype = submitter?.getAttribute('formenctype') ?? form.getAttribute('enctype') ?? 'application/x-www-form-urlencoded';
+    const target = attribute('target');
+    const enctype = attribute('enctype', 'application/x-www-form-urlencoded');
     if (!url || (target && target !== '_self') || !['get', 'post'].includes(method) || !['application/x-www-form-urlencoded', 'multipart/form-data'].includes(enctype) || form.hasAttribute('data-no-router') || submitter?.getAttribute('type')?.toLowerCase() === 'image') return null;
     if (method === 'post' && !session(activeAdapter).allowsAction?.(url)) return null;
     return { url, method, enctype };

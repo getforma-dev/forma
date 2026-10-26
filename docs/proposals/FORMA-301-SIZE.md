@@ -50,6 +50,16 @@ After a clean dependency install, rebuilt packages and the final prefetch
 controls, [`size-v4.json`](../../experiments/forma-router-native/evidence/size-v4.json)
 records 40,552 bytes for the group and 12,120 bytes incremental (168 bytes spare).
 It additionally binds package manifests and the workspace lock during the run.
+The callback/POST-persistence corrections initially exceeded N3. Their failed
+measurements and reverted reductions remain in the
+[callback size record](../design/router/evidence/qualification/n3-callback/summary.json).
+After bounded streaming decode and a simpler equivalent route-overlap check,
+[`size-v5.json`](../../experiments/forma-router-native/evidence/size-v5.json)
+records 40,713 bytes for the group and 12,281 bytes incremental. **Only 7 bytes of
+N3 headroom remain.** The next minor version preparation and every runtime change
+must remeasure the actual consumer; these figures do not prequalify a future tag.
+All 190 router tests and type checking pass, with the original caps unchanged.
+
 These source measurements are marked dirty and are not whole-P17 or final-release
 qualification. Product changes require a fresh receipt; preserve prior results.
 

@@ -19,14 +19,12 @@ function segments(path: string): Segment[] {
     return { kind: 'literal', value };
   });
 }
-function equalScore(a: number[], b: number[]) { return a.length === b.length && a.every((x, i) => x === b[i]); }
-function intersects(a: Segment[], b: Segment[]) {
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    if (a[i]?.kind === 'splat' || b[i]?.kind === 'splat') return true;
-    if (!a[i] || !b[i]) return false;
-    if (a[i].kind === 'literal' && b[i].kind === 'literal' && a[i].value !== b[i].value) return false;
-  }
-  return true;
+// Scores are a one-to-one encoding of segment kinds. Equal rank therefore
+// requires equal lengths/kinds; with terminal splats, overlap then depends
+// only on literal equality. Empty branches overlap as well.
+function overlapsAtEqualRank(a: Segment[], b: Segment[]) {
+  return a.length === b.length && a.every((token, i) => token.kind === b[i].kind
+    && (token.kind !== 'literal' || token.value === b[i].value));
 }
 /** Copy and validate caller configuration; mutation of the source never changes matching. */
 export function defineRoutes(input: readonly RouteDefinition[]): readonly RouteDefinition[] {
@@ -54,7 +52,7 @@ export function defineRoutes(input: readonly RouteDefinition[]): readonly RouteD
   }
   const routes = visit(input, [], [], 1);
   for (let i = 0; i < branches.length; i++) for (let j = i + 1; j < branches.length; j++) {
-    if (equalScore(branches[i].score, branches[j].score) && intersects(branches[i].segments, branches[j].segments)) fail('ROUTER_AMBIGUOUS');
+    if (overlapsAtEqualRank(branches[i].segments, branches[j].segments)) fail('ROUTER_AMBIGUOUS');
   }
   branches.sort((a, b) => {
     for (let i = 0; i < Math.max(a.score.length, b.score.length); i++) {
@@ -70,7 +68,7 @@ export function matchRoutes(routes: readonly RouteDefinition[], pathname: string
   if (!branches) return matchRoutes(defineRoutes(routes), pathname);
   if (!pathname.startsWith('/') || pathname.includes('//')) return null;
   let parts: string[];
-  try { parts = pathname.slice(1).replace(/\/$/, '').split('/').filter(Boolean).map(decodeURIComponent); } catch { return fail('ROUTER_ENCODING'); }
+  try { parts = pathname.slice(1).split('/').filter(Boolean).map(decodeURIComponent); } catch { return fail('ROUTER_ENCODING'); }
   for (const branch of branches) {
     const params: Record<string, string> = Object.create(null); let pos = 0, ok = true;
     for (const token of branch.segments) {

@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "scope": "Source measurements during callback fixes and semantics-preserving reductions. Not a sealed-package P17 result. Final source-dirty measurement will be repeated after the source freeze.",
+  "baselineVersion": "3.1.0",
+  "incrementLimit": 12288,
+  "groupLimit": 65536,
+  "headroomBytes": 7,
+  "measurements": [
+    {
+      "attempt": "callback-provisional",
+      "passed": false,
+      "incrementGzip": 12458,
+      "groupGzip": 40890,
+      "receipt": "callback-provisional/qualification.json",
+      "measurement": "callback-provisional/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/callback-provisional"
+    },
+    {
+      "attempt": "callback-context",
+      "passed": false,
+      "incrementGzip": 12461,
+      "groupGzip": 40893,
+      "receipt": "callback-context/qualification.json",
+      "measurement": "callback-context/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/callback-context"
+    },
+    {
+      "attempt": "callback-final",
+      "passed": false,
+      "incrementGzip": 12332,
+      "groupGzip": 40764,
+      "receipt": "callback-final/qualification.json",
+      "measurement": "callback-final/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/callback-final"
+    },
+    {
+      "attempt": "media-tokens",
+      "passed": false,
+      "incrementGzip": 12350,
+      "groupGzip": 40782,
+      "receipt": "media-tokens/qualification.json",
+      "measurement": "media-tokens/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/media-tokens"
+    },
+    {
+      "attempt": "media-pairs",
+      "passed": false,
+      "incrementGzip": 12361,
+      "groupGzip": 40793,
+      "receipt": "media-pairs/qualification.json",
+      "measurement": "media-pairs/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/media-pairs"
+    },
+    {
+      "attempt": "snapshot",
+      "passed": false,
+      "incrementGzip": 12336,
+      "groupGzip": 40768,
+      "receipt": "snapshot/qualification.json",
+      "measurement": "snapshot/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/snapshot"
+    },
+    {
+      "attempt": "attributes",
+      "passed": false,
+      "incrementGzip": 12338,
+      "groupGzip": 40770,
+      "receipt": "attributes/qualification.json",
+      "measurement": "attributes/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/attributes"
+    },
+    {
+      "attempt": "route-rank",
+      "passed": true,
+      "incrementGzip": 12281,
+      "groupGzip": 40713,
+      "receipt": "route-rank/qualification.json",
+      "measurement": "route-rank/size.json",
+      "durableRaw": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/n3-callback/route-rank"
+    }
+  ],
+  "retainedChanges": [
+    "Fatal streaming UTF-8 decoder preserves byte cap/BOM/split-codepoint/refusal and abort behavior without a duplicate whole-body buffer.",
+    "Equal-rank route overlap uses segment kinds/count and literal equality; validated terminal splats make generic intersection cases impossible.",
+    "Trailing-slash removal was redundant before split/filter and decode.",
+    "A second Array.isArray(journal) was entailed by validated stored.entries or a fresh array.",
+    "Shared form attribute override helper preserves submitter precedence and all existing defaults."
+  ],
+  "revertedExperiments": [
+    "Header token helper and required-pair loop increased compressed bytes.",
+    "Reusing frozen snapshot params increased compressed bytes; original outward snapshot identity behavior retained."
+  ],
+  "tests": 190,
+  "futureVersionRequirement": "Only7B spare; every runtime change and coordinated next-minor version preparation must remeasure against the same fixed caps. No threshold, baseline or fixture weakening is permitted.",
+  "files": {
+    "router-build.log": "507ab486549f88284d82b61247043a36336a4d794d7b7f76c52ad93a86b0f58e",
+    "router-tests.log": "de572bf257bac84fcfdb1c419d2cb77826c889494e1bc2056f124ca3311d2fc2",
+    "streaming-body-tests.log": "ce6112acb1daebaf1dab207dea222196052313ffeeef3ce19272630fb047c99f",
+    "snapshot-test-initial-expectation-failure.log": "54ef436867e80f3b027eec1541f5e85b839a9610a56276cd76630133da9bca0c",
+    "router-types.log": "ec7c2956a0e82c3740fe311636edc297640d2513640bbf0c645803be84af70f2",
+    "snapshot/qualification.json": "d6934cb8d179a225c0cc86b2c5d8d717487b93787a794882a912f5e9a529a560",
+    "snapshot/measurement.log": "c27d91165b148317ca8c0bec5028d7d16def92ba5934b3e6367cce4202c8f70b",
+    "snapshot/size.json": "53ee1843dc0c15237bfd217a8153a922ca3d42a35bc078d6bce64da6eb25dfca",
+    "media-tokens/qualification.json": "1841cb10629e19e54c4bf9f6710ac641f9017cfa2de0d37ba5537d8603de2a76",
+    "media-tokens/measurement.log": "57b2018e8e81689162d152509107a37c3c41d32fab9b4d7fd966f2786bd02619",
+    "media-tokens/size.json": "9dd1e5362b4a3759a0004dc595274df2497cd45187603c3ef99c389f8d60f88a",
+    "callback-context/qualification.json": "4cefb2c9f509cc30b6d48ddb5054e5826ff65775468a7ca65848dfa8ce9d8c2c",
+    "callback-context/measurement.log": "4018aa53635d092109a5b74152e598305ec5f47180350dd66b807a98973a492b",
+    "callback-context/size.json": "e2a2739a8d49f46c773cc399d09a48a4f60e61e2911f8e426b390810cad8b50c",
+    "callback-final/qualification.json": "709f1eb72601947314b9d2818d4c9efbc379d6d8328017e3a034446dd0186ab2",
+    "callback-final/measurement.log": "2a2a351a0222305e6055bd78ccbeae8fddaedba821a9352030c3df27c3388004",
+    "callback-final/size.json": "2f36c18c3727f27766680a021c607107f39cb9343aa9713600fc60163ef3b0d3",
+    "media-pairs/qualification.json": "4541a052136f730dba201993c3c5cb93caa84fa690322acacc90f7fe59139ca6",
+    "media-pairs/measurement.log": "64256b4d0b37f4ea176bf505af68608836346cec566944fcb9cf702b075c5f1d",
+    "media-pairs/size.json": "5d39beabd0a883a9857a7331e728c2c3890b22936ee8f90cb67c855c04d35b3c",
+    "attributes/qualification.json": "5465c9dedfb882bff7cc8be58f339dd652d48a1aec79ab7ba4d7d4a34b73aa0d",
+    "attributes/measurement.log": "6faa8371251b25d7e39ce16afa66cb919a30a2be6be7edd06fc03a32d2a3a379",
+    "attributes/size.json": "6bf11b810582346942cac3bb856cd40561051ffa70566d10c6788f5a2dedbc68",
+    "callback-provisional/qualification.json": "58f6a5a303e5e11e5cb001e4a54c6fb7f703606b74801854029aa35c9cc9589d",
+    "callback-provisional/measurement.log": "0e407deae52c5aecc8bd5e5f0889cb18a33a167a9275f1a7f2a6134ab2809fd1",
+    "callback-provisional/size.json": "0cf67f9770d9062a3240231034853a591226e05d853466d3d24330be09d132ce",
+    "route-rank/qualification.json": "abc79d529b2f57536c687a8ce20ddfae7652c2ced030c01e82dfbc9f63b0d2a8",
+    "route-rank/measurement.log": "3144413f078b5a29addcb2736e7a48d6baa2bf01ea39d90649f3c814670c945f",
+    "route-rank/size.json": "4cff3fa24b15ca8eed2c9d6c56c9194d3e8964ce0acab0455baba894fd662386"
+  }
+}
