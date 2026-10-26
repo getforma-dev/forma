@@ -2,11 +2,23 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
 import {readFileSync} from 'node:fs';
-import {REPOSITORY,NPM_PACKAGES,classifyEvent,signedWebhook,environmentSnapshot,settingsAlerts,registrySnapshot,registryAlerts} from './release-plane-events.mjs';
+import {REPOSITORY,NPM_PACKAGES,ROUTER_NPM_PACKAGES,classifyEvent,signedWebhook,environmentSnapshot,settingsAlerts,registrySnapshot,registryAlerts} from './release-plane-events.mjs';
 const base={repository:{full_name:REPOSITORY},sender:{login:'operator'}};
 test('the outside registry inventory covers exactly the four actual published npm packages',()=>{
  const actual=['core','compiler','build','create-app'].map(dir=>JSON.parse(readFileSync(new URL(`../packages/${dir}/package.json`,import.meta.url),'utf8')).name);
  assert.deepEqual([...NPM_PACKAGES].sort(),actual.sort());
+});
+test('explicit router observation expands a historical baseline once without dropping existing history',()=>{
+ const docs=Object.fromEntries(ROUTER_NPM_PACKAGES.map(name=>[name,{name,versions:{'3.2.0-rc.1':{name,version:'3.2.0-rc.1',dist:{integrity:'sha512-test-only'}}}}]));
+ const prior=registrySnapshot(Object.fromEntries(Object.entries(docs).filter(([name])=>name!=='@getforma/router')));
+ assert.throws(()=>registrySnapshot(docs),/selected npm observation/);
+ const current=registrySnapshot(docs,ROUTER_NPM_PACKAGES),alerts=registryAlerts(prior,current);
+ assert.deepEqual(alerts.map(row=>row.kind),['npm-inventory-expanded','npm-registry-changed']);
+ assert.equal(alerts[1].details.package,'@getforma/router');assert.equal(alerts[1].details.before,null);
+ assert.deepEqual(registryAlerts(current,current),[]);
+ assert.throws(()=>registryAlerts(current,prior),/cannot shrink/);
+ delete docs['@getforma/router'];assert.throws(()=>registrySnapshot(docs,ROUTER_NPM_PACKAGES),/selected npm observation/);
+ assert.throws(()=>registrySnapshot(docs,['@getforma/core']),/complete published/);
 });
 test('five seeded release-plane changes produce their specific alert',()=>{
  const tag=classifyEvent('create',{...base,ref_type:'tag',ref:'v3.0.0-beta.1'},{delivery:'tag-1'});

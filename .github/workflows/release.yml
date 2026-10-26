@@ -220,6 +220,9 @@ jobs:
           RECORD_SHA256: ${{ needs.pack.outputs.record-sha256 }}
         run: bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"
       - name: Publish only missing verified tarballs, prereleases on next
+        env:
+          # One first-package enrollment; the script confines this to the router child.
+          NPM_ROUTER_BOOTSTRAP_TOKEN: ${{ github.ref == 'refs/tags/v3.2.0-rc.1' && secrets.NPM_ROUTER_BOOTSTRAP_TOKEN || '' }}
         run: node scripts/release-publish.mjs "$RUNNER_TEMP/release" npm
 
   record:

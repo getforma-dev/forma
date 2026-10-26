@@ -5,21 +5,21 @@ test.describe('Dashboard Navigation', () => {
     await page.goto('/');
     await expect(page.locator('h1')).toContainText('Infrastructure Overview');
 
-    await page.click('button:has-text("Deployments")');
+    await page.getByRole('link', { name: 'Deployments', exact: true }).click();
     await expect(page.locator('h1')).toContainText('Deployments');
     expect(page.url()).toContain('/deployments');
 
-    await page.click('button:has-text("Servers")');
+    await page.getByRole('link', { name: 'Servers', exact: true }).click();
     await expect(page.locator('h1')).toContainText('Server Fleet');
     expect(page.url()).toContain('/servers');
 
-    await page.click('button:has-text("Dashboard")');
+    await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
     await expect(page.locator('h1')).toContainText('Infrastructure Overview');
   });
 
   test('browser back/forward buttons work', async ({ page }) => {
     await page.goto('/');
-    await page.click('button:has-text("Deployments")');
+    await page.getByRole('link', { name: 'Deployments', exact: true }).click();
     await expect(page.locator('h1')).toContainText('Deployments');
 
     await page.goBack();
@@ -27,6 +27,46 @@ test.describe('Dashboard Navigation', () => {
 
     await page.goForward();
     await expect(page.locator('h1')).toContainText('Deployments');
+  });
+
+  test('shared router retains layout and same-route chart, then releases a removed page', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('svg[viewBox="0 0 600 200"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Toggle sidebar' }).click();
+    await page.evaluate(() => {
+      (window as any).__layout = document.querySelector('[data-dashboard-layout]');
+      (window as any).__chart = document.querySelector('svg[viewBox="0 0 600 200"]');
+      const link = document.createElement('a'); link.href = '/?view=all#chart'; link.id = 'same-page';
+      document.querySelector('main')!.append(link); link.click();
+    });
+    await expect(page).toHaveURL(/\?view=all#chart$/);
+    expect(await page.evaluate(() => (window as any).__chart === document.querySelector('svg[viewBox="0 0 600 200"]'))).toBe(true);
+    await page.getByRole('link', { name: 'Deployments', exact: true }).click();
+    await expect(page.locator('h1')).toHaveText('Deployments');
+    expect(await page.evaluate(() => (window as any).__layout === document.querySelector('[data-dashboard-layout]'))).toBe(true);
+    expect(await page.evaluate(() => (window as any).__chart.isConnected)).toBe(false);
+    await expect(page.getByRole('button', { name: 'Toggle sidebar' })).toHaveAttribute('aria-expanded', 'false');
+    await page.goBack();
+    await expect(page.locator('svg[viewBox="0 0 600 200"]')).toBeVisible();
+    expect(await page.evaluate(() => (window as any).__chart === document.querySelector('svg[viewBox="0 0 600 200"]'))).toBe(false);
+    await expect(page.getByRole('button', { name: 'Toggle sidebar' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('ordinary links support a new tab and command-palette navigation uses the router', async ({ page, context }) => {
+    await page.goto('/');
+    const link = page.getByRole('link', { name: 'Servers', exact: true });
+    await expect(link).toHaveAttribute('href', '/servers');
+    const next = context.waitForEvent('page');
+    await link.click({ modifiers: ['ControlOrMeta'] });
+    const tab = await next;
+    await expect(tab.locator('h1')).toHaveText('Server Fleet');
+    await expect(page).toHaveURL(/\/$/);
+    await tab.close();
+    await page.keyboard.press('ControlOrMeta+k');
+    await page.getByPlaceholder('Search pages...').fill('settings');
+    await page.getByRole('button', { name: /Settings.*System configuration/ }).click();
+    await expect(page.locator('h1')).toHaveText('Settings');
+    await expect(page).toHaveURL(/\/settings$/);
   });
 
   test('direct URL navigation works', async ({ page }) => {

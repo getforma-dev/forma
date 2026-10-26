@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
+import { packageIdentitiesForVersion } from './release-package-inventory.mjs';
 
 const identities = [
   ['npm', '@getforma/core', 'getforma-dev/formajs', 'v', '2.0.3'],
@@ -15,6 +16,7 @@ const identities = [
   ['crates', 'forma-ir', 'getforma-dev/forma', 'ir-v', '0.2.2'],
   ['crates', 'forma-ir-derive', 'getforma-dev/forma', null, '0.0.0'],
   ['crates', 'forma-server', 'getforma-dev/forma', 'server-v', '0.2.2'],
+  ['npm', '@getforma/router', 'getforma-dev/forma', null, '3.2.0'],
 ];
 const versionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const hashPattern = /^[a-f0-9]{64}$/;
@@ -32,13 +34,17 @@ const crateArchive = (name, version) => `https://static.crates.io/crates/${name}
 
 export function validatePolicy(policy) {
   assert.equal(policy?.schema, 1, 'unsupported reconciliation policy');
-  assert(Array.isArray(policy.packages) && policy.packages.length === 7, 'policy must cover all seven packages');
+  assert(Array.isArray(policy.packages), 'policy package inventory missing');
+  const router = policy.packages.some(p => p.name === '@getforma/router');
+  const expected = identities.filter(([, name]) => router || name !== '@getforma/router').map(([registry, name]) => `${registry}:${name}`).sort();
+  assert.deepEqual(policy.packages.map(identityKey).sort(), expected, 'policy must cover the complete published inventory');
   const seen = new Set();
   for (const p of policy.packages) {
     const id = identityKey(p), spec = known.get(id);
     assert(spec && !seen.has(id), 'unknown or duplicate policy package'); seen.add(id);
     assert.deepEqual(p.recordRepositories, [...new Set([spec[2], 'getforma-dev/forma'])], `${id}: record repositories differ`);
     assert(Array.isArray(p.baseline), `${id}: baseline missing`);
+    if (p.name === '@getforma/router') assert.deepEqual(p.baseline, [], 'router has no pre-record historical releases');
     const versions = new Set();
     for (const b of p.baseline) {
       assert(typeof b.version === 'string' && /^\d+\.\d+\.\d+$/.test(b.version) && versionPattern.test(b.version), 'baseline requires an exact historical stable version');
@@ -151,14 +157,19 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
               assert(Number.isSafeInteger(asset.id) && asset.id > 0 && Number.isSafeInteger(asset.size) && asset.size > 0 && asset.size <= budget.recordBytes, 'invalid release record asset size/id');
               const record = await json(`https://api.github.com/repos/${repo}/releases/assets/${asset.id}`, budget.recordBytes, { asset: true });
               assert(record.schema === 1 && record.dryRun === false && record.tag === tag && /^[a-f0-9]{40}$/.test(record.commit) && /^[1-9][0-9]*$/.test(String(record.run)), 'record producer/tag binding invalid');
-              assert(Array.isArray(record.packages) && record.packages.length === 7, 'incomplete unified package set');
+              assert(Array.isArray(record.packages), 'incomplete unified package set');
+              assert.deepEqual(record.packages.map(identityKey).sort(), packageIdentitiesForVersion(tag.slice(1)), 'incomplete versioned unified package set');
               const ids = new Set();
               for (const p of record.packages) {
                 assert(known.has(identityKey(p)) && !ids.has(identityKey(p)) && p.version === tag.slice(1), 'duplicate/wrong unified package version');
                 assert(hashPattern.test(p.sha256) && p.file === artifactFilename(p.registry, p.name, p.version), 'invalid unified digest/filename');
                 ids.add(identityKey(p));
               }
-              for (const p of record.packages) addRecord(p, { ...source, assetId: asset.id });
+              for (const p of record.packages) {
+                addRecord(p, { ...source, assetId: asset.id });
+                if (!policy.packages.some(item => identityKey(item) === identityKey(p)))
+                  finding('POLICY_PACKAGE_UNENROLLED', 'published package is absent from the active registry monitor policy', { ...source, name: p.name, version: p.version });
+              }
             } catch (e) { finding('RECORD_INVALID', e.message, source); }
           } else {
             for (const spec of identities) {

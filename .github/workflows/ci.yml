@@ -549,7 +549,7 @@ jobs:
       - run: npm audit signatures
       - run: npm run build
       - name: Candidate boundary controls
-        run: node --test scripts/candidate-scaffold.test.mjs scripts/n8-size-start.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release.test.mjs
+        run: node --test scripts/candidate-scaffold.test.mjs scripts/n8-size-start.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release-router-bootstrap.test.mjs scripts/release.test.mjs
       - name: Pack committed candidates and record ten-file restoration
         id: pack
         run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"

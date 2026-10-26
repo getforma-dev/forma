@@ -84,7 +84,7 @@ with the HTML.
 
 ### Features
 
-- **Client-side routing** via `createSignal` + `createShow` + History API (no router library)
+- **Client-side routing** via `@getforma/router` and `createBrowserAdapter`, with real links, Back/Forward support, and a retained layout owner
 - **Command palette** (Cmd+K / Ctrl+K) with page search and navigation
 - **Interactive SVG chart** — hand-rolled, hover tooltip with success/error counts
 - **Deployment table search** — reactive filtering across all columns
@@ -92,7 +92,14 @@ with the HTML.
 - **Loading skeletons** and **error states** on every page
 - **Collapsible sidebar** with grouped navigation and SVG icons
 - **Dark theme** — Gruvbox palette with a neon green (#39FF14) accent
-- **16 Playwright E2E tests** — navigation, data rendering, filtering, API validation, console-error check
+- **18 Playwright E2E tests** — navigation, data rendering, filtering, API validation, console-error check
+
+The root route retains the sidebar, header, command palette, and toast while
+child routes change. Sidebar collapse survives navigation. Each page owns its
+fetches, filters, and chart effects; leaving the page disposes them, and returning
+starts that page fresh. Query and hash changes within the same route retain its
+owner. There is no unbounded page cache. Native server ownership is demonstrated
+by the separate `native-router` starter.
 
 ### API Endpoints
 
@@ -127,7 +134,7 @@ admin/src/
 flowchart TB
   subgraph client["Browser"]
     direction TB
-    mount["mount(component, '#app')"]
+    mount["createRouter + createBrowserAdapter"]
     signals["Signals & Effects<br/><i>createSignal · createShow · createList<br/>createComputed · createEffect · onCleanup</i>"]
     jsx["JSX → h() → Real DOM"]
     mount --> signals --> jsx
@@ -185,12 +192,13 @@ this is a map of where each primitive shows up in this codebase.
 
 | Primitive | Where | What it does here |
 |---|---|---|
-| `createSignal` | `app.tsx`, every page | Current page, sidebar collapse, search text, filter tab |
-| `createShow` | `app.tsx`, every page | The router itself, plus loading/error branches |
+| `createSignal` | `app.tsx`, every page | Sidebar collapse, search text, filter tab |
+| `createShow` | `app.tsx`, every page | Palette, toast, loading/error branches |
 | `createList` | `DeploymentsPage`, `ServersPage` | Keyed table rows and server cards |
 | `createComputed` | `ServersPage` | Filtered fleet + per-status counts |
-| `createEffect` | `app.tsx`, `OverviewPage` | URL sync via History API; imperative SVG hover layer |
-| `onCleanup` | `app.tsx` | Removes the `popstate` and `keydown` listeners |
+| `createEffect` | `OverviewPage` | Imperative SVG hover layer |
+| `onCleanup` | `app.tsx` | Removes the layout keyboard listener and toast timer |
+| `createRouter` / `createBrowserAdapter` | `app.tsx` | Owns History, links, retained layout, and disposable route pages |
 | `createFetch` | every page | Loads `/api/*` with `.data()` / `.loading()` / `.error()` |
 
 Two things that catch people out:
@@ -221,7 +229,7 @@ applies them through the CSSOM at runtime, which CSP does not cover at all.
 - **Real data:** edit `src/data.rs` — replace the hardcoded `Vec<...>` returns
   with your queries. The structs are the API contract, and `serde` derives the
   JSON.
-- **A new page:** add `admin/src/pages/MyPage.tsx`, a `createShow` branch in
+- **A new page:** add `admin/src/pages/MyPage.tsx`, a child route with `render` in
   `app.tsx`, entries in `PAGE_META` / `PALETTE_ITEMS` / the sidebar, and a route
   in `main.rs` (page routes all render the same shell — the client routes).
 - **Icons:** copy path data from [Iconify Lucide](https://icon-sets.iconify.design/lucide/)
@@ -234,7 +242,7 @@ cd admin && npx playwright install chromium   # first run only
 npm test
 ```
 
-16 tests. `playwright.config.ts` starts the server for you with
+18 tests. `playwright.config.ts` starts the server for you with
 `cd .. && cargo run`, so build the frontend first.
 
 ## Tech Stack
@@ -251,6 +259,7 @@ npm test
 ## Part of the Forma Stack
 
 - [@getforma/core](https://www.npmjs.com/package/@getforma/core) — reactive DOM library
+- [@getforma/router](https://www.npmjs.com/package/@getforma/router) — client navigation and route ownership
 - [@getforma/build](https://www.npmjs.com/package/@getforma/build) — build pipeline
 - [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) — FMIR compiler (used by the `minimal` template's SSR build)
 - [forma-server](https://crates.io/crates/forma-server) — Rust page rendering, assets, CSP

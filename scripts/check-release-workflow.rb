@@ -14,6 +14,7 @@ CONTRACTS = 'scripts/release-contracts.json'
 MILESTONES = %w[alpha beta rc final].freeze
 GATE_KEY = %r{\AFORMA-\d{3}( [A-Za-z0-9()./-]+)*\z}.freeze
 PUBLISH = { 'publish-crates' => 'crates', 'publish-npm' => 'npm' }.freeze
+ROUTER_BOOTSTRAP = "${{ github.ref == 'refs/tags/v3.2.0-rc.1' && secrets.NPM_ROUTER_BOOTSTRAP_TOKEN || '' }}".freeze
 VERIFY = 'bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"'
 NEEDS = {
   'check' => [], 'engines' => ['check'], 'pack' => ['check'], 'verify' => %w[check pack],
@@ -83,6 +84,22 @@ def violations(doc)
         out << "N1 #{name} must use the declared build Node with caching off" unless step.dig('with', 'node-version-file') == '.node-version' && step.dig('with', 'package-manager-cache') == false && !step.fetch('with', {}).key?('cache')
       end
       out << 'S21 client_payload cannot enter a shell script' if step.fetch('run', '').include?('client_payload')
+    end
+  end
+  # The first router version cannot enroll OIDC until it exists. Keep the
+  # temporary credential on one exact step/tag, never a workflow/job environment.
+  [doc, *jobs.values].each do |holder|
+    env = holder.fetch('env', {})
+    out << 'B10 router bootstrap cannot be inherited by jobs' if env.key?('NODE_AUTH_TOKEN') || env.key?('NPM_ROUTER_BOOTSTRAP_TOKEN') || env.to_json.include?('secrets.NPM_ROUTER_BOOTSTRAP_TOKEN')
+  end
+  jobs.each do |name, job|
+    steps(job).each do |step|
+      env = step.fetch('env', {})
+      if name == 'publish-npm' && step['run'] == 'node scripts/release-publish.mjs "$RUNNER_TEMP/release" npm'
+        out << 'B10 only the first router tag may supply the bootstrap credential' unless env == { 'NPM_ROUTER_BOOTSTRAP_TOKEN' => ROUTER_BOOTSTRAP }
+      else
+        out << 'B10 router bootstrap leaked into another step' if env.key?('NODE_AUTH_TOKEN') || env.key?('NPM_ROUTER_BOOTSTRAP_TOKEN') || env.to_json.include?('secrets.NPM_ROUTER_BOOTSTRAP_TOKEN')
+      end
     end
   end
   PUBLISH.each do |name, registry|

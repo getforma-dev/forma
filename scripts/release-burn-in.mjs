@@ -64,7 +64,7 @@ export async function worker({ tag, commit, attempt, work, payloadRoot }) {
   const { CONTRACT, ENGINES, FUZZ_TARGETS, MIN_ACTIVE_NS, readFuzzCompletion } = await module('scripts/release-burn-in-report.mjs');
   const { prepareBurnIn } = await module('scripts/release-burn-in-stage.mjs');
   const { securityHarnessHashes, validateHostileProof } = await module('scripts/release-security.mjs');
-  const { hostileIds, fixtureCheckIds } = await module('scripts/release-burn-in-identities.mjs');
+  const { hostileIds, fixtureCheckIds, nativeTemplateCheckIds } = await module('scripts/release-burn-in-identities.mjs');
   const { readApps } = await module('e2e/fixtures/apps/lib/build-apps.mjs');
   const { verifyStagedFixturePages } = await module('scripts/release-fixture-apps.mjs');
   const { requireSkewChecks } = await module('scripts/release-skew-drill.mjs');
@@ -78,12 +78,15 @@ export async function worker({ tag, commit, attempt, work, payloadRoot }) {
   const report = { contract: CONTRACT, rcTag: tag, sourceCommit: commit, harnessCommit: commit, complete: false, zeroFaults: false, faults: [], rounds: [], cleanup: { complete: false, remainingOwnedPids: [], failures: ['awaiting Linux supervisor'] } };
   try {
     const auth = await authenticateRc({ tag, commit, directory: inputs });
+    // Historical donor/payload runs have no router helper in their frozen tree.
+    const nativeTemplate = auth.packages.some(p => p.name === '@getforma/router')
+      ? await module('scripts/release-template-navigation.mjs') : null;
     const staged = await prepareBurnIn({ authenticated: auth, work, test: async (name, fn) => { await fn(); preparedProof.push(name); } });
     const { chromium, firefox, webkit } = await loadPayloadPlaywright(payload);
     const launchers = { chromium, firefox, webkit };
     const runtime = join(staged.extracted['@getforma/core'], 'dist/formajs-runtime.global.js'), runtimeSha256 = digest(runtime);
     const harnessSha256 = sha(run('git', ['ls-tree', '-r', '-z', commit], payload, { encoding: 'buffer' }));
-    const expected = { rcTag: tag, sourceCommit: commit, packages: auth.packages, ds12Sha256: auth.ds12Sha256, p17EvidenceSha256: auth.p17EvidenceSha256, d14EvidenceSha256: auth.d14EvidenceSha256, harnessSha256, runtimeSha256, hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds(staged.fixtures.project) };
+    const expected = { rcTag: tag, sourceCommit: commit, packages: auth.packages, ds12Sha256: auth.ds12Sha256, p17EvidenceSha256: auth.p17EvidenceSha256, d14EvidenceSha256: auth.d14EvidenceSha256, harnessSha256, runtimeSha256, hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds(staged.fixtures.project, tag.slice(1)) };
     const protectedPaths = [ ...Object.values(staged.binaries), ...Object.values(staged.templates).flatMap(p => [p.binary, join(p.project, 'admin/dist')]), staged.skew.binary, ...['A', 'B', 'B2', 'C', 'S'].map(name => staged.skew.deployments[name].dist), join(staged.fixtures.project, 'out'), ...Object.keys(readApps(staged.fixtures.project).apps).map(name => join(staged.fixtures.targetDir, 'release', `fixture-${name}`)), ...Object.values(launchers).map(engine => engine.executablePath()), runtime, join(payload, 'package-lock.json') ];
     const before = fileInventory(protectedPaths);
     saveExclusive(join(attempt, 'expected.json'), expected); saveExclusive(join(attempt, 'prepared.json'), { preparedProof, before, tools: { node: process.version, rust: run('rustc', ['-Vv']), fuzz: run('cargo', ['fuzz', '--version'], staged.fuzz), playwright: json(join(payload, 'node_modules/@playwright/test/package.json')).version }, staged: { descriptor: staged.descriptor, templateSources: staged.templateSources, cliSignatures: staged.cliSignatures, cliLock: staged.cliLock, fuzzLock: staged.fuzzLock, sourceReport: staged.sourceReport } });
@@ -123,9 +126,20 @@ export async function worker({ tag, commit, attempt, work, payloadRoot }) {
         try {
           const pages = await verifyStagedFixturePages({ staged: staged.fixtures, browser, test: async (_name, fn) => fn() }), templates = {};
           for (const [name, entry] of Object.entries(staged.templates)) await withOwnedServer(entry.binary, [], entry.project, async (_response, origin) => {
-            templates[name] = name === 'minimal' ? { island: await verifyMinimalIsland(browser, origin, entry.manifest), static: await verifyStaticTemplate(browser, origin, entry.manifest, '/about', { staticHtml: auth.set.contracts.staticHtml ?? 'legacy-v1' }) } : await verifyDashboardTemplate(browser, origin);
+            if (name === 'native-router') {
+              const engines = {};
+              for (const engine of ENGINES) {
+                const nativeBrowser = engine === 'chromium' ? browser : await launchers[engine].launch();
+                try { engines[engine] = nativeTemplate.validateNativeRouterTemplateProof(await nativeTemplate.verifyNativeRouterTemplate(nativeBrowser, origin, entry.manifest)); }
+                finally { if (nativeBrowser !== browser) await nativeBrowser.close(); }
+              }
+              templates[name] = { engines };
+            } else templates[name] = name === 'minimal' ? { island: await verifyMinimalIsland(browser, origin, entry.manifest), static: await verifyStaticTemplate(browser, origin, entry.manifest, '/about', { staticHtml: auth.set.contracts.staticHtml ?? 'legacy-v1' }) } : await verifyDashboardTemplate(browser, origin, { router: !!nativeTemplate });
           }, { timeout: 60_000 });
-          const checkIds = [...pages.pages.map(p => `fixture:${p.app}:${p.page}`), ...pages.extras.map(name => `extra:${name}`), 'template:minimal:adoption', 'template:minimal:static', 'template:dashboard:interaction'];
+          const checkIds = [...pages.pages.map(p => `fixture:${p.app}:${p.page}`), ...pages.extras.map(name => `extra:${name}`), 'template:minimal:adoption', 'template:minimal:static', 'template:dashboard:interaction',
+            ...(templates.dashboard.tooltip.navigation ? ['template:dashboard:router'] : []),
+            ...Object.keys(templates['native-router']?.engines ?? {}).map(engine => `template:native-router:${engine}:navigation`)];
+          assert.deepEqual(checkIds.filter(id => id.startsWith('template:native-router:')), nativeTemplate ? nativeTemplateCheckIds(tag.slice(1)) : []);
           assert.deepEqual(checkIds.slice().sort(), expected.fixtureCheckIds.slice().sort());
           return { proof: { pages, templates }, fields: { checkIds } };
         } finally { await browser.close(); }

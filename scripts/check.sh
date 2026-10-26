@@ -107,7 +107,7 @@ node packages/core/scripts/qualify-expression-mutation.mjs
 step "router: types and packed public exports"
 npm run typecheck -w packages/router
 npm run check:pack -w packages/router
-node --test scripts/release-package-inventory.test.mjs scripts/release-router-package.test.mjs scripts/navigation-size-contract.test.mjs
+node --test scripts/release-router-bootstrap.test.mjs scripts/release-package-inventory.test.mjs scripts/release-router-package.test.mjs scripts/navigation-size-contract.test.mjs
 step "build: the packed forma-raw-lint bin"
 node packages/build/scripts/test-raw-lint-bin.mjs
 

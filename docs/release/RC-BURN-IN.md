@@ -73,12 +73,14 @@ The ordinary workflow suppresses Python bytecode before ownership imports and
 retains before, pre-worker and after source status outside the checkout, including
 after failures. Dirty source still fails; it is never ignored or repaired in place.
 It authenticates the actual successful release/P17 workflow attempt and nested
-evidence, the DS12/D14 assets, and all seven original npm/crates registry archives
+evidence, the DS12/D14 assets, and the versioned npm/crates registry archive set
+(seven for 3.0/3.1; eight including `@getforma/router` from 3.2)
 against both DS12 and registry integrity. It neither repacks these archives nor
 substitutes workspace `dist` output.
 
 Setup installs pinned tools, extracts the original packages, and builds actual
-minimal/dashboard consumers, native fixture applications and the five deployment
+minimal/dashboard consumers, plus the native-router starter from 3.2, native
+fixture applications and the five deployment
 skew products through existing packed-product staging. Four ASan fuzz targets are
 compiled against the extracted `forma-ir` and `forma-ir-derive` crate archives with
 the committed nightly/Cargo lock. Setup is outside the active-time accounting.
@@ -94,6 +96,20 @@ Every round runs, sequentially:
    Chromium, Firefox and WebKit.
 4. Every native fixture route/variant and extra control, plus minimal adoption
    and interaction, static-page zero-script behavior, and dashboard interaction.
+   From 3.2, dashboard interaction also proves real shared-router links, retained
+   layout/same-route chart state, released leaf state, and Back/Forward. The
+   native-router starter additionally runs in Chromium, Firefox, and WebKit: typed
+   click/Back/Forward responses, retained layout state, fresh returned leaf, no new
+   executable script requests, and direct no-JavaScript rendering. The final
+   validator derives these required IDs from the authenticated RC version and
+   checks every raw outcome. Historical 3.0/3.1 evidence retains its original
+   two-starter obligations; it cannot satisfy the 3.2 inventory.
+
+The native starter subset above is repeated every round. The separate complete
+90-case packed native fixture campaign remains pre-release qualification; this
+subset is not reported as a repeated 90-case campaign. A new 3.2 stable release
+requires its own same-line published RC evidence and at least 3,600 credited
+active seconds with zero faults. The 3.0 L-66 deferral is not transferable.
 
 A round finishes all its checks even when the active-hour threshold is crossed.
 There are no retries, inserted sleeps, or five-second orchestration cutoff.

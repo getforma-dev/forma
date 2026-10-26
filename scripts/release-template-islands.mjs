@@ -211,8 +211,49 @@ export async function verifyStaticTemplate(browser, origin, manifest, route = '/
   finally { await context.close(); }
 }
 
+/** Real shared-router behavior, required by current release consumers. */
+export async function verifyDashboardNavigation(page) {
+  const chart = page.locator('svg[viewBox="0 0 600 200"]');
+  await chart.waitFor({ state: 'visible' });
+  const sidebar = page.getByRole('button', { name: 'Toggle sidebar', exact: true });
+  await sidebar.click();
+  assert.equal(await sidebar.getAttribute('aria-expanded'), 'false');
+  await page.evaluate(() => {
+    globalThis.__dashboardLayout = document.querySelector('[data-dashboard-layout]');
+    globalThis.__dashboardChart = document.querySelector('svg[viewBox="0 0 600 200"]');
+    const link = document.createElement('a'); link.href = '/?view=all#chart';
+    document.querySelector('main').append(link); link.click(); link.remove();
+  });
+  await page.waitForURL('**/?view=all#chart');
+  assert.equal(await page.evaluate(() => globalThis.__dashboardChart === document.querySelector('svg[viewBox="0 0 600 200"]')), true, 'same route replaced chart');
+  const deployments = page.getByRole('link', { name: 'Deployments', exact: true });
+  assert.equal(await deployments.getAttribute('href'), '/deployments');
+  await deployments.click();
+  await page.locator('h1').filter({ hasText: /^Deployments$/ }).waitFor();
+  assert.equal(new URL(page.url()).pathname, '/deployments');
+  assert.equal(await page.evaluate(() => globalThis.__dashboardLayout === document.querySelector('[data-dashboard-layout]')), true, 'dashboard layout replaced');
+  assert.equal(await page.evaluate(() => globalThis.__dashboardChart.isConnected), false, 'removed chart is still connected');
+  await page.goBack();
+  await chart.waitFor({ state: 'visible' });
+  assert.equal(await page.evaluate(() => globalThis.__dashboardChart === document.querySelector('svg[viewBox="0 0 600 200"]')), false, 'removed chart owner was cached');
+  await page.goForward();
+  await page.locator('h1').filter({ hasText: /^Deployments$/ }).waitFor();
+  assert.equal(await sidebar.getAttribute('aria-expanded'), 'false', 'layout state was reset');
+  await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
+  await chart.waitFor({ state: 'visible' });
+  // Leave the ordinary visual controls expanded for the existing chart proof.
+  await sidebar.click();
+  assert.equal(await sidebar.getAttribute('aria-expanded'), 'true');
+  return validateDashboardNavigationProof({ links: true, sameRouteChart: true, persistentLayout: true, removedPageReset: true, backForward: true });
+}
+export function validateDashboardNavigationProof(proof) {
+  for (const name of ['links', 'sameRouteChart', 'persistentLayout', 'removedPageReset', 'backForward'])
+    assert.equal(proof?.[name], true, `dashboard router ${name} failed`);
+  return proof;
+}
+
 /** The same Browser-template positive interaction used by P17 and RC stress. */
-export async function interactDashboard(page, { violationKey = '__formaTemplateViolations', note = () => {} } = {}) {
+export async function interactDashboard(page, { violationKey = '__formaTemplateViolations', note = () => {}, router = false } = {}) {
   const collectViolations = async () => {
     // Native CSP events are queued. Read the caller's navigation-time collector
     // before reload replaces the document and its init-script-owned array.
@@ -221,6 +262,7 @@ export async function interactDashboard(page, { violationKey = '__formaTemplateV
     assert.deepEqual(violations, [], 'dashboard interaction produced a CSP violation');
     return violations;
   };
+  const navigation = router ? await verifyDashboardNavigation(page) : undefined;
   const endpoint = '**/api/request-volume';
   const original = await page.request.get(new URL('/api/request-volume', page.url()).href);
   assert.equal(original.status(), 200);
@@ -261,18 +303,18 @@ export async function interactDashboard(page, { violationKey = '__formaTemplateV
     assert.equal(intercepted, 1, 'hostile chart payload did not reach the real API consumer exactly once');
     assert.equal(await page.evaluate(() => globalThis.__formaTooltipExecuted), undefined, 'tooltip executed API text');
   } finally { await page.unroute(endpoint, handler); }
-  await page.getByRole('button', { name: /^Deployments(?:\s|$)/ }).click();
+  await page.getByRole(router ? 'link' : 'button', { name: /^Deployments(?:\s|$)/ }).click();
   await page.locator('h1').filter({ hasText: 'Deployments' }).waitFor();
   const hostileViolations = await collectViolations();
-  return { normal, hostile: hostileObservation, apiTextStayedText: true,
+  return { normal, hostile: hostileObservation, apiTextStayedText: true, ...(router ? { navigation } : {}),
     violations: { normal: normalViolations, hostile: hostileViolations } };
 }
-export async function verifyDashboardTemplate(browser, origin) {
+export async function verifyDashboardTemplate(browser, origin, { router = false } = {}) {
   const context = await browser.newContext(), observed = await observe(context);
   try {
     observed.note(`goto ${origin} (waitUntil networkidle, timeout 20000 ms)`);
     const csp = await policy(await observed.page.goto(origin, { waitUntil: 'networkidle', timeout: 20_000 }));
-    const tooltip = await interactDashboard(observed.page, { note: observed.note });
+    const tooltip = await interactDashboard(observed.page, { note: observed.note, router });
     assert.equal(await observed.page.locator('[data-forma-status="pending"], [data-forma-status="hydrating"], [data-forma-status="error"]').count(), 0, 'dashboard did not activate');
     await settle(observed.page); await noErrors(observed);
     return { interacted: true, tooltip, csp, pageErrors: observed.errors, violations: [] };

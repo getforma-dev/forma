@@ -120,10 +120,10 @@ test('template inventory follows authenticated router presence, independent of r
   assert.deepEqual(templatesForPackages([{registry:'crates', name:'@getforma/router'}]), ['minimal', 'dashboard']);
 });
 
-test('the router is declared only by its native starter and its seed never invents archive integrity', () => {
+test('interactive starters declare the router while minimal stays independent and seeds never invent archive integrity', () => {
   for (const [template, files] of originals) {
     const manifest = JSON.parse(files.get('admin/package.json'));
-    assert.equal(Object.hasOwn(manifest.dependencies, '@getforma/router'), template === 'native-router');
+    assert.equal(Object.hasOwn(manifest.dependencies, '@getforma/router'), template !== 'minimal');
   }
   const router = JSON.parse(originals.get('native-router').get('admin/package-lock.json')).packages['node_modules/@getforma/router'];
   assert.throws(changed('minimal', files => npm(files, lock => { lock.packages['node_modules/@getforma/router'] = router; })), /omits or adds/);

@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { candidateNpmPackages, CRATE_PACKAGES } from './release-package-inventory.mjs';
-import { ROOT, digest, json, packedRuntimeLock, run, save } from './release-set.mjs';
+import { ROOT, digest, json, packedRuntimeLock, run, save, assertInstalledTemplateCandidates } from './release-set.mjs';
 import { stageCandidateProject, validateCandidate } from './candidate-scaffold.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { stageFixtureProject, pruneCargoLock } from './release-fixture-apps.mjs';
 import { preparePackedSkew } from './release-skew-drill.mjs';
 import { FUZZ_TARGETS } from './release-burn-in-report.mjs';
+import { templatesForPackages } from './template-lock-seeds.mjs';
 
 // Candidate scaffolding needs a descriptor beside its archives. A published RC
 // starts with the versioned authenticated registry archives, whereas a dry pack already
@@ -55,12 +56,13 @@ export async function prepareBurnIn({ authenticated, work, test }) {
   const descriptor = scaffoldDescriptor(authenticated);
   const contextPath = join(work, 'context.json'); save(contextPath, { dir, recordSha256: descriptor.sha256, commit: set.commit, work });
   const templates = {};
-  for (const template of ['minimal', 'dashboard']) {
+  for (const template of templatesForPackages(set.packages)) {
     const name = `burn-in-${template}`, project = join(work, name), admin = join(project, 'admin');
     run(process.execPath, [join(cli, 'dist/index.js'), name, '--template', template], work, { env: { ...process.env, NODE_PATH: '' } });
     stageCandidateProject(contextPath, project);
     const lock = digest(join(admin, 'package-lock.json'));
     run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin, { stdio: 'inherit' });
+    assertInstalledTemplateCandidates(admin, set.packages);
     const signatures = auditCandidateSignatures(admin, set.packages, dir);
     run('npm', ['run', template === 'minimal' ? 'build:ssr' : 'build'], admin, { stdio: 'inherit' });
     assert.equal(digest(join(admin, 'package-lock.json')), lock);

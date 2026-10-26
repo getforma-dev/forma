@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateFixtureProof, validateBurnInFiles } from './release-burn-in-final.mjs';
-import { fixtureCheckIds, hostileIds } from './release-burn-in-identities.mjs';
+import { fixtureCheckIds, hostileIds, NATIVE_TEMPLATE_ENGINES } from './release-burn-in-identities.mjs';
 
-function fixture() {
-  const ids = fixtureCheckIds();
-  return {
+function fixture(version = '3.1.0') {
+  const ids = fixtureCheckIds(undefined, version);
+  const result = {
     pages: {
       pages: ids.filter(id => id.startsWith('fixture:')).map(id => {
         const [_, app, ...page] = id.split(':');
@@ -26,7 +26,43 @@ function fixture() {
       } },
     },
   };
+  if (ids.some(id => id.startsWith('template:native-router:'))) result.templates['native-router'] = {
+    engines: Object.fromEntries(NATIVE_TEMPLATE_ENGINES.map(engine => [engine, {
+      typedNavigations: 3, navigationResponses: [200, 200, 200], scripts: 1,
+      persistentLayout: true, removedLeafReset: true, noNewScripts: true, noJavaScript: true, errors: [], violations: [],
+    }])),
+  };
+  if (ids.includes('template:dashboard:router')) result.templates.dashboard.tooltip.navigation = { links: true, sameRouteChart: true, persistentLayout: true, removedPageReset: true, backForward: true };
+  return result;
 }
+
+test('3.2 burn-in requires complete native navigation outcomes in every engine while historical raw evidence remains valid', () => {
+  for (const version of ['3.0.0-rc.5', '3.1.0-rc.3']) validateFixtureProof(fixture(version), fixtureCheckIds(undefined, version), version);
+  const version = '3.2.0-rc.1', ids = fixtureCheckIds(undefined, version), original = fixture(version);
+  validateFixtureProof(original, ids, version);
+  assert.equal(ids.filter(id => id.startsWith('template:native-router:')).length, 3);
+  assert.throws(() => validateFixtureProof(fixture(), ids, version), /inventory differs/);
+  assert.throws(() => validateFixtureProof(original, fixtureCheckIds(), version), /expectations differ/);
+  assert.throws(() => validateFixtureProof(original), /inventory differs/);
+  for (const engine of NATIVE_TEMPLATE_ENGINES) for (const edit of [
+    p => { delete p.templates['native-router'].engines[engine]; },
+    p => { p.templates['native-router'].engines[engine].typedNavigations = 2; },
+    p => { p.templates['native-router'].engines[engine].navigationResponses[1] = 500; },
+    p => { p.templates['native-router'].engines[engine].scripts = 0; },
+    ...['persistentLayout', 'removedLeafReset', 'noNewScripts', 'noJavaScript'].map(name => p => { p.templates['native-router'].engines[engine][name] = false; }),
+    p => p.templates['native-router'].engines[engine].errors.push('late browser failure'),
+    p => p.templates['native-router'].engines[engine].violations.push('script-src'),
+  ]) { const changed = structuredClone(original); edit(changed); assert.throws(() => validateFixtureProof(changed, ids, version)); }
+  for (const name of ['links', 'sameRouteChart', 'persistentLayout', 'removedPageReset', 'backForward']) {
+    const changed = structuredClone(original); changed.templates.dashboard.tooltip.navigation[name] = false;
+    assert.throws(() => validateFixtureProof(changed, ids, version), /dashboard router/);
+  }
+  const noDashboard = structuredClone(original); delete noDashboard.templates.dashboard.tooltip.navigation;
+  assert.throws(() => validateFixtureProof(noDashboard, ids, version));
+  const extra = structuredClone(original); extra.templates['native-router'].engines.other = extra.templates['native-router'].engines.chromium;
+  assert.throws(() => validateFixtureProof(extra, ids, version), /all three engines/);
+  assert.throws(() => validateBurnInFiles('/not-read', {rcTag: `v${version}`, hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds()}, {}), /fixture expectation differs/);
+});
 
 test('raw fixture evidence must retain every independent source case and real behavior outcome', () => {
   const original = fixture(); validateFixtureProof(original);

@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import net from 'node:net';
 import {createRequire} from 'node:module';
 import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertInstalledTemplateCandidates, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
+import { npmPackagesForVersion } from './release-package-inventory.mjs';
 import { templatesForPackages } from './template-lock-seeds.mjs';
 import { verifyNativeRouterTemplate } from './release-template-navigation.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
@@ -517,7 +518,7 @@ export async function verify(dir, reportPath) {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
               } else if (template === 'dashboard') {
-                dashboardTooltip = await interactDashboard(page, { violationKey: '__formaP17Violations' });
+                dashboardTooltip = await interactDashboard(page, { violationKey: '__formaP17Violations', router: npmPackagesForVersion(set.version).includes('router') });
               }
               // Historical activation removed status markers. Strict adoption keeps
               // the original DOM; its separate held-module observer proves success.

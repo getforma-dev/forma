@@ -14,6 +14,7 @@ export async function verifyNativeRouterTemplate(browser, origin, manifest, { ti
   }
   const context = await browser.newContext(), page = await context.newPage();
   const errors = [], scripts = [], navigationResponses = [];
+  let violations;
   page.setDefaultTimeout(timeout);
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -56,7 +57,8 @@ export async function verifyNativeRouterTemplate(browser, origin, manifest, { ti
     assert.deepEqual(scripts, loadedScripts, 'navigation fetched executable code');
     assert.equal(navigationResponses.length, 3, 'click/back/forward must use typed responses');
     assert.deepEqual(navigationResponses, [200, 200, 200]);
-    assert.deepEqual(await page.evaluate(() => globalThis.__navigationViolations), []);
+    violations = await page.evaluate(() => globalThis.__navigationViolations);
+    assert.deepEqual(violations, []);
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
   const plain = await browser.newContext({ javaScriptEnabled: false }), nojs = await plain.newPage();
@@ -67,5 +69,18 @@ export async function verifyNativeRouterTemplate(browser, origin, manifest, { ti
     assert.equal(await nojs.locator('h1').textContent(), 'Home');
     assert.equal(await nojs.locator('#home-count').textContent(), '7');
   } finally { await plain.close(); }
-  return { typedNavigations: navigationResponses.length, scripts: scripts.length, persistentLayout: true, removedLeafReset: true, noJavaScript: true };
+  return validateNativeRouterTemplateProof({ typedNavigations: navigationResponses.length, navigationResponses, scripts: scripts.length,
+    persistentLayout: true, removedLeafReset: true, noNewScripts: true, noJavaScript: true, errors, violations });
+}
+
+/** Validate retained outcomes independently when authenticating burn-in files. */
+export function validateNativeRouterTemplateProof(proof) {
+  assert.equal(proof?.typedNavigations, 3, 'native starter must complete link/back/forward');
+  assert.deepEqual(proof.navigationResponses, [200, 200, 200], 'native starter typed responses differ');
+  assert(Number.isSafeInteger(proof.scripts) && proof.scripts > 0, 'native starter bootstrap was not observed');
+  for (const name of ['persistentLayout', 'removedLeafReset', 'noNewScripts', 'noJavaScript'])
+    assert.equal(proof[name], true, `native starter ${name} failed`);
+  assert.deepEqual(proof.errors, [], 'native starter browser errors');
+  assert.deepEqual(proof.violations, [], 'native starter policy violations');
+  return proof;
 }

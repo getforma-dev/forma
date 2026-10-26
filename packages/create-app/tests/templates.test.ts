@@ -533,12 +533,12 @@ describe('native-router template', () => {
       });
     }, 60_000);
   }
-  it('makes the router dependency opt-in and preserves the existing templates', () => {
-    expect(readJson('native-router', 'admin', 'package.json').dependencies['@getforma/router']).toBe(`=${SOURCE_VERSION}`);
-    for (const template of ['minimal', 'dashboard']) {
-      const manifest = readJson(template, 'admin', 'package.json');
-      expect({...manifest.dependencies, ...manifest.devDependencies}['@getforma/router']).toBeUndefined();
+  it('uses the shared router in both interactive starters while minimal stays independent', () => {
+    for (const template of ['dashboard', 'native-router']) {
+      expect(readJson(template, 'admin', 'package.json').dependencies['@getforma/router']).toBe(`=${SOURCE_VERSION}`);
     }
+    const manifest = readJson('minimal', 'admin', 'package.json');
+    expect({...manifest.dependencies, ...manifest.devDependencies}['@getforma/router']).toBeUndefined();
   });
 });
 

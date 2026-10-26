@@ -197,7 +197,7 @@ export function DeploymentsPage() {
                         <span class="text-xs text-gruvbox-gray">{dep.time_ago}</span>
                       </td>
                     </tr>
-                  ))}
+                  ) as HTMLTableRowElement)}
                 </tbody>
               </table>
               {createShow(

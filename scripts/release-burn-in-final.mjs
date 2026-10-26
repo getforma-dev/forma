@@ -1,3 +1,4 @@
+import { validateDashboardNavigationProof } from './release-template-islands.mjs';
 // Hosted provenance is deliberately separate from the pure burn-in report validator.
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
@@ -8,7 +9,8 @@ import { SEED_MARKER, LEGACY_SEED_TEMPLATES } from './template-lock-seeds.mjs';
 import { ROOT, digest, json, run, versionFiles } from './release-set.mjs';
 import { auditInputManifest } from './release-audit.mjs';
 import { authenticateRc, downloadRunEvidence, releaseReader, sha256 } from './release-burn-in-inputs.mjs';
-import { hostileIds, fixtureCheckIds } from './release-burn-in-identities.mjs';
+import { hostileIds, fixtureCheckIds, nativeTemplateCheckIds, NATIVE_TEMPLATE_ENGINES } from './release-burn-in-identities.mjs';
+import { validateNativeRouterTemplateProof } from './release-template-navigation.mjs';
 import { validateBurnInReport, readFuzzCompletion } from './release-burn-in-report.mjs';
 import { requireSkewChecks } from './release-skew-drill.mjs';
 import { securityHarnessHashes, validateHostileProof } from './release-security.mjs';
@@ -94,9 +96,17 @@ export async function verifyFinalSoakDeferral({ reference, commit, root = ROOT, 
     return { ...soakDisposition(reference), publishedRcAuthenticated: true, reviewedFinalChanges: changes };
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
-export function validateFixtureProof(proof, expectedIds = fixtureCheckIds()) {
-  const observed = [...proof.pages.pages.map(p => `fixture:${p.app}:${p.page}`), ...proof.pages.extras.map(name => `extra:${name}`), 'template:minimal:adoption', 'template:minimal:static', 'template:dashboard:interaction'];
-  assert.deepEqual(expectedIds, fixtureCheckIds(), 'fixture expectations differ from authenticated source');
+export function validateFixtureProof(proof, expectedIds = fixtureCheckIds(), version = '3.1.0') {
+  const native = nativeTemplateCheckIds(version).length > 0;
+  assert.deepEqual(Object.keys(proof.templates).sort(), (native ? ['minimal', 'dashboard', 'native-router'] : ['minimal', 'dashboard']).sort(), 'template inventory differs from authenticated release');
+  if (native) {
+    assert.deepEqual(Object.keys(proof.templates['native-router'].engines).sort(), [...NATIVE_TEMPLATE_ENGINES].sort(), 'native starter requires all three engines');
+    for (const engine of NATIVE_TEMPLATE_ENGINES) validateNativeRouterTemplateProof(proof.templates['native-router'].engines[engine]);
+  }
+  const observed = [...proof.pages.pages.map(p => `fixture:${p.app}:${p.page}`), ...proof.pages.extras.map(name => `extra:${name}`), 'template:minimal:adoption', 'template:minimal:static', 'template:dashboard:interaction',
+    ...(proof.templates.dashboard.tooltip?.navigation ? ['template:dashboard:router'] : []),
+    ...Object.keys(proof.templates['native-router']?.engines ?? {}).map(engine => `template:native-router:${engine}:navigation`)];
+  assert.deepEqual(expectedIds, fixtureCheckIds(undefined, version), 'fixture expectations differ from authenticated source');
   assert.deepEqual(observed.sort(), expectedIds.slice().sort(), 'raw fixture cases differ');
   assert(proof.pages.pages.every(page => page.mutations === 0 && page.elements > 0));
   const { island, static: staticPage } = proof.templates.minimal;
@@ -105,6 +115,7 @@ export function validateFixtureProof(proof, expectedIds = fixtureCheckIds()) {
   assert.equal(staticPage.executableScripts, 0); assert.equal(staticPage.modulepreloads, 0); assert.deepEqual(staticPage.errors, []); assert.deepEqual(staticPage.violations, []);
   assert.equal(proof.templates.dashboard.interacted, true); assert.deepEqual(proof.templates.dashboard.pageErrors, []); assert.deepEqual(proof.templates.dashboard.violations, []);
   const tooltip = proof.templates.dashboard.tooltip;
+  if (native) validateDashboardNavigationProof(tooltip?.navigation);
   assert.equal(tooltip?.apiTextStayedText, true, 'dashboard tooltip safety evidence missing');
   assert.deepEqual(tooltip.violations, { normal: [], hostile: [] }, 'dashboard navigation CSP evidence missing or violated');
   assert.deepEqual(tooltip.normal.map(point => point.hour), ['00:00', '23:00']);
@@ -117,7 +128,8 @@ export function validateFixtureProof(proof, expectedIds = fixtureCheckIds()) {
 }
 export function validateBurnInFiles(directory, expected, report = json(join(directory, 'burn-in.json'))) {
   assert.deepEqual(expected.hostileCaseIds, hostileIds(), 'hostile expectation differs from authenticated source');
-  assert.deepEqual(expected.fixtureCheckIds, fixtureCheckIds(), 'fixture expectation differs from authenticated source');
+  const version = expected.rcTag?.slice(1) ?? '3.1.0';
+  assert.deepEqual(expected.fixtureCheckIds, fixtureCheckIds(undefined, version), 'fixture expectation differs from authenticated source');
   validateBurnInReport(report, expected);
   for (const round of report.rounds) {
     const dir = join(directory, `round-${String(round.index).padStart(3, '0')}`);
@@ -134,7 +146,7 @@ export function validateBurnInFiles(directory, expected, report = json(join(dire
         validateHostileProof(proof, { commit: expected.sourceCommit, runtimeSha256: expected.runtimeSha256, harnessSources: securityHarnessHashes() });
       } else if (task.id.startsWith('skew:')) requireSkewChecks(proof);
       else {
-        validateFixtureProof(proof, expected.fixtureCheckIds);
+        validateFixtureProof(proof, expected.fixtureCheckIds, version);
       }
     }
   }
