@@ -155,7 +155,12 @@ export function versionFiles(root, version, { legacyInventory = false } = {}) {
     updateRequirements(p, version, member ? `@getforma/${member}` : p.name);
   }
   files.set('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
-  for (const path of ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock']) {
+  // Active nested-workspace consumers must follow the coordinated set too.
+  // Historical source donors predate the native router fixture; do not invent it.
+  const cargoLocks = ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock'];
+  const nativeProofLock = 'experiments/forma-router-native/server/Cargo.lock';
+  if (existsSync(join(root, nativeProofLock))) cargoLocks.push(nativeProofLock);
+  for (const path of cargoLocks) {
     let text = read(path);
     text = text.replace(/(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g, `$1${version}"`);
     files.set(path, text);

@@ -266,6 +266,29 @@ test('version preparation keeps every Cargo workspace aligned without changing e
     }
   }
 });
+test('version preparation updates the active native proof lock for RC and stable without changing any other bytes', () => {
+  const path = 'experiments/forma-router-native/server/Cargo.lock';
+  const original = readFileSync(join(ROOT, path), 'utf8');
+  const pattern = /(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g;
+  assert.equal([...original.matchAll(pattern)].length, 3, 'the actual fixture holds all three local Forma packages');
+  for (const version of ['3.2.0-rc.2', '3.2.0', '3.3.0-rc.1']) {
+    const prepared = versionFiles(ROOT, version).get(path);
+    assert.equal(prepared, original.replace(pattern, `$1${version}"`), 'only the three Forma version scalars may change');
+    assert.equal(readFileSync(join(ROOT, path), 'utf8'), original, 'planning must not mutate the actual fixture');
+  }
+});
+test('version preparation preserves a source donor without the later native proof workspace', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-version-donor-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const optional = 'experiments/forma-router-native/server/Cargo.lock';
+  const initial = versionFiles(ROOT, '3.2.0-rc.1');
+  for (const [path, text] of initial) if (path !== optional) {
+    const full = join(dir, path); mkdirSync(join(full, '..'), { recursive: true }); writeFileSync(full, text);
+  }
+  const next = versionFiles(dir, '3.2.0');
+  assert.equal(next.has(optional), false, 'a missing historical fixture is not synthesized');
+  assert.equal(next.get('Cargo.lock'), initial.get('Cargo.lock').replace(/(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g, '$13.2.0"'));
+});
 test('version preparation remains valid under the actual internal dependency guard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-version-guard-'));
   try {

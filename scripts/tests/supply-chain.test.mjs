@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -45,10 +45,49 @@ for (const mode of ['ok', 'npm-advisory', 'npm-unreachable', 'rust-unreachable',
     script(join(dir, 'cargo'), `echo "cargo $*" >> "$PROBE_LOG"\nif [[ "$PROBE_MODE" == rust-unreachable && "$*" == *'fetch db'* ]]; then echo 'advisory fetch unavailable' >&2; exit 1; fi\nif [[ "$PROBE_MODE" == rust-advisory && "$*" == *'check advisories'* ]]; then echo 'RUSTSEC vulnerability' >&2; exit 1; fi`);
     const r = run('bash', [join(root, 'scripts/check-advisories.sh')], root, { PATH: `${dir}:${process.env.PATH}`, PROBE_LOG: log, PROBE_MODE: mode });
     const calls = readFileSync(log, 'utf8');
-    if (mode === 'ok') { success(r); assert.equal((calls.match(/npm audit --omit=dev/g) || []).length, 3); assert.match(calls, /deny --locked .*fetch db/); assert.match(calls, /deny --locked .*check advisories/); }
+    if (mode === 'ok') { success(r); assert.equal((calls.match(/npm audit --omit=dev/g) || []).length, 4); assert.match(calls, /deny --locked .*fetch db/); assert.match(calls, /deny --locked .*check advisories/); }
     else { assert.notEqual(r.status, 0); if (mode === 'rust-unreachable') assert.doesNotMatch(calls, /check advisories/); if (mode.startsWith('npm-')) assert.doesNotMatch(calls, /cargo/); }
   });
 }
+
+// Exercise the real shell with controlled external tools, including a failure
+// visible only in the newly shipped starter (root/two old starter audits pass).
+const advisoryFixture = (t, version, { native = true } = {}) => {
+  const dir = scratch(t), bin = join(dir, 'bin'), log = join(dir, 'calls');
+  mkdirSync(bin); mkdirSync(join(dir, 'scripts')); mkdirSync(join(dir, 'packages/core'), { recursive: true });
+  for (const name of ['check-advisories.sh', 'release-package-inventory.mjs', 'template-lock-seeds.mjs']) copyFileSync(join(root, 'scripts', name), join(dir, 'scripts', name));
+  writeFileSync(join(dir, 'packages/core/package.json'), JSON.stringify({ version }));
+  for (const name of ['minimal', 'dashboard', ...(native ? ['native-router'] : [])]) mkdirSync(join(dir, 'packages/create-app/templates', name, 'admin'), { recursive: true });
+  script(join(bin, 'npm'), 'echo "npm $PWD $*" >> "$PROBE_LOG"\nif [[ "$PWD" == */native-router/admin && "$PROBE_MODE" != ok ]]; then echo "$PROBE_MODE in native-router" >&2; exit 1; fi');
+  script(join(bin, 'cargo'), 'echo "cargo $*" >> "$PROBE_LOG"');
+  return { dir, log, env: { PATH: `${bin}:${process.env.PATH}`, PROBE_LOG: log, PROBE_MODE: 'ok' } };
+};
+for (const mode of ['ok', 'npm-advisory', 'npm-unreachable']) test(`SR4: native-router-only advisory boundary ${mode}`, t => {
+  const f = advisoryFixture(t, '3.2.0-rc.1');
+  const r = run('bash', [join(f.dir, 'scripts/check-advisories.sh')], f.dir, { ...f.env, PROBE_MODE: mode });
+  const calls = readFileSync(f.log, 'utf8').trim().split('\n');
+  assert.equal(calls.filter(line => line.startsWith('npm ')).length, 4);
+  assert.match(calls[3], /native-router\/admin audit --omit=dev$/);
+  if (mode === 'ok') { success(r); assert.equal(calls.filter(line => line.startsWith('cargo ')).length, 2); }
+  else { assert.notEqual(r.status, 0); assert.equal(calls.filter(line => line.startsWith('cargo ')).length, 0); }
+});
+test('SR4: historical release inventory keeps two starters and current inventory refuses a missing native starter', t => {
+  const old = advisoryFixture(t, '3.1.0', { native: false });
+  success(run('bash', [join(old.dir, 'scripts/check-advisories.sh')], old.dir, old.env));
+  assert.equal((readFileSync(old.log, 'utf8').match(/npm .*audit --omit=dev/g) || []).length, 3);
+  const current = advisoryFixture(t, '3.2.0', { native: false });
+  const r = run('bash', [join(current.dir, 'scripts/check-advisories.sh')], current.dir, current.env);
+  assert.notEqual(r.status, 0); assert.match(r.stderr, /native-router/);
+  assert.doesNotMatch(readFileSync(current.log, 'utf8'), /cargo/);
+});
+test('SR4: unpacked crate manifest mode audits only that locked Rust graph', t => {
+  const f = advisoryFixture(t, '3.2.0-rc.1');
+  const manifest = join(f.dir, 'packed-crate/Cargo.toml');
+  success(run('bash', [join(f.dir, 'scripts/check-advisories.sh'), manifest], f.dir, f.env));
+  const calls = readFileSync(f.log, 'utf8'); assert.doesNotMatch(calls, /npm/);
+  assert.ok(calls.includes(`cargo deny --locked --manifest-path ${manifest} fetch db`));
+  assert.ok(calls.includes(`cargo deny --locked --manifest-path ${manifest} check advisories`));
+});
 
 const policyFixture = (dir) => {
   for (const folder of ['.github/workflows', 'packages/core', 'packages/create-app/templates/minimal/admin', 'packages/create-app/templates/dashboard/admin']) mkdirSync(join(dir, folder), { recursive: true });
