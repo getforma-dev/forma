@@ -6,8 +6,9 @@ import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 export const REPOSITORY='getforma-dev/forma';
 export const LEGACY_NPM_PACKAGES=['@getforma/core','@getforma/compiler','@getforma/build','@getforma/create-app'];
 export const ROUTER_NPM_PACKAGES=[...LEGACY_NPM_PACKAGES,'@getforma/router'];
-// Activate the expanded inventory only after the first real router publication.
-export const NPM_PACKAGES=[...LEGACY_NPM_PACKAGES];
+// Configure the complete target inventory before the release audit freezes source.
+// A missing package still fails observation; this does not claim live enrollment.
+export const NPM_PACKAGES=[...ROUTER_NPM_PACKAGES];
 export const ownedPath=path=>path.startsWith('.github/') || [
  'crates/forma-ir/src/walker.rs','crates/forma-ir/src/text.rs',
  'crates/forma-server/src/csp.rs','crates/forma-server/src/template.rs',

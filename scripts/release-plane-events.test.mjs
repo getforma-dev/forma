@@ -1,18 +1,25 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
-import {readFileSync} from 'node:fs';
-import {REPOSITORY,NPM_PACKAGES,ROUTER_NPM_PACKAGES,classifyEvent,signedWebhook,environmentSnapshot,settingsAlerts,registrySnapshot,registryAlerts} from './release-plane-events.mjs';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL,fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+import {REPOSITORY,NPM_PACKAGES,LEGACY_NPM_PACKAGES,ROUTER_NPM_PACKAGES,classifyEvent,signedWebhook,environmentSnapshot,settingsAlerts,registrySnapshot,registryAlerts} from './release-plane-events.mjs';
 const base={repository:{full_name:REPOSITORY},sender:{login:'operator'}};
-test('the outside registry inventory covers exactly the four actual published npm packages',()=>{
- const actual=['core','compiler','build','create-app'].map(dir=>JSON.parse(readFileSync(new URL(`../packages/${dir}/package.json`,import.meta.url),'utf8')).name);
+test('the configured five-package target retains the exact historical four-package reader',()=>{
+ const actual=['core','compiler','build','create-app','router'].map(dir=>JSON.parse(readFileSync(new URL(`../packages/${dir}/package.json`,import.meta.url),'utf8')).name);
  assert.deepEqual([...NPM_PACKAGES].sort(),actual.sort());
+ assert.deepEqual(NPM_PACKAGES,ROUTER_NPM_PACKAGES);
+ assert.deepEqual(LEGACY_NPM_PACKAGES,['@getforma/core','@getforma/compiler','@getforma/build','@getforma/create-app']);
 });
 test('explicit router observation expands a historical baseline once without dropping existing history',()=>{
  const docs=Object.fromEntries(ROUTER_NPM_PACKAGES.map(name=>[name,{name,versions:{'3.2.0-rc.1':{name,version:'3.2.0-rc.1',dist:{integrity:'sha512-test-only'}}}}]));
- const prior=registrySnapshot(Object.fromEntries(Object.entries(docs).filter(([name])=>name!=='@getforma/router')));
- assert.throws(()=>registrySnapshot(docs),/selected npm observation/);
- const current=registrySnapshot(docs,ROUTER_NPM_PACKAGES),alerts=registryAlerts(prior,current);
+ const legacyDocs=Object.fromEntries(Object.entries(docs).filter(([name])=>name!=='@getforma/router'));
+ const prior=registrySnapshot(legacyDocs,LEGACY_NPM_PACKAGES);
+ assert.throws(()=>registrySnapshot(legacyDocs),/selected npm observation/);
+ const current=registrySnapshot(docs),alerts=registryAlerts(prior,current);
  assert.deepEqual(alerts.map(row=>row.kind),['npm-inventory-expanded','npm-registry-changed']);
  assert.equal(alerts[1].details.package,'@getforma/router');assert.equal(alerts[1].details.before,null);
  assert.deepEqual(registryAlerts(current,current),[]);
@@ -51,4 +58,49 @@ test('outside-GitHub registry comparison requires every package and flags versio
  docs['@getforma/core'].versions['3.0.0-alpha.2'].dist.integrity='sha512-changed';
  assert.equal(registryAlerts(before,registrySnapshot(docs)).length,1);
  delete docs['@getforma/compiler'];assert.throws(()=>registrySnapshot(docs));
+});
+
+// Exercise the real CLI/default inventory with a closed provider. No request can
+// escape this injected fetch; the caller's real baseline is never consulted.
+test('default npm collector requests all five, preserves a historical baseline and refuses missing router',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'forma-monitor-inventory-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const docs=Object.fromEntries(NPM_PACKAGES.map(name=>{const version=name==='@getforma/router'?'3.2.0-rc.1':'3.1.0';return [name,{name,versions:{[version]:{name,version,dist:{integrity:'sha512-test-only'}}}}];}));
+ const baseline=registrySnapshot(Object.fromEntries(Object.entries(docs).filter(([name])=>name!=='@getforma/router')),LEGACY_NPM_PACKAGES);
+ const baselinePath=join(dir,'historical-baseline.json'),baselineBytes=JSON.stringify(baseline,null,2)+'\n';writeFileSync(baselinePath,baselineBytes);
+ const provider=join(dir,'provider.mjs');writeFileSync(provider,`
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+const input=JSON.parse(readFileSync(process.env.FORMA_TEST_PROVIDER,'utf8')),calls=[];
+globalThis.fetch=async (inputURL,options)=>{
+ const url=new URL(inputURL),name=decodeURIComponent(url.pathname.slice(1));
+ assert.equal(url.origin,'https://registry.npmjs.org');assert(Object.hasOwn(input.docs,name),'unmocked package');
+ assert.equal(options.redirect,'error');assert.deepEqual(options.headers,{Accept:'application/json'});
+ calls.push(name);writeFileSync(input.calls,JSON.stringify(calls));
+ return input.missing===name?new Response('package missing',{status:404}):Response.json(input.docs[name]);
+};
+`);
+ function collect(name,missing){
+  const input=join(dir,name+'-input.json'),out=join(dir,name+'-report.json'),calls=join(dir,name+'-calls.json');
+  writeFileSync(input,JSON.stringify({docs,missing,calls}));
+  const env={...process.env,FORMA_TEST_PROVIDER:input};
+  for(const key of ['GITHUB_ACTIONS','GH_TOKEN','GITHUB_TOKEN','NODE_AUTH_TOKEN','NPM_ROUTER_BOOTSTRAP_TOKEN','NODE_OPTIONS'])delete env[key];
+  const child=spawnSync(process.execPath,['--import',pathToFileURL(provider).href,fileURLToPath(new URL('./release-plane-observe.mjs',import.meta.url)),'npm','--baseline',baselinePath,'--out',out],{env,encoding:'utf8',timeout:10000});
+  assert.equal(child.error,undefined,child.error?.message);assert.equal(child.signal,null);
+  const report=JSON.parse(readFileSync(out,'utf8'));
+  assert.deepEqual(JSON.parse(readFileSync(calls,'utf8')),NPM_PACKAGES);
+  assert.equal(readFileSync(baselinePath,'utf8'),baselineBytes,'collector must never promote or overwrite its input baseline');
+  assert.equal(report.delivered,false);
+  return {status:child.status,report,stderr:child.stderr};
+ }
+ const missing=collect('missing-router','@getforma/router');
+ assert.equal(missing.status,1,missing.stderr);assert.equal(missing.report.complete,false);
+ assert.match(missing.report.error,/@getforma\/router: HTTP 404/);
+ assert.equal(Object.hasOwn(missing.report,'snapshot'),false);assert.equal(Object.hasOwn(missing.report,'alerts'),false);
+ const complete=collect('complete');assert.equal(complete.status,0,complete.stderr);assert.equal(complete.report.complete,true);
+ assert.deepEqual(Object.keys(complete.report.snapshot.packages).sort(),[...NPM_PACKAGES].sort());
+ assert.deepEqual(complete.report.alerts.map(row=>row.kind),['npm-inventory-expanded','npm-registry-changed']);
+ assert.equal(complete.report.alerts[1].details.package,'@getforma/router');
+ assert.equal(complete.report.alerts[1].details.before,null);
+ assert.deepEqual(registryAlerts(complete.report.snapshot,complete.report.snapshot),[]);
+ assert.throws(()=>registryAlerts(complete.report.snapshot,baseline),/cannot shrink/);
 });

@@ -2,9 +2,14 @@
 
 This is preparation for the first coordinated 3.2 release. It does not claim that
 `@getforma/router` exists on npm or that its publisher is enrolled. The read-only
-registry query on 2026-10-26 returned E404. Before publication the active observer
-still lists four npm packages and registry reconciliation still lists the seven
-published npm/crates identities. A missing registry package remains an error.
+registry query on 2026-10-26 returned E404. The source now configures the complete
+target inventory before the D14/source freeze: five npm packages for the outside
+observer and eight npm/crates identities for reconciliation. This is configured
+coverage, not an observation of publication or publisher enrollment. A missing
+registry package remains a hard failure with no baseline promotion. An existing
+external four-package monitor may continue from its previously deployed version
+until the audited successor is deployed after publication; its observations
+remain explicitly four-package evidence.
 
 npm [requires the package to exist before trusted-publisher enrollment](https://docs.npmjs.com/cli/v11/commands/npm-trust/).
 The original V2 SR42 token exception covered only the first `forma-ir-derive`
@@ -89,27 +94,45 @@ the expired entry and recreate it before that release. Do not publish an extra
 unqualified version to validate enrollment. Token revocation does not wait for
 that later OIDC publication.
 
+The target inventory is already staged in the audited source:
+
+- `scripts/registry-reconcile-policy.json` includes `@getforma/router`, restricted
+  to records from `getforma-dev/forma`, with `baseline: []`. Router has no
+  pre-record historical releases to exempt.
+- `NPM_PACKAGES` in `scripts/release-plane-events.mjs` selects
+  `ROUTER_NPM_PACKAGES`. The default collector requests all five npm packuments.
+  `LEGACY_NPM_PACKAGES` and historical snapshot/record readers remain unchanged.
+
+This preparation must precede D14 and the published-RC code freeze. There is no
+post-publication source switch, activation variable or exception to that freeze.
+The SR2/L-48 reconciler remains a complete, fail-closed check: a missing package,
+record or mismatched archive is a failed result. SR26 observation remains
+purely detective and does not grant or block release authority. Its CLI records
+an incomplete observation and exits nonzero on missing input; that error never
+promotes a candidate baseline or becomes a fabricated successful observation.
+Existing release gates and the absence of external alert-delivery evidence are
+unchanged.
+
 After the first real RC publication has a valid DS12 record and its registry
 bytes match all eight recorded archive identities:
 
-1. Add this entry to `scripts/registry-reconcile-policy.json`:
-
-   ```json
-   { "registry": "npm", "name": "@getforma/router",
-     "recordRepositories": ["getforma-dev/forma"], "baseline": [] }
-   ```
-
-2. Switch `NPM_PACKAGES` in `scripts/release-plane-events.mjs` from the exported
-   legacy inventory to `ROUTER_NPM_PACKAGES`. The collector then fetches all five
-   actual npm packuments. A 4-to-5 observation emits an explicit inventory
-   expansion and new-package event; later observations compare all five.
-3. Run the normal registry reconciliation and release-plane observation. Retain
-   their real receipts and errors. Do not synthesize a pre-record router baseline
-   or suppress E404. Valid 3.2 records seen before policy enrollment deliberately
-   produce `POLICY_PACKAGE_UNENROLLED` instead of silently passing.
+1. Deploy/run the already-audited five-package observer and the normal eight-package
+   reconciliation. No source edit is required. Do not run the new live inventory
+   prematurely merely to manufacture readiness, and never suppress a 404.
+2. Retain the actual complete receipts, errors and external delivery evidence.
+   The first real four-to-five comparison emits an inventory-expansion event and
+   a new-router event; later observations compare all five. Preserve the previous
+   four-package baseline bytes. Only the existing external delivery owner's
+   promotion procedure may establish the new baseline after successful delivery.
+3. Complete the publisher/credential steps above and record what was actually
+   observed. Configuring target coverage and passing fixture tests are not npm
+   publication, trusted-publisher enrollment or external alert delivery.
 
 Validators retain exact historical seven-package 3.0/3.1 release records, require
-eight identities in 3.2 records, reject partial inventories and reject a 5-to-4
-monitor shrink. Tests cover these boundaries and premature enrollment. They are
-preparation evidence; only the real publisher/registry/DS12 observations complete
-the operational enrollment.
+eight identities in 3.2 records, reject partial inventories and reject a five-to-four
+monitor shrink. Tests exercise the actual default collector with a closed provider:
+all five requests, missing-router 404/nonzero/incomplete result, unchanged supplied
+historical baseline, and complete expansion. Reconciliation tests use the shipped
+policy and actual fixture archive bytes for complete eight-package coverage and
+missing-package/record/hash refusals. Only the real post-publication observations
+complete operational enrollment.

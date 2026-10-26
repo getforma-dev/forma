@@ -72,10 +72,15 @@ reviewed bootstrap and monitor preparation in the
 an existing package before trusted-publisher enrollment. The finite,
 founder-authorized first-package exception applies only to the qualified
 `@getforma/router@3.2.0-rc.1` archive; it never replaces CI, archive verification,
-P17, provenance or D14. The current four-package npm observer and seven-package
-registry policy must expand only after the actual eight-package publication is
-verified. Then remove the bootstrap secret, revoke its credential, enroll the
-real router trusted publisher and complete five-package npm monitoring. Those
+P17, provenance or D14. Configure the target five-package npm observer and
+eight-package registry policy before D14 and the published-RC source freeze;
+this source preparation is already present and does not claim live enrollment.
+Missing-package 404s remain failures, historical baselines remain unchanged, and
+no post-publication source edit or activation switch is needed. After the actual
+eight-package publication is verified, remove the bootstrap secret, revoke its
+credential, enroll the real router trusted publisher and deploy/run the audited
+observers to establish genuine complete monitoring evidence. An existing external
+four-package monitor can continue its historical version until then. Those
 post-publication obligations remain pending. Do not invent a registry identity,
 suppress a 404 or treat local tests as operational enrollment. Historical 3.0/3.1
 records retain their seven-package identities.
