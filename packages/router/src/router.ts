@@ -234,8 +234,8 @@ export function createRouter(input: RouterOptions): Router {
         const visible = entryOf(win.history.state);
         if (!visible || !scroll.has(visible.key)) throw new NavigationError('ROUTER_HISTORY_FOREIGN', true);
         const nextEntry = opts.pop ? selected! : opts.revalidate ? current : { key: win.crypto.randomUUID(), index: visible.index + (opts.replace ? 0 : 1) };
-        if (!opts.pop && !opts.revalidate) { putHistory(target, !!opts.replace, nextEntry); irreversible = true; }
-        else if (target.href !== url.href) { putHistory(target, true, nextEntry); irreversible = true; }
+        if (!opts.pop && !opts.revalidate) putHistory(target, !!opts.replace, nextEntry);
+        else if (target.href !== url.href) putHistory(target, true, nextEntry);
         // Commit may release owners before throwing, even without a history write.
         irreversible = true;
         if (adapter !== activeAdapter) { sessions.get(activeAdapter)?.dispose(); sessions.delete(activeAdapter); }
@@ -404,8 +404,10 @@ export function createRouter(input: RouterOptions): Router {
   function click(event: MouseEvent) {
     if (!initialized || event.defaultPrevented || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const anchor = event.composedPath().find(n => n instanceof win.HTMLAnchorElement) as HTMLAnchorElement | undefined;
-    if (!anchor || !root.contains(anchor) || anchor.hasAttribute('download') || anchor.hasAttribute('data-no-router') || (anchor.target && anchor.target !== '_self') || !eligible(anchor.href)) return;
-    event.preventDefault(); void run(anchor.href);
+    if (!anchor || !root.contains(anchor) || anchor.hasAttribute('download') || anchor.hasAttribute('data-no-router') || (anchor.target && anchor.target !== '_self')) return;
+    const href = anchor.getAttribute('href');
+    if (href === null || !eligible(href)) return;
+    event.preventDefault(); void run(href);
   }
   function formEvent(event: SubmitEvent) {
     if (!initialized || event.defaultPrevented || !(event.target instanceof win.HTMLFormElement) || !root.contains(event.target) || !formSpec(event.target, event.submitter ?? undefined)) return;

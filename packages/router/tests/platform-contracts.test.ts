@@ -116,6 +116,47 @@ describe('compound route grammar', () => {
 });
 
 describe('non-root base and platform URL behavior', () => {
+  it.each([
+    ['next', '/app/team/next'],
+    ['#caf%C3%A9', '/app/team/current?keep=yes#caf%C3%A9'],
+    ['/app/root', '/app/root'],
+  ])('resolves anchor %s from the committed view while a POP guard is pending', async (href, expected) => {
+    const { router } = fixture('/app/');
+    await router.ready;
+    await router.navigate('/app/old/previous');
+    const previous = structuredClone(history.state);
+    await router.navigate('/app/team/current?keep=yes');
+    let release!: (allowed: boolean) => void;
+    const held = new Promise<boolean>(resolve => { release = resolve; });
+    const destinations: string[] = [];
+    router.beforeLeave(url => {
+      destinations.push(url.pathname + url.search + url.hash);
+      return url.pathname === '/app/old/previous' ? held : true;
+    });
+    history.replaceState(previous, '', '/app/old/previous');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: previous }));
+    await flush();
+    expect(router.location().url.pathname).toBe('/app/team/current');
+    root.innerHTML = `<a href="${href}"><span>Destination</span></a>`;
+    expect(clickPath(root.querySelector('a')!).defaultPrevented).toBe(true);
+    await flush();
+    release(false);
+    await flush();
+    const committed = router.location().url;
+    expect(committed.pathname + committed.search + committed.hash).toBe(expected);
+    expect(location.pathname + location.search + location.hash).toBe(expected);
+    expect(destinations.filter(url => url.startsWith('/app/old/previous'))).toEqual(['/app/old/previous']);
+  });
+
+  it('does not turn an anchor without an href into navigation', async () => {
+    const { router, commits } = fixture('/app/');
+    await router.ready;
+    root.innerHTML = '<a><span>Label only</span></a>';
+    expect(clickPath(root.querySelector('a')!).defaultPrevented).toBe(false);
+    await flush();
+    expect(commits).toEqual([]);
+  });
+
   it('resolves relatives from the committed URL and keeps repeated query and fragment encoding', async () => {
     const { router } = fixture('/app/');
     await router.ready;
