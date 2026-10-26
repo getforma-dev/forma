@@ -1,10 +1,10 @@
 # Unified releases
 
-The source workspace contains eight coordinated packages, including the optional
-`@getforma/router` introduced for the next minor release. Published 3.0 and 3.1
-records retain their original seven-package inventory. **3.0.0 is already
-published**; its [as-built summary](release/V3-AS-BUILT.md) records qualification
-and completed post-release verification. This document explains the release
+The source workspace prepares 3.2.0-rc.1 with eight coordinated packages,
+including the optional `@getforma/router`. **[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)**;
+3.2 qualification and publication remain pending. Published 3.0 and 3.1 records
+retain their original seven-package inventory. The [3.0 as-built summary](release/V3-AS-BUILT.md)
+records its qualification and completed post-release verification. This document explains the release
 mechanisms and retains historical 3.0 examples. Never reuse an existing tag or
 version. For a new release, first prepare its own reviewed contract and evidence.
 The checked-in contract record, `scripts/release-contracts.json`, states which
@@ -47,9 +47,8 @@ CI and packed qualification are green. Use merge commits and never move a tag.
 
 ### Adding the optional router to the coordinated release
 
-The feature branch retains the published 3.1.0 source version until ordinary release
-preparation. `release-set.mjs version` updates the router manifest and lock together,
-including its core peer range. The next 3.2-or-later release requires all eight
+The candidate source is prepared as 3.2.0-rc.1. `release-set.mjs version` updates
+the router manifest and lock together, including its core peer range. A 3.2-or-later release requires all eight
 packages; an eight-package live 3.1 tag is refused. No existing tag is reused.
 
 Feature dry packs declare `packageSet: "forma-router-v1"` and include the router
@@ -60,24 +59,26 @@ the new package for subsequent releases. P17 resolves the packed router against
 the packed core navigation entry and exercises nested parameter matching. The
 source gate builds/tests the router and checks its types and packed exports.
 The `native-router` starter opts into the router dependency and Rust navigation feature.
-`minimal` and `dashboard` keep their existing dependency graphs. Current candidate
+`dashboard` uses the browser adapter for its client routes; `minimal` keeps its
+existing dependency graph without the router. Current candidate
 qualification includes all three starters; authenticated historical seven-package
 records select only their two original starters. The new starter adds five heavy
 cases, including native navigation and persistent shell state in all three browser
 engines, and a Linux N8 row at the existing 3 MB / 100 ms limits.
 
-Before the first router publication, complete the package's npm trusted-publisher
-enrollment and enroll it in the operational registry monitor inventories
-(`scripts/registry-reconcile-policy.json` and `scripts/release-plane-events.mjs`).
-For the first new npm identity, use the narrowly scoped
-[router enrollment procedure](release/ROUTER-REGISTRY-ENROLLMENT.md); the temporary
-credential never replaces CI, archive verification, P17, provenance or D14.
-These are release-preparation blockers; the live inventories currently describe
-the four actually published npm packages. Do not invent an existing registry
-package, suppress a 404 or claim that local package tests established enrollment.
-Their 3.0/3.1 historical records must retain their seven-package identities when
-those monitors gain the new package. Publication remains a separately reviewed
-release operation with exact-source CI, packed qualification and its own gates.
+Before the first router publication, qualify the candidate and complete the
+reviewed bootstrap and monitor preparation in the
+[router enrollment procedure](release/ROUTER-REGISTRY-ENROLLMENT.md). npm requires
+an existing package before trusted-publisher enrollment. The finite,
+founder-authorized first-package exception applies only to the qualified
+`@getforma/router@3.2.0-rc.1` archive; it never replaces CI, archive verification,
+P17, provenance or D14. The current four-package npm observer and seven-package
+registry policy must expand only after the actual eight-package publication is
+verified. Then remove the bootstrap secret, revoke its credential, enroll the
+real router trusted publisher and complete five-package npm monitoring. Those
+post-publication obligations remain pending. Do not invent a registry identity,
+suppress a 404 or treat local tests as operational enrollment. Historical 3.0/3.1
+records retain their seven-package identities.
 
 ### Hosted packed rehearsal
 
@@ -234,16 +235,20 @@ fails the same CLI execution that a consumer would run.
 ## Publication and retry
 
 Configure trusted publishers for `release.yml` in getforma-dev/forma, with
-`crates-publish` for all three crates and `npm-publish` for all four npm packages.
+`crates-publish` for all three crates and `npm-publish` for all five npm packages
+in 3.2. The original four npm publishers remain in place; the router's first
+publication uses only the finite exception described above before enrollment.
 Both environments allow release tags and have **no required reviewer**. This is
 the existing environment plan, not an additional approval gate. Current [npm trusted
 publisher documentation](https://docs.npmjs.com/trusted-publishers/) allows up to ten
 publishers, so retain the maintenance publisher. A new configuration expires unless
 it first publishes within two days and defaults to stage-only: explicitly choose
 **Allow npm publish**, consistent with the founder's autonomous-release decision.
-Create the new entries just before the first live alpha, not weeks before it. Publisher
-hookup gates the first live publish; it does not require deleting maintenance access
-or prevent the history/code merge. Admin-only v* tag rules still apply.
+Saving an entry does not validate it. Schedule its first trusted publish within
+that window as part of a qualified release, or replace an expired configuration
+before the next qualified release; this is not permission for an extra unqualified
+publication. Publisher hookup does not require deleting maintenance access or
+prevent the history/code merge. Admin-only v* tag rules still apply.
 
 Two sequential minimal jobs hold OIDC permission. Each downloads only this run's
 DS11 and verifies its independently anchored hash before publication. Neither

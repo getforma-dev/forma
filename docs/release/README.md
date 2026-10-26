@@ -1,18 +1,25 @@
 # Release documentation
 
-**3.0.0 is published, and its deferred post-release soak is complete.** Read
-[the as-built summary](V3-AS-BUILT.md) for the actual source, producers and limits.
-The original publication record correctly retains its then-deferred soak status;
-the later completion receipt supplies the result without rewriting history.
+**[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).**
+The current source prepares 3.2.0-rc.1 with the optional router and eight
+coordinated packages. Its qualification, publication and website rollout remain
+pending; prepared version strings do not establish a release.
 
-## 3.1 preparation
+## 3.2 router preparation
 
-3.1.0-rc.2 is published; RC1 was stopped before publication. A fresh
-3.1.0-rc.3 is being prepared for the compiler templates and list-ownership repair.
-The earlier RC2 qualification cannot certify these changed runtime bytes. [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md)
-record the accepted tradeoffs and missed targets. [3.1 qualification](3.1-QUALIFICATION.md)
-binds each non-audit RC row to exact-source evidence. The upgrade guide is
-[UPGRADING-3.1](../UPGRADING-3.1.md).
+The [router implementation record](../design/router/README.md) preserves the
+research and design decisions. Its [qualification ledger](../design/router/qualification.md)
+distinguishes source and packed evidence from the remaining stable-release
+scenarios, manual accessibility/device review and live website acceptance.
+The [registry enrollment procedure](ROUTER-REGISTRY-ENROLLMENT.md) records the
+finite first-package bootstrap exception and subsequent trusted-publisher and
+monitoring obligations. The current gates are in `scripts/release-contracts.json`;
+RC qualification does not complete the stable gates or hosted soak.
+
+The [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md),
+[3.1 qualification](3.1-QUALIFICATION.md) and [3.1 upgrade guide](../UPGRADING-3.1.md)
+retain that release's tradeoffs, evidence and migration advice. Earlier RC
+failures and superseded qualification records retain their original status.
 
 ## Maintainer procedures
 
@@ -23,6 +30,11 @@ binds each non-audit RC row to exact-source evidence. The upgrade guide is
 - [RC audit and burn-in](RC-BURN-IN.md): audit identity, active work and later completion verification.
 
 ## Dated 3.0 records
+
+3.0.0 is published, and its deferred post-release soak is complete. Read
+[the as-built summary](V3-AS-BUILT.md) for the actual source, producers and limits.
+The original publication record retains its then-deferred soak status; the later
+completion receipt supplies the result without rewriting history.
 
 [Gate dispositions](3.0-GATE-DISPOSITIONS.md), [alpha](ALPHA-RUNBOOK.md),
 [beta](BETA-QUALIFICATION.md), [RC qualification](RC-QUALIFICATION.md),
