@@ -29,10 +29,23 @@ async function sourceFiles() {
   return Object.fromEntries(Object.entries(files).sort(([a],[b])=>a.localeCompare(b)));
 }
 const result = { at:new Date().toISOString(), command:process.argv, node:process.version, source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(), dirty:execFileSync('git',['status','--short'],{encoding:'utf8'}), diffSha256:sha(execFileSync('git',['diff','--binary'])), artifacts:await artifacts(), sourceFiles:await sourceFiles(), serverBinarySha256:sha(await readFile(process.env.NATIVE_SERVER_BINARY ?? resolve(here,"server/target/debug/forma-router-native-fixture"))), scope:'Source integration of actual public compiler/build/core/router/server; not packed release, deployment or manual accessibility qualification.', browsers:[], results:[], failures:[] };
+const ownedBrowsers = new Set();
+let interrupted = false;
+function interrupt(signal) {
+  if (!interrupted) result.failures.push({status:'failed',error:`Browser campaign interrupted by ${signal}`});
+  interrupted = true;
+  void Promise.allSettled([...ownedBrowsers].map(browser=>browser.close()));
+}
+process.on('SIGINT',()=>interrupt('SIGINT'));process.on('SIGTERM',()=>interrupt('SIGTERM'));
+try {
 for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
+  if (interrupted) break;
   if (process.env.NATIVE_ENGINES && !process.env.NATIVE_ENGINES.split(',').includes(engine)) continue;
-  const browser = await launcher.launch(); result.browsers.push({engine,version:browser.version()});
+  console.log('START',engine);
+  const browser = await launcher.launch(); ownedBrowsers.add(browser); result.browsers.push({engine,version:browser.version()});
+  if (interrupted) break;
   async function scenario(name, ids, callback, options={}) {
+    if (interrupted) return;
     if (process.env.NATIVE_CASE && !name.includes(process.env.NATIVE_CASE)) return;
     const context = await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',...options});
     const page = await context.newPage(); const errors = []; page.on('pageerror', error=>errors.push(error.message));
@@ -249,7 +262,17 @@ for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
   });
   await browser.close();
 }
+} catch(error) {result.failures.push({status:'failed',error:String(error.stack??error)});}
+finally {
+  const cleanup = await Promise.allSettled([...ownedBrowsers].map(browser=>browser.close()));
+  for(const item of cleanup)if(item.status==='rejected')result.failures.push({status:'failed',error:`Browser cleanup failed: ${item.reason}`});
+  result.ownedBrowsersDisconnected=[...ownedBrowsers].every(browser=>!browser.isConnected());
+  if(!result.ownedBrowsersDisconnected)result.failures.push({status:'failed',error:'Owned browser remained connected after cleanup'});
+}
 result.finishedAt=new Date().toISOString();result.finalDiffSha256=sha(execFileSync('git',['diff','--binary']));result.sourceChangedDuringRun=JSON.stringify(result.sourceFiles)!==JSON.stringify(await sourceFiles());result.artifactsChangedDuringRun=JSON.stringify(result.artifacts)!==JSON.stringify(await artifacts());
+if(result.sourceChangedDuringRun||result.artifactsChangedDuringRun)result.failures.push({status:'failed',error:'Source or served artifacts changed during browser qualification'});
+if(!result.results.length&&!result.failures.length)result.failures.push({status:'failed',error:'No selected browser scenarios ran'});
+result.status=result.failures.length?'failed':'passed';
 await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(result,null,2)+'\n');
-console.log(JSON.stringify({passed:result.results.length-result.failures.length,failed:result.failures.length,output,sourceChangedDuringRun:result.sourceChangedDuringRun}));
+console.log(JSON.stringify({passed:result.results.filter(item=>item.status==='passed').length,failed:result.failures.length,output,sourceChangedDuringRun:result.sourceChangedDuringRun}));
 if(result.failures.length)process.exitCode=1;

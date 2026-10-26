@@ -125,6 +125,12 @@ this browser fixture; no individual row represents the entire 57-row matrix.
   `browser-final-recovery-sync.json` records 90/90. Served artifacts did not change;
   its source-drift flag records a concurrent edit only to the unexecuted size
   measurement helper. It is not presented as a source-stable campaign.
+- The current runner fails source/artifact drift and closes owned browsers on
+  interruption. `browser-harness-drift.json` is an intentional source-edit
+  negative control (exit 1); `browser-harness-interrupt-corrected.json` is an
+  intentional SIGTERM control (exit 1, browsers disconnected). The first
+  interruption attempt's mistyped scenario filter selected zero tests; its
+  receipt remains, and zero selected scenarios now fail instead of passing.
 
 The matrix-to-scenario mappings live directly in `browser.mjs` and each receipt.
 Final results and remaining gaps must be read from the latest complete receipt,

@@ -64,7 +64,7 @@ const result = {startedAt:started,command:process.argv,node:process.version,sour
   packageArchives,artifacts:await artifacts(),sourceFiles:await sources(),serverBinarySha256:hash(await readFile(binary)),serverBuildProfile:'release',cells:[],failures:[],heap:[]};
 const ownedServers = [], ownedBrowsers = new Set();
 let interrupted = false;
-function interrupt() {interrupted=true;for(const child of ownedServers)child.kill('SIGTERM');for(const browser of ownedBrowsers)void browser.close();}
+function interrupt() {interrupted=true;for(const child of ownedServers)child.kill('SIGTERM');void Promise.allSettled([...ownedBrowsers].map(browser=>browser.close()));}
 process.on('SIGINT',interrupt);process.on('SIGTERM',interrupt);
 async function save() {await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(result,null,2)+'\n');}
 async function server(folder) {
@@ -169,6 +169,7 @@ try{
   result.servers=Object.fromEntries(Object.entries(servers).map(([key,value])=>[key,{origin:value.origin,pid:value.pid,folder:value.folder}]));
   await save();
   for(const definition of cells){
+    if(interrupted)throw Error('Performance run interrupted');
     const browser=await engines[definition.engine].launch();ownedBrowsers.add(browser);
     const cell={...definition,browserVersion:browser.version(),startedAt:new Date().toISOString(),warm:[],cold:[],status:'running'};result.cells.push(cell);
     if(definition.engine==='chromium'){
@@ -188,7 +189,8 @@ try{
   }
 }catch(error){result.failures.push({error:String(error.stack??error)});console.error(error);}
 finally{
-  for(const browser of ownedBrowsers)await browser.close();
+  const browserCleanup=await Promise.allSettled([...ownedBrowsers].map(browser=>browser.close()));
+  for(const item of browserCleanup)if(item.status==='rejected')result.failures.push({error:`Browser cleanup failed: ${item.reason}`});
   for(const child of ownedServers)child.kill('SIGTERM');
   await Promise.all(ownedServers.map(child=>new Promise(resolveExit=>{
     if(child.exitCode!==null||child.signalCode!==null)return resolveExit();

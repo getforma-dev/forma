@@ -1,0 +1,3 @@
+START chromium
+PASS chromium native nested owner A-B-A retains layout island and disposes departing leaf
+{"passed":1,"failed":1,"output":"/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/evidence/browser-harness-drift.json","sourceChangedDuringRun":true}
