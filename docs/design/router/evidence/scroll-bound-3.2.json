@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "scope": "Exact-source scroll metadata correction; final archived-product qualification and release acceptance remain pending.",
+  "requirement": "RT-S06: at most1000 retained scroll records. RT-O02/C04 failures must retain a coherent bounded current visit.",
+  "priorProduct": "d3e28253aa97081bca649e00aaf6d260a68787f2",
+  "defect": "Pruning in saveScroll preceded inserting the new committed key, retaining1001 records. Moving only the prune after title allowed a throwing title followed by failed preparation to recreate the excess when recovery was exhausted.",
+  "correction": "Record and bound the new current key immediately after assigning it, before reactive location observers or title callbacks. saveScroll then updates the already-recorded current visit.",
+  "validation": {
+    "routerTests": 231,
+    "focusedRegressions": 2,
+    "typecheck": "passed",
+    "build": "passed",
+    "pairedSourceSize": {
+      "comparisons": [
+        {
+          "route": "/native/a",
+          "previousPlainGzip": 28456,
+          "currentPlainGzip": 28428,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12287
+        },
+        {
+          "route": "/native/b",
+          "previousPlainGzip": 28456,
+          "currentPlainGzip": 28429,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12286
+        }
+      ],
+      "incrementGzip": 12287,
+      "groupGzip": 40715,
+      "ceilings": {
+        "increment": 12288,
+        "group": 65536
+      },
+      "passed": true
+    },
+    "independentFailureReproducedAndFixed": true
+  },
+  "sourceFiles": {
+    "packages/router/src/router.ts": "0ebc4e19d99f8df415a91f4a5e9f3c8877e32f16fb2e311db0c76aede495fdbd",
+    "packages/router/tests/limits.test.ts": "1d95aaef8744100d7fcb6ea9c786c65243614db6b995abc8298e9d35f9cc194a"
+  },
+  "localEvidenceRoot": "work/FORMA-301/qualification/ecosystem/acceptance-8ee/limits",
+  "files": {
+    "source-scroll-before-actual.log": "fa4256323adcffaacc8d6fb42638bad0a0c09ba58bff68768e929da84a1b4504",
+    "source-scroll-final-two.log": "e960d99de60d987f7868020b67deb20f76462a2d5fe69192709a23cea9eedf7b",
+    "source-router-final.log": "4f491131708e84f68d1fea00d7e6816061d30b709984d37f33c873a332851730",
+    "source-typecheck-final.log": "ffd6e1892068ccfd0be45934461a466775fcb73a02d2d09cf45be58d4168ae3d",
+    "source-size-scroll-final.json": "1cefa002e53235feb65bce8c50d6608ad23e4353184ecafe369b43eef3f427e5"
+  },
+  "independentEvidence": {
+    "independent-review/scroll-failure-control/receipt.json": "806b95d268af843e5f5ab44fc66d2dc03d79caa99a6e11c1a25f205ab13e176b",
+    "independent-review/scroll-failure-fixed/receipt.json": "c233a5e2d1d62313272e4704cfdd4cf47f1df523ed048590736dda3edf57c0e4"
+  },
+  "limitsChanged": false
+}

@@ -130,7 +130,34 @@ the outcome is unknown; the durable attempt marker survives a document reload.
 Use application status/idempotency evidence to resolve uncertainty. A successful
 GET alone cannot prove that the earlier mutation failed or succeeded.
 
-Invalidate retained context on login, logout or account/role changes. The server
+Validation needs application field markup as well as the router's summary. Give
+the summary `data-forma-form-error` and `role="alert"`. Associate each field with
+its error using `aria-describedby`; return the same error and `aria-invalid`
+state in no-JavaScript responses. For native templates, compute that attribute
+as a declared scalar prop in Rust.
+
+For a server contract returning `fields.name`, supply this `onAction` option:
+
+```js
+onAction(outcome, form) {
+  if (outcome.outcome !== 'validation') return;
+  const input = form.querySelector('[name="name"]');
+  const error = form.querySelector('#name-error');
+  const message = outcome.data.fields?.name;
+  if (input && error) {
+    const text = typeof message === 'string' ? message : '';
+    input.setAttribute('aria-invalid', text ? 'true' : 'false');
+    input.setAttribute('aria-describedby', 'name-error');
+    error.textContent = text;
+  }
+}
+```
+
+The router focuses the summary; the application owns field associations and safe
+value preservation. Render errors as text and avoid echoing secrets. Verify the
+actual spoken feedback with assistive technology.
+
+Invalidate retained context before login, logout or account/role changes. The server
 continues to own authentication, authorization, CSRF and transaction semantics.
 Build, policy, asset or context incompatibility takes a bounded document GET,
 which can lose in-memory layout state. Deploy matching server, manifest, group

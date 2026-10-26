@@ -67,7 +67,7 @@ export function createRouter(input: RouterOptions): Router {
   if (uncertain) setMutation('uncertain');
   function announce(text: string) { if (!closed) status.textContent = uncertain ? `${text}. ${unknownMessage}` : text; }
   function report(error: unknown) { try { options.onError?.(code(error)); } catch { /* An observer cannot acquire router ownership. */ } }
-  function saveScroll() { scroll.set(current.key, [win.scrollX, win.scrollY]); if (scroll.size > 1000) scroll.delete(scroll.keys().next().value!); }
+  function saveScroll() { scroll.set(current.key, [win.scrollX, win.scrollY]); }
   function eligible(raw: string | URL, outsideBase = false): URL | null {
     let url: URL; try { url = new URL(String(raw), value().url); } catch { return null; }
     return url.href.length <= 8192 && ['http:', 'https:'].includes(url.protocol) && url.origin === origin && !url.username && !url.password && (outsideBase || base === '/' || url.pathname === base.slice(0, -1) || url.pathname.startsWith(base)) ? url : null;
@@ -243,12 +243,13 @@ export function createRouter(input: RouterOptions): Router {
         candidate?.commit();
         if (!isCurrent()) throw new NavigationError('ROUTER_CANCELLED');
         activeAdapter = adapter; current = nextEntry;
+        scroll.set(current.key, scroll.get(current.key) ?? [0, 0]);
+        if (scroll.size > 1000) scroll.delete(scroll.keys().next().value!);
         setValue({ url: new URL(target), key: current.key, matches: (matched ?? []) });
         if (!isCurrent()) throw new NavigationError('ROUTER_CANCELLED');
         const title = candidate?.title ?? options.title?.(location());
         if (!isCurrent()) throw new NavigationError('ROUTER_CANCELLED');
         if (title !== undefined) doc.title = title;
-        scroll.set(current.key, scroll.get(current.key) ?? [0, 0]);
       } finally {
         committing = false;
         const next = queued; queued = undefined;
