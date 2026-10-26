@@ -1,0 +1,323 @@
+{
+  "schema": 1,
+  "passed": true,
+  "commit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "recordSha256": "96472d312b1075dd409b89596d597335832a5609893fd33f637b28dc153382a6",
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.1.0",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.1.0.crate",
+      "sha256": "7b2724a3fc2a03b24d0629d66112fdde9e6d87a9262afeb82aa3e8ed7cee3f06"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.1.0",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.1.0.crate",
+      "sha256": "d0086bf6078717c3890b6fbc148d7fd30816ca64d1ab84fec3e076961591c462"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.1.0",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.1.0.crate",
+      "sha256": "bd032192b11eff22f5a32f34bd9f522728934479ea0bdab62fa19d5ed79bd645"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.1.0",
+      "path": "packages/core",
+      "file": "getforma-core-3.1.0.tgz",
+      "sha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.1.0",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.1.0.tgz",
+      "sha256": "5dfeedc0ffad2bff505cf6a17e4d3bb4d5eac83804679e0325ceedf445821643"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.1.0",
+      "path": "packages/build",
+      "file": "getforma-build-3.1.0.tgz",
+      "sha256": "e73fc2e27a83b6924caa6460a83a75481be398893bff4591709322b78e2618ec"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/router",
+      "version": "3.1.0",
+      "path": "packages/router",
+      "file": "getforma-router-3.1.0.tgz",
+      "sha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.1.0",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.1.0.tgz",
+      "sha256": "d9a1f3dfaffd06dabb59422e43df81945d1c23eded4a9c43acbff594d7defd09"
+    }
+  ],
+  "sourceEquality": {
+    "capability": "islands-v1",
+    "files": [
+      {
+        "path": "dashboard/.github/workflows/build.yml",
+        "sha256": "8126443fd7a3f518c7dba9f726941bf8f449928aa3f52aebf5b1b0f59ee0c121",
+        "bytes": 1414
+      },
+      {
+        "path": "dashboard/README.md",
+        "sha256": "d4159f5886cc90df1204fd48bca19743541cd9adfeedfe004eee9e673ad298ee",
+        "bytes": 13079
+      },
+      {
+        "path": "dashboard/_gitignore",
+        "sha256": "65dd0a42ae4c19effd53f667fb76b461fb889a624fdcf0a79b09a2844d760cb0",
+        "bytes": 515
+      },
+      {
+        "path": "dashboard/admin/_npmrc",
+        "sha256": "50d1878b2057a4b1cead1b11eacaf31dfcb924fac03a4ce907654bdc841f00bd",
+        "bytes": 94
+      },
+      {
+        "path": "dashboard/admin/build.ts",
+        "sha256": "39e1fc2339a62f637023ea6ef8be746aec38881a2c513b66cba5e97575be84b4",
+        "bytes": 1119
+      },
+      {
+        "path": "dashboard/admin/playwright.config.ts",
+        "sha256": "29e285f6134e8adf55d11c637598c932d42694b62286a0d20cc11d215f60ddca",
+        "bytes": 333
+      },
+      {
+        "path": "dashboard/admin/src/app.tsx",
+        "sha256": "fb7b3eea2f40e61a58e50f835056d79ccac7e6ed16641173cbd285f6ae8097de",
+        "bytes": 11579
+      },
+      {
+        "path": "dashboard/admin/src/components/Icon.tsx",
+        "sha256": "dbf07593a444cd6653a7e8021535f790b43920c82acf36828cd077697b5b10fa",
+        "bytes": 529
+      },
+      {
+        "path": "dashboard/admin/src/components/ProgressBar.tsx",
+        "sha256": "16951731712a08bcfcf279463d66073c6337647a700820cdf3b7e98be1ffb514",
+        "bytes": 809
+      },
+      {
+        "path": "dashboard/admin/src/components/StatCard.tsx",
+        "sha256": "dbcf676cb47365be37887bd0332f7f18c8284fd3cda8ec02c2785c9521d4681b",
+        "bytes": 1228
+      },
+      {
+        "path": "dashboard/admin/src/components/StatusBadge.tsx",
+        "sha256": "982d99f423b773792b7ee83fe45a94a9b3b16e69e1f4941274f9c8c5ee6bca55",
+        "bytes": 1700
+      },
+      {
+        "path": "dashboard/admin/src/components/UserAvatar.tsx",
+        "sha256": "392f5be0cdb33737b0010260cabce8dfc446fc693808e7fac8330797ab6aaee5",
+        "bytes": 523
+      },
+      {
+        "path": "dashboard/admin/src/components/icons.ts",
+        "sha256": "2a4b5d296a5b5286b2ec19ef9be768e853b6074d109dc6b8b65882e49de82710",
+        "bytes": 3386
+      },
+      {
+        "path": "dashboard/admin/src/pages/DeploymentsPage.tsx",
+        "sha256": "f21e510a86b4c0b2201545782d17d192a550bc69f435512456e20d134da38122",
+        "bytes": 8895
+      },
+      {
+        "path": "dashboard/admin/src/pages/OverviewPage.tsx",
+        "sha256": "983c7b2646976e84897c7669572fbb16b0db72d055df554fdb9ff718e1f84e16",
+        "bytes": 16574
+      },
+      {
+        "path": "dashboard/admin/src/pages/ServersPage.tsx",
+        "sha256": "f5ff4adbd789a0dc346101b89cc398d7f334cf0222a5090916eafeb7e46d6121",
+        "bytes": 5278
+      },
+      {
+        "path": "dashboard/admin/src/pages/SettingsPage.tsx",
+        "sha256": "83d610b988550f49f854e6991eb533f1ff330cf6a614523f029a0d6333e435ce",
+        "bytes": 367
+      },
+      {
+        "path": "dashboard/admin/src/styles/dashboard.css",
+        "sha256": "26d3137b45fdd7d044fdf8c746f952162093f5d4ac65db7df9b7bd1f003b0403",
+        "bytes": 2038
+      },
+      {
+        "path": "dashboard/admin/tests/dashboard.spec.ts",
+        "sha256": "ad9879255599a3d018d28793a2b0f41bb31151ecdc5af214a38fe02a71a217a9",
+        "bytes": 6025
+      },
+      {
+        "path": "dashboard/admin/tsconfig.json",
+        "sha256": "8f54953b133871cc1c728d72bf59b8e03eb929a85a60da177368619f5a2049a4",
+        "bytes": 309
+      },
+      {
+        "path": "dashboard/src/data.rs",
+        "sha256": "01d6aa4bf157d4cd52cc6685b95dec7405ca5e6d3db0b7edb7a0e5868546cac5",
+        "bytes": 12668
+      },
+      {
+        "path": "dashboard/src/main.rs",
+        "sha256": "8ea57590fdf23205ef3cc4b9a1e92bab0b99094445f4a66248f94b2e11cdb687",
+        "bytes": 8201
+      },
+      {
+        "path": "minimal/.github/workflows/build.yml",
+        "sha256": "42d99ec2941a0d3d9b9b9d79fe0adfac6ca261362354f17a4abf5d5eb11678bd",
+        "bytes": 1418
+      },
+      {
+        "path": "minimal/README.md",
+        "sha256": "9ba98c777a6992fb3afd0e3df0c1c53d3d8fd453fa2cdca484937dde010fb078",
+        "bytes": 5167
+      },
+      {
+        "path": "minimal/_gitignore",
+        "sha256": "7a30efb08919d715d1ffe8fc5ef523ac7d290e6c5d6cd3a3e71fd0acf26bcbdc",
+        "bytes": 436
+      },
+      {
+        "path": "minimal/admin/_npmrc",
+        "sha256": "50d1878b2057a4b1cead1b11eacaf31dfcb924fac03a4ce907654bdc841f00bd",
+        "bytes": 94
+      },
+      {
+        "path": "minimal/admin/build.ts",
+        "sha256": "1ecca61b2919198dbd3ac6747f30e02c23f8f2ce50e560619c347a26d96665f0",
+        "bytes": 1032
+      },
+      {
+        "path": "minimal/admin/src/about/app.tsx",
+        "sha256": "37523058d8624bdd2796f47fe1b82c278373b78d20d1b612061e4f1cc3f055da",
+        "bytes": 470
+      },
+      {
+        "path": "minimal/admin/src/home/app.tsx",
+        "sha256": "895bb95bea8022ffa2306b0959af0e4f512f7643edf0a6d96c9340271b06b1ea",
+        "bytes": 1150
+      },
+      {
+        "path": "minimal/admin/src/styles/app.css",
+        "sha256": "8098e2c0b9b4368f0dd8bbdda48d30b1fabf8585a7c916adc9e6e98f21947a83",
+        "bytes": 1607
+      },
+      {
+        "path": "minimal/admin/tsconfig.json",
+        "sha256": "8f54953b133871cc1c728d72bf59b8e03eb929a85a60da177368619f5a2049a4",
+        "bytes": 309
+      },
+      {
+        "path": "minimal/src/main.rs",
+        "sha256": "5b6bd9c9e0f9e564c5424544e1c3c0ff56ba4871fed969623823aaaddeceb1fb",
+        "bytes": 8045
+      },
+      {
+        "path": "native-router/.github/workflows/build.yml",
+        "sha256": "42d99ec2941a0d3d9b9b9d79fe0adfac6ca261362354f17a4abf5d5eb11678bd",
+        "bytes": 1418
+      },
+      {
+        "path": "native-router/README.md",
+        "sha256": "35f05b3d09b485195afdd02edbb54acda0c0b6e1a262e850234c44b8ebb37b3e",
+        "bytes": 3479
+      },
+      {
+        "path": "native-router/_gitignore",
+        "sha256": "7a30efb08919d715d1ffe8fc5ef523ac7d290e6c5d6cd3a3e71fd0acf26bcbdc",
+        "bytes": 436
+      },
+      {
+        "path": "native-router/admin/_npmrc",
+        "sha256": "50d1878b2057a4b1cead1b11eacaf31dfcb924fac03a4ce907654bdc841f00bd",
+        "bytes": 94
+      },
+      {
+        "path": "native-router/admin/build.ts",
+        "sha256": "3df75dd1923081215fd3630f331e4e77b039f07d330090ba3ca610e1b4eab3b0",
+        "bytes": 969
+      },
+      {
+        "path": "native-router/admin/src/about/app.tsx",
+        "sha256": "afd026c99080e1212a2b82332a4c36b6fbeceb544b7a46a8fe1967f535a79946",
+        "bytes": 294
+      },
+      {
+        "path": "native-router/admin/src/home/app.tsx",
+        "sha256": "bffd204feaf43389bc2d20a5bc5bbdd433160aa43f8ba3d1304409f2a1b12c06",
+        "bytes": 641
+      },
+      {
+        "path": "native-router/admin/src/navigation.ts",
+        "sha256": "9c936153a22befd06a3fff1a82d4f26f1b2385d3120f7514a011a5a57126bc36",
+        "bytes": 574
+      },
+      {
+        "path": "native-router/admin/src/shell/app.tsx",
+        "sha256": "75a157300d9ad14c72cf41a3074e10c8fda811b06b9a7a80f7ea7814fb9ca0f7",
+        "bytes": 958
+      },
+      {
+        "path": "native-router/admin/src/styles/app.css",
+        "sha256": "8098e2c0b9b4368f0dd8bbdda48d30b1fabf8585a7c916adc9e6e98f21947a83",
+        "bytes": 1607
+      },
+      {
+        "path": "native-router/admin/tsconfig.json",
+        "sha256": "8f54953b133871cc1c728d72bf59b8e03eb929a85a60da177368619f5a2049a4",
+        "bytes": 309
+      },
+      {
+        "path": "native-router/src/main.rs",
+        "sha256": "6b4795eaf9e2b468cadb5f6292d4871f82d829876f810d9069030f3d946d2991",
+        "bytes": 6255
+      }
+    ]
+  },
+  "signatures": {
+    "localCandidates": [],
+    "registryDependencies": [
+      {
+        "name": "prompts",
+        "version": "2.4.2",
+        "location": "node_modules/prompts",
+        "resolved": "https://registry.npmjs.org/prompts/-/prompts-2.4.2.tgz",
+        "integrity": "sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q=="
+      },
+      {
+        "name": "kleur",
+        "version": "3.0.3",
+        "location": "node_modules/prompts/node_modules/kleur",
+        "resolved": "https://registry.npmjs.org/kleur/-/kleur-3.0.3.tgz",
+        "integrity": "sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w=="
+      },
+      {
+        "name": "sisteransi",
+        "version": "1.0.5",
+        "location": "node_modules/prompts/node_modules/sisteransi",
+        "resolved": "https://registry.npmjs.org/sisteransi/-/sisteransi-1.0.5.tgz",
+        "integrity": "sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg=="
+      }
+    ]
+  }
+}

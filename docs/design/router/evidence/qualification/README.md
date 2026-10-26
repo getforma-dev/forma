@@ -2,7 +2,7 @@
 
 These records distinguish source checks, a sealed eight-package development candidate, and isolated packed-consumer checks. The source version stays **3.1.0**. The already published 3.1.0 release contains seven packages; these local archives add `@getforma/router` and the opt-in `native-router` starter. They are not published release bytes and do not authorize a release.
 
-`qualification.json` names each original log, correction, command, source identity, and archive checksum. `release-set.json` identifies the eight archives; `SHA256SUMS` authenticates their complete directory. Archives are retained outside Git, with their durable location recorded in the qualification record.
+The root `qualification.json`, `release-set.json` and `SHA256SUMS` preserve the superseded 33ae attempt. The corrected candidate is recorded in `successor-9d4aafee/`, which names its source identity, all eight archive checksums and the completed packed-consumer checks. Archives and complete raw reports are retained outside Git, with durable paths and hashes in each qualification record.
 
 ## Source checks
 
@@ -21,3 +21,11 @@ The dry-run performance target is `v3.1.0` because the unchanged release contrac
 The clean 33ae candidate passed P17: 75 checks in 1222.075 seconds against the 1800-second limit. Its corrected packed scaffold replay passed 218 tests including all 24 heavy cases on macOS. The first scaffold run failed two harness cases and is retained beside the correction. Independent callback review then found additional coordinator defects against the actual extracted archives. These results remain valid for 33ae; they do not qualify the corrected successor candidate. See `callback-review/` and the explicit scope in `qualification.json`.
 
 The successful P17 portable file is an explicit selected-fields summary, not the full raw report. Its `summaryOf` block records the complete durable report and SHA-256. Original sample arrays, security details, and duplicated fixture data remain in that full report and the retained raw-file inventory.
+
+## Corrected successor
+
+The clean `9d4aafee0c99cde4faff3f39a8fca2705e70a398` candidate passed all **75 P17 checks in 1235.994 seconds**, below the unchanged 1800-second limit, and all **218 scaffold cases including the 24 required heavy cases** in 140.34 seconds on macOS. This includes all three starters and the native starter in Chromium, Firefox and WebKit. The complete source and archives stayed frozen through both campaigns. All eight archive hashes were verified again afterward.
+
+`successor-9d4aafee/p17-summary.json` uses a distinct summary schema and keeps only each check's name, outcome and recorded duration, key budgets, archive identity and the full report's path/hash. The 59,727,456-byte raw report and all 237 named raw files remain outside Git. The final router delta passed 190 tests, type checking and package analysis. The pinned native size comparison is 12,281/12,288 gzip bytes: **7 bytes of headroom**. Future coordinated version preparation must remeasure the actual versioned output.
+
+The successor archive qualification binds the sealed commit above. Later test/helper-only CI repairs and independent packed native, website and timing campaigns have their own receipts; this record does not silently rebind P17 to a later Git head.

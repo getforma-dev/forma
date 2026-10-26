@@ -1,0 +1,69 @@
+SSR mode enabled — emitting IR files
+   IR emitted (real): plain-a.ir (1986 bytes, 2 islands)
+   IR emitted (real): plain-b.ir (1989 bytes, 2 islands)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/previous/dist/plain-b.ffe3bfb1.js  78.0kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/previous/dist/plain-a.65970b7c.js  78.0kb
+
+   5 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /native/a  islands  Forma 26,548 of 28,420 B  JavaScript 28,457 of 76,800 B  (Brotli: Forma 23,780, JavaScript 25,433)  plain-a.65970b7c.js
+   /native/b  islands  Forma 26,548 of 28,420 B  JavaScript 28,457 of 76,800 B  (Brotli: Forma 23,726, JavaScript 25,378)  plain-b.ffe3bfb1.js
+   Service worker   sw.js  3,337 B raw, 1,614 B gzip, 1,389 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       461 ms: bundle 290 ms, hash 1 ms, compress 169 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/previous/dist/manifest.json (build: 4b02086634bd...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/previous/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): plain-b.ir (1989 bytes, 2 islands)
+   IR emitted (real): plain-a.ir (1986 bytes, 2 islands)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/current/dist/plain-b.23d9fe08.js  78.1kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/current/dist/plain-a.16f75c69.js  78.1kb
+
+   5 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /native/a  islands  Forma 26,529 of 28,420 B  JavaScript 28,432 of 76,800 B  (Brotli: Forma 23,750, JavaScript 25,400)  plain-a.16f75c69.js
+   /native/b  islands  Forma 26,530 of 28,420 B  JavaScript 28,433 of 76,800 B  (Brotli: Forma 23,759, JavaScript 25,409)  plain-b.23d9fe08.js
+   Service worker   sw.js  3,337 B raw, 1,609 B gzip, 1,387 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       372 ms: bundle 195 ms, hash 1 ms, compress 175 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/current/dist/manifest.json (build: 504ceb740be7...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-router-size-E9tC7i/current/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+{
+  "output": "/tmp/forma-301-size-successor-clean/size.json",
+  "verdict": {
+    "comparisons": [
+      {
+        "route": "/native/a",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28432,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12281
+      },
+      {
+        "route": "/native/b",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28433,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12280
+      }
+    ],
+    "incrementGzip": 12281,
+    "groupGzip": 40713,
+    "ceilings": {
+      "increment": 12288,
+      "group": 65536
+    },
+    "passed": true
+  }
+}
+

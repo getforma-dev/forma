@@ -1,0 +1,264 @@
+   Packaging forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-ir-derive)
+    Updating crates.io index
+    Packaged 7 files, 16.5KiB (5.8KiB compressed)
+   Packaging forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-ir)
+    Updating crates.io index
+    Packaged 219 files, 1.2MiB (270.2KiB compressed)
+   Packaging forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Updating crates.io index
+    Packaged 126 files, 838.3KiB (226.0KiB compressed)
+npm notice
+npm notice 📦  @getforma/core@3.1.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 13.2kB README.md
+npm notice 109.8kB dist/chunk-2CJY5HA5.js
+npm notice 288.2kB dist/chunk-2CJY5HA5.js.map
+npm notice 13.6kB dist/chunk-2RYUWROU.cjs
+npm notice 49.8kB dist/chunk-2RYUWROU.cjs.map
+npm notice 3.3kB dist/chunk-46JRMM2Y.js
+npm notice 25.6kB dist/chunk-46JRMM2Y.js.map
+npm notice 3.7kB dist/chunk-J7XVXJ7C.cjs
+npm notice 25.7kB dist/chunk-J7XVXJ7C.cjs.map
+npm notice 26.5kB dist/chunk-MZNVTNKN.cjs
+npm notice 113.4kB dist/chunk-MZNVTNKN.cjs.map
+npm notice 13.7kB dist/chunk-NTW6E4KC.js
+npm notice 60.2kB dist/chunk-NTW6E4KC.js.map
+npm notice 111.5kB dist/chunk-RG5ALIDX.cjs
+npm notice 289.1kB dist/chunk-RG5ALIDX.cjs.map
+npm notice 13.2kB dist/chunk-RRZJ6XRE.js
+npm notice 49.5kB dist/chunk-RRZJ6XRE.js.map
+npm notice 25.3kB dist/chunk-TY4YU4W6.js
+npm notice 113.3kB dist/chunk-TY4YU4W6.js.map
+npm notice 15.2kB dist/chunk-ZUWTXXVD.cjs
+npm notice 60.5kB dist/chunk-ZUWTXXVD.cjs.map
+npm notice 4.5kB dist/compiled.cjs
+npm notice 12.7kB dist/compiled.cjs.map
+npm notice 895B dist/compiled.d.cts
+npm notice 894B dist/compiled.d.ts
+npm notice 4.3kB dist/compiled.js
+npm notice 12.5kB dist/compiled.js.map
+npm notice 109.8kB dist/dev/chunk-3FR6OLHS.js
+npm notice 28.6kB dist/dev/chunk-7TITUI4X.cjs
+npm notice 13.9kB dist/dev/chunk-GZMXARPM.cjs
+npm notice 13.5kB dist/dev/chunk-JO4VSDXG.js
+npm notice 13.6kB dist/dev/chunk-NIJKWI5L.js
+npm notice 4.7kB dist/dev/chunk-ONSU5VQQ.cjs
+npm notice 4.3kB dist/dev/chunk-QF55J27D.js
+npm notice 27.4kB dist/dev/chunk-RSLLCAKG.js
+npm notice 15.1kB dist/dev/chunk-WES3Y5XN.cjs
+npm notice 111.5kB dist/dev/chunk-YYBQPUNB.cjs
+npm notice 4.5kB dist/dev/compiled.cjs
+npm notice 4.3kB dist/dev/compiled.js
+npm notice 5.7kB dist/dev/http.cjs
+npm notice 5.4kB dist/dev/http.js
+npm notice 40.7kB dist/dev/index.cjs
+npm notice 34.0kB dist/dev/index.js
+npm notice 10.2kB dist/dev/navigation.cjs
+npm notice 9.9kB dist/dev/navigation.js
+npm notice 151.6kB dist/dev/runtime-hardened.cjs
+npm notice 151.3kB dist/dev/runtime-hardened.js
+npm notice 137.3kB dist/dev/runtime.cjs
+npm notice 136.5kB dist/dev/runtime.js
+npm notice 5.4kB dist/dev/storage.cjs
+npm notice 5.3kB dist/dev/storage.js
+npm notice 559B dist/dev/tc39-compat.cjs
+npm notice 495B dist/dev/tc39-compat.js
+npm notice 166.1kB dist/forma-runtime-csp.js
+npm notice 168.8kB dist/forma-runtime.js
+npm notice 205.7kB dist/forma.esm.js
+npm notice 697.0kB dist/forma.esm.js.map
+npm notice 163.4kB dist/formajs-frame.global.js
+npm notice 166.1kB dist/formajs-runtime-hardened.global.js
+npm notice 618.4kB dist/formajs-runtime-hardened.global.js.map
+npm notice 168.8kB dist/formajs-runtime.global.js
+npm notice 550.3kB dist/formajs-runtime.global.js.map
+npm notice 5.7kB dist/http.cjs
+npm notice 19.7kB dist/http.cjs.map
+npm notice 4.4kB dist/http.d.cts
+npm notice 4.4kB dist/http.d.ts
+npm notice 5.4kB dist/http.js
+npm notice 19.6kB dist/http.js.map
+npm notice 40.4kB dist/index.cjs
+npm notice 132.6kB dist/index.cjs.map
+npm notice 59.8kB dist/index.d.cts
+npm notice 59.8kB dist/index.d.ts
+npm notice 33.7kB dist/index.js
+npm notice 132.1kB dist/index.js.map
+npm notice 14.5kB dist/jsx.d.ts
+npm notice 10.2kB dist/navigation.cjs
+npm notice 24.3kB dist/navigation.cjs.map
+npm notice 1.3kB dist/navigation.d.cts
+npm notice 1.3kB dist/navigation.d.ts
+npm notice 9.9kB dist/navigation.js
+npm notice 24.1kB dist/navigation.js.map
+npm notice 148.8kB dist/runtime-hardened.cjs
+npm notice 592.5kB dist/runtime-hardened.cjs.map
+npm notice 11.2kB dist/runtime-hardened.d.cts
+npm notice 11.2kB dist/runtime-hardened.d.ts
+npm notice 148.5kB dist/runtime-hardened.js
+npm notice 592.4kB dist/runtime-hardened.js.map
+npm notice 136.0kB dist/runtime.cjs
+npm notice 474.2kB dist/runtime.cjs.map
+npm notice 8.3kB dist/runtime.d.cts
+npm notice 8.3kB dist/runtime.d.ts
+npm notice 135.2kB dist/runtime.js
+npm notice 473.8kB dist/runtime.js.map
+npm notice 2.6kB dist/signal-B5ZKb9uL.d.cts
+npm notice 2.6kB dist/signal-B5ZKb9uL.d.ts
+npm notice 5.4kB dist/storage.cjs
+npm notice 17.3kB dist/storage.cjs.map
+npm notice 2.2kB dist/storage.d.cts
+npm notice 2.2kB dist/storage.d.ts
+npm notice 5.3kB dist/storage.js
+npm notice 17.3kB dist/storage.js.map
+npm notice 600B dist/tc39-compat.cjs
+npm notice 2.5kB dist/tc39-compat.cjs.map
+npm notice 1.2kB dist/tc39-compat.d.cts
+npm notice 1.2kB dist/tc39-compat.d.ts
+npm notice 535B dist/tc39-compat.js
+npm notice 2.5kB dist/tc39-compat.js.map
+npm notice 3.0kB dist/trusted-html-CQ4YBquI.d.cts
+npm notice 3.0kB dist/trusted-html-CQ4YBquI.d.ts
+npm notice 1.1kB licenses/alien-signals.txt
+npm notice 7.6kB package.json
+npm notice Tarball Details
+npm notice name: @getforma/core
+npm notice version: 3.1.0
+npm notice filename: getforma-core-3.1.0.tgz
+npm notice package size: 2.2 MB
+npm notice unpacked size: 8.8 MB
+npm notice shasum: 662b33117f028b69f5b986d8a55c5261087eba8e
+npm notice integrity: sha512-Qf3eGIjZscNhJ[...]POAIKx9jEQZAQ==
+npm notice total files: 112
+npm notice
+npm notice
+npm notice 📦  @getforma/compiler@3.1.0
+npm notice Tarball Contents
+npm notice 21.6kB README.md
+npm notice 19.6kB dist/index.d.ts
+npm notice 454.3kB dist/index.js
+npm notice 54.0kB docs/subset.md
+npm notice 1.3kB package.json
+npm notice Tarball Details
+npm notice name: @getforma/compiler
+npm notice version: 3.1.0
+npm notice filename: getforma-compiler-3.1.0.tgz
+npm notice package size: 134.5 kB
+npm notice unpacked size: 550.7 kB
+npm notice shasum: 5333b9f12c153b43db42c70504cbfe5151224c0e
+npm notice integrity: sha512-y59HhAk6PvGE1[...]wPsfZD/ITbH0A==
+npm notice total files: 5
+npm notice
+npm notice
+npm notice 📦  @getforma/build@3.1.0
+npm notice Tarball Contents
+npm notice 59.7kB README.md
+npm notice 23.2kB dist/index.d.ts
+npm notice 127.0kB dist/index.js
+npm notice 20B dist/raw-lint-cli.d.ts
+npm notice 104.6kB dist/raw-lint-cli.js
+npm notice 1.2kB package.json
+npm notice Tarball Details
+npm notice name: @getforma/build
+npm notice version: 3.1.0
+npm notice filename: getforma-build-3.1.0.tgz
+npm notice package size: 92.8 kB
+npm notice unpacked size: 315.6 kB
+npm notice shasum: 770ee681edc34d26884d946ae19299f34759b195
+npm notice integrity: sha512-24UwhCrfhaX6P[...]82kFT3EXf1l9A==
+npm notice total files: 6
+npm notice
+npm notice
+npm notice 📦  @getforma/router@3.1.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 14.1kB README.md
+npm notice 69.3kB dist/index.cjs
+npm notice 7.2kB dist/index.d.cts
+npm notice 7.2kB dist/index.d.ts
+npm notice 67.7kB dist/index.js
+npm notice 1.3kB package.json
+npm notice Tarball Details
+npm notice name: @getforma/router
+npm notice version: 3.1.0
+npm notice filename: getforma-router-3.1.0.tgz
+npm notice package size: 43.3 kB
+npm notice unpacked size: 167.9 kB
+npm notice shasum: 1027f11a795f1a0750ce7d058aacdff9cec1bc6e
+npm notice integrity: sha512-XM2wdVgT4Grkv[...]I85stBhZCAcRA==
+npm notice total files: 7
+npm notice
+npm notice
+npm notice 📦  @getforma/create-app@3.1.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 11.0kB README.md
+npm notice 13.5kB dist/index.js
+npm notice 913B package.json
+npm notice 515B templates/dashboard/_gitignore
+npm notice 1.4kB templates/dashboard/.github/workflows/build.yml
+npm notice 94B templates/dashboard/admin/_npmrc
+npm notice 1.1kB templates/dashboard/admin/build.ts
+npm notice 75.2kB templates/dashboard/admin/package-lock.json
+npm notice 625B templates/dashboard/admin/package.json
+npm notice 333B templates/dashboard/admin/playwright.config.ts
+npm notice 11.6kB templates/dashboard/admin/src/app.tsx
+npm notice 529B templates/dashboard/admin/src/components/Icon.tsx
+npm notice 3.4kB templates/dashboard/admin/src/components/icons.ts
+npm notice 809B templates/dashboard/admin/src/components/ProgressBar.tsx
+npm notice 1.2kB templates/dashboard/admin/src/components/StatCard.tsx
+npm notice 1.7kB templates/dashboard/admin/src/components/StatusBadge.tsx
+npm notice 523B templates/dashboard/admin/src/components/UserAvatar.tsx
+npm notice 8.9kB templates/dashboard/admin/src/pages/DeploymentsPage.tsx
+npm notice 16.6kB templates/dashboard/admin/src/pages/OverviewPage.tsx
+npm notice 5.3kB templates/dashboard/admin/src/pages/ServersPage.tsx
+npm notice 367B templates/dashboard/admin/src/pages/SettingsPage.tsx
+npm notice 2.0kB templates/dashboard/admin/src/styles/dashboard.css
+npm notice 6.0kB templates/dashboard/admin/tests/dashboard.spec.ts
+npm notice 309B templates/dashboard/admin/tsconfig.json
+npm notice 25.2kB templates/dashboard/Cargo.lock
+npm notice 502B templates/dashboard/Cargo.toml
+npm notice 13.1kB templates/dashboard/README.md
+npm notice 12.7kB templates/dashboard/src/data.rs
+npm notice 8.2kB templates/dashboard/src/main.rs
+npm notice 436B templates/minimal/_gitignore
+npm notice 1.4kB templates/minimal/.github/workflows/build.yml
+npm notice 94B templates/minimal/admin/_npmrc
+npm notice 1.0kB templates/minimal/admin/build.ts
+npm notice 85.6kB templates/minimal/admin/package-lock.json
+npm notice 562B templates/minimal/admin/package.json
+npm notice 470B templates/minimal/admin/src/about/app.tsx
+npm notice 1.1kB templates/minimal/admin/src/home/app.tsx
+npm notice 1.6kB templates/minimal/admin/src/styles/app.css
+npm notice 309B templates/minimal/admin/tsconfig.json
+npm notice 25.3kB templates/minimal/Cargo.lock
+npm notice 473B templates/minimal/Cargo.toml
+npm notice 5.2kB templates/minimal/README.md
+npm notice 8.0kB templates/minimal/src/main.rs
+npm notice 436B templates/native-router/_gitignore
+npm notice 1.4kB templates/native-router/.github/workflows/build.yml
+npm notice 94B templates/native-router/admin/_npmrc
+npm notice 969B templates/native-router/admin/build.ts
+npm notice 86.1kB templates/native-router/admin/package-lock.json
+npm notice 582B templates/native-router/admin/package.json
+npm notice 294B templates/native-router/admin/src/about/app.tsx
+npm notice 641B templates/native-router/admin/src/home/app.tsx
+npm notice 574B templates/native-router/admin/src/navigation.ts
+npm notice 958B templates/native-router/admin/src/shell/app.tsx
+npm notice 1.6kB templates/native-router/admin/src/styles/app.css
+npm notice 309B templates/native-router/admin/tsconfig.json
+npm notice 25.3kB templates/native-router/Cargo.lock
+npm notice 514B templates/native-router/Cargo.toml
+npm notice 3.5kB templates/native-router/README.md
+npm notice 6.3kB templates/native-router/src/main.rs
+npm notice Tarball Details
+npm notice name: @getforma/create-app
+npm notice version: 3.1.0
+npm notice filename: getforma-create-app-3.1.0.tgz
+npm notice package size: 91.3 kB
+npm notice unpacked size: 485.9 kB
+npm notice shasum: ac58e715f7268c359261fb40a0851f850a9a9ae2
+npm notice integrity: sha512-8oo4I+yyQq/HZ[...]gv0ouD1goIuiQ==
+npm notice total files: 60
+npm notice

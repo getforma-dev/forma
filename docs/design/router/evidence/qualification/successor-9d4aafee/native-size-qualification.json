@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-26T20:13:58.670Z",
+  "baseline": {
+    "schema": 1,
+    "scope": "Published Forma 3.1.0 core baseline for the frozen FORMA-301 paired size contract.",
+    "name": "@getforma/core",
+    "version": "3.1.0",
+    "integrity": "sha512-sttf0ogV92qwJf1CL5jkremiWiebBmup+pDfb5XuhHw+mbR0bY+xxO6ZRnI2N5C6jR8/saWZ7zQBMb3PVhrEEA==",
+    "archiveSha256": "312149d7c863f54776bc5d0eb78fa920f009dc7e5867352535c877e16d4610b7"
+  },
+  "scope": "Source consumer qualification; not whole P17 or publication.",
+  "passed": true,
+  "verdict": {
+    "comparisons": [
+      {
+        "route": "/native/a",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28432,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12281
+      },
+      {
+        "route": "/native/b",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28433,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12280
+      }
+    ],
+    "incrementGzip": 12281,
+    "groupGzip": 40713,
+    "ceilings": {
+      "increment": 12288,
+      "group": 65536
+    },
+    "passed": true
+  },
+  "finishedAt": "2026-10-26T20:14:02.564Z"
+}

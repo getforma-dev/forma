@@ -1,0 +1,59 @@
+{
+  "schema": "forma-301-successor-qualification-v1",
+  "sourceCommit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "candidateDirectory": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/candidate",
+  "scope": "Local macOS development qualification of the exact eight sealed archives. No publication or deployment; the source version marker remains 3.1.0.",
+  "recordSha256": "96472d312b1075dd409b89596d597335832a5609893fd33f637b28dc153382a6",
+  "checksumRecordSha256": "40e4bcd280e3668edf2762e1ad70ab7193f6c72b967d476d4aea40e3b6963c95",
+  "archiveHashesReverifiedAfterConsumers": true,
+  "p17": {
+    "passed": true,
+    "checks": 75,
+    "elapsedSeconds": 1235.994,
+    "limitSeconds": 1800,
+    "summary": "p17-summary.json",
+    "raw": {
+      "schema": 1,
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/successor-p17/p17.json",
+      "bytes": 59727456,
+      "sha256": "1f1db230f144a45be8e7d0a38e577313044dfbf92f181d453566a14457e0e460"
+    }
+  },
+  "scaffold": {
+    "passed": true,
+    "platform": "darwin",
+    "tests": 218,
+    "heavy": 24,
+    "durationSeconds": 140.34,
+    "report": "scaffold-report.json",
+    "vitest": "scaffold-vitest.json",
+    "log": "scaffold.log"
+  },
+  "routerSourceDelta": {
+    "tests": 190,
+    "testFiles": 10,
+    "types": "passed",
+    "packageAnalysis": "passed",
+    "logs": [
+      "router-tests.log",
+      "router-types.log",
+      "router-pack.log"
+    ],
+    "scope": "Final runtime, streaming decoder and matcher simplification after the prior aggregate check and superseded 33ae archive qualification."
+  },
+  "nativeIncrementalSize": {
+    "incrementGzipBytes": 12281,
+    "limitGzipBytes": 12288,
+    "remainingGzipBytes": 7,
+    "groupGzipBytes": 40713,
+    "groupLimitGzipBytes": 65536,
+    "scope": "Pinned published-core baseline; exact ordinary control and opt-in group; future version preparation must remeasure.",
+    "repositoryReceipt": "experiments/forma-router-native/evidence/size-v5.json",
+    "receipt": "native-size-qualification.json",
+    "sourceProducts": "native-size-size.json",
+    "sourceDirty": false,
+    "baselineArchiveSha256": "312149d7c863f54776bc5d0eb78fa920f009dc7e5867352535c877e16d4610b7"
+  },
+  "laterChecks": "Independent packed native proof, packed website pilot, native navigation timing and CI harness corrections are recorded separately with their own source/archive bindings.",
+  "priorAttempts": "The parent directory preserves four failed full-check attempts and the passing resumed tail; 33ae candidate P17/scaffold and callback failures remain explicitly superseded, not erased."
+}
