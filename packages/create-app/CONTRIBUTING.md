@@ -29,7 +29,7 @@ separately pinned toolchain.
 ## The gates
 
 The structural suite checks the CLI, template contracts and generated files.
-The full scaffold gate installs and serves the actual packed seven-package
+The full scaffold gate installs and serves the actual packed version-appropriate package
 candidate on Linux and Windows. It verifies typed SSR, explicit Browser pages,
 response policy, declared island activation and static-route network behavior.
 Use the [candidate workflow](README.md#development) from the repository root;

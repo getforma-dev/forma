@@ -49,6 +49,13 @@ it('publishes separately compiled native owners with one closed, integrity-check
   expect(Object.keys(bootstrap.registrations)).toEqual(['Counter']);
   expect(Object.isFrozen(bootstrap)&&Object.isFrozen(bootstrap.registrations)&&Object.isFrozen(bootstrap.owners)).toBe(true);
 });
+it('awaits asynchronous bootstrap initialization and propagates initialization failure', async()=>{
+  const {root,config}=fixture();
+  writeFileSync(join(root,'client.ts'), 'export default async function initialize(){await Promise.resolve();throw new Error("initialization refused")}');
+  const {manifest}=await build(config);
+  const source=readFileSync(join(config.outputDir,manifest.routes['/a'].js[0]));
+  await expect(import(`data:text/javascript;base64,${source.toString('base64')}`)).rejects.toThrow('initialization refused');
+});
 it('leaves ordinary static owners zero-JS and excludes navigation metadata unless opted in',async()=>{
   const {config}=fixture();delete config.navigationGroups; const {manifest}=await build(config);
   expect(manifest.routes['/shell'].js).toEqual([]);expect(manifest.routes['/shell'].navigation).toBeUndefined();

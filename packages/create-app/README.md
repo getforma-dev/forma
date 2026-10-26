@@ -6,7 +6,7 @@
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
 
-> **Where this sits.** One repository, seven coordinated packages:
+> **Where this sits.** One repository, eight coordinated source packages:
 >
 > ```
 > TS/JSX → @getforma/compiler → FMIR 3 → forma-ir → forma-server → HTML
@@ -16,7 +16,7 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 >
 > **You are here:** the front door. New to the stack? Read
 > **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)**
-> — it explains the pipeline. All seven packages live in
+> — it explains the pipeline. All eight source packages live in
 > [getforma-dev/forma](https://github.com/getforma-dev/forma) and publish as one set.
 > Existing 0.6.x projects can follow the
 > [3.0 template migration](docs/UPGRADING-3.0.md).
@@ -42,7 +42,7 @@ cd admin && npm ci && npm run build && cd ..
 cargo run
 ```
 
-Open http://localhost:3000. Both templates bind to `127.0.0.1` by default; the
+Open http://localhost:3000. All templates bind to `127.0.0.1` by default; the
 dashboard can opt in to a wider bind with `FORMA_HOST`, and warns when you do,
 because its `/api/*` routes have no authentication.
 
@@ -70,6 +70,14 @@ exists.
 |----------|-----------|-------------|
 | `dashboard` | Explicit Browser rendering | DevOps admin panel — 4 pages, 8 API routes, SVG chart, Tailwind CSS, Gruvbox theme, 16 Playwright tests |
 | `minimal` | Browser, or native SSR with `npm run build:ssr` | Rust server + a Counter page and a static About page |
+| `native-router` | Native SSR with optional owned navigation | Persistent layout, typed owner branches, ordinary links and history; candidate release only |
+
+`native-router` is new in the next coordinated minor release; it is absent from
+published 3.0/3.1 archives. Before publication use the documented packed candidate
+workflow and select `--template native-router` from that candidate CLI. It adds
+`@getforma/router` only to this opt-in template. The ordinary templates retain
+their dependency graphs and rendering behavior. See its
+[ownership and deployment guide](templates/native-router/README.md).
 
 The dashboard explicitly uses client rendering. The FMIR compiler walks source
 rather than executing it and accepts only the documented native subset. It
@@ -106,7 +114,7 @@ node scripts/candidate-scaffold.mjs run /absolute/path/to/candidate-artifacts RE
 ```
 
 CI always runs the full candidate suite on Linux and Windows. The separate
-registry lane runs the actual published CLI when all seven coordinated versions
+registry lane runs the actual published CLI when all version-appropriate coordinated packages
 exist. Missing or skipped candidate jobs fail the release gate. The source lock
 seeds are never passed directly to an unpublished registry installation.
 
@@ -115,7 +123,7 @@ template's lockfile with `npm ci`, builds the frontend, runs
 `cargo check --locked`, then starts each compiled server and reads its
 responses: the minimal template must serve real server-rendered markup after
 `build:ssr`, the dashboard must serve each page as its declared browser shell
-whose CSP nonce matches the script tag, and every page of both must answer
+whose CSP nonce matches the script tag; native-router must retain its layout through typed navigation in all three browser engines, and every page must answer
 `Cache-Control: no-store` with a fresh nonce on each fetch, register no service
 worker, and leave `/sw.js` to forma-server's retiring worker. It also runs
 `npm audit signatures` over each template's install, fails on any

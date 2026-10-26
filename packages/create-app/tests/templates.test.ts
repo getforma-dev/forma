@@ -47,7 +47,7 @@ function cargoDeps(template: string): string[] {
 /** The templates preserve their existing consumer toolchain floor. */
 const RUST_FLOOR = '1.85';
 const SOURCE_VERSION = readJson('..', 'package.json').version;
-const INTERNAL_NPM = new Set(['@getforma/core', '@getforma/compiler', '@getforma/build']);
+const INTERNAL_NPM = new Set(['@getforma/core', '@getforma/compiler', '@getforma/build', '@getforma/router']);
 const INTERNAL_CRATES = new Set(['forma-ir', 'forma-ir-derive', 'forma-server']);
 
 /** The `[[package]]` entries of a Cargo.lock, as name/version/source/checksum/dependencies. */
@@ -260,7 +260,7 @@ describe.each(TEMPLATES)('%s template', (template) => {
       if (key === '' || entry.inBundle) continue;
       expect(entry.link, `${key} is a link`).toBeUndefined();
       expect(entry.resolved, `${key} resolves elsewhere`).toMatch(/^https:\/\/registry\.npmjs\.org\//);
-      if (/^node_modules\/@getforma\/(core|compiler|build)$/.test(key)) {
+      if (/^node_modules\/@getforma\/(core|compiler|build|router)$/.test(key)) {
         expect(entry.version).toBe(SOURCE_VERSION);
         expect(entry.integrity, 'only the identified source seed may omit internal archive hashes').toBeUndefined();
       } else expect(entry.integrity, `${key} has no sha512 integrity`).toMatch(/^sha512-/);
@@ -503,6 +503,30 @@ describe('the published package', () => {
       expect(files).toContain(`templates/${template}/Cargo.lock`);
       expect(files).toContain(`templates/${template}/admin/package-lock.json`);
       expect(files).not.toContain('template-lock-seeds.json');
+    }
+  });
+});
+
+describe('native-router template', () => {
+  it('compiles each actual scaffolded owner with independent declared props and island registrations', () => {
+    inTmpDir('forma-template-native-', dir => {
+      const created = runCli(['native-page', '--template', 'native-router'], dir);
+      expect(created.status, created.stderr).toBe(0);
+      for (const [owner, names] of [['shell', ['LayoutCounter']], ['home', ['Counter']], ['about', []]] as const) {
+        const {result, diagnostics} = collectDiagnostics(() => generateRealIr(path.join(dir, `native-page/admin/src/${owner}/app.tsx`)));
+        expect(diagnostics).toEqual([]);
+        expect(result).not.toBeNull();
+        expect(result!.islands.map(island => island.name)).toEqual(names);
+        expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint]))
+          .toEqual(owner === 'about' ? [] : [['count', 3]]);
+      }
+    });
+  }, 60_000);
+  it('makes the router dependency opt-in and preserves the existing templates', () => {
+    expect(readJson('native-router', 'admin', 'package.json').dependencies['@getforma/router']).toBe(`=${SOURCE_VERSION}`);
+    for (const template of ['minimal', 'dashboard']) {
+      const manifest = readJson(template, 'admin', 'package.json');
+      expect({...manifest.dependencies, ...manifest.devDependencies}['@getforma/router']).toBeUndefined();
     }
   });
 });

@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-Changes after the prepared 3.0.0 set will be recorded here.
+- Add the opt-in `native-router` starter with a checked native group, typed Rust owner branches, persistent layout state, history navigation and ordinary no-JavaScript links. Existing starters remain unchanged. The new template is sealed and qualified with the next coordinated router release; its source lock is not a published install receipt.
+
 
 ## [3.0.0] - Prepared; publication pending
 

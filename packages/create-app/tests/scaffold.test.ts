@@ -3,7 +3,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
-import { TEMPLATES, validateProjectName } from '../src/scaffold';
+import { verifyNativeRouterTemplate } from '../../../scripts/release-template-navigation.mjs';
+import { TEMPLATES as SOURCE_TEMPLATES, validateProjectName } from '../src/scaffold';
 import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
 
 /**
@@ -13,6 +14,11 @@ import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, r
  * build, `cargo check` — runs when FORMA_SCAFFOLD_E2E=1, which is what turns a
  * template that cannot compile from a passing test into a failing one.
  */
+
+const TEMPLATES: string[] = process.env.FORMA_SCAFFOLD_TEMPLATES
+  ? JSON.parse(process.env.FORMA_SCAFFOLD_TEMPLATES) : SOURCE_TEMPLATES;
+if (!Array.isArray(TEMPLATES) || !TEMPLATES.length || new Set(TEMPLATES).size !== TEMPLATES.length
+  || TEMPLATES.some(template => !SOURCE_TEMPLATES.includes(template))) throw new Error('unknown scaffold template inventory');
 
 const TEXT_EXTS = new Set(['.toml', '.lock', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
 const STATIC_HTML = process.env.FORMA_SCAFFOLD_STATIC_HTML ?? 'plain-v1';
@@ -531,6 +537,31 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     }, { profile: 'release' });
   }, 900_000);
 
+  if (TEMPLATES.includes('native-router')) {
+    it('native-router: typed navigation preserves its layout and works without JavaScript in all engines', async () => {
+      const name = 'e2e-native-router';
+      expect(runCli([name, '--template', 'native-router'], tmp).status).toBe(0);
+      const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
+      const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
+      expect(install.status, install.stderr).toBe(0);
+      const build = run('npm', ['run', 'build'], admin);
+      expect(build.status, build.stdout + build.stderr).toBe(0);
+      const cargo = run('cargo', ['build', '--locked', '--release'], dest);
+      expect(cargo.status, cargo.stderr).toBe(0);
+      await checkN8('native-router', dest, name);
+      const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist/manifest.json'), 'utf8'));
+      await withServer(dest, name, async (_body, response) => {
+        const origin = new URL(response.url).origin;
+        for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
+          await withEngine(engine, launcher, async browser => {
+            const navigation = await verifyNativeRouterTemplate(browser, origin, manifest);
+            recordObservation(`native-router: ${engine} actual typed navigation`, {engine, profile: 'release', navigation});
+          });
+        }
+      }, {profile: 'release'});
+    }, 900_000);
+  }
+
   it('dashboard: serves each page as its browser shell, by declaration (ssr: false)', async () => {
     const name = 'e2e-phase1';
     expect(runCli([name, '--template', 'dashboard'], tmp).status).toBe(0);
@@ -750,7 +781,8 @@ globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
             const plainStatic = staticRoute && STATIC_HTML === 'plain-v1';
             // The authenticated release contract selects one exact shape:
             // plain static roots have no adoption metadata; legacy SSR does.
-            const root = plainStatic ? /<div id="app">/
+            const root = template === 'native-router' ? /<div id="app"[^>]*data-forma-router-root/
+              : plainStatic ? /<div id="app">/
               : script === 'build:ssr' ? /<div id="app" data-forma-build="[^"]+" data-forma-ssr>/
                 : /<div id="app" data-forma-build="[^"]+"><\/div>/;
             for (let fetchNo = 1; fetchNo <= 2; fetchNo++) {

@@ -55,7 +55,7 @@ export function navigationOptions(config: BuildConfig, group: NavigationGroup,
   const contents = `${imports.join('\n')}
 import initialize from ${JSON.stringify(resolve(group.client))};
 const registrations = Object.freeze(Object.assign(Object.create(null), ${entries.map((_, index) => `r${index}`).join(', ')}));
-initialize(Object.freeze({ registrations, app: ${JSON.stringify(config.app)}, build: __FORMA_BUILD__, group: ${JSON.stringify(group.id)}, owners: Object.freeze(${JSON.stringify(group.owners)}) }));`;
+await initialize(Object.freeze({ registrations, app: ${JSON.stringify(config.app)}, build: __FORMA_BUILD__, group: ${JSON.stringify(group.id)}, owners: Object.freeze(${JSON.stringify(group.owners)}) }));`;
   return { ...options, entryPoints: undefined, stdin: { contents, resolveDir: process.cwd(), sourcefile: navigationFilename(group), loader: 'js' },
     outfile: resolve(config.outputDir, navigationFilename(group)), splitting: false, metafile: true, write: false };
 }
