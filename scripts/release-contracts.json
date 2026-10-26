@@ -179,11 +179,11 @@
       "tags": "v3.1.0: npm latest, Cargo 3.1.0",
       "gates": {
         "FORMA-144 slice 3": {
-          "status": "pending",
+          "status": "done",
           "scope": "final template and release cleanup"
         },
         "FORMA-191": {
-          "status": "pending",
+          "status": "done",
           "scope": "the per-release measurements in P17"
         },
         "FORMA-146": {
@@ -191,7 +191,7 @@
           "scope": "Q10 to Q13 and Q14 to Q18 defaults confirmed by the founder in L-57 on 2026-10-15; see docs/release/3.0-GATE-DISPOSITIONS.md"
         },
         "FORMA-145 soak": {
-          "status": "pending",
+          "status": "done",
           "scope": "L-62: at least 3600 seconds of continuous fault-free CI burn-in on the exact packed RC set, including stress, fuzzers and skew/upgrade drills, after RC P17 and the independent whole-release audit"
         }
       }

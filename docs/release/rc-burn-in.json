@@ -1,0 +1,158 @@
+{
+  "contract": "rc-burn-in-reference-v1",
+  "finalVersion": "3.1.0",
+  "rcTag": "v3.1.0-rc.3",
+  "rcCommit": "cf381a0acc697b083b12be243f84d1269d6eefcd",
+  "runId": 40322508923,
+  "runAttempt": 1,
+  "manifestSha256": "686cbafa6158096f9003ab9ad2fac041a6f86692370423002d58db502156d8cb",
+  "ds12Sha256": "96dd998ab57f010e15880aa15bb68eb7ea7afd10e9e2c63c78f4afb5721e1018",
+  "p17EvidenceSha256": "63921a3ef7095150bf99ccde48b84236bff26ec8f17c0c79482776ce121910b4",
+  "d14EvidenceSha256": "ef8236ba7e7337a5d46ca709cd98c39f6ef63a0b292b14525b7f5487d838e6f8",
+  "reviewedChanges": [
+    {
+      "path": "CHANGELOG.md",
+      "before": "5c4a14d4b6c1425e13c51d0eab903826fc5af0e8",
+      "afterSha256": "c8777c6cbf68cf2845907d790adc9137504202f8fbc53b63b39400bf0c734c8a"
+    },
+    {
+      "path": "Cargo.lock",
+      "before": "662a414c7540e79ed701eafb4bba00d68191a70c",
+      "afterSha256": "fb9dc2055fc9b5f2bf0572de5834d5fb514ac2ab436f28cb6a194ba6f6cd3bd2"
+    },
+    {
+      "path": "Cargo.toml",
+      "before": "1decc26956937a978fa8f4aa6c292a179f8776e1",
+      "afterSha256": "f00c9a7818be86e2506d1435cfb4b3d58e440efac4c30ecca6a5b4a6f62fdbb4"
+    },
+    {
+      "path": "crates/forma-ir-derive/Cargo.toml",
+      "before": "4c6efbcceb5c943327a93f48624c7e06283f8e5d",
+      "afterSha256": "4b6f1e0add5ecbbd83382215e926a4268488031f29cf4350d25960794cc9125e"
+    },
+    {
+      "path": "crates/forma-ir/Cargo.toml",
+      "before": "ce554558fd38ce0c068ba7448b7a300933bbc9ad",
+      "afterSha256": "c84c759aaeffe57991d1e082a94d4d66f17e89413f3377546e3f278b018d24d1"
+    },
+    {
+      "path": "crates/forma-server/Cargo.toml",
+      "before": "2e664f767a4e0b23e3460ac234dc256a83d35639",
+      "afterSha256": "7d4558bdbf627826619f9170804ff525052a5ea2e2f4565cf0c623188ba3d282"
+    },
+    {
+      "path": "docs/release/3.1-QUALIFICATION.md",
+      "before": "821d316fbc2a8ac8fdce952df47672fa2db92d6e",
+      "afterSha256": "c2028958145fe32f6a1d4d41b30fa7aa86fcd96d9910bdad2660f01099464da4"
+    },
+    {
+      "path": "e2e/Cargo.lock",
+      "before": "80cfe9cc9e2a4a1cd183437d0752ace142a7125f",
+      "afterSha256": "db038750807da27801dd217ec75fb07a7ba56c94241a11ff08283dcae055f2f3"
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "before": "a779213802f8cf7947b843b4b532f793c9efe650",
+      "afterSha256": "0907c4a3c2120f38290600124f83680f5ab25c30333e93a693123c77f582de5c"
+    },
+    {
+      "path": "package-lock.json",
+      "before": "14685f4dc91085de0ae992bc823f8a1478e21bf8",
+      "afterSha256": "cb4d9218a986874243523c414048f1e36bbfab22676b949e7aecfe7c6b855063"
+    },
+    {
+      "path": "packages/build/package.json",
+      "before": "95df3efeda0c6fe27f08f06cf570d1f501f8154c",
+      "afterSha256": "ed9f769da3b757c2bff80cb06a62db7f6846cfc2db08207b019d96e35ad57fc4"
+    },
+    {
+      "path": "packages/compiler/package.json",
+      "before": "a4e9d91d164bcb3af9d11d4fb153e0737615312b",
+      "afterSha256": "c7d45d58b15cfd646ff80e59419198d6e17967bf0a41b8caca893149129f88f2"
+    },
+    {
+      "path": "packages/core/CHANGELOG.md",
+      "before": "6443126225a1855d1590b99764216f800890123b",
+      "afterSha256": "932ba7af90f2bfa3b2168bb2db89db0a6bf2a1cba8bc10ecf469ec3532462aa2"
+    },
+    {
+      "path": "packages/core/CSP.md",
+      "before": "4d98fbcd1381c2d605be7cbe6c099cd5bad23015",
+      "afterSha256": "be8b51d33f13dbbfb55cf1f4b9335c2f65b99195ae229efc56e67405681d5a77"
+    },
+    {
+      "path": "packages/core/README.md",
+      "before": "350360acd7f95083626d05554bbd65293ac867e0",
+      "afterSha256": "3e113b02ff2d72cc2ae188ee00717f105e9283e62f5c1af06554d2edb3a96b2a"
+    },
+    {
+      "path": "packages/core/SECURITY.md",
+      "before": "886f14741f365e0bd45bcfc206ed93f32b373aaa",
+      "afterSha256": "87ae06e95d099dcff7517c5b6dbcdd962be948457be0bd1e0275a75decd787de"
+    },
+    {
+      "path": "packages/core/package.json",
+      "before": "9a0896cc41a7f7036a027a7311bad5fcac7dec71",
+      "afterSha256": "7a5079acc09bc9a978384ea168ee011a20e6ea87500b7b9c4a8b1bbf903cabfe"
+    },
+    {
+      "path": "packages/create-app/package.json",
+      "before": "bb12d45161d7b07b6cc1f9cf8162167420cf0ab0",
+      "afterSha256": "9d783e1344d0cb52a3e70754cff835e9c369a4c487ac342455740ccb6bfca40b"
+    },
+    {
+      "path": "packages/create-app/template-lock-seeds.json",
+      "before": "76eedecf189463e43e9c940c5bc80ffffc2a30a2",
+      "afterSha256": "01076b3600739f05454ff32be5aae26187d7691e91ac23acf177025063f137d2"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/Cargo.lock",
+      "before": "5e4c4d641374077ab256924ac361ed6b0c4fe00b",
+      "afterSha256": "399311eac7bc953064bb92ddd51234b17d24e656bafddffbe900c765d8822a42"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/Cargo.toml",
+      "before": "d81b187d5cdc92b8f319f3dceba6e562003e1d7f",
+      "afterSha256": "389de6545958db32f50967f6dfa36251bb80206922258287571b49148c91c90d"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
+      "before": "aa13044917fe809726a25a8f119fb48e2714fa32",
+      "afterSha256": "a47dae99417959f4d75436ba0b9cca5a5cb874e8dd5aa4dcb50aeb509cf91bdd"
+    },
+    {
+      "path": "packages/create-app/templates/dashboard/admin/package.json",
+      "before": "e75179f6f779e03e716759dde723f55721bf6606",
+      "afterSha256": "e848bf5463a810a81f8774ae7efe6fa88f3029bdda1e21cc5bf8f046cefaa748"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/Cargo.lock",
+      "before": "3e35efe0c2994230a84b09f8e2f35df22b2d6d00",
+      "afterSha256": "1ed81a2e18fefbc98b9c218918147d189ec36d3990a4134007f12a5f6c8a4bf1"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/Cargo.toml",
+      "before": "1e3133efa3f4d977c85d856850b0b0ba3862d2e8",
+      "afterSha256": "cd9098da8deed6780f0c34c42efa78e72106f827ed834b5954021cf75ae1d092"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package-lock.json",
+      "before": "5ac23a83f5580f0b2da24e62932bebbd3b59480d",
+      "afterSha256": "d308578fa8b4ad2e83c33f4855224fcdfee585d2a19e2993c076f4a0e981d170"
+    },
+    {
+      "path": "packages/create-app/templates/minimal/admin/package.json",
+      "before": "aef92cdfb4ef650c3a2b745d1ae86e757639c12e",
+      "afterSha256": "bd118bfd4398439b57515fe87d9454cd0ae4986fc61436396dafb2ced468d2fb"
+    },
+    {
+      "path": "scripts/release-contracts.json",
+      "before": "e472da57b4a05fc6f76b50f11235125d8aff2a08",
+      "afterSha256": "6b93fb8821a090304337702e21800db2f920add738d774add8d52e8a40508720"
+    }
+  ],
+  "reviewEvidence": {
+    "content": "Independent final-delta review accepted at 2026-10-26T14:10:30.259582+00:00.\n\nRC source: cf381a0acc697b083b12be243f84d1269d6eefcd (v3.1.0-rc.3).\nFinal version: 3.1.0.\nActual accepted burn-in: run 40322508923, attempt 1; manifest SHA-256 686cbafa6158096f9003ab9ad2fac041a6f86692370423002d58db502156d8cb; original artifact SHA-256 d5afb3b10fafe72bb1db8d40a1978e6d7c61fd7e7851d3e6c6f5a0310c4e7414.\n\nI independently reviewed the complete 28-path RC-to-final preparation below. All 21 version/lock/seed outputs are byte-exact canonical results computed from immutable RC3 inputs. The four core-document changes match the earlier reviewed proposal. Root CHANGELOG and the current qualification section accurately distinguish prepared source from publication, native-island adoption from client construction, actual tagged RC2 baseline from historical 3.0.0 comparisons, strict startup success from retained browser-layout exclusions, and the passing hard P17 clock from the outer release-time miss. Historical release records remain preserved. All source, runtime, compiler, renderer, test, workflow, corpus, measurement, classifier and limit bytes outside the allowed metadata/documentation set remain unchanged.\n\nThe only contract changes complete FORMA-144 slice 3, FORMA-191 and FORMA-145 soak using actual qualified templates, canonical final preparation, current tagged measurements and the independently authenticated 3,660-second burn-in. No scope, limit or other gate changes. All original 15 rounds / 135 tasks, 60 completed fuzz logs, hostile/fixture/skew proofs, original seven package identities, exact source status and supervisor cleanup were independently checked. The finite campaign and retained evidence do not imply exhaustive security coverage or erase accepted performance misses.\n\nI approve these exact 28 changes for final preparation and their inclusion in the burn-in reference. The reference itself is excluded from its own reviewed change list by the existing finalDiffBinding contract and must name this exact RC, run, attempt, manifest, prerequisite hashes and review text. The ensuing committed reference and final diff still require exact binding validation. Final-source CI and the final tag's own P17, engines and publication/archive authentication remain mandatory. This review is not a claim that stable 3.1.0 has already been published.\n\nReviewed change identities (path | RC Git blob | final SHA-256):\nCHANGELOG.md | 5c4a14d4b6c1425e13c51d0eab903826fc5af0e8 | c8777c6cbf68cf2845907d790adc9137504202f8fbc53b63b39400bf0c734c8a\nCargo.lock | 662a414c7540e79ed701eafb4bba00d68191a70c | fb9dc2055fc9b5f2bf0572de5834d5fb514ac2ab436f28cb6a194ba6f6cd3bd2\nCargo.toml | 1decc26956937a978fa8f4aa6c292a179f8776e1 | f00c9a7818be86e2506d1435cfb4b3d58e440efac4c30ecca6a5b4a6f62fdbb4\ncrates/forma-ir-derive/Cargo.toml | 4c6efbcceb5c943327a93f48624c7e06283f8e5d | 4b6f1e0add5ecbbd83382215e926a4268488031f29cf4350d25960794cc9125e\ncrates/forma-ir/Cargo.toml | ce554558fd38ce0c068ba7448b7a300933bbc9ad | c84c759aaeffe57991d1e082a94d4d66f17e89413f3377546e3f278b018d24d1\ncrates/forma-server/Cargo.toml | 2e664f767a4e0b23e3460ac234dc256a83d35639 | 7d4558bdbf627826619f9170804ff525052a5ea2e2f4565cf0c623188ba3d282\ndocs/release/3.1-QUALIFICATION.md | 821d316fbc2a8ac8fdce952df47672fa2db92d6e | c2028958145fe32f6a1d4d41b30fa7aa86fcd96d9910bdad2660f01099464da4\ne2e/Cargo.lock | 80cfe9cc9e2a4a1cd183437d0752ace142a7125f | db038750807da27801dd217ec75fb07a7ba56c94241a11ff08283dcae055f2f3\nfuzz/Cargo.lock | a779213802f8cf7947b843b4b532f793c9efe650 | 0907c4a3c2120f38290600124f83680f5ab25c30333e93a693123c77f582de5c\npackage-lock.json | 14685f4dc91085de0ae992bc823f8a1478e21bf8 | cb4d9218a986874243523c414048f1e36bbfab22676b949e7aecfe7c6b855063\npackages/build/package.json | 95df3efeda0c6fe27f08f06cf570d1f501f8154c | ed9f769da3b757c2bff80cb06a62db7f6846cfc2db08207b019d96e35ad57fc4\npackages/compiler/package.json | a4e9d91d164bcb3af9d11d4fb153e0737615312b | c7d45d58b15cfd646ff80e59419198d6e17967bf0a41b8caca893149129f88f2\npackages/core/CHANGELOG.md | 6443126225a1855d1590b99764216f800890123b | 932ba7af90f2bfa3b2168bb2db89db0a6bf2a1cba8bc10ecf469ec3532462aa2\npackages/core/CSP.md | 4d98fbcd1381c2d605be7cbe6c099cd5bad23015 | be8b51d33f13dbbfb55cf1f4b9335c2f65b99195ae229efc56e67405681d5a77\npackages/core/README.md | 350360acd7f95083626d05554bbd65293ac867e0 | 3e113b02ff2d72cc2ae188ee00717f105e9283e62f5c1af06554d2edb3a96b2a\npackages/core/SECURITY.md | 886f14741f365e0bd45bcfc206ed93f32b373aaa | 87ae06e95d099dcff7517c5b6dbcdd962be948457be0bd1e0275a75decd787de\npackages/core/package.json | 9a0896cc41a7f7036a027a7311bad5fcac7dec71 | 7a5079acc09bc9a978384ea168ee011a20e6ea87500b7b9c4a8b1bbf903cabfe\npackages/create-app/package.json | bb12d45161d7b07b6cc1f9cf8162167420cf0ab0 | 9d783e1344d0cb52a3e70754cff835e9c369a4c487ac342455740ccb6bfca40b\npackages/create-app/template-lock-seeds.json | 76eedecf189463e43e9c940c5bc80ffffc2a30a2 | 01076b3600739f05454ff32be5aae26187d7691e91ac23acf177025063f137d2\npackages/create-app/templates/dashboard/Cargo.lock | 5e4c4d641374077ab256924ac361ed6b0c4fe00b | 399311eac7bc953064bb92ddd51234b17d24e656bafddffbe900c765d8822a42\npackages/create-app/templates/dashboard/Cargo.toml | d81b187d5cdc92b8f319f3dceba6e562003e1d7f | 389de6545958db32f50967f6dfa36251bb80206922258287571b49148c91c90d\npackages/create-app/templates/dashboard/admin/package-lock.json | aa13044917fe809726a25a8f119fb48e2714fa32 | a47dae99417959f4d75436ba0b9cca5a5cb874e8dd5aa4dcb50aeb509cf91bdd\npackages/create-app/templates/dashboard/admin/package.json | e75179f6f779e03e716759dde723f55721bf6606 | e848bf5463a810a81f8774ae7efe6fa88f3029bdda1e21cc5bf8f046cefaa748\npackages/create-app/templates/minimal/Cargo.lock | 3e35efe0c2994230a84b09f8e2f35df22b2d6d00 | 1ed81a2e18fefbc98b9c218918147d189ec36d3990a4134007f12a5f6c8a4bf1\npackages/create-app/templates/minimal/Cargo.toml | 1e3133efa3f4d977c85d856850b0b0ba3862d2e8 | cd9098da8deed6780f0c34c42efa78e72106f827ed834b5954021cf75ae1d092\npackages/create-app/templates/minimal/admin/package-lock.json | 5ac23a83f5580f0b2da24e62932bebbd3b59480d | d308578fa8b4ad2e83c33f4855224fcdfee585d2a19e2993c076f4a0e981d170\npackages/create-app/templates/minimal/admin/package.json | aef92cdfb4ef650c3a2b745d1ae86e757639c12e | bd118bfd4398439b57515fe87d9454cd0ae4986fc61436396dafb2ced468d2fb\nscripts/release-contracts.json | e472da57b4a05fc6f76b50f11235125d8aff2a08 | 6b93fb8821a090304337702e21800db2f920add738d774add8d52e8a40508720\n",
+    "sha256": "42999357bbe239ed163ed43745887c0dbe0f3c27ebaa4fe40e206ecb9856a89d"
+  }
+}
