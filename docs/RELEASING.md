@@ -250,7 +250,7 @@ introduced in that checkout, preserving Cargo VCS metadata. npm uploads the exac
 DS11 tarballs with `--ignore-scripts --provenance`; prereleases use `next`.
 
 Two registries are not transactional. Before uploading anything, each job queries
-all seven versions. A present version is skipped only when its registry checksum
+every package version in the authenticated candidate inventory. A present version is skipped only when its registry checksum
 matches DS11 exactly (and a crate is not yanked); a mismatch, unreadable response
 or failure after upload stops the run. Only HTTP 404 means absent. Crate publication
 must be visible before npm starts. Polling has a bounded deadline including requests
@@ -279,8 +279,8 @@ the reviewed overlap and visibility changes do not predict the next result.
 
 ## Current development integration
 
-Development revisions can use `3.0.0-dev`, which names no milestone and cannot
-publish. Release preparation aligns all seven packages, internal requirements,
+Development revisions can use a development prerelease such as `3.2.0-dev`, which names no milestone and cannot
+publish. Release preparation aligns all eight source packages, internal requirements,
 three Cargo locks (root, e2e and fuzz), template ranges and current version
 documentation with the candidate, without changing external resolutions. Keep
 historical changelog entries and archived evidence attached to their released
@@ -288,7 +288,7 @@ versions. The FMIR v3 contract is independent of the package prerelease suffix;
 P17 compares the packed compiler's writer triple and canonical dumps with the
 packed reader's actual version and frozen corpus.
 
-The current source templates use the typed 3.0 startup API. Their packed locks
+The current source templates use the typed startup API; native-router additionally opts into the navigation feature. Their packed locks
 still require the candidate's actual archive checksums, as described above; a
 source template build does not replace packed template acceptance. A development
 dry run is labeled `v3-development-dry-run`, and any template refusal remains a

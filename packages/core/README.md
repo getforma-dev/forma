@@ -7,7 +7,7 @@
 
 Reactive DOM library with fine-grained signals. No virtual DOM — signals update only the DOM nodes that changed. Components run once.
 
-> **Where this sits.** One product, one repository, seven packages:
+> **Where this sits.** One product, one repository, eight source packages (including the optional router):
 >
 > ```
 > TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it

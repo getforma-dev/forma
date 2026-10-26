@@ -36,7 +36,7 @@ try {
       action.status = child.status === 0 && !child.error ? 'npm-deprecated' : 'failed'; save();
       assert.equal(action.status, 'npm-deprecated', `${action.name}: recall stopped; inspect the receipt and registry before resuming`);
     }
-    console.log(`npm deprecations completed. The recall remains INCOMPLETE until the founder yanks all three exact crate versions through the URLs in ${receipt} and verifies all seven registry states.`);
+    console.log(`npm deprecations completed. The recall remains INCOMPLETE until the founder yanks all three exact crate versions through the URLs in ${receipt} and verifies every recorded registry state.`);
     // A successful npm phase must never masquerade as a completed set recall.
     process.exitCode = 2;
   }

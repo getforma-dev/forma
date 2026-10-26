@@ -39,6 +39,10 @@ increased cold group cost. The union asset totals remain visible.
 
 The local [`size-v1.json`](../../experiments/forma-router-native/evidence/size-v1.json)
 measured 39,538 bytes for the complete group and 11,179 bytes worst-case increment.
+The later [`size-v2.json`](../../experiments/forma-router-native/evidence/size-v2.json)
+includes the reviewed router fixes and identical baseline CSS: 40,390 bytes for
+the group and 11,958 bytes worst-case increment. It verifies that the candidate
+source and built JavaScript hashes remain unchanged throughout the comparison.
 These source measurements are marked dirty and are not whole-P17 or final-release
 qualification. Product changes require a fresh receipt; preserve prior results.
 
