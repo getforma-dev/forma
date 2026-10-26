@@ -90,7 +90,8 @@ pub struct SealedNavigationPolicy {
 }
 impl SealedNavigationPolicy {
     /// Declare the complete typed-policy profile and up to 128 canonical action
-    /// pathnames. Empty means no enhanced forms. Sorting makes identity stable.
+    /// pathnames. Empty means no enhanced POST actions; GET forms still navigate.
+    /// Sorting makes identity stable.
     pub fn page_response_only<I, S>(actions: I) -> Result<Self, NavigationInputError>
     where
         I: IntoIterator<Item = S>,
