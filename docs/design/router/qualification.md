@@ -31,6 +31,17 @@ The [3.2 preparation receipt](evidence/ecosystem-3.2-preparation.json) separatel
 records the dashboard and release-tooling checks. Manual/device and application
 acceptance remain open for stable release.
 
+The first 98889302 packed native campaign remains **89/90, failed**: the WebKit
+100-cycle aggregate retention check failed. The [identity investigation](evidence/document-identity-3.2.json)
+reproduced exact Document/layout/island retention with a one-millisecond change
+in `performance.timeOrigin` on those same artifacts. The corrected harness uses
+the actual objects plus main-frame document requests, records clock values as
+diagnostics, and requires a changed Document with exactly one GET for recovery.
+A real HTTP reload must fail retention before the unchanged 100-cycle checks.
+The prospective WebKit replay passes 30 cases; it does not replace the required
+fresh whole-90 run. Primary-source clock-conversion evidence is pinned separately
+and is not claimed as the exact source of the installed browser binary.
+
 ## Historical feature qualification
 
 The corrected router passes **190 source tests**, type checking and package

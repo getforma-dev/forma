@@ -30,6 +30,8 @@ async function sourceFiles() {
 }
 const result = { at:new Date().toISOString(), command:process.argv, node:process.version, source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(), dirty:execFileSync('git',['status','--short'],{encoding:'utf8'}), diffSha256:sha(execFileSync('git',['diff','--binary'])), artifacts:await artifacts(), sourceFiles:await sourceFiles(), serverBinarySha256:sha(await readFile(process.env.NATIVE_SERVER_BINARY ?? resolve(here,"server/target/debug/forma-router-native-fixture"))), scope:'Source integration of actual public compiler/build/core/router/server; not packed release, deployment or manual accessibility qualification.', browsers:[], results:[], failures:[] };
 const ownedBrowsers = new Set();
+const documentRequests = new WeakMap();
+result.documentObservations = [];
 let interrupted = false;
 function interrupt(signal) {
   if (!interrupted) result.failures.push({status:'failed',error:`Browser campaign interrupted by ${signal}`});
@@ -49,6 +51,8 @@ for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
     if (process.env.NATIVE_CASE && !name.includes(process.env.NATIVE_CASE)) return;
     const context = await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',...options});
     const page = await context.newPage(); const errors = []; page.on('pageerror', error=>errors.push(error.message));
+    const requests = { count: 0, baseline: 0, events: [], scenario: name }; documentRequests.set(page, requests);
+    page.on('request', request => { if (request.isNavigationRequest() && request.frame() === page.mainFrame()) { requests.count++; requests.events.push({method:request.method(),url:request.url()}); } });
     await context.request.post(origin+'/__native/reset');
     try { await callback(page,context); assert.deepEqual(errors,[],'uncaught browser errors'); result.results.push({engine,name,ids,status:'passed'}); console.log('PASS',engine,name); }
     catch(error) { const item={engine,name,ids,status:'failed',error:String(error.stack??error)}; result.results.push(item);result.failures.push(item);console.error('FAIL',engine,name,error.message); }
@@ -56,8 +60,27 @@ for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
   }
   async function ready(page) {await page.waitForFunction(()=>window.__native);await page.evaluate(()=>window.__native.ready);}
   async function recovered(page,release) {const navigation=page.waitForEvent('framenavigated',frame=>frame===page.mainFrame());release();await navigation;await page.waitForLoadState('load');await ready(page);}
-  async function open(page,path='/native/a') {await page.goto(origin+path);await ready(page);await page.evaluate(()=>{window.__document=document;window.__layout=document.querySelector('#native-layout');window.__layoutIsland=document.querySelector('#layout-counter').closest('[data-forma-island]');window.__timeOrigin=performance.timeOrigin;});}
-  async function same(page) {assert.equal(await page.evaluate(()=>document===window.__document&&document.querySelector('#native-layout')===window.__layout&&document.querySelector('#layout-counter').closest('[data-forma-island]')===window.__layoutIsland&&performance.timeOrigin===window.__timeOrigin),true,'normal transition must preserve actual document and layout island');}
+  async function remember(page) {await page.evaluate(()=>{window.__document=document;window.__layout=document.querySelector('#native-layout');window.__layoutIsland=document.querySelector('#layout-counter').closest('[data-forma-island]');window.__timeOrigin=performance.timeOrigin;});const requests=documentRequests.get(page);requests.baseline=requests.count;requests.timeOrigin=await page.evaluate(()=>window.__timeOrigin);}
+  async function open(page,path='/native/a') {await page.goto(origin+path);await ready(page);await remember(page);}
+  async function identity(page, expected) {
+    const value=await page.evaluate(()=>({document:document===window.__document,layout:document.querySelector('#native-layout')===window.__layout,island:document.querySelector('#layout-counter')?.closest('[data-forma-island]')===window.__layoutIsland,timeOrigin:performance.timeOrigin}));
+    const requests=documentRequests.get(page);
+    const observation={engine,scenario:requests.scenario,expected,...value,originalTimeOrigin:requests.timeOrigin,documentRequests:requests.count-requests.baseline,requests:requests.events.slice(requests.baseline)};
+    result.documentObservations.push(observation);return observation;
+  }
+  async function same(page, negative=false) {
+    const value=await identity(page,negative?'retention-refusal-control':'retained');
+    assert.equal(value.document&&value.layout&&value.island,true,'normal transition must preserve actual document and layout island');
+    assert.equal(value.documentRequests,0,'normal transition requested another document');
+    // WebKit's wall-clock conversion can move timeOrigin by 1 ms in the same
+    // Document. Keep the raw clock diagnostic; exact objects and GETs own this oracle.
+  }
+  async function replaced(page) {
+    const value=await identity(page,'replaced');
+    assert.equal(value.document,false,'recovery must replace the actual Document');
+    assert.equal(value.documentRequests,1,'recovery must issue exactly one document GET');
+    assert.equal(value.requests[0].method,'GET','recovery must not repeat a mutation');
+  }
   async function go(page,path,options={}) {const outcome=await page.evaluate(async([path,options])=>{const value=await window.__native.router.navigate(path,options);if(value.kind==='committed')await value.ready;return {kind:value.kind,code:value.code};},[path,options]);assert.equal(outcome.kind,'committed',JSON.stringify(outcome));return outcome;}
   async function state(context) {return (await context.request.get(origin+'/__native/state')).json();}
   async function hidden(page,name,value) {await page.evaluate(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;document.querySelector('#update-form').append(input);},[name,value]);}
@@ -175,9 +198,9 @@ for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
     await recovered(page,release);await page.waitForTimeout(300);assert.equal(new URL(page.url()).pathname,'/native/a');assert.equal(await page.locator('#layout-count').innerText(),'0');
   });
   await scenario('foreground context check and persisted pageshow each use a fresh document boundary', ['RT-S05','RT-H03'], async(page,context)=>{
-    await open(page);let time=await page.evaluate(()=>performance.timeOrigin);await context.request.post(origin+'/__native/context');await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
-    await page.waitForFunction(before=>performance.timeOrigin!==before,time);await ready(page);time=await page.evaluate(()=>performance.timeOrigin);
-    await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));await page.waitForFunction(before=>performance.timeOrigin!==before,time);await ready(page);
+    await open(page);await context.request.post(origin+'/__native/context');await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+    await page.waitForFunction(()=>document!==window.__document);await ready(page);await replaced(page);await remember(page);
+    await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));await page.waitForFunction(()=>document!==window.__document);await ready(page);await replaced(page);
     assert.equal(await page.locator('#route-title').innerText(),'Native route A');
   });
   await scenario('held valid context verification blocks new navigation and POST until admission', ['RT-S05','RT-F08'], async(page,context)=>{
@@ -200,14 +223,14 @@ for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
     const settled=page.evaluate(()=>{window.__awaitingBlocked=true;return window.__blocked;});await page.waitForFunction(()=>window.__awaitingBlocked);release();const value=await settled;assert.equal(value.kind,'disposed');assert.equal(value.html,'');await documentRequested;assert.equal((await state(context)).posts,0);await recovered(page,releaseDocument);
   });
   await scenario('real changed policy makes one explicit document boundary', ['RT-S01','RT-X02'], async page=>{
-    await open(page);const before=await page.evaluate(()=>performance.timeOrigin);
+    await open(page);
     await Promise.all([page.waitForURL('**/native/b?policy=changed'),page.evaluate(()=>window.__native.router.navigate('/native/b?policy=changed')).catch(()=>{})]);await page.waitForLoadState('load');await ready(page);
-    assert.notEqual(await page.evaluate(()=>performance.timeOrigin),before);assert.equal(await page.locator('#route-title').innerText(),'Native route B');
+    await replaced(page);assert.equal(await page.locator('#route-title').innerText(),'Native route B');
   });
   await scenario('actual second compiled build cannot mix owners and requires document boundary', ['RT-S02','RT-X02'], async page=>{
-    await open(page);const before=await page.evaluate(()=>({time:performance.timeOrigin,build:window.__native.bootstrap.build}));
+    await open(page);const before=await page.evaluate(()=>window.__native.bootstrap.build);
     await Promise.all([page.waitForURL('**/native/b?build=changed'),page.evaluate(()=>window.__native.router.navigate('/native/b?build=changed')).catch(()=>{})]);await page.waitForLoadState('load');await ready(page);
-    const after=await page.evaluate(()=>({time:performance.timeOrigin,build:window.__native.bootstrap.build,generation:document.documentElement.dataset.nativeGeneration}));assert.notEqual(after.time,before.time);assert.notEqual(after.build,before.build);assert.equal(after.generation,'next');
+    const after=await page.evaluate(()=>({build:window.__native.bootstrap.build,generation:document.documentElement.dataset.nativeGeneration}));await replaced(page);assert.notEqual(after.build,before);assert.equal(after.generation,'next');
   });
   await scenario('malformed scoped state refuses destination activation before one document recovery', ['RT-N02','RT-N03','RT-X02'], async page=>{
     await open(page);let release,received;const gate=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>received=resolve);let documents=0;
@@ -245,6 +268,9 @@ for (const [engine, launcher] of Object.entries({chromium,firefox,webkit})) {
       const timers=new Set;window.__nativeTimers=timers;const timeout=window.setTimeout.bind(window),clear=window.clearTimeout.bind(window);
       window.setTimeout=(callback,ms,...args)=>{const id=timeout(()=>{timers.delete(id);callback(...args);},ms);timers.add(id);return id;};window.clearTimeout=id=>{timers.delete(id);clear(id);};
     });
+    // A real HTTP reload must fail retention and satisfy the replacement oracle.
+    await open(page);await page.reload();await ready(page);
+    await assert.rejects(()=>same(page,true),/preserve actual document/);await replaced(page);
     await open(page);await page.locator('#layout-counter').click();const baseline=await page.evaluate(()=>({listeners:window.__nativeListeners.length,timers:window.__nativeTimers.size}));assert.ok(baseline.listeners>0);
     const values=await page.evaluate(async()=>{const departed=[];for(let i=0;i<100;i++){const button=document.querySelector('[id^=counter-]'),output=document.querySelector('[id^=value-]');departed.push({button,output,value:output.textContent});const result=await window.__native.router.navigate(i%2?'/native/a':'/native/b');if(result.kind!=='committed')throw Error(result.kind);await result.ready;}return {retained:document.querySelector('#layout-count').textContent,dead:departed.every(item=>{item.button.click();return !item.button.isConnected&&item.output.textContent===item.value;}),active:document.querySelectorAll('[data-forma-island]').length,listeners:window.__nativeListeners.length,detached:window.__nativeListeners.filter(entry=>!entry.target.isConnected).length,timers:window.__nativeTimers.size};});
     assert.equal(values.retained,'1');assert.equal(values.dead,true);assert.equal(values.active,2);assert.equal(values.listeners,baseline.listeners);assert.equal(values.detached,0);assert.equal(values.timers,baseline.timers);await same(page);assert.deepEqual(await page.evaluate(()=>window.__native.metrics.errors),[]);

@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-- Add the opt-in `native-router` starter with a checked native group, typed Rust owner branches, persistent layout state, history navigation and ordinary no-JavaScript links. Existing starters remain unchanged. The new template is sealed and qualified with the next coordinated router release; its source lock is not a published install receipt.
+- Add the opt-in `native-router` starter with a checked native group, typed Rust owner branches, persistent layout state, history navigation and ordinary no-JavaScript links. The new template is sealed and qualified with the next coordinated router release; its source lock is not a published install receipt.
+- Move dashboard navigation to the browser router adapter, retaining the layout and disposing replaced route content. The minimal starter keeps its existing rendering model.
+- Verify registry signatures and current npm/Rust advisories in all three generated CI workflows before builds, including development dependencies and refusal on an unavailable advisory feed.
 
 
 ## [3.0.0] - Prepared; publication pending
