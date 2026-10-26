@@ -341,7 +341,8 @@ percentages above are not current coverage or mutation results.
 
 | Gate | Current owner |
 |---|---|
-| Workspace builds, unit tests, core types and packaging | `npm run check` builds/tests all four npm packages and the three Rust crates. |
+| Workspace builds, unit tests, core/router types and packaging | `npm run check` builds/tests all five npm source packages and the three Rust crates. Published 3.0/3.1 records retain their original four-npm-package scope. |
+| Optional native navigation | The integrated native fixture runs Chromium and the pinned paired size gate; engine qualification repeats it in Firefox/WebKit. Packed P17 additionally runs the native-router starter against candidate archives. |
 | Compiler/native FMIR contract and typed props | The integrated command regenerates the compiler corpus, checks the native fixtures and runs reader tests. |
 | Native/browser parity and values | Blocking parity and generated value-rule checks run against actual compiler, native walker and browser products. |
 | Size and native list-cost regressions | Core's import-graph size gates and native list-scaling tests remain distinct from application/browser performance. |

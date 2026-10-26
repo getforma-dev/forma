@@ -122,10 +122,11 @@ release manifests or Git history. See [documentation placement](docs/REPOSITORY-
 
 ## Releasing
 
-All seven packages use one version and one `v*` tag through the merged
-repository workflow. See [the release runbook](docs/RELEASING.md) for version
+All coordinated packages use one version and one `v*` tag through the merged
+repository workflow: seven in published 3.0/3.1, eight with the next-minor router.
+See [the release runbook](docs/RELEASING.md) for version
 preparation, packed verification, the two publishing environments and partial
-release recovery. The current A2 rehearsal cannot publish a live milestone.
+release recovery. Dry-run rehearsals cannot publish a live milestone.
 
 ## Pull requests
 

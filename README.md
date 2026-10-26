@@ -9,17 +9,22 @@ static site, or compile supported components to FMIR and render them in Rust
 with typed request data. Interactive islands adopt the server's existing DOM.
 The Rust rendering path needs no JavaScript server runtime.
 
-**[Forma 3.0.0 is released](https://github.com/getforma-dev/forma/releases/tag/v3.0.0).**
-One repository ships seven coordinated packages. Start with the
-[documentation](docs/README.md), [3.0 upgrade guide](docs/UPGRADING-3.0.md), or
-[release results and limits](docs/release/V3-AS-BUILT.md).
+**[Forma 3.1.0 is released](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).**
+The published release has seven coordinated packages. Start with the
+[documentation](docs/README.md), [3.1 upgrade guide](docs/UPGRADING-3.1.md), or
+[release records](docs/release/README.md).
+
+This feature branch also contains the **unreleased optional router**, planned for
+a coordinated future minor. Its [API](packages/router/README.md) and
+[qualification ledger](docs/design/router/qualification.md) distinguish candidate
+behavior from the published release.
 
 ## Start an application
 
 With Node 22+ and Rust 1.85+:
 
 ```sh
-npx @getforma/create-app@3.0.0 my-app --template minimal
+npx @getforma/create-app@3.1.0 my-app --template minimal
 cd my-app
 ```
 
@@ -30,7 +35,7 @@ build; the dashboard template uses Browser rendering. See
 [rendering modes](packages/create-app/docs/RENDERING-PHASES.md).
 
 For a browser-only application or static landing page, install
-`@getforma/core@3.0.0` and follow the [core quickstart](packages/core/README.md).
+`@getforma/core@3.1.0` and follow the [core quickstart](packages/core/README.md).
 That path does not require Rust or FMIR.
 
 ## Choose what runs where
@@ -56,7 +61,8 @@ remain application responsibilities. See [architecture](docs/ARCHITECTURE-3.0.md
 | [`@getforma/core`](packages/core) | Signals, DOM components, island adoption and the explicit HTML runtime |
 | [`@getforma/compiler`](packages/compiler) | TypeScript/TSX subset, declared schemas and FMIR emission |
 | [`@getforma/build`](packages/build) | Bundling, assets, manifests, integrity and deployment retention |
-| [`@getforma/create-app`](packages/create-app) | Minimal and dashboard starters |
+| [`@getforma/router`](packages/router) | Unreleased opt-in browser navigation, persistent layouts and typed native transitions |
+| [`@getforma/create-app`](packages/create-app) | Minimal/dashboard starters; unreleased native-router candidate starter |
 | [`forma-ir`](crates/forma-ir) | FMIR validation, typed props and native HTML walking |
 | [`forma-ir-derive`](crates/forma-ir-derive) | Rust `PageProps` derive |
 | [`forma-server`](crates/forma-server) | Typed pages, complete responses, assets and Axum integration |
