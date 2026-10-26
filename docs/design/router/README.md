@@ -1,16 +1,16 @@
 # FORMA-301 implementation and qualification
 
 This is the working implementation record for optional `@getforma/router`, built
-on the published Forma3.1.0 baseline `9a570afece5eb5091824422f00134a875310e857`.
+on the published Forma 3.1.0 baseline `9a570afece5eb5091824422f00134a875310e857`.
 The v1 reviewed design/PDF remains immutable in the companion design-doc-factory
 project (`tasks/forma-router`, delivery `task/forma-router/v1`). This record adds
 implementation decisions and receipts; it does not retroactively label the design
-proof as production qualification or modify the existing3.1 release contract.
+proof as production qualification or modify the existing 3.1 release contract.
 
 ## Research carried into code
 
-All105 reference questions remain accounted for: Angular25, Astro40, ReactRouter40.
-The full [research map](research-map.md) retains its48adopt/47adapt/4defer/6reject
+All 105 reference questions remain accounted for: Angular 25, Astro 40, React Router 40.
+The full [research map](research-map.md) retains its 48 adopt / 47 adapt / 4 defer / 6 reject
 dispositions. The frozen reports/snippets/source pins/licenses are in [research](research/README.md),
 with their [input hashes](research-manifest.json). The original raw REA runs remain
 in the companion research project's `.local`; the snapshot explicitly records
@@ -33,7 +33,7 @@ snippets or grant reference-site evidence the status of Forma test results.
 | RD11 mutation/read generations | one POST slot; preserve newer destination after settlement | held GET/POST/validation and lost-result cases |
 | RD12 observable readiness/experience | immediate readiness, focus/scroll/status; deferred lifetimes | three engines, early input, retained selection and reduced motion |
 | RD13 bounded live speculation | two opt-in requests; no completed private cache | sharing/disposal/no-permission/data-saving controls |
-| RD14 typed errors/recovery | status-preserving error branch, bounded method-safe GET |404/410/500/503 and capped recovery journal |
+| RD14 typed errors/recovery | status-preserving error branch, bounded method-safe GET | 404/410/500/503 and capped recovery journal |
 | RD15 evidence discipline | original failures + source/artifact hashes | receipts below; final-source checks distinguish earlier passes |
 | RD16 native proof before expansion | actual typed fixture and optional native-router starter | real Rust/compiler/core/router and packed starter qualification |
 
@@ -60,20 +60,23 @@ work; physical history repair precedes same-view reads or mutation after a pendi
 POP. These are implementation refinements, with independent review regressions.
 
 Default core stays within its existing size gates. Adding an optional code-split
-entry initially exceeded main gzip by832B due to compression boundaries. The fix
+entry initially exceeded main gzip by 832 B due to compression boundaries. The fix
 preserves readable identifiers/lines while removing non-license descriptive
 comments from code-split output; it does not duplicate runtime state or increase
 caps. Legal/SPDX/purity/source-map annotations and source-map locations are tested.
 
-The original island-route Forma cap remains28,420B. The design's explicit new
-navigation-group class combines that base with the12KiB incremental allocation
-(40,708B aggregate Forma) and caps the complete group at64KiB. Ordinary routes and
+The original island-route Forma cap remains 28,420 B. The design's explicit new
+navigation-group class combines that base with the 12 KiB incremental allocation
+(40,708 B aggregate Forma) and caps the complete group at 64 KiB. Ordinary routes and
 core caps remain unchanged; a canvas flag cannot increase a group's cap. The
 separate paired consumer measurement includes any added shared-core delta and
-must meet12KiB. Counting router as ordinary application code is forbidden. Initial
+must meet 12 KiB. Counting router as ordinary application code is forbidden. Initial
 wrong-class and all later failed measurements are retained.
 
 ## Evidence and remaining release gates
+
+The [qualification ledger](qualification.md) maps all 57 acceptance scenarios to
+source, browser or packed evidence and explicitly names the remaining gates.
 
 - [Native fixture](../../../experiments/forma-router-native/README.md): actual
   compiler output, typed server, distinct islands, nested retained layout, real
@@ -89,8 +92,8 @@ wrong-class and all later failed measurements are retained.
   complete TSX+Rust app. Existing minimal/dashboard semantics remain unchanged.
 - [Release process](../../RELEASING.md): coordinated archive inventory, exact peer,
   source sealing and installed archive verification now include router. Historical
-  published3.0/3.1 evidence still has seven packages and two templates. Source
-  manifests keep3.1 until version preparation; no new3.1 publication is implied.
+  published 3.0/3.1 evidence still has seven packages and two templates. Source
+  manifests keep 3.1 until version preparation; no new 3.1 publication is implied.
 
 Local implementation checks do not replace exact-source CI, platform/MSRV jobs,
 manual screen-reader/gesture review, release-channel qualification, RC soak,

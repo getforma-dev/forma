@@ -162,7 +162,8 @@ lifecycle code: wrap the adapter's session to own page features and their dispos
 
 There is one coordinator per Document. `base` defaults to `/`; a non-root base
 must start/end with `/`. Relative destinations resolve from the committed URL,
-even during pending Back/Forward. `location()` and `pending()` return defensive
+even during pending Back/Forward. An imperative destination outside the base
+returns `failed/ROUTER_URL`; an ordinary out-of-base anchor stays native. `location()` and `pending()` return defensive
 URL snapshots. PUSH/REPLACE reserve fallible history work before disposal. POP
 never pushes; blocked known entries are repaired with their actual traversal
 delta. Foreign/evicted entries use document recovery. Same-URL navigation is
@@ -229,9 +230,9 @@ only in-flight work with navigation. Completed private responses are never cache
 Mutation, context change, navigation or disposal revokes speculative work.
 
 Limits: 15s navigation/preparation, 30s mutation, 1 MiB decoded response, 10,000
-markup tokens, depth64, 200 islands across the entire final owner branch, 1,000
+markup tokens, depth 64, 200 islands across the entire final owner branch, 1,000
 scroll records, 32 automatic recovery keys per public build identity and 60
-history writes per10s. Error codes contain no private query/form values. Storage
+history writes per 10s. Error codes contain no private query/form values. Storage
 failure or an exhausted recovery journal stops automatic recovery visibly.
 
 Document GET boundaries include unsupported routes/profile/adapter switches,
