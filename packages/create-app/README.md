@@ -23,13 +23,13 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 
 ## Usage
 
-These registry commands use the published, coordinated `3.0.0` set.
+These registry commands use the published, coordinated `3.1.0` set.
 Contributor builds of unpublished changes use the packed candidate workflow
-below. [Release records](https://github.com/getforma-dev/forma/releases/tag/v3.0.0)
+below. [Release records](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
 report qualification of the published set.
 
 ```bash
-npx @getforma/create-app@3.0.0 my-app
+npx @getforma/create-app@3.1.0 my-app
 cd my-app
 ```
 
@@ -49,11 +49,11 @@ because its `/api/*` routes have no authentication.
 ## Options
 
 ```bash
-npx @getforma/create-app@3.0.0 my-app --template dashboard
-npx @getforma/create-app@3.0.0 my-app --template minimal
-npx @getforma/create-app@3.0.0 my-app --dry-run
-npx @getforma/create-app@3.0.0 --help
-npx @getforma/create-app@3.0.0 --version
+npx @getforma/create-app@3.1.0 my-app --template dashboard
+npx @getforma/create-app@3.1.0 my-app --template minimal
+npx @getforma/create-app@3.1.0 my-app --dry-run
+npx @getforma/create-app@3.1.0 --help
+npx @getforma/create-app@3.1.0 --version
 ```
 
 Project names must start with a lowercase letter and use only lowercase
@@ -74,10 +74,12 @@ exists.
 
 `native-router` is new in the next coordinated minor release; it is absent from
 published 3.0/3.1 archives. Before publication use the documented packed candidate
-workflow and select `--template native-router` from that candidate CLI. It adds
-`@getforma/router` only to this opt-in template. The ordinary templates retain
-their dependency graphs and rendering behavior. See its
-[ownership and deployment guide](templates/native-router/README.md).
+workflow and select `--template native-router` from that candidate CLI. The current candidate adds
+`@getforma/router` to this template and the dashboard. The dashboard remains an
+explicit Browser application, with retained layout and routed page ownership.
+The minimal template keeps its existing dependency graph and rendering behavior. See its
+[ownership and deployment guide](templates/native-router/README.md) and the
+[connected routing walkthrough](../../docs/ROUTING.md).
 
 The dashboard explicitly uses client rendering. The FMIR compiler walks source
 rather than executing it and accepts only the documented native subset. It
@@ -136,7 +138,7 @@ missing/wrong props and unbound routes must stop before a listener opens.
 The packed native-island check adopts the server value without initial writes
 and checks that the static route requests no code in all three engines. The
 dashboard tooltip check keeps API values as text under enforced Trusted Types.
-The gate requires all 19 heavy controls plus the structural suite, with no skips.
+The current eight-package candidate gate requires all 24 heavy controls plus the structural suite, with no skips. Historical 3.0/3.1 sets retain their original controls.
 
 | Document | What it is |
 |---|---|
@@ -155,6 +157,7 @@ The gate requires all 19 heavy controls plus the structural suite, with no skips
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
 | [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR generation, coded diagnostics and esbuild SSR integration |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
+| [@getforma/router](../router/README.md) | Optional browser/native navigation and persistent layouts (3.2 candidate) |
 
 ### Backend (Rust)
 

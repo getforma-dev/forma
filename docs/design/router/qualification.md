@@ -5,6 +5,26 @@ implementation evidence or an explicit remaining gate. It does not edit
 [the design acceptance matrix](acceptance-matrix-design.md), and a row pointing
 to source tests is not a claim of complete packed-release qualification.
 
+## Release preparation after the feature qualification
+
+The current source is prepared as the coordinated **3.2.0-rc.1** candidate.
+The website rollout now includes the shared router, versioned guides, a native lab
+and a downloadable routed application. The dashboard uses the browser adapter.
+These are later changes; the feature receipts below remain bound to their
+original 9d4aafee products and do not qualify the new archives.
+
+New source regressions admit ordinary quoted accessibility labels while refusing
+upgrade-capable attributes before parsing, and recover a same-URL browser
+revalidation failure after irreversible commit. The latter was independently
+reported as D14-3.2-001. The updated source suite passes 218 cases. Its corrected
+before-fix controls fail four irreversible cases while the pre-commit preservation
+case passes. Fresh packed, platform and independent review gates remain pending.
+The [3.2 preparation receipt](evidence/ecosystem-3.2-preparation.json) separately
+records the dashboard and release-tooling checks. Manual/device and application
+acceptance remain open for stable release.
+
+## Historical feature qualification
+
 The corrected router passes **190 source tests**, type checking and package
 analysis [Q]. Its controls include [29 callback and POST ownership cases][CB],
 [browser owner lifetimes][BL], [platform vectors][RP] and [adapter boundaries][RB].
@@ -116,8 +136,9 @@ pass for capability admission. Local development candidates still labeled 3.1
 cannot be used to prove old consumers understand the new feature. The actual
 old-reader control sets only a copied test manifest's writer to the planned 3.2
 minor; the immutable old reader refuses it with `MANIFEST-102` before any bind.
-Normal future-minor version preparation must produce that boundary before a new
-public release. No version bump was performed by this task.
+That original feature-qualification phase performed no version bump. The later
+3.2.0-rc.1 preparation now supplies the actual future-minor boundary, which must
+still pass the new candidate’s archive and platform qualification before publication.
 
 Independently, a new reader compiled without the feature previously dropped the
 reserved field, even at a future matching version. The current raw-manifest guard

@@ -15,7 +15,8 @@ The published release has seven coordinated packages. Start with the
 [release records](docs/release/README.md).
 
 This feature branch also contains the **unreleased optional router**, planned for
-a coordinated future minor. Its [API](packages/router/README.md) and
+the coordinated 3.2 candidate. Read the [routing guide](docs/ROUTING.md),
+[3.2 upgrade guide](docs/UPGRADING-3.2.md), [API](packages/router/README.md) and
 [qualification ledger](docs/design/router/qualification.md) distinguish candidate
 behavior from the published release.
 

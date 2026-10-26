@@ -16,12 +16,13 @@ application author should follow.
 | Build browser UI or a static site | [Core quickstart](../packages/core/README.md) and [API](../packages/core/docs/API.md) |
 | Use Rust request data in a page | [Declared props](DECLARED-PROPS.md) and [server API](../crates/forma-server/README.md) |
 | Activate server-rendered islands | [Islands and state](../packages/core/docs/ISLANDS.md) |
-| Evaluate optional client navigation (unreleased) | [Router API](../packages/router/README.md) and [native-router starter](../packages/create-app/templates/native-router/README.md) |
+| Add client navigation and persistent layouts (3.2 candidate) | [Routing guide](ROUTING.md), [router API](../packages/router/README.md) and [native-router starter](../packages/create-app/templates/native-router/README.md) |
 | Use the explicit HTML runtime | [HTML runtime](../packages/core/docs/HTML-RUNTIME.md) |
 | Know what compiles natively | [Admitted subset and build diagnostics](../packages/compiler/docs/subset.md) |
 | Configure a build or deployment | [Build package](../packages/build/README.md) |
 | Upgrade to published 3.0 | [Upgrade guide](UPGRADING-3.0.md) and [compatibility](compatibility.md) |
 | Upgrade to published 3.1 | [3.0 → 3.1 upgrade guide](UPGRADING-3.1.md) |
+| Prepare a router application for 3.2 | [3.2 candidate upgrade guide](UPGRADING-3.2.md) |
 | Diagnose a failure | [Diagnostic catalogue](DIAGNOSTICS.md) |
 
 ## Contracts and security

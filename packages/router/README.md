@@ -3,11 +3,12 @@
 Optional client navigation for Forma: ranked routes, persistent layouts, owned
 cleanup, browser history and progressively enhanced typed Rust actions.
 
-This is **unreleased FORMA-301 source**. Forma 3.1.0 is already published and does
-not contain this API. The feature branch retains the coordinated 3.1.0 source
-version until release preparation; use the packed candidate for qualification.
-The release helper advances core/router peers together for the next minor. Do
-not install the published 3.1.0 core expecting its new `/navigation` entry.
+This is **Forma 3.2 candidate source**. Forma 3.1.0 is already published and does
+not contain this API. Use one coordinated published candidate or the sealed packed
+candidate for qualification; the release record determines registry availability.
+Do not install published 3.1.0 core expecting its new `/navigation` entry.
+Start with the [routing guide](../../docs/ROUTING.md) for rendering choices and a
+connected application, or the [3.2 upgrade guide](../../docs/UPGRADING-3.2.md).
 
 The router is a separate package with one peer instance of `@getforma/core`.
 Installing core does not enable routing. Ordinary SSR, native anchors/forms and

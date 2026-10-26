@@ -184,7 +184,7 @@ export function createRouter(input: RouterOptions): Router {
     intended = { url, opts };
     const isCurrent = () => open() && generation === mine && mutationAtStart === mutationGeneration && !controller.signal.aborted;
     const timeout = win.setTimeout(() => controller.abort(new NavigationError('ROUTER_DEADLINE')), 15000);
-    let candidate: PreparedView | undefined, wroteHistory = false, preparingAdapter = activeAdapter, usedTaken = false;
+    let candidate: PreparedView | undefined, irreversible = false, preparingAdapter = activeAdapter, usedTaken = false;
     const selected = opts.pop ? entryOf(win.history.state) : null;
     try {
       await abortable(ready, controller.signal);
@@ -234,8 +234,10 @@ export function createRouter(input: RouterOptions): Router {
         const visible = entryOf(win.history.state);
         if (!visible || !scroll.has(visible.key)) throw new NavigationError('ROUTER_HISTORY_FOREIGN', true);
         const nextEntry = opts.pop ? selected! : opts.revalidate ? current : { key: win.crypto.randomUUID(), index: visible.index + (opts.replace ? 0 : 1) };
-        if (!opts.pop && !opts.revalidate) { putHistory(target, !!opts.replace, nextEntry); wroteHistory = true; }
-        else if (target.href !== url.href) { putHistory(target, true, nextEntry); wroteHistory = true; }
+        if (!opts.pop && !opts.revalidate) { putHistory(target, !!opts.replace, nextEntry); irreversible = true; }
+        else if (target.href !== url.href) { putHistory(target, true, nextEntry); irreversible = true; }
+        // Commit may release owners before throwing, even without a history write.
+        irreversible = true;
         if (adapter !== activeAdapter) { sessions.get(activeAdapter)?.dispose(); sessions.delete(activeAdapter); }
         if (!isCurrent()) throw new NavigationError('ROUTER_CANCELLED');
         candidate?.commit();
@@ -263,7 +265,7 @@ export function createRouter(input: RouterOptions): Router {
       const recoveryGeneration = generation, recoveryMutation = mutationGeneration;
       report(error);
       if (closed || generation !== recoveryGeneration || mutationGeneration !== recoveryMutation) return { kind: 'cancelled', reason: 'superseded' };
-      if (wroteHistory || (error instanceof NavigationError && error.documentRecovery) || opts.pop || preparingAdapter.kind !== 'browser') return recover(url, code(error), true);
+      if (irreversible || (error instanceof NavigationError && error.documentRecovery) || opts.pop || preparingAdapter.kind !== 'browser') return recover(url, code(error), true);
       announce('Navigation failed'); return { kind: 'failed', code: controller.signal.aborted ? 'ROUTER_DEADLINE' : code(error) };
     } finally {
       try { candidate?.dispose(); } catch (error) { report(error); }

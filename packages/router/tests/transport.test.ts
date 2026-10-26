@@ -14,6 +14,38 @@ it('allows ordinary escaped content, controls and same-origin destinations', () 
   const node = parseFragment('<section><h1>&lt;Hello&gt;</h1><form action="/save"><input name="x" value="A"><button>Save</button></form></section>', document, url);
   expect(node.textContent).toBe('<Hello>Save'); expect(node.isConnected).toBe(false);
 });
+it.each([
+  'aria-label="Link to How is this different from Solid?"',
+  "aria-label='How is this useful?'",
+  'data-note=" is=custom /shadowrootmode=open srcdoc=markup"',
+  "data-note=' is=custom /shadowrootmode=open srcdoc=markup'",
+  'data-note=/is=custom',
+  'data-note=/shadowrootmode=open',
+  'data-note=/srcdoc=markup',
+  'data-note = " is=custom" aria-label="An ordinary heading"',
+  'aria-label="A > B is ordinary"',
+  "aria-label='A > B is ordinary'",
+])('keeps forbidden-name words inside attribute values as ordinary text: %s', attributes => {
+  const node = parseFragment(`<main><h1 ${attributes}>Page</h1></main>`, document, url, true);
+  expect(node.querySelector('h1')?.textContent).toBe('Page');
+  expect(node.querySelector('h1')?.hasAttribute('is')).toBe(false);
+});
+it.each([
+  'data-note=" is safe" is="router-tripwire"',
+  "data-note=' is safe' IS='router-tripwire'",
+  'data-note="ordinary"/is=router-tripwire',
+  'data-note=/is=ordinary is=router-tripwire',
+  'data-note="ordinary" shadowrootmode=open',
+  "data-note='ordinary' srcdoc='payload'",
+  'data-note="ordinary" is',
+  'data-note="ordinary"is=router-tripwire',
+  "data-note='ordinary'srcdoc='payload'",
+  'data-note="ordinary"shadowrootmode=open',
+])('refuses actual upgrading attributes before even creating a parsing template: %s', attributes => {
+  const create = vi.spyOn(document, 'createElement');
+  expect(() => parseFragment(`<main><button ${attributes}>Page</button></main>`, document, url, true)).toThrow('ROUTER_HTML_PROFILE');
+  expect(create).not.toHaveBeenCalled();
+});
 it('rejects excessive nesting and response bytes without trusting Content-Length', async () => {
   expect(() => parseFragment('<div>'.repeat(65) + '</div>'.repeat(65), document, url)).toThrow('ROUTER_HTML_DEPTH');
   await expect(readBody(new Response('x'.repeat(BODY_LIMIT + 1), { headers: { 'Content-Length': '2' } }))).rejects.toThrow('ROUTER_BODY_LIMIT');
@@ -25,8 +57,8 @@ it('requires no-store, Vary Accept, and a UTF-8-compatible representation', () =
   for (const [key, value] of [['vary', 'Accept-Encoding'], ['cache-control', 'max-age=0'], ['content-type', 'application/vnd.forma.navigation+json; charset=iso-8859-1']]) expect(() => media(new Response('', { headers: { ...good, [key]: value } }), 'application/vnd.forma.navigation+json')).toThrow();
 });
 it('accepts the server canonical endpoint grammar, excluding dot segments and query strings', () => {
-  for (const value of ['/', '/save', '/v1/save.json', '/users/~mine']) expect(pathOnly(value)).toBe(true);
-  for (const value of ['/save/', '/a/../b', '/a//b', '/save?q=x', '//foreign', '/%73ave']) expect(pathOnly(value)).toBe(false);
+  for (const value of ['/', '/save', '/v1/save.json', '/users/~mine', '/...', '/.hidden', '/a/file..']) expect(pathOnly(value)).toBe(true);
+  for (const value of ['/save/', '/a/../b', '/a/./b', '/a/..', '/.', '/a//b', '/save?q=x', '//foreign', '/%73ave']) expect(pathOnly(value)).toBe(false);
 });
 const context = (): NavigationContext => ({ url, matches: [], signal: new AbortController().signal, revalidate: false, location: () => ({ url, key: 'a', matches: [] }) });
 async function digest(text: string) { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))].map(x => x.toString(16).padStart(2, '0')).join(''); }
@@ -47,4 +79,10 @@ it('allows ordinary external anchors only in the verified generated-document pro
   const node = parseFragment('<main><a href="https://example.com/path">Web</a><a href="mailto:help@example.com">Email</a><a href="tel:123">Phone</a></main>', document, url, true); expect(node.querySelectorAll('a')).toHaveLength(3);
   expect(() => parseFragment('<main><a href="javascript:alert(1)">Bad</a></main>', document, url, true)).toThrow();
   expect(() => parseFragment('<form action="https://example.com/save"></form>', document, url, true)).toThrow();
+});
+
+it.each(['<main title="unterminated></main>', "<main title='unterminated></main>", '<main title=unfinished'])('refuses incomplete tag/quote tokens before parsing: %s', html => {
+  const create = vi.spyOn(document, 'createElement');
+  expect(() => parseFragment(html, document, url)).toThrow('ROUTER_HTML');
+  expect(create).not.toHaveBeenCalled();
 });

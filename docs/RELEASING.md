@@ -69,6 +69,9 @@ engines, and a Linux N8 row at the existing 3 MB / 100 ms limits.
 Before the first router publication, complete the package's npm trusted-publisher
 enrollment and enroll it in the operational registry monitor inventories
 (`scripts/registry-reconcile-policy.json` and `scripts/release-plane-events.mjs`).
+For the first new npm identity, use the narrowly scoped
+[router enrollment procedure](release/ROUTER-REGISTRY-ENROLLMENT.md); the temporary
+credential never replaces CI, archive verification, P17, provenance or D14.
 These are release-preparation blockers; the live inventories currently describe
 the four actually published npm packages. Do not invent an existing registry
 package, suppress a 404 or claim that local package tests established enrollment.

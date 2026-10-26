@@ -29,32 +29,33 @@ export function pathOnly(value: string): boolean { return value === '/' || value
 /** Strict own-renderer fragment profile. No resource-loading or upgrade-capable node reaches importNode. */
 export function parseFragment(html: string, doc: Document, destination: URL, externalLinks = false): HTMLElement {
   if (typeof html !== 'string' || html.length > BODY_LIMIT) throw new NavigationError('ROUTER_HTML_LIMIT');
-  const voids = new Set(['area', 'br', 'col', 'hr', 'input', 'wbr']);
-  const forbidden = new Set(['head', 'html', 'body', 'script', 'iframe', 'object', 'embed', 'base', 'meta', 'link', 'style', 'template', 'img', 'audio', 'video', 'source', 'track', 'svg', 'math']);
+  const voids = /^(?:area|br|col|hr|input|wbr)$/;
+  const forbidden = /[-:]|^(?:head|html|body|script|iframe|object|embed|base|meta|link|style|template|img|audio|video|source|track|svg|math)$/;
   const stack: string[] = []; let cursor = 0, nodes = 0;
   while (cursor < html.length) {
     if (++nodes > 10000) throw new NavigationError('ROUTER_NODE_LIMIT');
     if (html.startsWith('<!--', cursor)) { const end = html.indexOf('-->', cursor + 4); if (end < 0) throw new NavigationError('ROUTER_HTML'); cursor = end + 3; continue; }
     if (html[cursor] !== '<') { const end = html.indexOf('<', cursor); cursor = end < 0 ? html.length : end; continue; }
-    const match = /^<\/?([a-zA-Z][a-zA-Z0-9:-]*)(?=[\s/>])/.exec(html.slice(cursor));
+    // Disjoint alternatives consume complete quoted values, including their >
+    // characters; incomplete quotes cannot reach the DOM parser.
+    const match = /^<\/?([a-zA-Z][a-zA-Z0-9:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/.exec(html.slice(cursor));
     if (!match) throw new NavigationError('ROUTER_HTML');
     const name = match[1].toLowerCase();
-    if (name.includes('-') || name.includes(':') || forbidden.has(name)) throw new NavigationError('ROUTER_HTML_PROFILE');
-    let end = cursor + match[0].length, quote = '';
-    for (; end < html.length; end++) { const c = html[end]; if (quote) { if (c === quote) quote = ''; } else if (c === '"' || c === "'") quote = c; else if (c === '>') break; }
-    if (end === html.length) throw new NavigationError('ROUTER_HTML');
-    const token = html.slice(cursor, end + 1);
-    if (/[\s/](?:is|shadowrootmode|srcdoc)(?:\s|=|\/|>)/i.test(token)) throw new NavigationError('ROUTER_HTML_PROFILE');
+    if (forbidden.test(name)) throw new NavigationError('ROUTER_HTML_PROFILE');
+    const token = match[0];
+    // Attribute values are text: an aria-label containing " is " cannot opt into
+    // custom-element upgrading. Erase complete values before scanning names.
+    if (/[\s/](?:is|shadowrootmode|srcdoc)(?:\s|=|\/|>)/i.test(token.replace(/=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/g, ' '))) throw new NavigationError('ROUTER_HTML_PROFILE');
     if (html[cursor + 1] === '/') { if (stack.pop() !== name) throw new NavigationError('ROUTER_HTML_NESTING'); }
-    else if (!voids.has(name)) { stack.push(name); if (stack.length > 64) throw new NavigationError('ROUTER_HTML_DEPTH'); }
-    cursor = end + 1;
+    else if (!voids.test(name)) { stack.push(name); if (stack.length > 64) throw new NavigationError('ROUTER_HTML_DEPTH'); }
+    cursor += token.length;
   }
   if (stack.length) throw new NavigationError('ROUTER_HTML_NESTING');
   const template = doc.createElement('template');
   // Core's named Trusted Types policy owns the sole raw boundary. Never retry as an unchecked string.
   template.innerHTML = navigationHTML(html) as string;
   for (const element of template.content.querySelectorAll('*')) {
-    if (element.localName.includes('-') || element.namespaceURI !== 'http://www.w3.org/1999/xhtml' || forbidden.has(element.localName)) throw new NavigationError('ROUTER_HTML_PROFILE');
+    if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml' || forbidden.test(element.localName)) throw new NavigationError('ROUTER_HTML_PROFILE');
     if (element.localName === 'input' && element.getAttribute('type')?.toLowerCase() === 'image') throw new NavigationError('ROUTER_HTML_PROFILE');
     for (const attr of element.attributes) {
       if (/^on/i.test(attr.name) || ['is', 'shadowrootmode', 'srcdoc', 'style', 'background'].includes(attr.name)) throw new NavigationError('ROUTER_HTML_PROFILE');

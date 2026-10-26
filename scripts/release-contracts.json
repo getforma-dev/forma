@@ -6,11 +6,11 @@
   "stateBlock": "declared-v1",
   "staticHtml": "plain-v1",
   "versionWindow": "same major; writer minor at most reader minor; patch independent; package suffix omitted",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "milestones": {
     "alpha": {
       "plan": "M2",
-      "tags": "v3.1.0-alpha.N: npm next, Cargo -alpha.N",
+      "tags": "v3.2.0-alpha.N: npm next, Cargo -alpha.N",
       "gates": {
         "FORMA-110": {
           "status": "done",
@@ -48,7 +48,7 @@
     },
     "beta": {
       "plan": "M3",
-      "tags": "v3.1.0-beta.N: npm next, Cargo -beta.N",
+      "tags": "v3.2.0-beta.N: npm next, Cargo -beta.N",
       "gates": {
         "FORMA-103": {
           "status": "done",
@@ -94,7 +94,7 @@
     },
     "rc": {
       "plan": "M4",
-      "tags": "v3.1.0-rc.N: npm next, Cargo -rc.N",
+      "tags": "v3.2.0-rc.N: npm next, Cargo -rc.N",
       "gates": {
         "FORMA-101": {
           "status": "done",
@@ -125,8 +125,8 @@
           "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78"
         },
         "FORMA-145 documentation": {
-          "status": "done",
-          "scope": "the 3.1 upgrade and stability documentation matches the final public surface; the complete 3.0 upgrade guide remains available"
+          "status": "pending",
+          "scope": "3.2 routing, scaffold, compatibility and upgrade guides match the coordinated candidate; published 3.0/3.1 records remain historical"
         },
         "FORMA-116": {
           "status": "done",
@@ -137,8 +137,8 @@
           "scope": "the recall script and SECURITY.md generated from the release record"
         },
         "FORMA-145 audit": {
-          "status": "done",
-          "scope": "the whole-release audit on another model or a separate fresh-context reviewer under L-65, with an empty blocking list (D14)"
+          "status": "pending",
+          "scope": "fresh-context independent whole-release review of the exact 3.2 candidate and retained evidence, with an empty blocking list (D14)"
         },
         "FORMA-257": {
           "status": "done",
@@ -171,19 +171,27 @@
         "FORMA-264": {
           "status": "done",
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
+        },
+        "FORMA-301 candidate": {
+          "status": "pending",
+          "scope": "exact-source 3.2 candidate CI, all eight sealed archives, all three starters, packed native navigation, original paired size limits and hosted P17; prior same-version development packs remain historical evidence"
+        },
+        "FORMA-301 publisher": {
+          "status": "pending",
+          "scope": "reviewed first-router bootstrap confined to the qualified v3.2.0-rc.1 tag archive, actual temporary npm-publish credential readiness, and tested version-aware monitoring preparation; real trusted-publisher enrollment and five-package live monitoring follow the verified first publication"
         }
       }
     },
     "final": {
       "plan": "M5",
-      "tags": "v3.1.0: npm latest, Cargo 3.1.0",
+      "tags": "v3.2.0: npm latest, Cargo 3.2.0",
       "gates": {
         "FORMA-144 slice 3": {
-          "status": "done",
+          "status": "pending",
           "scope": "final template and release cleanup"
         },
         "FORMA-191": {
-          "status": "done",
+          "status": "pending",
           "scope": "the per-release measurements in P17"
         },
         "FORMA-146": {
@@ -191,8 +199,12 @@
           "scope": "Q10 to Q13 and Q14 to Q18 defaults confirmed by the founder in L-57 on 2026-10-15; see docs/release/3.0-GATE-DISPOSITIONS.md"
         },
         "FORMA-145 soak": {
-          "status": "done",
+          "status": "pending",
           "scope": "L-62: at least 3600 seconds of continuous fault-free CI burn-in on the exact packed RC set, including stress, fuzzers and skew/upgrade drills, after RC P17 and the independent whole-release audit"
+        },
+        "FORMA-301 acceptance": {
+          "status": "pending",
+          "scope": "remaining supported-profile acceptance including assistive-technology/device review and documented scenario obligations, plus real getforma.dev router rollout acceptance; no fixture timing or dispatch-only event claim substitutes for those checks"
         }
       }
     }
@@ -214,7 +226,12 @@
       "scope": "beyond 3.0: separate agent GitHub identity and scoped credentials; new founder-only protection enforcement and distinct-identity denial drills; external alert receiver, scheduler and real delivery acceptance",
       "risk": "agents continue using the founder identity, so GitHub does not independently separate their administrator/release authority; external alert delivery remains unavailable; these criteria are deferred, not passed"
     },
-    "currentScope": "The current framework/benchmark programme does not make old external applications a release constraint or modify their repositories. Historical L-57/L-60 evidence below remains historical; no live-rollout criterion is newly marked passed."
+    "currentScope": "3.2 adds optional routing and its coordinated package/starter, preserves inherited 3.1 baseline behavior, and newly includes the requested getforma.dev ecosystem adoption. Fresh candidate gates above prevent historical completion records from authorizing this release.",
+    "baseline": {
+      "version": "3.1.0",
+      "source": "9a570afece5eb5091824422f00134a875310e857",
+      "scope": "Inherited unchanged gates retain their prior completed baseline; new 3.2 candidate, documentation, independent audit, publisher and final gates remain pending until independently evidenced."
+    }
   },
   "trustedTypes": "enforced-v1",
   "boundRender": "finalized-v1",

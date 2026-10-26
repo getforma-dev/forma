@@ -9,8 +9,8 @@ rust-version = "1.85"
 resolver = "3"
 
 [dependencies]
-forma-ir = "=3.1.0"
-forma-server = { version = "=3.1.0", features = ["navigation"] }
+forma-ir = "=3.2.0-rc.1"
+forma-server = { version = "=3.2.0-rc.1", features = ["navigation"] }
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
 rust-embed = "8"
