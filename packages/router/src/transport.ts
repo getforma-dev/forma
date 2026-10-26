@@ -2,7 +2,8 @@ import { NavigationError } from './types';
 export const BODY_LIMIT = 1024 * 1024;
 export async function readBody(response: Response, signal?: AbortSignal): Promise<string> {
   if (!response.body) throw new NavigationError('ROUTER_BODY');
-  const reader = response.body.getReader(), chunks: Uint8Array[] = []; let bytes = 0;
+  const reader = response.body.getReader(), decoder = new TextDecoder('utf-8', { fatal: true });
+  let bytes = 0, text = '';
   const abort = () => { void reader.cancel(signal?.reason).catch(() => {}); };
   signal?.addEventListener('abort', abort, { once: true });
   try {
@@ -11,12 +12,10 @@ export async function readBody(response: Response, signal?: AbortSignal): Promis
       const item = await reader.read(); signal?.throwIfAborted(); if (item.done) break;
       bytes += item.value.byteLength;
       if (bytes > BODY_LIMIT) throw new NavigationError('ROUTER_BODY_LIMIT');
-      chunks.push(item.value);
+      text += decoder.decode(item.value, { stream: true });
     }
+    return text + decoder.decode();
   } catch (error) { await reader.cancel().catch(() => {}); throw error; } finally { signal?.removeEventListener('abort', abort); reader.releaseLock(); }
-  const buffer = new Uint8Array(bytes); let at = 0;
-  for (const chunk of chunks) { buffer.set(chunk, at); at += chunk.length; }
-  return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
 }
 export function media(response: Response, expected: string) {
   const type = response.headers.get('content-type')?.split(';').map(s => s.trim().toLowerCase());
