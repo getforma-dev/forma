@@ -9,8 +9,13 @@ The latest retained native browser campaign is [N]: **90 successful scenarios**
 across Chromium, Firefox and WebKit, with actual Rust responses and compiled
 native owners. Its receipt binds its own source and artifact hashes. The later
 two router guards for offline speculation and disposal inside the permission
-callback are source-tested in the **90-test router suite**; they were added after
-that browser artifact. The independent portal pilot [P] has **18 successful
+callback are source-tested in the **121-test router suite**; they were added after
+that browser artifact. Twenty-one additional [platform contract vectors][RP]
+cover compound/index/pathless routes, non-root bases, encoded queries, link escapes
+and multipart construction. Ten [adapter boundary controls][RB] cover refusal
+before browser rendering, cleanup revocation, initial-owner failure disposal and destination URL snapshots;
+the last two controls were added after the 119-test adapter receipt. These additions
+are source tests, not a new integrated browser receipt. The independent portal pilot [P] has **18 successful
 scenarios** against actual packed core/router archives and real site pages.
 
 **Evidence labels:** `source` means focused implementation tests; `browser` means
@@ -25,7 +30,7 @@ passes. A local passing subset does not authorize publication.
 
 | Key | Evidence and scope |
 |---|---|
-| R | [Router tests][R]: matcher, coordinator, browser adapter, native admission and generated-HTML transport. Includes real cleanup reentrancy and ignored-abort negative controls in [mutation receipts][MU]. DOM-unit transport doubles are explicitly distinct from N. |
+| R | [Router tests][R]: matcher, coordinator, browser adapter, native admission and generated-HTML transport. Includes real cleanup reentrancy and ignored-abort negative controls in [mutation receipts][MU], [adapter boundary receipts][AB] and [initial-owner receipt][IO]. DOM-unit transport doubles are explicitly distinct from N. |
 | C | [Core owner tests][C] and [original authority tests][CA]: original-document partition, exact captured hosts/outlets, detached preparation, deferred revocation and adoption failures. Full core suite: 245 files / 4,326 tests; unchanged default delivery caps. |
 | S | [Native owner server tests][S], [action/policy tests][SA] and [manifest capability tests][SC]: typed owner/state contracts, statuses, sealed policy and opt-in admission. |
 | B | [Build group tests][B] and [compiler owner tests][BC]: actual registered products, fixed empty outlets, closed executable graphs, output admission and size classification. |
@@ -44,19 +49,19 @@ passes. A local passing subset does not authorize publication.
 | RT-P01 | Packed/source: G, P | Actual packed router resolves public `core/navigation`, exports/types and nested matches; the pilot installs candidate archives in a separate dependency graph. Full clean outside-repository consumer install and explicit duplicate/incompatible-core installation matrix remain required; peer metadata alone is not that proof. |
 | RT-P02 | Source/actual old reader: SC, V | Feature-disabled current readers reject reserved `navigation` metadata before binding, including null/malformed declarations; unrelated forward fields remain accepted. Enabled readers preserve schema/writer guards. Actual published 3.1 accepts old/equal/patch writers and rejects 3.2. Coordinated future-minor version preparation is mandatory; see the caveat below. |
 | RT-P03 | Source/build/process: B, GI, GS | Only declared groups receive router output; ordinary and static routes retain their classes. Eight-package feature candidates and future releases include router; historical 3.0/3.1 records remain seven packages/two starters. Exact final packed no-JS/non-opt-in outputs remain P17 gates. |
-| RT-U01 | Source/browser: R, N | Encoded slash is decoded after splitting; malformed percent escapes refuse; repeated queries and null-prototype parameter maps are exercised. Managed GET uses platform query encoding. Exhaustive combined plus/fragment/prototype round-trip vectors remain broader release coverage. |
-| RT-U02 | Source: R | Static/parameter/splat ranking, complete branch ownership, duplicate/ambiguous grammar and scoped params are tested. Index/pathless behavior is implemented; expand explicit compound index/pathless/full-consumption vectors before claiming the entire frozen row. |
-| RT-U03 | Source/browser: R, NH | Pending POP cursor repair is exercised for imperative navigation, revalidation, foreground verification and POST; generated URLs use the committed view. The full non-root-base relative/root/fragment matrix remains a separate test obligation. |
+| RT-U01 | Source/browser: R, N | Encoded slash is decoded after splitting; malformed percent escapes refuse; repeated queries and null-prototype parameter maps are exercised. Managed GET uses platform query encoding. [RP] adds Unicode/prototype parameters, encoded plus versus query-space and repeated keys. Exhaustive combined round trips remain broader release coverage. |
+| RT-U02 | Source: R | Static/parameter/splat ranking, compound pathless/index ownership, full path consumption, inherited scoped params and duplicate/ambiguous grammar are exercised in [RP]. Packed real-browser repetition remains distinct from these source vectors. |
+| RT-U03 | Source/browser: R, NH | Pending POP cursor repair is exercised for imperative navigation, revalidation, foreground verification and POST; generated URLs use the committed view. [RP] adds non-root relative/root destinations, empty base path, encoded fragments and repeated queries. Combined pending-POP/non-root and foreign-entry browser coverage remains separate. |
 | RT-U04 | Source: R | Unsupported grammar, malformed encodings and route count/depth are refused. Current limits are 1,000 definitions and depth 32; no optional/named-outlet/matrix expansion is implemented. |
 | RT-U05 | Source/browser: R, N | Same-URL cancellation, explicit revalidation, query transitions and fragment-only history/ownership are exercised. Revalidation preserves visit identity; a newer navigation cancels older preparation. |
 | RT-H01 | Source/browser: R, N, NH | Actual PUSH/REPLACE/POP, retained unrelated state, distinct visit keys and pending traversal repair are tested. Redirected POP replaces its destination address without pushing. Packed/browser repetition remains required. |
 | RT-H02 | Source/browser, partial: R, NH | Known traversal compensation and its serialization barrier are tested, including superseding pending POP. Foreign state has explicit document recovery. The full real unsaved-form blocker/replay and foreign-entry sequence matrix is not claimed complete. |
 | RT-H03 | Source/browser: R, N | Disposal restores scroll restoration and removes owned handlers; immediate disposal cannot initialize. Foreground and persisted-pageshow invalidate or verify context, with actual document boundaries. Manual BFCache eligibility/gesture behavior remains platform qualification. |
 | RT-H04 | Source/browser, partial: R, N | Typed GET redirects reach one final route; redirected POP updates address and keeps its key. Hop/cycle limits and disallowed destinations are implemented. Every external/out-of-base/relative redirect variant still needs the packed negative matrix. |
-| RT-L01 | Source/pilot, partial: R, P | Real anchors, target/download/opt-out/modifier policy and document boundaries are implemented; existing target behavior and bounded pilot destinations are exercised. A comprehensive native mouse/composed-shadow-path/modifier matrix remains unclaimed. |
+| RT-L01 | Source/pilot, partial: R, P | Real anchors, target/download/opt-out/modifier policy and document boundaries are implemented; existing target behavior and bounded pilot destinations are exercised. [RP] explicitly exercises meta/control/shift/alt/middle-click, target/download/opt-out, nested anchors and blockers at the listener boundary. Actual native mouse/shadow-path/device behavior remains a browser qualification obligation. |
 | RT-C01 | Source/browser: R, N | Held GET A then B, ignored abort, late candidate/error disposal and stale title/URL/layout prevention are exercised. The current navigation owns pending state. |
 | RT-C02 | Source/core/browser: R, C, N | Late detached candidates dispose, deferred moved/departed hosts cannot activate, explicit context revocation prevents a stale response reacquiring owners. Groups use an already verified eager asset set; dynamic cross-route stylesheet preparation is outside this admitted profile. |
-| RT-C03 | Source with mutation controls: R, MU | Commit reentry queues only the latest destination. Cleanup that disposes or invalidates cannot repopulate a root; validator callbacks cannot authorize a superseded commit. Removing the authority check makes the regression fail. |
+| RT-C03 | Source with mutation controls: R, MU | Commit reentry queues only the latest destination. Cleanup that disposes or invalidates cannot repopulate a root; validator callbacks cannot authorize a superseded commit. Removing the authority check makes the regression fail. [AB] reproduces and fixes generated-HTML cleanup revocation; [IO] verifies disposal of an initial detached browser owner after render-time revocation. |
 | RT-C04 | Source/browser, partial: R, C, N | Readiness distinguishes detached preparation, synchronous ownership transfer and immediate activation; deferred work remains separately cancellable. Committed/cancelled/blocked/failed/document-navigation outcomes exist. Exhaustive one-settlement observation for every error branch remains release coverage. |
 | RT-O01 | Source/browser: C, N, T | Native A-B-A retains actual layout island nodes/input/selection while replacing and disposing the leaf; browser owners dispose child before parent. Repeated full-branch identity reuse is tested. |
 | RT-O02 | Browser/core, partial: C, N | 100 actual native route cycles preserve the layout and leave departed click handlers inactive; deferred jobs and throwing observer cleanup have focused controls. This does not count every global listener/effect/observer/timer/worker class under cancellation/failure cycles. |
@@ -66,7 +71,7 @@ passes. A local passing subset does not authorize publication.
 | RT-N03 | Source/browser: C, S, R, N | Invalid schema/state, duplicate/moved ownership, wrong transport identity, missing registration and initial/final 200-island bounds refuse admission. Actual malformed scoped state refuses before activation and triggers one document recovery. |
 | RT-N04 | Core/browser: C, N | Initial native nodes survive adoption; early input and scheduled readiness are exercised; removed deferred owners cannot activate. Outlet identity remains fixed through move/rename/marker mutations. |
 | RT-N05 | Browser/server: S, N, T | Actual direct requests, refresh and no-JS links/forms return typed server HTML and fresh props. Starter also verifies no-JS navigation. Packed status and direct-route qualification remain separate. |
-| RT-N06 | Source/packed pilot: R, P | Browser adapter refuses server-marked roots. Registered generated HTML authenticates full documents and parses only the marked region; native state, executable/custom-element/shadow claims are refused. Real two-page portal uses packed packages without replaying head scripts. |
+| RT-N06 | Source/packed pilot: R, P | Browser adapter refuses root/subtree SSR/island/state claims before rendering; [RB] verifies original node identity and zero render calls. Registered generated HTML authenticates full documents and parses only the marked region; native state, executable/custom-element/shadow claims are refused. Real two-page portal uses packed packages without replaying head scripts. |
 | RT-S01 | Server/browser: S, N | Same sealed policy with fresh response nonces is admitted; changed effective profile causes an explicit document boundary. Missing sealed profile or changed action set refuses. Applications must attest final middleware/proxy policy; no production proxy audit is claimed. |
 | RT-S02 | Build/source/browser: B, R, N | Initial and incoming app/build/group/profile/assets tuples are checked. A separately compiled second build causes a document boundary. Ordinary successful cases assert the same Document. |
 | RT-S03 | Build/browser: B, N | Registration-only group output has a closed executable graph and one integrity-bearing entry; external/dynamic unverified imports and unsupported entry/watch shapes refuse. Native browser tests run that actual emitted group. |
@@ -74,7 +79,7 @@ passes. A local passing subset does not authorize publication.
 | RT-S05 | Source/browser, partial: R, S, N | no-store response admission, explicit context revocation, held stale reads/checks, BFCache and foreground barriers are exercised. Private completed HTML cache capacity is zero. Cross-tab plumbing exists, but a real multi-tab principal/session-change campaign remains required. |
 | RT-S06 | Source/browser, partial: R, C, S, N | Byte/depth/owner/route limits, ignored-abort deadlines, two speculative requests and bounded recovery are tested. 1,000 scroll entries, 32 recovery keys and 60 writes/10 seconds are implemented; all boundary combinations and allocation/time denial controls are not yet fully measured. |
 | RT-F01 | Server/browser: S, N | Real handlers support native/enhanced GET and POST; known mutation settlement refreshes typed props and no-JS remains usable. Multipart application handler qualification is not established by the URL-encoded fixture. |
-| RT-F02 | Source/browser, partial: R, N | Native FormData serialization, GET queries, competing formdata reentry and serialization-time disposal are exercised. Full real file/multipart, submitter override, disabled controls and controls named submit/method/action matrix remains required. |
+| RT-F02 | Source/browser, partial: R, N | Native FormData serialization, GET queries, competing formdata reentry and serialization-time disposal are exercised. [RP] verifies multipart body construction without a manual boundary, submitter endpoint/encoding, repeated/disabled controls and named method/action fields. Real file upload, controls named submit and complete browser serialization remain required. |
 | RT-F03 | Source/browser, partial: R, N | Validation retains entered safe values, exposes/focuses the summary, preserves history and never repeats the action. Manual screen-reader field-error announcements and all field-level error patterns remain open. |
 | RT-F04 | Source/browser: R, N | One mutation slot returns busy for competing submissions; distinct-form synchronous formdata reentry cannot transmit twice, and disposal during serialization prevents transmission. Nothing queues/replays a POST automatically. |
 | RT-F05 | Source/browser: R, N, NH | Mutation generations invalidate prior reads/speculation; held newer GETs are restarted after known settlement without losing their destination. POST/revalidation repair a pending POP cursor before reading the committed branch. |
@@ -92,7 +97,7 @@ passes. A local passing subset does not authorize publication.
 | RT-A05 | Browser, partial: N, P, T | Native/forms/history/lifecycle run in three engines at 390×844; portal pilot and native starter also run in all three. Automated viewport/input is not a physical-device gesture check or full packed browser matrix. |
 | RT-K01 | Source: R | Native/private speculation is off by default; explicit safe-read opt-in is bounded to two requests, honors save-data/offline and keeps no completed candidate cache. Final permission-callback disposal/offline guards have source tests after the recorded native artifact. |
 | RT-K02 | Source, scoped: R | Navigation can claim existing in-flight work; unrelated speculation cancels, failed/completed attempts release and retry freshly, mutation/context changes revoke ownership. This is one foreground navigation plus speculative ownership, not the deferred independent keyed-fetcher API. |
-| RT-M01 | Measured source build: M | Paired complete consumer graph includes shared-core growth; group and ordinary route gates remain distinct, with frozen 12 KiB increment and 64 KiB complete-group limit. Source/artifact-bound receipts retain failures. Remeasure the final release archives; local bytes do not replace P17. |
+| RT-M01 | Measured source build: M | Paired complete consumer graph includes shared-core growth; group and ordinary route gates remain distinct, with frozen 12 KiB increment and 64 KiB complete-group limit. The latest v4 consumer measurement is 40,552 B gzip complete group and 12,120 B maximum increment (168 B below the unchanged incremental ceiling). Source/artifact-bound receipts retain failures. Remeasure the final release archives; local bytes do not replace P17. |
 | RT-M02 | **Pending independent measurement** | A fixed native cold/warm navigation versus document baseline runner is being prepared. Do not promote earlier functional timings or the portal gzip comparison to this percentile/sample/profile gate. Require the final raw measurement receipt before closing. |
 | RT-M03 | Partial deterministic evidence: N | The 100-cycle departed-handler check is real. No browser heap observations or complete tracked-resource baseline campaign is claimed here; pending memory measurement must retain raw samples and distinguish noisy heap data from deterministic cleanup. |
 | RT-D01 | Source-linked starter + packed subchecks: T, G, P | Complete native-router starter builds/runs locally and its three-engine helper passes. P17 and the candidate lane require it, preserve 24 heavy cases and add the unchanged Linux N8 limits. Execute the documented full starter from the sealed eight-archive candidate outside the repository before closing this row. |
@@ -127,6 +132,10 @@ implementation, bounded local pilot and release tooling can be reviewed now;
 there is no claim that all 57 full qualification rows are closed.
 
 [R]: ../../../packages/router/tests/
+[RP]: ../../../packages/router/tests/platform-contracts.test.ts
+[RB]: ../../../packages/router/tests/adapter-boundaries.test.ts
+[AB]: evidence/adapter-boundaries.json
+[IO]: evidence/initial-owner-disposal.json
 [MU]: evidence/mutations.json
 [C]: ../../../packages/core/src/dom/__tests__/native-owner.test.ts
 [CA]: ../../../packages/core/src/dom/__tests__/navigation-adoption.test.ts
@@ -149,7 +158,7 @@ there is no claim that all 57 full qualification rows are closed.
 [PA]: ../../../experiments/forma-router-site-pilot/evidence/attempts.json
 [V]: evidence/published-reader-compatibility.json
 [VR]: ../../../scripts/navigation-reader-compatibility.mjs
-[M]: ../../../experiments/forma-router-native/evidence/size-v3.json
+[M]: ../../../experiments/forma-router-native/evidence/size-v4.json
 [MS]: ../../../experiments/forma-router-native/measure-size.mjs
 [RM]: research-manifest.json
 [RQ]: research-map.json

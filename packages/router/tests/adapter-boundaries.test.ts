@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { h } from '@getforma/core';
-import { createBrowserAdapter, createHtmlAdapter, defineRoutes, matchRoutes, type NavigationContext } from '../src/index';
+import { h, createEffect, createSignal, onCleanup } from '@getforma/core';
+import { createBrowserAdapter, createHtmlAdapter, createRouter, defineRoutes, matchRoutes, type NavigationContext } from '../src/index';
 let root: HTMLElement;
 const url = new URL('http://localhost:3000/a');
 const context = (signal = new AbortController().signal): NavigationContext => ({ url, matches: [], signal, revalidate: false, location: () => ({ url, key: 'a', matches: [] }) });
@@ -33,4 +33,42 @@ it.each(['dispose', 'revoke'] as const)('does not resurrect generated HTML when 
   expect(() => page.commit()).toThrow(); expect(disposed).toHaveBeenCalledOnce();
   expect(root.textContent).toBe(mode === 'dispose' ? 'Original content' : '');
   page.dispose(); session.dispose();
+});
+
+it('disposes an initial detached owner when rendering revokes its session', async () => {
+  let cleaned = 0;
+  const session = createBrowserAdapter().connect(root);
+  const routes = defineRoutes([{ id: 'a', path: 'a', render() {
+    createEffect(() => onCleanup(() => cleaned++));
+    session.dispose();
+    return document.createElement('p');
+  } }]);
+  await expect(session.initialize!({ ...context(), matches: matchRoutes(routes, '/a')! })).rejects.toThrow('ROUTER_CANCELLED');
+  expect(cleaned).toBe(1); expect(root.childNodes).toHaveLength(0);
+  session.dispose(); expect(cleaned).toBe(1);
+});
+
+it('initializes fresh routes from isolated destination URLs while retained locations stay reactive', async () => {
+  history.replaceState({}, '', '/a?q=old');
+  const observed: (string | null)[] = [], renderedPaths: string[] = [];
+  const router = createRouter({ root, adapter: createBrowserAdapter(), routes: [{
+    id: 'layout', render({ url, location, outlet }) {
+      url.search = '?q=changed-by-parent';
+      createEffect(() => { observed.push(location().url.searchParams.get('q')); });
+      const section = document.createElement('section'); section.append(outlet); return section;
+    }, children: [{ id: 'leaf', path: ':id', render({ url }) {
+      renderedPaths.push(url.pathname);
+      const [initialQuery] = createSignal(url.searchParams.get('q'));
+      url.pathname = '/changed-by-leaf';
+      const node = document.createElement('p'); node.textContent = initialQuery(); return node;
+    } }],
+  }] });
+  try {
+    await router.ready; const layout = root.firstElementChild;
+    expect(root.textContent).toBe('old');
+    expect((await router.navigate('/b?q=new')).kind).toBe('committed');
+    expect(root.textContent).toBe('new'); expect(root.firstElementChild).toBe(layout);
+    expect(observed).toEqual(['old', 'new']); expect(renderedPaths).toEqual(['/a', '/b']);
+    expect(router.location().url.pathname).toBe('/b'); expect(router.location().url.search).toBe('?q=new');
+  } finally { router.dispose(); }
 });

@@ -43,7 +43,12 @@ await router.navigate('/projects/beta?tag=one&tag=two');
 ```
 
 Components run once in separately disposable Forma roots. Reactive callbacks
-must use accessors, following core's usual rules. Put effect cleanup in
+must use accessors, following core's usual rules. `render({ url })` receives a
+fresh destination URL snapshot for one-time initialization, such as
+`createSignal(url.searchParams.get('filter'))`. Mutating that snapshot cannot
+change navigation or another owner's input. `location()` remains the reactive
+committed location: detached preparation sees the previous committed view until
+commit, and a retained layout observes subsequent commits. Put effect cleanup in
 `createEffect(() => { ...; onCleanup(dispose); })`. Returning the supplied exact
 `outlet` inside a parent establishes child ownership; it is not a second mount.
 Parameters belonging to children do not invalidate their parent. A changed

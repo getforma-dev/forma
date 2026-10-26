@@ -19,6 +19,8 @@ export interface LocationState {
   readonly matches: readonly { readonly id: string; readonly params: Readonly<Record<string, string>> }[];
 }
 export interface RenderContext {
+  /** Destination snapshot for one-time route initialization. */
+  readonly url: URL;
   readonly location: Accessor<LocationState>;
   readonly params: Readonly<Record<string, string>>;
   readonly outlet: HTMLElement;

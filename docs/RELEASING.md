@@ -82,7 +82,8 @@ After `.github/workflows/packed-qualification.yml` is present on the default
 branch, dispatch it on a reviewed immutable preparation ref, for example:
 
 ```sh
-gh workflow run packed-qualification.yml --ref 'codex/forma-beta3-qualification-<commit>' -f target_tag=v3.0.0-beta.3
+# Replace both placeholders with the reviewed preparation ref and unpublished version.
+gh workflow run packed-qualification.yml --ref '<reviewed-preparation-ref>' -f target_tag='vX.Y.Z-rc.N'
 ```
 
 The read-only workflow builds and dry-packs all eight source packages from that run's
@@ -94,12 +95,14 @@ reports, raw observations and cleanup results are retained as run artifacts.
 Its 60-minute job and 45-minute verification step allow setup and cleanup;
 P17's independent 1,800-second acceptance limit remains unchanged.
 
-`target_tag` must match all eight prepared versions. Use `v3.0.0-rc.1` for an RC
-preparation: pending milestone gates remain recorded, so the rehearsal can
-collect evidence before they close. The normal baseline reader still requires
-an actual comparable DS12 from the newest published predecessor for RC
-performance: published 3.0.0 for 3.1.0-rc.1 unless a later 3.0.x is published
-first. The workflow has
+`target_tag` must match all eight prepared versions for the new minor release.
+The 3.0/3.1 commands elsewhere in historical runbooks describe their original
+seven-package releases; they are not current feature-candidate instructions.
+Pending milestone gates remain recorded, so the rehearsal can collect evidence
+before they close. The normal baseline reader still requires an actual comparable
+DS12 from the newest published predecessor for RC performance. Select that
+predecessor through the versioned release tooling, not a copied historical tag.
+The workflow has
 no publication credentials, never writes DS12 to a Release, and neither closes
 gates nor replaces exact-main CI or the tagged release workflow. A failed run
 remains failed; another attempt requires an explicit decision.

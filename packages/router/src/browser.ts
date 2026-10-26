@@ -27,7 +27,7 @@ export function createBrowserAdapter(): RouteAdapter {
             let stop = () => {}; let node: HTMLElement;
             node = createUnownedRoot(dispose => {
               stop = dispose;
-              const element = match.definition.render?.({ location: context.location, params: match.params, outlet, signal: context.signal }) ?? outlet;
+              const element = match.definition.render?.({ url: new URL(context.url), location: context.location, params: match.params, outlet, signal: context.signal }) ?? outlet;
               if (!(element instanceof container.ownerDocument.defaultView!.HTMLElement)) throw new NavigationError('ROUTER_RENDER_ROOT');
               return element as HTMLElement;
             });
@@ -60,7 +60,7 @@ export function createBrowserAdapter(): RouteAdapter {
         };
       }
       return {
-        async initialize(context: NavigationContext) { const candidate = prepare(context); candidate.commit(); },
+        async initialize(context: NavigationContext) { const candidate = prepare(context); try { candidate.commit(); } finally { candidate.dispose(); } },
         async prepare(context: NavigationContext) { return prepare(context); },
         invalidate() { release(live); live = []; container.replaceChildren(); },
         dispose() { if (closed) return; closed = true; const errors = release(live); live = []; if (errors.length) throw new AggregateError(errors, 'ROUTER_CLEANUP'); },
