@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEMPLATES, TEMPLATE_INFO } from '../src/scaffold';
-import { REPO_ROOT, TEMPLATES_DIR, listFiles, run, runCli, inTmpDir } from './helpers';
+import { CLI_TEMPLATES, REPO_ROOT, TEMPLATES_DIR, listFiles, run, runCli, inTmpDir } from './helpers';
 import { collectDiagnostics, generateRealIr } from '../../compiler/src/index';
 import { getSlots } from '../../compiler/tests/helpers/fmir';
 
@@ -508,20 +508,31 @@ describe('the published package', () => {
 });
 
 describe('native-router template', () => {
-  it('compiles each actual scaffolded owner with independent declared props and island registrations', () => {
-    inTmpDir('forma-template-native-', dir => {
-      const created = runCli(['native-page', '--template', 'native-router'], dir);
-      expect(created.status, created.stderr).toBe(0);
-      for (const [owner, names] of [['shell', ['LayoutCounter']], ['home', ['Counter']], ['about', []]] as const) {
-        const {result, diagnostics} = collectDiagnostics(() => generateRealIr(path.join(dir, `native-page/admin/src/${owner}/app.tsx`)));
-        expect(diagnostics).toEqual([]);
-        expect(result).not.toBeNull();
-        expect(result!.islands.map(island => island.name)).toEqual(names);
-        expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint]))
-          .toEqual(owner === 'about' ? [] : [['count', 3]]);
-      }
-    });
-  }, 60_000);
+  if (CLI_TEMPLATES.includes('native-router')) {
+    it('compiles each actual scaffolded owner with independent declared props and island registrations', () => {
+      inTmpDir('forma-template-native-', dir => {
+        const created = runCli(['native-page', '--template', 'native-router'], dir);
+        expect(created.status, created.stderr).toBe(0);
+        for (const [owner, names] of [['shell', ['LayoutCounter']], ['home', ['Counter']], ['about', []]] as const) {
+          const {result, diagnostics} = collectDiagnostics(() => generateRealIr(path.join(dir, `native-page/admin/src/${owner}/app.tsx`)));
+          expect(diagnostics).toEqual([]);
+          expect(result).not.toBeNull();
+          expect(result!.islands.map(island => island.name)).toEqual(names);
+          expect(getSlots(result!.binary).filter(slot => slot.source === 0).map(slot => [slot.name, slot.typeHint]))
+            .toEqual(owner === 'about' ? [] : [['count', 3]]);
+        }
+      });
+    }, 60_000);
+  } else {
+    it('the historical CLI refuses the unavailable native-router starter', () => {
+      inTmpDir('forma-template-native-legacy-', dir => {
+        const created = runCli(['native-page', '--template', 'native-router'], dir);
+        expect(created.status).not.toBe(0);
+        expect(created.stderr).toMatch(/Invalid template .*native-router/);
+        expect(fs.existsSync(path.join(dir, 'native-page'))).toBe(false);
+      });
+    }, 60_000);
+  }
   it('makes the router dependency opt-in and preserves the existing templates', () => {
     expect(readJson('native-router', 'admin', 'package.json').dependencies['@getforma/router']).toBe(`=${SOURCE_VERSION}`);
     for (const template of ['minimal', 'dashboard']) {

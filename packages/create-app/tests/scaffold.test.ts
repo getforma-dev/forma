@@ -4,8 +4,8 @@ import * as path from 'node:path';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
 import { verifyNativeRouterTemplate } from '../../../scripts/release-template-navigation.mjs';
-import { TEMPLATES as SOURCE_TEMPLATES, validateProjectName } from '../src/scaffold';
-import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
+import { validateProjectName } from '../src/scaffold';
+import { CLI_TEMPLATES as TEMPLATES, E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -14,11 +14,6 @@ import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, r
  * build, `cargo check` — runs when FORMA_SCAFFOLD_E2E=1, which is what turns a
  * template that cannot compile from a passing test into a failing one.
  */
-
-const TEMPLATES: string[] = process.env.FORMA_SCAFFOLD_TEMPLATES
-  ? JSON.parse(process.env.FORMA_SCAFFOLD_TEMPLATES) : SOURCE_TEMPLATES;
-if (!Array.isArray(TEMPLATES) || !TEMPLATES.length || new Set(TEMPLATES).size !== TEMPLATES.length
-  || TEMPLATES.some(template => !SOURCE_TEMPLATES.includes(template))) throw new Error('unknown scaffold template inventory');
 
 const TEXT_EXTS = new Set(['.toml', '.lock', '.rs', '.ts', '.tsx', '.json', '.md', '.css', '.html', '.yml']);
 const STATIC_HTML = process.env.FORMA_SCAFFOLD_STATIC_HTML ?? 'plain-v1';
