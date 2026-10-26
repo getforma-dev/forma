@@ -90,7 +90,7 @@ source, browser or packed evidence and explicitly names the remaining gates.
   bootstrap/action policy and aggregate resource limits.
 - [Starter](../../../packages/create-app/templates/native-router/): optional
   complete TSX+Rust app. Existing minimal/dashboard semantics remain unchanged.
-- [Release process](../../RELEASING.md): coordinated archive inventory, exact peer,
+- [Release process](../../RELEASING.md): coordinated archive inventory, coordinated peer range,
   source sealing and installed archive verification now include router. Historical
   published 3.0/3.1 evidence still has seven packages and two templates. Source
   manifests keep 3.1 until version preparation; no new 3.1 publication is implied.
