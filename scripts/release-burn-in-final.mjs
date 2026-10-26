@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { isDeepStrictEqual } from 'node:util';
+import { SEED_MARKER, LEGACY_SEED_TEMPLATES } from './template-lock-seeds.mjs';
 import { ROOT, digest, json, run, versionFiles } from './release-set.mjs';
 import { auditInputManifest } from './release-audit.mjs';
 import { authenticateRc, downloadRunEvidence, releaseReader, sha256 } from './release-burn-in-inputs.mjs';
@@ -49,7 +51,11 @@ export function finalDiffBinding(reference, finalCommit, root = ROOT) {
   try {
     const archive = join(scratch, 'source.tar'); run('git', ['archive', '--format=tar', `--output=${archive}`, reference.rcCommit], root);
     run('tar', ['-xf', archive, '-C', scratch]);
-    versions = versionFiles(scratch, reference.finalVersion);
+    // Reproduce the inventory declared by this authenticated archived RC. Only
+    // the historical version lines may use the exact legacy two-template marker;
+    // synthetic/current feature sources keep the strict five-package default.
+    const legacyInventory = /^3\.[01]\./.test(reference.finalVersion) && isDeepStrictEqual(json(join(scratch, SEED_MARKER)), { schema: 1, version: reference.rcTag.slice(1), templates: LEGACY_SEED_TEMPLATES });
+    versions = versionFiles(scratch, reference.finalVersion, { legacyInventory });
   } finally { rmSync(scratch, { recursive: true, force: true }); }
   const old = new Map(before.entries.map(row => [row.path, row])), current = new Map(after.entries.map(row => [row.path, row])), changes = [];
   for (const path of [...new Set([...old.keys(), ...current.keys()])].sort()) {

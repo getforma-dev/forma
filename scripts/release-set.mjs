@@ -121,10 +121,16 @@ function updateRequirements(p, version, owner = p.name) {
   if (peer) p.peerDependencies = { ...p.peerDependencies, [peer]: compatibilityPeer(version) };
 }
 
-export function versionFiles(root, version) {
+export function versionFiles(root, version, { legacyInventory = false } = {}) {
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3, 'expected a 3.x-or-later release version or X.Y.Z-dev');
   const files = new Map();
   const read = p => readFileSync(join(root, p), 'utf8');
+  const lock = JSON.parse(read('package-lock.json'));
+  const npm = legacyInventory ? npmPackagesForVersion(version) : NPM;
+  if (legacyInventory) {
+    assert(npm.length < NPM.length, 'legacy source inventory is only valid for the historical 3.0/3.1 lines');
+    assert.deepEqual(lock.packages?.['']?.workspaces?.slice().sort(), npm.map(name => `packages/${name}`).sort(), 'legacy source inventory differs from the archived workspace declaration');
+  }
   let cargo = read('Cargo.toml');
   assert(/\[workspace.package\]\s*\nversion = "[^"]+"/.test(cargo));
   cargo = cargo.replace(/(\[workspace.package\]\s*\nversion = ")[^"]+"/, `$1${version}"`);
@@ -136,17 +142,16 @@ export function versionFiles(root, version) {
     text = text.replace(/^(forma-(?:ir|ir-derive|server)\s*=\s*\{[^\n]*?version\s*=\s*")[^"]+"/gm, `$1=${version}"`);
     files.set(path, text);
   }
-  for (const name of NPM) {
+  for (const name of npm) {
     const path = `packages/${name}/package.json`, p = JSON.parse(read(path));
     p.version = version;
     updateRequirements(p, version);
     p.repository = { type: 'git', url: 'git+https://github.com/getforma-dev/forma.git', directory: `packages/${name}` };
     files.set(path, JSON.stringify(p, null, 2) + '\n');
   }
-  const lock = JSON.parse(read('package-lock.json'));
   for (const [path, p] of Object.entries(lock.packages)) {
-    if (NPM.some(name => path === `packages/${name}`)) p.version = version;
-    const member = NPM.find(name => path === `packages/${name}`);
+    if (npm.some(name => path === `packages/${name}`)) p.version = version;
+    const member = npm.find(name => path === `packages/${name}`);
     updateRequirements(p, version, member ? `@getforma/${member}` : p.name);
   }
   files.set('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
@@ -157,7 +162,7 @@ export function versionFiles(root, version) {
   }
   // Source seeds never invent the hash of an archive containing this commit.
   const previous = JSON.parse(read('packages/create-app/package.json')).version;
-  for (const [path, text] of prepareTemplateSeeds(root, previous, version)) files.set(path, text);
+  for (const [path, text] of prepareTemplateSeeds(root, previous, version, { legacyInventory })) files.set(path, text);
   return files;
 }
 

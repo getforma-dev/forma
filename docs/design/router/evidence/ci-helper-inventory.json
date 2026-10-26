@@ -1,0 +1,60 @@
+{
+  "schema": "forma-301-ci-helper-inventory-v1",
+  "recordedAt": "2026-10-26T20:40:59.307739+00:00",
+  "scope": "Post-seal CI/historical reader tooling correction. No product source, dist or sealed archive modification; not a new P17 or hosted CI result.",
+  "failedHostedJob": {
+    "id": 121822336162,
+    "sourceCommit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+    "tests": 445,
+    "passed": 443,
+    "failed": 2
+  },
+  "causes": [
+    "release-workflow installed helper dependencies without building core/router before executing the actual npm-pack resolution test.",
+    "Current strict source version preparation was reused on the authenticated published3.0 RC archive, which has four npm packages and two templates."
+  ],
+  "changes": [
+    "Build actual core/router artifacts before the full-history release-helper self-test; absent dist now refuses explicitly.",
+    "Keep default source preparation strict at five npm packages and three templates. Only historical3.0/3.1 plus an exact authenticated legacy marker may opt into the original four/two inventory. Validate the archived workspace declaration as well.",
+    "Dedicated historical tests execute only in the full-history release-helper lane. No fetch, missing-object skip or absent-file inventory inference was added."
+  ],
+  "historicalSource": {
+    "tag": "v3.0.0-rc.5",
+    "commit": "12320f4340d87cbb96575b5bb3b7eab42121d477",
+    "positive": "Actual archived manifests and seed files prepare the original inventory. Existing soak-v2 controls authenticate its real final diff.",
+    "negative": [
+      "Strict default refuses a historical source missing router.",
+      "Future3.2 cannot opt into legacy inventory.",
+      "Future default source missing router refuses.",
+      "Mixed archived workspace declaration refuses.",
+      "Unknown seed marker refuses."
+    ]
+  },
+  "validation": {
+    "releaseHelpers": {
+      "command": "CARGO_BUILD_JOBS=3 ruby scripts/check-release-workflow.rb --self-test",
+      "tests": 447,
+      "passed": 447,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 68169.562208,
+      "rawLogSha256": "b420a10e0d68b43c83fe6486796d5c25e8230179575313fe13cf4578a78a9483"
+    },
+    "sourceInventory": {
+      "command": "CARGO_BUILD_JOBS=3 node --test scripts/template-lock-seeds.test.mjs scripts/release-package-inventory.test.mjs scripts/release-template-source.test.mjs",
+      "tests": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "rawLogSha256": "958673c1d932d878bc7fc85ec45e9d87f5713ea04ad7f23be8e6c5915cfde269"
+    }
+  },
+  "sourceProducts": {
+    ".github/workflows/ci.yml": "484fea5fae5c31d87dc7d8e3ff6047821d008211eb44bfaba545b07619118be3",
+    "scripts/release-router-package.test.mjs": "1eff83441d642c5bc71e6917d112fd314c61d029e423295f48973af8d64bc1d2",
+    "scripts/release-set.mjs": "f24d47ad6dad9fdd74df3f9afc271ff54aa502f5d2ef42c6e1490d5df32f942f",
+    "scripts/template-lock-seeds.mjs": "a39728b61897e27919aeb2bdc245328e1b0e4adf1e3a0df94ce5509a2a6d1687",
+    "scripts/release-burn-in-final.mjs": "e9eadbd5311a797f632b76e47fd643cc6296780d301b10cb6dc84ad2faa2a6ef",
+    "scripts/release-historical-inventory.test.mjs": "21fa5dc5e25306706626afd6895f8c69f48378dcdf6f6cc3bf1722090a390a0a"
+  }
+}

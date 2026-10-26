@@ -501,6 +501,8 @@ jobs:
           shellcheck --version | head -2
           "$RUNNER_TEMP/actionlint" -version
           "$RUNNER_TEMP/actionlint"
+      - name: Build core and router for actual packed public-export controls
+        run: npm run build -w packages/core -w packages/router
       - name: SR43 lint and its seeded violations
         run: |
           ruby --version

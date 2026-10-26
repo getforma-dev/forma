@@ -106,21 +106,25 @@ export function replaceTemplateCargoRequirements(text, requirement) {
   return text.replace(/^((forma-(?:ir|ir-derive|server))\s*=\s*(?:\{\s*version\s*=\s*)?")[^"]+"/gm,
     (_, prefix, name) => `${prefix}${requirement(name)}"`);
 }
-export function readTemplateSeeds(root, expectedVersion) {
+export function readTemplateSeeds(root, expectedVersion, { legacyInventory = false } = {}) {
   version(expectedVersion);
+  if (legacyInventory) assert(/^3\.[01]\./.test(expectedVersion), 'legacy seed inventory is only valid for the historical 3.0/3.1 lines');
+  const templates = legacyInventory ? LEGACY_SEED_TEMPLATES : SEED_TEMPLATES;
   const marker = JSON.parse(read(root, SEED_MARKER));
-  assert.deepEqual(marker, { schema: 1, version: expectedVersion, templates: SEED_TEMPLATES }, 'source template seed identity/version differs');
+  assert.deepEqual(marker, { schema: 1, version: expectedVersion, templates }, 'source template seed identity/version differs');
   assert.equal(JSON.parse(read(root, 'packages/create-app/package.json')).version, expectedVersion, 'source template seed differs from create-app version');
-  return new Map(SEED_TEMPLATES.map(template => {
+  return new Map(templates.map(template => {
     const prefix = `packages/create-app/templates/${template}`;
     const files = new Map(['Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(path => [path, read(root, `${prefix}/${path}`)]));
     return [template, validateSeedFiles(files, expectedVersion, template)];
   }));
 }
-export function prepareTemplateSeeds(root, oldVersion, nextVersion) {
+export function prepareTemplateSeeds(root, oldVersion, nextVersion, { legacyInventory = false } = {}) {
   version(nextVersion);
-  const output = new Map([[SEED_MARKER, JSON.stringify({schema: 1, version: nextVersion, templates: SEED_TEMPLATES}, null, 2) + '\n']]);
-  for (const [template, files] of readTemplateSeeds(root, oldVersion)) {
+  if (legacyInventory) assert(/^3\.[01]\./.test(nextVersion), 'legacy seed inventory is only valid for the historical 3.0/3.1 lines');
+  const templates = legacyInventory ? LEGACY_SEED_TEMPLATES : SEED_TEMPLATES;
+  const output = new Map([[SEED_MARKER, JSON.stringify({schema: 1, version: nextVersion, templates}, null, 2) + '\n']]);
+  for (const [template, files] of readTemplateSeeds(root, oldVersion, { legacyInventory })) {
     const manifest = JSON.parse(files.get('admin/package.json')), lock = JSON.parse(files.get('admin/package-lock.json'));
     for (const p of [manifest, lock.packages['']]) for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies']) for (const name of Object.keys(p[kind] ?? {})) if (NPM.includes(name)) p[kind][name] = `=${nextVersion}`;
     for (const [path, entry] of Object.entries(lock.packages)) if (NPM.includes(npmName(path))) {
