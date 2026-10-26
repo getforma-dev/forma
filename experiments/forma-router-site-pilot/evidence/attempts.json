@@ -1,0 +1,23 @@
+{
+  "scope": "Rejected attempts retained locally; none qualifies the pilot.",
+  "attempts": [
+    {
+      "attempt": "initial global candidate install",
+      "accepted": false,
+      "reason": "The real website API-reference build requires @getforma/core 3.0.0 and correctly refused the 3.1.0 candidate. Source build aliases preserve that guard in the accepted pilot.",
+      "logSha256": "c65404589ef0d1af7fcfc7bc7d30c898db8fd45e75ee4df6e3c3f77b171248fb"
+    },
+    {
+      "attempt": "browser-chromium-first.json",
+      "accepted": false,
+      "reason": "Harness imported CommonJS Playwright as named ESM exports; it failed before browser launch.",
+      "receiptSha256": "a6942b6debc7c1e4819992af43ec77ce744e46dc3283142a2759c7b31f30793c"
+    },
+    {
+      "attempt": "browser-chromium-second.json",
+      "accepted": false,
+      "reason": "Five Chromium scenarios passed; the native-lab locator omitted the real count=7 query and timed out.",
+      "receiptSha256": "98e6a2e3912159a0127f515343ebefe65472927081be1b8056c6eb3cc8bd2f2a"
+    }
+  ]
+}
