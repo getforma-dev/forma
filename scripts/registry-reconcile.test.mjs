@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {reconcile, validatePolicy} from './registry-reconcile.mjs';
+import {validatePublicationRecoveryProof} from './release-publication-recovery.mjs';
 
 const identities = [
   ['npm', '@getforma/core', 'getforma-dev/formajs'],
@@ -103,6 +104,45 @@ const codes = result => result.findings.map(f => f.code);
 // Offline synthetic providers only. The injected finite plan has the same
 // strict contract as the audited plan, but its archive hashes describe these
 // small fixture bytes; it is never a live publication/qualification receipt.
+function syntheticRecoveryProof(plan) {
+  const original = plan.original;
+  const actualRun = {repository: {full_name: 'getforma-dev/forma'}, id: original.runId,
+    run_attempt: original.runAttempt, head_sha: original.commit, head_branch: original.tag,
+    path: original.workflow, event: original.event, status: 'completed', conclusion: 'failure'};
+  const provider = {latestRun: clone(actualRun), attempt: clone(actualRun),
+    jobs: {total_count: plan.jobs.length, jobs: plan.jobs.map(job => ({...job,
+      run_id: original.runId, run_attempt: original.runAttempt, head_sha: original.commit,
+      head_branch: original.tag, status: 'completed', steps: job.name === 'record'
+        ? [{name: 'Write DS12, the compatibility record and elapsed time', conclusion: 'failure'}]
+        : job.name === 'verify' ? [{name: 'P17 packed corpus and both templates', conclusion: 'success'}] : [],
+    }))},
+    tagRef: {ref: `refs/tags/${original.tag}`, object: {type: 'tag', sha: original.tagObject}},
+    annotatedTag: {tag: original.tag, sha: original.tagObject, object: {type: 'commit', sha: original.commit}},
+    inventory: {total_count: 2, artifacts: Object.values(plan.artifacts).map(item => ({id: item.id,
+      name: item.name, size_in_bytes: item.bytes, digest: `sha256:${item.sha256}`, expired: false,
+      workflow_run: {id: original.runId, head_sha: original.commit, head_branch: original.tag},
+      archive_download_url: `https://api.github.com/repos/getforma-dev/forma/actions/artifacts/${item.id}/zip`}))},
+    recordLog: `release-record: ${original.failure}\n`,
+  };
+  const ds11 = {content: '{"fixture":"synthetic DS11; not qualification"}\n', sha256sums: 'synthetic checksums\n'};
+  plan.artifacts.packed.setSha256 = sha(ds11.content);
+  plan.artifacts.packed.manifestSha256 = sha(ds11.sha256sums);
+  const d14 = {files: Object.fromEntries(Object.keys(plan.d14).map(name => [name, `${name}: synthetic test input\n`])),
+    binding: {}, scope: 'offline test only'};
+  for (const [name, bytes] of Object.entries(d14.files)) plan.d14[name] = sha(bytes);
+  return {contract: 'forma-publication-recovery-proof-v1', disposition: 'inventory-only', original: clone(original),
+    planSha256: sha(JSON.stringify(plan)), provider, ds11,
+    p17: {...plan.artifacts.p17, filesVerified: 1, passed: true, elapsedSeconds: 1200, rawEvidenceAttached: false},
+    d14, registry: plan.packages.map(item => {
+      const archiveUrl = item.registry === 'npm'
+        ? `https://registry.npmjs.org/${item.name}/-/${item.name.split('/')[1]}-${item.version}.tgz`
+        : `https://static.crates.io/crates/${item.name}/${item.name}-${item.version}.crate`;
+      const metadata = item.registry === 'npm'
+        ? {name: item.name, version: item.version, dist: {integrity: item.integrity, shasum: item.shasum, tarball: archiveUrl}}
+        : {version: {crate: item.name, num: item.version, checksum: item.sha256, yanked: false}};
+      return {...item, archiveUrl, metadataUrl: 'offline synthetic fixture', metadata};
+    })};
+}
 function recoveryFixture() {
   const f = fixture('3.2.0-rc.2', true), original = fixture('3.2.0-rc.1', true);
   const plan = JSON.parse(readFileSync(new URL('../docs/release/publication-recovery-3.2-rc1.json', import.meta.url), 'utf8'));
@@ -120,7 +160,8 @@ function recoveryFixture() {
       p.shasum = createHash('sha1').update(bytes).digest('hex');
     }
   }
-  const proofBytes = Buffer.from(JSON.stringify({ fixture: 'synthetic offline provenance; not qualification' }));
+  const proofValue = syntheticRecoveryProof(plan);
+  let proofBytes = Buffer.from(JSON.stringify(proofValue));
   const proof = { asset: `publication-recovery-${plan.original.tag}-proof.json`, sha256: sha(proofBytes), bytes: proofBytes.length };
   const preparedBy = {tag: f.record.tag, commit: f.record.commit, runId: Number(f.record.run), runAttempt: 1,
     workflow: '.github/workflows/release.yml', event: 'push', job: 'check'};
@@ -131,7 +172,7 @@ function recoveryFixture() {
     preparedAt: '2026-10-27T05:00:00.000Z', recordedAt: '2026-10-27T05:01:00.000Z'};
   const host = f.releases.get('getforma-dev/forma')[0], assets = new Map();
   const providerAsset = (id, name, bytes) => ({id, name, size: bytes.length, digest: `sha256:${sha(bytes)}`});
-  f.plan = plan; f.receipt = receipt; f.host = host; f.assetBodies = assets;
+  f.plan = plan; f.receipt = receipt; f.host = host; f.assetBodies = assets; f.proof = proofValue;
   f.sync = () => {
     const receiptBytes = Buffer.from(JSON.stringify(receipt));
     const pointer = {contract: receipt.contract, originalTag: plan.original.tag,
@@ -140,6 +181,11 @@ function recoveryFixture() {
     assets.set(124, receiptBytes); assets.set(125, proofBytes);
     host.assets = [providerAsset(123, 'release-record.json', Buffer.from(JSON.stringify(f.record))),
       providerAsset(124, pointer.asset, receiptBytes), providerAsset(125, pointer.proof.asset, proofBytes)];
+  };
+  f.syncProof = () => {
+    proofBytes = Buffer.from(JSON.stringify(f.proof));
+    receipt.proof = {asset: proof.asset, sha256: sha(proofBytes), bytes: proofBytes.length};
+    f.sync();
   };
   f.syncHost = () => { host.assets[0] = providerAsset(123, 'release-record.json', Buffer.from(JSON.stringify(f.record))); };
   f.sync();
@@ -159,7 +205,9 @@ function alterAssetByte(f, id) {
 }
 
 test('authenticated inventory-only recovery verifies all original and host archives without baseline promotion', async () => {
-  const f = recoveryFixture(), policy = clone(f.policy), result = await f.run();
+  const f = recoveryFixture(), policy = clone(f.policy);
+  assert.equal(validatePublicationRecoveryProof(f.proof, f.plan), f.proof);
+  const result = await f.run();
   assert.equal(result.passed, true, JSON.stringify(result.findings));
   assert.equal(result.verifiedArchives.length, 16);
   const recovered = result.verifiedArchives.filter(row => row.version === '3.2.0-rc.1');
@@ -189,6 +237,27 @@ test('recovery receipt semantic refusals preserve the independently valid host b
     assert(codes(result).includes('RECORD_INVALID'), JSON.stringify(result.findings));
     assert.equal(result.verifiedArchives.length, 8);
     assert(result.verifiedArchives.every(row => row.version === '3.2.0-rc.2'));
+    assert.equal(result.findings.filter(row => row.code === 'MISS_RECORD').length, 8);
+  });
+});
+
+test('internally rehashed recovery proofs still require the complete shared semantic contract', async t => {
+  for (const [name, change] of [
+    ['wrong schema', proof => { proof.contract = 'other-proof-v1'; }],
+    ['incomplete proof', proof => { delete proof.provider; }],
+    ['original failure erased', proof => { proof.provider.latestRun.conclusion = 'success'; }],
+    ['original source changed', proof => { proof.original.commit = 'c'.repeat(40); }],
+    ['partial registry inventory', proof => { proof.registry.pop(); }],
+    ['registry metadata mismatch', proof => { proof.registry.find(item => item.registry === 'npm').metadata.dist.integrity = 'wrong'; }],
+    ['DS11 bytes altered', proof => { proof.ds11.content += ' '; }],
+    ['D14 bytes altered', proof => { proof.d14.files['d14-report.json'] += ' '; }],
+    ['P17 qualification promoted', proof => { proof.p17.rawEvidenceAttached = true; }],
+  ]) await t.test(name, async () => {
+    const f = recoveryFixture(); change(f.proof); f.syncProof();
+    const result = await f.run();
+    assert.equal(result.passed, false);
+    assert(codes(result).includes('RECORD_INVALID'), JSON.stringify(result.findings));
+    assert.equal(result.verifiedArchives.length, 8, 'valid host survives, no recovered claims enter');
     assert.equal(result.findings.filter(row => row.code === 'MISS_RECORD').length, 8);
   });
 });

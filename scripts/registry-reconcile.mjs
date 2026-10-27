@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
 import { packageIdentitiesForVersion } from './release-package-inventory.mjs';
-import { recoveryPlanForTag, validatePublicationRecoveryReceipt,
+import { recoveryPlanForTag, validatePublicationRecoveryReceipt, validatePublicationRecoveryProof,
   PUBLICATION_RECOVERY_CONTRACT, PUBLICATION_RECOVERY_MAX_BYTES } from './release-publication-recovery.mjs';
 
 const identities = [
@@ -177,9 +177,11 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
       { hostTag: record.tag, hostCommit: record.commit, hostRunId: String(record.run), plan });
     assert.deepEqual(receipt.proof, pointer.proof, 'publication recovery receipt/proof pointer differs');
     const proofAsset = await boundAsset(pointer.proof);
+    validatePublicationRecoveryProof(JSON.parse(proofAsset.bytes.toString('utf8')), plan);
     // The shared validator admits inventory-only claims, never qualification.
-    // Add the complete set only after both linked assets authenticate. Duplicate
-    // claims deliberately remain separate records for AMBIGUOUS_RECORD below.
+    // Add the complete set only after both linked assets authenticate and their
+    // semantic contracts pass. Duplicate claims deliberately remain separate
+    // records for AMBIGUOUS_RECORD below.
     for (const p of receipt.packages) {
       addRecord(p, { ...source, kind: 'publication-recovery', assetId: receiptAsset.asset.id,
         assetSha256: pointer.sha256, proofAssetId: proofAsset.asset.id,

@@ -43,8 +43,11 @@ the DS12 pointer's exact asset names, hashes and lengths. The shared strict
 validator binds the receipt to the actual host tag, commit and recorder run, and
 to the audited original publication tuple and complete eight-package inventory.
 The receipt must declare `inventory-only`, with performance-baseline and soak
-eligibility both false. The receipt contributes no partial package set if any
-linked asset or contract fails validation.
+eligibility both false. After authenticating the proof bytes, the shared proof
+validator also checks its original failure/provider tuple, DS11/D14 bindings,
+bounded P17 description and complete registry inventory. Matching asset hashes
+alone do not admit a wrong-schema or incomplete proof. The receipt contributes
+no partial package set if any linked asset or semantic contract fails validation.
 
 Recovered packages then undergo the same registry inventory and archive-download
 checks as ordinary recorded packages. Missing versions, unreadable sources and
