@@ -12,6 +12,11 @@ RC1's eight archives were published before its record job failed. RC2 now hosts
 the separate inventory-only receipt. The [incident record and dated follow-up](3.2-RECORD-RECOVERY.md)
 preserve the failed original outcome without granting RC1 qualification or soak credit.
 
+Current source prepares a coordinated RC4 successor for the reviewed router
+cleanup and maintained R17 scheduling changes. [Its preparation record](3.2-RC4-PREPARATION.md)
+lists the evidence still required. Earlier archives, tags and failures stay
+immutable; a local version string does not establish publication.
+
 ## 3.2 router preparation
 
 The [router implementation record](../design/router/README.md) preserves the

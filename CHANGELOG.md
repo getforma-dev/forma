@@ -14,6 +14,19 @@ RC3 publication completed on 2026-10-27; its
 [dated outcome](docs/release/3.2-RC3-PUBLICATION.md) supplements the unchanged
 preparation entries below. New changes in this section are not in that release.
 
+## [3.2.0-rc.4] - Preparation checkpoint
+
+- Prepare the eight coordinated versions and source template seeds for the
+  reviewed Link URL-policy and uncertain-outcome wording fixes, unused type-field
+  removal, and islands/navigation documentation clarification.
+- Integrate a maintained R17 schedule with shared stage implementations, explicit
+  resource admission, a complete serial fallback before work begins, and owned
+  parallel cleanup. No test, resource threshold or sampling requirement is removed.
+- Require fresh source/platform/packed qualification, native paired-size proof
+  and independent whole-release review. The previous N7 failure and both scheduler
+  development pilots retain their original scopes. Preparation is not publication
+  or stable acceptance. See [RC4 preparation](docs/release/3.2-RC4-PREPARATION.md).
+
 ## [3.2.0-rc.3] - Prepared; publication pending
 
 - Prepare all eight coordinated versions and starter locks/seeds. Stable 3.1.0

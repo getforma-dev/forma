@@ -38,13 +38,17 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-The coordinated [3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) package set is published as a prerelease;
-the latest stable set remains [3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).
-See [release records](../../docs/release/README.md) for stable acceptance
-and the [routing guide](../../docs/ROUTING.md) for a published RC3 walkthrough.
+This source uses coordinated version `3.2.0-rc.4`. The command below requires
+that exact version to be published; check its matching release record before
+installing a candidate. For a walkthrough using the published
+[3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) set,
+see the [routing guide](../../docs/ROUTING.md). The latest stable set remains
+[3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).
+[Release records](../../docs/release/README.md) keep preparation, publication
+and stable acceptance separate.
 
 ```bash
-npm install @getforma/core@3.2.0-rc.3
+npm install @getforma/core@3.2.0-rc.4
 ```
 
 For the separate stable 2.1.0 runtime, the following URLs are retained only as
