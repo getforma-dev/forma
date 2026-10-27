@@ -2,17 +2,39 @@
 
 ## [Unreleased]
 
+## [3.2.0-rc.2] - Prepared; publication pending
+
+This successor requires coordinated version preparation, fresh independent review,
+exact-source CI and its own tagged packed qualification before publication. RC.1's
+registry versions and original failed record attempt remain immutable.
+
 - FORMA-301: add optional `@getforma/router` for browser routes, verified
   generated HTML and typed native SSR navigation. Compatible nested layouts
   retain their DOM/state while departing owners dispose and destination islands
   adopt fresh server HTML. Include bounded cancellation/history, typed actions,
   mutation uncertainty, context revocation and explicit document fallbacks.
 - Add optional core native-owner APIs, compiler/build navigation groups and the
-  `native-router` starter. Prepare the eight-package coordinated future-minor
-  inventory and packed qualification without changing published 3.1.0 versions
-  or existing non-router size limits. Preserve the reverse-engineering studies,
-  negative controls and [qualification ledger](docs/design/router/qualification.md).
-  The new router is not part of the published release below.
+  `native-router` starter to the eight-package coordinated 3.2 inventory. Preserve
+  published 3.1.0 versions, existing non-router size limits, reverse-engineering
+  studies, negative controls and the
+  [qualification ledger](docs/design/router/qualification-3.2.md).
+- D14-3.2-010: require a nonempty changelog entry for the exact tag before either
+  publisher. Preflight and DS12 generation use the same parser. Missing, empty,
+  neighboring-version and uncommitted-only entries cannot qualify; original
+  preflight failure controls and the corrected checks remain distinct.
+
+## [3.2.0-rc.1] - Registry publication completed; release record failed
+
+[Release run 40433276229](https://github.com/getforma-dev/forma/actions/runs/40433276229)
+qualified the packed candidate and published all five npm packages and three
+crates from immutable tag `v3.2.0-rc.1`, commit
+`6e5e2e4937e5ed9dc60e6669cb4887508ccdbdb8`. Its record job then failed because
+that tagged root changelog had no exact `3.2.0-rc.1` entry. This is a partial
+release: registry publication and successful P17 do not establish successful
+workflow completion, a DS12 release record or hosted burn-in acceptance.
+The original tag, published archive identities and failed run are retained.
+Any separately authenticated archival record recovery must disclose that later
+recovery and cannot turn the failed original job into a successful one.
 
 ## [3.1.0] - 2026-10-26
 

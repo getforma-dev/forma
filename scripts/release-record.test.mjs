@@ -8,16 +8,22 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { recordEvidence } from './release-evidence.mjs';
-import { auditInputManifest, AUDIT_FILES } from './release-audit.mjs';
+import { auditInputManifest, AUDIT_FILES, readRcAudit } from './release-audit.mjs';
+import { checkReleaseQualification } from './check-release-qualification.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const encode = value => JSON.stringify(value, null, 2) + '\n';
-async function evidenceFixture(t, { rc = false } = {}) {
+async function evidenceFixture(t, { rc = false, version = '3.0.0', changelog } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'forma-record-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   git('init', '--quiet'); git('config', 'user.name', 'Finite control'); git('config', 'user.email', 'control@example.invalid');
   writeFileSync(join(root, 'runtime.js'), 'export const actual = true;\n');
+  if (changelog !== undefined) {
+    writeFileSync(join(root, 'CHANGELOG.md'), changelog);
+    mkdirSync(join(root, 'scripts'));
+    writeFileSync(join(root, 'scripts/release-contracts.json'), encode({ version }));
+  }
   git('add', '.'); git('commit', '--quiet', '-m', 'review input');
   const reviewed = git('rev-parse', 'HEAD');
   if (rc) {
@@ -38,7 +44,7 @@ async function evidenceFixture(t, { rc = false } = {}) {
   const reportPath = join(p17, 'p17.json'), report = { commit, passed: true, measurements: { full: 'retained' } };
   writeFileSync(reportPath, encode(report)); writeFileSync(join(p17, 'raw/trace.json'), '[1,2,3]\n');
   const manifestSha256 = await recordEvidence(p17);
-  const set = { commit, run: '12345', tag: rc ? 'v3.0.0-rc.1' : 'v3.0.0-beta.1' };
+  const set = { commit, run: '12345', tag: rc ? `v${version}-rc.1` : `v${version}-beta.1` };
   const env = { GITHUB_SHA: commit, GITHUB_RUN_ID: '12345', GITHUB_RUN_ATTEMPT: '2', P17_RUN_ATTEMPT: '2', P17_MANIFEST_SHA256: manifestSha256 };
   return { root, directory, reportPath, set, env, report, p17, git };
 }
@@ -164,6 +170,47 @@ test('stable tags cannot select prereleases or other version prefixes', () => {
   const source = '## [3.0.0-alpha.1]\n\nPreview.\n\n## 3.0.01\n\nDifferent version.\n';
   assert.throws(() => changelogEntry(source, '3.0.0'), /missing CHANGELOG/);
   assert.throws(() => changelogEntry('## [3.0.0]\n\n## [2.1.0]\nOld.', '3.0.0'), /empty CHANGELOG/);
+});
+
+// These synthetic Git/audit fixtures reproduce the missing exact-entry shape
+// that failed RC.1 recording after publication; they are not release receipts.
+const rc1MissingEntry = '# Changelog\n\n## [Unreleased]\n\n- FORMA-301 router work.\n\n## [3.1.0]\n\nPublished predecessor.\n';
+
+test('pre-publication rejects the RC.1 missing-entry shape despite accepted audit evidence', async t => {
+  const f = await evidenceFixture(t, { rc: true, version: '3.2.0', changelog: rc1MissingEntry });
+  assert.equal(readRcAudit(f.set.commit, f.root).binding.rcCommit, f.set.commit);
+  const check = commit => checkReleaseQualification({ tag: 'v3.2.0-rc.1', commit, root: f.root });
+  await assert.rejects(check(f.set.commit), /missing CHANGELOG entry for 3\.2\.0-rc\.1/);
+  const repaired = rc1MissingEntry.replace('## [Unreleased]', '## [3.2.0-rc.1]');
+  writeFileSync(join(f.root, 'CHANGELOG.md'), repaired);
+  await assert.rejects(check(f.set.commit), /missing CHANGELOG entry for 3\.2\.0-rc\.1/, 'an uncommitted patch cannot repair the tagged source');
+  f.git('add', 'CHANGELOG.md'); f.git('commit', '--quiet', '-m', 'synthetic exact entry');
+  const commit = f.git('rev-parse', 'HEAD'), result = await check(commit);
+  assert.equal(result.milestone, 'rc'); assert.equal(result.audit.rcCommit, commit);
+});
+
+test('pre-publication refuses empty or neighboring-version entries and accepts the exact RC.2 entry', async t => {
+  for (const [changelog, message] of [
+    ['## [3.2.0-rc.2]\n  \n\t\n## [3.1.0]\n\nPrevious release.\n', /empty CHANGELOG entry for 3\.2\.0-rc\.2/],
+    ['## [3.2.0-rc.20]\n\nAnother RC.\n\n## [3.2.0]\n\nStable.\n', /missing CHANGELOG entry for 3\.2\.0-rc\.2/],
+  ]) {
+    const f = await evidenceFixture(t, { rc: true, version: '3.2.0', changelog });
+    await assert.rejects(checkReleaseQualification({ tag: 'v3.2.0-rc.2', commit: f.set.commit, root: f.root }), message);
+  }
+  const f = await evidenceFixture(t, { rc: true, version: '3.2.0', changelog: '## [3.2.0-rc.2] - Prepared\r\n\r\n- Exact candidate changes.\r\n' });
+  const result = await checkReleaseQualification({ tag: 'v3.2.0-rc.2', commit: f.set.commit, root: f.root });
+  assert.equal(result.milestone, 'rc'); assert.equal(result.audit.rcCommit, f.set.commit);
+});
+
+test('every publishing milestone refuses a missing exact changelog entry before hosted readers', async t => {
+  const f = await evidenceFixture(t, { rc: true, version: '3.2.0', changelog: rc1MissingEntry });
+  let calls = 0;
+  const reader = async () => { calls++; throw Error('must not reach hosted reader'); };
+  for (const suffix of ['-alpha.1', '-beta.1', '-rc.1', '']) {
+    const version = `3.2.0${suffix}`;
+    await assert.rejects(checkReleaseQualification({ tag: `v${version}`, commit: f.set.commit, root: f.root, finalReader: reader, deferredReader: reader }), error => error.message === `missing CHANGELOG entry for ${version}`);
+  }
+  assert.equal(calls, 0);
 });
 
 test('the Release notes carry one line of P17\'s measurements when it took them, and nothing otherwise', () => {
