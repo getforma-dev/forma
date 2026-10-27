@@ -1,202 +1,214 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "aa3f913f7e9cefcdd808066ca58823a5eed4b54c",
-  "reviewedTree": "10bcae43d78f4b4f311b9bf370a8e350a5461c4b",
-  "inputManifestSha256": "6977f0cca1649f89cb1db4b24a5402280a0cc77ad0d5873d079f37a591e5c0ba",
+  "reviewedCommit": "bb39371cab3def78fe49228ef7601e967a77d9c1",
+  "reviewedTree": "d476df4935811842d2d8353157847ff5722ba501",
+  "inputManifestSha256": "451e0908152b98c636e0567d33deddcd1f6c1fc70cda16f8d31299fae130bb1c",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "18b9c93ce51d16b82296e47b20a83f03cfed0b6d323e400f4953b3ed323e69c7"
+    "sessionEvidenceSha256": "9e9a9c753807813b9caee36d9adb2cce1fc70bc10c0143f831e7f3d937faaec6"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "26e129738457067c2fc0debb6e4489b68801b0440ba82537f81229e53fa1bf02"
+    "sessionEvidenceSha256": "b07563a3369fd7f4776ec5e1d94b735d1b4078b82b82bad62f82b92982dc8b02"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "eb6b86524404316b58f96c015075a2dd30656bcbb6414397577d77cca0281019"
+    "initializationEvidenceSha256": "31c7affec564b8c2e4ac1412eba3dc8422bb3d3fd79953d4e23bf149ae1df0f0"
   },
-  "reviewedAt": "2026-10-27T16:57:59.849Z",
+  "reviewedAt": "2026-10-27T17:19:15.888Z",
   "accepted": true,
   "findings": [
     {
       "id": "D14-3.2-001",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Historical recovery defect remains resolved. Exact current source sets irreversible before owner commit, detaches a failed session before cleanup and fences reentrant generation/mutation authority. The unchanged 0e11 product has fresh original packed navigation/security evidence; original older causal controls retain their original identities.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Historical recovery defect remains resolved. Exact current source sets irreversible before owner commit, detaches a failed session before cleanup and fences reentrant generation/mutation authority. The unchanged 0e11 product has fresh original packed navigation/security evidence; original older causal controls retain their original identities.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-002",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Current prepared 3.2.0 documentation now also corrects all five compiler/build/crate READMEs: install/peer/manifest recipes name 3.2.0 and native navigation has no stale RC2/RC3 prerelease framing. Historical removals, migration/window examples and placeholder disclosure remain intact. Exact doc-only successor review preserves all earlier substantive source/security evidence and future publication/site boundaries.",
-      "evidenceSha256": "bc9e22c1f586dcab9f75e11e1f508969d4849e0a8de37c47071491f4d455d151"
+      "rationale": "Prepared stable 3.2.0 documentation now additionally corrects core CHANGELOG, CSP history and support metadata. Historical preparation and publication-record boundaries remain explicit. Complete exact delta was independently read; unchanged focused docs-truth suite passed 20/20 on identical doc/test bytes. Prior five README corrections and substantive source/security review remain retained.",
+      "evidenceSha256": "ebe18c3cd3608da197aa46357e5ccc2716ff06f530482ea8980503903b6708f1"
     },
     {
       "id": "D14-3.2-003",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Native-router advisory coverage remains in the complete shipped-lock inventory. Original 0e11 P17 includes fresh advisories over every shipped crate lock and all three starter paths. Stable canonical version changes preserve the external dependency graph; actual stable-tag checks remain mandatory.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Native-router advisory coverage remains in the complete shipped-lock inventory. Original 0e11 P17 includes fresh advisories over every shipped crate lock and all three starter paths. Stable canonical version changes preserve the external dependency graph; actual stable-tag checks remain mandatory.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-004",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The repaired consumer workflows retain scripts-off complete installations, registry signatures/advisories and pinned cargo-deny checks. Current original packed starter and platform evidence is applicable to the unchanged source/API and canonical stable pins. No future registry signature outcome is inferred.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The repaired consumer workflows retain scripts-off complete installations, registry signatures/advisories and pinned cargo-deny checks. Current original packed starter and platform evidence is applicable to the unchanged source/API and canonical stable pins. No future registry signature outcome is inferred.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-005",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "The historical founder-authorized broad bootstrap credential remains a disclosed governance exception with original removal/token-absence/trust-policy observations. Subsequent RC2/RC3 ordinary OIDC publication is recorded, and the final workflow introduces no bootstrap credential or trust bypass. Independent attestation signature-chain verification is not claimed.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The historical founder-authorized broad bootstrap credential remains a disclosed governance exception with original removal/token-absence/trust-policy observations. Subsequent RC2/RC3 ordinary OIDC publication is recorded, and the final workflow introduces no bootstrap credential or trust bypass. Independent attestation signature-chain verification is not claimed.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-006",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Held-POP click handling still resolves the raw href through the committed-view eligibility path, leaving a missing href native. The same router source passes original 0e11 native consumers in three engines. Earlier causal controls are preserved as earlier executions.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Held-POP click handling still resolves the raw href through the committed-view eligibility path, leaving a missing href native. The same router source passes original 0e11 native consumers in three engines. Earlier causal controls are preserved as earlier executions.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-007",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Current source inserts the current scroll key and prunes to 1000 immediately after current-entry assignment, before reactive value/title callbacks. No cap or ownership boundary changed; current native/browser evidence and unchanged runtime support applicability.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Current source inserts the current scroll key and prunes to 1000 immediately after current-entry assignment, before reactive value/title callbacks. No cap or ownership boundary changed; current native/browser evidence and unchanged runtime support applicability.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-008",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Version-selected five-npm/eight-total package observer coverage and finite router holding-archive handling remain intact. RC3 actually recorded the exact inventory-only router receipt. Unknown stubs, changed bytes and duplicate inventory claims remain refused. Full SR2 is not claimed because historical derive 0.0.0 remains FORMA-224.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Version-selected five-npm/eight-total package observer coverage and finite router holding-archive handling remain intact. RC3 actually recorded the exact inventory-only router receipt. Unknown stubs, changed bytes and duplicate inventory claims remain refused. Full SR2 is not claimed because historical derive 0.0.0 remains FORMA-224.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-009",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "The duplicate unknown-outcome warning is now repaired: announce does not append unknownMessage when that exact warning is already the text. Current automated tests and original packed source preserve persistent uncertainty and one-send behavior. No fresh human spoken-output observation is invented.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The duplicate unknown-outcome warning is now repaired: announce does not append unknownMessage when that exact warning is already the text. Current automated tests and original packed source preserve persistent uncertainty and one-send behavior. No fresh human spoken-output observation is invented.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-010",
       "severity": "high",
       "disposition": "resolved",
-      "rationale": "The high-severity historical RC1 record failure remains high/resolved. Exact-version changelog preflight and the shared parser remain enforced, and the frozen stable source has a real 3.2.0 changelog entry. Current release-helper controls pass; RC1 remains its immutable failed workflow and inventory-only recovery.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The high-severity historical RC1 record failure remains high/resolved. Exact-version changelog preflight and the shared parser remain enforced, and the frozen stable source has a real 3.2.0 changelog entry. Current release-helper controls pass; RC1 remains its immutable failed workflow and inventory-only recovery.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-011",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Shared semantic validation of recovered evidence remains before recovered claims are admitted. The finite placeholder plan remains inventory-only and cannot manufacture qualification or clean full reconciliation. Release-helper integration controls retain the original cause/binding checks.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Shared semantic validation of recovered evidence remains before recovered claims are admitted. The finite placeholder plan remains inventory-only and cannot manufacture qualification or clean full reconciliation. Release-helper integration controls retain the original cause/binding checks.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-3.2-012",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "Historical N7 misses remain misses, including original p95 748.73 s and 665.29 s and the later incomplete campaign with a real watch failure. Current 0e11 R17 at 620 s is one functional observation, not a distribution. The later direct user decision explicitly authorizes skipping non-security repetition; the new N7 campaign is waived, never passed. No CPU/cache cause, speedup or full original timing conformity is claimed.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Historical N7 misses remain misses, including original p95 748.73 s and 665.29 s and the later incomplete campaign with a real watch failure. Current 0e11 R17 at 620 s is one functional observation, not a distribution. The later direct user decision explicitly authorizes skipping non-security repetition; the new N7 campaign is waived, never passed. No CPU/cache cause, speedup or full original timing conformity is claimed.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-RC3-001",
       "severity": "info",
       "disposition": "resolved",
-      "rationale": "The original RC3 donor-identity and collection condition remains historically resolved. Its twenty original observations remain intact and its failed timing target is preserved under D14-3.2-012. This historical closure does not supply a new stable N7 campaign.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The original RC3 donor-identity and collection condition remains historically resolved. Its twenty original observations remain intact and its failed timing target is preserved under D14-3.2-012. This historical closure does not supply a new stable N7 campaign.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-RC3-002",
       "severity": "info",
       "disposition": "resolved",
-      "rationale": "The original RC3 P17 authentication remains historical. Separately, original 0e11 P17 run 40537706950 attempt 1 authenticates 75/75 in 1303.893 s against published RC3. This reviewer replayed its security and performance validators over preserved raw data. It is a rehearsal, not stable-tag execution.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The original RC3 P17 authentication remains historical. Separately, original 0e11 P17 run 40537706950 attempt 1 authenticates 75/75 in 1303.893 s against published RC3. This reviewer replayed its security and performance validators over preserved raw data. It is a rehearsal, not stable-tag execution.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-RC3-003",
       "severity": "info",
       "disposition": "resolved",
-      "rationale": "The original RC3 binding and substantive stable3e296 audit remain historical. This actual independent successor review binds exact stable commit aa3f913f7e9cefcdd808066ca58823a5eed4b54c / tree 10bcae43d78f4b4f311b9bf370a8e350a5461c4b with all5032 tracked blobs and modes. The complete delta is five reviewed public README corrections; runtime/gates/versions/profile are unchanged. All non-audit source gates are done or explicitly waived and audit alone remains pending.",
-      "evidenceSha256": "bc9e22c1f586dcab9f75e11e1f508969d4849e0a8de37c47071491f4d455d151"
+      "rationale": "Historical RC3 and prior stable bindings remain retained. This independent fresh-context successor binds exact bb39371cab3def78fe49228ef7601e967a77d9c1 / tree d476df4935811842d2d8353157847ff5722ba501, all 5032 tracked blobs and modes. Entire new delta is three core metadata documents plus documentation-gate scope and audit reopened pending; no runtime/tests/workflows/version/waiver change.",
+      "evidenceSha256": "ebe18c3cd3608da197aa46357e5ccc2716ff06f530482ea8980503903b6708f1"
     },
     {
       "id": "D14-RC3-004",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "RC3 subsequently recorded the finite router placeholder inventory receipt; it remains inventory-only. Inherited forma-ir-derive 0.0.0 accounting remains FORMA-224 without an exemption or clean-SR2 claim. This historical accounting residual does not authorize changing archive identity or publication provenance.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: RC3 subsequently recorded the finite router placeholder inventory receipt; it remains inventory-only. Inherited forma-ir-derive 0.0.0 accounting remains FORMA-224 without an exemption or clean-SR2 claim. This historical accounting residual does not authorize changing archive identity or publication provenance.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-RC3-005",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "The earlier wrong-source preflight/unintended-helper operational attempt stays invalid without qualification credit. Separate original 0e11 eight-archive/native90/paired-size receipts authenticate the intended source, installed products and complete owned cleanup.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The earlier wrong-source preflight/unintended-helper operational attempt stays invalid without qualification credit. Separate original 0e11 eight-archive/native90/paired-size receipts authenticate the intended source, installed products and complete owned cleanup.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-RC3-006",
       "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "Ordinary R17 reports with sourceClean=false remain original observations; unrecorded dirty paths are not invented. The separate original packed P17 requires and supplies clean-source security proof. This reviewer replayed that stronger P17 hostile/expression evidence and current harness identity successfully.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Ordinary R17 reports with sourceClean=false remain original observations; unrecorded dirty paths are not invented. The separate original packed P17 requires and supplies clean-source security proof. This reviewer replayed that stronger P17 hostile/expression evidence and current harness identity successfully.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-STABLE-001",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "The one-hour active soak, new N7 twenty-run campaign, extra prerelease solely for soak and staged production rollback exercise are explicitly waived under the actual 2026-10-27 maintainer decision. Zero active seconds and no soak/N7 pass or future-soak promise are claimed. This reduces repetition/durability evidence; it does not waive security, core correctness, exact source review, final CI, tagged qualification or actual site verification.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The one-hour active soak, new N7 twenty-run campaign, extra prerelease solely for soak and staged production rollback exercise are explicitly waived under the actual 2026-10-27 maintainer decision. Zero active seconds and no soak/N7 pass or future-soak promise are claimed. This reduces repetition/durability evidence; it does not waive security, core correctness, exact source review, final CI, tagged qualification or actual site verification.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-STABLE-002",
       "severity": "info",
       "disposition": "resolved",
-      "rationale": "The exact finite 3.2.0 waiver implementation fails closed for other versions/gates/decisions and requires both waived rows together. Preflight and DS12 authenticate regular committed decision bytes and final-source D14. Current source preserves exact-main CI, tagged engine/P17 prerequisites, archive integrity and protected OIDC publishers. The 594-test helper integration suite passes with no failures/skips/cancellations.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: The exact finite 3.2.0 waiver implementation fails closed for other versions/gates/decisions and requires both waived rows together. Preflight and DS12 authenticate regular committed decision bytes and final-source D14. Current source preserves exact-main CI, tagged engine/P17 prerequisites, archive integrity and protected OIDC publishers. The 594-test helper integration suite passes with no failures/skips/cancellations.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-STABLE-003",
       "severity": "info",
       "disposition": "resolved",
-      "rationale": "Reviewed compiler watch recovery preserves refusal and coherent browser/IR publication while coalescing only actually observed source drift into a fresh generation; cancellation/disposal fences remain. R18 compile receipt admission remains bound to a live parent, source/output hashes and one consumed receipt, with owned cleanup. Hostile profile concurrency retains separate origins/contexts and every original case/control. Current source hashes equal the independently reviewed files, and original 0e11 hosted qualification is complete.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Reviewed compiler watch recovery preserves refusal and coherent browser/IR publication while coalescing only actually observed source drift into a fresh generation; cancellation/disposal fences remain. R18 compile receipt admission remains bound to a live parent, source/output hashes and one consumed receipt, with owned cleanup. Hostile profile concurrency retains separate origins/contexts and every original case/control. Current source hashes equal the independently reviewed files, and original 0e11 hosted qualification is complete.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-STABLE-004",
       "severity": "low",
       "disposition": "nonblocking",
-      "rationale": "Manual applicability is deliberately bounded: the original Mac Safari/VoiceOver/Reduce Motion confirmation and iPhone overall checklist feedback retain their actual source/session limits. No new unknown-outcome speech, theme assistive behavior, iPhone VoiceOver, mutation or BFCache result is claimed. Version/release-policy changes since 0e11 do not alter those UI paths.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Manual applicability is deliberately bounded: the original Mac Safari/VoiceOver/Reduce Motion confirmation and iPhone overall checklist feedback retain their actual source/session limits. No new unknown-outcome speech, theme assistive behavior, iPhone VoiceOver, mutation or BFCache result is claimed. Version/release-policy changes since 0e11 do not alter those UI paths.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-STABLE-005",
       "severity": "info",
       "disposition": "resolved",
-      "rationale": "The exact stable source manifest, retained provider bytes, semantic P17 replay, canonical 27-file version transformation, current reviewed-source hashes, original full core mutation applicability and final helper output were independently checked. The final profile adds only the reviewed finite release-helper rows and changes no stage/resource policy.",
+      "rationale": "The original substantive review and supporting observer evidence remain authenticated at their original source. Current successor changes three docs read by docs-truth, so the original mutation baseline all-read-bytes-identical premise cannot be reused. Runtime/security mutation source, assertions, corpus, harness and workflow are unchanged; applicability is explicitly bounded by the separate metadata review and 20/20 focused result in D14-STABLE-008. No new full mutation result is claimed.",
       "evidenceSha256": "2dcea4fb33e3c3d094b01627158ecdff6f6cf3b4cacb5ad3c3fc7e0e59f02d87"
     },
     {
       "id": "D14-STABLE-006",
       "severity": "info",
       "disposition": "nonblocking",
-      "rationale": "This accepts the prepared stable source audit, not future release outcomes. Exact final-main CI, tagged P17/engines, successful ordinary trusted publication/DS12 and final stable website/docs/download live acceptance remain required. Historical outer publication target misses and unmeasured active human effort are retained; a P17 elapsed value does not satisfy those different clocks.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: This accepts the prepared stable source audit, not future release outcomes. Exact final-main CI, tagged P17/engines, successful ordinary trusted publication/DS12 and final stable website/docs/download live acceptance remain required. Historical outer publication target misses and unmeasured active human effort are retained; a P17 elapsed value does not satisfy those different clocks.",
       "evidenceSha256": "64444f419f0348dab9c3f8ef42c474762de2af6968ee0d3dff3ce71ba74ab87e"
     },
     {
       "id": "D14-STABLE-007",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Five public package/crate READMEs retained stale3.0 installation recipes and RC2/RC3 navigation framing after the first stable-source audit. The exact documentation-only successor corrects those current references to3.2.0, preserving historical information and every implementation/publication boundary. The complete five-file diff was independently read and authenticated without repeating workloads.",
+      "rationale": "Retained from the earlier accepted audit; its original observation and review scope remain historical: Five public package/crate READMEs retained stale3.0 installation recipes and RC2/RC3 navigation framing after the first stable-source audit. The exact documentation-only successor corrects those current references to3.2.0, preserving historical information and every implementation/publication boundary. The complete five-file diff was independently read and authenticated without repeating workloads.",
       "evidenceSha256": "d1f0830991c1568cb32780889a2f2ddb079f9f7ab1ef1ac33631097fbcc7e82a"
+    },
+    {
+      "id": "D14-STABLE-008",
+      "severity": "low",
+      "disposition": "resolved",
+      "rationale": "The stable core metadata drift is corrected in CHANGELOG/CSP/SECURITY without weakening tests or security policy. Actual focused 20/20 execution applies to identical final document/test bytes. Documentation-gate scope now records the missing acceptance surface. Changed docs are baseline read inputs, so coverage applicability explicitly preserves original mutation identities and excludes an all-read-bytes-identical or fresh-full-baseline claim. Runtime/security mutation coverage remains applicable within that reviewed documentary exception.",
+      "evidenceSha256": "8ee534af709ca8417c19432b24bc8f336a9c43a64fb3ef04c0c173b1e9eef814"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "0b17bf0157eae1cfc5fb4045b452299c18d39dc9ff45492823d6865a33688b06"
+  "acceptanceEvidenceSha256": "a2dd18b279d004aacf805978882d29521f3bcbe60b3c1874417b02a6666136f3",
+  "inheritedAudit": {
+    "reportSha256": "3bac31e0b76ca25bcfdb69d7b20b13d51e0d727e47267bb46b8d11c31059dd08",
+    "reviewedCommit": "aa3f913f7e9cefcdd808066ca58823a5eed4b54c",
+    "scope": "Prior substantive observations retained; successor statements govern current source and changed doc read scope."
+  }
 }

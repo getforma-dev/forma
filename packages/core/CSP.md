@@ -237,7 +237,7 @@ If you see this with FormaJS v1.0.9+, the issue is outside FormaJS — check for
 
 ## Version History
 
-The 3.1.0 row describes the prepared final source; publication remains pending.
+The 3.2.0 row describes the coordinated release source.
 The release record, not this source-history table, establishes publication.
 It is not evidence that the package is available from a registry.
 
@@ -259,4 +259,5 @@ Verified by `src/__tests__/docs-truth.test.ts` > "CSP.md's version history ends 
 | 2.1.0 | Trusted Types: what core writes of its own passes `require-trusted-types-for 'script'; trusted-types forma forma-runtime` (its clears use `replaceChildren()`; the runtime's parser re-mints trusted markup through `forma-runtime`, and its diff of that markup writes no `on*` or script `src`), and every raw sink takes `trustedHtml()`, made by core's policy `forma`. Such a page reports only what the application writes as a string, the runtime's `srcdoc` bindings included. See [Trusted Types](#trusted-types). |
 | 3.0.0 | Published: refuses plain strings at raw APIs and refuses `h('script')`; runtime srcdoc bindings report coded refusals. Forma-server enforces both Trusted Types directives without requiring a reporting endpoint. |
 | 3.1.0 | Prepared: retains the raw-HTML and Trusted Types boundaries. Optional compiler templates mint their static markup through `trustedHtml()` and use the allowed `forma` policy. Publication is not established by this source table. |
-| Unreleased | Changes after the prepared 3.1.0 set will be recorded here. |
+| 3.2.0 | Optional native navigation retains the existing raw-HTML and Trusted Types boundaries. Native owner adoption uses the same scoped activation and cleanup contracts; routing does not relax CSP or grant new markup authority. |
+| Unreleased | Changes after the 3.2.0 set will be recorded here. |

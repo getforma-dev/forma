@@ -126,7 +126,7 @@
         },
         "FORMA-145 documentation": {
           "status": "done",
-          "scope": "Current 3.2.0 guides cover optional router APIs, islands/native navigation, three starters, coordinated installation/upgrade and known group limitations. Independent current-doc/canonical27 review is accepted; original 49 research inputs, 105 questions and 57 acceptance IDs remain verified. Website current docs and package pins update together after stable publication; no preview deployment is required."
+          "scope": "Current 3.2.0 guides cover optional router APIs, islands/native navigation, three starters, coordinated installation/upgrade and known group limitations. Independent current-doc/canonical27 review is accepted; original 49 research inputs, 105 questions and 57 acceptance IDs remain verified. Website current docs and package pins update together after stable publication; no preview deployment is required. Core CHANGELOG/CSP/support metadata identifies prepared 3.2.0; the focused docs-truth suite passes 20/20 after three main-CI metadata assertion failures, preserving publication-record boundaries. Original mutation evidence retains runtime/security applicability with separately reviewed changed documentation reads."
         },
         "FORMA-116": {
           "status": "done",

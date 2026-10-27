@@ -4,10 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
-3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
-is published. The development notes below retain their earlier scope; the RC3
-entry records the new coordinated preparation separately.
+## [3.2.0] - 2026-10-27
+
+- Add the optional `@getforma/core/navigation` entry for native owner scopes,
+  initial document partitioning, nested outlet exclusion and scoped island
+  activation/disposal. Core-only applications keep the same public root API.
+- Coordinate the runtime with the optional router, compiler/build navigation
+  groups and typed Rust owner responses. Preserve the existing raw-HTML,
+  Trusted Types, ownership and cleanup boundaries.
+
+## Historical preparation notes
+
+At RC3 preparation, stable 3.1.0 and the coordinated
+[3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+were published. The development notes and preparation entries below retain
+their original scope and do not describe current registry availability.
 
 Development notes since stable 3.1.0 are retained here. Earlier preparation entries
 retain their original evidence; [the coordinated release](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
