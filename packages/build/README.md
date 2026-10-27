@@ -9,16 +9,16 @@ Production build pipeline for [FormaJS](https://github.com/getforma-dev/forma) a
 
 ## Install
 
-These examples target the published, coordinated `3.0.0` package set. Select that version explicitly:
+These examples use the coordinated `3.2.0` package set. Select that version explicitly:
 
 ```bash
-npm install -D @getforma/build@3.0.0
+npm install -D @getforma/build@3.2.0
 ```
 
 This installs `esbuild` automatically. For SSR features (FMIR emission), also install the compiler:
 
 ```bash
-npm install -D @getforma/compiler@3.0.0
+npm install -D @getforma/compiler@3.2.0
 ```
 
 ## Quick Start
@@ -517,7 +517,7 @@ build (`BUILD-817`). This abbreviated example omits measured digests and sizes:
 ```json
 {
   "version": 2,
-  "writer": "3.0.0",
+  "writer": "3.2.0",
   "app": "ledger",
   "build": "5f0c9a1e7d2b4c86",
   "aliases": {"home.js": "home.a1b2c3d4.js", "home.ir": "home.a1b2c3d4.ir"},
@@ -692,7 +692,7 @@ nowhere or loops is a `BUILD-814` (exclude it if it is not source), and a
 file reached by two paths is read once. It needs nothing beyond this package:
 an application that does not build with `@getforma/build` (a Rust-only one,
 or one that uses `@getforma/core` alone) runs it with
-`npx -p @getforma/build@3.0.0 forma-raw-lint …` after final publication.
+`npx -p @getforma/build@3.2.0 forma-raw-lint …` after final publication.
 
 **Point it at source, not build output.** A bundle that includes core carries
 core's own raw entries: the registry key survives minification, and a
