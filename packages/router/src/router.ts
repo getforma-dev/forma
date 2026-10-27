@@ -67,7 +67,6 @@ export function createRouter(input: RouterOptions): Router {
   if (uncertain) setMutation('uncertain');
   function announce(text: string) { if (!closed) status.textContent = uncertain && text !== unknownMessage ? `${text}. ${unknownMessage}` : text; }
   function report(error: unknown) { try { options.onError?.(code(error)); } catch { /* An observer cannot acquire router ownership. */ } }
-  function saveScroll() { scroll.set(current.key, [win.scrollX, win.scrollY]); }
   function eligible(raw: string | URL, outsideBase = false): URL | null {
     let url: URL; try { url = new URL(String(raw), value().url); } catch { return null; }
     return url.href.length <= 8192 && ['http:', 'https:'].includes(url.protocol) && url.origin === origin && !url.username && !url.password && (outsideBase || base === '/' || url.pathname === base.slice(0, -1) || url.pathname.startsWith(base)) ? url : null;
@@ -199,7 +198,7 @@ export function createRouter(input: RouterOptions): Router {
         if (!isCurrent()) return { kind: 'cancelled', reason: 'superseded' };
         if (!allowed) { if (opts.pop) await repairPop(); return { kind: 'blocked' }; }
       }
-      saveScroll();
+      scroll.set(current.key, [win.scrollX, win.scrollY]);
       const hashOnly = url.pathname === value().url.pathname && url.search === value().url.search && !opts.revalidate;
       let target = url, matched = matches(target), adapter = activeAdapter;
       if (!hashOnly) {
