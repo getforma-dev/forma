@@ -137,7 +137,7 @@
           "scope": "the recall script and SECURITY.md generated from the release record"
         },
         "FORMA-145 audit": {
-          "status": "done",
+          "status": "pending",
           "scope": "Independent review binds the exact prepared stable 3.2.0 source, security/runtime/release-policy changes, applicable original evidence and an empty blocking list through the existing D14 input and evidence validator. The direct-final waiver removes extra RC publication and soak, not source audit or publication integrity."
         },
         "FORMA-257": {
