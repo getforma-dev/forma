@@ -38,12 +38,10 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-This checkout prepares the coordinated `3.2.0-rc.3` package set. It is not
-published yet; use the candidate command below only after its release record
-confirms publication. [3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is the published router prerelease;
+The coordinated [3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) package set is published as a prerelease;
 the latest stable set remains [3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).
-See [RC3 preparation](../../docs/release/3.2-RC3-PREPARATION.md) for the distinction
-and the [routing guide](../../docs/ROUTING.md) for a published RC2 walkthrough.
+See [release records](../../docs/release/README.md) for stable acceptance
+and the [routing guide](../../docs/ROUTING.md) for a published RC3 walkthrough.
 
 ```bash
 npm install @getforma/core@3.2.0-rc.3

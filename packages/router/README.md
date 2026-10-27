@@ -3,12 +3,12 @@
 Optional client navigation for Forma: ranked routes, persistent layouts, owned
 cleanup, browser history and progressively enhanced typed Rust actions.
 
-The router is published in **[Forma 3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**.
-This checkout prepares **3.2.0-rc.3**, which is not yet published. Stable 3.1.0
+The router is published in **[Forma 3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)**.
+Stable 3.1.0
 does not contain this API or core's `/navigation` entry. Use one coordinated
 published candidate or the sealed packed candidate for qualification; do not
-mix a 3.2 router with 3.1 core. The [RC3 preparation record](../../docs/release/3.2-RC3-PREPARATION.md)
-keeps source validation, publication and stable acceptance separate.
+mix a 3.2 router with 3.1 core. The [release records](../../docs/release/README.md)
+keep source validation, publication and stable acceptance separate.
 Start with the [routing guide](../../docs/ROUTING.md) for rendering choices and a
 connected application, or the [3.2 upgrade guide](../../docs/UPGRADING-3.2.md).
 
@@ -16,12 +16,21 @@ The router is a separate package with one peer instance of `@getforma/core`.
 Installing core does not enable routing. Ordinary SSR, native anchors/forms and
 static routes continue to work without a router bootstrap.
 
+Islands and routing are complementary. With `createNativeAdapter`, Rust renders
+destination HTML, islands supply interactivity, and the router preserves
+compatible layouts while replacing changed owners. Client-side navigation does
+not require whole-page client-side rendering. Use `createBrowserAdapter` for
+routes rendered in JavaScript, and never mount it over existing native owners.
+An application can use both paths in different sections; crossing between them
+loads a new document. The [rendering guide](../../docs/ROUTING.md#islands-and-navigation-work-together)
+explains the supported combinations and current native-group build constraints.
+
 ## Install the published candidate
 
 For an existing browser application with the matching 3.2 toolchain:
 
 ```sh
-npm install --save-exact @getforma/core@3.2.0-rc.2 @getforma/router@3.2.0-rc.2
+npm install --save-exact @getforma/core@3.2.0-rc.3 @getforma/router@3.2.0-rc.3
 ```
 
 Native applications also coordinate compiler, build and Rust crate versions;
@@ -156,8 +165,9 @@ route-dependent proxy/middleware/meta policy. It enforces `form-action 'self'` a
 an exact declared action list. If the application cannot guarantee that, keep
 ordinary navigation. CSS/fonts are identical across a group; all executable
 imports are bundled into its initial SRI artifact. New scripts are never replayed.
-Dynamic import expressions, independent group watch builds and code splitting are
-explicitly unsupported in this first group product.
+Literal import dependencies are bundled eagerly; computed dynamic imports,
+independent group watch builds and code splitting are explicitly unsupported
+in this first group product.
 
 ## Generated HTML
 

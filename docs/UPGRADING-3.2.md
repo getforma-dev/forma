@@ -2,10 +2,10 @@
 
 3.2 introduces optional `@getforma/router`, the `@getforma/core/navigation`
 ownership entry, native navigation groups and typed Rust owner/action responses.
-The coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is published.
-This checkout prepares 3.2.0-rc.3, which is not yet published; use RC2 for the
-registry walkthroughs or the sealed packed workflow for RC3 development.
-[RC3 preparation](release/3.2-RC3-PREPARATION.md) records the remaining checks.
+The coordinated [3.2.0-rc.3 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) is published.
+Use that exact coordinated version for the registry walkthroughs, or the sealed
+packed workflow for unpublished source changes. [Release records](release/README.md)
+distinguish prerelease publication from remaining stable acceptance.
 Stable 3.1.0 and existing 3.0/3.1 records are unchanged.
 
 ## Upgrade the coordinated set
@@ -37,8 +37,9 @@ downloads, modified clicks, external links and unsupported pages.
 
 Enable `forma-server`'s `navigation` feature and use finalized typed page handles.
 A native group requires a single literal outlet per non-leaf owner, identical
-CSS/fonts across the group and a closed eager executable graph. Group code
-splitting, dynamic imports and independent group watch builds are not supported
+CSS/fonts across the group and a closed eager executable graph. Literal import
+dependencies are bundled into the initial group script. Group code splitting,
+computed dynamic imports and independent group watch builds are not supported
 by this first profile. Keep ordinary routes for content outside the admitted
 contract; do not weaken CSP or manually assemble ownership metadata.
 

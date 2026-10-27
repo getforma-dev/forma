@@ -24,16 +24,16 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 ## Usage
 
 The basic commands below use the latest stable, coordinated `3.1.0` set.
-For the new router starter, use published [3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2):
+For the new router starter, use published [3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3):
 
 ```sh
-npx @getforma/create-app@3.2.0-rc.2 my-routed-app --template native-router
+npx @getforma/create-app@3.2.0-rc.3 my-routed-app --template native-router
 ```
 
-This checkout prepares unpublished `3.2.0-rc.3`. Contributor builds use the
-[packed candidate workflow](#development), not an unavailable registry version.
-The [RC3 preparation record](../../docs/release/3.2-RC3-PREPARATION.md) records
-its outstanding qualification; publication of RC2 does not approve stable 3.2.
+For unpublished source changes, contributors use the
+[packed candidate workflow](#development).
+The [release records](../../docs/release/README.md) distinguish actual RC3
+publication from the remaining stable 3.2 acceptance.
 
 ```bash
 npx @getforma/create-app@3.1.0 my-app
@@ -79,8 +79,8 @@ exists.
 | `minimal` | Browser, or native SSR with `npm run build:ssr` | Rust server + a Counter page and a static About page |
 | `native-router` | Native SSR with optional owned navigation | Persistent layout, typed owner branches, ordinary links and history; candidate release only |
 
-`native-router` is included in published 3.2.0-rc.2; it is absent from
-published 3.0/3.1 archives. For unpublished RC3 changes use the documented packed
+`native-router` is included in published 3.2.0-rc.3; it is absent from
+published 3.0/3.1 archives. For unpublished changes use the documented packed
 candidate workflow and select `--template native-router` from that candidate CLI.
 The 3.2 set adds `@getforma/router` to this template and the dashboard. The dashboard remains an
 explicit Browser application, with retained layout and routed page ownership.

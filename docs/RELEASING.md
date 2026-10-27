@@ -1,11 +1,12 @@
 # Unified releases
 
-The source workspace prepares **3.2.0-rc.3**, an unpublished eight-package
-successor including the optional `@getforma/router`. Stable
+The coordinated 3.2 line includes eight packages with the optional
+`@getforma/router`. Stable
 [3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0) remains available;
-[3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is the authenticated published router prerelease.
-The [RC3 preparation record](release/3.2-RC3-PREPARATION.md) distinguishes its
-remaining gates from RC2's actual outcome. RC2 also hosts the separate
+[3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) is published as a router prerelease.
+The [RC3 publication outcome](release/3.2-RC3-PUBLICATION.md) supplements the
+historical preparation record and distinguishes publication from stable
+acceptance. RC2 hosts the separate
 inventory-only RC1 recovery; [the incident record](release/3.2-RECORD-RECOVERY.md)
 preserves the original failed record job. Published 3.0 and 3.1 records
 retain their original seven-package inventory. The [3.0 as-built summary](release/V3-AS-BUILT.md)
@@ -52,7 +53,7 @@ CI and packed qualification are green. Use merge commits and never move a tag.
 
 ### Adding the optional router to the coordinated release
 
-The candidate source is prepared as 3.2.0-rc.3. `release-set.mjs version` updates
+`release-set.mjs version` updates
 the router manifest and lock together, including its core peer range. A 3.2-or-later release requires all eight
 packages; an eight-package live 3.1 tag is refused. No existing tag is reused.
 

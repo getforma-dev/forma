@@ -2,10 +2,9 @@
 
 Forma 3.1.0 is the latest stable release, with seven coordinated packages. The
 [3.1 upgrade guide](UPGRADING-3.1.md) describes that release. Published
-[3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) adds the optional router as the eighth package.
-This checkout prepares unpublished 3.2.0-rc.3; the
-[preparation record](release/3.2-RC3-PREPARATION.md) separates its pending checks
-from RC2 publication and the [original implementation ledger](design/router/qualification.md).
+[3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) includes the optional router as the eighth package.
+The [release index](release/README.md) distinguishes actual prerelease publication
+from the remaining stable checks in the [implementation ledger](design/router/qualification.md).
 Historical decisions and release evidence are kept separately from the path an
 application author should follow.
 

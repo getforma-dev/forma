@@ -65,7 +65,7 @@ export function createRouter(input: RouterOptions): Router {
   let marker: string | null = null, uncertain = false;
   try { marker = win.sessionStorage.getItem(unknownKey); uncertain = marker !== null; } catch { /* POST persistence preflight refuses unavailable storage. */ }
   if (uncertain) setMutation('uncertain');
-  function announce(text: string) { if (!closed) status.textContent = uncertain ? `${text}. ${unknownMessage}` : text; }
+  function announce(text: string) { if (!closed) status.textContent = uncertain && text !== unknownMessage ? `${text}. ${unknownMessage}` : text; }
   function report(error: unknown) { try { options.onError?.(code(error)); } catch { /* An observer cannot acquire router ownership. */ } }
   function saveScroll() { scroll.set(current.key, [win.scrollX, win.scrollY]); }
   function eligible(raw: string | URL, outsideBase = false): URL | null {

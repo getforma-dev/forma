@@ -14,12 +14,12 @@ The published release has seven coordinated packages. Start with the
 [documentation](docs/README.md), [3.1 upgrade guide](docs/UPGRADING-3.1.md), or
 [release records](docs/release/README.md).
 
-The optional router is available in the published **[3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**,
-as part of eight coordinated packages. This checkout prepares **3.2.0-rc.3**,
-which is not yet published. Read the [routing guide](docs/ROUTING.md),
+The optional router is available in the published **[3.2.0-rc.3 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)**,
+as part of eight coordinated packages. Stable 3.2 acceptance remains in progress.
+Read the [routing guide](docs/ROUTING.md),
 [3.2 upgrade guide](docs/UPGRADING-3.2.md) and [router API](packages/router/README.md)
-to try the published candidate. The [RC3 preparation record](docs/release/3.2-RC3-PREPARATION.md)
-distinguishes published evidence from remaining release and website acceptance.
+to try the published candidate. The [release records](docs/release/README.md)
+distinguish publication from remaining stable-release acceptance.
 
 ## Start an application
 

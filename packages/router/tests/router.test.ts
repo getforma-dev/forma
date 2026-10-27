@@ -79,6 +79,27 @@ describe('ownership and coordination', () => {
 function form() { const el = document.createElement('form'); el.method = 'post'; el.action = '/save'; el.innerHTML = '<input name="name" value="A"><p data-forma-form-error></p><button name="intent" value="save">Save</button>'; root.replaceChildren(el); return el; }
 function response(outcome: string, data: Record<string, unknown> = {}, status = 200) { return new Response(JSON.stringify({ outcome, status, data }), { status, headers: { 'Content-Type': 'application/vnd.forma.action+json', 'Cache-Control': 'no-store', Vary: 'Accept' } }); }
 describe('managed forms', () => {
+  it('announces an unknown submission once and keeps the warning until resolution without resending', async () => {
+    const warning = 'Submission outcome unknown. Check server status before submitting again.';
+    const fetcher = vi.fn(async () => { throw new TypeError('Connection lost'); }); vi.stubGlobal('fetch', fetcher);
+    const router = make(fake().adapter); await router.ready;
+    const status = document.querySelector('[data-forma-router-status]')!;
+    expect(await router.submit(form())).toEqual({ kind: 'uncertain' });
+    expect(status.textContent).toBe(warning);
+    const marker = sessionStorage.getItem('forma-router:uncertain'); expect(marker).not.toBeNull();
+    expect(await router.submit(form())).toEqual({ kind: 'uncertain' });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect((await router.navigate('/b')).kind).toBe('committed');
+    expect(status.textContent).toBe(`Page ready. ${warning}`);
+    expect(await router.resolveUncertain(async () => false)).toBe(false);
+    expect(router.mutation()).toBe('uncertain');
+    expect(sessionStorage.getItem('forma-router:uncertain')).toBe(marker);
+    expect(await router.resolveUncertain(async () => true)).toBe(true);
+    expect(router.mutation()).toBe('idle');
+    expect(sessionStorage.getItem('forma-router:uncertain')).toBeNull();
+    expect(status.textContent).toBe('Submission status resolved');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('holds one mutation slot and never replays a lost POST', async () => {
     const held = deferred<Response>(), fetcher = vi.fn(() => held.promise); vi.stubGlobal('fetch', fetcher); const router = make(fake().adapter); await router.ready; const el = form(); const first = router.submit(el); await flush(); expect(await router.submit(el)).toEqual({ kind: 'busy' }); held.resolve(new Response('lost', { status: 500 })); expect(await first).toEqual({ kind: 'uncertain' }); expect(await router.submit(el)).toEqual({ kind: 'uncertain' }); expect(fetcher).toHaveBeenCalledTimes(1); expect(await router.resolveUncertain(async () => false)).toBe(false); expect(await router.resolveUncertain(async () => true)).toBe(true); expect(router.mutation()).toBe('idle');
   });

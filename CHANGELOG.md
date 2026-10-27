@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+- Guard router-created links with core's existing URL policy, including
+  obfuscated executable schemes, while preserving caller-supplied documents.
+- Announce uncertain submission outcomes once and remove the unused
+  `PreparedView.focus` declaration.
+- Clarify that native islands and client navigation work together, with explicit
+  document boundaries between rendering profiles. Correct current publication
+  pointers and the research-map link.
+
+RC3 publication completed on 2026-10-27; its
+[dated outcome](docs/release/3.2-RC3-PUBLICATION.md) supplements the unchanged
+preparation entries below. New changes in this section are not in that release.
+
 ## [3.2.0-rc.3] - Prepared; publication pending
 
 - Prepare all eight coordinated versions and starter locks/seeds. Stable 3.1.0
