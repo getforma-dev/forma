@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "originalScriptSha256": "4974a7ddadf5322ae9a457a5d442b10c878df14a29137a251fecf26375a09b80",
+  "source": "0cf47cdd6b487543f488f60695f74553282bbe9c",
+  "originalStages": [
+    {
+      "index": 0,
+      "label": "npm ci --ignore-scripts",
+      "sha256": "5e2c115648487b3cbc0a13a150d5ec69863e69ee84ae3feeddd48daa0d703b9a"
+    },
+    {
+      "index": 1,
+      "label": "npm advisory gate (fails closed)",
+      "sha256": "880b8e06cdcda0376f080c2d710a1e2187c4fb6e5ac11c8baa99c7dd15b14326"
+    },
+    {
+      "index": 2,
+      "label": "npm audit signatures",
+      "sha256": "f2fc840927d50d7782949281c12ee52c4a22604500d71769f88a64f06827c846"
+    },
+    {
+      "index": 3,
+      "label": "router design and reverse-engineering provenance are complete",
+      "sha256": "45dcf2b801be297bb4f4fbefe21a7bec6f0ab301730c6eba3ef89ee32ab881d7"
+    },
+    {
+      "index": 4,
+      "label": "FMIR shared constants are current",
+      "sha256": "19d889033edc435b2dfef5bd96e0fe8aa9ec199231703071565896ca24da6ac2"
+    },
+    {
+      "index": 5,
+      "label": "cargo fmt --all --check",
+      "sha256": "6b868f5e0459c256980fcd53b4e3b6f47a2b7585c3414779d56842403e200491"
+    },
+    {
+      "index": 6,
+      "label": "cargo clippy --locked --workspace --all-targets --all-features -- -D warnings",
+      "sha256": "d6c5f3d81ee9da94e71c2bf69e7e6f562727273d4b90ca139835e6fab9fb6fa8"
+    },
+    {
+      "index": 7,
+      "label": "cargo test --locked --workspace",
+      "sha256": "cb881b983a93160d49ba7b78b2260cf6f44dbbfa17c8a6c6988c984fee8c8635"
+    },
+    {
+      "index": 8,
+      "label": "cargo test --locked -p forma-server --all-features",
+      "sha256": "49328b4a5cdf5d3055fad4819042dba597e8d20d6cb588ccbb225a463d720aef"
+    },
+    {
+      "index": 9,
+      "label": "actual renderer 3.1 accepts older writers and refuses 3.2 before bind",
+      "sha256": "d2fe70be87e96aaa2fdb3de314e4ceb94a87de26b902219ff895acfe831f1c98"
+    },
+    {
+      "index": 10,
+      "label": "cargo doc --locked --workspace --no-deps",
+      "sha256": "77cefc309607d79fbabcf4599496aa086c5f1f43beee038e19a493c926c33c5c"
+    },
+    {
+      "index": 11,
+      "label": "npm run build (compiler, build, core, router, create-app)",
+      "sha256": "3e02965111f506f40a35ecf49e71859ade3d147dce3529b089c9b4bee783499d"
+    },
+    {
+      "index": 12,
+      "label": "npm test --workspaces",
+      "sha256": "2f7fb6cfc5cbfe2ee59b3d50feb663c1af567a587754dff1e6a3120482d44479"
+    },
+    {
+      "index": 13,
+      "label": "declared props: compiler bytes match the native typed-handler fixtures",
+      "sha256": "a4ef52c68549bd01f1e749fbe5333a7f6f88fb5031826c961cdc916ababb7505"
+    },
+    {
+      "index": 14,
+      "label": "packed compiler API and actual optional-compiler compatibility",
+      "sha256": "a9e83dc7d13538668d00d7f1ac7fb4c12c6999a564ebbc7f3dd573038075b33b"
+    },
+    {
+      "index": 15,
+      "label": "packed integrity gate: resource observations and mandatory native checks",
+      "sha256": "0b4ff1ae8652cf15e0f377499eeb15e49bd626e8fd8d05e618ac362c3c07265f"
+    },
+    {
+      "index": 16,
+      "label": "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)",
+      "sha256": "ca6f58fce4fa7143251ef35d74235f3ce1de7661df33fe2c5c1fcf96b8ecdbe0"
+    },
+    {
+      "index": 17,
+      "label": "packed decoder: actual built compiler regenerates the timed contracts",
+      "sha256": "018b812ac54c0c1bc36811e87af2f288088326f52e2f2ff6025f6ff8c242b068"
+    },
+    {
+      "index": 18,
+      "label": "core: typecheck, size gate, packaging lint, probe anchors",
+      "sha256": "5c652748280bd5ca3f304e1e49c6935e64cd497973d2ad10172fc90d61d20201"
+    },
+    {
+      "index": 19,
+      "label": "expression qualification:100000 generated cases, removed-charge control and independent nightly floor",
+      "sha256": "e22c02cafebfdd174e6df29bc79b7cb5ea25cf9a8beefbb16018bab7cafc864a"
+    },
+    {
+      "index": 20,
+      "label": "router: types and packed public exports",
+      "sha256": "6d6bab6ef9bc6e01d2bc5db307e5e5a0dc95036777285f73ef462142dc9eafcd"
+    },
+    {
+      "index": 21,
+      "label": "build: the packed forma-raw-lint bin",
+      "sha256": "3054eb8af477fa76a2036a35de5102e886a5087e3aea520409b75b73af84ce27"
+    },
+    {
+      "index": 22,
+      "label": "FMIR contract: historical and current-writer corpus preserve exact payloads and HTML",
+      "sha256": "5cc33ba6ed3affec9d9f3c2973bcf51de449f2190b284e2857102f76348680d8"
+    },
+    {
+      "index": 23,
+      "label": "e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications",
+      "sha256": "a1cc0e776efa46012cf4b480d7f1820cc9a70f9c25af3bab2f722c3f630c9f84"
+    },
+    {
+      "index": 24,
+      "label": "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)",
+      "sha256": "873e052d21988d00734a6aabd00326c9ce917f77467a3d63a3cb51a217eac0a9"
+    },
+    {
+      "index": 25,
+      "label": "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)",
+      "sha256": "8a52d0a34e82cd322b5dbf6218e7745df3a3a11d06ae0cd29e0838ae01b136c2"
+    },
+    {
+      "index": 26,
+      "label": "native router: real compiled owners, server and Chromium navigation controls",
+      "sha256": "49bed7b3a15ec1ba08c98af145f2c2cf418dc621b6ee0a8486b3d60c30720b56"
+    },
+    {
+      "index": 27,
+      "label": "hostile widgets: complete reviewed-tier matrix and real removed-grant control",
+      "sha256": "bfd75df479d7a2312d17b1d568cba2af0cd2d7e6bf5d5279d4e6820c0a976d42"
+    },
+    {
+      "index": 28,
+      "label": "parity harness (FORMA-183): generator, comparison, serializer, renderBoth",
+      "sha256": "cf80b5124ce69e70a51eebcfe4419b0c9e56b2f10d49830e26271854dd1bbfcb"
+    },
+    {
+      "index": 29,
+      "label": "blocking parity: step 1, 100 states, typed P1/P2/P3 with no exceptions",
+      "sha256": "8d3c6427021dfebb0d366cff1a51cf36610b850783ce53770d4815153f4523d0"
+    },
+    {
+      "index": 30,
+      "label": "value rules: deterministic generator, actual native metadata, 1,000 comparisons/rule",
+      "sha256": "a993c0b4084819a55cda3d10564b873cab3c9879f781d2c31056eaeee3bc2173"
+    },
+    {
+      "index": 31,
+      "label": "N3: actual indexed public-set timing, serial Chromium",
+      "sha256": "bd65afef908ea1cc0978374f480e33457cf256d3c1ab99d774c4291df31db16f"
+    }
+  ],
+  "exclusiveBeforeFork": [
+    20,
+    22,
+    23,
+    24
+  ],
+  "overlapA": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    21
+  ],
+  "overlapB": [
+    27,
+    25
+  ],
+  "afterJoin": [
+    26,
+    28,
+    29,
+    30,
+    31
+  ],
+  "specificChanges": [
+    "stage12 complete core files partitioned; other workspaces retain original order; two core resource files execute exclusively after join",
+    "stage15 release-integrity.test.mjs alone moved before fork because it launches actual private Cargo",
+    "stage25 build worker moved before fork because it launches root Cargo; Node controls and root browser remain serial in B",
+    "stage25 complete core browser files partition32+3; original build check/runtime copy occurs once before fork; no assertion/hooks/profile changes",
+    "root/core Chromium workers explicitly2, matching original hosted observations and required global browser admission",
+    "added fake-child/partition controls and immutable shared-input seals; original check.sh unchanged; no workflow integration"
+  ],
+  "resourcePartition": "All 243 correctness unit files share one original-config invocation; all 32 correctness browser files share one original-config two-worker invocation. After both lanes and owned cleanup join, each of the two resource unit files and three resource browser files runs individually and sequentially with whole-file selection, original config/worker ceiling, distinct browser output and nonzero short-circuit."
+}
