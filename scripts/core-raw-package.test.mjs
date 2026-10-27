@@ -102,12 +102,15 @@ for (const mode of modes) {
     const ok = (file, message) => { const r = compile(mode, file); assert.equal(r.status, 0, `${message}\n${r.output}`); };
     // Prove each mode resolved the packed declarations the way it is supposed to,
     // rather than some other copy: the real file, via typesVersions for node10.
-    const trace = compile(mode, 'positive.tsx', ['--traceResolution']).output;
+    // Tracing adds resolution diagnostics to the same strict compilation; its
+    // exit status must pass before any successful-resolution text is trusted.
+    const positive = compile(mode, 'positive.tsx', ['--traceResolution']);
+    assert.equal(positive.status, 0, `the positive consumer must compile without library errors\n${positive.output}`);
+    const trace = positive.output;
     for (const [specifier, file] of [['@getforma/core', 'dist/index.d.ts'], ['@getforma/core/runtime', 'dist/runtime.d.ts']]) {
       assert.match(trace, new RegExp(`Module name '${specifier}' was successfully resolved to '[^']*node_modules/@getforma/core/${file.replace('.', '\\.')}'`), `${mode.name} must resolve ${specifier} to the packed ${file}`);
     }
     if (mode.typesVersions) assert.match(trace, /'typesVersions' entry '\*' .*pattern to match module name 'runtime'/, 'node10 must reach the subpath through typesVersions, since it cannot read package exports');
-    ok('positive.tsx', 'the positive consumer must compile without library errors');
     if (/^node(16|next)$/i.test(mode.moduleResolution)) ok('cjs-consumer.cts', 'the CommonJS consumer must compile against the packed .d.cts declarations');
     ok('negative.tsx', 'all nine plain-string calls must have their own type error');
     ok('island-negative.tsx', 'all five noncallable entries must have their own type error');

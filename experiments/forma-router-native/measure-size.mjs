@@ -24,7 +24,22 @@ function inventory(dist,manifest){const routes=Object.fromEntries(Object.entries
 async function plain(label,core){const root=join(scratch,label);mkdirSync(join(root,'node_modules/@getforma'),{recursive:true});cpSync(join(here,'app'),join(root,'app'),{recursive:true});symlinkSync(core,join(root,'node_modules/@getforma/core'),'dir');const result=await build({app:'forma-router-native',ssr:true,entryPoints:['a','b'].map(name=>({entry:join(root,`app/plain-${name}.tsx`),outfile:`plain-${name}.js`})),cssEntries:[{input:join(root,'app/fixture.css'),outfile:'fixture.css'}],routes:Object.fromEntries(['a','b'].map(name=>[`/native/${name}`,{js:[`plain-${name}`],css:['fixture'],fonts:[]}])),outputDir:join(root,'dist')});return {...inventory(join(root,'dist'),result.manifest),manifest:result.manifest,sizes:result.sizes};}
 try{
  const sourceProducts=products();
- execFileSync(process.execPath,[join(here,'build.mjs')],{cwd:repo,stdio:'pipe'});
+ // This is the source proof's single fixture producer. Remove both old trees
+ // so a successful partial/no-op build cannot supply stale browser artifacts.
+ for(const folder of ['dist','dist-next'])rmSync(join(here,folder),{recursive:true,force:true});
+ // Inherit into the qualifier's captured measurement.log, including diagnostics
+ // on successful builds and output emitted before any failed build exits.
+ execFileSync(process.execPath,[join(here,'build.mjs')],{cwd:repo,stdio:'inherit'});
+ for(const folder of ['dist','dist-next']){
+  const dist=join(here,folder),manifest=JSON.parse(readFileSync(join(dist,'manifest.json')));
+  assert.deepEqual(Object.keys(manifest.routes).sort(),['/native/_shell','/native/a','/native/b'],`${folder} must contain every native owner`);
+  const files=new Set(['sw.js',...Object.keys(manifest.assets)]);
+  for(const row of Object.values(manifest.routes)){
+   assert.equal(row.mode,'ssr',`${folder} must contain native routes`);assert(row.ir,`${folder} must contain compiled native modules`);
+   for(const file of [...row.js,...row.modulepreload??[],...row.css,...row.fonts,row.ir])files.add(file);
+  }
+  for(const file of files)assert(readFileSync(join(dist,file)).length>0,`${folder}/${file} must be a fresh nonempty build product`);
+ }
  const previous=join(scratch,'published-core');mkdirSync(previous);execFileSync('tar',['-xzf',archive,'-C',previous,'--strip-components=1']);
  const require=createRequire(join(repo,'packages/core/package.json'));let signals=dirname(require.resolve('alien-signals'));
  while(!existsSync(join(signals,'package.json')))signals=dirname(signals);
