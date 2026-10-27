@@ -125,8 +125,8 @@
           "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78"
         },
         "FORMA-145 documentation": {
-          "status": "done",
-          "scope": "3.2 router APIs, route profiles, scaffold, compatibility, upgrade and release guides match the coordinated candidate; the 57-row current qualification ledger and exact evidence index are independently reviewed. Historical 3.0/3.1 and failed attempts retain their identities; publication, device and deployment outcomes are not anticipated."
+          "status": "pending",
+          "scope": "RC.3 current guides must distinguish authenticated published RC.2 from this prepared successor, preserve the research and historical evidence, and describe the finite router placeholder receipt and bounded harness changes without anticipating publication, site/device, N7 or stable acceptance."
         },
         "FORMA-116": {
           "status": "done",
@@ -137,7 +137,7 @@
           "scope": "the recall script and SECURITY.md generated from the release record"
         },
         "FORMA-145 audit": {
-          "status": "done",
+          "status": "pending",
           "scope": "fresh-context independent whole-release review of the exact 3.2 candidate and retained evidence, with an empty blocking list (D14)"
         },
         "FORMA-257": {
@@ -173,12 +173,12 @@
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         },
         "FORMA-301 candidate": {
-          "status": "done",
-          "scope": "RC.2 product/harness source bdc691e1 passed hosted packed qualification 40441486845: all eight coordinated archives and three starters, 75/75 P17 checks in 1266.223 seconds, unchanged limits and complete cleanup. The same archives pass native90 and paired 12,287/12,288 B incremental and 40,715 B group limits. Documentation-only successor 5b44312e passed CI 40442597606 plus security, budgets and scaffold-cache checks; original failed README-pin jobs and cancellation remain retained. Independent review preserves narrow documentation/source applicability and original archive identities. Exact final main/tag CI and tagged P17 still qualify their own archives; failed immutable RC.1 is not a release or burn-in baseline."
+          "status": "pending",
+          "scope": "Qualify the exact coordinated RC.3 source and eight archives after the reviewed finite npm placeholder accounting and removal of duplicate test work. Require current source CI, complete packed P17, native/archive and unchanged paired-size evidence, preserving original failures and exact input identities. Published RC.2 is authenticated but does not substitute for new archive qualification; whole-R17 N7 remains unqualified pending its own current distribution."
         },
         "FORMA-301 publisher": {
           "status": "done",
-          "scope": "The qualified RC.1 router bootstrap published the exact verified archive. The temporary GitHub secret was removed and the npm token was confirmed absent. The actual router GitHub trusted publisher names getforma-dev/forma, release.yml and npm-publish; package policy requires 2FA and disallows bypass tokens. Its first actual OIDC publication remains an RC.2 outcome to verify. No bootstrap credential is needed or authorized for RC.2. Complete five-package observer and eight-package registry reconciliation remain post-record obligations."
+          "scope": "RC.2 completed normal GitHub OIDC publication for all five npm packages, including router configuration 444b6303-11f2-4327-8837-8f009fe445fa, with no bootstrap token; source, registry bytes and provenance are independently bound. Installed site graphs pass npm signature verification. The actual five-package external observation is complete without delivery/baseline promotion. Full reconciliation verifies 93 archives but remains FAIL for the new router placeholder and inherited FORMA-224; the prospective RC.3 receipt handles only the router finding. No bootstrap credential, historical baseline exception or clean SR2 claim is authorized."
         }
       }
     },

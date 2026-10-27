@@ -34,7 +34,7 @@ checksum = "aedcfb3409746eddb02b9e19ebda1c3394f759a152e48ee875a0844d1b955484"
 
 [[package]]
 name = "forma-ir"
-version = "3.2.0-rc.2"
+version = "3.2.0-rc.3"
 dependencies = [
  "forma-ir-derive",
  "ryu-js",
@@ -43,7 +43,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir-derive"
-version = "3.2.0-rc.2"
+version = "3.2.0-rc.3"
 dependencies = [
  "proc-macro2",
  "quote",

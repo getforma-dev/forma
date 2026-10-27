@@ -165,7 +165,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir"
-version = "3.2.0-rc.2"
+version = "3.2.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "forma-ir-derive",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "forma-ir-derive"
-version = "3.2.0-rc.2"
+version = "3.2.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2",
@@ -185,7 +185,7 @@ dependencies = [
 
 [[package]]
 name = "forma-server"
-version = "3.2.0-rc.2"
+version = "3.2.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "axum",
