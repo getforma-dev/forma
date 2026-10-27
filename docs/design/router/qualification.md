@@ -5,6 +5,12 @@ implementation evidence or an explicit remaining gate. It does not edit
 [the design acceptance matrix](acceptance-matrix-design.md), and a row pointing
 to source tests is not a claim of complete packed-release qualification.
 
+The later [3.2 candidate supplement](qualification-3.2.md) records the fresh
+862d native, resource, limits and history campaigns and their exact identities.
+The historical rows and receipts below remain unchanged in scope; later source
+or archive identities are not silently substituted. Publication, current-source
+P17/D14 and stable manual/production acceptance remain pending.
+
 ## Release preparation after the feature qualification
 
 The current source is prepared as the coordinated **3.2.0-rc.1** candidate.
