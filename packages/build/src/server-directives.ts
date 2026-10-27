@@ -50,12 +50,12 @@ export function serverDirectiveGuard(legacyImports?: Set<string>): esbuild.Plugi
 
 /** Check the full browser/SSR source graphs before touching output, including initial watch. */
 export async function assertNoServerFunctions(config: BuildConfig, options: esbuild.BuildOptions, legacyImports?: Set<string>): Promise<void> {
-  const entries = [...new Set(config.entryPoints.flatMap(entry => {
+  const entries = [...new Set([...config.entryPoints.flatMap(entry => {
     const ssrEntry = config.ssr && entry.ssr !== false
       ? config.ssrEntryPoints?.[basename(entry.outfile, '.js')]
       : undefined;
     return ssrEntry ? [entry.entry, ssrEntry] : [entry.entry];
-  }))];
+  }), ...(config.navigationGroups ?? []).map(group => group.client)])];
   if (!entries.length) return;
   try {
     await esbuild.build({ ...options, entryPoints: Object.fromEntries(entries.map((entry, i) => [`entry-${i}`, entry])), outdir: config.outputDir, write: false, minify: false, sourcemap: false, logLevel: 'error', plugins: [serverDirectiveGuard(legacyImports), {

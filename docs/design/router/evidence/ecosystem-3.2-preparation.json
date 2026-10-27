@@ -1,0 +1,194 @@
+{
+  "schema": "forma-router-3.2-preparation-v1",
+  "scope": "Local source-linked preparation, not packed RC qualification, publication, publisher enrollment or credited soak",
+  "sourceCommitBeforeChanges": "77192ed61ec9c0090ead5fc5094ef6d445d8a4dc",
+  "sourceDirty": true,
+  "sourceFiles": {
+    "packages/create-app/templates/dashboard/admin/src/app.tsx": "f5dd309361faab43682f823d39edbbcc26517b543911e307ec98487552e27811",
+    "packages/create-app/templates/dashboard/admin/src/jsx.d.ts": "8cc225a296356fbd329e1180cfaff8af9b5c8bad4ef2103a2f1b89718876e2bf",
+    "packages/create-app/templates/dashboard/admin/tests/dashboard.spec.ts": "6de9e84eea7105dc1fa9a23a4b0dc24c5b2e2bf2d42f017986ec61be76499971",
+    "scripts/release-publish.mjs": "63eb0e29872e8a3992fd4e4d25e13e1e6e5b947f146fc25ab21e81d25f04ab3b",
+    "scripts/release-router-bootstrap.test.mjs": "059c468db3169b9886402e46bebf16a630a49396226c568b4710198330dbb48a",
+    "scripts/release-burn-in-identities.mjs": "f1169ae1a2b3507477800b505fd3e8f8407d75d6a2af381f8dce10591220979a",
+    "scripts/release-burn-in-final.mjs": "3ee24252ae449a6ee2afd79f2401fc190905d8ce982eaccc7743018b84fe8f07",
+    "scripts/release-burn-in.mjs": "c177726f464ee311c21f9cc304331bd8c5031bd53a0c6dab9924775e8639ec5c",
+    "scripts/release-template-islands.mjs": "2958c2096a4d2cfbe2984c5173f314baf1c8a0245616c09334f760a9b06a35da",
+    "scripts/release-template-navigation.mjs": "293fa4ddc045d30f2074d70d7910f353d54b7f8e3854038c9a7ac28a7bf77efc",
+    ".github/workflows/release.yml": "39e362145ac1bc3f0b4b702fd6b6dd6a8bdc34c6a77911af265fe474c9f658c2",
+    "scripts/check-release-workflow.rb": "a9a8e68c76207da616874de5c471ce04e1ecd4683dd53996c28fb447e9c782be"
+  },
+  "dashboard": {
+    "typecheck": "passed",
+    "templateSourceTests": {
+      "passed": 76,
+      "failed": 0
+    },
+    "browserCases": {
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "serverProfile": "release",
+      "sameRouteChartRetained": true,
+      "layoutRetained": true,
+      "removedPageDisposedAndFreshOnReturn": true,
+      "realLinksAndCommandPalette": true
+    },
+    "releaseHelperEngines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "size": {
+      "formaGzipBytes": 17023,
+      "formaLimitBytes": 28420,
+      "totalJavaScriptGzipBytes": 27755,
+      "totalJavaScriptLimitBytes": 76800,
+      "reportPath": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/dashboard-size-report.json",
+      "reportSha256": "48e543fd33176879449f6cb5d5f2585d0d7a71443f64ff04854769ebc05a4cbd"
+    }
+  },
+  "finiteControls": {
+    "burnInSeedsHistorical": {
+      "passed": 84,
+      "failed": 0
+    },
+    "monitor": {
+      "passed": 36,
+      "failed": 0
+    },
+    "bootstrapAndExistingRelease": {
+      "passed": 33,
+      "failed": 0
+    },
+    "bootstrapAndWorkflowRefusals": {
+      "passed": 44,
+      "failed": 0
+    },
+    "completeReleaseHelperSelfTest": {
+      "passed": 456,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "corrections": [
+    {
+      "attempt": "initial dashboard interaction",
+      "finding": "boolean false removes aria-expanded in the DOM; changed to the platform string false",
+      "result": "54 browser cases pass after correction"
+    },
+    {
+      "attempt": "debug server three-engine helper",
+      "finding": "WebKit reports debug-only Trusted Types report-only policy lacking report-to",
+      "result": "strict failure retained; unchanged checks pass on the actual release server"
+    },
+    {
+      "attempt": "root-cwd Vitest invocation",
+      "finding": "matched archived tests plus the current template; README still needed its exact18-test inventory",
+      "result": "76 current package tests pass with correct cwd and README"
+    },
+    {
+      "attempt": "bootstrap helper test initial import",
+      "finding": "yaml package not installed",
+      "result": "uses repository-established Ruby YAML parser;44 controls pass"
+    }
+  ],
+  "pending": [
+    "fresh packed RC P17 and candidate scaffold qualification",
+    "independent whole-release D14 review",
+    "actual first router credential setup, qualified tag publication, registry identity verification and trusted-publisher enrollment",
+    "same-line published RC hosted soak with at least3600 active seconds and zero faults",
+    "post-publication monitor activation"
+  ],
+  "rawReceipts": [
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-proof-release.json",
+      "sha256": "d617629c02b0fb057c9e2105d23d4a7919ffacf6f31eb9e0f5bcd04dbb432369",
+      "bytes": 4754
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-proof-debug.json",
+      "sha256": "d4888a52bbe88a14e4efc676978d161ef82730c77521ebb802d7a1c911797ac9",
+      "bytes": 4838
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-e2e.json",
+      "sha256": "0ef48dbeb4cdac54ca559a5ff9a93a35688e82c35266ba4bf7531267ef4f82ac",
+      "bytes": 69439
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-e2e-status.json",
+      "sha256": "b9f0a81cf0c0124b490dd1f794cc17d27165a888e95e64ccf2aaa16268b11084",
+      "bytes": 108
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-build-v2.log",
+      "sha256": "c1dce8d67942af6f61434f64c527c1ccd33011cdec0de4498302ea70e28046d9",
+      "bytes": 1041
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-types-v2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-types.log",
+      "sha256": "216ab3ba4d3e6708816b91e7a857e6f6a08a209b9d7bd76d73168689d8637d5c",
+      "bytes": 4459
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-cargo.log",
+      "sha256": "20457686ac1c18bcc49e0e856990114c4a7bbce38e4e0032e970d46cc24a2808",
+      "bytes": 1629
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-dashboard-router-release.log",
+      "sha256": "bb909915f3590533cf304b942e3c5acaa65ed059e8cb96de6b3c6801753198a7",
+      "bytes": 3130
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-burn-in-dashboard-tests.log",
+      "sha256": "ea6bd4d980fbe85f31c4399545cc7fd0ae58c8c37716b3f7cf24b157238ce58b",
+      "bytes": 9324
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-monitor-tests.log",
+      "sha256": "c0a641bd6003c285a39ccc45cf81bb5a88de93da580ffe57f8ede1d3c64d6d63",
+      "bytes": 3118
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-template-tests.log",
+      "sha256": "3b7c55e3f48e80772a0bbb13fbd7f2c005be8a0ffab32e9731bb923bafc97af0",
+      "bytes": 18362
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-template-tests-v2.log",
+      "sha256": "00ed30ab082540e98edc351f397bd70a55798590b01ce5bf0269b3daede48a37",
+      "bytes": 259
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-bootstrap-tests.log",
+      "sha256": "fed921123558f24e36e1f0df4f0b645bbc6bd1f9f3f6bf21444732664e7ab4b2",
+      "bytes": 6398
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-bootstrap-tests-v2.log",
+      "sha256": "fd818696dd35a499981f7f9bc8a35a57b824fda4f1bb7950a518e3474b777348",
+      "bytes": 5649
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-bootstrap-lint-tests.log",
+      "sha256": "09aa8a5b9346afdb7210bd257d820097b048f2b3557d20b4b6890d4237f791b4",
+      "bytes": 3733
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/3.2-preparation/forma-32-workflow-self-test.log",
+      "sha256": "b4a8336562a29bcd43e2789d9d209c4c8203f284ddc24b99a4a55deda2ef7420",
+      "bytes": 125432
+    }
+  ]
+}

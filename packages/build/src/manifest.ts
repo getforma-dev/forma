@@ -52,7 +52,9 @@ export function generateManifest(
     if (serverRendered && (!product || product.mode !== 'ssr')) {
       throw new Error(`BUILD-817 route ${route} has no accepted native product for its configured SSR owner`);
     }
-    const staticRoute = serverRendered && product?.browserRequired === false;
+    const navigationGroup = config.navigationGroups?.find(group => group.owners.includes(mapping.js[0]));
+    if (navigationGroup && (product?.mode !== 'ssr' || product.navigationOutlet === undefined)) throw new Error(`BUILD-827 route ${route} has no compiler-checked navigation owner`);
+    const staticRoute = serverRendered && product?.browserRequired === false && !navigationGroup;
     if (staticRoute && (mapping.js.length !== 1 || config.serverInlined?.includes(entry!.outfile))) {
       throw new Error(`BUILD-611 static route ${route} cannot request extra scripts or an executable server-inlined owner`);
     }
@@ -92,6 +94,9 @@ export function generateManifest(
 
     const routeEntry: RouteManifest = {
       mode: serverRendered ? 'ssr' : 'browser',
+      ...(navigationGroup && product?.mode === 'ssr' ? { navigation: {
+        group: navigationGroup.id, owner: mapping.js[0], outlet: product.navigationOutlet ?? null,
+      } } : {}),
       js: jsFiles,
       ...(modulepreload.length ? { modulepreload } : {}),
       css: cssFiles,
@@ -113,7 +118,7 @@ export function generateManifest(
 
     if (serverRendered && !routeEntry.ir) throw new Error(`BUILD-817 route ${route} declares SSR but its compiled module is missing; fix compilation before serving this build`);
     routes[route] = routeEntry;
-    classes[route] = serverRendered
+    classes[route] = navigationGroup ? 'navigation-group' : serverRendered
       ? (staticRoute ? 'no-interactive-region' : 'islands')
       : (jsFiles.length > 0 ? 'whole-page-mount' : 'no-interactive-region');
 

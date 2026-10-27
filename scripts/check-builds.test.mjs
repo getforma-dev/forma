@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {mkdtempSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, rmSync} from 'node:fs';
+import {mkdtempSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, rmSync, realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -11,7 +11,7 @@ const coreScripts = JSON.parse(readFileSync(join(repo, 'packages/core/package.js
 const quote = value => `'${value.replaceAll("'", "'\\''")}'`;
 
 function fixture(run) {
-  const root = mkdtempSync(join(tmpdir(), 'forma check builds '));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'forma check builds ')));
   try {
     const core = join(root, 'packages/core'), bin = join(root, 'bin');
     for (const path of [bin, join(root, 'scripts'), join(root, 'e2e/fixtures'), join(core, 'scripts'), join(core, 'e2e/fixtures'), join(core, 'dist')]) mkdirSync(path, {recursive: true});

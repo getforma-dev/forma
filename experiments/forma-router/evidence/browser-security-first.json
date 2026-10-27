@@ -1,0 +1,346 @@
+{
+  "observedAt": "2026-10-26T16:26:26.887Z",
+  "origin": "http://127.0.0.1:51216",
+  "scope": "Experimental native two-route/static-shell proof; not nested-layout, packed-release or complete ticket qualification.",
+  "browsers": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4"
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0"
+    },
+    {
+      "engine": "webkit",
+      "version": "27.2"
+    }
+  ],
+  "results": [
+    {
+      "engine": "chromium",
+      "name": "security: lost mutation warning survives GET recovery without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /markup/. Input:\n\n'response-admission'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:132:50\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:121:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: only the exact declared POST endpoint is enhanced and unsupported forms stay native",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: recursive formdata submission from a distinct form reserves exactly one POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: disposal before submit or during formdata sends no POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: failed form serialization releases the reserved action slot",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:194:102\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:185:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"failed\",\"reason\":\"response-admission\"}\n+ actual - expected\n\n+ 'failed'\n- 'committed'\n\n    at go (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:38:12)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:200:5\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:197:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: persisted pageshow revokes private owners before document recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: lost mutation warning survives GET recovery without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /markup/. Input:\n\n'response-admission'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:132:50\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:121:3"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: only the exact declared POST endpoint is enhanced and unsupported forms stay native",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: recursive formdata submission from a distinct form reserves exactly one POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: disposal before submit or during formdata sends no POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: failed form serialization releases the reserved action slot",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:194:102\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:185:3"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"failed\",\"reason\":\"response-admission\"}\n+ actual - expected\n\n+ 'failed'\n- 'committed'\n\n    at go (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:38:12)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:200:5\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:197:3"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: persisted pageshow revokes private owners before document recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: lost mutation warning survives GET recovery without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /markup/. Input:\n\n'response-admission'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:132:50\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:121:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: only the exact declared POST endpoint is enhanced and unsupported forms stay native",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: recursive formdata submission from a distinct form reserves exactly one POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: disposal before submit or during formdata sends no POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: failed form serialization releases the reserved action slot",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:194:102\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:185:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"failed\",\"reason\":\"response-admission\"}\n+ actual - expected\n\n+ 'failed'\n- 'committed'\n\n    at go (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:38:12)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:200:5\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:197:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: persisted pageshow revokes private owners before document recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    }
+  ],
+  "failures": [
+    {
+      "engine": "chromium",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /markup/. Input:\n\n'response-admission'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:132:50\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:121:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:194:102\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:185:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"failed\",\"reason\":\"response-admission\"}\n+ actual - expected\n\n+ 'failed'\n- 'committed'\n\n    at go (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:38:12)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:200:5\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:197:3"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /markup/. Input:\n\n'response-admission'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:132:50\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:121:3"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:194:102\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:185:3"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"failed\",\"reason\":\"response-admission\"}\n+ actual - expected\n\n+ 'failed'\n- 'committed'\n\n    at go (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:38:12)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:200:5\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:197:3"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /markup/. Input:\n\n'response-admission'\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:132:50\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:121:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:194:102\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:185:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"failed\",\"reason\":\"response-admission\"}\n+ actual - expected\n\n+ 'failed'\n- 'committed'\n\n    at go (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:38:12)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:200:5\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:197:3"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:223:51\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:218:45"
+    }
+  ],
+  "clientSha256": "1ab94b3918c8b8fc053fd13b3004dfa9e0a1b924609289eef9fa6618743d0935",
+  "manifest": {
+    "version": 2,
+    "writer": "3.1.0",
+    "app": "forma-router-proof",
+    "build": "66a86cee68a5a976",
+    "aliases": {
+      "proof-group.js": "proof-group.f85ed41624c3.js",
+      "proof-a.ir": "proof-a.43f5de560348.ir",
+      "proof-b.ir": "proof-b.3b409ecab892.ir",
+      "proof-a.js": "proof-group.f85ed41624c3.js",
+      "proof-b.js": "proof-group.f85ed41624c3.js"
+    },
+    "assets": {
+      "proof-a.43f5de560348.ir": {
+        "immutable": true,
+        "integrity": "sha384-yhKqomMpUlrt3xGZb6gniVmclO5sm0VyXmIkuri5EcL5cTDK9fnhU6qoIwMHq3NN"
+      },
+      "proof-b.3b409ecab892.ir": {
+        "immutable": true,
+        "integrity": "sha384-C9xCXsx6WZAEKjB0SQICzGf8cm/Fk1bjJDDALsXgCMiTaGuFYyrXy5iW4LUAsuhm"
+      },
+      "proof-group.f85ed41624c3.js": {
+        "immutable": true,
+        "integrity": "sha384-c+FAqWA/u0HsEdmeJSsRL9szsFSHA/REVtYxSZ2Om0KarxY8EY6rRmj8yBGTbY5f"
+      }
+    },
+    "routes": {
+      "/proof/a": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.f85ed41624c3.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 30212,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-a.43f5de560348.ir"
+      },
+      "/proof/b": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.f85ed41624c3.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 30212,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-b.3b409ecab892.ir"
+      }
+    }
+  },
+  "passed": false
+}

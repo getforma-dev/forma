@@ -1,0 +1,1214 @@
+
+> check
+> bash scripts/check.sh
+
+
+### npm ci --ignore-scripts (0s)
+
+added 427 packages, and audited 433 packages in 6s
+
+81 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+### npm advisory gate (fails closed) (7s)
+found 0 vulnerabilities
+
+### npm audit signatures (7s)
+audited 422 packages in 4s
+
+422 packages have verified registry signatures
+
+107 packages have verified attestations
+(use --json --include-attestations to view attestation details)
+
+
+### FMIR shared constants are current (11s)
+
+### cargo fmt --all --check (11s)
+
+### cargo clippy --locked --workspace --all-targets --all-features -- -D warnings (12s)
+   Compiling serde v1.0.229
+    Checking forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-ir)
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+    Checking half v2.4.1
+    Checking anstyle v1.0.14
+    Checking regex-syntax v0.8.11
+    Checking serde_urlencoded v0.7.1
+    Checking clap_lex v0.6.0
+    Checking axum v0.8.9
+    Checking ciborium-io v0.2.2
+    Checking either v1.19.0
+    Checking itertools v0.10.5
+    Checking regex-automata v0.4.18
+    Checking ciborium-ll v0.2.2
+    Checking clap_builder v4.4.18
+    Checking cast v0.3.0
+    Checking criterion-plot v0.5.0
+    Checking clap v4.4.18
+    Checking regex v1.13.1
+    Checking ciborium v0.2.2
+    Checking tinytemplate v1.2.1
+    Checking is-terminal v0.4.17
+    Checking anes v0.1.6
+    Checking forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Checking oorandom v11.1.5
+    Checking unicode-ident v1.0.27
+    Checking criterion v0.5.1
+    Checking proc-macro2 v1.0.107
+    Checking quote v1.0.47
+    Checking syn v2.0.119
+    Checking forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-ir-derive)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.53s
+
+### cargo test --locked --workspace (20s)
+   Compiling serde v1.0.229
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-ir)
+   Compiling half v2.4.1
+   Compiling anstyle v1.0.14
+   Compiling serde_urlencoded v0.7.1
+   Compiling either v1.19.0
+   Compiling axum v0.8.9
+   Compiling regex-syntax v0.8.11
+   Compiling ciborium-io v0.2.2
+   Compiling clap_lex v0.6.0
+   Compiling clap_builder v4.4.18
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+   Compiling ciborium-ll v0.2.2
+   Compiling regex-automata v0.4.18
+   Compiling itertools v0.10.5
+   Compiling cast v0.3.0
+   Compiling num-traits v0.2.19
+   Compiling criterion-plot v0.5.0
+   Compiling regex v1.13.1
+   Compiling ciborium v0.2.2
+   Compiling clap v4.4.18
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling criterion v0.5.1
+   Compiling forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-ir-derive)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 16.64s
+     Running unittests src/lib.rs (target/debug/deps/forma_ir-3aed13680f398cea)
+
+running 264 tests
+test contracts::native_tests::explicit_constants_preserve_null_keys_without_schema_projection ... ok
+test contracts::native_tests::fixed_binding_lexical_and_capture_refusals ... ok
+test contracts::native_tests::branch_temporary_does_not_dominate_a_join_or_sibling ... ok
+test contracts::native_tests::branch_join_cannot_erase_date_number_provenance_behind_one_number_hint ... ok
+test contracts::native_tests::list_row_coalesce_uses_current_row_and_restores_scratch ... ok
+test contracts::native_tests::archived_precontract_island_requires_rebuild_and_archived_static_still_loads ... ok
+test contracts::native_tests::list_occurrences_own_row_snapshots_before_the_next_iteration ... ok
+test contracts::native_tests::coalesce_refuses_wrong_fallback_hint_ownership_and_multiple_definition ... ok
+test contracts::native_tests::nonisland_old_module_survives_but_new_opcode_requires_contract_section ... ok
+test contracts::native_tests::nested_island_snapshots_precede_children_and_repeat_ordered_inputs ... ok
+test contracts::native_tests::full_type_checks_enums_dates_and_recursive_aggregate_fallbacks ... ok
+test contracts::native_tests::real_reader_and_walker_coalesce_null_but_keep_zero_false_and_empty_string ... ok
+test contracts::tests::canonical_schema_rejects_duplicate_shapes_unreachable_and_cycles ... ok
+test contracts::native_tests::state_projects_only_declared_nested_fields_and_preserves_unused_disclosure ... ok
+test contracts::tests::count_limits_precede_truncation ... ok
+test contracts::tests::constants_keep_empty_and_null_distinct_and_require_finite_canonical_numbers ... ok
+test contracts::native_tests::state_has_one_owned_envelope_new_host_markers_and_no_legacy_channel ... ok
+test format::compatibility_tests::frozen_examples_keep_their_explicit_historical_reader_results ... ok
+test contracts::native_tests::repeated_ordered_input_is_valid_and_contract_schema_must_match_global ... ok
+test format::compatibility_tests::shared_version_pairs_pass_through_the_actual_header_reader ... ok
+test contracts::native_tests::state_refuses_bad_runtime_values_and_preserves_optional_array_positions ... ok
+test js_emitter_contract::closed_list_defaults_render_real_rows_in_both_projections ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+test contracts::tests::independent_paper_vectors_parse_exactly ... ok
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::strict_corpus_near_misses_render_their_real_defaults ... ok
+test keys::tests::every_shared_key_vector_maps_or_refuses_as_the_file_says ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test keys::tests::every_shared_path_vector_resolves_against_the_row_as_the_file_says ... ok
+test keys::tests::the_budget_check_counts_normalized_bytes_and_stops_at_the_budget ... ok
+test keys::tests::the_path_refuses_exactly_the_reasons_the_catalogue_names ... ok
+test parser::tests::duplicate_slot_names_resolve_first_wins_everywhere ... ok
+test keys::tests::every_shared_collision_vector_agrees_on_whether_two_values_share_a_key ... ok
+test parser::tests::parse_ir_rejects_bad_section_bounds ... ok
+test parser::tests::island_table_rejects_count_the_section_cannot_hold ... ok
+test parser::tests::parse_ir_rejects_truncated ... ok
+test parser::tests::parse_ir_with_islands ... ok
+test parser::tests::parse_ir_with_slots ... ok
+test parser::tests::parse_island_table ... ok
+test parser::tests::parse_island_table_empty ... ok
+test parser::tests::parse_island_table_with_slot_ids ... ok
+test parser::tests::parse_minimal_ir_file ... ok
+test parser::tests::parse_slot_table ... ok
+test parser::tests::parse_slot_table_empty ... ok
+test parser::tests::parse_string_table ... ok
+test parser::tests::parse_string_table_empty ... ok
+test parser::tests::parse_string_table_truncated ... ok
+test parser::tests::parse_string_table_unicode ... ok
+test parser::tests::slot_table_rejects_count_the_section_cannot_hold ... ok
+test parser::tests::slot_and_island_lookups_are_indexed ... ok
+test parser::tests::string_table_rejects_count_the_section_cannot_hold ... ok
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test parser::tests::validate_catches_bad_island_str_idx ... ok
+test parser::tests::validate_rejects_duplicate_island_ids ... ok
+test parser::tests::validate_rejects_duplicate_slot_ids ... ok
+test parser::tests::validate_catches_bad_slot_str_idx ... ok
+test parser::tests::validate_rejects_island_offset_landing_mid_operand ... ok
+test parser::tests::validate_rejects_island_slot_id_absent_from_slot_table ... ok
+test parser::tests::validate_rejects_island_start_missing_from_table ... ok
+test parser::tests::validate_rejects_list_item_slot_not_in_table ... ok
+test parser::tests::validate_rejects_opcode_slot_id_absent_from_slot_table ... ok
+test props::value::tests::date_conversion_checks_both_signed_bounds_without_system_time_limits ... ok
+test slot::tests::as_bool_matches_javascript_tobool ... ok
+test slot::tests::borrowed_scalar_text_preserves_ecmascript_conversion ... ok
+test slot::tests::from_json_array ... ok
+test slot::tests::from_json_basic ... ok
+test slot::tests::from_json_bool_values ... ok
+test slot::tests::from_json_invalid_json ... ok
+test slot::tests::from_json_missing_key_uses_default ... ok
+test slot::tests::from_json_nested_object ... ok
+test slot::tests::from_json_null_value ... ok
+test slot::tests::from_json_unknown_key_ignored ... ok
+test slot::tests::number_to_json_non_finite_is_null_matching_js ... ok
+test slot::tests::number_to_json_round_trips_by_value_not_by_text ... ok
+test slot::tests::number_to_text_matches_javascript_string ... ok
+test slot::tests::number_to_text_never_saturates_above_i64 ... ok
+test slot::tests::set_grows_instead_of_silently_dropping ... ok
+test slot::tests::slot_data_get_text ... ok
+test slot::tests::slot_data_new_from_defaults_basic ... ok
+test slot::tests::slot_data_new_from_defaults_bool_true ... ok
+test slot::tests::slot_data_new_from_defaults_empty_table ... ok
+test slot::tests::slot_data_new_from_defaults_no_default_bytes ... ok
+test slot::tests::slot_data_new_from_defaults_number ... ok
+test slot::tests::slot_data_nonempty_object_default_is_refused_at_load ... ok
+test slot::tests::slot_data_out_of_bounds ... ok
+test slot::tests::slot_data_set_and_get ... ok
+test slot::tests::slot_value_as_array ... ok
+test slot::tests::slot_value_bool_to_text ... ok
+test slot::tests::slot_value_null_to_text ... ok
+test slot::tests::slot_value_number_float ... ok
+test slot::tests::slot_value_number_integer ... ok
+test slot::tests::slot_value_text_to_text ... ok
+test slot::tests::to_text_matches_javascript_string_for_containers ... ok
+test text::tests::a_crlf_split_across_two_values_is_two_line_feeds ... ok
+test text::tests::the_iterator_reports_no_exact_size_and_the_byte_count_is_the_normalized_one ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ok
+test walker::tests::a_bound_select_overrides_authored_selected_on_its_options ... ok
+test walker::tests::a_list_exactly_at_the_remaining_budget_still_renders ... ok
+test text::tests::every_shared_value_vector_maps_through_the_iterator_and_the_collector ... ok
+test walker::tests::a_null_member_of_a_multiple_value_compares_as_null ... ok
+test walker::tests::a_multiple_select_selects_every_option_in_an_array_value ... ok
+test walker::tests::a_select_binding_ends_with_its_select ... ok
+test walker::tests::a_nested_list_is_checked_against_what_its_parents_left ... ok
+test walker::tests::a_list_longer_than_the_remaining_budget_fails_before_its_first_row ... ok
+test walker::tests::a_select_value_binding_compares_as_the_client_string ... ok
+test walker::tests::a_select_value_binding_matches_an_option_without_a_value_by_its_text ... ok
+test walker::tests::a_static_select_value_attribute_selects_its_option ... ok
+test walker::tests::a_single_select_selects_only_the_first_matching_option ... ok
+test walker::tests::a_textarea_doubles_a_leading_line_feed ... ok
+test walker::tests::an_empty_value_in_a_text_only_parent_writes_nothing ... ok
+test walker::tests::a_textarea_value_binding_wins_over_its_children ... ok
+test walker::tests::a_textarea_value_binding_is_written_as_its_text ... ok
+test walker::tests::an_option_ends_at_the_next_option_or_optgroup ... ok
+test walker::tests::an_options_first_value_attribute_is_its_value ... ok
+test walker::tests::a_select_value_binding_selects_the_matching_option ... ok
+test walker::tests::counted_walk_names_no_component_for_a_failure_outside_every_island ... ok
+test js_emitter_contract::state_snapshots_match_golden ... ok
+test walker::tests::counted_walk_names_every_island_around_a_failure_outermost_first ... ok
+test walker::tests::counted_walk_writes_what_walk_to_html_writes_and_counts_it ... ok
+test walker::tests::counted_walk_returns_the_counts_reached_when_a_budget_stops_it ... ok
+test walker::tests::a_select_value_binding_reaches_options_rendered_by_a_list ... ok
+test walker::tests::declared_props_are_separate_from_body_html ... ok
+test walker::tests::diagnostic_fragment_does_not_restore_an_inline_state_channel ... ok
+test walker::tests::dyn_attr_bool_matches_the_client_renderer ... ok
+test walker::tests::duplicate_slot_names_do_not_invent_declared_island_props ... ok
+test walker::tests::dyn_attr_emits_attribute_with_value ... ok
+test walker::tests::counted_walk_catches_a_panic_and_names_its_island ... ok
+test walker::tests::dyn_attr_multiple_on_same_element ... ok
+test walker::tests::dyn_attr_empty_string_and_zero_follow_boolean_presence ... ok
+test walker::tests::dyn_attr_on_void_tag ... ok
+test walker::tests::dyn_attr_skips_when_slot_null ... ok
+test walker::tests::empty_declared_inputs_do_not_emit_inline_props ... ok
+test walker::tests::keyed_rows::a_diagnostic_path_quotes_a_segment_a_dot_would_make_ambiguous ... ok
+test walker::tests::dyn_text_outside_the_text_only_parents_keeps_its_markers ... ok
+test walker::tests::dyn_text_in_a_text_only_parent_is_written_without_markers ... ok
+test walker::tests::keyed_rows::a_key_is_charged_to_the_output_budget_before_it_is_built ... ok
+test walker::tests::keyed_rows::a_keyed_list_writes_each_rows_canonical_key_once_on_its_root ... ok
+test walker::tests::keyed_rows::a_refused_row_leaves_the_slot_journal_keyed_rows_and_list_depth_as_found ... ok
+test walker::tests::keyed_rows::a_registered_child_envelope_enclosing_the_root_puts_the_key_on_the_host ... ok
+test walker::tests::keyed_rows::a_void_root_carries_the_key_and_admits_nothing_beside_it ... ok
+test walker::tests::keyed_rows::a_row_without_an_identity_at_the_path_refuses_with_its_reason ... ok
+test walker::tests::keyed_rows::an_island_envelope_that_does_not_wholly_enclose_the_root_refuses ... ok
+test walker::tests::keyed_rows::an_unkeyed_list_renders_byte_identically_with_no_key_and_no_key_rules ... ok
+test walker::tests::keyed_rows::each_execution_of_a_list_is_its_own_duplicate_scope ... ok
+test walker::tests::keyed_rows::keys_collide_on_their_canonical_text_not_on_their_type_or_spelling ... ok
+test walker::tests::keyed_rows::static_mode_omits_row_keys_but_keeps_key_and_shape_refusals ... ok
+test walker::tests::keyed_rows::the_iteration_budget_refuses_a_keyed_list_before_any_key_is_read ... ok
+test walker::tests::keyed_rows::an_authored_data_forma_key_on_the_root_refuses_and_on_a_descendant_renders ... ok
+test walker::tests::keyed_rows::every_shared_key_vector_is_written_as_its_served_markup ... ok
+test walker::tests::keyed_rows::a_keyed_row_renders_exactly_one_balanced_root_and_nothing_beside_it ... ok
+test walker::tests::larger_props_use_the_same_owned_state_channel ... ok
+test walker::tests::nested_diagnostic_fragment_has_occurrence_markers ... ok
+test walker::tests::multiple_islands_share_one_owned_envelope ... ok
+test walker::tests::no_marker_kind_is_written_inside_a_text_only_parent ... ok
+test walker::tests::inv1_vectors::ordinary_payloads_are_escaped_in_both_output_contexts ... ok
+test walker::tests::normalization_vectors::adjacent_values_normalize_each_before_composition ... ok
+test walker::tests::multiple_counts_only_when_the_attribute_is_written ... ok
+test walker::tests::normalization_vectors::pre_children_protect_only_an_initial_normalized_line_feed ... ok
+test walker::tests::normalization_vectors::the_pre_boundary_is_consumed_by_any_token_but_not_by_a_value_only_opcode ... ok
+test walker::tests::normalization_vectors::the_output_budget_counts_the_normalized_and_escaped_bytes_actually_written ... ok
+test walker::tests::normalization_vectors::textarea_children_protect_only_an_initial_normalized_line_feed ... ok
+test walker::tests::normalization_vectors::text_and_dyn_text_write_each_value_normalized ... ok
+test walker::tests::obsolete_mode_cannot_restore_fragment_inline_props ... ok
+test walker::tests::normalization_vectors::url_attributes_are_checked_as_the_normalized_string_that_is_written ... ok
+test walker::tests::owned_state_has_no_raw_script_openers ... ok
+test walker::tests::parse_accepts_zero_length_else_branch_known_residual ... ok
+test walker::tests::owned_state_escapes_existing_comment_script_regression ... ok
+test walker::tests::parse_rejects_list_body_len_past_the_stream ... ok
+test walker::tests::parse_rejects_show_if_then_len_past_the_stream ... ok
+test walker::tests::parse_rejects_show_if_marker_byte_that_is_not_show_else ... ok
+test walker::tests::roundtrip_conditional_content ... ok
+test walker::tests::roundtrip_dynamic_greeting ... ok
+test walker::tests::roundtrip_list_rendering ... ok
+test walker::tests::roundtrip_page_structure ... ok
+test walker::tests::security_probe_bounded_attribute_escaping ... ok
+test walker::tests::security_probe_bounded_text_escaping ... ok
+test walker::tests::normalization_vectors::static_and_dynamic_attributes_write_each_value_normalized ... ok
+test walker::tests::roundtrip_nested_structure ... ok
+test walker::tests::slot_value_to_json_all_types ... ok
+test walker::tests::small_props_use_the_owned_state_channel ... ok
+test walker::tests::static_routes::static_limits_charge_actual_bytes_and_list_iterations ... ok
+test walker::tests::show_text_branch_vectors::a_dyn_text_branch_is_written_between_the_conditional_markers ... ok
+test walker::tests::static_routes::static_mode_refuses_declared_islands_before_any_output ... ok
+test contracts::native_tests::state_exact_escaped_utf8_ceiling_passes_and_one_byte_more_refuses ... ok
+test walker::tests::static_routes::static_conditionals_lists_and_text_only_parents_keep_visible_values ... ok
+test walker::tests::the_per_row_check_still_stops_a_list_whose_nested_rows_spend_the_budget ... ok
+test walker::tests::static_routes::static_dynamic_text_preserves_initial_line_feeds_across_empty_ranges ... ok
+test walker::tests::static_routes::static_vectors_omit_markers_and_holders_but_keep_value_rules ... ok
+test walker::tests::the_fault_trigger_is_armed_only_by_the_counted_walk ... ok
+test walker::tests::the_context_rules_hold_in_an_island_fragment ... ok
+test walker::tests::value_rule_vectors::rule_3_an_admitted_exact_integer_is_written_as_its_decimal_digits ... ok
+test walker::tests::walk_attr_escaping ... ok
+test walker::tests::value_rule_vectors::rule_7_a_boolean_condition_selects_the_branch ... ok
+test walker::tests::walk_blocks_svg_data_url_outside_image_context ... ok
+test walker::tests::value_rule_vectors::rule_6_the_string_near_miss_writes_the_boolean_word_and_the_idiom_its_range ... ok
+test walker::tests::walk_boolean_attr ... ok
+test walker::tests::walk_drops_event_handler_attributes ... ok
+test walker::tests::walk_drops_hostile_attribute_names ... ok
+test walker::tests::walk_drops_hostile_dyn_attr_name ... ok
+test walker::tests::walk_drops_hostile_boolean_attribute_name ... ok
+test walker::tests::walk_drops_javascript_url_in_dyn_attr ... ok
+test walker::tests::walk_drops_javascript_url_in_static_attr ... ok
+test walker::tests::walk_dyn_text ... ok
+test walker::tests::value_rule_vectors::rule_5_null_writes_nothing_as_text_attribute_and_textarea_child ... ok
+test walker::tests::walk_dyn_text_empty_string_emits_zwsp ... ok
+test walker::tests::value_rule_vectors::rule_2_numbers_are_written_in_ecmascript_formatting_as_text_and_attribute ... ok
+test walker::tests::walk_dyn_text_null_emits_zwsp ... ok
+test walker::tests::walk_dyn_text_escaping ... ok
+test walker::tests::walk_empty_element ... ok
+test walker::tests::walk_island_attrs_match_walk_to_html ... ok
+test walker::tests::walk_island_attrs_on_void_tag ... ok
+test walker::tests::walk_island_attrs_on_open_tag ... ok
+test walker::tests::walk_island_attrs_do_not_leak_past_the_island_end ... ok
+test walker::tests::walk_island_attrs_with_existing_attrs ... ok
+test walker::tests::walk_island_basic ... ok
+test walker::tests::walk_island_attrs_survive_an_empty_show_if_before_the_root ... ok
+test walker::tests::walk_island_markers ... ok
+test walker::tests::walk_island_byte_offset_out_of_bounds ... ok
+test walker::tests::walk_island_nested_inside_another_islands_root_is_fine ... ok
+test walker::tests::walk_island_no_entry_in_table ... ok
+test walker::tests::walk_island_not_found ... ok
+test walker::tests::walk_keeps_safe_urls_and_data_images ... ok
+test walker::tests::walk_list_depth_exceeded ... ok
+test walker::tests::walk_list_empty_array ... ok
+test walker::tests::walk_island_with_dyn_text ... ok
+test walker::tests::walk_list_renders_items ... ok
+test walker::tests::walk_list_null_slot ... ok
+test walker::tests::walk_list_nested ... ok
+test walker::tests::walk_multiple_attrs ... ok
+test walker::tests::walk_list_with_elements ... ok
+test walker::tests::walk_nested_elements ... ok
+test walker::tests::walk_nested_show_if_within_limit ... ok
+test walker::tests::walk_nested_island_start_before_a_root_element_is_an_error ... ok
+test walker::tests::walk_prop_in_list_body ... ok
+test walker::tests::walk_prop_missing_property ... ok
+test walker::tests::walk_prop_multiple_properties ... ok
+test walker::tests::walk_prop_on_non_object ... ok
+test walker::tests::walk_real_benchmark_ir ... ignored, requires admin/dist IR files — run in monorepo or after `npm run build`
+test walker::tests::walk_rejects_hostile_close_tag_name ... ok
+test walker::tests::walk_rejects_hostile_tag_name ... ok
+test walker::tests::walk_show_if_false_branch ... ok
+test walker::tests::walk_show_if_falsy_null ... ok
+test walker::tests::walk_show_if_nested ... ok
+test walker::tests::walk_show_if_no_else ... ok
+test walker::tests::walk_show_if_true_branch ... ok
+test walker::tests::walk_show_if_truthy_text ... ok
+test walker::tests::walk_show_if_with_elements ... ok
+test walker::tests::walk_static_div ... ok
+test walker::tests::walk_text_escaping ... ok
+test walker::tests::walk_void_tag ... ok
+test walker::tests::walk_output_limit_trips_on_a_single_dyn_text_value ... ok
+test walker::tests::value_rule_vectors::rule_6_attribute_values_follow_one_table ... ok
+test contracts::native_tests::fixed_constant_depth_and_node_boundaries_are_checked_iteratively ... ok
+test walker::tests::walk_drops_a_script_url_in_an_svg_animation_value ... ok
+test walker::tests::walk_list_budget_exceeded ... ok
+test walker::tests::inv1_vectors::names_and_urls_agree_for_static_and_dynamic_attributes ... ok
+test walker::tests::walk_output_limit_trips_inside_one_opcode ... ok
+test contracts::native_tests::state_cap_is_cumulative_and_a_refused_entry_is_not_retained ... ok
+test walker::tests::bulk_escaping_matches_character_reference_at_every_output_boundary ... ok
+
+test result: ok. 263 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.73s
+
+     Running tests/feature_isolation.rs (target/debug/deps/feature_isolation-0f07e3a4a8b5d412)
+
+running 1 test
+test test_helpers_alone_does_not_compile_the_fault_trigger_in ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.84s
+
+     Running tests/fmir_contract.rs (target/debug/deps/fmir_contract-17e25b2cba2099d6)
+
+running 3 tests
+test variable_sections_tile_exactly_and_reserved_fields_fail_closed ... ok
+test legacy_and_newer_minor_are_rebuild_errors ... ok
+test frozen_header_layout_matches_document_and_package_version ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fmir_v3.rs (target/debug/deps/fmir_v3-ff2086984e2245c6)
+
+running 8 tests
+test an_available_section_count_is_checked_before_the_missing_reserved_prefix ... ok
+test crc_standard_vector_and_example_match ... ok
+test every_removed_opcode_is_reserved_and_refused_at_load ... ok
+test all_bytecode_string_operand_shapes_are_validated_before_render ... ok
+test canonical_dump_losslessly_rebuilds_every_accepted_review_fixture ... ok
+test recursive_inputs_are_bounded_at_the_contract_and_at_ten_thousand_levels ... ok
+test reviewed_v3_fixture_codes_are_exact ... ok
+test module_ceiling_is_checked_before_decoding_but_includes_its_boundary ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+
+     Running tests/fuzz_regressions.rs (target/debug/deps/fuzz_regressions-a54e9d1b7c06097c)
+
+running 6 tests
+test malformed_and_oversized_input_never_looks_like_a_successful_replay ... ok
+test slot_adapter_uses_declared_order_bounded_lengths_and_null_for_truncation ... ok
+test seeded_decoder_defects_are_caught_deterministically ... ok
+test replay_every_committed_regression_with_its_real_adapter ... ok
+test fault_corpus_is_total_and_accepted_cases_walk ... ok
+test frozen_modules_reach_all_four_adapters_and_the_bounded_walker ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/island_emitter.rs (target/debug/deps/island_emitter-6956e921d5f51f1a)
+
+running 16 tests
+test closed_aggregate_projection_preserves_array_positions_and_strips_extras ... ok
+test browser_only_contract_renders_only_its_empty_host_and_declared_state ... ok
+test closed_rows_project_each_registered_input_at_the_current_occurrence ... ok
+test closed_nested_optional_projection_folds_without_inventing_native_type ... ok
+test closed_optional_inputs_fold_before_native_coalesce_type_validation ... ok
+test closed_local_aggregate_defaults_render_rows_without_handler_slots ... ok
+test declared_coalesce_only_replaces_null_and_keeps_original_input_state ... ok
+test declared_aggregate_fallback_keeps_empty_arrays_and_scalar_row_hints ... ok
+test repeated_fields_keep_the_ordered_input_mapping ... ok
+test repeated_list_entries_snapshot_the_current_nested_row ... ok
+test optional_root_access_keeps_the_handler_value_and_only_defaults_null ... ok
+test keyed_shapes_compiler_output_writes_every_rows_key_on_its_own_root ... ok
+test declared_aggregate_fallback_keeps_empty_arrays_and_keyed_object_rows ... ok
+test keyed_shapes_compiler_output_refuses_a_duplicate_in_the_list_execution_that_has_it ... ok
+test keyed_fixtures_refuse_duplicate_missing_and_non_identity_keys_as_render_503 ... ok
+test keyed_fixtures_render_their_unkeyed_originals_plus_exactly_the_row_keys ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/json_float_roundtrip.rs (target/debug/deps/json_float_roundtrip-52be1dee34c407d5)
+
+running 2 tests
+test public_json_import_accepts_the_exact_integer_spelling ... ok
+test public_json_import_preserves_fixed_finite_decimal_values ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/list_scaling.rs (target/debug/deps/list_scaling-adcd9434cb816426)
+
+running 4 tests
+test list_row_writes_do_not_escape_the_row ... ok
+test list_row_scope_is_restored_when_the_walk_aborts ... ok
+test list_walk_time_is_linear_in_row_count ... ok
+test list_walk_allocations_are_linear_in_row_count ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+
+     Running tests/namespace_vectors.rs (target/debug/deps/namespace_vectors-5791ab24e77923f9)
+
+running 1 test
+test frozen_namespace_trees_are_written_by_the_real_native_walker ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/page_props.rs (target/debug/deps/page_props-961a47731c67d93b)
+
+running 12 tests
+test recursive_rust_shapes_are_refused_and_empty_objects_are_valid ... ok
+test errors_retain_route_path_and_both_actual_declarations ... ok
+test raw_identifiers_and_leading_underscores_have_stable_camel_case_names ... ok
+test missing_optional_field_fails_but_present_option_none_omits ... ok
+test nested_value_error_has_indexed_path_and_declaration_sources ... ok
+test bound_props_derives_once_and_keeps_its_verified_module ... ok
+test dates_are_signed_epoch_milliseconds_truncated_toward_zero ... ok
+test enum_literal_sets_must_be_exact_but_order_is_irrelevant ... ok
+test integer_checks_happen_before_rounding_and_floats_must_be_finite ... ok
+test name_comparison_and_projection_do_not_leak_extra_rust_fields ... ok
+test value_rule_vectors::date_vectors_are_epoch_milliseconds_truncated_toward_zero ... ok
+test value_rule_vectors::integer_vectors_are_admitted_or_refused_in_the_integer_domain ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/page_props_compile.rs (target/debug/deps/page_props_compile-213ab4829fe1c076)
+
+running 1 test
+test derive_refuses_unsupported_shapes_at_the_offending_declaration ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.93s
+
+     Running unittests src/lib.rs (target/debug/deps/forma_ir_derive-378dcbe9077fa92b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/forma_server-a30445e960565c04)
+
+running 114 tests
+test assets::tests::denied_names_are_never_served ... ok
+test assets::tests::mime_default_stays_fail_closed ... ok
+test assets::tests::mime_covers_images_fonts_and_maps ... ok
+test assets::tests::mime_matching_is_case_insensitive ... ok
+test assets::tests::falls_through_to_the_next_candidate_when_a_sibling_is_missing ... ok
+test assets::tests::higher_qvalue_wins ... ok
+test assets::tests::mime_reads_the_extension_after_the_last_separator ... ok
+test assets::tests::mime_wasm_is_pinned ... ok
+test assets::tests::qvalue_zero_is_a_rejection_not_an_acceptance ... ok
+test assets::tests::missing_asset_is_404 ... ok
+test assets::tests::manifest_and_compressed_siblings_are_not_directly_servable ... ok
+test assets::tests::tokens_match_exactly_not_by_substring ... ok
+test assets::tests::wildcard_identity_and_absent_headers_serve_raw ... ok
+test assets::tests::filename_aliases_404_in_debug_just_like_release ... ok
+test csp::tests::csp_contains_nonce ... ok
+test assets::tests::un_hashed_assets_are_revalidated_not_pinned_for_a_year ... ok
+test assets::tests::serves_a_hashed_asset_immutable_with_an_etag ... ok
+test assets::tests::an_embedded_size_report_is_not_served_through_the_route ... ok
+test assets::tests::falls_back_to_gzip_when_only_a_gz_sibling_exists ... ok
+test assets::tests::metadata_is_required_for_immutable_caching ... ok
+test csp::tests::extension_sources_accept_what_consumers_add ... ok
+test csp::tests::csp_is_strict ... ok
+test csp::tests::extension_sources_refuse_injection_and_loosening ... ok
+test assets::tests::conditional_request_gets_304_without_a_body ... ok
+test csp::tests::endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest ... ok
+test csp::tests::failed_draw_returns_no_nonce_even_after_a_partial_fill ... ok
+test csp::tests::frame_and_form_targets_refuse_data_and_filesystem ... ok
+test csp::tests::nonce_is_base64 ... ok
+test csp::tests::nonce_is_unique ... ok
+test assets::tests::negotiation_honours_qvalue_zero_end_to_end ... ok
+test csp::tests::parse_accepts_a_generated_nonce ... ok
+test csp::tests::parse_rejects_attribute_and_directive_breakout ... ok
+test csp::tests::strict_base_preserves_existing_directives_and_adds_enforced_trusted_types ... ok
+test csp::tests::successful_draw_encodes_all_32_bytes_once ... ok
+test csp::tests::try_generate_draws_distinct_44_character_nonces ... ok
+test head::tests::script_urls_are_recognised_as_a_browser_reads_them ... ok
+test frame::tests::frame_201_a_failed_nonce_draw_is_no_frame ... ok
+test frame::tests::frame_202_a_policy_that_is_no_header_value_is_no_frame ... ok
+test ir::tests::a_load_error_s_code_is_read_from_the_start_of_its_reason ... ok
+test ir::tests::a_declared_but_unembedded_ir_file_is_reported_not_swallowed ... ok
+test ir::tests::a_route_with_no_ir_field_is_not_an_error ... ok
+test ir::reload_tests::the_reload_loads_through_the_strict_loader_at_start ... ok
+test pages::tests::a_same_named_client_slot_never_becomes_a_handler_target ... ok
+test ir::reload_tests::development::a_module_that_fails_to_load_keeps_the_previous_one_and_is_logged_once_with_its_code ... ok
+test render::tests::a_keyed_row_refusal_is_render_503_and_other_walk_refusals_stay_render_102 ... ok
+test ir::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads ... ok
+test head::tests::a_preload_must_be_one_of_the_builds_files ... ok
+test render::tests::an_invalid_extension_fails_before_the_walk ... ok
+test render::tests::display_names_code_route_component_and_counts ... ok
+test render::tests::render_202_a_failed_nonce_draw ... ok
+test ir::reload_tests::development::the_manifest_can_rename_a_module_or_name_a_new_one_and_a_bad_one_changes_nothing ... ok
+test render::tests::static_island_mismatch_refuses_before_nonce_or_walk ... ok
+test render_contract::checked_render::render_101_a_server_render_without_its_module ... ok
+test render_contract::checked_render::render_102_a_module_the_walk_refuses_names_its_island ... ok
+test render_contract::checked_render::render_201_an_invalid_policy_extension ... ok
+test pages::tests::root_bindings_reject_missing_duplicate_unknown_defaulted_and_wrong_type_slots ... ok
+test render_contract::checked_render::a_component_failing_on_one_tenants_branding_fails_that_request_alone ... ok
+test render_contract::checked_render::render_301_the_output_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::render_302_the_list_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::render_303_nesting_past_the_walker_s_depth ... ok
+test render_contract::checked_render::render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers ... ok
+test render_contract::checked_render::try_render_writes_the_document_and_counts_the_walk ... ok
+test render_contract::island_state::empty_ssr_still_has_one_envelope_but_browser_shell_has_none ... ok
+test render_contract::island_state::complete_document_limit_is_exact_and_counts_the_escaped_state_and_tags ... ok
+test render::tests::a_panic_outside_the_walk_is_still_a_fault ... ok
+test render_contract::island_state::one_head_state_block_precedes_body_and_preserves_the_checked_values ... ok
+test render_contract::checked_render::try_render_never_serves_a_shell_in_place_of_a_failure ... ok
+test render_contract::checked_render::a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders ... ok
+test render_contract::island_state::reviewer_browser_shell_counts_escaped_metadata_at_the_exact_request_limit ... ok
+test render_contract::checked_render::render_399_a_panic_inside_the_walk ... ok
+test render_contract::island_state::head_and_state_can_exceed_budget_without_body_growth_and_override_is_local ... ok
+test render_contract::page_response::a_page_response_counts_its_walk ... ok
+test render_contract::page_response::extensions_add_sources_to_their_own_directive_only ... ok
+test render_contract::page_response::page_response_writes_no_store_the_policy_and_the_document_headers ... ok
+test render_contract::page_response::two_fetches_get_no_store_and_two_different_nonces ... ok
+test render_contract::page_response::into_parts_unchecked_returns_exactly_what_the_response_writes ... ok
+test assets::tests::more_embed_types_than_cache_slots_each_serve_their_own_assets ... ok
+test render_contract::raw_html::a_raw_html_body_prefix_is_written_verbatim_on_every_retained_path ... ok
+test render_contract::preview_frame::the_frame_policy_replaces_exactly_its_nine_directives ... ok
+test render_contract::page_response::an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy ... ok
+test render_contract::preview_frame::the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch ... ok
+test render_contract::raw_html::the_documented_body_prefix_form_compiles_on_the_msrv_and_renders ... ok
+test render_contract::typed_homes::a_head_link_carries_only_the_listed_link_types ... ok
+test render_contract::typed_homes::a_head_link_refuses_a_script_url_and_keeps_every_other ... ok
+test render_contract::typed_homes::head_links_are_written_escaped_in_the_head_in_the_order_added ... ok
+test render_contract::island_state::state_failures_have_distinct_codes_route_component_and_field_path ... ok
+test render_contract::typed_homes::a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table ... ok
+test render_contract::typed_homes::metadata_normalization_preserves_transport_and_url_refusals ... ok
+test sw::tests::application_names_are_what_a_cache_name_can_carry ... ok
+test sw::tests::serve_sw_sets_nosniff_and_no_store ... ok
+test template::tests::a_legacy_manifest_is_refused_before_removed_wasm_fields_can_be_used ... ok
+test template::tests::asset_filename_xss_is_escaped ... ok
+test template::tests::body_class_with_quotes_is_escaped ... ok
+test render_contract::typed_homes::try_render_writes_the_routes_manifest_modulepreload_links_nonced ... ok
+test template::tests::config_json_emits_no_raw_angle_brackets ... ok
+test template::tests::escape_html_basic_entities ... ok
+test template::tests::named_parts_expose_the_nonce_bound_to_the_document ... ok
+test template::tests::page_response_headers_are_no_store ... ok
+test template::tests::personality_css_round_trips_legitimate_values ... ok
+test template::tests::personality_css_style_breakout_prevented ... ok
+test template::tests::phase1_renders_empty_app_div ... ok
+test template::tests::phase2_renders_ssr_content_with_data_attr ... ok
+test render_contract::typed_homes::ordinary_metadata_uses_the_shared_rule_one_vectors_on_both_render_paths ... ok
+test template::tests::phase2_ssr_preserves_head_content ... ok
+test template::tests::phase2_with_slot_data ... ok
+test template::tests::style_attributes_rendered_by_the_walker_are_permitted_by_the_csp ... ok
+test render_contract::preview_frame::a_frame_without_its_runtime_is_a_coded_error_at_start ... ok
+test template::tests::the_root_carries_the_manifests_build_escaped_on_both_forms ... ok
+test render_contract::preview_frame::page_response_frame_is_the_only_response_that_rewrites_the_policy ... ok
+test render_contract::checked_render::render_302_a_60_000_row_list_fails_before_its_first_row_in_under_a_millisecond ... ok
+test sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s ... ok
+test render_contract::page_response::no_policy_extension_yields_a_response_without_the_policy ... ok
+test render_contract::island_state::default_eight_mib_limit_includes_large_head_metadata_exactly ... ok
+test render_contract::raw_html::a_search_finds_one_raw_constructor ... ok
+
+test result: ok. 114 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+     Running tests/asset_integrity.rs (target/debug/deps/asset_integrity-055e46408d2a2559)
+
+running 3 tests
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/asset_sets.rs (target/debug/deps/asset_sets-8ae15852b2990193)
+
+running 1 test
+test two_embed_types_each_serve_their_own_assets ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/dev_reload.rs (target/debug/deps/dev_reload-9b07c02467a8cd33)
+
+running 1 test
+test an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/feature_isolation.rs (target/debug/deps/feature_isolation-ff7bfdd99e6aeaa4)
+
+running 1 test
+test a_consumer_with_test_helpers_never_resolves_the_fault_injection_feature ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/island_state.rs (target/debug/deps/island_state-a478fdb186d10aeb)
+
+running 3 tests
+test finalized_typed_handle_emits_only_declared_state_in_the_head ... ok
+test public_state_and_document_refusals_are_distinct_and_request_limits_do_not_persist ... ok
+test public_page_handle_accepts_exactly_one_mib_of_escaped_state_and_refuses_one_more_byte ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/loader_refusal_logs.rs (target/debug/deps/loader_refusal_logs-4d172ea66b4eb31b)
+
+running 1 test
+test the_default_loader_logs_no_fallback_it_does_not_take ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/manifest_cache.rs (target/debug/deps/manifest_cache-8b50c1bcd7c9758e)
+
+running 3 tests
+test development_cache_policy_rereads_rebuilt_metadata ... ok
+test metadata_cache_overflow_falls_back_without_crossing_embed_types ... ok
+test each_embed_type_uses_its_metadata_for_raw_compressed_retained_and_304_responses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/manifest_compatibility.rs (target/debug/deps/manifest_compatibility-a7207fc3edf15ddd)
+
+running 3 tests
+test checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok
+test a_retained_asset_must_be_immutable ... ok
+test schema_writer_and_mode_refusals_happen_before_binding ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation.rs (target/debug/deps/navigation-80d7b5668b6ad93c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation_owners.rs (target/debug/deps/navigation_owners-a5aeee9296e67e7c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/relaxation_log_bound.rs (target/debug/deps/relaxation_log_bound-8f7a580358ccd854)
+
+running 1 test
+test the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/service_worker_named_off.rs (target/debug/deps/service_worker_named_off-af2ac23ffb311a25)
+
+running 1 test
+test a_named_application_s_retiring_worker_also_deletes_its_own_caches ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_off.rs (target/debug/deps/service_worker_off-1931ec1ed2032231)
+
+running 3 tests
+test configuring_after_the_first_use_is_refused ... ok
+test by_default_no_page_registers_a_worker ... ok
+test by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedded ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_on.rs (target/debug/deps/service_worker_on-050397790ee646b2)
+
+running 4 tests
+test the_setting_is_configured_once ... ok
+test an_enabled_application_s_js_pages_register_the_worker ... ok
+test an_enabled_application_serves_its_built_worker ... ok
+test an_enabled_application_with_no_built_worker_is_told_once ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/startup_results.rs (target/debug/deps/startup_results-4b354fd7ee85715b)
+
+running 3 tests
+test text_asset_results_preserve_bytes_and_read_errors ... ok
+test valid_manifest_and_compatibility_alias_keep_the_same_values ... ok
+test manifest_refusals_propagate_before_startup ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/static_routes.rs (target/debug/deps/static_routes-d48a196ebbb1cbe3)
+
+running 9 tests
+test an_explicit_browser_shell_keeps_request_configuration_without_native_state ... ok
+test empty_js_is_explicit_and_static_module_preloads_are_refused ... ok
+test static_ssr_refuses_a_stale_preload_table_even_when_the_asset_is_retained ... ok
+test javascript_routes_without_islands_keep_the_existing_adoption_output ... ok
+test static_ssr_omits_adoption_state_and_keeps_css_fonts_headers_and_exact_response_budget ... ok
+test a_static_page_does_not_remove_the_enabled_worker_delivery_endpoint ... ok
+test explicit_config_refuses_static_ssr_but_remains_supported_with_a_js_entry ... ok
+test startup_refuses_islands_without_js_and_accepts_both_valid_products ... ok
+test reload_keeps_the_good_pair_and_retries_same_bytes_after_route_policy_changes ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/strict_loader.rs (target/debug/deps/strict_loader-4f2517bb8faf2f62)
+
+running 9 tests
+test regenerate_module_fixtures ... ignored, writes the fixtures; run by hand after changing the generator
+test a_flipped_byte_fails_the_default_loader_naming_route_file_and_code ... ok
+test an_unbound_ssr_route_refuses_before_the_fixture_listener ... ok
+test a_truncated_module_fails_the_default_loader_naming_route_file_and_code ... ok
+test module_fixtures_are_what_their_generator_writes ... ok
+test with_a_bad_module_the_fixture_server_binds_no_port ... ok
+test a_route_declared_ssr_false_needs_no_module ... ok
+test the_same_server_binds_and_serves_after_all_handlers_finalize ... ok
+test every_reviewed_v3_refusal_happens_before_bind ... ok
+
+test result: ok. 8 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/trusted_types_report_only.rs (target/debug/deps/trusted_types_report_only-7921299647c68a12)
+
+running 4 tests
+test trusted_types_are_enforced_without_an_endpoint_in_every_build ... ok
+test a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints ... ok
+test a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason ... ok
+test an_invalid_endpoint_fails_the_page_on_every_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/typed_pages.rs (target/debug/deps/typed_pages-5c9f3ef1511d6c1a)
+
+running 18 tests
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize ... ok
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs ... ok
+test a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders ... ok
+test finalization_refuses_a_bind_already_comparing_on_another_thread ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test bind_limits_inherit_and_request_overrides_never_change_sibling_defaults ... ok
+test a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503 ... ok
+test two_routes_sharing_an_alias_need_two_successful_exact_bindings ... ok
+test typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks ... ok
+test reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test a_sixty_thousand_row_typed_request_refuses_before_its_first_row ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+   Doc-tests forma_ir
+
+running 4 tests
+test crates/forma-ir/src/lib.rs - (line 11) - compile fail ... ok
+test crates/forma-ir/src/lib.rs - (line 14) - compile fail ... ok
+test crates/forma-ir/src/lib.rs - (line 18) - compile fail ... ok
+test crates/forma-ir/src/lib.rs - (line 8) - compile fail ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+   Doc-tests forma_ir_derive
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests forma_server
+
+running 35 tests
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 102) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 93) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 90) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 87) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 105) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 96) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 59) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadIrModules (line 79) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 99) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 108) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_to (line 427) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::relax_trusted_types (line 489) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions (line 302) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_uri (line 453) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 64) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 42) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 72) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 69) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 15) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 18) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 21) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 24) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 27) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 30) - compile fail ... ok
+test crates/forma-server/src/frame.rs - frame (line 170) - compile ... ok
+test crates/forma-server/src/lib.rs - (line 8) - compile ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 33) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 6) ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx::with_module_preloads (line 150) - compile ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 43) - compile ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 38) - compile fail ... ok
+test crates/forma-server/src/sw.rs - sw (line 8) - compile ... ok
+test crates/forma-server/src/head.rs - head::HeadLink (line 121) ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx (line 19) ... ok
+test crates/forma-server/src/raw.rs - raw::RawHtml (line 10) ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+
+
+### cargo test --locked -p forma-server --features compression (48s)
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.46s
+     Running unittests src/lib.rs (target/debug/deps/forma_server-25920b52ffeaf15a)
+
+running 120 tests
+test assets::tests::denied_names_are_never_served ... ok
+test assets::tests::mime_default_stays_fail_closed ... ok
+test assets::tests::mime_covers_images_fonts_and_maps ... ok
+test assets::tests::mime_matching_is_case_insensitive ... ok
+test assets::tests::manifest_and_compressed_siblings_are_not_directly_servable ... ok
+test assets::tests::mime_reads_the_extension_after_the_last_separator ... ok
+test assets::tests::falls_through_to_the_next_candidate_when_a_sibling_is_missing ... ok
+test assets::tests::mime_wasm_is_pinned ... ok
+test assets::tests::higher_qvalue_wins ... ok
+test assets::tests::qvalue_zero_is_a_rejection_not_an_acceptance ... ok
+test assets::tests::missing_asset_is_404 ... ok
+test assets::tests::tokens_match_exactly_not_by_substring ... ok
+test assets::tests::wildcard_identity_and_absent_headers_serve_raw ... ok
+test assets::tests::filename_aliases_404_in_debug_just_like_release ... ok
+test assets::tests::serves_a_hashed_asset_immutable_with_an_etag ... ok
+test assets::tests::an_embedded_size_report_is_not_served_through_the_route ... ok
+test assets::tests::un_hashed_assets_are_revalidated_not_pinned_for_a_year ... ok
+test assets::tests::falls_back_to_gzip_when_only_a_gz_sibling_exists ... ok
+test csp::tests::csp_contains_nonce ... ok
+test assets::tests::metadata_is_required_for_immutable_caching ... ok
+test csp::tests::extension_sources_accept_what_consumers_add ... ok
+test csp::tests::csp_is_strict ... ok
+test assets::tests::negotiation_honours_qvalue_zero_end_to_end ... ok
+test csp::tests::failed_draw_returns_no_nonce_even_after_a_partial_fill ... ok
+test csp::tests::extension_sources_refuse_injection_and_loosening ... ok
+test csp::tests::endpoints_accept_a_path_https_or_loopback_http_and_refuse_the_rest ... ok
+test csp::tests::frame_and_form_targets_refuse_data_and_filesystem ... ok
+test csp::tests::nonce_is_base64 ... ok
+test assets::tests::conditional_request_gets_304_without_a_body ... ok
+test csp::tests::nonce_is_unique ... ok
+test csp::tests::parse_accepts_a_generated_nonce ... ok
+test csp::tests::parse_rejects_attribute_and_directive_breakout ... ok
+test csp::tests::strict_base_preserves_existing_directives_and_adds_enforced_trusted_types ... ok
+test csp::tests::successful_draw_encodes_all_32_bytes_once ... ok
+test csp::tests::try_generate_draws_distinct_44_character_nonces ... ok
+test frame::tests::frame_202_a_policy_that_is_no_header_value_is_no_frame ... ok
+test frame::tests::frame_201_a_failed_nonce_draw_is_no_frame ... ok
+test head::tests::script_urls_are_recognised_as_a_browser_reads_them ... ok
+test ir::tests::a_declared_but_unembedded_ir_file_is_reported_not_swallowed ... ok
+test ir::tests::a_load_error_s_code_is_read_from_the_start_of_its_reason ... ok
+test ir::reload_tests::the_reload_loads_through_the_strict_loader_at_start ... ok
+test ir::tests::a_route_with_no_ir_field_is_not_an_error ... ok
+test render::tests::a_keyed_row_refusal_is_render_503_and_other_walk_refusals_stay_render_102 ... ok
+test ir::reload_tests::a_release_build_reads_nothing_per_request_and_a_debug_build_rereads ... ok
+test ir::reload_tests::development::a_module_that_fails_to_load_keeps_the_previous_one_and_is_logged_once_with_its_code ... ok
+test pages::tests::a_same_named_client_slot_never_becomes_a_handler_target ... ok
+test render::tests::an_invalid_extension_fails_before_the_walk ... ok
+test head::tests::a_preload_must_be_one_of_the_builds_files ... ok
+test render::tests::display_names_code_route_component_and_counts ... ok
+test ir::reload_tests::development::the_manifest_can_rename_a_module_or_name_a_new_one_and_a_bad_one_changes_nothing ... ok
+test render::tests::render_202_a_failed_nonce_draw ... ok
+test render::tests::a_panic_outside_the_walk_is_still_a_fault ... ok
+test render::tests::static_island_mismatch_refuses_before_nonce_or_walk ... ok
+test render_contract::checked_render::render_102_a_module_the_walk_refuses_names_its_island ... ok
+test render_contract::checked_render::render_101_a_server_render_without_its_module ... ok
+test render_contract::checked_render::render_201_an_invalid_policy_extension ... ok
+test render_contract::checked_render::render_302_the_list_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::render_301_the_output_budget_with_the_counts_reached ... ok
+test render_contract::checked_render::a_component_failing_on_one_tenants_branding_fails_that_request_alone ... ok
+test pages::tests::root_bindings_reject_missing_duplicate_unknown_defaulted_and_wrong_type_slots ... ok
+test render_contract::checked_render::render_399_a_panic_inside_the_walk ... ok
+test render_contract::checked_render::render_303_nesting_past_the_walker_s_depth ... ok
+test render_contract::checked_render::render_browser_shell_serves_the_bundle_around_an_empty_root_with_the_page_headers ... ok
+test render_contract::checked_render::a_panicking_component_returns_fault_the_handler_answers_500_and_the_next_request_renders ... ok
+test render_contract::checked_render::try_render_never_serves_a_shell_in_place_of_a_failure ... ok
+test render_contract::island_state::empty_ssr_still_has_one_envelope_but_browser_shell_has_none ... ok
+test render_contract::checked_render::try_render_writes_the_document_and_counts_the_walk ... ok
+test render_contract::island_state::complete_document_limit_is_exact_and_counts_the_escaped_state_and_tags ... ok
+test render_contract::island_state::reviewer_browser_shell_counts_escaped_metadata_at_the_exact_request_limit ... ok
+test render_contract::island_state::one_head_state_block_precedes_body_and_preserves_the_checked_values ... ok
+test render_contract::page_response::a_page_response_counts_its_walk ... ok
+test render_contract::page_response::page_response_writes_no_store_the_policy_and_the_document_headers ... ok
+test render_contract::island_state::head_and_state_can_exceed_budget_without_body_growth_and_override_is_local ... ok
+test assets::tests::more_embed_types_than_cache_slots_each_serve_their_own_assets ... ok
+test render_contract::page_response::into_parts_unchecked_returns_exactly_what_the_response_writes ... ok
+test render_contract::page_response::extensions_add_sources_to_their_own_directive_only ... ok
+test render_contract::page_response::two_fetches_get_no_store_and_two_different_nonces ... ok
+test render_contract::preview_frame::the_frame_document_inlines_the_runtime_by_its_hash_and_names_nothing_to_fetch ... ok
+test render_contract::raw_html::a_raw_html_body_prefix_is_written_verbatim_on_every_retained_path ... ok
+test render_contract::raw_html::the_documented_body_prefix_form_compiles_on_the_msrv_and_renders ... ok
+test render_contract::preview_frame::the_frame_policy_replaces_exactly_its_nine_directives ... ok
+test render_contract::page_response::an_invalid_extension_fails_instead_of_sending_a_page_without_the_policy ... ok
+test render_contract::typed_homes::a_head_link_carries_only_the_listed_link_types ... ok
+test render_contract::typed_homes::a_head_link_refuses_a_script_url_and_keeps_every_other ... ok
+test render_contract::preview_frame::a_frame_without_its_runtime_is_a_coded_error_at_start ... ok
+test render_contract::island_state::state_failures_have_distinct_codes_route_component_and_field_path ... ok
+test render_contract::typed_homes::a_manifest_preload_that_is_not_one_of_the_builds_files_refuses_the_table ... ok
+test render_contract::typed_homes::head_links_are_written_escaped_in_the_head_in_the_order_added ... ok
+test response::compression::tests::compression_levels ... ignored, manual per-request compression timing; use a representative HTML fixture
+test render_contract::typed_homes::metadata_normalization_preserves_transport_and_url_refusals ... ok
+test response::compression::tests::enabling_the_feature_does_not_compress_an_ordinary_page_or_change_raw_parts ... ok
+test render_contract::typed_homes::try_render_writes_the_routes_manifest_modulepreload_links_nonced ... ok
+test response::compression::tests::negotiation_honors_quality_refusals_wildcards_identity_and_field_lines ... ok
+test sw::tests::application_names_are_what_a_cache_name_can_carry ... ok
+test sw::tests::serve_sw_sets_nosniff_and_no_store ... ok
+test response::compression::tests::identity_threshold_and_all_refused_paths_keep_headers_and_exact_body_rules ... ok
+test template::tests::a_legacy_manifest_is_refused_before_removed_wasm_fields_can_be_used ... ok
+test response::compression::tests::encoded_bodies_decode_to_the_same_page_with_all_policy_headers_intact ... ok
+test template::tests::asset_filename_xss_is_escaped ... ok
+test template::tests::body_class_with_quotes_is_escaped ... ok
+test response::compression::tests::axum_head_has_get_headers_and_no_body_for_every_negotiated_representation ... ok
+test template::tests::config_json_emits_no_raw_angle_brackets ... ok
+test template::tests::escape_html_basic_entities ... ok
+test template::tests::named_parts_expose_the_nonce_bound_to_the_document ... ok
+test template::tests::page_response_headers_are_no_store ... ok
+test template::tests::personality_css_round_trips_legitimate_values ... ok
+test render_contract::typed_homes::ordinary_metadata_uses_the_shared_rule_one_vectors_on_both_render_paths ... ok
+test template::tests::phase1_renders_empty_app_div ... ok
+test template::tests::phase2_renders_ssr_content_with_data_attr ... ok
+test template::tests::phase2_with_slot_data ... ok
+test template::tests::style_attributes_rendered_by_the_walker_are_permitted_by_the_csp ... ok
+test template::tests::personality_css_style_breakout_prevented ... ok
+test template::tests::phase2_ssr_preserves_head_content ... ok
+test template::tests::the_root_carries_the_manifests_build_escaped_on_both_forms ... ok
+test render_contract::preview_frame::page_response_frame_is_the_only_response_that_rewrites_the_policy ... ok
+test render_contract::checked_render::render_302_a_60_000_row_list_fails_before_its_first_row_in_under_a_millisecond ... ok
+test sw::tests::the_retiring_worker_deletes_v1_s_caches_and_its_own_never_another_s ... ok
+test render_contract::page_response::no_policy_extension_yields_a_response_without_the_policy ... ok
+test render_contract::island_state::default_eight_mib_limit_includes_large_head_metadata_exactly ... ok
+test render_contract::raw_html::a_search_finds_one_raw_constructor ... ok
+
+test result: ok. 119 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/asset_integrity.rs (target/debug/deps/asset_integrity-3e423592bad0ce49)
+
+running 3 tests
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/asset_sets.rs (target/debug/deps/asset_sets-6a178af62b9f0e73)
+
+running 1 test
+test two_embed_types_each_serve_their_own_assets ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/dev_reload.rs (target/debug/deps/dev_reload-56d8e78e9fc97613)
+
+running 1 test
+test an_edited_page_is_served_on_the_next_request_and_a_broken_edit_keeps_the_previous_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/feature_isolation.rs (target/debug/deps/feature_isolation-11fa2bc6641e427a)
+
+running 1 test
+test a_consumer_with_test_helpers_never_resolves_the_fault_injection_feature ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/island_state.rs (target/debug/deps/island_state-d1d43945b9999385)
+
+running 3 tests
+test finalized_typed_handle_emits_only_declared_state_in_the_head ... ok
+test public_state_and_document_refusals_are_distinct_and_request_limits_do_not_persist ... ok
+test public_page_handle_accepts_exactly_one_mib_of_escaped_state_and_refuses_one_more_byte ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/loader_refusal_logs.rs (target/debug/deps/loader_refusal_logs-5f88717b8fc15c5e)
+
+running 1 test
+test the_default_loader_logs_no_fallback_it_does_not_take ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/manifest_cache.rs (target/debug/deps/manifest_cache-8a37545ad5bcf6cd)
+
+running 3 tests
+test development_cache_policy_rereads_rebuilt_metadata ... ok
+test metadata_cache_overflow_falls_back_without_crossing_embed_types ... ok
+test each_embed_type_uses_its_metadata_for_raw_compressed_retained_and_304_responses ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/manifest_compatibility.rs (target/debug/deps/manifest_compatibility-bb4bfd4c8085f4e6)
+
+running 3 tests
+test checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok
+test a_retained_asset_must_be_immutable ... ok
+test schema_writer_and_mode_refusals_happen_before_binding ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation.rs (target/debug/deps/navigation-1b0760479320eda8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/navigation_owners.rs (target/debug/deps/navigation_owners-a99040a8e0a1a415)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/relaxation_log_bound.rs (target/debug/deps/relaxation_log_bound-135a2fbafd96a9d4)
+
+running 1 test
+test the_relaxation_log_names_at_most_1024_pairs_and_then_says_so_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/service_worker_named_off.rs (target/debug/deps/service_worker_named_off-612c79c683960809)
+
+running 1 test
+test a_named_application_s_retiring_worker_also_deletes_its_own_caches ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_off.rs (target/debug/deps/service_worker_off-c1f0d327f397aaf4)
+
+running 3 tests
+test configuring_after_the_first_use_is_refused ... ok
+test by_default_no_page_registers_a_worker ... ok
+test by_default_sw_js_is_the_retiring_worker_even_with_a_built_worker_embedded ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/service_worker_on.rs (target/debug/deps/service_worker_on-fdafbd05642e82b1)
+
+running 4 tests
+test the_setting_is_configured_once ... ok
+test an_enabled_application_serves_its_built_worker ... ok
+test an_enabled_application_s_js_pages_register_the_worker ... ok
+test an_enabled_application_with_no_built_worker_is_told_once ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/startup_results.rs (target/debug/deps/startup_results-fb018e2244463c87)
+
+running 3 tests
+test text_asset_results_preserve_bytes_and_read_errors ... ok
+test valid_manifest_and_compatibility_alias_keep_the_same_values ... ok
+test manifest_refusals_propagate_before_startup ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/static_routes.rs (target/debug/deps/static_routes-15b50a3b19675568)
+
+running 9 tests
+test empty_js_is_explicit_and_static_module_preloads_are_refused ... ok
+test an_explicit_browser_shell_keeps_request_configuration_without_native_state ... ok
+test static_ssr_refuses_a_stale_preload_table_even_when_the_asset_is_retained ... ok
+test javascript_routes_without_islands_keep_the_existing_adoption_output ... ok
+test a_static_page_does_not_remove_the_enabled_worker_delivery_endpoint ... ok
+test static_ssr_omits_adoption_state_and_keeps_css_fonts_headers_and_exact_response_budget ... ok
+test explicit_config_refuses_static_ssr_but_remains_supported_with_a_js_entry ... ok
+test startup_refuses_islands_without_js_and_accepts_both_valid_products ... ok
+test reload_keeps_the_good_pair_and_retries_same_bytes_after_route_policy_changes ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/strict_loader.rs (target/debug/deps/strict_loader-0870c084ae7ce2c9)
+
+running 9 tests
+test regenerate_module_fixtures ... ignored, writes the fixtures; run by hand after changing the generator
+test a_truncated_module_fails_the_default_loader_naming_route_file_and_code ... ok
+test an_unbound_ssr_route_refuses_before_the_fixture_listener ... ok
+test with_a_bad_module_the_fixture_server_binds_no_port ... ok
+test a_flipped_byte_fails_the_default_loader_naming_route_file_and_code ... ok
+test module_fixtures_are_what_their_generator_writes ... ok
+test a_route_declared_ssr_false_needs_no_module ... ok
+test the_same_server_binds_and_serves_after_all_handlers_finalize ... ok
+test every_reviewed_v3_refusal_happens_before_bind ... ok
+
+test result: ok. 8 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/trusted_types_report_only.rs (target/debug/deps/trusted_types_report_only-f113951a7b7c38d4)
+
+running 4 tests
+test trusted_types_are_enforced_without_an_endpoint_in_every_build ... ok
+test a_named_endpoint_is_written_into_both_policies_and_reporting_endpoints ... ok
+test a_relaxed_route_keeps_reporting_and_is_logged_once_per_route_and_reason ... ok
+test an_invalid_endpoint_fails_the_page_on_every_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/typed_pages.rs (target/debug/deps/typed_pages-938d2b599d12d305)
+
+running 18 tests
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize ... ok
+test finalization_refuses_a_bind_already_comparing_on_another_thread ... ok
+test a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders ... ok
+test finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs ... ok
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503 ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test bind_limits_inherit_and_request_overrides_never_change_sibling_defaults ... ok
+test typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy ... ok
+test two_routes_sharing_an_alias_need_two_successful_exact_bindings ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks ... ok
+test reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test a_sixty_thousand_row_typed_request_refuses_before_its_first_row ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+   Doc-tests forma_server
+
+running 35 tests
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 102) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 93) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 90) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 87) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 105) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 59) - compile fail ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_uri (line 453) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::report_to (line 427) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions (line 302) ... ok
+test crates/forma-server/src/csp.rs - csp::PolicyExtensions::relax_trusted_types (line 489) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 96) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 99) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::BoundRenderOnly (line 108) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadIrModules (line 79) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 64) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 42) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 72) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::LoadManifest (line 69) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 15) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 24) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 27) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 21) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 18) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 30) - compile fail ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 33) ... ok
+test crates/forma-server/src/deprecations.rs - deprecations::RemovedBridges (line 6) ... ok
+test crates/forma-server/src/frame.rs - frame (line 170) - compile ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx::with_module_preloads (line 150) - compile ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 43) - compile ... ok
+test crates/forma-server/src/lib.rs - (line 8) - compile ... ok
+test crates/forma-server/src/response.rs - response::PageResponse (line 38) - compile fail ... ok
+test crates/forma-server/src/sw.rs - sw (line 8) - compile ... ok
+test crates/forma-server/src/head.rs - head::HeadLink (line 121) ... ok
+test crates/forma-server/src/raw.rs - raw::RawHtml (line 10) ... ok
+test crates/forma-server/src/render.rs - render::RenderCtx (line 19) ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.25s
+
+
+### actual renderer 3.1 accepts older writers and refuses 3.2 before bind (59s)
+node:fs:483
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-renderer-window-DDBXqL/source/packages/router/package.json'
+    at readFileSync (node:fs:483:20)
+    at read (file:///private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-renderer-window-DDBXqL/source/scripts/release-set.mjs:127:21)
+    at versionFiles (file:///private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-renderer-window-DDBXqL/source/scripts/release-set.mjs:140:66)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/test-renderer-window.mjs:27:28 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-renderer-window-DDBXqL/source/packages/router/package.json'
+}
+
+Node.js v24.22.1

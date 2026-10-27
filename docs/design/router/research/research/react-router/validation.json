@@ -1,0 +1,14 @@
+{
+  "verified_at_utc": "2026-10-26T14:35:43.849315+00:00",
+  "checks": {
+    "source_hashes": 42,
+    "asset_hashes": 7,
+    "rea_hashes": 3,
+    "pinned_line_links": 33,
+    "local_markdown_links": 84,
+    "json_files": 4,
+    "exact_upstream_excerpts": 6
+  },
+  "errors": [],
+  "scope": "Provenance hashes, JSON syntax, local Markdown target existence, pinned source line bounds and exact excerpt contents. Does not validate semantic correctness or all remote URLs."
+}

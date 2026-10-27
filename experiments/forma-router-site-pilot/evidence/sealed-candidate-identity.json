@@ -1,0 +1,37 @@
+{
+  "schema": "forma-301-site-pilot-sealed-identity-v1",
+  "recordedAt": "2026-10-26T20:41:51.240329+00:00",
+  "sealedSourceCommit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "sealedReleaseSetSha256": "96472d312b1075dd409b89596d597335832a5609893fd33f637b28dc153382a6",
+  "packages": [
+    {
+      "name": "@getforma/core",
+      "version": "3.1.0",
+      "file": "getforma-core-3.1.0.tgz",
+      "sha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643"
+    },
+    {
+      "name": "@getforma/router",
+      "version": "3.1.0",
+      "file": "getforma-router-3.1.0.tgz",
+      "sha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e"
+    }
+  ],
+  "archiveIdentityMatchesSealed": true,
+  "harnessUnchangedSinceSealing": true,
+  "harnessSha256": {
+    "experiments/forma-router-site-pilot/prepare.mjs": "60a06fc1d5bd67c6795da82bdc7315a44459c1fd1fb2691c1c212c39a08409f4",
+    "experiments/forma-router-site-pilot/browser.mjs": "25d42b108419cf29b4b09cd9bc6484d8e5956f245255f7f95e0009152ec2ddfc",
+    "experiments/forma-router-site-pilot/navigation.js": "90ebe9cbd5f41f1cafe0db10ed19ec0ac06937f18d94f224c744db6a02513171",
+    "experiments/forma-router-site-pilot/serve.mjs": "4c7313758ca505bfa8b4ddb97c8bff93f5a85b2826656c8de651a6ffb68fc30d"
+  },
+  "privateCheckoutUntouched": true,
+  "previousAttemptPreserved": ".local-previous",
+  "browserReceipt": "browser-three-engine-sealed.json",
+  "browserReceiptSha256": "49e4149543dd7bd521b03d03418a8aaae2e45b2c4d583008488db161b42354ba",
+  "browserCases": 18,
+  "browserCasesPassed": 18,
+  "harnessExitCode": 0,
+  "cleanupScope": "Unchanged harness awaited browser.close for each of the three engines, then SIGTERM and exit of its own static server before successful process completion. No claim about unrelated processes.",
+  "rawBrowserLogSha256": "522dd7ecbf25f18b3db6d82d58d866250351719b89d7b7915b70f405d6b68107"
+}

@@ -1,0 +1,30 @@
+
+> @getforma/router@3.1.0 check:pack
+> publint && attw --pack .
+
+Running publint v0.3.25 for @getforma/router...
+Packing files with `npm pack`...
+Linting...
+All good!
+
+@getforma/router v3.1.0
+
+Build tools:
+- @arethetypeswrong/cli@^0.18.5
+- typescript@^5.9.3
+- tsup@^8.5.1
+
+ No problems found 🌟
+
+
+[90m┌───────────────────[39m[90m┬────────────────────┐[39m
+[90m│[39m[31m                   [39m[90m│[39m[31m "@getforma/router" [39m[90m│[39m
+[90m├───────────────────[39m[90m┼────────────────────┤[39m
+[90m│[39m node10            [90m│[39m 🟢                 [90m│[39m
+[90m├───────────────────[39m[90m┼────────────────────┤[39m
+[90m│[39m node16 (from CJS) [90m│[39m 🟢 (CJS)           [90m│[39m
+[90m├───────────────────[39m[90m┼────────────────────┤[39m
+[90m│[39m node16 (from ESM) [90m│[39m 🟢 (ESM)           [90m│[39m
+[90m├───────────────────[39m[90m┼────────────────────┤[39m
+[90m│[39m bundler           [90m│[39m 🟢                 [90m│[39m
+[90m└───────────────────[39m[90m┴────────────────────┘[39m

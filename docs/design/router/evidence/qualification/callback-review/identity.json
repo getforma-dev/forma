@@ -1,0 +1,8 @@
+{
+  "candidateCommit": "33ae2bcea038f6797e2fc46d3b7433ff56242c6a",
+  "archives": {
+    "core": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643",
+    "router": "3c9669cbed2d35651f1089f584578c9817603b067bd5692265efcb6d3fcc7e21"
+  },
+  "routerEntrySha256": "ad45a6179fc391af4c485d29466eb6fe5cabca54a1ec217983ae96802499a2f6"
+}

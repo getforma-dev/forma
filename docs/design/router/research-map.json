@@ -1,0 +1,2572 @@
+{
+  "created_date": "2026-10-26",
+  "scope": "Design traceability, not implementation qualification",
+  "counts": {
+    "angular": 25,
+    "astro": 40,
+    "react-router": 40
+  },
+  "decisions": {
+    "RD01": {
+      "name": "Optional package and coordinated release",
+      "contract": "@getforma/router owns router policy; core remains a peer. Additive compiler/build/server contracts travel in the matching release set.",
+      "owner": "Router, build/release"
+    },
+    "RD02": {
+      "name": "Explicit bounded route grammar",
+      "contract": "Rank complete branches, static before parameter before terminal splat; support nested/index/pathless layouts. Reject unsupported syntax; preserve search/hash and segment decoding.",
+      "owner": "Router matcher, compiler/build"
+    },
+    "RD03": {
+      "name": "Platform semantics first",
+      "contract": "Intercept only admitted links and opted-in forms. Keep real href/action/method, browser validation and submitter behavior.",
+      "owner": "Router DOM adapter"
+    },
+    "RD04": {
+      "name": "Owned navigation transaction",
+      "contract": "Generation identity plus abort, detached preparation, serialized synchronous commit, late-resource disposal and distinct terminal outcomes.",
+      "owner": "Router coordinator, core owners"
+    },
+    "RD05": {
+      "name": "Central history and blockers",
+      "contract": "Commit PUSH/REPLACE after admission; POP never pushes. Entry keys/indexes, committed versus pending URL, explicit blocked/foreign-entry recovery.",
+      "owner": "Router history adapter"
+    },
+    "RD06": {
+      "name": "Persistent layout owners",
+      "contract": "Retain only a compatible common owner chain and live nodes; replace changed identity/props boundaries; dispose departing and obsolete owners.",
+      "owner": "Router renderer, core lifecycle"
+    },
+    "RD07": {
+      "name": "Typed native transition and scoped adoption",
+      "contract": "Same typed Rust page produces a versioned navigation response; validate incoming claims in a new scope without resetting original-document authority.",
+      "owner": "forma-server, core adoption, compiler/build"
+    },
+    "RD08": {
+      "name": "Policy, build and integrity admission",
+      "contract": "Require compatible app/build/group/policy; no client-supplied nonce or arbitrary script replay; one bounded safe document recovery.",
+      "owner": "forma-server policy, build assets, router admission"
+    },
+    "RD09": {
+      "name": "Initial group registration bootstrap",
+      "contract": "Aggregate registration-only products into an integrity-checked complete executable artifact; defer route-code lazy loading and lazy discovery.",
+      "owner": "Compiler/build, core registration"
+    },
+    "RD10": {
+      "name": "Enhanced Rust forms",
+      "contract": "Progressive GET/POST with typed success/validation/error/303 outcomes, no JavaScript server runtime and no client authorization.",
+      "owner": "Router forms, forma-server action response, application handlers"
+    },
+    "RD11": {
+      "name": "Mutation/read generations",
+      "contract": "One managed mutation, explicit busy state; invalidate stale reads, revalidate current branch after settlement, suppress obsolete redirects, never replay an uncertain POST.",
+      "owner": "Router data coordinator, application mutation policy"
+    },
+    "RD12": {
+      "name": "Observable experience and completion",
+      "contract": "Separate commit from island readiness; owned title/focus/scroll/announcements, reduced motion and browser-native escapes.",
+      "owner": "Router experience adapter, core readiness"
+    },
+    "RD13": {
+      "name": "Bounded speculation, no private page cache",
+      "contract": "Private/native prefetch off by default; explicitly safe intent reads, at most two in flight, no retained completed private HTML or inferred shared TTL.",
+      "owner": "Router speculation, server cache policy"
+    },
+    "RD14": {
+      "name": "Status-aware error and fallback",
+      "contract": "Not-found/validation/cancel/redirect/failure differ. Keep valid rendered errors; fallback only through the documented method-safe matrix.",
+      "owner": "Router boundaries, Rust response transport"
+    },
+    "RD15": {
+      "name": "Evidence and source ownership",
+      "contract": "Keep source, artifact, REA, browser and original-prototype evidence distinct; retain pins, raw failures, licenses and scope limits.",
+      "owner": "Design lead, test/release evidence"
+    },
+    "RD16": {
+      "name": "Native proof before expansion",
+      "contract": "Original examples are scaffolds, not framework qualification. Prove native policy/adoption/forms first, then qualify the full opt-in feature.",
+      "owner": "Framework integration, independent reviewers"
+    }
+  },
+  "questions": [
+    {
+      "id": "AG01",
+      "study": "angular",
+      "number": 1,
+      "question": "Where is the actual implementation?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Keep router/library and docs ownership pinned; no host or byte-attestation inference.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG02",
+      "study": "angular",
+      "number": 2,
+      "question": "Where is the docs app hosted?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Retain Firebase configuration only as hosting evidence; it does not select Forma hosting.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG03",
+      "study": "angular",
+      "number": 3,
+      "question": "Is the docs site actually client routed?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD12",
+        "RD15"
+      ],
+      "tests": [
+        "RT-N01",
+        "RT-N05"
+      ],
+      "conclusion": "Use document identity and requests to prove routing; the single Chromium sample is not cross-browser credit.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG04",
+      "study": "angular",
+      "number": 4,
+      "question": "Can REA recover the complete router or route table from these minified bundles?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Keep truncated REA graphs and selected-source limits; source and executable tests close different gaps.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG05",
+      "study": "angular",
+      "number": 5,
+      "question": "What must the URL parser preserve?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02"
+      ],
+      "tests": [
+        "RT-U01",
+        "RT-U04"
+      ],
+      "conclusion": "Preserve segment encoding/query repetition/hash; do not import Angular matrix/named-outlet grammar or host-specific slash predecode.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG06",
+      "study": "angular",
+      "number": 6,
+      "question": "What does \u201cfirst match wins\u201d actually mean?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02"
+      ],
+      "tests": [
+        "RT-U02"
+      ],
+      "conclusion": "Keep full-branch recognition; choose ranked Forma precedence rather than Angular configuration-order semantics.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG07",
+      "study": "angular",
+      "number": 7,
+      "question": "Are routes limited to flat paths?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02",
+        "RD06"
+      ],
+      "tests": [
+        "RT-U02",
+        "RT-U04"
+      ],
+      "conclusion": "Adopt nested/index/pathless layouts; defer named outlets and nonterminal multi-pattern wildcards.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG08",
+      "study": "angular",
+      "number": 8,
+      "question": "How are redirect loops bounded?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD14"
+      ],
+      "tests": [
+        "RT-H04",
+        "RT-S06"
+      ],
+      "conclusion": "Redirect is a bounded control outcome; choose a Forma limit rather than copy Angular's development/production constant behavior.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG09",
+      "study": "angular",
+      "number": 9,
+      "question": "What keeps a slow earlier navigation from overwriting a later one?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD04"
+      ],
+      "tests": [
+        "RT-C01",
+        "RT-C02",
+        "RT-C03"
+      ],
+      "conclusion": "Generation checks supplement abort and cover synchronous callbacks as well as promises.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG10",
+      "study": "angular",
+      "number": 10,
+      "question": "Are same-URL requests always ignored?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD04",
+        "RD12"
+      ],
+      "tests": [
+        "RT-U05",
+        "RT-C04"
+      ],
+      "conclusion": "Separate same-URL skip, explicit data revalidation and owner recreation.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG11",
+      "study": "angular",
+      "number": 11,
+      "question": "Does a link click always call pushState?",
+      "disposition": "Defer",
+      "decisions": [
+        "RD05",
+        "RD16"
+      ],
+      "tests": [
+        "RT-H01",
+        "RT-A05"
+      ],
+      "conclusion": "Use History API first; Navigation API integration is deferred because one docs Chromium path cannot establish supported-engine behavior.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG12",
+      "study": "angular",
+      "number": 12,
+      "question": "Why is cancelling Back harder than cancelling a link?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD05"
+      ],
+      "tests": [
+        "RT-H02"
+      ],
+      "conclusion": "Restore/replay known POP deltas; never repair cancellation with an extra push.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG13",
+      "study": "angular",
+      "number": 13,
+      "question": "Which anchor actions should stay native?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD03"
+      ],
+      "tests": [
+        "RT-L01"
+      ],
+      "conclusion": "Keep real hrefs and complete native-action escapes; do not extract a site-specific click helper without negative cases.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG14",
+      "study": "angular",
+      "number": 14,
+      "question": "When do guards, data, code, and DOM run?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD04",
+        "RD06"
+      ],
+      "tests": [
+        "RT-C03",
+        "RT-C04"
+      ],
+      "conclusion": "Order matching/leaving checks/preparation/commit/settling explicitly; loading code and DOM activation have different ownership.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG15",
+      "study": "angular",
+      "number": 15,
+      "question": "Do all Angular loaders run in parallel?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD04",
+        "RD11"
+      ],
+      "tests": [
+        "RT-F05",
+        "RT-C01"
+      ],
+      "conclusion": "Document data dependencies instead of claiming every loader runs in parallel; native destination preparation is a typed server response.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG16",
+      "study": "angular",
+      "number": 16,
+      "question": "How does this site get the next document body?",
+      "disposition": "Reject",
+      "decisions": [
+        "RD07",
+        "RD13"
+      ],
+      "tests": [
+        "RT-N06",
+        "RT-K02"
+      ],
+      "conclusion": "Do not copy the docs Promise-per-path HTML cache or its retained 404 rejection into private native routing.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG17",
+      "study": "angular",
+      "number": 17,
+      "question": "Does cancellation stop the content network request?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD04",
+        "RD13"
+      ],
+      "tests": [
+        "RT-C01",
+        "RT-K02"
+      ],
+      "conclusion": "Cancellation of one consumer is not proof shared network work stopped; revoke commit authority independently.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG18",
+      "study": "angular",
+      "number": 18,
+      "question": "What is reused during navigation?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD06"
+      ],
+      "tests": [
+        "RT-O01",
+        "RT-O03"
+      ],
+      "conclusion": "Reuse stable route/layout identity, not component name or URL alone; changed props/identity replace the boundary.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG19",
+      "study": "angular",
+      "number": 19,
+      "question": "What DOM transformation occurs?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD06",
+        "RD07"
+      ],
+      "tests": [
+        "RT-N06",
+        "RT-O02"
+      ],
+      "conclusion": "Generated HTML is a controlled owned region inside an adapter; never equate it with native claim authority.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG20",
+      "study": "angular",
+      "number": 20,
+      "question": "Is preloading the same as caching?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD09",
+        "RD13"
+      ],
+      "tests": [
+        "RT-K01",
+        "RT-S03"
+      ],
+      "conclusion": "Separate registration bootstrap, speculative data, module preload and HTTP cache.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG21",
+      "study": "angular",
+      "number": 21,
+      "question": "Does this router supply form actions and mutation invalidation?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD10",
+        "RD11"
+      ],
+      "tests": [
+        "RT-F01",
+        "RT-F05"
+      ],
+      "conclusion": "Enhanced Rust actions are an explicit new contract, not an assumed consequence of guards or resolvers.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG22",
+      "study": "angular",
+      "number": 22,
+      "question": "When can scroll restoration happen?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A02"
+      ],
+      "conclusion": "Restore scroll after usable layout and only for the current owner.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG23",
+      "study": "angular",
+      "number": 23,
+      "question": "Does updating the title guarantee accessible focus?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A01",
+        "RT-A04"
+      ],
+      "conclusion": "Title alone does not prove accessible focus/announcements; test these separately.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG24",
+      "study": "angular",
+      "number": 24,
+      "question": "Does client routing eliminate SSR, deep-link, or base-path work?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD03",
+        "RD07"
+      ],
+      "tests": [
+        "RT-U03",
+        "RT-N05"
+      ],
+      "conclusion": "Deep URL, base path and server normalization remain server/build responsibilities.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AG25",
+      "study": "angular",
+      "number": 25,
+      "question": "What is the error contract?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD14",
+        "RD10"
+      ],
+      "tests": [
+        "RT-X01",
+        "RT-F08"
+      ],
+      "conclusion": "Separate cancel/redirect/skip/error; preserve server auth and status rather than map every failure to 404.",
+      "source": "research/angular/questions.md"
+    },
+    {
+      "id": "AS01",
+      "study": "astro",
+      "number": 1,
+      "question": "Where is the framework implemented?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Keep framework source distinct from docs and theme pins.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS02",
+      "study": "astro",
+      "number": 2,
+      "question": "Where is the docs site implemented?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Retain the separate docs snapshot without claiming it is an attested deployed commit.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS03",
+      "study": "astro",
+      "number": 3,
+      "question": "Where is the theme and what hosts docs?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Keep Starlight and Cloudflare evidence as provenance, not a Forma deployment dependency.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS04",
+      "study": "astro",
+      "number": 4,
+      "question": "Is the docs site a demonstration of ClientRouter?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15",
+        "RD16"
+      ],
+      "tests": [
+        "RT-E01",
+        "RT-N01"
+      ],
+      "conclusion": "The observed docs reload is not a ClientRouter runtime test; prove Forma native behavior independently.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS05",
+      "study": "astro",
+      "number": 5,
+      "question": "Could persistent sidebar state mislead us?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD06"
+      ],
+      "tests": [
+        "RT-O01",
+        "RT-N01"
+      ],
+      "conclusion": "Stored/restored values do not prove live DOM identity; assert actual objects.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS06",
+      "study": "astro",
+      "number": 6,
+      "question": "Does an `astro:page-load` listener prove ClientRouter is enabled?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "A router event listener in an asset is not evidence that routing is enabled.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS07",
+      "study": "astro",
+      "number": 7,
+      "question": "Is there a client route tree and outlet matcher?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02",
+        "RD07"
+      ],
+      "tests": [
+        "RT-U02",
+        "RT-N06"
+      ],
+      "conclusion": "Native server resolves typed destinations, while browser routes need a branch matcher; explicit adapters prevent conflation.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS08",
+      "study": "astro",
+      "number": 8,
+      "question": "How do route conflicts resolve?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02"
+      ],
+      "tests": [
+        "RT-U02"
+      ],
+      "conclusion": "Use explicit Forma ranked rules and complete-branch tests; do not copy Astro file-route tie-breaks.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS09",
+      "study": "astro",
+      "number": 9,
+      "question": "How does a page opt in?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD07",
+        "RD08"
+      ],
+      "tests": [
+        "RT-S02",
+        "RT-P03"
+      ],
+      "conclusion": "Use an explicit compiler/server capability and group contract, stronger than a marker-only admission test.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS10",
+      "study": "astro",
+      "number": 10,
+      "question": "What click events are intercepted?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD03"
+      ],
+      "tests": [
+        "RT-L01"
+      ],
+      "conclusion": "Adopt composed-path eligibility and native escapes with a negative case for each escape.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS11",
+      "study": "astro",
+      "number": 11,
+      "question": "What gets fetched?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD07",
+        "RD14"
+      ],
+      "tests": [
+        "RT-N01",
+        "RT-N06",
+        "RT-X01"
+      ],
+      "conclusion": "Use a typed navigation representation for native pages; full HTML belongs only to its admitted generated-HTML adapter.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS12",
+      "study": "astro",
+      "number": 12,
+      "question": "Can an HTML 404 be rendered?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD14"
+      ],
+      "tests": [
+        "RT-X01"
+      ],
+      "conclusion": "Valid typed 404 content is a status-preserving result, not an automatic network failure.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS13",
+      "study": "astro",
+      "number": 13,
+      "question": "Who wins if slow A finishes after fast B?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD04"
+      ],
+      "tests": [
+        "RT-C01",
+        "RT-C02"
+      ],
+      "conclusion": "Newest owner wins; await/serialize the previous commit and revoke stale preparation.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS14",
+      "study": "astro",
+      "number": 14,
+      "question": "Is fetch cancellation alone enough?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD04"
+      ],
+      "tests": [
+        "RT-C01",
+        "RT-C03"
+      ],
+      "conclusion": "Abort alone is insufficient at custom async or reentrant boundaries.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS15",
+      "study": "astro",
+      "number": 15,
+      "question": "Can hooks cancel or replace the process?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD04",
+        "RD14"
+      ],
+      "tests": [
+        "RT-H02",
+        "RT-C04"
+      ],
+      "conclusion": "Define explicit blocked/cancelled/native-fallback outcomes; do not reuse Astro event cancellation semantics.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS16",
+      "study": "astro",
+      "number": 16,
+      "question": "What are lifecycle events ordered around?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD04",
+        "RD12"
+      ],
+      "tests": [
+        "RT-C04",
+        "RT-N04"
+      ],
+      "conclusion": "Expose commit and island readiness separately; no page-load claim that all deferred islands finished.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS17",
+      "study": "astro",
+      "number": 17,
+      "question": "What does `await navigate()` mean?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-C04"
+      ],
+      "conclusion": "Specify navigate outcome plus readiness; animation completion is a separate concern.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS18",
+      "study": "astro",
+      "number": 18,
+      "question": "Are same-URL and fragment navigations identical?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD05",
+        "RD12"
+      ],
+      "tests": [
+        "RT-U05",
+        "RT-A02"
+      ],
+      "conclusion": "Hash, query, self-link and form navigation each have an explicit branch.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS19",
+      "study": "astro",
+      "number": 19,
+      "question": "What happens after redirect?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD14"
+      ],
+      "tests": [
+        "RT-H04",
+        "RT-F09"
+      ],
+      "conclusion": "Commit final admitted URL; action redirects preserve method-safe semantics rather than blind fetch-follow.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS20",
+      "study": "astro",
+      "number": 20,
+      "question": "Why remove `noscript` from parsed HTML?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD07",
+        "RD08"
+      ],
+      "tests": [
+        "RT-N06",
+        "RT-S04"
+      ],
+      "conclusion": "Detached parsing needs a typed trust boundary; no-JS markup is not blindly transplanted into the live document.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS21",
+      "study": "astro",
+      "number": 21,
+      "question": "How is CSS ready before the body changes?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A03",
+        "RT-C02"
+      ],
+      "conclusion": "Wait for admitted CSS with bounded failure handling; load-error settlement is not proof of correct styling.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS22",
+      "study": "astro",
+      "number": 22,
+      "question": "How is the head reconciled?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD07",
+        "RD08"
+      ],
+      "tests": [
+        "RT-S01",
+        "RT-A01",
+        "RT-A03"
+      ],
+      "conclusion": "Manage title/metadata/styles explicitly; HTTP policy cannot be replaced by a head swap.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS23",
+      "study": "astro",
+      "number": 23,
+      "question": "Does persistence mean copy old HTML?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD06"
+      ],
+      "tests": [
+        "RT-O01"
+      ],
+      "conclusion": "Persistence retains live nodes, not serialized copies.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS24",
+      "study": "astro",
+      "number": 24,
+      "question": "What about canvas, media, shadow roots?",
+      "disposition": "Defer",
+      "decisions": [
+        "RD06",
+        "RD16"
+      ],
+      "tests": [
+        "RT-O01",
+        "RT-A05"
+      ],
+      "conclusion": "Keep stable layout nodes in place; arbitrary keyed media/canvas/shadow-root transplants are not first-release persistence.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS25",
+      "study": "astro",
+      "number": 25,
+      "question": "Do persisted island props update?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD06",
+        "RD11"
+      ],
+      "tests": [
+        "RT-O03",
+        "RT-F05"
+      ],
+      "conclusion": "Do not silently mutate snapshot props; replace incompatible native layout owners after server revalidation.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS26",
+      "study": "astro",
+      "number": 26,
+      "question": "When does an island unmount?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD06"
+      ],
+      "tests": [
+        "RT-O02",
+        "RT-N04"
+      ],
+      "conclusion": "Temporary movement and permanent disposal differ; scoped owners must cancel deferred activation.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS27",
+      "study": "astro",
+      "number": 27,
+      "question": "How are scripts activated and deduplicated?",
+      "disposition": "Reject",
+      "decisions": [
+        "RD08",
+        "RD09"
+      ],
+      "tests": [
+        "RT-S03",
+        "RT-S04"
+      ],
+      "conclusion": "Do not replay/deduplicate fetched scripts. Use compiler-owned registration products and the verified initial bootstrap.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS28",
+      "study": "astro",
+      "number": 28,
+      "question": "How are back/forward direction and scroll known?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD05",
+        "RD12"
+      ],
+      "tests": [
+        "RT-H01",
+        "RT-U03",
+        "RT-A02"
+      ],
+      "conclusion": "Keep entry identity, committed URL and scroll snapshots separate from the already-moved browser cursor.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS29",
+      "study": "astro",
+      "number": 29,
+      "question": "What focus/accessibility policy exists?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A01",
+        "RT-A04"
+      ],
+      "conclusion": "Preserve retained-control focus, announce transitions and test actual keyboard/assistive behavior.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS30",
+      "study": "astro",
+      "number": 30,
+      "question": "Does animation support determine routing support?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A03"
+      ],
+      "conclusion": "Routing does not depend on animation API support; reduced-motion behavior is explicit.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS31",
+      "study": "astro",
+      "number": 31,
+      "question": "How do GET/POST forms differ?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD03",
+        "RD10",
+        "RD11"
+      ],
+      "tests": [
+        "RT-F01",
+        "RT-F02",
+        "RT-F07"
+      ],
+      "conclusion": "Preserve native GET/POST/submitter semantics, with a stronger explicit no-replay uncertain-outcome contract.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS32",
+      "study": "astro",
+      "number": 32,
+      "question": "What is prefetch caching?",
+      "disposition": "Reject",
+      "decisions": [
+        "RD13"
+      ],
+      "tests": [
+        "RT-K01",
+        "RT-K02"
+      ],
+      "conclusion": "Do not copy an unbounded attempted-URL set or infer a result-cache TTL; share bounded live requests only.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS33",
+      "study": "astro",
+      "number": 33,
+      "question": "Is prefetch safe for every GET?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD13",
+        "RD10"
+      ],
+      "tests": [
+        "RT-K01",
+        "RT-F08"
+      ],
+      "conclusion": "Only explicitly safe server reads may be prefetched; same origin does not make a mutation-on-GET safe.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS34",
+      "study": "astro",
+      "number": 34,
+      "question": "Is there a release mismatch fence?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD08"
+      ],
+      "tests": [
+        "RT-S02"
+      ],
+      "conclusion": "Add explicit build/protocol compatibility; the absence found in two Astro files is not a universal upstream failure claim.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS35",
+      "study": "astro",
+      "number": 35,
+      "question": "Does no JavaScript still work?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD03",
+        "RD07"
+      ],
+      "tests": [
+        "RT-N05"
+      ],
+      "conclusion": "Keep complete server routes and native forms usable without enhancement.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS36",
+      "study": "astro",
+      "number": 36,
+      "question": "Does REA prove execution or exhaustive route coverage?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "REA parsed selected artifacts, not execution or exhaustive routing coverage.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS37",
+      "study": "astro",
+      "number": 37,
+      "question": "What did the docs REA alias bound mean?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Retain the 512-state alias bound and unknowns; missing graph edges are not negative proof.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS38",
+      "study": "astro",
+      "number": 38,
+      "question": "Was published JS tied cryptographically to the source commit?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01",
+        "RT-S03"
+      ],
+      "conclusion": "Registry/package integrity and source tag alignment do not prove reproducible live bytes; preserve separate receipts.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS39",
+      "study": "astro",
+      "number": 39,
+      "question": "Were upstream tests run?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Do not report inspected upstream tests as executed; qualify the actual Forma products.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "AS40",
+      "study": "astro",
+      "number": 40,
+      "question": "What should we build first for Forma?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD07",
+        "RD16"
+      ],
+      "tests": [
+        "RT-N01",
+        "RT-S01",
+        "RT-F01"
+      ],
+      "conclusion": "Ticket supersedes a generic HTML prototype: first prove typed native policy/adoption plus enhanced forms.",
+      "source": "research/astro/questions.md"
+    },
+    {
+      "id": "RR01",
+      "study": "react-router",
+      "number": 1,
+      "question": "Where is the router implemented?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15",
+        "RD01"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Identify library ownership separately from documentation application code.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR02",
+      "study": "react-router",
+      "number": 2,
+      "question": "Where is the docs website application implemented?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Keep website snapshot and framework source independently pinned.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR03",
+      "study": "react-router",
+      "number": 3,
+      "question": "Which release is being explained?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Tie claims to 8.5.0 and exact commits; no default-main substitution.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR04",
+      "study": "react-router",
+      "number": 4,
+      "question": "Can we prove the website's deployed Git commit or whole hosting topology?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Fly config/headers do not prove the deployed commit or private infrastructure topology.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR05",
+      "study": "react-router",
+      "number": 5,
+      "question": "Is this one routing mode?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD01",
+        "RD07"
+      ],
+      "tests": [
+        "RT-N06",
+        "RT-P01"
+      ],
+      "conclusion": "Use explicit renderer/data responsibilities; do not clone React's mode names or rendering runtime.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR06",
+      "study": "react-router",
+      "number": 6,
+      "question": "Does navigation replace the HTML document body?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD06",
+        "RD07"
+      ],
+      "tests": [
+        "RT-O01",
+        "RT-N01"
+      ],
+      "conclusion": "Nested owner trees inform persistence; native destination HTML/state has a distinct adoption adapter.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR07",
+      "study": "react-router",
+      "number": 7,
+      "question": "Why does `/teams/new` beat `/teams/:id`?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02"
+      ],
+      "tests": [
+        "RT-U02"
+      ],
+      "conclusion": "Adopt specificity ranking as a contract, without copying implementation scores blindly.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR08",
+      "study": "react-router",
+      "number": 8,
+      "question": "How do nesting, index and pathless routes work?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02",
+        "RD06"
+      ],
+      "tests": [
+        "RT-U02",
+        "RT-O01"
+      ],
+      "conclusion": "Retain ancestor layout metadata; index leaves and pathless owners have explicit rules.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR09",
+      "study": "react-router",
+      "number": 9,
+      "question": "What about optional segments, splats and encoded separators?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD02"
+      ],
+      "tests": [
+        "RT-U01",
+        "RT-U04"
+      ],
+      "conclusion": "Preserve encoded segment boundaries; defer optional-segment expansion and reject unsupported grammar.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR10",
+      "study": "react-router",
+      "number": 10,
+      "question": "Is the new route-pattern engine the deployed default?",
+      "disposition": "Reject",
+      "decisions": [
+        "RD02",
+        "RD15"
+      ],
+      "tests": [
+        "RT-U02",
+        "RT-E01"
+      ],
+      "conclusion": "Do not copy an experimental matcher as the observed default or make Forma depend on it.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR11",
+      "study": "react-router",
+      "number": 11,
+      "question": "Which clicks should remain browser actions?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD03"
+      ],
+      "tests": [
+        "RT-L01"
+      ],
+      "conclusion": "Preserve native click behavior and define delegated HTML-link eligibility fully.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR12",
+      "study": "react-router",
+      "number": 12,
+      "question": "Are generated Markdown links handled the same way as JSX Links?",
+      "disposition": "Reject",
+      "decisions": [
+        "RD03"
+      ],
+      "tests": [
+        "RT-L01"
+      ],
+      "conclusion": "Do not copy docs host-only interception; enforce full origin, download and defaultPrevented rules.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR13",
+      "study": "react-router",
+      "number": 13,
+      "question": "Why do entries need keys and indexes?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD05"
+      ],
+      "tests": [
+        "RT-H01",
+        "RT-H02"
+      ],
+      "conclusion": "Separate entry key, traversal index and unrelated user history state.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR14",
+      "study": "react-router",
+      "number": 14,
+      "question": "When is the URL committed?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD04",
+        "RD05"
+      ],
+      "tests": [
+        "RT-H01",
+        "RT-C01"
+      ],
+      "conclusion": "Commit PUSH/REPLACE after preparation; POP already moved and never pushes.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR15",
+      "study": "react-router",
+      "number": 15,
+      "question": "How can Back be blocked if popstate cannot be canceled?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD05"
+      ],
+      "tests": [
+        "RT-H02"
+      ],
+      "conclusion": "Use known inverse/replay deltas for blockers; foreign entries have explicit recovery.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR16",
+      "study": "react-router",
+      "number": 16,
+      "question": "Does observing the browser Navigation API mean the router uses it?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Observed Navigation API events do not prove interception by that API.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR17",
+      "study": "react-router",
+      "number": 17,
+      "question": "What states must the UI distinguish?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD04",
+        "RD10",
+        "RD11"
+      ],
+      "tests": [
+        "RT-C04",
+        "RT-F04",
+        "RT-F06"
+      ],
+      "conclusion": "Separate committed/pending route, submitting and revalidating state; omit keyed fetcher state in v1.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR18",
+      "study": "react-router",
+      "number": 18,
+      "question": "Is AbortController alone enough to avoid stale UI?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD04"
+      ],
+      "tests": [
+        "RT-C01",
+        "RT-C02"
+      ],
+      "conclusion": "Generation identity protects commits from promises that ignore abort.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR19",
+      "study": "react-router",
+      "number": 19,
+      "question": "Are loaders always sequential or always rerun?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD11"
+      ],
+      "tests": [
+        "RT-F05",
+        "RT-O03"
+      ],
+      "conclusion": "After mutations revalidate the active branch; do not assume universal parallel loading or unconditional parent reuse.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR20",
+      "study": "react-router",
+      "number": 20,
+      "question": "What is an action versus a loader?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD10",
+        "RD11"
+      ],
+      "tests": [
+        "RT-F01",
+        "RT-F09"
+      ],
+      "conclusion": "Separate safe GET navigation from POST actions and method-aware redirects.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR21",
+      "study": "react-router",
+      "number": 21,
+      "question": "What is a fetcher?",
+      "disposition": "Defer",
+      "decisions": [
+        "RD11",
+        "RD16"
+      ],
+      "tests": [
+        "RT-F04"
+      ],
+      "conclusion": "Independent keyed/background fetchers are later scope; one managed mutation is the explicit v1 concurrency boundary.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR22",
+      "study": "react-router",
+      "number": 22,
+      "question": "Does request cancellation undo server writes?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD11"
+      ],
+      "tests": [
+        "RT-F07",
+        "RT-F08"
+      ],
+      "conclusion": "Client cancellation cannot roll back server writes; require application idempotency/ordering for stronger semantics.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR23",
+      "study": "react-router",
+      "number": 23,
+      "question": "Are error boundaries just 404 pages?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD14",
+        "RD06"
+      ],
+      "tests": [
+        "RT-X01",
+        "RT-O01"
+      ],
+      "conclusion": "Route-local errors may preserve compatible ancestor layouts; 404 is only one error class.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR24",
+      "study": "react-router",
+      "number": 24,
+      "question": "How are redirects classified?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD14",
+        "RD10"
+      ],
+      "tests": [
+        "RT-H04",
+        "RT-F09"
+      ],
+      "conclusion": "Represent redirect metadata explicitly; enhanced mutation replay through 307/308 is not supported in v1.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR25",
+      "study": "react-router",
+      "number": 25,
+      "question": "What does Framework mode request over the wire?",
+      "disposition": "Reject",
+      "decisions": [
+        "RD07"
+      ],
+      "tests": [
+        "RT-N01",
+        "RT-N03"
+      ],
+      "conclusion": "Do not adopt .data/Turbo Stream as Forma's wire format; use its own versioned typed native response.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR26",
+      "study": "react-router",
+      "number": 26,
+      "question": "Does every client loader go through that protocol?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD07",
+        "RD10"
+      ],
+      "tests": [
+        "RT-N06",
+        "RT-F01"
+      ],
+      "conclusion": "Browser loaders and application Rust endpoints remain explicit; native rendering alone uses the native navigation contract.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR27",
+      "study": "react-router",
+      "number": 27,
+      "question": "Are route discovery, lazy modules and prefetch synonymous?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD09",
+        "RD13"
+      ],
+      "tests": [
+        "RT-S03",
+        "RT-K01"
+      ],
+      "conclusion": "Treat discovery, code loading, data fetching and speculation as separate lifetimes.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR28",
+      "study": "react-router",
+      "number": 28,
+      "question": "Is lazy manifest discovery enabled on the docs site?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD09"
+      ],
+      "tests": [
+        "RT-S03",
+        "RT-M01"
+      ],
+      "conclusion": "Use initial group metadata/registration; count its complete initial bytes rather than call it lazy discovery.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR29",
+      "study": "react-router",
+      "number": 29,
+      "question": "How does generic lazy discovery handle stale releases?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD08"
+      ],
+      "tests": [
+        "RT-S02",
+        "RT-X02"
+      ],
+      "conclusion": "Use explicit version validation and bounded recovery; no blanket reload loop or inherited discovery guarantee.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR30",
+      "study": "react-router",
+      "number": 30,
+      "question": "Is loader reuse a universal data cache?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD13"
+      ],
+      "tests": [
+        "RT-K01",
+        "RT-K02",
+        "RT-S05"
+      ],
+      "conclusion": "Loader reuse is not a universal private data cache; retain clear keys/lifetimes and no-store boundaries.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR31",
+      "study": "react-router",
+      "number": 31,
+      "question": "What survives route changes?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD06"
+      ],
+      "tests": [
+        "RT-O01",
+        "RT-O02"
+      ],
+      "conclusion": "Common route owners may persist, but Forma must prove actual DOM identity and cleanup under its own runtime.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR32",
+      "study": "react-router",
+      "number": 32,
+      "question": "What makes deep links work?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD03",
+        "RD07"
+      ],
+      "tests": [
+        "RT-N05"
+      ],
+      "conclusion": "Every admitted deep link must have a meaningful server response.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR33",
+      "study": "react-router",
+      "number": 33,
+      "question": "How is scroll restored?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A02",
+        "RT-H03"
+      ],
+      "conclusion": "Entry-key scroll and page lifecycle are explicit, including hashes and no-reset behavior.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR34",
+      "study": "react-router",
+      "number": 34,
+      "question": "Does the router automatically solve focus and announcements?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD12"
+      ],
+      "tests": [
+        "RT-A01",
+        "RT-A04"
+      ],
+      "conclusion": "Focus/live announcements remain specified and tested rather than assumed from routing.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR35",
+      "study": "react-router",
+      "number": 35,
+      "question": "Are React transitions and browser View Transitions the same thing?",
+      "disposition": "Defer",
+      "decisions": [
+        "RD12",
+        "RD16"
+      ],
+      "tests": [
+        "RT-A03"
+      ],
+      "conclusion": "View-transition animation is optional polish after correctness; React scheduling is not a Forma dependency.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR36",
+      "study": "react-router",
+      "number": 36,
+      "question": "Can SSR data be ignored and everything fetched again?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD07",
+        "RD08"
+      ],
+      "tests": [
+        "RT-N02",
+        "RT-N04"
+      ],
+      "conclusion": "Initial typed SSR state is authoritative for adoption; do not refetch/remount away its guarantees.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR37",
+      "study": "react-router",
+      "number": 37,
+      "question": "How much did REA parse?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Retain 6 parsed files, two successful runs and timed-out entry evidence as scoped static analysis.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR38",
+      "study": "react-router",
+      "number": 38,
+      "question": "Did REA recover the complete route tree and state machine?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15"
+      ],
+      "tests": [
+        "RT-E01"
+      ],
+      "conclusion": "Use inert manifest/source to explain actual route structure; generic favicon candidates are not routes.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR39",
+      "study": "react-router",
+      "number": 39,
+      "question": "What was actually tested?",
+      "disposition": "Adopt",
+      "decisions": [
+        "RD15",
+        "RD16"
+      ],
+      "tests": [
+        "RT-E01",
+        "RT-A05",
+        "RT-M02"
+      ],
+      "conclusion": "Historical Chromium/example tests are not upstream, performance or cross-browser qualification.",
+      "source": "research/react-router/questions.md"
+    },
+    {
+      "id": "RR40",
+      "study": "react-router",
+      "number": 40,
+      "question": "What is the smallest useful reconstruction?",
+      "disposition": "Adapt",
+      "decisions": [
+        "RD16",
+        "RD07",
+        "RD10"
+      ],
+      "tests": [
+        "RT-N01",
+        "RT-F01",
+        "RT-D01"
+      ],
+      "conclusion": "Use the coordinator scaffold, but first release must also satisfy native integration and enhanced-form requirements.",
+      "source": "research/react-router/questions.md"
+    }
+  ],
+  "tests": [
+    {
+      "id": "RT-E01",
+      "phase": "design",
+      "owner": "Design/evidence",
+      "assertion": "Verify all 105 source-question IDs, immutable pins, input hashes, source-license paths, REA failures and link targets; distinguish source inspection from execution.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG01",
+        "AG02",
+        "AG04",
+        "AS01",
+        "AS02",
+        "AS03",
+        "AS04",
+        "AS06",
+        "AS36",
+        "AS37",
+        "AS38",
+        "AS39",
+        "RR01",
+        "RR02",
+        "RR03",
+        "RR04",
+        "RR10",
+        "RR16",
+        "RR37",
+        "RR38",
+        "RR39"
+      ]
+    },
+    {
+      "id": "RT-P01",
+      "phase": "qualification",
+      "owner": "Router packaging",
+      "assertion": "Install the packed router outside the monorepo with one compatible core; declarations/exports resolve and a duplicate or incompatible core is refused.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR05"
+      ]
+    },
+    {
+      "id": "RT-P02",
+      "phase": "qualification",
+      "owner": "Build/server compatibility",
+      "assertion": "Old/equal/new writer-reader fixtures keep existing compatibility rules; old consumers cannot accidentally accept a new navigation capability.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": []
+    },
+    {
+      "id": "RT-P03",
+      "phase": "qualification",
+      "owner": "Build/release",
+      "assertion": "Non-opt-in and no-JavaScript routes contain zero router bootstrap bytes; coordinated artifact inventory includes router without rewriting historical release evidence.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS09"
+      ]
+    },
+    {
+      "id": "RT-U01",
+      "phase": "qualification",
+      "owner": "Router URL policy",
+      "assertion": "Round-trip encoded slash, malformed percent, repeated query keys, plus decoding, fragments and prototype-like parameter names without altering grammar or object prototypes.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG05",
+        "RR09"
+      ]
+    },
+    {
+      "id": "RT-U02",
+      "phase": "qualification",
+      "owner": "Router matcher",
+      "assertion": "Static/parameter/splat precedence, full child consumption, index and pathless layouts select the declared complete branch; duplicate/ambiguous configuration has a documented result.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG06",
+        "AG07",
+        "AS07",
+        "AS08",
+        "RR07",
+        "RR08",
+        "RR10"
+      ]
+    },
+    {
+      "id": "RT-U03",
+      "phase": "qualification",
+      "owner": "Router URL/history",
+      "assertion": "Relative, root-relative and fragment links under a non-root base resolve from the committed view even while a POP destination is pending.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG24",
+        "AS28"
+      ]
+    },
+    {
+      "id": "RT-U04",
+      "phase": "qualification",
+      "owner": "Router matcher",
+      "assertion": "Unsupported optional/matrix/named-outlet or regex grammar is rejected explicitly; bounded deep/large routes do not produce unbounded expansion.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG05",
+        "AG07",
+        "RR09"
+      ]
+    },
+    {
+      "id": "RT-U05",
+      "phase": "qualification",
+      "owner": "Router coordinator",
+      "assertion": "Same URL, explicit revalidation, query-only and fragment-only changes follow distinct policies; fragment navigation cancels obsolete pending page work.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG10",
+        "AS18"
+      ]
+    },
+    {
+      "id": "RT-H01",
+      "phase": "proof and qualification",
+      "owner": "Router history",
+      "assertion": "PUSH/REPLACE commit once after preparation; Back/Forward never PUSH; duplicate URL entries retain separate keys and unrelated history state survives.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG11",
+        "AS28",
+        "RR13",
+        "RR14"
+      ]
+    },
+    {
+      "id": "RT-H02",
+      "phase": "qualification",
+      "owner": "Router blockers",
+      "assertion": "Block/allow link/API/POP with unsaved state; known traversal deltas restore and replay correctly; foreign entries recover without invented indexes or loops.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG12",
+        "AS15",
+        "RR13",
+        "RR15"
+      ]
+    },
+    {
+      "id": "RT-H03",
+      "phase": "qualification",
+      "owner": "Router lifecycle",
+      "assertion": "pagehide/pageshow, BFCache restore, teardown and reinstall restore history.scrollRestoration and do not duplicate global handlers.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR33"
+      ]
+    },
+    {
+      "id": "RT-H04",
+      "phase": "qualification",
+      "owner": "Router redirects",
+      "assertion": "Relative/internal/external/out-of-base redirects preserve final URL, terminate within the declared budget and never commit an intermediate stale route.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG08",
+        "AS19",
+        "RR24"
+      ]
+    },
+    {
+      "id": "RT-L01",
+      "phase": "proof and qualification",
+      "owner": "Router DOM adapter",
+      "assertion": "Modified/non-primary/defaultPrevented/download/target/external/unsafe/opt-out clicks stay native; composed-path anchors and real hrefs behave correctly.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG13",
+        "AS10",
+        "RR11",
+        "RR12"
+      ]
+    },
+    {
+      "id": "RT-C01",
+      "phase": "proof and qualification",
+      "owner": "Router coordinator",
+      "assertion": "Held A then successful B, A ignoring abort and stale A errors cannot mutate B DOM, URL, title, focus, scroll or pending state.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG09",
+        "AG15",
+        "AG17",
+        "AS13",
+        "AS14",
+        "RR14",
+        "RR18"
+      ]
+    },
+    {
+      "id": "RT-C02",
+      "phase": "proof and qualification",
+      "owner": "Router/core lifecycle",
+      "assertion": "A late detached candidate, stylesheet or deferred activation is disposed exactly once after cancellation and cannot acquire committed ownership.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG09",
+        "AS13",
+        "AS21",
+        "RR18"
+      ]
+    },
+    {
+      "id": "RT-C03",
+      "phase": "qualification",
+      "owner": "Router/core lifecycle",
+      "assertion": "Callbacks and disposal that request another navigation obey the documented re-entry queue/critical-section rule; no interleaved or resurrected commit.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG09",
+        "AG14",
+        "AS14"
+      ]
+    },
+    {
+      "id": "RT-C04",
+      "phase": "qualification",
+      "owner": "Router outcomes",
+      "assertion": "Committed, cancelled, blocked, redirected, failed and fallback outcomes settle once; DOM commit, initial island readiness and deferred readiness are not conflated.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG10",
+        "AG14",
+        "AS15",
+        "AS16",
+        "AS17",
+        "RR17"
+      ]
+    },
+    {
+      "id": "RT-O01",
+      "phase": "proof and qualification",
+      "owner": "Router/core owners",
+      "assertion": "Sibling child navigation preserves the common layout's actual nodes, input state and owner; departed route effects cease.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG18",
+        "AS05",
+        "AS23",
+        "AS24",
+        "RR06",
+        "RR08",
+        "RR23",
+        "RR31"
+      ]
+    },
+    {
+      "id": "RT-O02",
+      "phase": "proof and qualification",
+      "owner": "Core lifecycle",
+      "assertion": "At least 100 A/B route cycles, cancellation cycles and failures return tracked listeners, effects, observers, timers, workers and pending activations to baseline.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG19",
+        "AS26",
+        "RR31"
+      ]
+    },
+    {
+      "id": "RT-O03",
+      "phase": "proof and qualification",
+      "owner": "Rust layout identity/router",
+      "assertion": "Changed server layout identity, incompatible props or session boundary replaces the affected owner; stale layout data is not retained merely because markup looks equal.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG18",
+        "AS25",
+        "RR19"
+      ]
+    },
+    {
+      "id": "RT-N01",
+      "phase": "proof and qualification",
+      "owner": "Native integrated fixture",
+      "assertion": "Two real typed Rust routes with distinct islands navigate A to B to A by link and API, retaining Document/layout identity, fresh props and interactive adopted destination nodes.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG03",
+        "AS04",
+        "AS05",
+        "AS11",
+        "AS40",
+        "RR06",
+        "RR25",
+        "RR40"
+      ]
+    },
+    {
+      "id": "RT-N02",
+      "phase": "proof and qualification",
+      "owner": "Core state/adoption",
+      "assertion": "Original document state/host claims stay frozen; new navigation context cannot authorize foreign/reused/departed hosts or reset an earlier refusal.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR36"
+      ]
+    },
+    {
+      "id": "RT-N03",
+      "phase": "proof and qualification",
+      "owner": "Core/server validation",
+      "assertion": "Malformed/oversized state, wrong protocol/route/host identity, duplicate host claims and missing registrations fail before destination activation.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR25"
+      ]
+    },
+    {
+      "id": "RT-N04",
+      "phase": "proof and qualification",
+      "owner": "Core adoption",
+      "assertion": "User input before activation is preserved; deferred islands that lose their route cannot activate later; initial adoption does not repair or remount served roots.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS16",
+        "AS26",
+        "RR36"
+      ]
+    },
+    {
+      "id": "RT-N05",
+      "phase": "proof and qualification",
+      "owner": "Server/compiler fixture",
+      "assertion": "Direct URL, refresh and JavaScript-disabled links/forms return meaningful full server HTML with correct status and fresh typed props.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG03",
+        "AG24",
+        "AS35",
+        "RR32"
+      ]
+    },
+    {
+      "id": "RT-N06",
+      "phase": "qualification",
+      "owner": "Rendering adapters",
+      "assertion": "Browser-component and generated-HTML routes use their own admitted contract; generated HTML cannot smuggle native state claims, scripts or a second bootstrap.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG16",
+        "AG19",
+        "AS07",
+        "AS11",
+        "AS20",
+        "RR05",
+        "RR26"
+      ]
+    },
+    {
+      "id": "RT-S01",
+      "phase": "proof and qualification",
+      "owner": "Rust policy/router",
+      "assertion": "Fresh nonces under the same normalized policy allow ordinary native transitions; changed CSP/TT/COOP/permissions policy takes one explicit document boundary.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS22",
+        "AS40"
+      ]
+    },
+    {
+      "id": "RT-S02",
+      "phase": "proof and qualification",
+      "owner": "Build/router admission",
+      "assertion": "Wrong app/build/group, missing/changed asset or protocol mismatch cannot execute mixed artifacts; supported same-group transitions never count a reload as success.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS09",
+        "AS34",
+        "RR29"
+      ]
+    },
+    {
+      "id": "RT-S03",
+      "phase": "proof and qualification",
+      "owner": "Compiler/build/browser",
+      "assertion": "The group registration artifact and all executable dependencies are integrity checked; concatenated activation entrypoints and unverified dynamic import graphs are refused.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG20",
+        "AS27",
+        "AS38",
+        "RR27",
+        "RR28"
+      ]
+    },
+    {
+      "id": "RT-S04",
+      "phase": "proof and qualification",
+      "owner": "Trusted DOM boundary",
+      "assertion": "Inert typed state and framework-authored markup do not replay executable script/event handlers; Trusted Types and strict CSP remain enforced.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS20",
+        "AS27"
+      ]
+    },
+    {
+      "id": "RT-S05",
+      "phase": "proof and qualification",
+      "owner": "Application/server/router",
+      "assertion": "no-store persists at real HTTP boundary; logout/account change cannot expose completed cached HTML/state or keep incompatible persistent private owners.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR30"
+      ]
+    },
+    {
+      "id": "RT-S06",
+      "phase": "qualification",
+      "owner": "Protocol validation",
+      "assertion": "Payload/state/route/redirect/prefetch and preparation time limits fail predictably without unbounded allocations or endless pending UI.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG08"
+      ]
+    },
+    {
+      "id": "RT-F01",
+      "phase": "proof and qualification",
+      "owner": "Router forms/Rust handler",
+      "assertion": "Same application handler handles enhanced and native GET/POST; successful mutation revalidates fresh typed server props and no-JS remains usable.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG21",
+        "AS31",
+        "AS40",
+        "RR20",
+        "RR26",
+        "RR40"
+      ]
+    },
+    {
+      "id": "RT-F02",
+      "phase": "qualification",
+      "owner": "Router form serialization",
+      "assertion": "Browser constraint validation, submitter name/value and action/method/enctype overrides, multipart files and controls named submit/method/action are preserved.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS31"
+      ]
+    },
+    {
+      "id": "RT-F03",
+      "phase": "proof and qualification",
+      "owner": "Router form UX",
+      "assertion": "Validation retains safe entered values, renders accessible field/form errors, focuses the summary/first invalid control and neither pushes history nor repeats the action.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": []
+    },
+    {
+      "id": "RT-F04",
+      "phase": "proof and qualification",
+      "owner": "Mutation coordinator",
+      "assertion": "Double-click and competing managed submissions produce one active request and explicit busy outcome; nothing is silently queued or retried.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR17",
+        "RR21"
+      ]
+    },
+    {
+      "id": "RT-F05",
+      "phase": "proof and qualification",
+      "owner": "Mutation/read coordinator",
+      "assertion": "GET/prefetch begun before a POST or its settlement cannot remain authoritative after it; mutation generations trigger a fresh current-branch read.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG15",
+        "AG21",
+        "AS25",
+        "RR19"
+      ]
+    },
+    {
+      "id": "RT-F06",
+      "phase": "proof and qualification",
+      "owner": "Mutation/navigation coordinator",
+      "assertion": "Navigation during POST can complete; the late action cannot redirect back or overwrite a newer route, and known settlement revalidates the current branch.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR17"
+      ]
+    },
+    {
+      "id": "RT-F07",
+      "phase": "proof and qualification",
+      "owner": "Form recovery",
+      "assertion": "Server receives POST but response is lost/aborted/invalid: exactly one client send attempt, visible unknown outcome, no automatic retry or native POST fallback.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS31",
+        "RR22"
+      ]
+    },
+    {
+      "id": "RT-F08",
+      "phase": "proof and qualification",
+      "owner": "Application Rust security",
+      "assertion": "Missing/invalid CSRF/session/authorization is rejected by real handlers; client guards never authorize writes or reveal protected data.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG25",
+        "AS33",
+        "RR22"
+      ]
+    },
+    {
+      "id": "RT-F09",
+      "phase": "proof and qualification",
+      "owner": "Rust actions/router",
+      "assertion": "Supported action 303 is represented explicitly and followed by GET; enhanced 307/308 method replay is refused, and unsupported forms escape before transmission.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS19",
+        "RR20",
+        "RR24"
+      ]
+    },
+    {
+      "id": "RT-F10",
+      "phase": "qualification",
+      "owner": "Action transport",
+      "assertion": "Preserve conflict/auth/server statuses and validate typed action outcomes; malformed or policy/build-incompatible action responses cannot become successful UI commits.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": []
+    },
+    {
+      "id": "RT-X01",
+      "phase": "qualification",
+      "owner": "Router error boundaries",
+      "assertion": "Admitted 404 and route errors render the declared boundary/status; offline, wrong media type and parsing errors follow explicit recovery instead of being relabeled not-found.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG25",
+        "AS11",
+        "AS12",
+        "RR23"
+      ]
+    },
+    {
+      "id": "RT-X02",
+      "phase": "proof and qualification",
+      "owner": "Fallback policy",
+      "assertion": "Each documented fallback has an assertion of one method-safe document GET and state-loss behavior; recovery does not retry indefinitely or satisfy normal-transition tests.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR29"
+      ]
+    },
+    {
+      "id": "RT-A01",
+      "phase": "proof and qualification",
+      "owner": "Router accessibility",
+      "assertion": "Title, pending/completion announcement and focus policies are independently asserted; focus/selection in retained controls survives when appropriate.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG23",
+        "AS22",
+        "AS29",
+        "RR34"
+      ]
+    },
+    {
+      "id": "RT-A02",
+      "phase": "proof and qualification",
+      "owner": "Router scroll",
+      "assertion": "Entry-key scroll restoration, new-route top, encoded/empty hash and interrupted scroll callbacks behave on Back and Forward without scrolling a newer page.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG22",
+        "AS18",
+        "AS28",
+        "RR33"
+      ]
+    },
+    {
+      "id": "RT-A03",
+      "phase": "qualification",
+      "owner": "Router experience",
+      "assertion": "Reduced motion and absence of View Transitions still route correctly; CSS preparation has bounded success/error handling and stale callbacks cannot commit.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AS21",
+        "AS22",
+        "AS30",
+        "RR35"
+      ]
+    },
+    {
+      "id": "RT-A04",
+      "phase": "qualification",
+      "owner": "Manual accessibility",
+      "assertion": "Keyboard, screen-reader announcements/errors and mobile interaction are reviewed on the actual native/form fixture; automation is not claimed as full assistive-technology qualification.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG23",
+        "AS29",
+        "RR34"
+      ]
+    },
+    {
+      "id": "RT-A05",
+      "phase": "proof and qualification",
+      "owner": "Browser matrix",
+      "assertion": "Run the native, forms, history and lifecycle fixture in Chromium, Firefox and WebKit, including mobile viewport/input and a separately documented gesture check.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG11",
+        "AS24",
+        "RR39"
+      ]
+    },
+    {
+      "id": "RT-K01",
+      "phase": "qualification",
+      "owner": "Router prefetch",
+      "assertion": "Private/native prefetch defaults off; opted-in safe reads cap concurrency at two, honor data-saving/offline state and retain no completed private HTML.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG20",
+        "AS32",
+        "AS33",
+        "RR27",
+        "RR30"
+      ]
+    },
+    {
+      "id": "RT-K02",
+      "phase": "qualification",
+      "owner": "Router prefetch",
+      "assertion": "Shared in-flight work outlives one cancelled owner only when another needs it; failed attempts are retryable and mutation/session/build changes revoke stale reuse.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "AG16",
+        "AG17",
+        "AS32",
+        "RR30"
+      ]
+    },
+    {
+      "id": "RT-M01",
+      "phase": "qualification",
+      "owner": "Package/build measurement",
+      "assertion": "Freeze incremental router and complete group-bootstrap gzip budgets before measurement; retain all results and do not raise existing gates implicitly.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR28"
+      ]
+    },
+    {
+      "id": "RT-M02",
+      "phase": "qualification",
+      "owner": "Browser measurement",
+      "assertion": "Measure cold entry and warm navigation on fixed routes/mobile profile against document-navigation baseline; report percentiles, sample count and failures without cross-framework superiority claims.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR39"
+      ]
+    },
+    {
+      "id": "RT-M03",
+      "phase": "qualification",
+      "owner": "Resource measurement",
+      "assertion": "Combine the 100-cycle owned-resource count with browser memory observations; distinguish deterministic cleanup assertions from noisy heap measurements.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": []
+    },
+    {
+      "id": "RT-D01",
+      "phase": "qualification",
+      "owner": "Docs/scaffold/packaging",
+      "assertion": "Execute the documented TSX plus Rust starter commands against packed candidate artifacts outside the repository; no private deep imports.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": [
+        "RR40"
+      ]
+    },
+    {
+      "id": "RT-D02",
+      "phase": "pilot",
+      "owner": "Site/infra integration",
+      "assertion": "Pilot only the admitted flow; disable enhancement and atomically restore matching browser/build/server artifacts; verify ordinary document navigation after rollback.",
+      "status": "planned",
+      "evidence": null,
+      "research_questions": []
+    }
+  ],
+  "research_file_sha256": {
+    "COMPARISON.md": "b03179854832a85aed067ccf46623d238c421b6519dc21607a6fef51b67b16df",
+    "FORMA-IMPLICATIONS.md": "c62303868a5103e9bc2adbdf02c015539c98c2a45c397b050a0f134ba7c61021",
+    "METHODS.md": "5cef7fcc0e645568995eccd1fe16087e30435ec0740cd2decb0dad0fa1574876",
+    "REBUILD-BLUEPRINT.md": "c60ce8e6db45833f1788da3028cd9d371e9ce60439a6ca6a3615f0a68ad0bed4",
+    "VALIDATION.md": "fc1c252cb218559e63a10d76f7cb1d58177722ea9fe6aab29051b9d5bd2efd5c",
+    "evidence/index.json": "23ed1c85720226048e99e2605dac05775fea19e84f31f7114a12d5e6735033ee",
+    "research/angular/LICENSE.angular.txt": "15e77c4692114f87c2020353626c868472c23954a4ed37ecc4c1522d14be1eb7",
+    "research/angular/questions.md": "fd5e67c238fdc3f3a0f109da2f44375f8dee39d5015094bacb2a02ae95723b00",
+    "research/angular/report.md": "b0b7f8d8e4cd854b425390e1c4b981c7783dc6e08f71f9bd779e641d594b9277",
+    "research/angular/sources.json": "5be35d1de11d8d0d598d990639e3c3fd49e3b4c02fbe1f68a3f92cad0fd6a6fe",
+    "research/astro/licenses/docs-LICENSE.txt": "db2b3af934943220a2abee7757ee964dbe7dca1b4798ed673833ce3d96ac7934",
+    "research/astro/licenses/framework-LICENSE.txt": "4aa72be797aad0e5e21827eaae6a1df9e122d7a401f07d2c308a6b9a5f0e1278",
+    "research/astro/licenses/starlight-LICENSE.txt": "a0ee39c239b80f632b663fc02a44893be6c8489815a776e231a2fff17c12ef42",
+    "research/astro/questions.md": "c86c82189ae39b12b56069561fb94112d8e9dc1b1c08c93e5685fb222f84b5ad",
+    "research/astro/report.md": "c34e151b599348601bf81b4442fa3251dffe283beb624f05d9e1a4fb0192501f",
+    "research/astro/sources.json": "5010c15677b78aed129075663dc0bf02212817ec54b7e7f99ed3f2b5e0df64e2",
+    "research/react-router/licenses/LICENSE-react-router.md": "77c9ee6a9c5d5782fb0c50b50d101189116314c14f7df0a1b0d385fc96a7ba49",
+    "research/react-router/licenses/LICENSE-website.md": "63c49bb12bc97aa1be7b58e3e2d841d0b2210a1afc3fbb85aeec644f0a88536b",
+    "research/react-router/questions.md": "195c48bba94cff8f25b43aa6de945ffc089d62d9952adbd58c8959d2c19dc2f9",
+    "research/react-router/report.md": "ebb54b872b195b8fab79db567d4943df2689b09c99cb246a67395dba33026e5c",
+    "research/react-router/sources.json": "79c763b59eb9ed69ceee7e60933003da7fef2dce0b89ab3c5eb9f35166c7cd80"
+  }
+}

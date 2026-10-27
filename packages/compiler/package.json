@@ -1,6 +1,6 @@
 {
   "name": "@getforma/compiler",
-  "version": "3.1.0",
+  "version": "3.2.0-rc.1",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
   },
   "peerDependencies": {
     "esbuild": ">=0.17.0",
-    "@getforma/core": "^3.1.0"
+    "@getforma/core": "^3.2.0 || =3.2.0-rc.1"
   },
   "peerDependenciesMeta": {
     "esbuild": {

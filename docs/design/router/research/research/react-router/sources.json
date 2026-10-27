@@ -1,0 +1,405 @@
+{
+  "snapshot_date": "2026-10-26",
+  "observed_docs_version": "8.5.0",
+  "repo_snapshots": [
+    {
+      "id": "router",
+      "repo": "https://github.com/remix-run/react-router",
+      "commit": "4fe4525102870a2b21a4a0568a651d118f5e5dbb",
+      "ref": "react-router@8.5.0",
+      "local_path": ".local/upstream/react-router",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "packages/react-router/package.json",
+          "sha256": "f4f6c026387b57abdfbfac4aaeb0df29b3e35bf646c709c93e40f0bdf4c163c7",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/package.json"
+        },
+        {
+          "path": "packages/react-router/lib/router/router.ts",
+          "sha256": "21afa81ff04fdc3d80f45ed0e55aefe92109c61f6bc1e25a8c1e9f522b70030f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/router/router.ts"
+        },
+        {
+          "path": "packages/react-router/lib/router/history.ts",
+          "sha256": "ef11f4f7bb88180cdbd75cdaccd2b3f12d13feab651d1df95479bd4ad2427c18",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/router/history.ts"
+        },
+        {
+          "path": "packages/react-router/lib/router/utils.ts",
+          "sha256": "4a8b33c235d788ebc88622795ffdc9ec2a975b924dac1d6d3473af1031e2253f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/router/utils.ts"
+        },
+        {
+          "path": "packages/react-router/lib/router/matcher.ts",
+          "sha256": "ee68e1fefa3fb79a76bd61714dc828c6f1fc627f88438acea2d2d2703fd1219e",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/router/matcher.ts"
+        },
+        {
+          "path": "packages/react-router/lib/router/matcher-route-pattern.ts",
+          "sha256": "7e5b9ae519edc5b82777284407737d2f6f2a834bc8591c6510d9fab96028854f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/router/matcher-route-pattern.ts"
+        },
+        {
+          "path": "packages/react-router/lib/dom/dom.ts",
+          "sha256": "8517c703cd8ac9060d5bc975721eba26a13fd668aed2beb13ca843905f1f67cd",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/dom.ts"
+        },
+        {
+          "path": "packages/react-router/lib/dom/lib.tsx",
+          "sha256": "937693f1da60c889d03f76c0936df11ad0b6b7cae39f997d13257f6111320ab9",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/lib.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/hooks.tsx",
+          "sha256": "43c3d168d9aebd9d91d4bff0fe5bdc7860e6e8770fd48f959513fa6c0f3d05c9",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/hooks.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/components.tsx",
+          "sha256": "4ccfe0c26aed396ec62eef7e575f38da0d788871611e8041486dba1cfb23704b",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/components.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/dom-export/hydrated-router.tsx",
+          "sha256": "49fc65da4bfc63cd3a7c166bdfca98ed1dc260e48d766ce51310d5df0de50d60",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom-export/hydrated-router.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/dom/ssr/hydration.tsx",
+          "sha256": "6f245c0a6b712293bf7d1e87eee4d6dd7ea2574da92ebc6eda7ee164de79dd53",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/ssr/hydration.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/dom/ssr/single-fetch.tsx",
+          "sha256": "d144df75a2a15e0f9f6b5a7a4cafab4da8ad27138c950d4b71f9c29102813c58",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/ssr/single-fetch.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/dom/ssr/fog-of-war.ts",
+          "sha256": "6adb5fde6fb5d0ce42b9a88271ba6a79cd56b12fee02b06644e9e64506b11368",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/ssr/fog-of-war.ts"
+        },
+        {
+          "path": "packages/react-router/lib/dom/ssr/components.tsx",
+          "sha256": "e447daa541a8e956fbc8541bde09b43c13482cbb37ccbbe74ecc849f1a1dd55f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/ssr/components.tsx"
+        },
+        {
+          "path": "packages/react-router/lib/dom/ssr/route-discovery.ts",
+          "sha256": "328b12c9ac3379915e53476504f36765e897316d7faa648fce64a556a939ea3e",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/lib/dom/ssr/route-discovery.ts"
+        },
+        {
+          "path": "docs/start/modes.md",
+          "sha256": "476cfe3c8f769fa7a20ae1b488587b6b9c27079e63edbeb915c11d179eeab93d",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/docs/start/modes.md"
+        },
+        {
+          "path": "docs/explanation/race-conditions.md",
+          "sha256": "b92aba4b278eb2f6fcb9421f119417539c7105aab92f98ecdb04e10edce304d9",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/docs/explanation/race-conditions.md"
+        },
+        {
+          "path": "docs/explanation/lazy-route-discovery.md",
+          "sha256": "8a1f6831f9404e478ead72898b3e6452e498ef175c296a23ed1af38c19c7a61b",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/docs/explanation/lazy-route-discovery.md"
+        },
+        {
+          "path": "docs/how-to/accessibility.md",
+          "sha256": "94efe75459d35417386d997b9d7c8ea7f82b2fabe95d291aceda14c7c48c7fa9",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/docs/how-to/accessibility.md"
+        },
+        {
+          "path": "docs/upgrading/future.md",
+          "sha256": "26a6a64aee10ca6158013620913102538a2234e34779405a56a7184f380e15b5",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/docs/upgrading/future.md"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/interruptions-test.ts",
+          "sha256": "11a1ae9c4b41b9e6bf0129f3ebef8d4d906cce40741c738486a285e012bc6cd9",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/interruptions-test.ts"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/navigation-test.ts",
+          "sha256": "a67337aef9d1d6db695d5feba8f2395327bbf3e0e88a4fa8832b15cb5fa8c88f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/navigation-test.ts"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/navigation-blocking-test.ts",
+          "sha256": "b1b6d76732b81be8c791f36cbd3677a17e00d40978c82cc076015d576ecdd6d4",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/navigation-blocking-test.ts"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/scroll-restoration-test.ts",
+          "sha256": "fa4b18b8e5545fddcf9bca276c4321d6fb4da22d37f47b81cfffdd866b595bfe",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/scroll-restoration-test.ts"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/route-matcher-comparison-test.ts",
+          "sha256": "f1078287d24099f4812c4bfa2ae8120e59dabc3ec6ded4e75fdc875311be0f7e",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/route-matcher-comparison-test.ts"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/should-revalidate-test.ts",
+          "sha256": "84cb58f8121a54bf04efebf94938416e182a4ac6836e96be0ed091194189e72f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/should-revalidate-test.ts"
+        },
+        {
+          "path": "packages/react-router/__tests__/router/redirects-test.ts",
+          "sha256": "b4bd9c0d9ab1f3e8ab5dcad9d93b4e4991f0a4acd85b180899abf338a828923f",
+          "url": "https://github.com/remix-run/react-router/blob/4fe4525102870a2b21a4a0568a651d118f5e5dbb/packages/react-router/__tests__/router/redirects-test.ts"
+        }
+      ]
+    },
+    {
+      "id": "website",
+      "repo": "https://github.com/remix-run/react-router-website",
+      "commit": "e9b619c5b05209d1eaf0ba02218633732347c789",
+      "ref": "main snapshot",
+      "local_path": ".local/upstream/react-router-website",
+      "license": "MIT",
+      "files": [
+        {
+          "path": "package.json",
+          "sha256": "2dc72e6255d1bb3ee40ea40e66217ef96c02c7c606e65e2650702c6421322c11",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/package.json"
+        },
+        {
+          "path": "react-router.config.ts",
+          "sha256": "69fa75aae530e7d8bf387bc6a021a53e63f346136012b5f3ed1b9b354bcc346a",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/react-router.config.ts"
+        },
+        {
+          "path": "app/routes.ts",
+          "sha256": "4bd97af854dcef329fc56aec4877f43687676abb2fadbea1b182cb3a2ac3e14e",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/routes.ts"
+        },
+        {
+          "path": "app/root.tsx",
+          "sha256": "83354d8bc751dcc056f081bd63ff710d636a275caa1905f8d2d456151ae6006e",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/root.tsx"
+        },
+        {
+          "path": "app/entry.client.tsx",
+          "sha256": "f54c679ceabe332a23767a8d99cf98717b331b20514ca3068607e4e351c3a407",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/entry.client.tsx"
+        },
+        {
+          "path": "app/pages/doc.tsx",
+          "sha256": "81d3b6b8e94d069cb1b9cf80542416b56de08b03ffddb2dac56ae7b7c31499f7",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/pages/doc.tsx"
+        },
+        {
+          "path": "app/pages/docs-layout.tsx",
+          "sha256": "69ae2269fb1c4f6b3756cae71a06cc123942febf7d524aad9e51cdc98d953e58",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/pages/docs-layout.tsx"
+        },
+        {
+          "path": "app/ui/delegate-markdown-links.ts",
+          "sha256": "81c8e75d512901a6e8c8e94bab0490d074c81bc4c54dbeb76f4847473cc27303",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/ui/delegate-markdown-links.ts"
+        },
+        {
+          "path": "app/components/docs-menu/menu.tsx",
+          "sha256": "f69d89282cb557eec101831633a3e9820ac81094834e137a90dcf242a1235d05",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/components/docs-menu/menu.tsx"
+        },
+        {
+          "path": "app/modules/gh-docs/.server/doc-url-parser.ts",
+          "sha256": "a3b564a3c3d42375e4df1ed5da2b8559125a236f6ed72b2c621b1219c46a5d75",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/modules/gh-docs/.server/doc-url-parser.ts"
+        },
+        {
+          "path": "app/modules/gh-docs/.server/docs.ts",
+          "sha256": "9ac71c17d96e0173861098d1102db8724a7b4fedc263dfa51723847293eea429",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/app/modules/gh-docs/.server/docs.ts"
+        },
+        {
+          "path": "README.md",
+          "sha256": "5944daf0ca597040fddab635c08c3420d1172e4721e49d76cfcfe6036f194209",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/README.md"
+        },
+        {
+          "path": "server.ts",
+          "sha256": "0717b231ba70c764865274dcb406a7abeedd102a95e7731ca8cf9dd619eeeff3",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/server.ts"
+        },
+        {
+          "path": "fly.production.toml",
+          "sha256": "7423c5dee14b47849c70dfa913a58e76b1be0b4bb2201397f60747c42589b96f",
+          "url": "https://github.com/remix-run/react-router-website/blob/e9b619c5b05209d1eaf0ba02218633732347c789/fly.production.toml"
+        }
+      ]
+    }
+  ],
+  "http_capture": {
+    "url": "https://reactrouter.com/home",
+    "final_url": "https://reactrouter.com/home",
+    "sha256": "ed69f97180be43b4eddd33ad0c7ccb4677f42f0be2e8dc47946e3ad160c884c6",
+    "bytes": 181137,
+    "headers": {
+      "Connection": "close",
+      "Content-Length": "181137",
+      "cache-control": "public, max-age=300, stale-while-revalidate=604800",
+      "content-type": "text/html",
+      "ratelimit": "limit=1000, remaining=999, reset=120",
+      "ratelimit-policy": "1000;w=120",
+      "server": "Fly/331937a822 (2026-10-23)",
+      "via": "1.1 fly.io, 1.1 fly.io, 1.1 varnish",
+      "fly-request-id": "01M5W8TA80X51G5KGV4JD58VWF-ewr",
+      "Accept-Ranges": "bytes",
+      "Age": "0",
+      "Date": "Mon, 26 Oct 2026 14:11:19 GMT",
+      "X-Served-By": "cache-ewr-kewr1740027-EWR",
+      "X-Cache": "MISS",
+      "X-Cache-Hits": "0",
+      "X-Timer": "S1793023879.378979,VS0,VE74",
+      "Vary": "Cookie, Accept, Accept-Encoding",
+      "Strict-Transport-Security": "max-age=300",
+      "alt-svc": "h3=\":443\";ma=86400,h3-29=\":443\";ma=86400,h3-27=\":443\";ma=86400"
+    }
+  },
+  "downloaded_assets": [
+    {
+      "url": "https://reactrouter.com/assets/manifest-b63cec8d.js",
+      "path": ".local/captures/react-router/assets/manifest-b63cec8d.js",
+      "sha256": "a8969d556b60866a28609a8b4562ef49576e2b12f23faa2e79a71057f1e0ec7c",
+      "bytes": 5647,
+      "content_type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "https://reactrouter.com/assets/entry.client-BVIS7KF3.js",
+      "path": ".local/captures/react-router/assets/entry.client-BVIS7KF3.js",
+      "sha256": "7b9df5a4d77e04d5bc1d0d2551f9a4d9e6ba1043c579028c52d6e6c0ac900ad9",
+      "bytes": 190898,
+      "content_type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "https://reactrouter.com/assets/lib-w1Rxlh47.js",
+      "path": ".local/captures/react-router/assets/lib-w1Rxlh47.js",
+      "sha256": "b0b40c19e5ef23de2b907ea20e49c7ba6b38ea13ba4458d89a2f12231eaae6b7",
+      "bytes": 10353,
+      "content_type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "https://reactrouter.com/assets/docs-layout-CTqBlNNw.js",
+      "path": ".local/captures/react-router/assets/docs-layout-CTqBlNNw.js",
+      "sha256": "dfdfecd7174abb72548b2a7d4b79cc48755fd1c90f9d74e9590d31f709801326",
+      "bytes": 14000,
+      "content_type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "https://reactrouter.com/assets/doc-CVbegNQE.js",
+      "path": ".local/captures/react-router/assets/doc-CVbegNQE.js",
+      "sha256": "878bbc8d3d9c1e1e522886670c71ca37574bf602ea9830bce350dd9b7b1c36ed",
+      "bytes": 7529,
+      "content_type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "https://reactrouter.com/assets/root-CmiqwOFp.js",
+      "path": ".local/captures/react-router/assets/root-CmiqwOFp.js",
+      "sha256": "a267b1731b1ae3dbfa2dad48027e357604ebfbe90ff4a76b24401d3814120254",
+      "bytes": 1755,
+      "content_type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "https://reactrouter.com/assets/utils-CTsB3O1x.js",
+      "path": ".local/captures/react-router/assets/utils-CTsB3O1x.js",
+      "sha256": "f3b976f46283d2396c3ce474e90469d9cb1d40af19a4a8f790cc257e57d64425",
+      "bytes": 2048,
+      "content_type": "text/javascript; charset=utf-8"
+    }
+  ],
+  "site_manifest_summary": "site-manifest-summary.json",
+  "site_context": "site-context.json",
+  "browser_evidence": "../../evidence/browser-react-router.json",
+  "rea_runs": [
+    {
+      "name": "react-router-doc-chunks",
+      "exit_code": 0,
+      "elapsed_seconds": 2.553,
+      "evidence_id": "ev_2216001df0e3f74322608fb6bc6b68ba083dc16566857260a7b1485ed677d1d3",
+      "statistics": {
+        "relevant_files": 7,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 16979,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 4,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 3425,
+        "findings": 80,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error_code": null,
+      "evidence_path": ".local/rea/react-router-doc-chunks/evidence.json",
+      "run_path": ".local/rea/react-router-doc-chunks/run.json",
+      "sha256": "72f6ac55fce468a170cb09a3da9f67085cd26a5c73e2db25a46aac174565aa96"
+    },
+    {
+      "name": "react-router-layout-chunks",
+      "exit_code": 0,
+      "elapsed_seconds": 4.363,
+      "evidence_id": "ev_b8951a4ad0b7cc6f223daf847efd7b78c6c38646f3f75e8f901ff082a45799c0",
+      "statistics": {
+        "relevant_files": 7,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 24353,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 2,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 6200,
+        "findings": 71,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error_code": null,
+      "evidence_path": ".local/rea/react-router-layout-chunks/evidence.json",
+      "run_path": ".local/rea/react-router-layout-chunks/run.json",
+      "sha256": "bf7063312b840dfcffed1795ade404690d0eda9186c5d08b942abed3986153c0"
+    },
+    {
+      "name": "react-router-entry",
+      "exit_code": 1,
+      "elapsed_seconds": 18.011,
+      "evidence_id": "ev_4b99ba5e845940350d8cd6bea7e8ffcc86b9e0db711b9aaab595e828756b440c",
+      "statistics": {
+        "relevant_files": 7,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 190898,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 0,
+        "skipped_javascript_files": 1,
+        "visited_ast_nodes": 0,
+        "findings": 0,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "error_code": "provider_timeout",
+      "evidence_path": ".local/rea/react-router-entry/evidence.json",
+      "run_path": ".local/rea/react-router-entry/run.json",
+      "sha256": "30d62da47d2218768bc41f28954db47cf24498207bcc1cc32345ecd9af6a07e6"
+    }
+  ],
+  "browser_capture": {
+    "path": "evidence/browser-react-router.json",
+    "sha256": "95d785ca0d48f7b922b1f11f68e2b2d91e13f11a124a185d40245991243c5da4",
+    "initial_probe_path": "evidence/browser-react-router-initial.json",
+    "method_correction": "Wait for destination heading and original heading after Back; initial URL-only completion snapshot retained."
+  },
+  "derived_rea_observations": {
+    "path": "research/react-router/rea-observations.json",
+    "sha256": "ebf9263859f616be9e80f1cd14cc49fc526572a2bd8310d72b9ec46b5e05460e",
+    "method": "Selected graph observations and full route inventories projected from the two successful evidence files; observation IDs, source locations, evidence limitations retained."
+  },
+  "local_example_tests": {
+    "command": "node --test --test-reporter=tap research/react-router/snippets/transaction-pattern.test.mjs",
+    "node_version": "v22.21.0",
+    "result_path": "research/react-router/snippets/test-results.tap",
+    "passed": 4,
+    "failed": 0,
+    "sha256": "51d8e93756b27fda5769c2720cd30da368f72ab239f12e7fa1c29fc9792e0aeb",
+    "scope": "Original study example only; upstream test suite not run."
+  }
+}

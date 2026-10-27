@@ -1,15 +1,16 @@
 {
   "name": "forma-stack",
   "private": true,
-  "description": "The Forma Stack: the npm workspace of its four packages (packages/) beside the Cargo workspace of its three crates (crates/).",
+  "description": "The Forma Stack: five npm packages (packages/) beside three Cargo crates (crates/).",
   "workspaces": [
     "packages/core",
+    "packages/router",
     "packages/compiler",
     "packages/build",
     "packages/create-app"
   ],
   "scripts": {
-    "build": "npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/create-app",
+    "build": "npm run build -w packages/compiler && npm run build -w packages/build && npm run build -w packages/core && npm run build -w packages/router && npm run build -w packages/create-app",
     "test": "npm test --workspaces",
     "emit:corpus": "npm run emit:corpus -w packages/compiler --",
     "test:e2e": "bash e2e/sync-fixtures.sh && bash e2e/ssr/build.sh && bash e2e/frame/build.sh && bash e2e/fixtures/apps/build.sh && bash e2e/skew/build.sh && npx playwright test",

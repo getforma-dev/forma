@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT, packedCargoGraph, run, digest, stageCargoLock } from './release-set.mjs';
+import { SEED_TEMPLATES } from './template-lock-seeds.mjs';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
 
 const registry = 'registry+https://github.com/rust-lang/crates.io-index';
@@ -76,7 +77,7 @@ test('a future internal feature override refuses staging until its unification i
   assert.throws(() => mergeRecordedCargoLock(original, candidates, recorded), /internal Cargo feature override/);
 });
 
-test('both real default template consumers accept the staged graph with locked Cargo and no rewrite', async () => {
+test('all real template consumers including optional navigation accept the staged graph with locked Cargo and no rewrite', async () => {
   const { placeCargoLockRoot } = await import('../packages/create-app/src/scaffold.ts');
   const graph = JSON.parse(run('cargo', ['metadata', '--no-deps', '--locked', '--offline', '--format-version', '1']));
   const crates = graph.packages.filter(p => ['forma-ir', 'forma-ir-derive', 'forma-server'].includes(p.name));
@@ -84,7 +85,7 @@ test('both real default template consumers accept the staged graph with locked C
   const recorded = { lock: readFileSync(join(ROOT, 'Cargo.lock'), 'utf8'), packages: crates };
   const scratch = mkdtempSync(join(tmpdir(), 'forma-default-cargo-closure-'));
   try {
-    for (const template of ['minimal', 'dashboard']) {
+    for (const template of SEED_TEMPLATES) {
       const name = `${template}-default-lock-proof`, dir = join(scratch, name);
       mkdirSync(join(dir, 'src'), { recursive: true });
       const source = join(ROOT, 'packages/create-app/templates', template);

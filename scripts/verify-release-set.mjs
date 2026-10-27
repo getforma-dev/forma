@@ -2,14 +2,17 @@
 // P17 skeleton. Package code comes from DS11; the test harness and third-party tools come
 // from the tagged tree's committed lock. No OIDC permission is needed here.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, existsSync, symlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import net from 'node:net';
-import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
+import {createRequire} from 'node:module';
+import { ROOT, NPM, CRATES, json, save, run, digest, stageNpmLock, stageCargoLock, assertInstalledTemplateCandidates, assertCargoCandidateLock, packedRuntimeLock, assertMilestoneReady } from './release-set.mjs';
+import { templatesForPackages } from './template-lock-seeds.mjs';
+import { verifyNativeRouterTemplate } from './release-template-navigation.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { verifyMinimalIsland, verifyStaticTemplate, interactDashboard } from './release-template-islands.mjs';
 import { withOwnedServer } from './owned-server.mjs';
@@ -22,6 +25,33 @@ import { completeMeasurements, machineProfile } from './release-measurements.mjs
 import { verifyPackedSecurity } from './release-security.mjs';
 import { assertCurrentCorpus, assertCurrentFmir, packageWriter, withStagedCorpus } from './fmir-corpus.mjs';
 import { verifyWorkerIntegrity, verifyWorkerLifecycle, WORKER_INTEGRITY_CHECKS, WORKER_LIFECYCLE_CHECKS } from '../packages/build/browser-tests/helpers/worker-integrity.mjs';
+
+/** Executed only after packed dependency resolution has been authenticated. */
+export async function verifyPackedRouter(scratch) {
+  // Core's exact third-party signal library is installed from the committed
+  // harness lock. Link that dependency, never a workspace Forma implementation.
+  const require = createRequire(join(ROOT, 'packages/core/package.json'));
+  let signals = dirname(require.resolve('alien-signals'));
+  while (!existsSync(join(signals, 'package.json'))) {
+    const parent = dirname(signals); assert.notEqual(parent, signals, 'locked signals package root missing'); signals = parent;
+  }
+  const signalPackage = json(join(signals, 'package.json'));
+  assert.equal(signalPackage.name, 'alien-signals');
+  const corePackage = json(join(scratch, 'packages/core/package.json'));
+  assert.equal(signalPackage.version, corePackage.dependencies['alien-signals'], 'packed core requires another signal-library version');
+  const target = join(scratch, 'node_modules/alien-signals');
+  if (!existsSync(target)) symlinkSync(signals, target, process.platform === 'win32' ? 'junction' : 'dir');
+  const router = await import(pathToFileURL(join(scratch, 'packages/router/dist/index.js')).href);
+  for (const name of ['defineRoutes', 'matchRoutes', 'createRouter', 'createBrowserAdapter', 'createNativeAdapter', 'createHtmlAdapter', 'Link', 'Outlet']) {
+    assert.equal(typeof router[name], 'function', `packed router is missing ${name}`);
+  }
+  const routes = router.defineRoutes([{ id: 'users', path: 'users', children: [{ id: 'user', path: ':id' }] }]);
+  const matches = router.matchRoutes(routes, '/users/a%2Fb');
+  assert.deepEqual(matches.map(match => match.id), ['users', 'user']);
+  assert.equal(matches.at(-1).params.id, 'a/b');
+  assert.equal(Object.getPrototypeOf(matches.at(-1).params), null);
+  assert.throws(() => router.defineRoutes([{id:'a',path:':a'},{id:'b',path:':b'}]), /ROUTER_AMBIGUOUS/);
+}
 
 async function freePort() {
   const server = net.createServer();
@@ -308,6 +338,8 @@ export async function verify(dir, reportPath) {
       report.packedResolution = assertPackedResolution(scratch, set.packages);
       assert(report.packedResolution.some(edge => edge.package === '@getforma/build' && edge.specifier === '@getforma/compiler'), 'the packed build no longer imports its compiler peer; update this check');
     });
+    if (set.packages.some(item => item.name === '@getforma/router')) await test(
+      'packed optional router matches nested owners using only packed core dependencies', () => verifyPackedRouter(scratch));
     report.security = {};
     await verifyPackedSecurity({ set, scratch, test, evidenceDir: join(dirname(reportPath), 'security'), result: report.security });
     if (set.contracts.sourceTemplates) await test('packed templates contain exact checked-in Rust and TypeScript sources', async () => {
@@ -407,7 +439,7 @@ export async function verify(dir, reportPath) {
           report.workerLifecycle = { ...requireWorkerChecks(await verifyWorkerLifecycle({ ...options, retiringWorkerSource }), WORKER_LIFECYCLE_CHECKS, app), retiringWorkerSha256: digest(sourcePath) };
         });
       }
-      for (const template of ['minimal', 'dashboard']) {
+      for (const template of templatesForPackages(set.packages)) {
         await test(`${template}: packed CLI, locked install, signatures, build, serve and interaction`, async () => {
           const name = `release-${template}`;
           run(process.execPath, [join(cli, 'dist/index.js'), name, '--template', template], scratch, { env: { ...process.env, NODE_PATH: '' } });
@@ -418,17 +450,14 @@ export async function verify(dir, reportPath) {
           run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin, { stdio: 'inherit' });
           const signatures = auditCandidateSignatures(admin, set.packages, dir);
           report.tests.push({ name: `${template}: registry signatures and DS11 candidate authentication`, passed: true, ...signatures });
-          for (const p of set.packages.filter(p => p.registry === 'npm' && p.name !== '@getforma/create-app')) {
-            const manifest = join(admin, 'node_modules', p.name, 'package.json');
-            if (existsSync(manifest)) assert.equal(json(manifest).version, p.version, `${template} installed another ${p.name}`);
-          }
+          assertInstalledTemplateCandidates(admin, set.packages);
           run('npm', ['run', template === 'minimal' ? 'build:ssr' : 'build'], admin, { stdio: 'inherit' });
           assert.equal(digest(join(admin, 'package-lock.json')), npmHash, 'npm changed the candidate lock');
           if (set.contracts.manifest === 2) {
             const manifest = json(join(admin, 'dist/manifest.json'));
             const buildVersion = set.packages.find(p => p.name === '@getforma/build').version.split('-')[0];
             assert.equal(manifest.version, 2); assert.equal(manifest.writer, buildVersion);
-            assert.equal(manifest.app, name); assert.equal(manifest.routes['/'].mode, template === 'minimal' ? 'ssr' : 'browser');
+            assert.equal(manifest.app, name); assert.equal(manifest.routes['/'].mode, template === 'dashboard' ? 'browser' : 'ssr');
             for (const [file, metadata] of Object.entries(manifest.assets)) {
               assert.equal(typeof metadata.immutable, 'boolean', `${template}: ${file} has no cache metadata`);
               assert.equal(metadata.integrity, `sha384-${digest(join(admin, 'dist', file), 'sha384', 'base64')}`, `${template}: ${file} digest is not its uncompressed bytes`);
@@ -487,8 +516,8 @@ export async function verify(dir, reportPath) {
               if (template === 'minimal') {
                 await page.getByRole('button', { name: 'Increment', exact: true }).click();
                 await page.locator('.count span').filter({ hasText: islandTemplates ? /^8$/ : /^1$/ }).waitFor();
-              } else {
-                dashboardTooltip = await interactDashboard(page, { violationKey: '__formaP17Violations' });
+              } else if (template === 'dashboard') {
+                dashboardTooltip = await interactDashboard(page, { violationKey: '__formaP17Violations', router: templatesForPackages(set.packages).includes('native-router') });
               }
               // Historical activation removed status markers. Strict adoption keeps
               // the original DOM; its separate held-module observer proves success.
@@ -529,6 +558,21 @@ export async function verify(dir, reportPath) {
                     const island = await verifyMinimalIsland(actual, releaseOrigin, manifest);
                     const staticRoute = await verifyStaticTemplate(actual, releaseOrigin, manifest, '/about', { staticHtml: set.contracts.staticHtml ?? 'legacy-v1' });
                     report.tests.push({ name: `minimal: ${engine} packed native adoption and static route`, passed: true, engine, profile: 'release', island, staticRoute });
+                  } finally { if (actual !== browser) await actual.close(); }
+                }
+              });
+            }
+            if (template === 'native-router') {
+              const manifest = json(join(admin, 'dist/manifest.json'));
+              run('cargo', ['build', '--locked', '--release'], project, { stdio: 'inherit', env: { ...process.env, CARGO_TARGET_DIR: join(scratch, 'target') } });
+              const releaseBinary = join(scratch, 'target/release', process.platform === 'win32' ? `${name}.exe` : name);
+              await server(releaseBinary, project, null, async (releaseResponse, releaseOrigin) => {
+                assert.equal(releaseResponse.headers.get('content-security-policy-report-only'), null, 'strict native router release has an unexpected diagnostic policy');
+                for (const [engine, launcher] of [['chromium', chromium], ['firefox', firefox], ['webkit', webkit]]) {
+                  const actual = engine === 'chromium' ? browser : await launcher.launch();
+                  try {
+                    const navigation = await verifyNativeRouterTemplate(actual, releaseOrigin, manifest);
+                    report.tests.push({ name: `native-router: ${engine} packed typed navigation`, passed: true, engine, profile: 'release', navigation });
                   } finally { if (actual !== browser) await actual.close(); }
                 }
               });

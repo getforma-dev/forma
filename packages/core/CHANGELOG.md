@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Changes after the prepared 3.1.0 set will be recorded here.
+Changes after published 3.1.0 are recorded here. Earlier preparation entries
+retain their original evidence; [the coordinated release](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
+establishes publication on 2026-10-26.
+
+- FORMA-301: add the optional `@getforma/core/navigation` integration entry for
+  captured native owner scopes, initial document partitioning, nested outlet
+  exclusion and scoped activation/disposal. The default public API is unchanged.
+  The experimental proof uses a separate source bridge. Readable split artifacts
+  omit descriptive comments while retaining licenses, purity annotations and
+  source-map positions. Main measures 49,165 B gzip against its unchanged
+  49,926 B cap; browser and all runtime caps remain unchanged.
 
 ## [3.1.0] - Prepared; publication pending
 

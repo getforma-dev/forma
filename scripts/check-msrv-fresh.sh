@@ -25,6 +25,9 @@ export CARGO_BUILD_JOBS=3
 CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo +stable generate-lockfile 2>&1 | tee resolve.log
 grep -qx 'version = 3' Cargo.lock || { echo 'fresh resolver changed the old-Cargo lock format' >&2; exit 1; }
 cargo "+$floor" check -p "$crate" --all-targets --locked 2>&1 | tee check.log
+if [[ "$crate" == forma-server ]]; then
+  cargo "+$floor" check -p "$crate" --all-targets --all-features --locked 2>&1 | tee check-all-features.log
+fi
 cd "$repo"
 [[ "$(shasum -a 256 Cargo.lock)" == "$original" ]] || { echo 'candidate lock changed during fresh MSRV check' >&2; exit 1; }
 echo "Fresh dependency resolve and Rust $floor check passed for $crate; candidate lock unchanged."

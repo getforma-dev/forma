@@ -4,7 +4,11 @@ import assert from 'node:assert/strict';
 import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 
 export const REPOSITORY='getforma-dev/forma';
-export const NPM_PACKAGES=['@getforma/core','@getforma/compiler','@getforma/build','@getforma/create-app'];
+export const LEGACY_NPM_PACKAGES=['@getforma/core','@getforma/compiler','@getforma/build','@getforma/create-app'];
+export const ROUTER_NPM_PACKAGES=[...LEGACY_NPM_PACKAGES,'@getforma/router'];
+// Configure the complete target inventory before the release audit freezes source.
+// A missing package still fails observation; this does not claim live enrollment.
+export const NPM_PACKAGES=[...ROUTER_NPM_PACKAGES];
 export const ownedPath=path=>path.startsWith('.github/') || [
  'crates/forma-ir/src/walker.rs','crates/forma-ir/src/text.rs',
  'crates/forma-server/src/csp.rs','crates/forma-server/src/template.rs',
@@ -79,9 +83,15 @@ export function settingsAlerts(previous,current) {
  return fingerprint(previous)===fingerprint(current)?[]:[event('environment-change:'+fingerprint(current),'environment-changed',{before:previous,after:current})];
 }
 
-export function registrySnapshot(packuments) {
- assert.deepEqual(Object.keys(packuments).sort(),[...NPM_PACKAGES].sort(),'complete four-package npm observation required');
- return {schema:1,repository:REPOSITORY,packages:Object.fromEntries(NPM_PACKAGES.map(name=>{
+function registryInventory(names) {
+ const sorted=[...names].sort();
+ assert.deepEqual(sorted,[...(names.includes('@getforma/router')?ROUTER_NPM_PACKAGES:LEGACY_NPM_PACKAGES)].sort(),'complete published npm observation required');
+ return sorted;
+}
+export function registrySnapshot(packuments, inventory = NPM_PACKAGES) {
+ const names=registryInventory(inventory);
+ assert.deepEqual(Object.keys(packuments).sort(),names,'complete selected npm observation required');
+ return {schema:1,repository:REPOSITORY,packages:Object.fromEntries(names.map(name=>{
   const doc=packuments[name];assert.equal(doc?.name,name);assert(doc.versions&&typeof doc.versions==='object'&&!Array.isArray(doc.versions));
   const versions=Object.entries(doc.versions).map(([version,manifest])=>{
    assert.equal(manifest.version,version);assert.equal(manifest.name,name);
@@ -95,9 +105,14 @@ export function registrySnapshot(packuments) {
 
 export function registryAlerts(previous,current) {
  assert.equal(current?.schema,1);assert.equal(current.repository,REPOSITORY);
- assert.deepEqual(Object.keys(current.packages).sort(),[...NPM_PACKAGES].sort());
+ const names=registryInventory(Object.keys(current.packages));
  if(previous===null)return [event('npm-baseline:'+fingerprint(current),'npm-baseline-established',{snapshot:current})];
  assert.equal(previous.schema,1);assert.equal(previous.repository,REPOSITORY);
- assert.deepEqual(Object.keys(previous.packages).sort(),[...NPM_PACKAGES].sort());
- return NPM_PACKAGES.flatMap(name=>fingerprint(previous.packages[name])===fingerprint(current.packages[name])?[]:[event('npm-change:'+name+':'+fingerprint(current.packages[name]),'npm-registry-changed',{package:name,before:previous.packages[name],after:current.packages[name]})]);
+ const before=registryInventory(Object.keys(previous.packages));
+ assert(before.every(name=>names.includes(name)),'registry inventory cannot shrink');
+ const expanded=names.length!==before.length;
+ return [
+  ...(expanded?[event('npm-inventory:'+fingerprint(names),'npm-inventory-expanded',{before,after:names})]:[]),
+  ...names.flatMap(name=>Object.hasOwn(previous.packages,name)&&fingerprint(previous.packages[name])===fingerprint(current.packages[name])?[]:[event('npm-change:'+name+':'+fingerprint(current.packages[name]),'npm-registry-changed',{package:name,before:previous.packages[name]??null,after:current.packages[name]})]),
+ ];
 }

@@ -1,0 +1,935 @@
+P17: packed npm packages resolve one another inside the packed set, never through the workspace
+P17: packed optional router matches nested owners using only packed core dependencies
+P17: packed core: complete hostile widget matrix and actual removed-selector-guard control
+P17: committed expression source: 100000 cases, real removed-cost control and corrected replay
+P17: packed templates contain exact checked-in Rust and TypeScript sources
+P17: fresh advisories over every exact shipped crate lock
+advisories ok
+advisories ok
+advisories ok
+P17: packed CLI has an isolated, locked runtime dependency installation
+
+added 3 packages in 371ms
+P17: packed compiler emits the frozen corpus read by packed forma-ir
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling zmij v1.0.23
+   Compiling autocfg v1.5.1
+   Compiling serde_json v1.0.154
+   Compiling syn v3.0.9
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.190
+   Compiling half v2.4.1
+   Compiling syn v2.0.119
+   Compiling num-traits v0.2.19
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling clap_lex v0.6.0
+   Compiling serde_derive v1.0.229
+   Compiling regex-syntax v0.8.11
+   Compiling anstyle v1.0.14
+   Compiling once_cell v1.21.4
+   Compiling either v1.19.0
+   Compiling ciborium-io v0.2.2
+   Compiling ciborium-ll v0.2.2
+   Compiling itertools v0.10.5
+   Compiling clap_builder v4.4.18
+   Compiling regex-automata v0.4.18
+   Compiling cast v0.3.0
+   Compiling same-file v1.0.6
+   Compiling walkdir v2.5.0
+   Compiling criterion-plot v0.5.0
+   Compiling is-terminal v0.4.17
+   Compiling tinytemplate v1.2.1
+   Compiling regex v1.13.1
+   Compiling clap v4.4.18
+   Compiling ciborium v0.2.2
+   Compiling tracing-attributes v0.1.31
+   Compiling tracing-core v0.1.36
+   Compiling pin-project-lite v0.2.17
+   Compiling anes v0.1.6
+   Compiling oorandom v11.1.5
+   Compiling forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir-derive)
+   Compiling criterion v0.5.1
+   Compiling tracing v0.1.44
+   Compiling ryu-js v1.0.3
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.11s
+     Running unittests src/lib.rs (.release-verify-29621/crates/forma-ir/target/debug/deps/forma_ir-52ccff3628461f9b)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (.release-verify-29621/crates/forma-ir/target/debug/deps/forma_ir-52ccff3628461f9b)
+
+running 13 tests
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+test js_emitter_contract::closed_list_defaults_render_real_rows_in_both_projections ... ok
+test js_emitter_contract::strict_corpus_near_misses_render_their_real_defaults ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ok
+test js_emitter_contract::state_snapshots_match_golden ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 251 filtered out; finished in 0.01s
+
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.67s
+     Running unittests src/lib.rs (.release-verify-29621/crates/forma-ir/target/debug/deps/forma_ir-52ccff3628461f9b)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running unittests src/lib.rs (.release-verify-29621/crates/forma-ir/target/debug/deps/forma_ir-52ccff3628461f9b)
+
+running 13 tests
+test js_emitter_contract::corpus_contains_every_expected_case ... ok
+test js_emitter_contract::corpus_exercises_multibyte_utf8 ... ok
+test js_emitter_contract::closed_list_defaults_render_real_rows_in_both_projections ... ok
+test js_emitter_contract::resolution_cases_ship_named_contracts_and_client_defaults ... ok
+test js_emitter_contract::slot_ids_are_pairwise_unique ... ok
+test js_emitter_contract::strict_corpus_near_misses_render_their_real_defaults ... ok
+test js_emitter_contract::slot_names_are_pairwise_unique ... ok
+test js_emitter_contract::every_case_parses_as_fmir ... ok
+test js_emitter_contract::every_island_entry_walks_as_a_fragment ... ok
+test js_emitter_contract::every_case_walks_to_html ... ok
+test js_emitter_contract::canonical_dumps_match_the_typescript_emitter ... ok
+test js_emitter_contract::rendered_html_matches_golden ... ok
+test js_emitter_contract::state_snapshots_match_golden ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 251 filtered out; finished in 0.01s
+
+P17: packed compiler declared props bind and render through packed typed Pages
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling libc v0.2.190
+   Compiling itoa v1.0.18
+   Compiling typenum v1.20.1
+   Compiling pin-project-lite v0.2.17
+   Compiling hybrid-array v0.4.15
+   Compiling syn v3.0.9
+   Compiling syn v2.0.119
+   Compiling cfg-if v1.0.5
+   Compiling serde_core v1.0.229
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling const-oid v0.10.2
+   Compiling bytes v1.12.1
+   Compiling futures-core v0.3.34
+   Compiling http v1.5.0
+   Compiling digest v0.11.3
+   Compiling once_cell v1.21.4
+   Compiling tracing-attributes v0.1.31
+   Compiling tracing-core v0.1.36
+   Compiling http-body v1.1.0
+   Compiling tokio-macros v2.7.2
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.4
+   Compiling log v0.4.34
+   Compiling httparse v1.10.1
+   Compiling unicase v2.10.0
+   Compiling zmij v1.0.23
+   Compiling same-file v1.0.6
+   Compiling mime v0.3.17
+   Compiling walkdir v2.5.0
+   Compiling mime_guess v2.0.5
+   Compiling tokio v1.53.3
+   Compiling tracing v0.1.44
+   Compiling cpufeatures v0.3.1
+   Compiling serde_json v1.0.154
+   Compiling serde v1.0.229
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling tower-service v0.3.3
+   Compiling cc v1.8.0
+   Compiling sha2 v0.11.0
+   Compiling serde_derive v1.0.229
+   Compiling httpdate v1.0.3
+   Compiling sync_wrapper v1.0.2
+   Compiling memchr v2.8.3
+   Compiling percent-encoding v2.3.2
+   Compiling futures-task v0.3.34
+   Compiling slab v0.4.12
+   Compiling tower-layer v0.3.3
+   Compiling smallvec v1.16.3
+   Compiling atomic-waker v1.1.2
+   Compiling hyper v1.12.0
+   Compiling futures-util v0.3.34
+   Compiling form_urlencoded v1.2.2
+   Compiling ring v0.17.14
+   Compiling rust-embed-utils v8.13.0
+   Compiling http-body-util v0.1.5
+   Compiling ryu v1.0.23
+   Compiling axum-core v0.5.6
+   Compiling serde_urlencoded v0.7.1
+   Compiling rust-embed-impl v8.13.0
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.20
+   Compiling serde_path_to_error v0.1.20
+   Compiling forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir-derive)
+   Compiling getrandom v0.2.17
+   Compiling untrusted v0.9.0
+   Compiling matchit v0.8.4
+   Compiling ryu-js v1.0.3
+   Compiling axum v0.8.9
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+   Compiling rust-embed v8.11.0
+   Compiling base64 v0.22.1
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 13.97s
+     Running tests/typed_pages.rs (.release-verify-29621/crates/forma-server/target/debug/deps/typed_pages-848cbe0bcdcb2c81)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running tests/typed_pages.rs (.release-verify-29621/crates/forma-server/target/debug/deps/typed_pages-848cbe0bcdcb2c81)
+
+running 18 tests
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders ... ok
+test finalization_refuses_a_bind_already_comparing_on_another_thread ... ok
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503 ... ok
+test bind_limits_inherit_and_request_overrides_never_change_sibling_defaults ... ok
+test two_routes_sharing_an_alias_need_two_successful_exact_bindings ... ok
+test typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy ... ok
+test typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test a_sixty_thousand_row_typed_request_refuses_before_its_first_row ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/typed_pages.rs (.release-verify-29621/crates/forma-server/target/debug/deps/typed_pages-848cbe0bcdcb2c81)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/typed_pages.rs (.release-verify-29621/crates/forma-server/target/debug/deps/typed_pages-848cbe0bcdcb2c81)
+
+running 18 tests
+test bind_errors_stop_startup_before_listener_and_keep_both_source_positions ... ok
+test a_props_conversion_unwind_is_one_request_fault_and_the_next_request_renders ... ok
+test only_declared_browser_routes_have_shells_and_an_empty_registry_can_finalize ... ok
+test actual_compiler_module_binds_by_declared_names_and_renders_two_list_views ... ok
+test no_parameter_and_typed_empty_pages_bind_without_handler_filling_local_lists ... ok
+test finalization_refuses_a_bind_already_comparing_on_another_thread ... ok
+test finalization_refuses_every_unbound_route_without_partly_sealing_then_repairs ... ok
+test every_request_checks_numeric_and_date_bounds_with_declared_paths ... ok
+test a_duplicate_or_non_identity_row_key_refuses_the_request_as_render_503 ... ok
+test bind_limits_inherit_and_request_overrides_never_change_sibling_defaults ... ok
+test two_routes_sharing_an_alias_need_two_successful_exact_bindings ... ok
+test typed_ssr_preserves_escaped_json_css_and_explicit_raw_prefix_with_response_policy ... ok
+test unknown_browser_and_ambiguous_pages_refuse_binding ... ok
+test typed_ssr_and_browser_execute_every_declared_entry_but_not_preload_chunks ... ok
+test reload::finalized_topology_refusal_freezes_edited_modules_and_assets_until_compatible_recovery ... ok
+test reload::rejected_or_missing_manifest_freezes_the_entire_pair_until_valid_recovery ... ok
+test reload::reload_keeps_last_good_files_and_rechecks_new_schema_with_matching_asset_snapshot ... ok
+test a_sixty_thousand_row_typed_request_refuses_before_its_first_row ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+P17: packed reader requires full digests on every public document path
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.52s
+     Running tests/asset_integrity.rs (.release-verify-29621/crates/forma-server/target/debug/deps/asset_integrity-ed5f275144c63f74)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/asset_integrity.rs (.release-verify-29621/crates/forma-server/target/debug/deps/asset_integrity-ed5f275144c63f74)
+
+running 3 tests
+test constructed_browser_manifests_and_stale_preload_tables_refuse_unchecked_tags ... ok
+test every_asset_requires_full_canonical_integrity_before_startup ... ok
+test both_public_document_paths_write_exact_integrity_and_keep_nonces ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+P17: packed build verifies cached and network bytes including dynamic chunks and compressed delivery
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-m4f2YT/A/dist/app.V6DCNCRF.js  321b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-m4f2YT/A/dist/chunk.LZ2LGE4E.js  68b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-m4f2YT/A/dist/app.WKHATZKR.css  18b
+
+   4 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 23 of 28,420 B  JavaScript 1,825 of 76,800 B  (Brotli: Forma 18, JavaScript 1,556)  app.V6DCNCRF.js
+   Service worker   sw.js  3,315 B raw, 1,605 B gzip, 1,383 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       18 ms: bundle 12 ms, hash 0 ms, compress 5 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-m4f2YT/A/dist/manifest.json (build: 44b05180ed2b...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-m4f2YT/A/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+P17: packed builds preserve waiting lifecycle and actual packed Rust retirement
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/A/dist/app.4ELFNIGX.js  321b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/A/dist/chunk.NROSRIYB.js  68b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/A/dist/app.WKHATZKR.css  18b
+
+   4 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 23 of 28,420 B  JavaScript 1,823 of 76,800 B  (Brotli: Forma 18, JavaScript 1,555)  app.4ELFNIGX.js
+   Service worker   sw.js  3,315 B raw, 1,603 B gzip, 1,379 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       12 ms: bundle 10 ms, hash 0 ms, compress 2 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/A/dist/manifest.json (build: 1e9ba2e59156...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/A/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/B/dist/app.4RBOR4RA.js  321b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/B/dist/chunk.JC26HZCH.js  68b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/B/dist/app.WKHATZKR.css  18b
+
+   4 assets hashed
+   3 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 23 of 28,420 B  JavaScript 1,818 of 76,800 B  (Brotli: Forma 18, JavaScript 1,559)  app.4RBOR4RA.js
+   Service worker   sw.js  3,315 B raw, 1,599 B gzip, 1,387 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       10 ms: bundle 8 ms, hash 0 ms, compress 2 ms, manifest 0 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/B/dist/manifest.json (build: 7276e1c43e22...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/worker-browser/worker-browser-k1DutJ/B/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+P17: minimal: packed CLI, locked install, signatures, build, serve and interaction
+
+added 67 packages in 869ms
+
+> build:ssr
+> tsx build.ts --ssr --strict
+
+SSR mode enabled — emitting IR files
+   IR emitted (real): home.ir (770 bytes, 1 islands)
+   IR emitted (real): about.ir (413 bytes, 0 islands)
+
+   dist/home.c336675a.js  77.6kb
+
+   4 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /       islands                Forma 26,517 of 28,420 B  JavaScript 28,173 of 76,800 B  (Brotli: Forma 23,773, JavaScript 25,192)  home.c336675a.js
+   /about  no interactive region  no JavaScript
+   Service worker   sw.js  3,215 B raw, 1,533 B gzip, 1,309 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       206 ms: bundle 118 ms, hash 1 ms, compress 86 ms, manifest 1 ms
+
+Manifest written: dist/manifest.json (build: 7701353de96d...)
+Size report written: dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling parking_lot_core v0.9.12
+   Compiling tracing-core v0.1.36
+   Compiling scopeguard v1.2.0
+   Compiling log v0.4.34
+   Compiling lock_api v0.4.14
+   Compiling errno v0.3.14
+   Compiling signal-hook-registry v1.4.8
+   Compiling parking_lot v0.12.5
+   Compiling tracing v0.1.44
+   Compiling tokio v1.53.3
+   Compiling axum-core v0.5.6
+   Compiling lazy_static v1.5.1
+   Compiling sharded-slab v0.1.7
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+   Compiling rust-embed v8.13.0
+   Compiling tracing-log v0.2.0
+   Compiling thread_local v1.1.10
+   Compiling nu-ansi-term v0.50.3
+   Compiling tracing-subscriber v0.3.23
+   Compiling hyper v1.12.0
+   Compiling hyper-util v0.1.21
+   Compiling tower v0.5.3
+   Compiling axum v0.8.9
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling release-minimal v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-minimal)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.81s
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling libc v0.2.190
+   Compiling cfg-if v1.0.5
+   Compiling itoa v1.0.18
+   Compiling pin-project-lite v0.2.17
+   Compiling bytes v1.12.1
+   Compiling syn v2.0.119
+   Compiling syn v3.0.9
+   Compiling smallvec v1.16.3
+   Compiling serde_core v1.0.229
+   Compiling typenum v1.20.1
+   Compiling parking_lot_core v0.9.12
+   Compiling once_cell v1.21.4
+   Compiling tracing-core v0.1.36
+   Compiling hybrid-array v0.4.15
+   Compiling futures-core v0.3.34
+   Compiling log v0.4.34
+   Compiling scopeguard v1.2.0
+   Compiling lock_api v0.4.14
+   Compiling errno v0.3.14
+   Compiling http v1.5.0
+   Compiling signal-hook-registry v1.4.8
+   Compiling parking_lot v0.12.5
+   Compiling http-body v1.1.0
+   Compiling tracing-attributes v0.1.31
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling tokio-macros v2.7.2
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.4
+   Compiling zmij v1.0.23
+   Compiling const-oid v0.10.2
+   Compiling unicase v2.10.0
+   Compiling httparse v1.10.1
+   Compiling mime_guess v2.0.5
+   Compiling digest v0.11.3
+   Compiling tokio v1.53.3
+   Compiling tracing v0.1.44
+   Compiling cpufeatures v0.3.1
+   Compiling shlex v2.0.1
+   Compiling same-file v1.0.6
+   Compiling tower-service v0.3.3
+   Compiling serde_json v1.0.154
+   Compiling serde v1.0.229
+   Compiling find-msvc-tools v0.1.14
+   Compiling cc v1.8.0
+   Compiling sha2 v0.11.0
+   Compiling walkdir v2.5.0
+   Compiling serde_derive v1.0.229
+   Compiling mime v0.3.17
+   Compiling sync_wrapper v1.0.2
+   Compiling percent-encoding v2.3.2
+   Compiling slab v0.4.12
+   Compiling httpdate v1.0.3
+   Compiling tower-layer v0.3.3
+   Compiling atomic-waker v1.1.2
+   Compiling futures-task v0.3.34
+   Compiling memchr v2.8.3
+   Compiling futures-util v0.3.34
+   Compiling hyper v1.12.0
+   Compiling form_urlencoded v1.2.2
+   Compiling ring v0.17.14
+   Compiling rust-embed-utils v8.13.0
+   Compiling http-body-util v0.1.5
+   Compiling ryu v1.0.23
+   Compiling serde_urlencoded v0.7.1
+   Compiling axum-core v0.5.6
+   Compiling rust-embed-impl v8.13.0
+   Compiling hyper-util v0.1.21
+   Compiling tower v0.5.3
+   Compiling serde_path_to_error v0.1.20
+   Compiling forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir-derive)
+   Compiling getrandom v0.2.17
+   Compiling matchit v0.8.4
+   Compiling ryu-js v1.0.3
+   Compiling untrusted v0.9.0
+   Compiling lazy_static v1.5.1
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+   Compiling sharded-slab v0.1.7
+   Compiling axum v0.8.9
+   Compiling rust-embed v8.13.0
+   Compiling tracing-log v0.2.0
+   Compiling thread_local v1.1.10
+   Compiling base64 v0.22.1
+   Compiling nu-ansi-term v0.50.3
+   Compiling tracing-subscriber v0.3.23
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling release-minimal v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-minimal)
+    Finished `release` profile [optimized] target(s) in 26.17s
+   Compiling release-minimal v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-minimal)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.62s
+P17: dashboard: packed CLI, locked install, signatures, build, serve and interaction
+
+added 51 packages in 768ms
+
+> build
+> tsx build.ts --strict
+
+≈ tailwindcss v4.3.3
+
+Done in 41ms
+
+   dist/dashboard.25c7eb15.js  55.7kb
+
+   2 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  whole-page mount  Forma 9,085 of 28,420 B  JavaScript 19,376 of 76,800 B  (Brotli: Forma 8,150, JavaScript 17,315)  dashboard.25c7eb15.js
+   Service worker   sw.js  3,230 B raw, 1,535 B gzip, 1,310 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       298 ms: bundle 211 ms, hash 1 ms, compress 85 ms, manifest 1 ms
+
+Manifest written: dist/manifest.json (build: 55b859d2704f...)
+Size report written: dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling release-dashboard v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-dashboard)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.70s
+   Compiling release-dashboard v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-dashboard)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.73s
+P17: native-router: packed CLI, locked install, signatures, build, serve and interaction
+
+added 68 packages in 731ms
+
+> build
+> tsx build.ts --strict
+
+SSR mode enabled — emitting IR files
+   IR emitted (real): shell.ir (843 bytes, 1 islands)
+   IR emitted (real): home.ir (562 bytes, 1 islands)
+   IR emitted (real): about.ir (350 bytes, 0 islands)
+
+   dist/forma-navigation-main.5139d616.js  113.7kb
+
+   8 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   FORMA-301 N3/N4: verified navigation groups allow 40,708 B aggregate Forma and 65,536 B total JavaScript; incremental <= 12,288 B requires paired consumer qualification.
+   /_layout  navigation group  Forma 38,464 of 40,708 B  JavaScript 40,422 of 65,536 B  [core/signals 28,038, router 10,426 B]  (Brotli: Forma 34,201, JavaScript 35,878)  forma-navigation-main.5139d616.js
+   /         navigation group  Forma 38,464 of 40,708 B  JavaScript 40,422 of 65,536 B  [core/signals 28,038, router 10,426 B]  (Brotli: Forma 34,201, JavaScript 35,878)  forma-navigation-main.5139d616.js
+   /about    navigation group  Forma 38,464 of 40,708 B  JavaScript 40,422 of 65,536 B  [core/signals 28,038, router 10,426 B]  (Brotli: Forma 34,201, JavaScript 35,878)  forma-navigation-main.5139d616.js
+   Service worker   sw.js  3,244 B raw, 1,548 B gzip, 1,312 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       378 ms: bundle 242 ms, hash 1 ms, compress 134 ms, manifest 1 ms
+
+Manifest written: dist/manifest.json (build: 93bc47e71470...)
+Size report written: dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling release-native-router v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-native-router)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.59s
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling release-native-router v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-native-router)
+    Finished `release` profile [optimized] target(s) in 6.01s
+   Compiling release-native-router v0.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/release-native-router)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.27s
+P17: deployment drill: packed libraries and dependencies install locked, signed and isolated
+
+added 64 packages in 688ms
+P17: deployment drill: five distributions built by the packed build, with identical B2 and no security retention
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-7.JMSODBGZ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-8.JHFUYDDH.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/app.GEB272Y5.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/browser.6P65CHGS.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/chunk.3BPOZZ64.js  77.7kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-1.Y3FQ5DUR.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-2.LG6PJRCT.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-3.2325ZBDK.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-4.CDGWQRWS.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-5.WWNARJFK.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/panel-6.KAEZIUFT.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/chunk.F7A7VPK3.js  33b
+
+   23 assets hashed
+   12 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,680 of 28,420 B  JavaScript 29,426 of 76,800 B  (Brotli: Forma 23,941, JavaScript 26,337)  app.GEB272Y5.js chunk.3BPOZZ64.js
+   /csr  whole-page mount  Forma 26,691 of 28,420 B  JavaScript 29,154 of 76,800 B  (Brotli: Forma 23,950, JavaScript 26,100)  browser.6P65CHGS.js chunk.3BPOZZ64.js
+   Service worker   sw.js  4,273 B raw, 2,223 B gzip, 1,950 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       226 ms: bundle 133 ms, hash 0 ms, compress 92 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/manifest.json (build: 3c7a8ddc067b...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/A/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-7.GUG7755Z.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-8.EWKRIBTP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/app.KRGUZDGY.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/browser.5KGCURUT.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/chunk.2UQMQJO5.js  77.7kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-1.EJMP2IAP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-2.BQPCCZOZ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-3.7KGS7WOD.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-4.WIDPVVRP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-5.KJ47UAYP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/panel-6.EIZL4IBD.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/chunk.LVGHRIUD.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build 3c7a8ddc067b...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,681 of 28,420 B  JavaScript 30,192 of 76,800 B  (Brotli: Forma 23,971, JavaScript 27,050)  app.KRGUZDGY.js chunk.2UQMQJO5.js
+   /csr  whole-page mount  Forma 26,692 of 28,420 B  JavaScript 29,919 of 76,800 B  (Brotli: Forma 23,980, JavaScript 26,813)  browser.5KGCURUT.js chunk.2UQMQJO5.js
+   Service worker   sw.js  5,549 B raw, 2,985 B gzip, 2,632 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       271 ms: bundle 86 ms, hash 0 ms, compress 184 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/manifest.json (build: 7e7b87d731e1...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-7.GUG7755Z.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-8.EWKRIBTP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/app.KRGUZDGY.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/browser.5KGCURUT.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/chunk.2UQMQJO5.js  77.7kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-1.EJMP2IAP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-2.BQPCCZOZ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-3.7KGS7WOD.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-4.WIDPVVRP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-5.KJ47UAYP.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/panel-6.EIZL4IBD.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/chunk.LVGHRIUD.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build 3c7a8ddc067b...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,681 of 28,420 B  JavaScript 30,192 of 76,800 B  (Brotli: Forma 23,971, JavaScript 27,050)  app.KRGUZDGY.js chunk.2UQMQJO5.js
+   /csr  whole-page mount  Forma 26,692 of 28,420 B  JavaScript 29,919 of 76,800 B  (Brotli: Forma 23,980, JavaScript 26,813)  browser.5KGCURUT.js chunk.2UQMQJO5.js
+   Service worker   sw.js  5,549 B raw, 2,985 B gzip, 2,632 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       297 ms: bundle 109 ms, hash 0 ms, compress 187 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/manifest.json (build: 7e7b87d731e1...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/B2/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-7.F57MB5O6.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-8.36P4W3AC.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/app.V6CYVAVP.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/browser.LA3YI6NC.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/chunk.VSC6DACS.js  77.7kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-1.6IAWS7EO.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-2.CKGBQU5G.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-3.25X3YO3K.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-4.ZGRQQEME.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-5.7SIQPZRM.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/panel-6.TMCGYNGC.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/chunk.RQYJNK64.js  33b
+
+   23 assets hashed
+   12 files retained from the previous release (build 7e7b87d731e1...)
+   24 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,680 of 28,420 B  JavaScript 30,189 of 76,800 B  (Brotli: Forma 23,835, JavaScript 26,916)  app.V6CYVAVP.js chunk.VSC6DACS.js
+   /csr  whole-page mount  Forma 26,691 of 28,420 B  JavaScript 29,916 of 76,800 B  (Brotli: Forma 23,844, JavaScript 26,686)  browser.LA3YI6NC.js chunk.VSC6DACS.js
+   Service worker   sw.js  5,549 B raw, 2,984 B gzip, 2,634 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       277 ms: bundle 93 ms, hash 0 ms, compress 183 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/manifest.json (build: f4d8236174d3...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/C/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+   Security release: the previous dist is ignored and nothing is retained (L-16, SR45)
+SSR mode enabled — emitting IR files
+   IR emitted (real): app.ir (1054 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-7.UYQ6TAXE.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-8.ZVUNLN2L.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/app.3M2F7SXJ.js  1.1kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/browser.CJVVCXD5.js  313b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/chunk.2TILCWO2.js  77.7kb
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-1.LOBZ37OF.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-2.5XU5J34L.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-3.RXUFLM77.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-4.6ICKIWPN.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-5.O3AF4ZZI.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/panel-6.WCRCZCFQ.js  98b
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/chunk.6I4EXQUO.js  33b
+
+   23 assets hashed
+   12 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /     islands           Forma 26,679 of 28,420 B  JavaScript 29,428 of 76,800 B  (Brotli: Forma 23,932, JavaScript 26,324)  app.3M2F7SXJ.js chunk.2TILCWO2.js
+   /csr  whole-page mount  Forma 26,690 of 28,420 B  JavaScript 29,156 of 76,800 B  (Brotli: Forma 23,941, JavaScript 26,089)  browser.CJVVCXD5.js chunk.2TILCWO2.js
+   Service worker   sw.js  4,273 B raw, 2,224 B gzip, 1,946 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       170 ms: bundle 79 ms, hash 0 ms, compress 90 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/manifest.json (build: 2ac84a76b521...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/out/S/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+P17: deployment drill: actual embedded native servers built locked from the packed crates
+   Compiling tokio v1.53.3
+   Compiling sha2 v0.11.1
+   Compiling rust-embed-utils v8.13.0
+   Compiling rust-embed-impl v8.13.0
+   Compiling forma-ir-derive v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir-derive)
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+   Compiling rust-embed v8.13.0
+   Compiling hyper v1.12.0
+   Compiling hyper-util v0.1.21
+   Compiling tower v0.5.3
+   Compiling axum v0.8.9
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling forma-e2e-skew v0.0.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/skew-drill/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.95s
+P17: deployment drill: chromium packed rolling deployment, rollback and inert-or-reload
+P17: deployment drill: firefox packed rolling deployment, rollback and inert-or-reload
+P17: deployment drill: webkit packed rolling deployment, rollback and inert-or-reload
+P17: fixture applications: the sources are the committed ones and the packed libraries install locked, signed and isolated
+
+added 64 packages in 664ms
+P17: fixture applications: every application builds with the packed build in strict mode, nothing above a note
+SSR mode enabled — emitting IR files
+   IR emitted (real): household.ir (1755 bytes, 1 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ledger/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ledger/dist/household.1bd3f8e6.js  79.5kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /household  islands  Forma 26,845 of 28,420 B  JavaScript 28,873 of 76,800 B  (Brotli: Forma 24,049, JavaScript 25,797)  household.1bd3f8e6.js
+   Service worker   sw.js  3,218 B raw, 1,537 B gzip, 1,309 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       277 ms: bundle 188 ms, hash 1 ms, compress 87 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ledger/dist/manifest.json (build: 06bb4b95cd6a...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ledger/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): tenant-login.ir (4227 bytes, 2 islands)
+   IR emitted (real): onboarding.ir (1740 bytes, 1 islands)
+   IR emitted (real): benchmark.ir (3125 bytes, 2 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/fauth/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/fauth/dist/onboarding.34ebc142.js  79.3kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/fauth/dist/tenant-login.71fc0022.js  81.5kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/fauth/dist/benchmark.66b50d3e.js  84.6kb
+
+   7 assets hashed
+   4 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /t/:slug/login        islands  Forma 26,872 of 28,420 B  JavaScript 29,673 of 76,800 B  (Brotli: Forma 23,950, JavaScript 26,410)  tenant-login.71fc0022.js
+   /platform/onboarding  islands  Forma 26,852 of 28,420 B  JavaScript 28,961 of 76,800 B  (Brotli: Forma 24,030, JavaScript 25,875)  onboarding.34ebc142.js
+   /platform/benchmark   islands  Forma 28,207 of 28,420 B  JavaScript 30,715 of 76,800 B  (Brotli: Forma 25,198, JavaScript 27,399)  benchmark.66b50d3e.js
+   Service worker   sw.js  3,438 B raw, 1,688 B gzip, 1,468 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       605 ms: bundle 339 ms, hash 1 ms, compress 264 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/fauth/dist/manifest.json (build: 1cf315a5c7f9...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/fauth/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): check.ir (4334 bytes, 2 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ksx/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ksx/dist/check.2b6d4fcb.js  84.6kb
+
+   3 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /check  islands  Forma 28,203 of 28,420 B  JavaScript 30,568 of 76,800 B  (Brotli: Forma 25,204, JavaScript 27,261)  check.2b6d4fcb.js
+   Service worker   sw.js  3,208 B raw, 1,532 B gzip, 1,312 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       244 ms: bundle 147 ms, hash 1 ms, compress 96 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ksx/dist/manifest.json (build: 428a46dfdee7...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/ksx/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+SSR mode enabled — emitting IR files
+   IR emitted (real): console1500.ir (1994 bytes, 1 islands)
+   IR emitted (real): login300.ir (1989 bytes, 1 islands)
+   IR emitted (real): doc10000.ir (1439 bytes, 1 islands)
+   IR emitted (real): ledger20000.ir (1750 bytes, 1 islands)
+   IR emitted (real): canvas15000.ir (1371 bytes, 1 islands)
+   IR emitted (real): islands100.ir (1125 bytes, 1 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/console1500.ed011ded.js  78.6kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/login300.ed011ded.js  78.6kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/ledger20000.ed011ded.js  78.6kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/canvas15000.e9501915.js  78.6kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/islands100.82cade54.js  78.6kb
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/doc10000.ed011ded.js  78.6kb
+
+   13 assets hashed
+   7 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /pages/300          islands  Forma 26,804 of 28,420 B  JavaScript 28,720 of 76,800 B  (Brotli: Forma 24,004, JavaScript 25,672)  login300.ed011ded.js
+   /pages/1500         islands  Forma 26,804 of 28,420 B  JavaScript 28,720 of 76,800 B  (Brotli: Forma 24,004, JavaScript 25,672)  console1500.ed011ded.js
+   /pages/10000        islands  Forma 26,804 of 28,420 B  JavaScript 28,720 of 76,800 B  (Brotli: Forma 24,004, JavaScript 25,672)  doc10000.ed011ded.js
+   /pages/15000        islands  Forma 26,799 of 28,420 B  JavaScript 28,715 of 76,800 B  (Brotli: Forma 24,003, JavaScript 25,671)  canvas15000.e9501915.js
+   /pages/20000        islands  Forma 26,804 of 28,420 B  JavaScript 28,720 of 76,800 B  (Brotli: Forma 24,004, JavaScript 25,672)  ledger20000.ed011ded.js
+   /pages/islands-100  islands  Forma 26,800 of 28,420 B  JavaScript 28,716 of 76,800 B  (Brotli: Forma 23,971, JavaScript 25,638)  islands100.82cade54.js
+   Service worker   sw.js  3,766 B raw, 1,715 B gzip, 1,488 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       865 ms: bundle 354 ms, hash 2 ms, compress 508 ms, manifest 1 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/manifest.json (build: 1f2053454ec1...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/bench/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+P17: fixture applications: the Rust servers build from the packed crates on the committed lock, pruned to the crate
+   Compiling tower v0.5.3
+   Compiling forma-ir v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-ir)
+   Compiling axum v0.8.9
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling forma-fixture-apps v0.0.0 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.71s
+P17: fixture applications: the packed build admits a client-side keyed list and reports its size policy (L-58)
+SSR mode enabled — emitting IR files
+   IR emitted (real): page.ir (588 bytes, 1 islands)
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/positive/list-island/diagnostics.json (0)
+
+   /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/positive/list-island/dist/page.a2957eb9.js  81.8kb
+
+   2 assets hashed
+   1 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   /  islands  Forma 27,940 of 28,420 B  JavaScript 29,539 of 76,800 B  (Brotli: Forma 25,007, JavaScript 26,364)  page.a2957eb9.js
+   Service worker   sw.js  3,137 B raw, 1,462 B gzip, 1,234 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       207 ms: bundle 118 ms, hash 0 ms, compress 89 ms, manifest 0 ms
+
+Manifest written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/positive/list-island/dist/manifest.json (build: 799396c7ea02...)
+Size report written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/positive/list-island/dist/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+P17: fixture applications: Forma's code on every fixture route is inside N2's ceiling in the packed build
+P17: fixture ledger: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work
+P17: fixture fauth: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work
+P17: fixture ksx: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work
+P17: fixture bench: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work
+P17: fixture applications: the packed compiler refuses the shapes the contract refuses (BUILD-610, with a file, a line and a column)
+SSR mode enabled — emitting IR files
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/negative/record-bindings/app.tsx:7:17: generic or namespace props types are not supported; use T[] for arrays
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/negative/record-bindings/diagnostics.json (1)
+SSR mode enabled — emitting IR files
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/negative/computed-condition/app.tsx:8:21: computed declared values remain outside the native subset
+   IR: BUILD-610 BUILD-610 /private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/negative/computed-condition/app.tsx:8:21: computed declared values remain outside the native subset
+   SSR diagnostics written: /var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw/out/negative/computed-condition/diagnostics.json (1)
+P17: performance: the previous published DS12 is authentic, complete and earlier than this run
+P17: performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown
+P17: performance: ordinary release binaries use the same exact packed crate lock
+   Compiling tokio v1.53.3
+   Compiling sha2 v0.11.1
+   Compiling rust-embed-utils v8.13.0
+   Compiling rust-embed-impl v8.13.0
+   Compiling rust-embed v8.13.0
+   Compiling hyper v1.12.0
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.21
+   Compiling axum v0.8.9
+   Compiling forma-server v3.1.0 (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/.release-verify-29621/crates/forma-server)
+   Compiling forma-fixture-apps v0.0.0 (/private/var/folders/rh/_w3bj3lx0fg0z2vvj9wkbvmr0000gn/T/forma-packed-fixtures-GmWfdw)
+    Finished `release` profile [optimized] target(s) in 19.59s
+P17: performance: N1 twenty thousand walks per consumer shape, N5 and public budget boundaries
+N1 300: 2000/20000 walks
+N1 300: 4000/20000 walks
+N1 300: 6000/20000 walks
+N1 300: 8000/20000 walks
+N1 300: 10000/20000 walks
+N1 300: 12000/20000 walks
+N1 300: 14000/20000 walks
+N1 300: 16000/20000 walks
+N1 300: 18000/20000 walks
+N1 300: 20000/20000 walks
+N1 1500: 2000/20000 walks
+N1 1500: 4000/20000 walks
+N1 1500: 6000/20000 walks
+N1 1500: 8000/20000 walks
+N1 1500: 10000/20000 walks
+N1 1500: 12000/20000 walks
+N1 1500: 14000/20000 walks
+N1 1500: 16000/20000 walks
+N1 1500: 18000/20000 walks
+N1 1500: 20000/20000 walks
+N1 10000: 2000/20000 walks
+N1 10000: 4000/20000 walks
+N1 10000: 6000/20000 walks
+N1 10000: 8000/20000 walks
+N1 10000: 10000/20000 walks
+N1 10000: 12000/20000 walks
+N1 10000: 14000/20000 walks
+N1 10000: 16000/20000 walks
+N1 10000: 18000/20000 walks
+N1 10000: 20000/20000 walks
+N1 15000: 2000/20000 walks
+N1 15000: 4000/20000 walks
+N1 15000: 6000/20000 walks
+N1 15000: 8000/20000 walks
+N1 15000: 10000/20000 walks
+N1 15000: 12000/20000 walks
+N1 15000: 14000/20000 walks
+N1 15000: 16000/20000 walks
+N1 15000: 18000/20000 walks
+N1 15000: 20000/20000 walks
+N1 20000: 2000/20000 walks
+N1 20000: 4000/20000 walks
+N1 20000: 6000/20000 walks
+N1 20000: 8000/20000 walks
+N1 20000: 10000/20000 walks
+N1 20000: 12000/20000 walks
+N1 20000: 14000/20000 walks
+N1 20000: 16000/20000 walks
+N1 20000: 18000/20000 walks
+N1 20000: 20000/20000 walks
+P17: performance: tenant-login twenty cold Lighthouse mobile and real activation runs
+tenant-login: 1/20 cold Lighthouse and activation runs
+tenant-login: 2/20 cold Lighthouse and activation runs
+tenant-login: 3/20 cold Lighthouse and activation runs
+tenant-login: 4/20 cold Lighthouse and activation runs
+tenant-login: 5/20 cold Lighthouse and activation runs
+tenant-login: 6/20 cold Lighthouse and activation runs
+tenant-login: 7/20 cold Lighthouse and activation runs
+tenant-login: 8/20 cold Lighthouse and activation runs
+tenant-login: 9/20 cold Lighthouse and activation runs
+tenant-login: 10/20 cold Lighthouse and activation runs
+tenant-login: 11/20 cold Lighthouse and activation runs
+tenant-login: 12/20 cold Lighthouse and activation runs
+tenant-login: 13/20 cold Lighthouse and activation runs
+tenant-login: 14/20 cold Lighthouse and activation runs
+tenant-login: 15/20 cold Lighthouse and activation runs
+tenant-login: 16/20 cold Lighthouse and activation runs
+tenant-login: 17/20 cold Lighthouse and activation runs
+tenant-login: 18/20 cold Lighthouse and activation runs
+tenant-login: 19/20 cold Lighthouse and activation runs
+tenant-login: 20/20 cold Lighthouse and activation runs
+P17: performance: islands-100 twenty cold Lighthouse mobile and real activation runs
+islands-100: 1/20 cold Lighthouse and activation runs
+islands-100: 2/20 cold Lighthouse and activation runs
+islands-100: 3/20 cold Lighthouse and activation runs
+islands-100: 4/20 cold Lighthouse and activation runs
+islands-100: 5/20 cold Lighthouse and activation runs
+islands-100: 6/20 cold Lighthouse and activation runs
+islands-100: 7/20 cold Lighthouse and activation runs
+islands-100: 8/20 cold Lighthouse and activation runs
+islands-100: 9/20 cold Lighthouse and activation runs
+islands-100: 10/20 cold Lighthouse and activation runs
+islands-100: 11/20 cold Lighthouse and activation runs
+islands-100: 12/20 cold Lighthouse and activation runs
+islands-100: 13/20 cold Lighthouse and activation runs
+islands-100: 14/20 cold Lighthouse and activation runs
+islands-100: 15/20 cold Lighthouse and activation runs
+islands-100: 16/20 cold Lighthouse and activation runs
+islands-100: 17/20 cold Lighthouse and activation runs
+islands-100: 18/20 cold Lighthouse and activation runs
+islands-100: 19/20 cold Lighthouse and activation runs
+islands-100: 20/20 cold Lighthouse and activation runs
+P17: performance: founder client comparison completes in all three engines over packed core
+Wrote ../qualification/successor-p17/performance-attempt-Z1WmGl/client-report.json
+Browser framework comparison complete.
+Chromium single update among 500: Forma 0.62 µs, React Compiler 0.030 ms.
+Server fan-out: Forma isolated 50 browser requests, Forma shared 1, React Query 1.
+P17: performance: final attribution, acceptance and complete evidence

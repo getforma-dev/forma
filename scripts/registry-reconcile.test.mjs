@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {reconcile, validatePolicy} from './registry-reconcile.mjs';
 
 const identities = [
@@ -26,14 +27,15 @@ const release = (id, tag, extra = {}) => ({
   body: '', assets: [], ...extra,
 });
 
-function fixture() {
-  const policy = {schema: 1, packages: identities.map(([registry, name, repo]) => ({
+function fixture(version = '3.0.0', router = false) {
+  const selected = router ? [...identities, ['npm', '@getforma/router', 'getforma-dev/forma']] : identities;
+  const policy = {schema: 1, packages: selected.map(([registry, name, repo]) => ({
     registry, name, recordRepositories: [...new Set([repo, 'getforma-dev/forma'])], baseline: [],
   }))};
   const metadata = new Map(), archives = new Map(), calls = [];
-  const record = {schema: 1, dryRun: false, tag: 'v3.0.0', commit: 'a'.repeat(40), run: '12345', packages: []};
-  for (const [registry, name] of identities) {
-    const version = '3.0.0', file = filename(registry, name, version), bytes = Buffer.from(`archive:${name}:${version}`);
+  const record = {schema: 1, dryRun: false, tag: `v${version}`, commit: 'a'.repeat(40), run: '12345', packages: []};
+  for (const [registry, name] of selected) {
+    const file = filename(registry, name, version), bytes = Buffer.from(`archive:${name}:${version}`);
     archives.set(file, bytes);
     record.packages.push({registry, name, version, file, sha256: sha(bytes)});
     if (registry === 'npm') metadata.set(name, {name, time: {[version]: '2026-10-20T04:00:00Z'}, versions: {
@@ -45,7 +47,7 @@ function fixture() {
       dl_path: `/api/v1/crates/${name}/${version}/download`}], meta: {total: 1, next_page: null}});
   }
   const releases = new Map([...new Set(policy.packages.flatMap(p => p.recordRepositories))].map(repo => [repo, []]));
-  releases.set('getforma-dev/forma', [release(77, 'v3.0.0', {assets: [{id: 123, name: 'release-record.json',
+  releases.set('getforma-dev/forma', [release(77, `v${version}`, {assets: [{id: 123, name: 'release-record.json',
     url: 'https://api.github.com/repos/getforma-dev/forma/releases/assets/123',
     browser_download_url: 'https://github.com/getforma-dev/forma/releases/download/v3.0.0/release-record.json',
     size: 4096}]} )]);
@@ -95,6 +97,84 @@ function fixture() {
 const run = f => reconcile({policy: f.policy, fetchImpl: f.fetchImpl, token: 'mock-github-token',
   limits: {timeoutMs: 1000, deadlineMs: 10000}});
 const codes = result => result.findings.map(f => f.code);
+
+// Use the shipped default policy, including its exact historical exemptions.
+// Synthetic metadata supplies those same old versions; no live baseline changes.
+function configuredFixture(version = '3.2.0-rc.1', routerRecord = true) {
+  const f = fixture(version, routerRecord);
+  f.policy = JSON.parse(readFileSync(new URL('./registry-reconcile-policy.json', import.meta.url), 'utf8'));
+  if (!f.metadata.has('@getforma/router')) {
+    const name = '@getforma/router', current = '3.2.0-rc.1';
+    f.metadata.set(name, {name, versions: {[current]: {name, version: current,
+      dist: {tarball: `https://registry.npmjs.org/${name}/-/router-${current}.tgz`}}}});
+  }
+  for (const p of f.policy.packages) {
+    const doc = f.metadata.get(p.name);
+    for (const baseline of p.baseline) {
+      const version = baseline.version;
+      if (p.registry === 'npm') doc.versions[version] = {name: p.name, version};
+      else doc.versions.push({crate: p.name, num: version, checksum: 'b'.repeat(64), yanked: false});
+    }
+    if (p.registry === 'crates') doc.meta.total = doc.versions.length;
+  }
+  return f;
+}
+
+test('shipped target policy enrolls exactly eight with no fabricated router history', async () => {
+  const f = configuredFixture(), original = clone(f.policy);
+  validatePolicy(f.policy);
+  assert.equal(f.policy.packages.length, 8);
+  assert.deepEqual(f.policy.packages.find(p => p.name === '@getforma/router'), {
+    registry: 'npm', name: '@getforma/router', recordRepositories: ['getforma-dev/forma'], baseline: [],
+  });
+  const result = await run(f);
+  assert.equal(result.passed, true, JSON.stringify(result.findings));
+  assert.equal(result.packages.length, 8); assert.equal(result.verifiedArchives.length, 8);
+  assert.equal(result.packages.reduce((n, p) => n + p.verified, 0), 8);
+  assert.equal(result.packages.find(p => p.name === '@getforma/router').baseline, 0);
+  assert.equal(result.packages.reduce((n, p) => n + p.baseline, 0), f.policy.packages.reduce((n, p) => n + p.baseline.length, 0));
+  assert.deepEqual(f.policy, original, 'reconciliation never promotes observations to exemptions');
+});
+
+test('shipped target policy refuses missing router package, record and altered archive bytes', async t => {
+  for (const kind of ['package', 'record', 'bytes']) await t.test(kind, async () => {
+    const f = kind === 'record' ? configuredFixture('3.1.0', false) : configuredFixture();
+    const original = clone(f.policy);
+    if (kind === 'package') f.metadata.delete('@getforma/router');
+    if (kind === 'bytes') f.archives.set('getforma-router-3.2.0-rc.1.tgz', Buffer.from('altered router archive'));
+    const result = await run(f);
+    assert.equal(result.passed, false);
+    const finding = result.findings.find(row => row.name === '@getforma/router');
+    assert(finding, JSON.stringify(result.findings));
+    assert.equal(finding.code, {package: 'REGISTRY_UNREADABLE', record: 'MISS_RECORD', bytes: 'HASH_MISMATCH'}[kind]);
+    if (kind === 'package') assert.match(finding.message, /HTTP 404/);
+    assert.equal(result.packages.length, 8);
+    assert.equal(result.verifiedArchives.length, 7, 'failure cannot disappear or discard the seven independently verified peers');
+    assert.equal(result.packages.find(p => p.name === '@getforma/router').baseline, 0);
+    assert.deepEqual(f.policy, original);
+  });
+});
+
+test('router enrollment accepts the eight-package 3.2 set while retaining historical seven-package records', async () => {
+  for (const version of ['3.0.0', '3.1.0']) assert.equal((await run(fixture(version))).passed, true);
+  const current = await run(fixture('3.2.0-rc.1', true));
+  assert.equal(current.passed, true, JSON.stringify(current.findings));
+  assert.equal(current.packages.length, 8); assert.equal(current.verifiedArchives.length, 8);
+  const historicalForgery = await run(fixture('3.1.0', true));
+  assert(codes(historicalForgery).includes('RECORD_INVALID'));
+  const missing = fixture('3.2.0-rc.1', true); missing.record.packages.pop();
+  assert(codes(await run(missing)).includes('RECORD_INVALID'));
+});
+test('an unconfigured published router and an unavailable target are visible failures, never suppressed 404s', async () => {
+  const pending = fixture('3.2.0-rc.1', true); pending.policy.packages.pop();
+  const result = await run(pending);
+  assert(codes(result).includes('POLICY_PACKAGE_UNENROLLED')); assert.equal(result.passed, false);
+  const premature = fixture('3.2.0-rc.1', true); premature.metadata.delete('@getforma/router');
+  assert.equal((await run(premature)).passed, false);
+  const fakeBaseline = fixture('3.2.0-rc.1', true);
+  fakeBaseline.policy.packages.at(-1).baseline=[{version:'3.1.0',reason:'pretend historical package',evidence:'https://example.invalid'}];
+  assert.throws(()=>validatePolicy(fakeBaseline.policy),/no pre-record/);
+});
 
 test('complete seven-package set is verified from actual archive bytes', async () => {
   const f = fixture(), result = await run(f);

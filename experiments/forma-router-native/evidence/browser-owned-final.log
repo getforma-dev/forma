@@ -1,0 +1,94 @@
+START chromium
+PASS chromium native nested owner A-B-A retains layout island and disposes departing leaf
+PASS chromium scheduled island readiness preserves original served nodes
+PASS chromium latest held GET wins and stale response cannot change title URL or layout
+PASS chromium hash query revalidation Back Forward and replace preserve history ownership
+PASS chromium revalidation repairs a held POP cursor before current-view data refresh
+PASS chromium valid foreground context verification restores the cancelled POP cursor
+PASS chromium POST during a held POP restores the committed cursor and refreshes that branch
+PASS chromium validation preserves form values and accessible summary without push
+PASS chromium successful typed POST refreshes props and replaces leaf while retaining layout
+PASS chromium managed GET form preserves query serialization without POST
+PASS chromium navigation during delayed POST revalidates newer current route
+PASS chromium competing submissions are busy and never queue a second send
+PASS chromium lost action result remains uncertain across GET and reload with one POST
+PASS chromium real CSRF refusal revokes safely and undeclared endpoint never transmits
+PASS chromium explicit POST redirect becomes one admitted GET and preserves document
+PASS chromium formdata reentrant submission reserves one POST and dispose transmits none
+PASS chromium late validation settlement cannot discard the newer held GET destination
+PASS chromium explicit context revocation clears owners before recovery and stale GET cannot reactivate
+PASS chromium foreground context check and persisted pageshow each use a fresh document boundary
+PASS chromium held valid context verification blocks new navigation and POST until admission
+PASS chromium held stale context verification refuses a queued mutation before transmission
+PASS chromium real changed policy makes one explicit document boundary
+PASS chromium actual second compiled build cannot mix owners and requires document boundary
+PASS chromium malformed scoped state refuses destination activation before one document recovery
+PASS chromium hostile markup never upgrades and repeated recovery is bounded
+PASS chromium typed404 and GET redirect preserve status semantics and one final history entry
+PASS chromium direct refresh and no-JavaScript native forms render fresh typed HTML
+PASS chromium 100 retained-layout route cycles leave departing click handlers inactive
+PASS chromium API focus and keyed Back Forward scroll restoration target the destination
+PASS chromium retained focus and layout input selection survive sibling transition
+START firefox
+PASS firefox native nested owner A-B-A retains layout island and disposes departing leaf
+PASS firefox scheduled island readiness preserves original served nodes
+PASS firefox latest held GET wins and stale response cannot change title URL or layout
+PASS firefox hash query revalidation Back Forward and replace preserve history ownership
+PASS firefox revalidation repairs a held POP cursor before current-view data refresh
+PASS firefox valid foreground context verification restores the cancelled POP cursor
+PASS firefox POST during a held POP restores the committed cursor and refreshes that branch
+PASS firefox validation preserves form values and accessible summary without push
+PASS firefox successful typed POST refreshes props and replaces leaf while retaining layout
+PASS firefox managed GET form preserves query serialization without POST
+PASS firefox navigation during delayed POST revalidates newer current route
+PASS firefox competing submissions are busy and never queue a second send
+PASS firefox lost action result remains uncertain across GET and reload with one POST
+PASS firefox real CSRF refusal revokes safely and undeclared endpoint never transmits
+PASS firefox explicit POST redirect becomes one admitted GET and preserves document
+PASS firefox formdata reentrant submission reserves one POST and dispose transmits none
+PASS firefox late validation settlement cannot discard the newer held GET destination
+PASS firefox explicit context revocation clears owners before recovery and stale GET cannot reactivate
+PASS firefox foreground context check and persisted pageshow each use a fresh document boundary
+PASS firefox held valid context verification blocks new navigation and POST until admission
+PASS firefox held stale context verification refuses a queued mutation before transmission
+PASS firefox real changed policy makes one explicit document boundary
+PASS firefox actual second compiled build cannot mix owners and requires document boundary
+PASS firefox malformed scoped state refuses destination activation before one document recovery
+PASS firefox hostile markup never upgrades and repeated recovery is bounded
+PASS firefox typed404 and GET redirect preserve status semantics and one final history entry
+PASS firefox direct refresh and no-JavaScript native forms render fresh typed HTML
+PASS firefox 100 retained-layout route cycles leave departing click handlers inactive
+PASS firefox API focus and keyed Back Forward scroll restoration target the destination
+PASS firefox retained focus and layout input selection survive sibling transition
+START webkit
+PASS webkit native nested owner A-B-A retains layout island and disposes departing leaf
+PASS webkit scheduled island readiness preserves original served nodes
+PASS webkit latest held GET wins and stale response cannot change title URL or layout
+PASS webkit hash query revalidation Back Forward and replace preserve history ownership
+PASS webkit revalidation repairs a held POP cursor before current-view data refresh
+PASS webkit valid foreground context verification restores the cancelled POP cursor
+PASS webkit POST during a held POP restores the committed cursor and refreshes that branch
+PASS webkit validation preserves form values and accessible summary without push
+PASS webkit successful typed POST refreshes props and replaces leaf while retaining layout
+PASS webkit managed GET form preserves query serialization without POST
+PASS webkit navigation during delayed POST revalidates newer current route
+PASS webkit competing submissions are busy and never queue a second send
+PASS webkit lost action result remains uncertain across GET and reload with one POST
+PASS webkit real CSRF refusal revokes safely and undeclared endpoint never transmits
+PASS webkit explicit POST redirect becomes one admitted GET and preserves document
+PASS webkit formdata reentrant submission reserves one POST and dispose transmits none
+PASS webkit late validation settlement cannot discard the newer held GET destination
+PASS webkit explicit context revocation clears owners before recovery and stale GET cannot reactivate
+PASS webkit foreground context check and persisted pageshow each use a fresh document boundary
+PASS webkit held valid context verification blocks new navigation and POST until admission
+PASS webkit held stale context verification refuses a queued mutation before transmission
+PASS webkit real changed policy makes one explicit document boundary
+PASS webkit actual second compiled build cannot mix owners and requires document boundary
+PASS webkit malformed scoped state refuses destination activation before one document recovery
+PASS webkit hostile markup never upgrades and repeated recovery is bounded
+PASS webkit typed404 and GET redirect preserve status semantics and one final history entry
+PASS webkit direct refresh and no-JavaScript native forms render fresh typed HTML
+PASS webkit 100 retained-layout route cycles leave departing click handlers inactive
+PASS webkit API focus and keyed Back Forward scroll restoration target the destination
+PASS webkit retained focus and layout input selection survive sibling transition
+{"passed":90,"failed":0,"output":"/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/test-results/router-native-final/2026-10-26T18-55-47-423Z-93817/browser.json","sourceChangedDuringRun":false}

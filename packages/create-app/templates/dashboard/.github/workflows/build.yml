@@ -37,8 +37,20 @@ jobs:
           # Page source is deliberately absent: dependencies can be reused.
           key: release
           save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-      - run: npm ci
+      - name: Verify JavaScript dependencies
+        shell: bash
         working-directory: admin
+        run: |
+          npm ci --ignore-scripts --include=dev --include=optional --include=peer
+          npm audit signatures --include=dev --include=optional --include=peer
+          npm audit --include=dev --include=optional --include=peer
+      - name: Verify Rust advisories
+        shell: bash
+        run: |
+          cargo install cargo-deny --version 0.20.2 --locked
+          # A failed live fetch must stop the build, even with a cached database.
+          cargo deny --locked --manifest-path Cargo.toml fetch db
+          cargo deny --locked --manifest-path Cargo.toml check advisories
       - run: npm run build
         working-directory: admin
       # Build assets first: rust-embed includes this build's pages in the binary.

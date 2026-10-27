@@ -170,6 +170,8 @@ fn styled_manifest() -> AssetManifest {
     routes.insert(
         "/".to_string(),
         RouteAssets {
+            #[cfg(feature = "navigation")]
+            navigation: None,
             mode: forma_server::RouteMode::Browser,
             modulepreload: Vec::new(),
             js: vec!["app.1.js".into()],

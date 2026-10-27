@@ -7,16 +7,16 @@ export const FUZZ_TARGETS = ['parse_raw', 'parse_body', 'parse_mutated', 'walk']
 export const ENGINES = ['chromium', 'firefox', 'webkit'];
 export { SKEW_DRILL_CHECKS as SKEW_CHECKS } from '../e2e/skew/run-drill.mjs';
 import { SKEW_DRILL_CHECKS as SKEW_CHECKS } from '../e2e/skew/run-drill.mjs';
-const PACKAGE_IDS = ['crates:forma-ir', 'crates:forma-ir-derive', 'crates:forma-server', 'npm:@getforma/build', 'npm:@getforma/compiler', 'npm:@getforma/core', 'npm:@getforma/create-app'];
+import {packageIdentitiesForVersion} from './release-package-inventory.mjs';
 const TASKS = [...FUZZ_TARGETS.map(t => `fuzz:${t}`), 'hostile', ...ENGINES.map(e => `skew:${e}`), 'fixtures'];
 const hash = (s, label) => assert.match(s ?? '', /^[a-f0-9]{64}$/, `${label}: invalid SHA-256`);
 const ns = (s, label) => { assert.equal(typeof s, 'string', `${label}: nanoseconds must be an integer string`); assert.match(s, /^(?:0|[1-9][0-9]{0,18})$/, `${label}: invalid monotonic value`); return BigInt(s); };
 const nonemptyUnique = (values, label) => { assert(Array.isArray(values) && values.length > 0 && values.length <= 65_536, `${label}: empty or oversized`); assert(values.every(v => typeof v === 'string' && v.length > 0 && v.length <= 1024), `${label}: invalid identity`); assert.equal(new Set(values).size, values.length, `${label}: duplicate identity`); return values; };
 const identicalIds = (actual, expected, label) => assert.deepEqual(nonemptyUnique(actual, label).slice().sort(), nonemptyUnique(expected, `${label} expectation`).slice().sort(), `${label}: incomplete or unexpected identities`);
 const packages = (rows, version) => {
-  assert(Array.isArray(rows)); assert.deepEqual(rows.map(p => `${p.registry}:${p.name}`).sort(), PACKAGE_IDS, 'exact seven archives required');
+  assert(Array.isArray(rows)); assert.deepEqual(rows.map(p => `${p.registry}:${p.name}`).sort(), packageIdentitiesForVersion(version), 'exact versioned archives required');
   for (const p of rows) { assert.equal(p.version, version); hash(p.sha256, p.name); assert(Number.isSafeInteger(p.bytes) && p.bytes > 0, `${p.name}: archive length`); assert.equal(typeof p.file, 'string'); assert(/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(p.file), `${p.name}: archive filename`); }
-  assert.equal(new Set(rows.map(p => p.file)).size, 7, 'duplicate archive filename');
+  assert.equal(new Set(rows.map(p => p.file)).size, packageIdentitiesForVersion(version).length, 'duplicate archive filename');
   return rows.slice().sort((a, b) => `${a.registry}:${a.name}`.localeCompare(`${b.registry}:${b.name}`));
 };
 

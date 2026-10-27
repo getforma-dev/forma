@@ -1,0 +1,14 @@
+P17: packed npm packages resolve one another inside the packed set, never through the workspace
+P17: packed optional router matches nested owners using only packed core dependencies
+P17: packed core: complete hostile widget matrix and actual removed-selector-guard control
+P17: committed expression source: 100000 cases, real removed-cost control and corrected replay
+P17: AssertionError [ERR_ASSERTION]: expression source was modified
+
+false !== true
+
+    at validateExpressionProof (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/release-security.mjs:68:12)
+    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/release-security.mjs:130:5
+    at recordVerificationCheck (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/verify-release-set.mjs:243:11)
+    at test (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/verify-release-set.mjs:324:30)
+    at verifyPackedSecurity (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/release-security.mjs:123:9)
+    at async verify (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/verify-release-set.mjs:344:5)

@@ -11,7 +11,7 @@ import { isHydrateError, reportHydrateError } from './adoption-errors.js';
 import { prepareAdoption, type PreparedAdoption } from './adoption.js';
 import { AdoptionScope } from '../reactive/adoption-scope.js';
 import { currentAdoptionDiagnostic, type AdoptionDiagnostic } from '../reactive/adoption-diagnostics.js';
-import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland } from './island-state.js';
+import { preflightIslands, checkIslandClaim, IslandStateError, type ValidatedIsland, type IslandPreflight } from './island-state.js';
 import { skewed } from './skew.js';
 import { setIslandDisposal } from './island-disposal.js';
 
@@ -31,7 +31,7 @@ import { setIslandDisposal } from './island-disposal.js';
 export type IslandHydrateFn = (el: HTMLElement, props: Record<string, unknown> | null) => unknown;
 
 type ActivationPhase = 'scheduled'|'preparing'|'live'|'error'|'disposed';
-const activationPhase = new WeakMap<Element,ActivationPhase>();
+export const activationPhase = new WeakMap<Element,ActivationPhase>();
 
 type LoadWork = ((event?: Event | false) => void) & { ready: Promise<void> };
 const pendingLoad = new Map<HTMLElement, LoadWork>();
@@ -238,7 +238,10 @@ export function activateIslands(
   root: ParentNode = document,
 ): Promise<void> {
   if (skewed(root)) return Promise.resolve();
-  const checked = preflightIslands(registry, root);
+  return activateCheckedIslands(preflightIslands(registry, root));
+}
+
+export function activateCheckedIslands(checked: readonly IslandPreflight[]): Promise<void> {
   const children = new Map<Element, ValidatedIsland>();
   for (const result of checked) if ('value' in result) children.set(result.host, result.value);
   const ready: Promise<void>[] = [];

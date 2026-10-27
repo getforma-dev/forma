@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "scope": "Current source correction and retained actual installed-archive defect observations; fresh corrected hosted archives/browser qualification and independent release acceptance remain pending.",
+  "priorProductCommit": "8ee6ae2423fcb7ca0907ad06377b363e6280cb3e",
+  "priorRecordSha256": "2d2d894d848f29d5f1c6a80d27aea4028355ecb614392d28676a0754797b2808",
+  "requirement": "RT-U03: raw relative, root-relative and fragment links under a non-root base resolve from the committed view while a POP destination is pending.",
+  "defect": "anchor.href resolves relative to the visible pending history address before the coordinator sees it. Real trusted Chromium clicks reproduce wrong relative destination and fragment guard reentry; imperative-relative and root-relative controls pass.",
+  "correction": "Read the original href attribute; refuse missing href; keep download/target/opt-out/modified-click admission unchanged and resolve inside the existing committed-view URL gate.",
+  "equivalentReduction": "Remove two duplicate irreversible=true writes directly followed by the unconditional irreversible=true before owner release. If putHistory throws, neither old nor new subsequent assignment executes; no asynchronous boundary or observer is removed.",
+  "sourceValidation": {
+    "routerTests": 229,
+    "typecheck": "passed",
+    "build": "passed",
+    "negativeBeforeFix": {
+      "failed": 3,
+      "passed": 22
+    },
+    "pairedSize": {
+      "comparisons": [
+        {
+          "route": "/native/a",
+          "previousPlainGzip": 28456,
+          "currentPlainGzip": 28428,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12287
+        },
+        {
+          "route": "/native/b",
+          "previousPlainGzip": 28456,
+          "currentPlainGzip": 28429,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12286
+        }
+      ],
+      "incrementGzip": 12287,
+      "groupGzip": 40715,
+      "ceilings": {
+        "increment": 12288,
+        "group": 65536
+      },
+      "passed": true
+    },
+    "pairedSizeScope": "Dirty current source with authenticated3.1 baseline; not packed release proof. Original larger equivalent formulations remain failed size measurements; neither limit changed."
+  },
+  "evidenceRoot": "work/FORMA-301/qualification/ecosystem/acceptance-8ee/history",
+  "files": {
+    "pending-pop-diagnostic/receipt.json": "f54a68a6c0bf053ee6f6a9c6688c9ff3d8df8fd3fb8ea66ca032a81a31b84b29",
+    "pending-pop-diagnostic/chromium-pending-pop-relative.json": "294e7a69f9a829a6f09edb3350640cb6a3b9ef500bb863d77afe761517511b23",
+    "pending-pop-diagnostic/chromium-pending-pop-fragment.json": "97ccd994afb66521d164168f71a9ee8f4379e580adf7ce7eafc1a5542c1079b9",
+    "source-before-fix.log": "00e5cb3adbe1dfb9d4b8c768f5599c2797c8a35dac8eb14de4c3685b40964564",
+    "source-final-fix.log": "e1842db73163e58f7f77be18bc6fe7b0fb5491163d55f1add37f1e50ae13208f",
+    "source-final-typecheck.log": "ffd6e1892068ccfd0be45934461a466775fcb73a02d2d09cf45be58d4168ae3d",
+    "source-size-rawhref5.json": "cc44071642742be0f12c49ee977629c28743d904d584b4187ef3c512f2fd05f1"
+  },
+  "sourceFiles": {
+    "packages/router/src/router.ts": "1a4ef4846c6d1e539c906dd9520d1d35483eda2e3f1a2db9e4fa7b46cd72b531",
+    "packages/router/tests/platform-contracts.test.ts": "250b85b37dc7d1792acac1bd566952bbf758ce3284b985b002f39919ef6dfb18"
+  },
+  "remaining": [
+    "Actual new archived-product browser replay",
+    "Fresh full native90 and paired packed size",
+    "Fresh complete P17/platform qualification",
+    "Independent review and all still-open stable acceptance"
+  ]
+}

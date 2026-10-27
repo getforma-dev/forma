@@ -9,12 +9,13 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { mergeRecordedCargoLock } from './release-cargo-lock.mjs';
 import { commandInvocation } from './portable-command.mjs';
-import { SEED_MARKER, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
+import { SEED_MARKER, SEED_TEMPLATES, templatesForPackages, replaceTemplateCargoRequirements, readTemplateSeeds, prepareTemplateSeeds } from './template-lock-seeds.mjs';
 import { SOAK_GATE, validateSoakGate } from './release-soak-deferral.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const NPM = ['core', 'compiler', 'build', 'create-app'];
-export const CRATES = ['forma-ir', 'forma-ir-derive', 'forma-server'];
+import { NPM_PACKAGES, CRATE_PACKAGES, npmPackagesForVersion, ROUTER_PACKAGE_SET } from './release-package-inventory.mjs';
+export const NPM = NPM_PACKAGES;
+export const CRATES = CRATE_PACKAGES;
 // Pre-release counters start at 1: the first alpha is -alpha.1, never -alpha.0.
 export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.[1-9]\d*))?$/;
 export const json = path => JSON.parse(readFileSync(path, 'utf8'));
@@ -48,7 +49,7 @@ export function assertReleaseSet(packages, tag) {
   const version = tag?.replace(/^v/, '');
   assert(tag?.startsWith('v') && SEMVER.test(version) && !version.endsWith('-dev'), 'release requires vX.Y.Z[-alpha.N|-beta.N|-rc.N]');
   assert(Number(version.split('.')[0]) >= 3, 'the unified workflow first publishes 3.0.0');
-  assert.equal(packages.length, 7);
+  assert.equal(packages.length, CRATES.length + npmPackagesForVersion(version).length, 'release package inventory does not match this version line');
   for (const p of packages) assert.equal(p.version, version, `${p.name}: manifest disagrees with ${tag}`);
   return version;
 }
@@ -116,14 +117,20 @@ function updateRequirements(p, version, owner = p.name) {
   for (const kind of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
     for (const name of Object.keys(p[kind] ?? {})) if (internal(name)) p[kind][name] = `=${version}`;
   }
-  const peer = owner === '@getforma/compiler' ? '@getforma/core' : owner === '@getforma/build' ? '@getforma/compiler' : null;
+  const peer = ['@getforma/compiler', '@getforma/router'].includes(owner) ? '@getforma/core' : owner === '@getforma/build' ? '@getforma/compiler' : null;
   if (peer) p.peerDependencies = { ...p.peerDependencies, [peer]: compatibilityPeer(version) };
 }
 
-export function versionFiles(root, version) {
+export function versionFiles(root, version, { legacyInventory = false } = {}) {
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3, 'expected a 3.x-or-later release version or X.Y.Z-dev');
   const files = new Map();
   const read = p => readFileSync(join(root, p), 'utf8');
+  const lock = JSON.parse(read('package-lock.json'));
+  const npm = legacyInventory ? npmPackagesForVersion(version) : NPM;
+  if (legacyInventory) {
+    assert(npm.length < NPM.length, 'legacy source inventory is only valid for the historical 3.0/3.1 lines');
+    assert.deepEqual(lock.packages?.['']?.workspaces?.slice().sort(), npm.map(name => `packages/${name}`).sort(), 'legacy source inventory differs from the archived workspace declaration');
+  }
   let cargo = read('Cargo.toml');
   assert(/\[workspace.package\]\s*\nversion = "[^"]+"/.test(cargo));
   cargo = cargo.replace(/(\[workspace.package\]\s*\nversion = ")[^"]+"/, `$1${version}"`);
@@ -135,28 +142,32 @@ export function versionFiles(root, version) {
     text = text.replace(/^(forma-(?:ir|ir-derive|server)\s*=\s*\{[^\n]*?version\s*=\s*")[^"]+"/gm, `$1=${version}"`);
     files.set(path, text);
   }
-  for (const name of NPM) {
+  for (const name of npm) {
     const path = `packages/${name}/package.json`, p = JSON.parse(read(path));
     p.version = version;
     updateRequirements(p, version);
     p.repository = { type: 'git', url: 'git+https://github.com/getforma-dev/forma.git', directory: `packages/${name}` };
     files.set(path, JSON.stringify(p, null, 2) + '\n');
   }
-  const lock = JSON.parse(read('package-lock.json'));
   for (const [path, p] of Object.entries(lock.packages)) {
-    if (NPM.some(name => path === `packages/${name}`)) p.version = version;
-    const member = NPM.find(name => path === `packages/${name}`);
+    if (npm.some(name => path === `packages/${name}`)) p.version = version;
+    const member = npm.find(name => path === `packages/${name}`);
     updateRequirements(p, version, member ? `@getforma/${member}` : p.name);
   }
   files.set('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
-  for (const path of ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock']) {
+  // Active nested-workspace consumers must follow the coordinated set too.
+  // Historical source donors predate the native router fixture; do not invent it.
+  const cargoLocks = ['Cargo.lock', 'e2e/Cargo.lock', 'fuzz/Cargo.lock'];
+  const nativeProofLock = 'experiments/forma-router-native/server/Cargo.lock';
+  if (existsSync(join(root, nativeProofLock))) cargoLocks.push(nativeProofLock);
+  for (const path of cargoLocks) {
     let text = read(path);
     text = text.replace(/(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g, `$1${version}"`);
     files.set(path, text);
   }
   // Source seeds never invent the hash of an archive containing this commit.
   const previous = JSON.parse(read('packages/create-app/package.json')).version;
-  for (const [path, text] of prepareTemplateSeeds(root, previous, version)) files.set(path, text);
+  for (const [path, text] of prepareTemplateSeeds(root, previous, version, { legacyInventory })) files.set(path, text);
   return files;
 }
 
@@ -195,6 +206,22 @@ export function assertNpmTemplateLock(manifest, lock, packages, artifactDir) {
     assert.equal(packed.name, name); assert.equal(packed.version, candidate.version);
     for (const kind of packedMetadata) assert.deepEqual(entry[kind], packed[kind], `${name}: shipped template lock ${kind}`);
   }
+}
+// Declared optional router dependencies are mandatory in their selected starter.
+// Checking only packages that happened to install could conceal a missing candidate.
+export function assertInstalledTemplateCandidates(admin, packages) {
+  const manifest = json(join(admin, 'package.json'));
+  const names = [...new Set(dependencyKinds.flatMap(kind => Object.keys(manifest[kind] ?? {}).filter(name => name.startsWith('@getforma/'))))];
+  for (const name of names) {
+    const candidate = packages.find(p => p.registry === 'npm' && p.name === name);
+    assert(candidate, `installed template has no release candidate for ${name}`);
+    const path = join(admin, 'node_modules', name, 'package.json');
+    assert(existsSync(path), `declared template candidate was not installed: ${name}`);
+    const installed = json(path);
+    assert.equal(installed.name, name, `${name}: installed template candidate identity`);
+    assert.equal(installed.version, candidate.version, `${name}: installed template candidate version`);
+  }
+  return names;
 }
 export function assertCargoCandidateLock(text, packages, rootName) {
   for (const block of text.split(/(?=\[\[package\]\])/)) {
@@ -277,7 +304,7 @@ export function stageNpmLock(manifest, lock, packages, artifactDir, local = fals
       if (packed[kind]) entry[kind] = packed[kind]; else delete entry[kind];
     }
     if (sourceLock) {
-      // Candidate peers are supplied by the seven-package release set. External
+      // Candidate peers are supplied by the coordinated release set. External
       // edges resolve through the exact workspace graph, including transitive peers.
       const external = structuredClone(packed);
       for (const kind of [...dependencyKinds, 'peerDependencies', 'peerDependenciesMeta']) {
@@ -346,24 +373,29 @@ export function withStagedTemplates(root, packages, out, callback) {
 export function stageTemplates(root, packages, out) {
   const originals = new Map();
   const stagedFiles = new Map();
+  const templates = templatesForPackages(packages);
   if (existsSync(join(root, 'packages/create-app/package.json'))) assert(existsSync(join(root, SEED_MARKER)), 'source templates require their explicit lock-seed identity');
   if (existsSync(join(root, SEED_MARKER))) {
     const expected = json(join(root, 'packages/create-app/package.json')).version;
-    const known = [...CRATES, ...NPM.slice(0,3).map(name => `@getforma/${name}`)].sort();
-    assert.deepEqual(packages.map(p => p.name).sort(), known, 'source seeds require all six runtime candidates');
+    const seeds = readTemplateSeeds(root, expected); // Validate every seed before writes or archive inspection.
+    const runtime = new Set([...seeds.values()].flatMap(files => {
+      const manifest = JSON.parse(files.get('admin/package.json'));
+      return dependencyKinds.flatMap(kind => Object.keys(manifest[kind] ?? {}).filter(name => name.startsWith('@getforma/')));
+    }));
+    const known = [...CRATES, ...runtime].sort();
+    assert.deepEqual(packages.map(p => p.name).sort(), known, 'source seeds require every declared runtime candidate');
     for (const p of packages) {
       assert.equal(p.version, expected, `${p.name}: mixed source seed/candidate version`);
       assert.equal(p.registry, CRATES.includes(p.name) ? 'crates' : 'npm', `${p.name}: unexpected candidate registry`);
     }
-    readTemplateSeeds(root, expected); // Validate both templates before writes or archive inspection.
     assert(existsSync(join(root, 'Cargo.lock')), 'source seeds require the committed candidate Cargo graph');
   } else {
     // Low-level historical fixtures may be already sealed. A recorded Cargo
     // graph must never turn an unidentified missing hash into a source seed.
-    for (const template of ['minimal', 'dashboard']) {
+    for (const template of templates) {
       const dir = join(root, 'packages/create-app/templates', template);
       for (const [path, entry] of Object.entries(json(join(dir, 'admin/package-lock.json')).packages)) {
-        if (/^node_modules\/@getforma\/(core|compiler|build)$/.test(path)) assert(/^sha512-[A-Za-z0-9+/]{86}==$/.test(entry.integrity ?? ''), 'unidentified template: missing checksum for internal npm package');
+        if (/^node_modules\/@getforma\/(core|compiler|build|router)$/.test(path)) assert(/^sha512-[A-Za-z0-9+/]{86}==$/.test(entry.integrity ?? ''), 'unidentified template: missing checksum for internal npm package');
       }
       for (const block of readFileSync(join(dir, 'Cargo.lock'), 'utf8').split(/(?=^\[\[package\]\])/m)) {
         if (/^name = "forma-(ir|ir-derive|server)"\r?$/m.test(block)) assert(/^checksum = "[a-f0-9]{64}"\r?$/m.test(block), 'unidentified template: missing checksum for internal crate');
@@ -371,9 +403,9 @@ export function stageTemplates(root, packages, out) {
     }
   }
   const cargoGraph = existsSync(join(root, 'Cargo.lock')) ? packedCargoGraph(root, packages, out) : undefined;
-  // Compute every replacement before touching the tree, so a malformed second template
-  // cannot leave the first template staged when packing fails.
-  for (const template of ['minimal', 'dashboard']) {
+  // Compute every replacement before touching the tree, so a malformed template
+  // cannot leave another template staged when packing fails.
+  for (const template of templates) {
     const dir = join(root, 'packages/create-app/templates', template);
     for (const name of ['admin/package.json', 'admin/package-lock.json', 'Cargo.toml', 'Cargo.lock']) originals.set(join(dir, name), readFileSync(join(dir, name)));
     const source = join(dir, 'src/main.rs');
@@ -381,11 +413,10 @@ export function stageTemplates(root, packages, out) {
     const staged = stageNpmLock(json(join(dir, 'admin/package.json')), json(join(dir, 'admin/package-lock.json')), packages, out, false, existsSync(join(root, 'package-lock.json')) ? json(join(root, 'package-lock.json')) : undefined);
     stagedFiles.set(join(dir, 'admin/package.json'), JSON.stringify(staged.manifest, null, 2) + '\n');
     stagedFiles.set(join(dir, 'admin/package-lock.json'), JSON.stringify(staged.lock, null, 2) + '\n');
-    const cargo = readFileSync(join(dir, 'Cargo.toml'), 'utf8').replace(/^(forma-(?:ir|ir-derive|server) = ")[^"]+"/gm, (line, prefix) => {
-      const name = prefix.split(' ')[0];
+    const cargo = replaceTemplateCargoRequirements(readFileSync(join(dir, 'Cargo.toml'), 'utf8'), name => {
       const candidate = packages.find(p => p.registry === 'crates' && p.name === name);
       assert(candidate, `template has no release candidate for ${name}`);
-      return `${prefix}${templateRequirement(candidate.version)}"`;
+      return templateRequirement(candidate.version);
     });
     stagedFiles.set(join(dir, 'Cargo.toml'), cargo);
     stagedFiles.set(join(dir, 'Cargo.lock'), stageCargoLock(readFileSync(join(dir, 'Cargo.lock'), 'utf8'), packages, false, undefined, cargoGraph));
@@ -436,15 +467,15 @@ export function pack(out, dryRun = false) {
   assertModuleTrustPolicy(policy);
   packCargoWorkspace(ROOT, packages, out, { dryRun });
   copyFileSync(join(ROOT, 'Cargo.lock'), join(out, 'Cargo.lock'));
-  for (const name of NPM.slice(0, 3)) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));
+  for (const name of NPM.filter(name => name !== 'create-app')) run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages', name));
   const preliminary = recordPackages(packages.filter(p => p.name !== '@getforma/create-app'), out);
   withStagedTemplates(ROOT, preliminary, out, () => run('npm', ['pack', '--ignore-scripts', '--pack-destination', out], join(ROOT, 'packages/create-app')));
   const cli = packages.find(p => p.name === '@getforma/create-app');
   const packedPaths = run('tar', ['-tzf', join(out, `getforma-create-app-${cli.version}.tgz`)]);
-  for (const template of ['minimal', 'dashboard']) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
+  for (const template of SEED_TEMPLATES) assert(packedPaths.includes(`package/templates/${template}/admin/_npmrc`), `${template}: packed install policy missing`);
   const recorded = recordPackages(packages, out);
   save(join(out, 'release-set.json'), {
-    schema: 1, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
+    schema: 1, packageSet: ROUTER_PACKAGE_SET, dryRun, tag: dryRun ? `${contracts.stage}-dry-run` : process.env.GITHUB_REF_NAME,
     commit: run('git', ['rev-parse', 'HEAD']).trim(),
     run: process.env.GITHUB_RUN_ID ?? null, toolchain: run('rustc', ['--version']).trim(),
     node: process.version, npm: run('npm', ['--version']).trim(), contracts, milestone, packages: recorded,
@@ -457,7 +488,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (cmd === 'version') {
       const files = versionFiles(ROOT, arg);
       for (const [path, text] of files) writeFileSync(join(ROOT, path), text);
-      console.log(`Set seven packages to ${arg}. Review locks and template ranges, test, then commit; no tag was created.`);
+      console.log(`Set ${CRATES.length + NPM.length} packages to ${arg}. Review locks and template ranges, test, then commit; no tag was created.`);
     } else if (cmd === 'check') {
       console.log(assertReleaseSet(setVersions(), arg));
     } else if (cmd === 'pack') {

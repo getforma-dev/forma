@@ -267,8 +267,8 @@ jobs:
       # copies core's built distribution as the fixture's installed dependency,
       # as R17's command has it after `npm run build`. Core is built here for
       # that fixture only; its own suite still runs on Linux.
-      - run: npm run build -w packages/core
-      - run: npm test -w packages/compiler -w packages/build
+      - run: npm run build -w packages/core -w packages/router
+      - run: npm test -w packages/compiler -w packages/build -w packages/router
       # SR8 through the package as an application installs it (FORMA-126),
       # through npm's .cmd shim.
       - run: node packages/build/scripts/test-raw-lint-bin.mjs
@@ -293,7 +293,7 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
       - run: cargo test --locked --workspace
-      - run: cargo test --locked -p forma-server --features compression
+      - run: cargo test --locked -p forma-server --all-features
       - run: cargo doc --locked --workspace --no-deps
 
   # Run the suite where `usize` is 32 bits. Arithmetic that cannot wrap
@@ -342,7 +342,7 @@ jobs:
           key: release
       - run: cargo clippy --locked -p forma-server --all-targets --all-features --release -- -D warnings
       - run: cargo test --locked -p forma-server --release
-      - run: cargo test --locked -p forma-server --features compression --release
+      - run: cargo test --locked -p forma-server --all-features --release
 
   # The crates publish different `rust-version` values and each is load-bearing
   # on crates.io/docs.rs, so each is built at exactly the declared version.
@@ -379,9 +379,9 @@ jobs:
           # AND version stops the legs evicting each other's cache.
           key: msrv-${{ matrix.crate }}-${{ matrix.rust }}
       - run: cargo check -p ${{ matrix.crate }} --all-targets --locked
-      - name: Check optional page compression at the server MSRV
+      - name: Check all optional server features at the declared MSRV
         if: matrix.crate == 'forma-server'
-        run: cargo check -p forma-server --all-targets --features compression --locked
+        run: cargo check -p forma-server --all-targets --all-features --locked
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: stable
@@ -501,6 +501,8 @@ jobs:
           shellcheck --version | head -2
           "$RUNNER_TEMP/actionlint" -version
           "$RUNNER_TEMP/actionlint"
+      - name: Build core and router for actual packed public-export controls
+        run: npm run build -w packages/core -w packages/router
       - name: SR43 lint and its seeded violations
         run: |
           ruby --version
@@ -547,7 +549,7 @@ jobs:
       - run: npm audit signatures
       - run: npm run build
       - name: Candidate boundary controls
-        run: node --test scripts/candidate-scaffold.test.mjs scripts/n8-size-start.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release.test.mjs
+        run: node --test scripts/candidate-scaffold.test.mjs scripts/n8-size-start.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release-router-bootstrap.test.mjs scripts/release.test.mjs
       - name: Pack committed candidates and record ten-file restoration
         id: pack
         run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"
@@ -717,7 +719,7 @@ jobs:
           retention-days: 14
 
   # Registry coverage remains distinct: it consumes the exact published CLI's
-  # sealed templates after all seven coordinated packages exist. A 404 means
+  # sealed templates after all versioned coordinated packages exist. A 404 means
   # unpublished; an unreadable registry is an error. Neither skips candidates.
   preflight:
     permissions:

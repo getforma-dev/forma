@@ -1,0 +1,41 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/create-app
+
+ ❯ tests/scaffold.test.ts (74 tests | 1 failed | 24 skipped) 2314ms
+     × dashboard includes every actual public page and excludes asset handlers 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scaffold.test.ts > page response gate discovery > dashboard includes every actual public page and excludes asset handlers
+AssertionError: expected [ '/', '/overview', …(3) ] to deeply equal [ '/', '/login', '/tenants', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "/",
+-   "/login",
+-   "/tenants",
+-   "/users",
++   "/overview",
++   "/deployments",
++   "/servers",
+    "/settings",
+  ]
+
+ ❯ tests/scaffold.test.ts:240:20
+    238|   it.each(TEMPLATES)('%s includes every actual public page and exclude…
+    239|     const routes = pageRoutes(fs.readFileSync(path.join(TEMPLATES_DIR,…
+    240|     expect(routes).toEqual(template === 'dashboard'
+       |                    ^
+    241|       ? ['/', '/login', '/tenants', '/users', '/settings'] : ['/', '/a…
+    242|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 49 passed | 24 skipped (74)
+   Start at  15:26:51
+   Duration  2.72s (transform 88ms, setup 0ms, import 306ms, tests 2.31s, environment 0ms)
+

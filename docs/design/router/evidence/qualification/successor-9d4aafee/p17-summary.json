@@ -1,0 +1,672 @@
+{
+  "schema": "forma-301-p17-summary-v2",
+  "scope": "Human-readable local macOS qualification summary, not a P17/DS12/publication input. Full raw P17 evidence remains at the bound local path.",
+  "sourceCommit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "passed": true,
+  "elapsedSeconds": 1235.994,
+  "raw": {
+    "schema": 1,
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/successor-p17/p17.json",
+    "bytes": 59727456,
+    "sha256": "1f1db230f144a45be8e7d0a38e577313044dfbf92f181d453566a14457e0e460"
+  },
+  "archiveSet": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/candidate",
+    "recordSha256": "96472d312b1075dd409b89596d597335832a5609893fd33f637b28dc153382a6",
+    "checksumRecordSha256": "40e4bcd280e3668edf2762e1ad70ab7193f6c72b967d476d4aea40e3b6963c95",
+    "packageSet": "forma-router-v1",
+    "dryRun": true,
+    "version": "3.1.0",
+    "packages": [
+      {
+        "registry": "crates",
+        "name": "forma-ir",
+        "version": "3.1.0",
+        "path": "crates/forma-ir",
+        "file": "forma-ir-3.1.0.crate",
+        "sha256": "7b2724a3fc2a03b24d0629d66112fdde9e6d87a9262afeb82aa3e8ed7cee3f06"
+      },
+      {
+        "registry": "crates",
+        "name": "forma-ir-derive",
+        "version": "3.1.0",
+        "path": "crates/forma-ir-derive",
+        "file": "forma-ir-derive-3.1.0.crate",
+        "sha256": "d0086bf6078717c3890b6fbc148d7fd30816ca64d1ab84fec3e076961591c462"
+      },
+      {
+        "registry": "crates",
+        "name": "forma-server",
+        "version": "3.1.0",
+        "path": "crates/forma-server",
+        "file": "forma-server-3.1.0.crate",
+        "sha256": "bd032192b11eff22f5a32f34bd9f522728934479ea0bdab62fa19d5ed79bd645"
+      },
+      {
+        "registry": "npm",
+        "name": "@getforma/core",
+        "version": "3.1.0",
+        "path": "packages/core",
+        "file": "getforma-core-3.1.0.tgz",
+        "sha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643"
+      },
+      {
+        "registry": "npm",
+        "name": "@getforma/compiler",
+        "version": "3.1.0",
+        "path": "packages/compiler",
+        "file": "getforma-compiler-3.1.0.tgz",
+        "sha256": "5dfeedc0ffad2bff505cf6a17e4d3bb4d5eac83804679e0325ceedf445821643"
+      },
+      {
+        "registry": "npm",
+        "name": "@getforma/build",
+        "version": "3.1.0",
+        "path": "packages/build",
+        "file": "getforma-build-3.1.0.tgz",
+        "sha256": "e73fc2e27a83b6924caa6460a83a75481be398893bff4591709322b78e2618ec"
+      },
+      {
+        "registry": "npm",
+        "name": "@getforma/router",
+        "version": "3.1.0",
+        "path": "packages/router",
+        "file": "getforma-router-3.1.0.tgz",
+        "sha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e"
+      },
+      {
+        "registry": "npm",
+        "name": "@getforma/create-app",
+        "version": "3.1.0",
+        "path": "packages/create-app",
+        "file": "getforma-create-app-3.1.0.tgz",
+        "sha256": "d9a1f3dfaffd06dabb59422e43df81945d1c23eded4a9c43acbff594d7defd09"
+      }
+    ]
+  },
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuModel": "Apple M1 Pro",
+    "cpus": 10,
+    "memoryGiB": 16,
+    "node": "v24.22.1",
+    "npm": "11.19.1",
+    "rustc": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+    "runner": "local",
+    "profile": "cargo debug binaries; npm packages from DS11; Chromium; P17 scratch install"
+  },
+  "checks": [
+    {
+      "name": "packed npm packages resolve one another inside the packed set, never through the workspace",
+      "passed": true,
+      "seconds": 0.603
+    },
+    {
+      "name": "packed optional router matches nested owners using only packed core dependencies",
+      "passed": true,
+      "seconds": 0.012
+    },
+    {
+      "name": "packed core: complete hostile widget matrix and actual removed-selector-guard control",
+      "passed": true,
+      "seconds": 78.622
+    },
+    {
+      "name": "committed expression source: 100000 cases, real removed-cost control and corrected replay",
+      "passed": true,
+      "seconds": 2.35
+    },
+    {
+      "name": "packed templates contain exact checked-in Rust and TypeScript sources",
+      "passed": true,
+      "seconds": 0.552
+    },
+    {
+      "name": "forma-ir: packed Cargo.lock advisories",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "forma-ir-derive: packed Cargo.lock advisories",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "forma-server: packed Cargo.lock advisories",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "fresh advisories over every exact shipped crate lock",
+      "passed": true,
+      "seconds": 3.871
+    },
+    {
+      "name": "packed CLI registry signatures",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "packed CLI has an isolated, locked runtime dependency installation",
+      "passed": true,
+      "seconds": 1.829
+    },
+    {
+      "name": "packed compiler emits the frozen corpus read by packed forma-ir",
+      "passed": true,
+      "seconds": 13.419
+    },
+    {
+      "name": "packed compiler declared props bind and render through packed typed Pages",
+      "passed": true,
+      "seconds": 14.963
+    },
+    {
+      "name": "packed reader requires full digests on every public document path",
+      "passed": true,
+      "seconds": 0.638
+    },
+    {
+      "name": "packed build verifies cached and network bytes including dynamic chunks and compressed delivery",
+      "passed": true,
+      "seconds": 0.628
+    },
+    {
+      "name": "packed builds preserve waiting lifecycle and actual packed Rust retirement",
+      "passed": true,
+      "seconds": 19.19
+    },
+    {
+      "name": "minimal: registry signatures and DS11 candidate authentication",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: packed manifest 2 identity, modes, aliases and uncompressed SHA-384",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: actual packed server resource tags carry manifest SHA-384 and nonces",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: served policy and zero CSP violations during positive browser interaction",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: chromium packed native adoption and static route",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: firefox packed native adoption and static route",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: webkit packed native adoption and static route",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: browser blocks changed actual entry bytes using packed server SRI",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "packed loader refuses a corrupt module before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "packed loader refuses a newer-minor module before binding, naming both versions",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: packed manifest schema/app/writer refused before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: packed manifest missing and malformed digests refused before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: packed checked worker accepts matching app and refuses mismatch before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "minimal: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 54.063
+    },
+    {
+      "name": "dashboard: registry signatures and DS11 candidate authentication",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: packed manifest 2 identity, modes, aliases and uncompressed SHA-384",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: actual packed server resource tags carry manifest SHA-384 and nonces",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: served policy and zero CSP violations during positive browser interaction",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: browser blocks changed actual entry bytes using packed server SRI",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: packed manifest schema/app/writer refused before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: packed manifest missing and malformed digests refused before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: packed checked worker accepts matching app and refuses mismatch before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "dashboard: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 10.5
+    },
+    {
+      "name": "native-router: registry signatures and DS11 candidate authentication",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: packed manifest 2 identity, modes, aliases and uncompressed SHA-384",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: actual packed server resource tags carry manifest SHA-384 and nonces",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: served policy and zero CSP violations during positive browser interaction",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: chromium packed typed navigation",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: firefox packed typed navigation",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: webkit packed typed navigation",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: browser blocks changed actual entry bytes using packed server SRI",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: packed manifest schema/app/writer refused before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: packed manifest missing and malformed digests refused before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: packed checked worker accepts matching app and refuses mismatch before binding",
+      "passed": true,
+      "seconds": null
+    },
+    {
+      "name": "native-router: packed CLI, locked install, signatures, build, serve and interaction",
+      "passed": true,
+      "seconds": 23.046
+    },
+    {
+      "name": "deployment drill: packed libraries and dependencies install locked, signed and isolated",
+      "passed": true,
+      "seconds": 3.306
+    },
+    {
+      "name": "deployment drill: five distributions built by the packed build, with identical B2 and no security retention",
+      "passed": true,
+      "seconds": 1.577
+    },
+    {
+      "name": "deployment drill: actual embedded native servers built locked from the packed crates",
+      "passed": true,
+      "seconds": 6.982
+    },
+    {
+      "name": "deployment drill: chromium packed rolling deployment, rollback and inert-or-reload",
+      "passed": true,
+      "seconds": 4.377
+    },
+    {
+      "name": "deployment drill: firefox packed rolling deployment, rollback and inert-or-reload",
+      "passed": true,
+      "seconds": 6.6
+    },
+    {
+      "name": "deployment drill: webkit packed rolling deployment, rollback and inert-or-reload",
+      "passed": true,
+      "seconds": 7.444
+    },
+    {
+      "name": "fixture applications: the sources are the committed ones and the packed libraries install locked, signed and isolated",
+      "passed": true,
+      "seconds": 3.943
+    },
+    {
+      "name": "fixture applications: every application builds with the packed build in strict mode, nothing above a note",
+      "passed": true,
+      "seconds": 2.307
+    },
+    {
+      "name": "fixture applications: the Rust servers build from the packed crates on the committed lock, pruned to the crate",
+      "passed": true,
+      "seconds": 5.771
+    },
+    {
+      "name": "fixture applications: the packed build admits a client-side keyed list and reports its size policy (L-58)",
+      "passed": true,
+      "seconds": 0.248
+    },
+    {
+      "name": "fixture applications: Forma's code on every fixture route is inside N2's ceiling in the packed build",
+      "passed": true,
+      "seconds": 0
+    },
+    {
+      "name": "fixture ledger: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work",
+      "passed": true,
+      "seconds": 0.365
+    },
+    {
+      "name": "fixture fauth: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work",
+      "passed": true,
+      "seconds": 1.705
+    },
+    {
+      "name": "fixture ksx: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work",
+      "passed": true,
+      "seconds": 0.688
+    },
+    {
+      "name": "fixture bench: the packed server serves each page; adoption writes nothing, the server's values stay, and the islands work",
+      "passed": true,
+      "seconds": 5.386
+    },
+    {
+      "name": "fixture applications: the packed compiler refuses the shapes the contract refuses (BUILD-610, with a file, a line and a column)",
+      "passed": true,
+      "seconds": 0.196
+    },
+    {
+      "name": "performance: the previous published DS12 is authentic, complete and earlier than this run",
+      "passed": true,
+      "seconds": 3.477
+    },
+    {
+      "name": "performance: public packed decoder, forty samples per one-MiB shape at four-times CPU slowdown",
+      "passed": true,
+      "seconds": 10.734
+    },
+    {
+      "name": "performance: ordinary release binaries use the same exact packed crate lock",
+      "passed": true,
+      "seconds": 19.643
+    },
+    {
+      "name": "performance: N1 twenty thousand walks per consumer shape, N5 and public budget boundaries",
+      "passed": true,
+      "seconds": 105.563
+    },
+    {
+      "name": "performance: tenant-login twenty cold Lighthouse mobile and real activation runs",
+      "passed": true,
+      "seconds": 367.379
+    },
+    {
+      "name": "performance: islands-100 twenty cold Lighthouse mobile and real activation runs",
+      "passed": true,
+      "seconds": 382.563
+    },
+    {
+      "name": "performance: founder client comparison completes in all three engines over packed core",
+      "passed": true,
+      "seconds": 65.151
+    },
+    {
+      "name": "performance: final attribution, acceptance and complete evidence",
+      "passed": true,
+      "seconds": 3.769
+    }
+  ],
+  "budgets": {
+    "p17": {
+      "id": "P17-time",
+      "seconds": 1235.994,
+      "limitSeconds": 1800,
+      "basis": "G6: tag push to the GitHub Release written, 30 minutes (FORMA-187)",
+      "passed": true
+    },
+    "n2": [
+      {
+        "app": "ledger",
+        "route": "/household",
+        "formaGzip": 26845,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "fauth",
+        "route": "/t/:slug/login",
+        "formaGzip": 26872,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "fauth",
+        "route": "/platform/onboarding",
+        "formaGzip": 26852,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "fauth",
+        "route": "/platform/benchmark",
+        "formaGzip": 28207,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "ksx",
+        "route": "/check",
+        "formaGzip": 28203,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "bench",
+        "route": "/pages/300",
+        "formaGzip": 26804,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "bench",
+        "route": "/pages/1500",
+        "formaGzip": 26804,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "bench",
+        "route": "/pages/10000",
+        "formaGzip": 26804,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "bench",
+        "route": "/pages/15000",
+        "formaGzip": 26799,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "bench",
+        "route": "/pages/20000",
+        "formaGzip": 26804,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "bench",
+        "route": "/pages/islands-100",
+        "formaGzip": 26800,
+        "limit": 28420,
+        "passed": true
+      },
+      {
+        "app": "positive/list-island",
+        "route": "/",
+        "formaGzip": 27940,
+        "limit": 28420,
+        "passed": true
+      }
+    ],
+    "performance": {
+      "passed": true,
+      "contract": "measured-v1",
+      "inputProtocol": "separate-input-tasks-v1",
+      "startupPolicy": "N3-cold-start-bounded-v2",
+      "rehearsal": true,
+      "targetTag": "v3.1.0",
+      "n1": [
+        {
+          "nodes": 298,
+          "p50Nanoseconds": 52000,
+          "p99Nanoseconds": 64833
+        },
+        {
+          "nodes": 1497,
+          "p50Nanoseconds": 163083,
+          "p99Nanoseconds": 252000
+        },
+        {
+          "nodes": 9995,
+          "p50Nanoseconds": 1240542,
+          "p99Nanoseconds": 1461250
+        },
+        {
+          "nodes": 15053,
+          "p50Nanoseconds": 1857833,
+          "p99Nanoseconds": 2273459
+        },
+        {
+          "nodes": 19961,
+          "p50Nanoseconds": 1808084,
+          "p99Nanoseconds": 2208917
+        }
+      ],
+      "n5": {
+        "allocation100To400Limit": 6,
+        "medianTimeRatio": 22.579131997471215,
+        "pairedRounds": 41,
+        "rowRatio": 32,
+        "shape": "actual console1500 five-field rows with fixed nav and islands",
+        "timeRatioLimit": 64
+      },
+      "mobile": [
+        {
+          "id": "tenant-login",
+          "runs": 20,
+          "p95TbtMs": 0,
+          "startupAcceptance": {
+            "policy": {
+              "id": "N3-cold-start-bounded-v2",
+              "targetMs": 50,
+              "maxExceptionalTaskMs": 55,
+              "maxExceptionalTasks": 2,
+              "maxAffectedVisits": 2,
+              "maxExcessMs": 10,
+              "runsPerRoute": 20
+            },
+            "runs": 20,
+            "exceptionalTaskCount": 0,
+            "totalExcessMs": 0,
+            "maxExceptionalTaskMs": 0
+          }
+        },
+        {
+          "id": "islands-100",
+          "runs": 20,
+          "p95TbtMs": 0,
+          "startupAcceptance": {
+            "policy": {
+              "id": "N3-cold-start-bounded-v2",
+              "targetMs": 50,
+              "maxExceptionalTaskMs": 55,
+              "maxExceptionalTasks": 2,
+              "maxAffectedVisits": 2,
+              "maxExcessMs": 10,
+              "runsPerRoute": 20
+            },
+            "runs": 20,
+            "exceptionalTaskCount": 0,
+            "totalExcessMs": 0,
+            "maxExceptionalTaskMs": 0
+          }
+        }
+      ],
+      "controls": {
+        "deadActivationRefused": true,
+        "longTaskRefused": true,
+        "longInputRefused": true
+      },
+      "evidence": {
+        "directory": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/successor-p17/performance-attempt-Z1WmGl",
+        "totalBytes": 126342192,
+        "sha256": "a02b08caf0b11c58fde127434faef08ce51b0b1ece72cc2f087d18c1b058c8e5"
+      }
+    }
+  },
+  "limitations": [
+    "Development candidate source remains 3.1.0 and is not the published seven-package 3.1.0 release.",
+    "No version bump, tag, publication or deployment was performed.",
+    "The separate FORMA-301 pinned native incremental-size gate has 7 bytes remaining; future version preparation must rerun it.",
+    "Later harness-only CI repairs do not change the sealed package bytes and are qualified separately."
+  ]
+}

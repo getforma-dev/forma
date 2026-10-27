@@ -228,10 +228,10 @@ test('a live tag cannot publish mixed A2 versions, dev versions or a partial set
   assert.throws(() => assertReleaseSet(packages.map((p, i) => i ? p : { ...p, version: '2.1.0' }), 'v3.0.0-alpha.1'));
   for (const tag of ['main', 'v3.0.0-dev', 'v2.0.0', 'v3.0.0;echo pwned', 'v03.0.0']) assert.throws(() => assertReleaseSet(packages, tag));
 });
-test('version preparation changes seven manifests, exact internal requirements and repositories without publishing', () => {
+test('version preparation changes eight manifests, exact internal requirements and repositories without publishing', () => {
   const before = json(join(ROOT, 'packages/core/package.json')).version;
   const files = versionFiles(ROOT, '3.0.0-alpha.1');
-  for (const name of ['core', 'compiler', 'build', 'create-app']) {
+  for (const name of ['core', 'compiler', 'build', 'router', 'create-app']) {
     const p = JSON.parse(files.get(`packages/${name}/package.json`));
     assert.equal(p.version, '3.0.0-alpha.1');
     assert.equal(p.repository.url, 'git+https://github.com/getforma-dev/forma.git');
@@ -265,6 +265,29 @@ test('version preparation keeps every Cargo workspace aligned without changing e
       assert.equal(readFileSync(join(ROOT, path), 'utf8'), original, 'versionFiles must stay pure');
     }
   }
+});
+test('version preparation updates the active native proof lock for RC and stable without changing any other bytes', () => {
+  const path = 'experiments/forma-router-native/server/Cargo.lock';
+  const original = readFileSync(join(ROOT, path), 'utf8');
+  const pattern = /(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g;
+  assert.equal([...original.matchAll(pattern)].length, 3, 'the actual fixture holds all three local Forma packages');
+  for (const version of ['3.2.0-rc.2', '3.2.0', '3.3.0-rc.1']) {
+    const prepared = versionFiles(ROOT, version).get(path);
+    assert.equal(prepared, original.replace(pattern, `$1${version}"`), 'only the three Forma version scalars may change');
+    assert.equal(readFileSync(join(ROOT, path), 'utf8'), original, 'planning must not mutate the actual fixture');
+  }
+});
+test('version preparation preserves a source donor without the later native proof workspace', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'forma-version-donor-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const optional = 'experiments/forma-router-native/server/Cargo.lock';
+  const initial = versionFiles(ROOT, '3.2.0-rc.1');
+  for (const [path, text] of initial) if (path !== optional) {
+    const full = join(dir, path); mkdirSync(join(full, '..'), { recursive: true }); writeFileSync(full, text);
+  }
+  const next = versionFiles(dir, '3.2.0');
+  assert.equal(next.has(optional), false, 'a missing historical fixture is not synthesized');
+  assert.equal(next.get('Cargo.lock'), initial.get('Cargo.lock').replace(/(\[\[package\]\]\nname = "forma-(?:ir|ir-derive|server)"\nversion = ")[^"]+"/g, '$13.2.0"'));
 });
 test('version preparation remains valid under the actual internal dependency guard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'forma-version-guard-'));
@@ -412,7 +435,7 @@ test('version preparation keeps the window peers and exact packed crate pins dis
   ]) {
     assert.equal(compatibilityPeer(version), expected);
     const files = versionFiles(ROOT, version);
-    for (const [member, peer] of [['compiler', '@getforma/core'], ['build', '@getforma/compiler']]) {
+    for (const [member, peer] of [['compiler', '@getforma/core'], ['router', '@getforma/core'], ['build', '@getforma/compiler']]) {
       const manifest = JSON.parse(files.get(`packages/${member}/package.json`));
       const locked = JSON.parse(files.get('package-lock.json')).packages[`packages/${member}`];
       assert.equal(manifest.peerDependencies[peer], expected);

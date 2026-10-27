@@ -1,0 +1,11 @@
+✔ normal completion and spawn refusal close their streams without claiming a live tree (34.517708ms)
+✔ cancellation closes a real owned descendant listener and inherited output (247.705333ms)
+✔ negative control: direct parent exit leaves its descendant alive until group cleanup (216.901958ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 567.054958

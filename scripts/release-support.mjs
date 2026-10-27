@@ -3,9 +3,9 @@
 import assert from 'node:assert/strict';
 import {RELEASE_RECORD_MAX_BYTES} from './release-record-limits.mjs';
 import { createHash } from 'node:crypto';
-import { assertReleaseSet, CRATES, NPM } from './release-set.mjs';
+import { assertReleaseSet } from './release-set.mjs';
 
-const identities = [...NPM.map(name => `npm:@getforma/${name}`), ...CRATES.map(name => `crates:${name}`)].sort();
+import { packageIdentitiesForVersion } from './release-package-inventory.mjs';
 const unifiedTag = /^v(?:[3-9]|[1-9]\d+)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?$/;
 export function readRecordedSet(bytes, expectedSha256) {
   assert(bytes.byteLength > 0 && bytes.byteLength <= RELEASE_RECORD_MAX_BYTES, 'DS12 invalid record byte size');
@@ -15,7 +15,7 @@ export function readRecordedSet(bytes, expectedSha256) {
   assert.equal(record.schema, 1, 'unsupported release-record schema');
   assert.equal(record.dryRun, false, 'a dry-run set is not a published release');
   assertReleaseSet(record.packages, record.tag);
-  assert.deepEqual(record.packages.map(p => `${p.registry}:${p.name}`).sort(), identities, 'record must name the exact seven-package set once');
+  assert.deepEqual(record.packages.map(p => `${p.registry}:${p.name}`).sort(), packageIdentitiesForVersion(record.tag.slice(1)), 'record must name its exact versioned package set once');
   assert.match(record.commit ?? '', /^[a-f0-9]{40}$/, 'record must name a commit');
   for (const p of record.packages) assert.match(p.sha256 ?? '', /^[a-f0-9]{64}$/, `${p.name}: missing archive hash`);
   assert.equal(record.measurements?.passed, true, 'record has no successful P17');

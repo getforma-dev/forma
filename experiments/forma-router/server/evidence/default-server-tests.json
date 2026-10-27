@@ -1,0 +1,11 @@
+{
+  "command": "cargo test -p forma-server --locked",
+  "observed_at_utc": "2026-10-26T16:08:36.364706+00:00",
+  "groups": 20,
+  "passed": 216,
+  "failed": 0,
+  "ignored": 1,
+  "all_groups_ok": true,
+  "source_base": "9a570afece5eb5091824422f00134a875310e857",
+  "scope": "Local server crate tests and doctests; not browser or packed release qualification."
+}

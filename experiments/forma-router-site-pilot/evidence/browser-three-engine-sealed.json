@@ -1,0 +1,213 @@
+{
+  "complete": true,
+  "at": "2026-10-26T20:41:51.610Z",
+  "scope": "Local static public portal pilot; no native-server qualification, deployment or private source publication.",
+  "preparation": {
+    "scope": "Local static public portal pilot; no native-server qualification, deployment or private source publication.",
+    "siteCommit": "919af5872b3a48fa43d12ce1bf4ceedad37dcdfd",
+    "privateCheckoutUntouched": true,
+    "frameworkCommit": "2fc9be2241b3300061927130b2f323b4376c0cff",
+    "frameworkRouterSourceSha256": "4c6be4cef51791c4d67348b54800dc806d614abc636128bdc7c3258ac40087e9",
+    "packages": [
+      {
+        "name": "@getforma/core",
+        "version": "3.1.0",
+        "file": "getforma-core-3.1.0.tgz",
+        "sha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643"
+      },
+      {
+        "name": "@getforma/router",
+        "version": "3.1.0",
+        "file": "getforma-router-3.1.0.tgz",
+        "sha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e"
+      }
+    ],
+    "build": "85a36c3c22521eb06bd7116e",
+    "assets": "?v=162c27d7eb6cfa96",
+    "head": "2527b45be29070ddb9852e6187d0e324b8418ecf0f7dc801c2c3bbf503a173a2",
+    "pages": [
+      {
+        "path": "/project/",
+        "sha256": "e624940b9eb9a171b0293dd086f0e8ab59376e38479cd4cf60f84148a4e4e391",
+        "title": "A small stack, in the open. — Forma"
+      },
+      {
+        "path": "/releases/",
+        "sha256": "3619bb39f583fedeee5ab804fce6008d735fbf81f145fab36334c0b07613de11",
+        "title": "Forma 3.0 — Forma"
+      }
+    ],
+    "originalPortalSha256": "b9ba2c22ce825b33a322a14dfac87f0dcf86147f86c6e25022e6bc44cc8542f1",
+    "candidatePortalSha256": "b8fd3828c92dd9d323dc00fa6d322da0c80be1adcc8b05af62cc983eff758c74"
+  },
+  "results": [
+    {
+      "engine": "chromium",
+      "name": "real pages retain header/search and release each departing page",
+      "passed": true,
+      "searchResults": 12,
+      "lifecycle": {
+        "mounts": 5,
+        "disposals": 4,
+        "errors": []
+      },
+      "newExecutableRequests": 0,
+      "documentPreserved": true,
+      "headerPreserved": true,
+      "searchPreserved": true
+    },
+    {
+      "engine": "chromium",
+      "name": "changed destination bytes refuse enhancement and recover by document",
+      "passed": true,
+      "changedDocumentRejected": true,
+      "documentRecovery": true
+    },
+    {
+      "engine": "chromium",
+      "name": "initial build mismatch leaves ordinary links usable",
+      "passed": true,
+      "initialMismatchRefused": true,
+      "documentNavigation": true
+    },
+    {
+      "engine": "chromium",
+      "name": "atomic rollback restores original navigator and homepage document boundary",
+      "passed": true,
+      "atomicRollback": true,
+      "priorNavigatorRestored": true,
+      "homepageDocumentNavigation": true
+    },
+    {
+      "engine": "chromium",
+      "name": "allowlist and native-lab boundary keep document navigation",
+      "passed": true,
+      "unregisteredPortalDocumentNavigation": true,
+      "nativeLabDocumentNavigation": true,
+      "nativeLabExecution": "static-preview landing only; Rust handler is outside this pilot"
+    },
+    {
+      "engine": "chromium",
+      "name": "ordinary public links work with JavaScript disabled",
+      "passed": true,
+      "noJavaScript": true
+    },
+    {
+      "engine": "firefox",
+      "name": "real pages retain header/search and release each departing page",
+      "passed": true,
+      "searchResults": 12,
+      "lifecycle": {
+        "mounts": 5,
+        "disposals": 4,
+        "errors": []
+      },
+      "newExecutableRequests": 0,
+      "documentPreserved": true,
+      "headerPreserved": true,
+      "searchPreserved": true
+    },
+    {
+      "engine": "firefox",
+      "name": "changed destination bytes refuse enhancement and recover by document",
+      "passed": true,
+      "changedDocumentRejected": true,
+      "documentRecovery": true
+    },
+    {
+      "engine": "firefox",
+      "name": "initial build mismatch leaves ordinary links usable",
+      "passed": true,
+      "initialMismatchRefused": true,
+      "documentNavigation": true
+    },
+    {
+      "engine": "firefox",
+      "name": "atomic rollback restores original navigator and homepage document boundary",
+      "passed": true,
+      "atomicRollback": true,
+      "priorNavigatorRestored": true,
+      "homepageDocumentNavigation": true
+    },
+    {
+      "engine": "firefox",
+      "name": "allowlist and native-lab boundary keep document navigation",
+      "passed": true,
+      "unregisteredPortalDocumentNavigation": true,
+      "nativeLabDocumentNavigation": true,
+      "nativeLabExecution": "static-preview landing only; Rust handler is outside this pilot"
+    },
+    {
+      "engine": "firefox",
+      "name": "ordinary public links work with JavaScript disabled",
+      "passed": true,
+      "noJavaScript": true
+    },
+    {
+      "engine": "webkit",
+      "name": "real pages retain header/search and release each departing page",
+      "passed": true,
+      "searchResults": 12,
+      "lifecycle": {
+        "mounts": 5,
+        "disposals": 4,
+        "errors": []
+      },
+      "newExecutableRequests": 0,
+      "documentPreserved": true,
+      "headerPreserved": true,
+      "searchPreserved": true
+    },
+    {
+      "engine": "webkit",
+      "name": "changed destination bytes refuse enhancement and recover by document",
+      "passed": true,
+      "changedDocumentRejected": true,
+      "documentRecovery": true
+    },
+    {
+      "engine": "webkit",
+      "name": "initial build mismatch leaves ordinary links usable",
+      "passed": true,
+      "initialMismatchRefused": true,
+      "documentNavigation": true
+    },
+    {
+      "engine": "webkit",
+      "name": "atomic rollback restores original navigator and homepage document boundary",
+      "passed": true,
+      "atomicRollback": true,
+      "priorNavigatorRestored": true,
+      "homepageDocumentNavigation": true
+    },
+    {
+      "engine": "webkit",
+      "name": "allowlist and native-lab boundary keep document navigation",
+      "passed": true,
+      "unregisteredPortalDocumentNavigation": true,
+      "nativeLabDocumentNavigation": true,
+      "nativeLabExecution": "static-preview landing only; Rust handler is outside this pilot"
+    },
+    {
+      "engine": "webkit",
+      "name": "ordinary public links work with JavaScript disabled",
+      "passed": true,
+      "noJavaScript": true
+    }
+  ],
+  "browsers": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4"
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0"
+    },
+    {
+      "engine": "webkit",
+      "version": "27.2"
+    }
+  ],
+  "failures": []
+}

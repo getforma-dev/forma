@@ -4,8 +4,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const SEED_MARKER = 'packages/create-app/template-lock-seeds.json';
-export const SEED_TEMPLATES = ['minimal', 'dashboard'];
-const NPM = ['@getforma/core', '@getforma/compiler', '@getforma/build'];
+export const LEGACY_SEED_TEMPLATES = ['minimal', 'dashboard'];
+export const SEED_TEMPLATES = [...LEGACY_SEED_TEMPLATES, 'native-router'];
+// Historical releases carry only their two original templates. The router is opt-in.
+export const templatesForPackages = packages => packages.some(p => p.registry === 'npm' && p.name === '@getforma/router') ? [...SEED_TEMPLATES] : [...LEGACY_SEED_TEMPLATES];
+const NPM = ['@getforma/core', '@getforma/compiler', '@getforma/build', '@getforma/router'];
 const CARGO = ['forma-ir', 'forma-ir-derive', 'forma-server'];
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:dev|(?:alpha|beta|rc)\.(?:0|[1-9]\d*)))?$/;
 const REGISTRY = 'registry+https://github.com/rust-lang/crates.io-index';
@@ -92,24 +95,36 @@ export function validateSeedFiles(files, v, label = 'template') {
   const rootEdges = [...root.raw.matchAll(/^\s+"([^"\r\n]+)",\r?$/gm)].map(m => m[1].split(' ')[0]).sort();
   assert.deepEqual(declarations.map(m => m[1]).sort(), rootEdges, `${label}: Cargo manifest and seed root dependencies differ`);
   for (const [, name, value] of declarations) assert(!/\b(?:package|path|git)\s*=/.test(value), `${label}: unsupported source override for ${name}`);
-  for (const [, name, value] of cargo.matchAll(/^(forma-[\w-]+)\s*=\s*(.+)\r?$/gm)) assert(CARGO.includes(name) && value.trim() === `"=${v}"`, `${label}: unknown or mixed Cargo requirement ${name}@${value}`);
+  for (const [, name, value] of cargo.matchAll(/^(forma-[\w-]+)\s*=\s*(.+)\r?$/gm)) {
+    const requirement = value.trim();
+    const navigation = /^\{\s*version\s*=\s*"([^"]+)"\s*,\s*features\s*=\s*\[\s*"navigation"\s*\]\s*\}$/.exec(requirement);
+    assert(CARGO.includes(name) && (requirement === `"=${v}"` || (name === 'forma-server' && navigation?.[1] === `=${v}`)), `${label}: unknown or mixed Cargo requirement ${name}@${value}`);
+  }
   return files;
 }
-export function readTemplateSeeds(root, expectedVersion) {
+export function replaceTemplateCargoRequirements(text, requirement) {
+  return text.replace(/^((forma-(?:ir|ir-derive|server))\s*=\s*(?:\{\s*version\s*=\s*)?")[^"]+"/gm,
+    (_, prefix, name) => `${prefix}${requirement(name)}"`);
+}
+export function readTemplateSeeds(root, expectedVersion, { legacyInventory = false } = {}) {
   version(expectedVersion);
+  if (legacyInventory) assert(/^3\.[01]\./.test(expectedVersion), 'legacy seed inventory is only valid for the historical 3.0/3.1 lines');
+  const templates = legacyInventory ? LEGACY_SEED_TEMPLATES : SEED_TEMPLATES;
   const marker = JSON.parse(read(root, SEED_MARKER));
-  assert.deepEqual(marker, { schema: 1, version: expectedVersion, templates: SEED_TEMPLATES }, 'source template seed identity/version differs');
+  assert.deepEqual(marker, { schema: 1, version: expectedVersion, templates }, 'source template seed identity/version differs');
   assert.equal(JSON.parse(read(root, 'packages/create-app/package.json')).version, expectedVersion, 'source template seed differs from create-app version');
-  return new Map(SEED_TEMPLATES.map(template => {
+  return new Map(templates.map(template => {
     const prefix = `packages/create-app/templates/${template}`;
     const files = new Map(['Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(path => [path, read(root, `${prefix}/${path}`)]));
     return [template, validateSeedFiles(files, expectedVersion, template)];
   }));
 }
-export function prepareTemplateSeeds(root, oldVersion, nextVersion) {
+export function prepareTemplateSeeds(root, oldVersion, nextVersion, { legacyInventory = false } = {}) {
   version(nextVersion);
-  const output = new Map([[SEED_MARKER, JSON.stringify({schema: 1, version: nextVersion, templates: SEED_TEMPLATES}, null, 2) + '\n']]);
-  for (const [template, files] of readTemplateSeeds(root, oldVersion)) {
+  if (legacyInventory) assert(/^3\.[01]\./.test(nextVersion), 'legacy seed inventory is only valid for the historical 3.0/3.1 lines');
+  const templates = legacyInventory ? LEGACY_SEED_TEMPLATES : SEED_TEMPLATES;
+  const output = new Map([[SEED_MARKER, JSON.stringify({schema: 1, version: nextVersion, templates}, null, 2) + '\n']]);
+  for (const [template, files] of readTemplateSeeds(root, oldVersion, { legacyInventory })) {
     const manifest = JSON.parse(files.get('admin/package.json')), lock = JSON.parse(files.get('admin/package-lock.json'));
     for (const p of [manifest, lock.packages['']]) for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies']) for (const name of Object.keys(p[kind] ?? {})) if (NPM.includes(name)) p[kind][name] = `=${nextVersion}`;
     for (const [path, entry] of Object.entries(lock.packages)) if (NPM.includes(npmName(path))) {
@@ -118,7 +133,7 @@ export function prepareTemplateSeeds(root, oldVersion, nextVersion) {
       for (const kind of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) for (const name of Object.keys(entry[kind] ?? {})) if (NPM.includes(name)) entry[kind][name] = kind === 'peerDependencies' ? peerWindow(nextVersion) : `=${nextVersion}`;
     }
     files.set('admin/package.json', JSON.stringify(manifest,null,2)+'\n'); files.set('admin/package-lock.json', JSON.stringify(lock,null,2)+'\n');
-    files.set('Cargo.toml', files.get('Cargo.toml').replace(/^(forma-(?:ir|ir-derive|server) = ")[^"]+"/gm, `$1=${nextVersion}"`));
+    files.set('Cargo.toml', replaceTemplateCargoRequirements(files.get('Cargo.toml'), () => `=${nextVersion}`));
     files.set('Cargo.lock', blocks(files.get('Cargo.lock')).map(raw => CARGO.includes(scalar(raw,'name')) ? raw.replace(/^version = "[^"]+"/m, `version = "${nextVersion}"`) : raw).join('').replace(/"(forma-(?:ir|ir-derive|server)) ([^" ]+)([^"]*)"/g, (_,name,prior,suffix) => { assert.equal(prior,oldVersion,'mixed internal Cargo edge version'); return `"${name} ${nextVersion}${suffix}"`; }));
     validateSeedFiles(files,nextVersion,template);
     for (const [path,text] of files) output.set(`packages/create-app/templates/${template}/${path}`,text);

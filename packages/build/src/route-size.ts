@@ -6,7 +6,7 @@
  * `BuildResult.sizeReport`, and writes it beside the manifest as
  * `size-report.json`.
  *
- * N2 as restated by L-55 and raised by L-58, L-59, L-64 and the 3.1 decision: Forma's own browser code, `@getforma/core` and its
+ * N2 as restated by L-55 and raised by L-58, L-59, L-64 and the 3.1 decision: Forma's own browser code, `@getforma/core`, optional `@getforma/router`, and the
  * signal library `alien-signals` as the route's bundles carry them, is at most
  * 28,420 B gzip at level 9 (1 KB = 1,000 B) on a route that has any, Brotli
  * reported beside it; the application's own code is outside that ceiling. The
@@ -84,22 +84,29 @@ export const FORMA_CODE_CEILING_GZIP = 28_420;
 /** N2's "other server-rendered pages": all of a route's JavaScript, bytes gzip -9 (75 KiB). */
 export const PAGE_JAVASCRIPT_CEILING_GZIP = 75 * 1024;
 
+/** FORMA-301 design N3/N4: an authenticated eager navigation group has a
+ * distinct fixed budget. Incremental consumer qualification remains separate. */
+export const NAVIGATION_INCREMENT_CEILING_GZIP = 12 * 1024;
+export const NAVIGATION_JAVASCRIPT_CEILING_GZIP = 64 * 1024;
+export const NAVIGATION_FORMA_CEILING_GZIP = FORMA_CODE_CEILING_GZIP + NAVIGATION_INCREMENT_CEILING_GZIP;
+
 /** N2's canvas, the JavaScript-heavy budget: all of a declared canvas route's JavaScript, bytes gzip -9 (365 KiB). */
 export const CANVAS_JAVASCRIPT_CEILING_GZIP = 365 * 1024;
 
 /** The packages whose bundled bytes are Forma's code under N2. */
-export const FORMA_PACKAGES: ReadonlySet<string> = new Set(['@getforma/core', 'alien-signals']);
+export const FORMA_PACKAGES: ReadonlySet<string> = new Set(['@getforma/core', '@getforma/router', 'alien-signals']);
 
 /** The generated service worker, a file of every production build. */
 export const WORKER_FILE = 'sw.js';
 
 /** How a route is classified (DR-35). */
-export type RouteClass = 'no-interactive-region' | 'islands' | 'whole-page-mount';
+export type RouteClass = 'no-interactive-region' | 'islands' | 'whole-page-mount' | 'navigation-group';
 
 const CLASS_LABEL: Readonly<Record<RouteClass, string>> = {
   'no-interactive-region': 'no interactive region',
   islands: 'islands',
   'whole-page-mount': 'whole-page mount',
+  'navigation-group': 'navigation group',
 };
 
 /** What a class may ship, bytes gzip -9: Forma's code, and all of the route's JavaScript. */
@@ -111,6 +118,7 @@ export interface RouteCeilings {
 /** The ceilings of a class; a canvas declaration raises only the JavaScript of a route that has JavaScript. */
 export function routeCeilings(routeClass: RouteClass, canvas = false): RouteCeilings {
   if (routeClass === 'no-interactive-region') return { forma: 0, javascript: 0 };
+  if (routeClass === 'navigation-group') return { forma: NAVIGATION_FORMA_CEILING_GZIP, javascript: NAVIGATION_JAVASCRIPT_CEILING_GZIP };
   return { forma: FORMA_CODE_CEILING_GZIP, javascript: canvas ? CANVAS_JAVASCRIPT_CEILING_GZIP : PAGE_JAVASCRIPT_CEILING_GZIP };
 }
 
@@ -125,6 +133,8 @@ export interface ByteSizes {
 export interface RouteSizeFile extends ByteSizes {
   file: string;
   forma: ByteSizes;
+  /** Optional-router attribution, included in forma; absent on legacy measurements. */
+  router?: ByteSizes;
 }
 
 /** One route's size report. */
@@ -136,8 +146,11 @@ export interface RouteSize extends ByteSizes {
   canvas: boolean;
   /** The files the route loads cold: its `js` and `modulepreload` lists. Empty for a route with no JavaScript. */
   files: RouteSizeFile[];
-  /** `@getforma/core` and `alien-signals` as bundled: N2's figure is `forma.gzip`. */
+  /** `@getforma/core`, `@getforma/router`, and `alien-signals` as bundled: N2's figure is `forma.gzip`. */
   forma: ByteSizes;
+  /** Core plus signals/banner; together with router equals forma. */
+  core: ByteSizes;
+  router: ByteSizes;
   /** Everything else in the route's files: the application's own code and its other dependencies. */
   application: ByteSizes;
   /** The service worker the route registers: `sw.js` for a route with JavaScript, zero for one without. */
@@ -221,7 +234,7 @@ export function packageNameOf(file: string, cache: Map<string, string | undefine
 }
 
 /**
- * Whether a metafile input is Forma's code: a file inside `@getforma/core` or
+ * Whether a metafile input is Forma's code: a file inside `@getforma/core`, `@getforma/router` or
  * `alien-signals`, however the bundle reached it (`formaAlias`, a workspace
  * link, a nested `node_modules`). The compatibility guard's virtual inputs are
  * nobody's bytes.
@@ -306,6 +319,8 @@ export function assembleRoute(
 ): RouteSize {
   const total = sum(files);
   const forma = sum(files.map((file) => file.forma));
+  const router = sum(files.map((file) => file.router ?? ZERO));
+  const core = { raw: forma.raw - router.raw, gzip: forma.gzip - router.gzip, brotli: forma.brotli - router.brotli };
   const registered: ByteSizes = files.length > 0 ? { raw: worker.raw, gzip: worker.gzip, brotli: worker.brotli } : ZERO;
   const javascript = sum([total, registered]);
   const ceilings = routeCeilings(routeClass, canvas);
@@ -318,7 +333,7 @@ export function assembleRoute(
     canvas,
     files,
     ...total,
-    forma,
+    forma, core, router,
     application: { raw: total.raw - forma.raw, gzip: total.gzip - forma.gzip, brotli: total.brotli - forma.brotli },
     worker: registered,
     javascript,
@@ -369,9 +384,12 @@ export function routeSizes(
     const output = outputs.get(file);
     if (!output) throw new Error(`BUILD-819 route file ${file} was written by no bundling pass, so its Forma code cannot be attributed`);
     const sizes = compressed(join(distDir, file));
-    let formaRaw = 0;
+    let formaRaw = 0, routerRaw = 0;
     for (const [input, contribution] of Object.entries(output.inputs)) {
-      if (isFormaInput(input, packages)) formaRaw += contribution.bytesInOutput;
+      if (isFormaInput(input, packages)) {
+        formaRaw += contribution.bytesInOutput;
+        if (packageNameOf(resolve(input), packages) === '@getforma/router') routerRaw += contribution.bytesInOutput;
+      }
     }
     // The identity banner is Forma's (see the header). The file's own bytes are the
     // denominator: its module wrapper and export lines, which no input owns, count as
@@ -382,6 +400,7 @@ export function routeSizes(
       file,
       ...sizes,
       forma: { raw: formaRaw, gzip: Math.round(sizes.gzip * share), brotli: Math.round(sizes.brotli * share) },
+      router: { raw: routerRaw, gzip: Math.round(sizes.gzip * (sizes.raw ? routerRaw / sizes.raw : 0)), brotli: Math.round(sizes.brotli * (sizes.raw ? routerRaw / sizes.raw : 0)) },
     };
     measured.set(file, result);
     return result;
@@ -427,7 +446,7 @@ const bytes = (n: number): string => n.toLocaleString('en-US');
 
 const time = (ms: number): string => (ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(2)} s`);
 
-const classOf = (size: RouteSize): string => `${CLASS_LABEL[size.class]}${size.canvas && size.class !== 'no-interactive-region' ? ', canvas' : ''}`;
+const classOf = (size: RouteSize): string => `${CLASS_LABEL[size.class]}${size.canvas && size.class !== 'no-interactive-region' && size.class !== 'navigation-group' ? ', canvas' : ''}`;
 
 /** The report as the build prints it: one line per route, then the worker, the frame document and the times. */
 export function formatSizeReport(report: SizeReport): string[] {
@@ -436,9 +455,12 @@ export function formatSizeReport(report: SizeReport): string[] {
   const classWidth = Math.max(1, ...routes.map((size) => classOf(size).length));
   const label = (name: string): string => `   ${name.padEnd(14)}   `;
   const lines = [
-    '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core and alien-signals as bundled;',
+    '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;',
     `   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
   ];
+  if (routes.some(size => size.class === 'navigation-group')) lines.push(
+    `   FORMA-301 N3/N4: verified navigation groups allow ${bytes(NAVIGATION_FORMA_CEILING_GZIP)} B aggregate Forma and ${bytes(NAVIGATION_JAVASCRIPT_CEILING_GZIP)} B total JavaScript; incremental <= ${bytes(NAVIGATION_INCREMENT_CEILING_GZIP)} B requires paired consumer qualification.`,
+  );
   for (const size of routes) {
     const route = size.route.padEnd(routeWidth);
     const kind = classOf(size).padEnd(classWidth);
@@ -453,6 +475,7 @@ export function formatSizeReport(report: SizeReport): string[] {
       `   ${route}  ${kind}` +
         `  Forma ${bytes(size.forma.gzip)} of ${bytes(size.ceilings.forma)} B` +
         `  JavaScript ${bytes(size.javascript.gzip)} of ${bytes(size.ceilings.javascript)} B` +
+        (size.class === 'navigation-group' ? `  [core/signals ${bytes(size.core.gzip)}, router ${bytes(size.router.gzip)} B]` : '') +
         `  (Brotli: Forma ${bytes(size.forma.brotli)}, JavaScript ${bytes(size.javascript.brotli)})` +
         `  ${size.files.map((file) => file.file).join(' ')}` +
         (over.length > 0 ? `  OVER: ${over.join(', ')}` : ''),

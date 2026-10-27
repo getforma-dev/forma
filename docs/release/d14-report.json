@@ -1,76 +1,90 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "e3f90c4871a9be4e8f25db944479681f9355e560",
-  "reviewedTree": "c9fe1a360bc8fad69a84ace448812b0dc85c1ed2",
-  "inputManifestSha256": "7f327838edc4bb24a1aa0a1b180d805dbe49fbca3774bfe1a653441d1843b688",
+  "reviewedCommit": "3c10b6d056b1b160db47c7f603693502e78e0c71",
+  "reviewedTree": "2263f1cc01c12b0eb19b5c2a4dff356371f9925b",
+  "inputManifestSha256": "f49c8cfdcce3c71cdd2e733857a2068178bd2905884b64bf4c6e948bd2bb3dd1",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "186ba18933797b9e3c9da93d1550198d7476f876478372219f6e8bd081be223f"
+    "sessionEvidenceSha256": "e2e8cc708044dee79045397154819f6f83a55a93442676effcdd82eb7ca4ae7b"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "ed53782673fff039ed52f697ee0452082c0277722ac99751be4dee5e8a72d32a"
+    "sessionEvidenceSha256": "a686c586dd2f255608994e2455e918f432bc05fe9020c45647e5c7c20a6487e5"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "6de4c98efef51e58e921b63b4d3df1a1805f7a66a8bacc6ccf1186f267704f5a"
+    "initializationEvidenceSha256": "6545e18e63c4bbd0c93e0618e414751b6ae9376e630caaa5dd5bf9944b3c1707"
   },
-  "reviewedAt": "2026-10-25T23:40:26.532Z",
+  "reviewedAt": "2026-10-27T00:52:51Z",
   "accepted": true,
   "findings": [
     {
-      "id": "D14-RC3-001",
-      "severity": "low",
-      "disposition": "resolved",
-      "rationale": "The two intended compiler exports missing from the public compatibility inventory were added in d6 and remain correct in Y. Packed API coverage and public source agree.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
-    },
-    {
-      "id": "D14-RC3-002",
-      "severity": "info",
-      "disposition": "resolved",
-      "rationale": "Current full mutation 40239819395 is authenticated and independently checked across all 328 actual probes: 326 caught, 2 scored threshold survivors, 0 equivalent or unqualified. Both 4,294-test baselines and all 26 ownership controls pass, as do the unchanged 85% floors. Historical failures and pre-PIFE evidence do not substitute. Stale survivor notes remain separate FORMA-300 work.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
-    },
-    {
-      "id": "D14-RC3-003",
-      "severity": "info",
-      "disposition": "nonblocking",
-      "rationale": "Historical multirow partial-render exception recovery remains FORMA-298 with disposal/remount as the documented recovery boundary. It is not repaired by the ownership change; focused evidence shows no parent-effect leak. Retain this bounded limitation.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
-    },
-    {
-      "id": "D14-RC3-004",
-      "severity": "high",
-      "disposition": "resolved",
-      "rationale": "The native resource harness originally compiled registry 3.0 crates despite unused RC3 patches. Exact consumer pins and guards on resolved local packages and unused patches repair identity. Authenticated corrected run 40235112915 satisfies resource caps for current Rust plus the explicitly frozen published npm fixture. No whole-RC3 image or invalid-run credit is claimed.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
-    },
-    {
-      "id": "D14-RC3-005",
+      "id": "D14-3.2-001",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "FORMA-299 original full startup tasks exceeded the unchanged policy. Five named PIFEs preserve function bodies and pass source, import and package review. Fresh packed P17 40239821236 passes 62/62 controls with zero exceptional tasks, visits or excess; full startup task maxima are 42.186/40.343 ms. Browser layout exclusions and historical failure remain disclosed.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
+      "rationale": "Irreversible revalidation commit failures now recover even without a history write. Failed committed adapter sessions are detached and disposed before bounded recovery, including exhausted journals; generation checks preserve newer reentrant/async authority. Independent original/fixed browser controls and 12 recovery/native tests support the repair. Current packed navigation/ownership/security campaigns and exact final source bind it.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
     },
     {
-      "id": "D14-RC3-006",
-      "severity": "info",
-      "disposition": "nonblocking",
-      "rationale": "Current Linux measurements reveal material workload costs; original fan-out, effect-create and row targets remain missed. The founder and independent reviewer explicitly accept the measured candidate for verified startup benefit within authorized scope, without noise, equivalence, causal or universal-speedup claims. All package, route and native caps remain enforced.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
+      "id": "D14-3.2-002",
+      "severity": "low",
+      "disposition": "resolved",
+      "rationale": "Current compatibility/release/qualification documentation identifies 3.2 as eight packages and three starters. Published 3.0/3.1 seven-package receipts and earlier router development evidence retain their historical identities. The final 57-row ledger and 49 indexed evidence files were independently verified.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
     },
     {
-      "id": "D14-RC3-007",
-      "severity": "info",
+      "id": "D14-3.2-003",
+      "severity": "low",
+      "disposition": "resolved",
+      "rationale": "The source advisory gate explicitly covers the current native-router starter through the version-selected inventory. Independent ten-control replay verifies native-only advisory/unreachable/missing-starter refusal and historical behavior. Fresh current P17 also passes source and packed advisory/signature gates. This was a coverage defect, not evidence of a present uncovered runtime vulnerability.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+    },
+    {
+      "id": "D14-3.2-004",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "All three shipped consumer workflows now enforce scripts-off complete npm installation, registry signatures, full npm advisories and pinned cargo-deny with live database fetch before builds. Independent parsed-workflow/mutation/fail-fast shell/packed-byte controls pass. Current candidate source/template equality and all three P17 starter runs bind the shipped correction.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+    },
+    {
+      "id": "D14-3.2-005",
+      "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "All 86 current default-branch dependency alerts map to 50 historical snapshots and 36 separate benchmark competitor locks. Checks of seven active locks and 66 applicable version ranges, plus authenticated package scope, find no affected shipped Forma input; current production advisory gates pass. Competitor runtime alerts remain visible maintenance under FORMA-293. No alerts were dismissed and no blanket security guarantee is claimed.",
-      "evidenceSha256": "e25b8087df5e3c73c8ff3bb94f30121a8a0bc57405827c6ece96ed280eebc328"
+      "rationale": "Bootstrap credential metadata shows broader package/org write authority, 2FA bypass and a seven-day expiry rather than the requested package-only/one-day credential. The human explicitly authorized the finite exception after disclosure, as relayed and recorded by the parent. The source restricts use to the first exact @getforma/router 3.2.0-rc.1 qualified archive and strips credentials from other npm children; it does not reduce registry authority if leaked. Immediate GitHub secret removal and npm revocation after publication, actual trusted-publisher enrollment/first trusted publication and live monitoring remain mandatory operational obligations. No least-privilege or completed-enrollment claim is accepted.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+    },
+    {
+      "id": "D14-3.2-006",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "Click interception reads the raw href and resolves it against the committed view during a held POP; missing href is not synthesized into navigation. The original three-engine failure, corrected 12-case replay and full 117-case history campaign retain their actual source identities. The two removed irreversible assignments were immediately overwritten unconditionally and did not create a new callback boundary.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+    },
+    {
+      "id": "D14-3.2-007",
+      "severity": "low",
+      "disposition": "resolved",
+      "rationale": "Scroll bookkeeping now inserts/prunes immediately after current assignment and before signal/title callbacks. Independent original/fixed title-failure/full-journal/preparation-failure controls show exactly 1000 records with the current key retained; the earlier prune relocation failed that control. Corrected installed regressions and current source/packed size preserve the original caps.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+    },
+    {
+      "id": "D14-3.2-008",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "Five-package observer defaults and eight-package registry policy are prepared before the audit freeze, removing the runbook requirement for prohibited post-RC source edits. Independent 43-test replay verifies missing-router 404/nonzero/incomplete/no snapshot, immutable historical baseline, expansion/shrink behavior and missing package/record/hash rejection. Preexisting policy data and historical inventory readers are unchanged. Configuration is not live enrollment or a successful registry observation.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+    },
+    {
+      "id": "D14-3.2-009",
+      "severity": "low",
+      "disposition": "nonblocking",
+      "rationale": "The first uncertain-outcome announcement repeats the warning sentence and doubles punctuation. An independent installed 4c59 control observes the DOM text while confirming one POST, retained uncertainty and refusal of a subsequent submit. This is a visible/live-region wording defect, not an observed speech failure. The general Mac checklist confirmation does not refute it. Retained for follow-up; no fixed claim or runtime change is required for this RC.",
+      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "1549093da63ef83cae98b1d1f522a1026064952ef28bc40ae6e71c5df5f06427"
+  "acceptanceEvidenceSha256": "5fe580a7a24fe12e21e42fd52df2bc3469588f044c6a1fd7b0cbd6188b6dc901"
 }

@@ -1,0 +1,680 @@
+{
+  "retrieved_date": "2026-10-26",
+  "source_repo": "https://github.com/angular/angular",
+  "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+  "pin_basis": "Public footer reported v22.2.3+sha-ecaec13; GitHub commit API resolved the prefix. Self-reported deployment identity, not a reproducible-byte attestation.",
+  "local_checkout": ".local/upstream/angular",
+  "site_entry": "https://angular.dev/guide/routing",
+  "site_source": "adev/",
+  "library_source": "packages/router/",
+  "source_license": "MIT",
+  "documentation_license": "CC BY 4.0 according to the website footer; prose is linked rather than broadly copied.",
+  "sources": [
+    {
+      "id": "A01",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/url_tree.ts",
+      "line_start": 472,
+      "line_end": 498,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/url_tree.ts#L472-L498",
+      "sha256": "46ed76a4316f1c132e3e4ea17801aa1887903acbffab450e73ef19af07ddebfb"
+    },
+    {
+      "id": "A02",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/url_tree.ts",
+      "line_start": 572,
+      "line_end": 642,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/url_tree.ts#L572-L642",
+      "sha256": "46ed76a4316f1c132e3e4ea17801aa1887903acbffab450e73ef19af07ddebfb"
+    },
+    {
+      "id": "A03",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/recognize.ts",
+      "line_start": 120,
+      "line_end": 172,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/recognize.ts#L120-L172",
+      "sha256": "827f858c694e95e36d601beb5e9964260e0eda3ab75b66ec640c4886ebc7b379"
+    },
+    {
+      "id": "A04",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/recognize.ts",
+      "line_start": 251,
+      "line_end": 284,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/recognize.ts#L251-L284",
+      "sha256": "827f858c694e95e36d601beb5e9964260e0eda3ab75b66ec640c4886ebc7b379"
+    },
+    {
+      "id": "A05",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/utils/config_matching.ts",
+      "line_start": 54,
+      "line_end": 118,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/utils/config_matching.ts#L54-L118",
+      "sha256": "0126de6f3c93b93809bed28afff07aed290b9cb359afa2bb42495e6678542c99"
+    },
+    {
+      "id": "A06",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/shared.ts",
+      "line_start": 153,
+      "line_end": 218,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/shared.ts#L153-L218",
+      "sha256": "f3bb28a66f80ef2f249dfdcb5a9d22c01ee14942a16c76ee5119b8eb88e96d3d"
+    },
+    {
+      "id": "A07",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/directives/router_link.ts",
+      "line_start": 480,
+      "line_end": 533,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/directives/router_link.ts#L480-L533",
+      "sha256": "1b647cff7d31c67aedb505924687d18626eb9417696806f8b36270b1652a78f2"
+    },
+    {
+      "id": "A08",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/navigation_transition.ts",
+      "line_start": 447,
+      "line_end": 985,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/navigation_transition.ts#L447-L985",
+      "sha256": "81e7825f5d838e8e3a5d1e7980063e714126afbc52213aba569a078e91c0c918"
+    },
+    {
+      "id": "A09",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/statemanager/state_manager.ts",
+      "line_start": 193,
+      "line_end": 325,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/statemanager/state_manager.ts#L193-L325",
+      "sha256": "48d31505d397e4db40cee69c93eb08d829b9e63de9cdc78f4f9856bf328964d1"
+    },
+    {
+      "id": "A10",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/statemanager/navigation_state_manager.ts",
+      "line_start": 117,
+      "line_end": 239,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/statemanager/navigation_state_manager.ts#L117-L239",
+      "sha256": "051705943ad52d96517c2673326ef0d9c514cbee77b851f56c93cfb6edf58ad8"
+    },
+    {
+      "id": "A11",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/statemanager/navigation_state_manager.ts",
+      "line_start": 402,
+      "line_end": 541,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/statemanager/navigation_state_manager.ts#L402-L541",
+      "sha256": "051705943ad52d96517c2673326ef0d9c514cbee77b851f56c93cfb6edf58ad8"
+    },
+    {
+      "id": "A12",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/operators/check_guards.ts",
+      "line_start": 56,
+      "line_end": 171,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/operators/check_guards.ts#L56-L171",
+      "sha256": "0cbddd66575f531e8bda3f001bd06ce2ffeeb68043b3afa9464bca4a33f0256b"
+    },
+    {
+      "id": "A13",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/operators/resolve_data.ts",
+      "line_start": 28,
+      "line_end": 126,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/operators/resolve_data.ts#L28-L126",
+      "sha256": "1ceebf09d52fe351d435c81a6095bdb8eb76cb2796b96594c4f5dbc3edff5f07"
+    },
+    {
+      "id": "A14",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/router_config_loader.ts",
+      "line_start": 40,
+      "line_end": 110,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/router_config_loader.ts#L40-L110",
+      "sha256": "9a96486e4a9ba29a1fa30e0ba7a7de49bd65b9714254e42b4f8f551bc25d7901"
+    },
+    {
+      "id": "A15",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/route_reuse_strategy.ts",
+      "line_start": 117,
+      "line_end": 165,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/route_reuse_strategy.ts#L117-L165",
+      "sha256": "505e9275637f6da5f66be57e129f4f33fd025970a7ddd44c35bfae249b554422"
+    },
+    {
+      "id": "A16",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/operators/activate_routes.ts",
+      "line_start": 1,
+      "line_end": 243,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/operators/activate_routes.ts#L1-L243",
+      "sha256": "fb11d9f55e68a4fe58fc83caec761a2f55ed26519490066da13fae1df567c657"
+    },
+    {
+      "id": "A17",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/router_preloader.ts",
+      "line_start": 60,
+      "line_end": 198,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/router_preloader.ts#L60-L198",
+      "sha256": "adb981e32ad308b4cd06f45a11d95a64aaa4b0fd1f2762af94cbd78791eb2748"
+    },
+    {
+      "id": "A18",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/router_scroller.ts",
+      "line_start": 55,
+      "line_end": 165,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/router_scroller.ts#L55-L165",
+      "sha256": "782487cc69db799caa6b9e47c7cd2c44cc4d87897322f93fcea1a98fff6765da"
+    },
+    {
+      "id": "A19",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/utils/preactivation.ts",
+      "line_start": 176,
+      "line_end": 205,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/utils/preactivation.ts#L176-L205",
+      "sha256": "39400cc9ab8c05e527fd4c1a321f55804f39cd44a5c35ca629b7f520b93a16c2"
+    },
+    {
+      "id": "A20",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/provide_router.ts",
+      "line_start": 906,
+      "line_end": 956,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/provide_router.ts#L906-L956",
+      "sha256": "17a50cce3ba0d8d9a9e87dac1353dedca4656d97ca468dc7d5ab9c82eef2a20d"
+    },
+    {
+      "id": "A21",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/operators/setup_and_run_resources.ts",
+      "line_start": 28,
+      "line_end": 215,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/operators/setup_and_run_resources.ts#L28-L215",
+      "sha256": "0e053cc12b396458464f5ee8356ac23171afe79365aff16f44e4392fc6d50f19"
+    },
+    {
+      "id": "A22",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/routing/router_providers.ts",
+      "line_start": 32,
+      "line_end": 89,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/routing/router_providers.ts#L32-L89",
+      "sha256": "a22906ff21f5fb09545a13fd8889969baae1dd5098d078b4cdc161d198fb1633"
+    },
+    {
+      "id": "A23",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/routing/routes.ts",
+      "line_start": 19,
+      "line_end": 164,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/routing/routes.ts#L19-L164",
+      "sha256": "8573b7a7c6226cc6723b36da507709c90069adeeffdac39a5f88857d4ddb084d"
+    },
+    {
+      "id": "A24",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/shared-docs/utils/navigation.utils.ts",
+      "line_start": 94,
+      "line_end": 152,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/shared-docs/utils/navigation.utils.ts#L94-L152",
+      "sha256": "f628acf2cc853c694cb0d812b2179cb97bd51a6be0238e2e2e5bd97131db4a08"
+    },
+    {
+      "id": "A25",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/core/services/content-loader.service.ts",
+      "line_start": 15,
+      "line_end": 46,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/core/services/content-loader.service.ts#L15-L46",
+      "sha256": "0c008c1246a928adb107eb63a3878cabcda79b3b4fa3690f9049f0e81e73d290"
+    },
+    {
+      "id": "A26",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/shared-docs/components/viewers/docs-viewer/docs-viewer.component.ts",
+      "line_start": 87,
+      "line_end": 139,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/shared-docs/components/viewers/docs-viewer/docs-viewer.component.ts#L87-L139",
+      "sha256": "09907a83da273a33621ed435fba91b11e901bb1e486d35acb7910f6263bd3893"
+    },
+    {
+      "id": "A27",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/shared-docs/components/viewers/docs-viewer/docs-viewer.component.ts",
+      "line_start": 355,
+      "line_end": 399,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/shared-docs/components/viewers/docs-viewer/docs-viewer.component.ts#L355-L399",
+      "sha256": "09907a83da273a33621ed435fba91b11e901bb1e486d35acb7910f6263bd3893"
+    },
+    {
+      "id": "A28",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/app-scroller.ts",
+      "line_start": 44,
+      "line_end": 119,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/app-scroller.ts#L44-L119",
+      "sha256": "5d79796f4581f839c1dd03a3f2cb6dde8660bb6dc4c9aa548c51e7a0b2fbd2d0"
+    },
+    {
+      "id": "A29",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/app.config.ts",
+      "line_start": 30,
+      "line_end": 59,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/app.config.ts#L30-L59",
+      "sha256": "bf75b8cac4ad27c158c7dd33959cd713863d4aa9f7b1e373baae8782a0b51110"
+    },
+    {
+      "id": "A30",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/core/services/routing/adev-url-serializer.ts",
+      "line_start": 15,
+      "line_end": 25,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/core/services/routing/adev-url-serializer.ts#L15-L25",
+      "sha256": "0e7ad0b2ba6727573cd0442cd032ddefa542bd23080657e532ff0fe38e64d825"
+    },
+    {
+      "id": "A31",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/features/tutorial/tutorials-route-reuse-strategy.ts",
+      "line_start": 14,
+      "line_end": 41,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/features/tutorial/tutorials-route-reuse-strategy.ts#L14-L41",
+      "sha256": "06a053e4f0d8d788dfa08959306cd29d95c1995bebc9c4ddbeb255be523ee8d0"
+    },
+    {
+      "id": "A32",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/core/services/a-dev-title-strategy.ts",
+      "line_start": 23,
+      "line_end": 58,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/core/services/a-dev-title-strategy.ts#L23-L58",
+      "sha256": "6f22bbf43cb2cb14ac4086eb109003c6297fbc77abc3595b5c8ca40cb67e9b7d"
+    },
+    {
+      "id": "A33",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/firebase.json",
+      "line_start": 1,
+      "line_end": 86,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/firebase.json#L1-L86",
+      "sha256": "fcdc1bacdef467140bdc57e2669a000e401531345a792e7ba6b5f4a94f28b971"
+    },
+    {
+      "id": "A34",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/test/url_serializer.spec.ts",
+      "line_start": 20,
+      "line_end": 320,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/test/url_serializer.spec.ts#L20-L320",
+      "sha256": "33aea882403570b9a1f48912b1557e069d37d4d12b7a05d9b17bfb850854f1b9"
+    },
+    {
+      "id": "A35",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/url_tree.ts",
+      "line_start": 643,
+      "line_end": 662,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/url_tree.ts#L643-L662",
+      "sha256": "46ed76a4316f1c132e3e4ea17801aa1887903acbffab450e73ef19af07ddebfb"
+    },
+    {
+      "id": "A36",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/provide_router.ts",
+      "line_start": 195,
+      "line_end": 270,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/provide_router.ts#L195-L270",
+      "sha256": "17a50cce3ba0d8d9a9e87dac1353dedca4656d97ca468dc7d5ab9c82eef2a20d"
+    },
+    {
+      "id": "A37",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "adev/src/app/app.component.ts",
+      "line_start": 57,
+      "line_end": 87,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/app/app.component.ts#L57-L87",
+      "sha256": "19e4ebe9ffc91091b92c7dca229a7f2a5ecac9988d36fef7bbaee9a2f0c5ffb2"
+    },
+    {
+      "id": "A38",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/src/url_tree.ts",
+      "line_start": 810,
+      "line_end": 884,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/src/url_tree.ts#L810-L884",
+      "sha256": "46ed76a4316f1c132e3e4ea17801aa1887903acbffab450e73ef19af07ddebfb"
+    },
+    {
+      "id": "A39",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/test/integration/navigation.spec.ts",
+      "line_start": 478,
+      "line_end": 612,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/test/integration/navigation.spec.ts#L478-L612",
+      "sha256": "d3f200d2a64967f43e3edef072898bdddb18cc3680b5547494ff7b2450042c3a"
+    },
+    {
+      "id": "A40",
+      "repository": "angular/angular",
+      "commit": "ecaec13db4fde7ceb0104105ee356bf00596f3d6",
+      "path": "packages/router/test/computed_state_restoration.spec.ts",
+      "line_start": 45,
+      "line_end": 235,
+      "url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/packages/router/test/computed_state_restoration.spec.ts#L45-L235",
+      "sha256": "3eed51e7f243c171f233273e5fb7c416da2b08d22822d23b7bc2dead01ffdf06"
+    }
+  ],
+  "documentation": [
+    {
+      "path": "adev/src/content/guide/routing/common-router-tasks.md",
+      "sha256": "d42a9f466db51ac9c76432642e9fd0e7ed5be77f38b5bfcfb944b2d128cfb17c",
+      "official_url": "https://angular.dev/guide/routing/common-router-tasks",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/common-router-tasks.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/customizing-route-behavior.md",
+      "sha256": "729140ba4dcdf6f5b070ab54b92b15afc13e6988ac503e3624dc001fb72e5494",
+      "official_url": "https://angular.dev/guide/routing/customizing-route-behavior",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/customizing-route-behavior.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/data-fetching-with-resources.md",
+      "sha256": "22f0457f134fb5610bf8b93ef0f64babe470c36b830ff9e4c9519f2543d262b2",
+      "official_url": "https://angular.dev/guide/routing/data-fetching-with-resources",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/data-fetching-with-resources.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/data-resolvers.md",
+      "sha256": "5c90c83175aa583d46f659ddd46bdee82d1eb107ac8fc873775d5f2b6c5a27c0",
+      "official_url": "https://angular.dev/guide/routing/data-resolvers",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/data-resolvers.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/define-routes.md",
+      "sha256": "2d7c8a2c6d704b8a07ff2c4954f0d3e20368a4df5c9dd1619065d504cccf390f",
+      "official_url": "https://angular.dev/guide/routing/define-routes",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/define-routes.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/lifecycle-and-events.md",
+      "sha256": "90de219939fc0239c6e724ca75e7f8afd238d896a3bfa38edde18cfddece2ce6",
+      "official_url": "https://angular.dev/guide/routing/lifecycle-and-events",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/lifecycle-and-events.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/loading-strategies.md",
+      "sha256": "ce38c60877afcb6357fc178174e62fdc7861813137fd50cfd3eeaf5c1252a254",
+      "official_url": "https://angular.dev/guide/routing/loading-strategies",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/loading-strategies.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/navigate-to-routes.md",
+      "sha256": "055081c66eac087aeecca61527b6a5aae774bf83e62d83881d8b09b1c58b9830",
+      "official_url": "https://angular.dev/guide/routing/navigate-to-routes",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/navigate-to-routes.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/overview.md",
+      "sha256": "fde24d0492f08b50175b05da9430c9b97c81a9ba42251b7a0a07491c42f64a1a",
+      "official_url": "https://angular.dev/guide/routing",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/overview.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/read-route-state.md",
+      "sha256": "508702004c9aa0d3c6e63c35bffbd009c97d0accf213b6adb43b9f86cd09ad58",
+      "official_url": "https://angular.dev/guide/routing/read-route-state",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/read-route-state.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/redirecting-routes.md",
+      "sha256": "4bdf98891df6b9a38ffa4926b27fcbdb8d86de4a1454d2afaa17bdda9786b9fd",
+      "official_url": "https://angular.dev/guide/routing/redirecting-routes",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/redirecting-routes.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/rendering-strategies.md",
+      "sha256": "3f95a0837c80b13ea6793ecb57a6ddd572948b8a7acafb9588539ce8c7d20310",
+      "official_url": "https://angular.dev/guide/routing/rendering-strategies",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/rendering-strategies.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/route-guards.md",
+      "sha256": "d374b9e17ce5bda58cc37c75adbae2182eb6d3f2f268e9f5bf0aa140b9843ae6",
+      "official_url": "https://angular.dev/guide/routing/route-guards",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/route-guards.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/route-transition-animations.md",
+      "sha256": "5837bc8dd173fd5c6cccac8bc4993878813ea1f1c3b0d4fef7fc0491161ebe95",
+      "official_url": "https://angular.dev/guide/routing/route-transition-animations",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/route-transition-animations.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/router-reference.md",
+      "sha256": "98fe703245fce56fdb7e77b2c8c7753e5a1466b33b0fbc5f83a92276aaca1abb",
+      "official_url": "https://angular.dev/guide/routing/router-reference",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/router-reference.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/routing-with-urlmatcher.md",
+      "sha256": "a1ff569e14410fc0ccc1eeded9f52841e976011d6e2b9c5791997980d53ddb37",
+      "official_url": "https://angular.dev/guide/routing/routing-with-urlmatcher",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/routing-with-urlmatcher.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/show-routes-with-outlets.md",
+      "sha256": "ec14cb85223943d2567e1d3f674cfa21bfa60a98996b32d62595073626586c17",
+      "official_url": "https://angular.dev/guide/routing/show-routes-with-outlets",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/show-routes-with-outlets.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    },
+    {
+      "path": "adev/src/content/guide/routing/testing.md",
+      "sha256": "d519138ac59effe55e804ccadd80d2a83fdbd43dc6122d958fa557e4062aafec",
+      "official_url": "https://angular.dev/guide/routing/testing",
+      "pinned_url": "https://github.com/angular/angular/blob/ecaec13db4fde7ceb0104105ee356bf00596f3d6/adev/src/content/guide/routing/testing.md",
+      "retention": "Sparse checkout; fetched as source documentation, not individual live HTML captures"
+    }
+  ],
+  "capture_manifest": ".local/captures/angular/capture.json",
+  "capture": {
+    "url": "https://angular.dev/guide/routing",
+    "final_url": "https://angular.dev/guide/routing",
+    "sha256": "2b35262ce4346a9726e10629d80a5930e1231f6d1c14c75a3ff3e4798fb5cc90",
+    "bytes": 178783,
+    "headers": {
+      "Connection": "close",
+      "Content-Length": "178783",
+      "Cache-Control": "max-age=3600",
+      "Content-Type": "text/html; charset=utf-8",
+      "Cross-Origin-Embedder-Policy": "credentialless",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Etag": "\"b857df16b4cddad70119a78dec90e83ca9b82fd232102c37d649c55b38908c4f\"",
+      "Last-Modified": "Mon, 26 Oct 2026 05:08:54 GMT",
+      "Strict-Transport-Security": "max-age=31556926",
+      "Accept-Ranges": "bytes",
+      "Date": "Mon, 26 Oct 2026 14:10:44 GMT",
+      "X-Served-By": "cache-ewr-kewr1740046-EWR",
+      "X-Cache": "MISS",
+      "X-Cache-Hits": "0",
+      "X-Timer": "S1793023845.575421,VS0,VE231",
+      "Vary": "x-fh-requested-host, accept-encoding",
+      "alt-svc": "h3=\":443\";ma=86400,h3-29=\":443\";ma=86400,h3-27=\":443\";ma=86400"
+    },
+    "assets": [
+      "https://angular.dev/chunk-BlZAhgZ5.js",
+      "https://angular.dev/chunk-DiscwNkY.js",
+      "https://angular.dev/chunk-BOHxeupa.js",
+      "https://angular.dev/chunk-NtOoTFZ6.js",
+      "https://angular.dev/chunk-CJ67U7VT.js",
+      "https://angular.dev/chunk-C0FaT-It.js",
+      "https://angular.dev/chunk-CrmKEisR.js",
+      "https://angular.dev/chunk-B-X8MTbm.js",
+      "https://angular.dev/chunk-CK-MGa8p.js",
+      "https://angular.dev/chunk-OiM2P69I.js",
+      "https://angular.dev/main-NXB5WAJL.js",
+      "https://angular.dev/chunk-Bf_6ndTT.js"
+    ],
+    "github_links": [
+      "https://github.com/angular/angular",
+      "https://github.com/angular/angular/blob/main/CONTRIBUTING.md",
+      "https://github.com/angular/angular/edit/main/adev/src/content/guide/routing/overview.md",
+      "https://github.com/angular/angular/issues",
+      "https://github.com/angular/angularfire#readme",
+      "https://github.com/angular/code-of-conduct/blob/main/CODE_OF_CONDUCT.md",
+      "https://github.com/angular/components/blob/main/src/youtube-player/README.md",
+      "https://github.com/angular/components/tree/main/src/google-maps#readme",
+      "https://github.com/google-pay/google-pay-button#angular"
+    ],
+    "base_url": "https://angular.dev/",
+    "downloads": [
+      {
+        "url": "https://angular.dev/chunk-BlZAhgZ5.js",
+        "path": "assets/chunk-BlZAhgZ5.js",
+        "bytes": 355432,
+        "sha256": "a95526cf010458cc915dd648346c34e1951bf3293bdd94b2123880b14667ff1f"
+      },
+      {
+        "url": "https://angular.dev/chunk-DiscwNkY.js",
+        "path": "assets/chunk-DiscwNkY.js",
+        "bytes": 253,
+        "sha256": "6f5cc18d1932a84f7d8ee4eb82beeec98d6947c47cc8a9d9ac6cf68f286bf34b"
+      },
+      {
+        "url": "https://angular.dev/chunk-BOHxeupa.js",
+        "path": "assets/chunk-BOHxeupa.js",
+        "bytes": 15600,
+        "sha256": "2b0d48bf9774b38d7888dad4f83abd1f49a0e1b50daf074c24804cdc6de19a00"
+      },
+      {
+        "url": "https://angular.dev/chunk-NtOoTFZ6.js",
+        "path": "assets/chunk-NtOoTFZ6.js",
+        "bytes": 5571,
+        "sha256": "32dab93e0fc17cd541a4e3db9c1bf5d0f513a8f1d737ac1b2f5464693bbde9a5"
+      },
+      {
+        "url": "https://angular.dev/chunk-CJ67U7VT.js",
+        "path": "assets/chunk-CJ67U7VT.js",
+        "bytes": 25163,
+        "sha256": "670754e3da332143c41bfd299b2318fda1b3fb5892b31a0ff36e7e8e2ea0c9c0"
+      },
+      {
+        "url": "https://angular.dev/chunk-C0FaT-It.js",
+        "path": "assets/chunk-C0FaT-It.js",
+        "bytes": 15875,
+        "sha256": "3625eb3486f5fbb6d76bb638b2cc4bc6ef97eef9b00e8f52811f5a1275150ffa"
+      },
+      {
+        "url": "https://angular.dev/chunk-CrmKEisR.js",
+        "path": "assets/chunk-CrmKEisR.js",
+        "bytes": 36249,
+        "sha256": "19180e45c7c83a932306ec915b2e6bd30d94c54250c0ab7d721af5086dd9be63"
+      },
+      {
+        "url": "https://angular.dev/chunk-B-X8MTbm.js",
+        "path": "assets/chunk-B-X8MTbm.js",
+        "bytes": 11425,
+        "sha256": "2574091bfce49d98890dcd3dcd7fff67a166faead21eb5f87a3fb906ccb2e9ee"
+      },
+      {
+        "url": "https://angular.dev/chunk-CK-MGa8p.js",
+        "path": "assets/chunk-CK-MGa8p.js",
+        "bytes": 116,
+        "sha256": "16718bdb6ac5b5eaa2bd23aeeeeb532ec1f78cf79b36f47a08107bceb729bf47"
+      },
+      {
+        "url": "https://angular.dev/chunk-OiM2P69I.js",
+        "path": "assets/chunk-OiM2P69I.js",
+        "bytes": 572,
+        "sha256": "f8ebadad18735fa60f563d7c2c23cd31baae54939f55ff5f63175cd262a441bf"
+      },
+      {
+        "url": "https://angular.dev/main-NXB5WAJL.js",
+        "path": "assets/main-NXB5WAJL.js",
+        "bytes": 621355,
+        "sha256": "c7ee9eb44123776a1f898f28fa314710dec387564a47f0f1f4dabdbb0f723c59"
+      },
+      {
+        "url": "https://angular.dev/chunk-Bf_6ndTT.js",
+        "path": "assets/chunk-Bf_6ndTT.js",
+        "bytes": 1940,
+        "sha256": "4cd33eaaa65968cba845d8c184756f8da208a5ebf96efeab4d87aa99ca23bac8"
+      }
+    ]
+  },
+  "rea_runs": [
+    {
+      "name": "angular-history",
+      "path": ".local/rea/angular-history",
+      "evidence_id": "ev_5dc13d49d68b5c31d1f9fd263b08bd6e28ae51ce576d04ddb1f28eed4ad68844"
+    },
+    {
+      "name": "angular-main",
+      "path": ".local/rea/angular-main",
+      "evidence_id": "ev_bbb808bd5f34a90446bd7fc5379afb826afc6de07bf47c97fa49f58bff4f63d3"
+    }
+  ]
+}

@@ -43,6 +43,8 @@ fn an_enabled_application_s_js_pages_register_the_worker() {
         routes: [(
             "/".into(),
             forma_server::RouteAssets {
+                #[cfg(feature = "navigation")]
+                navigation: None,
                 mode: forma_server::RouteMode::Browser,
                 modulepreload: vec![],
                 js: vec!["app.a1b2c3d4.js".into()],

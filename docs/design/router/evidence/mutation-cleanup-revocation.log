@@ -1,0 +1,37 @@
+
+ RUN  v4.1.12 /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router
+
+ ❯ tests/router.test.ts (32 tests | 2 failed | 30 skipped) 13ms
+     × cannot repopulate the root when old-owner cleanup calls dispose 10ms
+     × cannot repopulate the root when old-owner cleanup calls invalidateContext 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/router.test.ts > synchronous teardown authority > cannot repopulate the root when old-owner cleanup calls dispose
+ FAIL  tests/router.test.ts > synchronous teardown authority > cannot repopulate the root when old-owner cleanup calls invalidateContext
+AssertionError: expected <section …(1)></section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  id="forbidden-after-revoke"
+/>
+
+ ❯ tests/router.test.ts:132:125
+    130|     ] });
+    131|     await router.ready; const outcome = await router.navigate('/b');
+    132|     expect(outcome.kind).toBe('cancelled'); expect(cleanups).toBe(1); …
+       |                                                                                                                             ^
+    133|   });
+    134|   it('rechecks authority after a validator synchronously supersedes na…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 skipped (32)
+   Start at  13:44:03
+   Duration  480ms (transform 127ms, setup 0ms, import 158ms, tests 13ms, environment 220ms)
+

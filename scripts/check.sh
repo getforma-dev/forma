@@ -7,7 +7,7 @@
 #
 #   Rust    fmt, clippy over every target and feature, the workspace's tests
 #           and docs (forma's CI `test` job)
-#   npm     the four packages built in dependency order and their unit suites
+#   npm     the five packages built in dependency order and their unit suites
 #           (formajs, forma-tools and create-forma-app's `test` jobs); core's
 #           type check, size gate, packaging lint and probe-anchor check
 #           (formajs's `test`, `package` and `probes-check` jobs); the packed
@@ -52,6 +52,9 @@ npm audit --omit=dev
 step "npm audit signatures"
 npm audit signatures
 
+step "router design and reverse-engineering provenance are complete"
+node scripts/check-router-research.mjs
+
 step "FMIR shared constants are current"
 node scripts/generate-fmir-constants.mjs --check
 
@@ -61,20 +64,21 @@ step "cargo clippy --locked --workspace --all-targets --all-features -- -D warni
 cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 step "cargo test --locked --workspace"
 cargo test --locked --workspace
-step "cargo test --locked -p forma-server --features compression"
-cargo test --locked -p forma-server --features compression
+step "cargo test --locked -p forma-server --all-features"
+cargo test --locked -p forma-server --all-features
 step "actual renderer 3.1 accepts older writers and refuses 3.2 before bind"
 node scripts/test-renderer-window.mjs
 step "cargo doc --locked --workspace --no-deps"
 cargo doc --locked --workspace --no-deps
 
-step "npm run build (compiler, build, core, create-app)"
+step "npm run build (compiler, build, core, router, create-app)"
 # Keep npm run build's dependency order. Only this shell and its explicitly
 # sourced subshells know which fresh builds succeeded; no exported skip flag.
 source scripts/check-builds.sh
 forma_check_build_package packages/compiler dist/index.js dist/index.d.ts
 forma_check_build_package packages/build dist/index.js dist/index.d.ts dist/raw-lint-cli.js
 forma_check_build_package packages/core dist/index.js dist/formajs-runtime.global.js dist/forma.esm.js dist/formajs-frame.global.js
+forma_check_build_package packages/router dist/index.js dist/index.d.ts
 forma_check_build_package packages/create-app dist/index.js
 step "npm test --workspaces"
 npm test --workspaces
@@ -100,6 +104,10 @@ npm run check:pack -w packages/core
 step "expression qualification:100000 generated cases, removed-charge control and independent nightly floor"
 node --test --test-concurrency=2 packages/core/scripts/expression-probe-floor.test.mjs packages/core/scripts/probe-results.test.mjs packages/core/scripts/probe-reporter.test.mjs scripts/release-security.test.mjs
 node packages/core/scripts/qualify-expression-mutation.mjs
+step "router: types and packed public exports"
+npm run typecheck -w packages/router
+npm run check:pack -w packages/router
+node --test scripts/release-router-bootstrap.test.mjs scripts/release-package-inventory.test.mjs scripts/release-router-package.test.mjs scripts/navigation-size-contract.test.mjs
 step "build: the packed forma-raw-lint bin"
 node packages/build/scripts/test-raw-lint-bin.mjs
 
@@ -134,6 +142,10 @@ node --test scripts/template-islands-browser.test.mjs scripts/ssr-csp-reports.te
 # N3 timing runs as its own required serial phase after all other tests.
 npx playwright test --grep-invert 'indexed products: complete public set'
 (source scripts/check-core-browser.sh --project=chromium)
+step "native router: real compiled owners, server and Chromium navigation controls"
+node --test scripts/router-proof-process.test.mjs
+node scripts/run-router-native-proof.mjs --engines chromium --skip-package-build
+
 step "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
 node packages/core/e2e/hostile-widgets/run.mjs
 node packages/core/e2e/hostile-widgets/qualify-guard.mjs

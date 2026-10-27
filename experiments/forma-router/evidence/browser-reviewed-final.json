@@ -1,0 +1,480 @@
+{
+  "observedAt": "2026-10-26T16:37:33.135Z",
+  "origin": "http://127.0.0.1:51216",
+  "scope": "Experimental native two-route/static-shell proof; not nested-layout, packed-release or complete ticket qualification.",
+  "browsers": [
+    {
+      "engine": "chromium",
+      "version": "156.0.8078.4"
+    },
+    {
+      "engine": "firefox",
+      "version": "157.0"
+    },
+    {
+      "engine": "webkit",
+      "version": "27.2"
+    }
+  ],
+  "results": [
+    {
+      "engine": "chromium",
+      "name": "typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "latest navigation wins when delayed A finishes after B",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "hash, Back and Forward retain owners and avoid additional push",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "enhanced validation preserves form and valid submission refreshes Rust props once",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "navigation during delayed POST keeps latest destination and revalidates it",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "busy competing submissions do not queue a second POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: lost mutation warning survives GET recovery without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "forged CSRF is rejected before any mutation",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "typed 303 action redirects through GET and preserves document",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "policy mismatch is an explicit document fallback",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "malformed native state is refused without replacing current route",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: only the exact declared POST endpoint is enhanced and unsupported forms stay native",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: recursive formdata submission from a distinct form reserves exactly one POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: disposed or revoked formdata ownership sends no POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: failed form serialization releases the reserved action slot",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: persisted pageshow revokes private owners before document recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: recovery loop storage omits query data and stops after 32 distinct attempts",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "security: stale validation and error outcomes cannot announce over a newer route",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "dispose revokes route and restores scroll policy",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "direct entry and explicit refresh render complete native HTML",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "name": "no-JavaScript links, validation and form mutation use same Rust handler",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "latest navigation wins when delayed A finishes after B",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "hash, Back and Forward retain owners and avoid additional push",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "enhanced validation preserves form and valid submission refreshes Rust props once",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "navigation during delayed POST keeps latest destination and revalidates it",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "busy competing submissions do not queue a second POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: lost mutation warning survives GET recovery without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "forged CSRF is rejected before any mutation",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "typed 303 action redirects through GET and preserves document",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "policy mismatch is an explicit document fallback",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "malformed native state is refused without replacing current route",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: only the exact declared POST endpoint is enhanced and unsupported forms stay native",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: recursive formdata submission from a distinct form reserves exactly one POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: disposed or revoked formdata ownership sends no POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: failed form serialization releases the reserved action slot",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: persisted pageshow revokes private owners before document recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: recovery loop storage omits query data and stops after 32 distinct attempts",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "security: stale validation and error outcomes cannot announce over a newer route",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "dispose revokes route and restores scroll policy",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "direct entry and explicit refresh render complete native HTML",
+      "status": "passed"
+    },
+    {
+      "engine": "firefox",
+      "name": "no-JavaScript links, validation and form mutation use same Rust handler",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "latest navigation wins when delayed A finishes after B",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "hash, Back and Forward retain owners and avoid additional push",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "enhanced validation preserves form and valid submission refreshes Rust props once",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "navigation during delayed POST keeps latest destination and revalidates it",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "busy competing submissions do not queue a second POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: lost mutation warning survives GET recovery without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "forged CSRF is rejected before any mutation",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "typed 303 action redirects through GET and preserves document",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "policy mismatch is an explicit document fallback",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "malformed native state is refused without replacing current route",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: slash attributes and custom markup are refused before import or constructors",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: only the exact declared POST endpoint is enhanced and unsupported forms stay native",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: recursive formdata submission from a distinct form reserves exactly one POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: disposed or revoked formdata ownership sends no POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: failed form serialization releases the reserved action slot",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: native context mismatch revokes live owners and private DOM before recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: explicit context invalidation revokes captured deferred island callbacks",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: persisted pageshow revokes private owners before document recovery",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: action context mismatch accepts no data and recovers without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: action endpoint mismatch accepts no data and recovers without repeating POST",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: recovery loop storage omits query data and stops after 32 distinct attempts",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "security: stale validation and error outcomes cannot announce over a newer route",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "dispose revokes route and restores scroll policy",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "direct entry and explicit refresh render complete native HTML",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "name": "no-JavaScript links, validation and form mutation use same Rust handler",
+      "status": "passed"
+    }
+  ],
+  "failures": [],
+  "clientSha256": "9a320ba9c30134139a7431396c7228e809c95eabfe7f5de831c9799b871f5c61",
+  "manifest": {
+    "version": 2,
+    "writer": "3.1.0",
+    "app": "forma-router-proof",
+    "build": "fd535f312f59d75c",
+    "aliases": {
+      "proof-group.js": "proof-group.b9bc2dd6d7a9.js",
+      "proof-a.ir": "proof-a.43f5de560348.ir",
+      "proof-b.ir": "proof-b.3b409ecab892.ir",
+      "proof-a.js": "proof-group.b9bc2dd6d7a9.js",
+      "proof-b.js": "proof-group.b9bc2dd6d7a9.js"
+    },
+    "assets": {
+      "proof-a.43f5de560348.ir": {
+        "immutable": true,
+        "integrity": "sha384-yhKqomMpUlrt3xGZb6gniVmclO5sm0VyXmIkuri5EcL5cTDK9fnhU6qoIwMHq3NN"
+      },
+      "proof-b.3b409ecab892.ir": {
+        "immutable": true,
+        "integrity": "sha384-C9xCXsx6WZAEKjB0SQICzGf8cm/Fk1bjJDDALsXgCMiTaGuFYyrXy5iW4LUAsuhm"
+      },
+      "proof-group.b9bc2dd6d7a9.js": {
+        "immutable": true,
+        "integrity": "sha384-u+CwqGsc2Ri6Ot+ilXbAy2UYZVHmv/J31SouG5/fLXvkmAe2c9kdmxFhrmH3eJZw"
+      }
+    },
+    "routes": {
+      "/proof/a": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.b9bc2dd6d7a9.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 30551,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-a.43f5de560348.ir"
+      },
+      "/proof/b": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.b9bc2dd6d7a9.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 30551,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-b.3b409ecab892.ir"
+      }
+    }
+  },
+  "passed": true
+}

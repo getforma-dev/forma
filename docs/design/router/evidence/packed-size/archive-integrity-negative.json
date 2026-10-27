@@ -1,0 +1,90 @@
+{
+  "schema": "forma-301-packed-size-v1",
+  "startedAt": "2026-10-26T20:53:19.199Z",
+  "node": "v24.22.1",
+  "passed": false,
+  "scope": "Authoritative paired N3 measurement over authenticated installed DS11 JavaScript archives. All eight archive identities are checked; only core/router/compiler/build execute in this size campaign. Authored fixture, build, measurement and fixed limits are unchanged. This is not another whole-P17 or publication result.",
+  "staging": "A separate sparse Git view at the sealed commit maps packages/{core,router,compiler,build} and node_modules to the authenticated isolated consumer. The view is intentionally dirty; its untracked staging marker and product symlinks are recorded. The original packed proof and its outputs remain untouched.",
+  "commands": [],
+  "sourceCommit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "releaseSet": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-integrity-negative/candidate/release-set.json",
+    "sha256": "96472d312b1075dd409b89596d597335832a5609893fd33f637b28dc153382a6"
+  },
+  "originalPackedProof": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-integrity-negative/packed-native-final/packed-native.json",
+    "sha256": "83884f8b5fec73b764679d2838bda702ac48a5ba864f847da992992a58709ff5"
+  },
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.1.0",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.1.0.crate",
+      "sha256": "7b2724a3fc2a03b24d0629d66112fdde9e6d87a9262afeb82aa3e8ed7cee3f06"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.1.0",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.1.0.crate",
+      "sha256": "d0086bf6078717c3890b6fbc148d7fd30816ca64d1ab84fec3e076961591c462"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.1.0",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.1.0.crate",
+      "sha256": "bd032192b11eff22f5a32f34bd9f522728934479ea0bdab62fa19d5ed79bd645"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.1.0",
+      "path": "packages/core",
+      "file": "getforma-core-3.1.0.tgz",
+      "sha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.1.0",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.1.0.tgz",
+      "sha256": "5dfeedc0ffad2bff505cf6a17e4d3bb4d5eac83804679e0325ceedf445821643"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.1.0",
+      "path": "packages/build",
+      "file": "getforma-build-3.1.0.tgz",
+      "sha256": "e73fc2e27a83b6924caa6460a83a75481be398893bff4591709322b78e2618ec"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/router",
+      "version": "3.1.0",
+      "path": "packages/router",
+      "file": "getforma-router-3.1.0.tgz",
+      "sha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.1.0",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.1.0.tgz",
+      "sha256": "d9a1f3dfaffd06dabb59422e43df81945d1c23eded4a9c43acbff594d7defd09"
+    }
+  ],
+  "error": "AssertionError [ERR_ASSERTION]: archive changed: @getforma/core\n+ actual - expected\n\n+ '214e1867cf6255d380f105391ce891232e6e134540a25dcc119e0115cfd3d6d7'\n- '679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643'\n\n    at checkArchives (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:42:67)\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs:43:2\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)",
+  "runner": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs",
+    "sha256": "a6e662a22ef24fec1864d89cdf3bcccece252eab5dfdaa8cbd1ff1469f359790"
+  },
+  "finishedAt": "2026-10-26T20:53:19.213Z"
+}

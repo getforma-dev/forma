@@ -112,7 +112,7 @@ impl IntoResponse for CompressedPageResponse {
     fn into_response(self) -> Response {
         let headers = self.page.headers();
         let mut coding = None;
-        let mut status = StatusCode::OK;
+        let mut status = self.page.status;
         let body = match self.negotiated {
             Negotiated::Identity => self.page.html.into_bytes(),
             Negotiated::NotAcceptable => {

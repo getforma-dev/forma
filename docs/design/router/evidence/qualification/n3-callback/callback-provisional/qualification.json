@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-26T19:50:43.255Z",
+  "baseline": {
+    "schema": 1,
+    "scope": "Published Forma 3.1.0 core baseline for the frozen FORMA-301 paired size contract.",
+    "name": "@getforma/core",
+    "version": "3.1.0",
+    "integrity": "sha512-sttf0ogV92qwJf1CL5jkremiWiebBmup+pDfb5XuhHw+mbR0bY+xxO6ZRnI2N5C6jR8/saWZ7zQBMb3PVhrEEA==",
+    "archiveSha256": "312149d7c863f54776bc5d0eb78fa920f009dc7e5867352535c877e16d4610b7"
+  },
+  "scope": "Source consumer qualification; not whole P17 or publication.",
+  "passed": false,
+  "error": "AssertionError [ERR_ASSERTION]: paired consumer measurement or fixed size limits failed\n\n1 !== 0\n\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/qualify-router-size.mjs:41:10\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)",
+  "finishedAt": "2026-10-26T19:50:47.650Z"
+}

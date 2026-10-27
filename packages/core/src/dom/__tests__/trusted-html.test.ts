@@ -18,6 +18,7 @@ import { adoptInRoot } from './helpers/owned-adoption.js';
 import { template, templateMany } from '../template';
 import { createReconciler } from '../reconcile';
 import { setHTMLUnsafe } from '../../dom-utils/mutate';
+import { navigationHTML } from '../../navigation.js';
 import {
   POLICY_REFUSED_CODE,
   RAW_HTML_CODES,
@@ -162,6 +163,18 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('trustedHtml()', () => {
+  it('the optional navigation parser keeps the existing named Trusted Types value at the sink', () => {
+    sim = enforceTrustedTypes();
+    const template = document.createElement('template');
+    expect(() => { template.innerHTML = '<p>untyped</p>'; }).toThrow('TrustedHTML');
+    const value = navigationHTML('<p>admitted server fragment</p>');
+    expect(value).toBeInstanceOf(FakeTrustedHTML);
+    template.innerHTML = value;
+    expect(template.content.firstElementChild?.textContent).toBe('admitted server fragment');
+    expect(sim.policies).toEqual(['forma']);
+    expect(sim.violations).toEqual(['innerHTML <p>untyped</p>']);
+  });
+
   it('trustedHtml() returns a TrustedHTML from the forma policy where the browser has Trusted Types', async () => {
     sim = enforceTrustedTypes();
     const first = trustedHtml('<b>one</b>') as unknown;

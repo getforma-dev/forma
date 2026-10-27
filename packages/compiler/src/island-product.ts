@@ -35,7 +35,7 @@ export type EntrySourceEdit = SourceEdit;
  * Module initialization/capture identity stays in place; only the authenticated
  * compile-time mount and unreachable literal activation entries are omitted.
  */
-export function collectIslandEntryEdits(file:string,server:IslandRegistry,result:IrResult|null,sourceEntry=file):readonly EntrySourceEdit[] {
+export function collectIslandEntryEdits(file:string,server:IslandRegistry,result:IrResult|null,sourceEntry=file,registrationOnly=false,allowEmptyRegistry=false):readonly EntrySourceEdit[] {
   const source=readSourceFile(file),browser=createIslandRegistry(file);
   const fail=(message:string):never=>{throw new PropsSchemaError(file,1,1,message);};
   const native=new Map(server.entries().map(entry=>[entry.island.name,entry.island]));
@@ -49,6 +49,31 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
       'the browser mount must select the same original native page declaration; otherwise use an activation-only browser entry');
   }
   const names=new Set<string>();traverse(ast,{Identifier(path){names.add(path.node.name);}});
+  // FORMA-301 navigation product: export the already authenticated registry,
+  // never execute a page entry merely to collect its islands. Ordinary entry
+  // policy remains unchanged when this explicit opt-in is absent.
+  if(registrationOnly) {
+    if(names.has('__formaNavigationRegistry'))refuseEntry(file,ast.program,
+      'registration-only entry reserves __formaNavigationRegistry');
+    traverse(ast,{Program(path){
+      for(const statement of path.get('body')) {
+        if(statement.isImportDeclaration()) {
+          if(statement.node.specifiers.length===0)refuseEntry(file,statement.node,
+            'registration-only entry cannot contain side-effect-only imports');
+          continue;
+        }
+        const declaration=statement.isExportNamedDeclaration()?statement.get('declaration'):statement;
+        if(!Array.isArray(declaration)&&(declaration.isFunctionDeclaration()||declaration.isTSTypeAliasDeclaration()||declaration.isTSInterfaceDeclaration()))continue;
+        if(!Array.isArray(declaration)&&declaration.isVariableDeclaration()
+          &&declaration.node.kind==='const'&&declaration.get('declarations').every(item=>item.get('init').isPure()))continue;
+        if(statement.isExpressionStatement()) {
+          const expression=statement.get('expression');
+          if(expression.isCallExpression()&&(isCoreCall(expression,'mount')||isCoreCall(expression,'activateIslands')))continue;
+        }
+        refuseEntry(file,statement.node,'registration-only entry accepts declarations plus standalone mount/activateIslands only');
+      }
+    }});
+  }
   let helper='__formaIslandRegistration';while(names.has(helper))helper+='_' ;
   const replacements=new Map<number,string>();
   for(const entry of browser.entries()) {
@@ -70,6 +95,7 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
   }
   for(const name of emitted.keys())if(!native.has(name))fail(`emitted island ${name} has no declared browser registration`);
   const edits:{start:number;end:number;text:string}[]=mount?[{...mount,text:''}]:[];
+  let registrationCalls=0;
   traverse(ast,{CallExpression(path){
     if(!isCoreCall(path,'activateIslands'))return;
     const arg=path.node.arguments[0];
@@ -77,7 +103,12 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
     const kept=arg.properties.flatMap(property=>{
       const replacement=replacements.get(property.start!);return replacement?[replacement]:[];
     });
-    if(kept.length)edits.push({start:arg.start!,end:arg.end!,text:`{${kept.join(',')}}`});
+    if(registrationOnly) {
+      if(++registrationCalls!==1||!path.parentPath.isExpressionStatement()||!path.parentPath.parentPath?.isProgram()||path.node.arguments.length!==1)
+        refuseEntry(file,path.node,'registration-only entry requires one standalone activateIslands call with only its literal registry');
+      edits.push({start:path.parentPath.node.start!,end:path.parentPath.node.end!,text:`export const __formaNavigationRegistry = Object.freeze({${kept.join(',')}});`});
+    }
+    else if(kept.length)edits.push({start:arg.start!,end:arg.end!,text:`{${kept.join(',')}}`});
     else {
       const awaited=path.parentPath.isAwaitExpression()&&path.parentPath.node.argument===path.node;
       const statement=awaited?path.parentPath.parentPath:path.parentPath;
@@ -91,6 +122,9 @@ export function collectIslandEntryEdits(file:string,server:IslandRegistry,result
         :{start:statement.node.start!,end:statement.node.end!,text:''});
     }
   }});
+  if(registrationOnly&&registrationCalls===0&&allowEmptyRegistry&&native.size===0) {
+    edits.push({start:source.length,end:source.length,text:'\nexport const __formaNavigationRegistry = Object.freeze({});\n'});
+  } else if(registrationOnly&&registrationCalls!==1)refuseEntry(file,ast.program,'registration-only entry requires a declared activateIslands registry');
   if(replacements.size) {
     const offset=ast.program.interpreter?.end??0;
     edits.push({start:offset,end:offset,text:`\nimport {__islandRegistration as ${helper}} from "@getforma/core";\n`});

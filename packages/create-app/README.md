@@ -6,7 +6,7 @@
 
 Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeScript frontend, fully wired.
 
-> **Where this sits.** One repository, seven coordinated packages:
+> **Where this sits.** One repository, eight coordinated source packages:
 >
 > ```
 > TS/JSX → @getforma/compiler → FMIR 3 → forma-ir → forma-server → HTML
@@ -16,20 +16,20 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 >
 > **You are here:** the front door. New to the stack? Read
 > **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)**
-> — it explains the pipeline. All seven packages live in
+> — it explains the pipeline. All eight source packages live in
 > [getforma-dev/forma](https://github.com/getforma-dev/forma) and publish as one set.
 > Existing 0.6.x projects can follow the
 > [3.0 template migration](docs/UPGRADING-3.0.md).
 
 ## Usage
 
-These registry commands use the published, coordinated `3.0.0` set.
+These registry commands use the published, coordinated `3.1.0` set.
 Contributor builds of unpublished changes use the packed candidate workflow
-below. [Release records](https://github.com/getforma-dev/forma/releases/tag/v3.0.0)
+below. [Release records](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
 report qualification of the published set.
 
 ```bash
-npx @getforma/create-app@3.0.0 my-app
+npx @getforma/create-app@3.1.0 my-app
 cd my-app
 ```
 
@@ -42,18 +42,18 @@ cd admin && npm ci && npm run build && cd ..
 cargo run
 ```
 
-Open http://localhost:3000. Both templates bind to `127.0.0.1` by default; the
+Open http://localhost:3000. All templates bind to `127.0.0.1` by default; the
 dashboard can opt in to a wider bind with `FORMA_HOST`, and warns when you do,
 because its `/api/*` routes have no authentication.
 
 ## Options
 
 ```bash
-npx @getforma/create-app@3.0.0 my-app --template dashboard
-npx @getforma/create-app@3.0.0 my-app --template minimal
-npx @getforma/create-app@3.0.0 my-app --dry-run
-npx @getforma/create-app@3.0.0 --help
-npx @getforma/create-app@3.0.0 --version
+npx @getforma/create-app@3.1.0 my-app --template dashboard
+npx @getforma/create-app@3.1.0 my-app --template minimal
+npx @getforma/create-app@3.1.0 my-app --dry-run
+npx @getforma/create-app@3.1.0 --help
+npx @getforma/create-app@3.1.0 --version
 ```
 
 Project names must start with a lowercase letter and use only lowercase
@@ -70,6 +70,16 @@ exists.
 |----------|-----------|-------------|
 | `dashboard` | Explicit Browser rendering | DevOps admin panel — 4 pages, 8 API routes, SVG chart, Tailwind CSS, Gruvbox theme, 16 Playwright tests |
 | `minimal` | Browser, or native SSR with `npm run build:ssr` | Rust server + a Counter page and a static About page |
+| `native-router` | Native SSR with optional owned navigation | Persistent layout, typed owner branches, ordinary links and history; candidate release only |
+
+`native-router` is new in the next coordinated minor release; it is absent from
+published 3.0/3.1 archives. Before publication use the documented packed candidate
+workflow and select `--template native-router` from that candidate CLI. The current candidate adds
+`@getforma/router` to this template and the dashboard. The dashboard remains an
+explicit Browser application, with retained layout and routed page ownership.
+The minimal template keeps its existing dependency graph and rendering behavior. See its
+[ownership and deployment guide](templates/native-router/README.md) and the
+[connected routing walkthrough](../../docs/ROUTING.md).
 
 The dashboard explicitly uses client rendering. The FMIR compiler walks source
 rather than executing it and accepts only the documented native subset. It
@@ -106,7 +116,7 @@ node scripts/candidate-scaffold.mjs run /absolute/path/to/candidate-artifacts RE
 ```
 
 CI always runs the full candidate suite on Linux and Windows. The separate
-registry lane runs the actual published CLI when all seven coordinated versions
+registry lane runs the actual published CLI when all version-appropriate coordinated packages
 exist. Missing or skipped candidate jobs fail the release gate. The source lock
 seeds are never passed directly to an unpublished registry installation.
 
@@ -115,7 +125,7 @@ template's lockfile with `npm ci`, builds the frontend, runs
 `cargo check --locked`, then starts each compiled server and reads its
 responses: the minimal template must serve real server-rendered markup after
 `build:ssr`, the dashboard must serve each page as its declared browser shell
-whose CSP nonce matches the script tag, and every page of both must answer
+whose CSP nonce matches the script tag; native-router must retain its layout through typed navigation in all three browser engines, and every page must answer
 `Cache-Control: no-store` with a fresh nonce on each fetch, register no service
 worker, and leave `/sw.js` to forma-server's retiring worker. It also runs
 `npm audit signatures` over each template's install, fails on any
@@ -128,7 +138,7 @@ missing/wrong props and unbound routes must stop before a listener opens.
 The packed native-island check adopts the server value without initial writes
 and checks that the static route requests no code in all three engines. The
 dashboard tooltip check keeps API values as text under enforced Trusted Types.
-The gate requires all 19 heavy controls plus the structural suite, with no skips.
+The current eight-package candidate gate requires all 24 heavy controls plus the structural suite, with no skips. Historical 3.0/3.1 sets retain their original controls.
 
 | Document | What it is |
 |---|---|
@@ -147,6 +157,7 @@ The gate requires all 19 heavy controls plus the structural suite, with no skips
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
 | [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR generation, coded diagnostics and esbuild SSR integration |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
+| [@getforma/router](../router/README.md) | Optional browser/native navigation and persistent layouts (3.2 candidate) |
 
 ### Backend (Rust)
 

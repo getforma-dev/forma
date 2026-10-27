@@ -8,6 +8,7 @@
  * worker generation, and budget warnings.
  */
 
+import { validateNavigation, navigationOptions, navigationFilename, validateNavigationProduct, navigationExecutableGuard } from './navigation.js';
 import {jsxNamespaceFallback} from './jsx-namespace.js';
 import * as esbuild from 'esbuild';
 import { generateManifest } from './manifest.js';
@@ -605,6 +606,7 @@ type SsrPluginFactory = (opts: {
   entryPoint?: string;
   clientEntryPoint?: string;
   browserEntryPoints?: readonly { path: string; entryPoint: string }[];
+  navigationOwner?: boolean;
   strict?: boolean;
   onDiagnostics?: (diagnostics: CompilerDiagnostic[], page: string) => void;
 }) => esbuild.Plugin;
@@ -636,6 +638,7 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   // Validate before anything is written: a config error must not touch the
   // previous build's output on its way to failing.
   validateConfig(userConfig);
+  validateNavigation(userConfig);
   // 3.0 strict-only publication; validate legacy flag spelling.
   const project = process.cwd();
   // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
@@ -804,12 +807,16 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       duplicateCore = next;
     };
     // The SSR plugin instances of a build, one per server-rendered entry.
+    const navigationGroups = config.navigationGroups ?? [];
+    const groupedOwners = new Set(navigationGroups.flatMap(group => [...group.owners]));
+    const ordinaryEntries = config.entryPoints.filter(entry => !groupedOwners.has(basename(entry.outfile, '.js')));
     const ssrPluginsFor = (entries: readonly BuildEntry[], options: SsrPluginShared) =>
       config.ssr && formaSsrPlugin ? entries.filter(entry => entry.ssr !== false).map(entry => formaSsrPlugin!({
         page: basename(entry.outfile, '.js'),
         outDir: distDir,
         entryPoint: config.ssrEntryPoints?.[basename(entry.outfile, '.js')] ?? entry.entry,
         clientEntryPoint: entry.entry,
+        ...(groupedOwners.has(basename(entry.outfile, '.js')) ? { navigationOwner: true } : {}),
         browserEntryPoints: entries.find(candidate=>candidate.ssr!==false&&realpathSync(candidate.entry)===realpathSync(entry.entry))===entry
           ? [...browserAliases.values()].filter(alias=>realpathSync(alias.entryPoint)===realpathSync(entry.entry)) : [],
         ...options,
@@ -838,6 +845,18 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       plugins: [...(options.plugins ?? []), ...ssrPluginsFor([entry], plugin), ...(config.clientTemplates ? [compiler!.formaClientPlugin()] : []), jsxNamespaceFallback()],
     });
 
+    const groupOptionsFor = (group: NonNullable<BuildConfig['navigationGroups']>[number], options: Partial<esbuild.BuildOptions>, plugin: SsrPluginShared) => {
+      const entries = config.entryPoints.filter(entry => group.owners.includes(basename(entry.outfile, '.js')));
+      return navigationOptions(config, group, { ...options, plugins: [...(options.plugins ?? []), navigationExecutableGuard(), ...ssrPluginsFor(entries, plugin),
+        ...(config.clientTemplates ? [compiler!.formaClientPlugin()] : []), jsxNamespaceFallback()] });
+    };
+    const classifyGroup = (group: NonNullable<BuildConfig['navigationGroups']>[number], result: esbuild.BuildResult) => {
+      const entries = config.entryPoints.filter(entry => group.owners.includes(basename(entry.outfile, '.js')));
+      const candidates = entryProducts(config, entries, result, compiler?.getSsrEntryProducts);
+      validateNavigationProduct(group, result, candidates);
+      return candidates;
+    };
+
     // ── The deployment identity (FORMA-186, DR-29; L-6 as amended by L-56) ──
     // Computed first, from every output of a bundling pass that has no
     // identity: the files the build would publish (browser-facing bundles and
@@ -864,9 +883,13 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           if (config.codeSplitting && config.entryPoints.length) {
             take(classify(await esbuild.build(splitOptionsFor(quietBase, noDiagnostics)), config.entryPoints).outputs);
           } else {
-            const results = await Promise.all(config.entryPoints.map(async entry =>
+            const results = await Promise.all(ordinaryEntries.map(async entry =>
               classify(await esbuild.build(entryOptionsFor(entry, quietBase, noDiagnostics)), [entry]).outputs));
             for (const outputs of results) take(outputs);
+            for (const group of navigationGroups) {
+              const result = await esbuild.build(groupOptionsFor(group, quietBase, noDiagnostics));
+              classifyGroup(group, result); take(result.outputFiles!);
+            }
           }
         });
         for (const name of readdirSync(distDir)) {
@@ -1055,7 +1078,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       } catch (error) { buildFailures.push(error); }
     } else {
       const attempts = await Promise.allSettled(
-        config.entryPoints.map(async (entry) => {
+        ordinaryEntries.map(async (entry) => {
           const result = await esbuild.build(entryOptionsFor(entry, shared, pluginShared));
           const classified = classify(result, [entry]);
           publishOutputFiles(classified.outputs);
@@ -1064,6 +1087,14 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
         }),
       );
       for (const attempt of attempts) if (attempt.status === 'rejected') buildFailures.push(attempt.reason);
+      for (const group of navigationGroups) {
+        try {
+          const result = await esbuild.build(groupOptionsFor(group, shared, pluginShared));
+          const candidates = classifyGroup(group, result);
+          publishOutputFiles(result.outputFiles!);
+          products = new Map([...products, ...candidates]); metafiles.push(result.metafile!);
+        } catch (error) { buildFailures.push(error); }
+      }
     }
 
     duplicateCore = duplicateCoreDiagnostic(metafiles);
@@ -1087,6 +1118,7 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
 
     // ── Content hashing ───────────────────────────────────────────────
     const assets = hashAssets(config, graph?.assets);
+    for (const group of navigationGroups) for (const owner of group.owners) assets[`${owner}.js`] = assets[navigationFilename(group)];
     printBundleSummary(metafiles, assets, shownDir);
     console.log(`   ${Object.keys(assets).length} assets hashed`);
     mark('hash');

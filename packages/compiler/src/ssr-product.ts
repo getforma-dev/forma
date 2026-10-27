@@ -10,7 +10,8 @@ export interface SsrEntryProduct {
   readonly irFile: string;
   readonly irHash: string;
   readonly browserRequired: boolean;
-  readonly islands: readonly Readonly<{ name: string; mode: 'ssr' | 'browserOnly' }>[];
+  readonly navigationOutlet?: string | null;
+  readonly islands: readonly Readonly<{ name: string; mode: 'ssr' | 'browserOnly'; declaration?: string; contract?: string }>[];
 }
 
 interface Contribution { readonly product: SsrEntryProduct; readonly output: OutputFile }
@@ -27,6 +28,7 @@ export function recordSsrEntryProduct(result: BuildResult, output: OutputFile,
   const islands = Object.freeze(input.islands.map(island => Object.freeze({ ...island })));
   const product: SsrEntryProduct = Object.freeze({
     page: input.page, mode: 'ssr', sourceEntry: input.sourceEntry, browserEntry: input.browserEntry,
+    ...(input.navigationOutlet !== undefined ? { navigationOutlet: input.navigationOutlet } : {}),
     irFile: output.path, irHash: digest(output.contents), browserRequired: islands.length > 0, islands,
   });
   contributions.set(result, Object.freeze([...previous, Object.freeze({ product, output })]));

@@ -1,0 +1,107 @@
+{
+  "schema": "forma-router-document-identity-source-v1",
+  "scope": "Prospective harness correction and bounded diagnostic replay of authenticated 988 archives; original whole90 failure remains failed. Fresh final-source whole90 and P17 remain required.",
+  "sourceFile": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs",
+    "sha256": "72d6e162e934f358b21d23ceb225a99ea558a2929af0d7fc0a9ec86d631e2472",
+    "bytes": 40292
+  },
+  "original": {
+    "commit": "988893020498004844a92652c25e86ecf961a46f",
+    "passed": 89,
+    "failed": 1,
+    "finding": "WebKit100cycle combined retention boolean failed. Separate same-artifact diagnostic reproduced exact Document/layout/island retained with timeOrigin -1ms and no router errors."
+  },
+  "boundedControls": {
+    "cycleDiagnostic1": "exact three objects retained; clock -1ms",
+    "cycleDiagnostic2": "exact objects retained; one initial document GET only; all100 history frame events retained separately",
+    "noNavigation150Samples": "same objects, one initial GET, no numerical drift in this30second control; intermittent drift not disproved",
+    "correctedWebKit": {
+      "passed": 30,
+      "failed": 0,
+      "actualHttpReloadNegative": "retention rejected; replacement detected exactly one GET and all three old object identities false",
+      "runtimeAssetsAndBinaryIdenticalToFailedCampaign": true
+    }
+  },
+  "oracle": "Keep exact Document/layout/island object identity and add zero extra main-frame document requests for retention. Require actual changed Document and exactly one GET for recovery; record raw timeOrigin diagnostically, with scenario and expectation labels. No runtime or budget change.",
+  "primarySources": {
+    "scope": "Current primary-source explanation of clock conversion; not a claim that this exact source produced installed Playwright WebKit27.2",
+    "commit": "d70dc52c80d2f3f95af6be413b8a0017371d2e9d",
+    "files": [
+      {
+        "source": "https://github.com/WebKit/WebKit/blob/d70dc52c80d2f3f95af6be413b8a0017371d2e9d/Source/WebCore/page/Performance.cpp",
+        "sha256": "8c512e822f674522d449b59e8be1a51edecd7b1f0d22f9c7fb281778f3e57faf",
+        "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/Performance.cpp",
+        "bytes": 23823
+      },
+      {
+        "source": "https://github.com/WebKit/WebKit/blob/d70dc52c80d2f3f95af6be413b8a0017371d2e9d/Source/WTF/wtf/GenericTimeMixin.h",
+        "sha256": "0a5768b1284c6ea548a35a6becee93b7c79fab4dade1f5b7f08eb079bd9b94a7",
+        "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/GenericTimeMixin.h",
+        "bytes": 5103
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/authentication.json",
+      "sha256": "4965518a58fe7da4ba2e19306d029578ab115ed3a404ff0aaab09bf2b4d25372",
+      "bytes": 1873
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/packed-native/packed-native.json",
+      "sha256": "6a8b39b7f8d4123aab6ba40d0d910e42416ba0edf5baf1bcadaeb8940f5f719d",
+      "bytes": 132914
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/packed-native/browser.json",
+      "sha256": "ae52ca8b9f61f44409df5e2a975d76154d9e8577a4339caf5c6c1b94c5672d5a",
+      "bytes": 85048
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/lifetime-diagnostic-1.json",
+      "sha256": "a0ebddbebab860a793494adf59c37bc3c2b7e51377bd88fe1a02691dcbb95b26",
+      "bytes": 65859
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/lifetime-diagnostic-1.log",
+      "sha256": "f2253fbc6db364243bee079530877bfddd9ae45d80627d308afe52a85177c739",
+      "bytes": 548
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/lifetime-diagnostic-2.json",
+      "sha256": "d805e7d8a1472bbd032e5bb1a6a39925d02fe2a37f998fc16c9e138cc254ebda",
+      "bytes": 64012
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/lifetime-diagnostic-2.log",
+      "sha256": "c82fca32c5e64dda036c8a6c0937b1749b52c540ec589b5447fd1f336e953b90",
+      "bytes": 8328
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/no-navigation-control.mjs",
+      "sha256": "52675332d969d8ad0b23fbede2e0694f223679fefd01836cc348747a4c4fb1a1",
+      "bytes": 2375
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/no-navigation-control.json",
+      "sha256": "48199375800990894c711d27ab5862bb0490ee6528d1123d75b2adc3ed5d1cf2",
+      "bytes": 31466
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/repaired-oracle-webkit.json",
+      "sha256": "6ced6acf6342fa4ed47e114b6b2e1565f40d1f46b5e8f4719409eb87cf65bf10",
+      "bytes": 81687
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/repaired-oracle-webkit.log",
+      "sha256": "381e85b20ae72729c72811e75989d5f87a3be2bacded1af896633bfdc5cb81d2",
+      "bytes": 2738
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-98889302/webkit-primary-source.json",
+      "sha256": "4ff91728b14908274d9e108567d48f32e592e57601ea0e44cbf53a7ac7908969",
+      "bytes": 966
+    }
+  ]
+}

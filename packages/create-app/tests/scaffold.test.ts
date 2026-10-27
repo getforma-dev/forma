@@ -3,8 +3,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { chromium, firefox, webkit } from '@playwright/test';
 import { verifyMinimalIsland, verifyStaticTemplate, verifyDashboardTemplate } from '../../../scripts/release-template-islands.mjs';
-import { TEMPLATES, validateProjectName } from '../src/scaffold';
-import { E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
+import { verifyNativeRouterTemplate } from '../../../scripts/release-template-navigation.mjs';
+import { validateProjectName } from '../src/scaffold';
+import { CLI_TEMPLATES as TEMPLATES, CLI, CANDIDATE_CONTEXT, E2E, PROJECT_NAMES, TEMPLATES_DIR, listFiles, mkTmpDir, rmrf, runCli, run, runRefusingServer, withServer, withEngine, auditSignatures, recordObservation, checkN8 } from './helpers';
 
 /**
  * Runs the real CLI against a real temp directory.
@@ -59,6 +60,19 @@ describe('scaffolding', () => {
         .filter((f) => !f.startsWith('.git/'))
         .sort();
       expect(actual).toEqual(expected);
+    });
+
+    it('emits the authenticated template workflow without changing its dependency gates', () => {
+      // Compare candidate output with the authenticated CLI archive, not a
+      // Windows source checkout whose Git policy may have converted LF to CRLF.
+      // Keep strict bytes; source security is checked in supply-chain.test.mjs.
+      const expectedRoot = CANDIDATE_CONTEXT
+        ? path.resolve(path.dirname(CLI), '..', 'templates')
+        : process.env.FORMA_SCAFFOLD_PUBLISHED_TEMPLATES || TEMPLATES_DIR;
+      const workflow = path.join('.github', 'workflows', 'build.yml');
+      expect(fs.readFileSync(path.join(dest, workflow), 'utf8')).toBe(
+        fs.readFileSync(path.join(expectedRoot, template, workflow), 'utf8'),
+      );
     });
 
     it('restores the scripts-off npm policy and never leaves _npmrc in a scaffold', () => {
@@ -211,18 +225,44 @@ describe('scaffolding', () => {
 
 // ── The gate: does what we ship actually build? ────────────────────────
 
-/**
- * A template's page routes: those whose handler renders a page, through
- * `try_render` or `render_browser_shell`, read from its main.rs, so a page
- * added to a template is covered without editing the tests.
- */
+/** Read the templates' local handler/helper chain so every public page is checked. */
 function pageRoutes(main: string): string[] {
-  const rendersPage = (handler: string) =>
-    /\b(?:try_render|render_browser_shell)\(/.test(new RegExp(`async fn ${handler}\\b[\\s\\S]*?\\n}`).exec(main)?.[0] ?? '');
+  const functions = new Map([...main.matchAll(/(?:async\s+)?fn (\w+)\b[\s\S]*?\n}/g)]
+    .map(match => [match[1]!, match[0]]));
+  const rendersPage = (handler: string, seen = new Set<string>()): boolean => {
+    if (seen.has(handler)) return false;
+    seen.add(handler);
+    const body = functions.get(handler) ?? '';
+    if (/\b(?:try_render|render_browser_shell|into_document_response)\(/.test(body)) return true;
+    return [...functions.keys()].some(name =>
+      new RegExp(`(?<![.\\w])${name}\\(`).test(body) && rendersPage(name, seen));
+  };
   return [...main.matchAll(/\.route\("([^"]+)",\s*get\((\w+)\)\)/g)]
-    .filter((m) => rendersPage(m[2]!))
-    .map((m) => m[1]!);
+    .filter((match) => rendersPage(match[2]!))
+    .map((match) => match[1]!);
 }
+
+describe('page response gate discovery', () => {
+  it.each(TEMPLATES)('%s includes every actual public page and excludes asset handlers', template => {
+    const routes = pageRoutes(fs.readFileSync(path.join(TEMPLATES_DIR, template, 'src/main.rs'), 'utf8'));
+    expect(routes).toEqual(template === 'dashboard'
+      ? ['/', '/overview', '/deployments', '/servers', '/settings'] : ['/', '/about']);
+  });
+  it('follows shared render helpers and refuses cycles without a page renderer', () => {
+    const source = `.route("/delegated", get(home))
+.route("/cycle", get(cycle))
+async fn home() {
+    render().await
+}
+async fn render() {
+    branch.into_document_response()
+}
+async fn cycle() {
+    cycle().await
+}`;
+    expect(pageRoutes(source)).toEqual(['/delegated']);
+  });
+});
 
 describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
   let tmp: string;
@@ -531,6 +571,31 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
     }, { profile: 'release' });
   }, 900_000);
 
+  if (TEMPLATES.includes('native-router')) {
+    it('native-router: typed navigation preserves its layout and works without JavaScript in all engines', async () => {
+      const name = 'e2e-native-navigation';
+      expect(runCli([name, '--template', 'native-router'], tmp).status).toBe(0);
+      const dest = path.join(tmp, name), admin = path.join(dest, 'admin');
+      const install = run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], admin);
+      expect(install.status, install.stderr).toBe(0);
+      const build = run('npm', ['run', 'build'], admin);
+      expect(build.status, build.stdout + build.stderr).toBe(0);
+      const cargo = run('cargo', ['build', '--locked', '--release'], dest);
+      expect(cargo.status, cargo.stderr).toBe(0);
+      await checkN8('native-router', dest, name);
+      const manifest = JSON.parse(fs.readFileSync(path.join(admin, 'dist/manifest.json'), 'utf8'));
+      await withServer(dest, name, async (_body, response) => {
+        const origin = new URL(response.url).origin;
+        for (const [engine, launcher] of Object.entries({chromium, firefox, webkit})) {
+          await withEngine(engine, launcher, async browser => {
+            const navigation = await verifyNativeRouterTemplate(browser, origin, manifest);
+            recordObservation(`native-router: ${engine} actual typed navigation`, {engine, profile: 'release', navigation});
+          });
+        }
+      }, {profile: 'release'});
+    }, 900_000);
+  }
+
   it('dashboard: serves each page as its browser shell, by declaration (ssr: false)', async () => {
     const name = 'e2e-phase1';
     expect(runCli([name, '--template', 'dashboard'], tmp).status).toBe(0);
@@ -593,7 +658,7 @@ describe.runIf(E2E)('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)', () => {
       expect(response.headers.get('content-security-policy-report-only')).toBeNull();
       for (const [engine, launcher] of Object.entries({ chromium, firefox, webkit })) {
         await withEngine(engine, launcher, async (browser) => {
-          const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin);
+          const observation = await verifyDashboardTemplate(browser, new URL(response.url).origin, { router: TEMPLATES.includes('native-router') });
           recordObservation(`dashboard: ${engine} tooltip text and policy`, { engine, profile: 'release', ...observation });
         });
       }
@@ -750,7 +815,8 @@ globalThis.__formaBrowserEntry = 'browser-entry-only-sentinel';`);
             const plainStatic = staticRoute && STATIC_HTML === 'plain-v1';
             // The authenticated release contract selects one exact shape:
             // plain static roots have no adoption metadata; legacy SSR does.
-            const root = plainStatic ? /<div id="app">/
+            const root = template === 'native-router' ? /<div id="app"[^>]*data-forma-router-root/
+              : plainStatic ? /<div id="app">/
               : script === 'build:ssr' ? /<div id="app" data-forma-build="[^"]+" data-forma-ssr>/
                 : /<div id="app" data-forma-build="[^"]+"><\/div>/;
             for (let fetchNo = 1; fetchNo <= 2; fetchNo++) {

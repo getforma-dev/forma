@@ -356,3 +356,21 @@ signal tuples but receive no setter authority. Each module receives one hygienic
 hook import, and unchanged native bytes/contracts remain the authority for
 browser registration. These compiler hooks feed the shipped strict adoption transaction. Browser
 and packed-package checks qualify their integration separately from emission.
+
+## Native navigation owner compilation
+
+`formaSsrPlugin({ navigationOwner: true, ... })` is the supported compiler seam
+used by `@getforma/build` navigation groups. It exports the authenticated island
+registry instead of activating it and removes the compile-time mount. A static
+owner receives an empty registry without requiring `activateIslands({})`.
+The separately compiled FMIR remains the source of native structure and props.
+
+An owner may declare one literal empty `div` with `data-forma-outlet="child"`,
+outside every registered island. Duplicate, nested, nonempty, dynamic and
+island-owned outlets are refused. Successful `getSsrEntryProducts(result)` records
+include `navigationOutlet` plus the physical declaration identity and contract for
+each emitted island, allowing build to authenticate deduplicated shared islands.
+These fields are absent without this opt-in; ordinary static no-JS classification
+and existing FMIR bytes are unchanged. Use the build API to obtain the complete
+identity, integrity and atomic-publication contract; the low-level plugin alone
+does not publish a navigation group.

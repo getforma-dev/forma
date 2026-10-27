@@ -471,6 +471,14 @@
           "evidence": "https://crates.io/api/v1/crates/forma-server (publication timestamp); https://github.com/getforma-dev/forma/releases/tag/server-v0.2.2 (first checksummed release)"
         }
       ]
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/router",
+      "recordRepositories": [
+        "getforma-dev/forma"
+      ],
+      "baseline": []
     }
   ]
 }

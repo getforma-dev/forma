@@ -1,0 +1,88 @@
+{
+  "startedAt": "2026-10-26T18:55:47.425Z",
+  "node": "v24.22.1",
+  "engines": [
+    "chromium",
+    "firefox",
+    "webkit"
+  ],
+  "commands": [
+    {
+      "command": "/Users/victorvillacis/dev/tools/rea/.local-runtime/node-v24.22.1-darwin-arm64/bin/node",
+      "args": [
+        "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/build.mjs"
+      ]
+    },
+    {
+      "command": "/Users/victorvillacis/dev/tools/rea/.local-runtime/node-v24.22.1-darwin-arm64/bin/node",
+      "args": [
+        "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/scripts/qualify-router-size.mjs",
+        "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/test-results/router-native-final/2026-10-26T18-55-47-423Z-93817/size"
+      ]
+    },
+    {
+      "command": "cargo",
+      "args": [
+        "build",
+        "--locked",
+        "--manifest-path",
+        "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/server/Cargo.toml"
+      ]
+    },
+    {
+      "command": "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/server/target/debug/forma-router-native-fixture",
+      "args": []
+    },
+    {
+      "command": "/Users/victorvillacis/dev/tools/rea/.local-runtime/node-v24.22.1-darwin-arm64/bin/node",
+      "args": [
+        "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs",
+        "http://127.0.0.1:51561",
+        "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/test-results/router-native-final/2026-10-26T18-55-47-423Z-93817/browser.json"
+      ]
+    }
+  ],
+  "scope": "Source integration; no packed release or deployment qualification.",
+  "cleanup": [
+    {
+      "pid": 93828,
+      "closed": true,
+      "method": "POSIX process group",
+      "processGroupGone": true,
+      "escalated": false
+    },
+    {
+      "pid": 93835,
+      "closed": true,
+      "method": "POSIX process group",
+      "processGroupGone": true,
+      "escalated": false
+    },
+    {
+      "pid": 93904,
+      "closed": true,
+      "method": "POSIX process group",
+      "processGroupGone": true,
+      "escalated": false
+    },
+    {
+      "pid": 93905,
+      "closed": true,
+      "method": "POSIX process group",
+      "processGroupGone": true,
+      "escalated": false
+    },
+    {
+      "pid": 93906,
+      "closed": true,
+      "method": "POSIX process group",
+      "processGroupGone": true,
+      "escalated": false
+    }
+  ],
+  "cleanupScope": "POSIX owned groups are verified absent; Windows uses taskkill /T and verifies inherited output closure. Independently detached processes are outside this claim.",
+  "finishedAt": "2026-10-26T18:57:00.259Z",
+  "status": "passed",
+  "origin": "http://127.0.0.1:51561",
+  "ownedProcessesStopped": true
+}

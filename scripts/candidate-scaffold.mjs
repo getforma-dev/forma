@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { SEED_TEMPLATES, templatesForPackages } from './template-lock-seeds.mjs';
+import { candidateNpmPackages } from './release-package-inventory.mjs';
 // The candidate gate consumes DS11 bytes. It never resolves unpublished Forma versions.
 import assert from 'node:assert/strict';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -6,13 +8,13 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, pack, packedRuntimeLock, stageNpmLock, stageCargoLock, assertNpmTemplateLock, assertCargoCandidateLock } from './release-set.mjs';
+import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, pack, packedRuntimeLock, stageNpmLock, stageCargoLock, assertInstalledTemplateCandidates, assertNpmTemplateLock, assertCargoCandidateLock } from './release-set.mjs';
 import { verifyPackedTemplateSources } from './release-template-sources.mjs';
 import { auditCandidateSignatures } from './audit-release-signatures.mjs';
 import { requireN8Observations } from './n8-size-start.mjs';
 import { summarizeTimings } from './scaffold-diagnostics.mjs';
 
-const sourceFiles = ['minimal', 'dashboard'].flatMap(template => ['src/main.rs', 'Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(file => `packages/create-app/templates/${template}/${file}`));
+const sourceFiles = SEED_TEMPLATES.flatMap(template => ['src/main.rs', 'Cargo.toml', 'Cargo.lock', 'admin/package.json', 'admin/package-lock.json'].map(file => `packages/create-app/templates/${template}/${file}`));
 export function templateHashes(root = ROOT) { return Object.fromEntries(sourceFiles.map(file => [file, digest(join(root, file))])); }
 
 export function validateCandidate(dir, expectedHash, expectedCommit) {
@@ -24,7 +26,7 @@ export function validateCandidate(dir, expectedHash, expectedCommit) {
   assert(['declared-v1', 'islands-v1'].includes(set.contracts?.sourceTemplates), 'candidate must carry a supported source template contract');
   assert([undefined, null, 'plain-v1'].includes(set.contracts.staticHtml), 'candidate must carry a supported static HTML contract');
   if (set.contracts.sourceTemplates === 'islands-v1') assert.equal(set.contracts.stateBlock, 'declared-v1', 'islands candidate requires declared state');
-  const expected = [...CRATES.map(name => ({name, registry:'crates', path:`crates/${name}`})), ...NPM.map(name => ({name:`@getforma/${name}`, registry:'npm', path:`packages/${name}`}))];
+  const expected = [...CRATES.map(name => ({name, registry:'crates', path:`crates/${name}`})), ...candidateNpmPackages(set).map(name => ({name:`@getforma/${name}`, registry:'npm', path:`packages/${name}`}))];
   assert(Array.isArray(set.packages)); assert.equal(set.packages.length, expected.length);
   const version = set.packages[0].version; assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3);
   for (const identity of expected) {
@@ -60,7 +62,7 @@ export function prepareCandidate(dir, expectedHash, expectedCommit, work) {
   }
   assert(!existsSync(join(cli, 'template-lock-seeds.json')), 'source seed identity must not ship');
   const sourceEquality = verifyPackedTemplateSources(cli, expectedCommit, set.contracts.sourceTemplates);
-  for (const template of ['minimal', 'dashboard']) {
+  for (const template of templatesForPackages(set.packages)) {
     const project = join(cli, 'templates', template), admin = join(project, 'admin');
     assertNpmTemplateLock(json(join(admin, 'package.json')), json(join(admin, 'package-lock.json')), set.packages, dir);
     assertCargoCandidateLock(readFileSync(join(project, 'Cargo.lock'), 'utf8'), set.packages);
@@ -71,7 +73,7 @@ export function prepareCandidate(dir, expectedHash, expectedCommit, work) {
   run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], cli, {stdio:'inherit'});
   assert.equal(digest(join(cli, 'package-lock.json')), before, 'packed CLI lock changed during installation');
   const signatures = auditCandidateSignatures(cli, set.packages, dir);
-  const context = {schema:1, dir, recordSha256:expectedHash, commit:expectedCommit, staticHtml:set.contracts.staticHtml ?? 'legacy-v1', work, cli:join(cli,'dist/index.js'), target:join(work,'target')};
+  const context = {schema:1, templates:templatesForPackages(set.packages), dir, recordSha256:expectedHash, commit:expectedCommit, staticHtml:set.contracts.staticHtml ?? 'legacy-v1', work, cli:join(cli,'dist/index.js'), target:join(work,'target')};
   save(join(work, 'context.json'), context);
   save(join(work, 'preparation.json'), {schema:1, passed:true, commit:expectedCommit, recordSha256:expectedHash, packages:set.packages, sourceEquality, signatures});
   return context;
@@ -93,7 +95,7 @@ export function stageCandidateProject(contextPath, project) {
 
 // Keep the complete legacy heavy suite load-bearing. New cases are additive.
 export const REQUIRED_HEAVY = [
-  ...['minimal','dashboard'].flatMap(t => [
+  ...SEED_TEMPLATES.flatMap(t => [
     `${t}: npm ci, frontend build, cargo check --locked`,
     `${t}: no locked crate needs a newer Rust than the template declares`,
     `${t}: a user's own cargo update keeps every crate within the template's rust-version`,
@@ -110,27 +112,30 @@ export const REQUIRED_HEAVY = [
   'minimal: declared count reaches SSR and invalid bindings refuse before listening',
   'minimal: packed native island adopts without writes and static route requests no code in all engines',
   'dashboard: chart tooltip keeps API values as text under enforced policy in all engines',
+  'native-router: typed navigation preserves its layout and works without JavaScript in all engines',
 ];
-export function requireHeavyResults(report) {
+export function requireHeavyResults(report, templates = SEED_TEMPLATES) {
+  assert.deepEqual(templates, templates.includes('native-router') ? SEED_TEMPLATES : templatesForPackages([]), 'unsupported scaffold template inventory');
+  const required = REQUIRED_HEAVY.filter(name => !name.startsWith('native-router:') || templates.includes('native-router'));
   assert.equal(report.success, true, 'scaffold suite failed');
   const cases = report.testResults.flatMap(file => file.assertionResults);
   assert(cases.length && cases.every(test => test.status === 'passed'), 'scaffold suite contains a skipped or failed test');
-  for (const name of REQUIRED_HEAVY) {
+  for (const name of required) {
     const found = cases.filter(test => test.title === name && test.ancestorTitles.includes('scaffolded projects build (FORMA_SCAFFOLD_E2E=1)'));
     assert.equal(found.length, 1, `required heavy case did not run exactly once: ${name}`);
     assert.equal(found[0].status, 'passed', `required heavy case failed: ${name}`);
   }
-  return {total:cases.length, heavy:REQUIRED_HEAVY.length, required:REQUIRED_HEAVY};
+  return {total:cases.length, heavy:required.length, required};
 }
 
 /**
- * The verdict on a scaffold run: every required heavy case passed, and (N8, FORMA-164) on Linux both
- * templates' size and start figures are in the report and inside the ceilings. Pure, so it is tested
+ * The verdict on a scaffold run: every required heavy case passed, and (N8, FORMA-164) on Linux each selected
+ * template's size and start figures are in the report and inside the ceilings. Pure, so it is tested
  * without a toolchain; `report.observations` must already be loaded.
  */
 export function judgeCandidate(report, rawResults) {
-  report.cases = requireHeavyResults(rawResults);
-  requireN8Observations(report.observations ?? [], report.platform);
+  report.cases = requireHeavyResults(rawResults, report.templates);
+  requireN8Observations(report.observations ?? [], report.platform, report.templates);
   report.passed = true;
   return report;
 }
@@ -147,9 +152,9 @@ export function runCandidate(context, reportPath) {
   const runner = join(dirname(require.resolve('vitest/package.json')), 'vitest.mjs');
   const result = spawnSync(process.execPath, [runner,'run','--reporter=default','--reporter=json',`--outputFile.json=${rawReport}`], {
     cwd:join(ROOT,'packages/create-app'), stdio:'inherit', windowsHide:true,
-    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_STATIC_HTML:context.staticHtml, FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_PUBLISHED_TEMPLATES:context.mode === 'published' ? join(dirname(context.cli),'..','templates') : '', FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
+    env:{...process.env, FORMA_SCAFFOLD_E2E:'1', FORMA_SCAFFOLD_TEMPLATES:JSON.stringify(context.templates ?? SEED_TEMPLATES), FORMA_SCAFFOLD_CONTEXT:context.mode === 'published' ? '' : join(context.work,'context.json'), FORMA_SCAFFOLD_STATIC_HTML:context.staticHtml, FORMA_SCAFFOLD_CLI:context.cli, FORMA_SCAFFOLD_PUBLISHED_TEMPLATES:context.mode === 'published' ? join(dirname(context.cli),'..','templates') : '', FORMA_SCAFFOLD_REPORT_DIR:context.work, CARGO_TARGET_DIR:context.target, CARGO_INCREMENTAL:'0'},
   });
-  const report = {schema:1, passed:false, mode:context.mode ?? 'candidate', commit:context.commit, recordSha256:context.recordSha256, platform:process.platform};
+  const report = {schema:1, passed:false, mode:context.mode ?? 'candidate', commit:context.commit, recordSha256:context.recordSha256, platform:process.platform, templates:context.templates ?? SEED_TEMPLATES};
   try {
     assert.equal(result.error, undefined); assert.equal(result.status, 0, 'scaffold suite command failed');
     report.observations = readObservations(context);
@@ -172,7 +177,7 @@ async function main() {
     try {pack(out, true); success = true;}
     finally {
       const after = templateHashes(); save(join(out,'template-restoration.json'),{schema:1,success,before,after});
-      assert.deepEqual(after,before,'real candidate pack did not restore all ten template source files');
+      assert.deepEqual(after,before,'real candidate pack did not restore all template source files');
     }
     const hash = digest(join(out,'release-set.json'));
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`record-sha256=${hash}\n`);
@@ -185,6 +190,7 @@ async function main() {
   } else if (command === 'project') stageCandidateProject(resolve(args[0]),resolve(args[1]));
   else if (command === 'audit') {
     const context = json(args[0]), set = validateCandidate(context.dir,context.recordSha256,context.commit);
+    assertInstalledTemplateCandidates(resolve(args[1]), set.packages);
     console.log(JSON.stringify(auditCandidateSignatures(resolve(args[1]),set.packages,context.dir)));
   } else throw Error('usage: candidate-scaffold.mjs pack OUT | prepare DIR HASH COMMIT WORK | run DIR HASH COMMIT WORK REPORT | project CONTEXT PROJECT | audit CONTEXT ADMIN');
 }

@@ -1,8 +1,9 @@
 # Forma documentation
 
-Forma 3.x is one repository and seven coordinated packages. Version 3.0.0 is
-published; current main also contains changes being prepared for 3.1. The
-[3.1 upgrade draft](UPGRADING-3.1.md) distinguishes those unreleased changes.
+Forma 3.1.0 is published as seven coordinated packages. The
+[3.1 upgrade guide](UPGRADING-3.1.md) describes that release. This feature branch
+adds the unreleased optional router as an eighth package for a future minor;
+its [implementation ledger](design/router/qualification.md) records qualification.
 Historical decisions and release evidence are kept separately from the path an
 application author should follow.
 
@@ -15,11 +16,13 @@ application author should follow.
 | Build browser UI or a static site | [Core quickstart](../packages/core/README.md) and [API](../packages/core/docs/API.md) |
 | Use Rust request data in a page | [Declared props](DECLARED-PROPS.md) and [server API](../crates/forma-server/README.md) |
 | Activate server-rendered islands | [Islands and state](../packages/core/docs/ISLANDS.md) |
+| Add client navigation and persistent layouts (3.2 candidate) | [Routing guide](ROUTING.md), [router API](../packages/router/README.md) and [native-router starter](../packages/create-app/templates/native-router/README.md) |
 | Use the explicit HTML runtime | [HTML runtime](../packages/core/docs/HTML-RUNTIME.md) |
 | Know what compiles natively | [Admitted subset and build diagnostics](../packages/compiler/docs/subset.md) |
 | Configure a build or deployment | [Build package](../packages/build/README.md) |
 | Upgrade to published 3.0 | [Upgrade guide](UPGRADING-3.0.md) and [compatibility](compatibility.md) |
-| Prepare for 3.1 (unpublished) | [3.0 → 3.1 upgrade draft](UPGRADING-3.1.md) |
+| Upgrade to published 3.1 | [3.0 → 3.1 upgrade guide](UPGRADING-3.1.md) |
+| Prepare a router application for 3.2 | [3.2 candidate upgrade guide](UPGRADING-3.2.md) |
 | Diagnose a failure | [Diagnostic catalogue](DIAGNOSTICS.md) |
 
 ## Contracts and security

@@ -1,8 +1,10 @@
 # Unified releases
 
-The unified repository publishes seven coordinated packages. **3.0.0 is already
-published**; its [as-built summary](release/V3-AS-BUILT.md) records qualification
-and completed post-release verification. This document explains the release
+The source workspace prepares 3.2.0-rc.1 with eight coordinated packages,
+including the optional `@getforma/router`. **[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)**;
+3.2 qualification and publication remain pending. Published 3.0 and 3.1 records
+retain their original seven-package inventory. The [3.0 as-built summary](release/V3-AS-BUILT.md)
+records its qualification and completed post-release verification. This document explains the release
 mechanisms and retains historical 3.0 examples. Never reuse an existing tag or
 version. For a new release, first prepare its own reviewed contract and evidence.
 The checked-in contract record, `scripts/release-contracts.json`, states which
@@ -34,7 +36,7 @@ bash scripts/install-deps.sh
 npm run check
 ```
 
-The version command changes seven manifests, their exact internal requirements,
+The version command changes eight manifests, their exact internal requirements,
 the workspace locks, npm repository metadata and release template ranges. It
 creates neither tags nor commits. A `-dev` version also aligns the current
 template source seeds; it names no publishable milestone.
@@ -43,16 +45,57 @@ CHANGELOG heading (for example `## [3.0.0]`), close only evidenced gates,
 review and merge the release PR, and tag the exact main commit after its required
 CI and packed qualification are green. Use merge commits and never move a tag.
 
+### Adding the optional router to the coordinated release
+
+The candidate source is prepared as 3.2.0-rc.1. `release-set.mjs version` updates
+the router manifest and lock together, including its core peer range. A 3.2-or-later release requires all eight
+packages; an eight-package live 3.1 tag is refused. No existing tag is reused.
+
+Feature dry packs declare `packageSet: "forma-router-v1"` and include the router
+archive even before the version bump. Authenticated historical 3.0/3.1 records
+and RC evidence remain seven-package records. The versioned inventory reader in
+`scripts/release-package-inventory.mjs` keeps those records valid while requiring
+the new package for subsequent releases. P17 resolves the packed router against
+the packed core navigation entry and exercises nested parameter matching. The
+source gate builds/tests the router and checks its types and packed exports.
+The `native-router` starter opts into the router dependency and Rust navigation feature.
+`dashboard` uses the browser adapter for its client routes; `minimal` keeps its
+existing dependency graph without the router. Current candidate
+qualification includes all three starters; authenticated historical seven-package
+records select only their two original starters. The new starter adds five heavy
+cases, including native navigation and persistent shell state in all three browser
+engines, and a Linux N8 row at the existing 3 MB / 100 ms limits.
+
+Before the first router publication, qualify the candidate and complete the
+reviewed bootstrap and monitor preparation in the
+[router enrollment procedure](release/ROUTER-REGISTRY-ENROLLMENT.md). npm requires
+an existing package before trusted-publisher enrollment. The finite,
+founder-authorized first-package exception applies only to the qualified
+`@getforma/router@3.2.0-rc.1` archive; it never replaces CI, archive verification,
+P17, provenance or D14. Configure the target five-package npm observer and
+eight-package registry policy before D14 and the published-RC source freeze;
+this source preparation is already present and does not claim live enrollment.
+Missing-package 404s remain failures, historical baselines remain unchanged, and
+no post-publication source edit or activation switch is needed. After the actual
+eight-package publication is verified, remove the bootstrap secret, revoke its
+credential, enroll the real router trusted publisher and deploy/run the audited
+observers to establish genuine complete monitoring evidence. An existing external
+four-package monitor can continue its historical version until then. Those
+post-publication obligations remain pending. Do not invent a registry identity,
+suppress a 404 or treat local tests as operational enrollment. Historical 3.0/3.1
+records retain their seven-package identities.
+
 ### Hosted packed rehearsal
 
 After `.github/workflows/packed-qualification.yml` is present on the default
 branch, dispatch it on a reviewed immutable preparation ref, for example:
 
 ```sh
-gh workflow run packed-qualification.yml --ref 'codex/forma-beta3-qualification-<commit>' -f target_tag=v3.0.0-beta.3
+# Replace both placeholders with the reviewed preparation ref and unpublished version.
+gh workflow run packed-qualification.yml --ref '<reviewed-preparation-ref>' -f target_tag='vX.Y.Z-rc.N'
 ```
 
-The read-only workflow builds and dry-packs all seven packages from that run's
+The read-only workflow builds and dry-packs all eight source packages from that run's
 exact commit, then passes the original candidate artifact to a separate clean
 Linux checkout. It checks the producer's DS11 digest, source commit, run,
 archive bytes, coordinated versions and Cargo lock before running the unchanged
@@ -61,12 +104,14 @@ reports, raw observations and cleanup results are retained as run artifacts.
 Its 60-minute job and 45-minute verification step allow setup and cleanup;
 P17's independent 1,800-second acceptance limit remains unchanged.
 
-`target_tag` must match all seven prepared versions. Use `v3.0.0-rc.1` for an RC
-preparation: pending milestone gates remain recorded, so the rehearsal can
-collect evidence before they close. The normal baseline reader still requires
-an actual comparable DS12 from the newest published predecessor for RC
-performance: published 3.0.0 for 3.1.0-rc.1 unless a later 3.0.x is published
-first. The workflow has
+`target_tag` must match all eight prepared versions for the new minor release.
+The 3.0/3.1 commands elsewhere in historical runbooks describe their original
+seven-package releases; they are not current feature-candidate instructions.
+Pending milestone gates remain recorded, so the rehearsal can collect evidence
+before they close. The normal baseline reader still requires an actual comparable
+DS12 from the newest published predecessor for RC performance. Select that
+predecessor through the versioned release tooling, not a copied historical tag.
+The workflow has
 no publication credentials, never writes DS12 to a Release, and neither closes
 gates nor replaces exact-main CI or the tagged release workflow. A failed run
 remains failed; another attempt requires an explicit decision.
@@ -142,14 +187,14 @@ predecessor archive and verifies the packed source-commit metadata; shared build
 targets and failed release artifacts remain untouched.
 
 Source template locks cannot contain a future registry checksum before that
-artifact has been packed. Pack first creates the three crates and three library
+artifact has been packed. Pack first creates the three crates and four library
 npm tarballs, then stages internal package versions, dependency metadata,
 registry URLs and checksums into the create-app templates. For the finalized 3.0.x
 candidate contract, an authenticated source adapter also stages the reviewed
 typed startup API; historical A2 source stays unchanged. Third-party resolutions
 remain unchanged. It packs create-app last and restores all source template files,
 including after a staging/write failure. Packed template `_npmrc` files are kept
-and restored to `.npmrc` by the CLI. DS11 contains seven archives, the exact source
+and restored to `.npmrc` by the CLI. DS11 contains eight archives, the exact source
 Cargo.lock and release-set.json with commit, run, toolchain, contract versions and
 archive hashes. SHA256SUMS covers every file; its own hash travels separately as a
 job output, so replacing both an archive and its manifest fails verification.
@@ -157,7 +202,7 @@ job output, so replacing both an archive and its manifest fails verification.
 `verify`, without OIDC permission, checks DS11 and the recorded lock, installs
 locked tools with scripts off, checks fresh advisories against the root lock and
 each crate archive’s own lock (only internal sources substituted), and checks npm registry signatures,
-then runs the packed compiler/reader corpus and both packed templates. Before any
+then runs the packed compiler/reader corpus and every template in the authenticated package set. Before any
 packed code runs, P17 writes a `node_modules/@getforma` beside the unpacked libraries,
 linking each packed one, and proves with Node's resolver that every bare `@getforma/*`
 specifier in every packed dist resolves inside the packed set
@@ -195,16 +240,20 @@ fails the same CLI execution that a consumer would run.
 ## Publication and retry
 
 Configure trusted publishers for `release.yml` in getforma-dev/forma, with
-`crates-publish` for all three crates and `npm-publish` for all four npm packages.
+`crates-publish` for all three crates and `npm-publish` for all five npm packages
+in 3.2. The original four npm publishers remain in place; the router's first
+publication uses only the finite exception described above before enrollment.
 Both environments allow release tags and have **no required reviewer**. This is
 the existing environment plan, not an additional approval gate. Current [npm trusted
 publisher documentation](https://docs.npmjs.com/trusted-publishers/) allows up to ten
 publishers, so retain the maintenance publisher. A new configuration expires unless
 it first publishes within two days and defaults to stage-only: explicitly choose
 **Allow npm publish**, consistent with the founder's autonomous-release decision.
-Create the new entries just before the first live alpha, not weeks before it. Publisher
-hookup gates the first live publish; it does not require deleting maintenance access
-or prevent the history/code merge. Admin-only v* tag rules still apply.
+Saving an entry does not validate it. Schedule its first trusted publish within
+that window as part of a qualified release, or replace an expired configuration
+before the next qualified release; this is not permission for an extra unqualified
+publication. Publisher hookup does not require deleting maintenance access or
+prevent the history/code merge. Admin-only v* tag rules still apply.
 
 Two sequential minimal jobs hold OIDC permission. Each downloads only this run's
 DS11 and verifies its independently anchored hash before publication. Neither
@@ -217,7 +266,7 @@ introduced in that checkout, preserving Cargo VCS metadata. npm uploads the exac
 DS11 tarballs with `--ignore-scripts --provenance`; prereleases use `next`.
 
 Two registries are not transactional. Before uploading anything, each job queries
-all seven versions. A present version is skipped only when its registry checksum
+every package version in the authenticated candidate inventory. A present version is skipped only when its registry checksum
 matches DS11 exactly (and a crate is not yanked); a mismatch, unreadable response
 or failure after upload stops the run. Only HTTP 404 means absent. Crate publication
 must be visible before npm starts. Polling has a bounded deadline including requests
@@ -246,8 +295,8 @@ the reviewed overlap and visibility changes do not predict the next result.
 
 ## Current development integration
 
-Development revisions can use `3.0.0-dev`, which names no milestone and cannot
-publish. Release preparation aligns all seven packages, internal requirements,
+Development revisions can use a development prerelease such as `3.2.0-dev`, which names no milestone and cannot
+publish. Release preparation aligns all eight source packages, internal requirements,
 three Cargo locks (root, e2e and fuzz), template ranges and current version
 documentation with the candidate, without changing external resolutions. Keep
 historical changelog entries and archived evidence attached to their released
@@ -255,7 +304,7 @@ versions. The FMIR v3 contract is independent of the package prerelease suffix;
 P17 compares the packed compiler's writer triple and canonical dumps with the
 packed reader's actual version and frozen corpus.
 
-The current source templates use the typed 3.0 startup API. Their packed locks
+The current source templates use the typed startup API; native-router additionally opts into the navigation feature. Their packed locks
 still require the candidate's actual archive checksums, as described above; a
 source template build does not replace packed template acceptance. A development
 dry run is labeled `v3-development-dry-run`, and any template refusal remains a
@@ -317,7 +366,7 @@ Rehearse it as the runner sees it: commit, `pack` a dry-run DS11, delete `packag
 ## Staged response contract (FORMA-109)
 
 The DS11 contract records `trustedTypes: "enforced-v1"`. P17 reads the actual
-HTTP and browser-navigation enforcement headers for both packed templates,
+HTTP and browser-navigation enforcement headers for all selected packed templates,
 requires the two intended policy names, and records native Trusted Types support,
 all `securitypolicyviolation` events and page errors across positive interaction.
 A passing result requires zero events and errors; separate native browser controls
@@ -326,9 +375,9 @@ not evidence of zero CSP reports.
 
 The current `sourceTemplates: "islands-v1"` contract packs the checked-in
 Rust and TypeScript template sources unchanged. `stageTemplates()` seals the
-eight dependency manifests/locks against the six runtime candidates and retains
-the two Rust main files in its ten-file restoration record. It validates both
-templates before writing and restores the originals after packaging. The older
+twelve dependency manifests/locks against the seven runtime candidates and retains
+the three Rust main files in its fifteen-file restoration record. It validates all
+three templates before writing and restores the originals after packaging. The older
 candidate source adapters belong to historical evidence; they are not the
 current source-template path. FORMA-144 slice 2 is accepted by the
 [beta qualification](release/BETA-QUALIFICATION.md); final slice 3 remains open.
@@ -337,7 +386,7 @@ current source-template path. FORMA-144 slice 2 is accepted by the
 
 The `finalized-v1` bound-render contract requires the packed server's external
 finalization, budget, typed document-home, browser-mode, panic and topology
-snapshot checks. Both current source templates finalize before opening a
+snapshot checks. All current source templates finalize before opening a
 listener. P17 authenticates the packed source inventory against the exact
 source commit and verifies the generated templates. Beta acceptance does not
 close FORMA-144's final-version cleanup gate.

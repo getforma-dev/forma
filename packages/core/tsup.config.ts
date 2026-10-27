@@ -1,4 +1,5 @@
 import { defineConfig, type Options } from 'tsup';
+import { stripDeliveryComments } from './scripts/readable-javascript.mjs';
 import {
   DEV_DEFINE,
   DEV_OUT_DIR,
@@ -8,6 +9,14 @@ import {
 } from './scripts/build-defines.mjs';
 
 const formaAlias = { ...FORMA_ALIAS };
+
+// Remove descriptive comments from delivery bytes while retaining legal notices,
+// purity annotations, readable names, line structure and source-map positions.
+// Verified by: src/__tests__/readable-javascript.test.ts > "the real split build preserves licenses and maps while omitting descriptive comments"
+const readableJavaScript: NonNullable<Options['plugins']>[number] = {
+  name: 'readable-javascript',
+  renderChunk(code) { return { code: stripDeliveryComments(code) }; },
+};
 
 /**
  * Every production artifact is built with `__FORMA_DEV_BUILD__` replaced by
@@ -69,6 +78,7 @@ const PRODUCTION: Options[] = [
     entry: {
       index: 'src/index.ts',
       compiled: 'src/compiled.ts',
+      navigation: 'src/navigation.ts',
       runtime: 'src/runtime.ts',
       'tc39-compat': 'src/reactive/tc39-compat.ts',
       http: 'src/http/index.ts',
@@ -81,6 +91,7 @@ const PRODUCTION: Options[] = [
     external: [],
     treeshake: true,
     splitting: true,
+    plugins: [readableJavaScript],
     target: 'es2022',
     minify: false,
     define: defines(),

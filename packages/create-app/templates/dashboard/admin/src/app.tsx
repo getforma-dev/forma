@@ -1,4 +1,5 @@
-import { h, Fragment, mount, createSignal, createShow, createEffect, onCleanup } from '@getforma/core';
+import { h, Fragment, createSignal, createShow, onCleanup } from '@getforma/core';
+import { createRouter, createBrowserAdapter, type RenderContext, type Router } from '@getforma/router';
 import { Icon } from './components/Icon';
 import { UserAvatar } from './components/UserAvatar';
 import {
@@ -11,10 +12,9 @@ import { OverviewPage } from './pages/OverviewPage';
 import { ServersPage } from './pages/ServersPage';
 import { SettingsPage } from './pages/SettingsPage';
 
-// ── Routing via signal + History API ──
-
-const initialPage = location.pathname.slice(1) || 'overview';
-export const [currentPage, setCurrentPage] = createSignal(initialPage);
+// One retained layout owner surrounds separately disposable page owners.
+let router: Router;
+const pagePath = (page: string) => page === 'overview' ? '/' : `/${page}`;
 
 // ── Page metadata ──
 
@@ -38,48 +38,47 @@ const PALETTE_ITEMS = [
 
 // ── Deploy Toast ──
 const [toastVisible, setToastVisible] = createSignal(false);
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
 const showToast = () => {
+  clearTimeout(toastTimer);
   setToastVisible(true);
-  setTimeout(() => setToastVisible(false), 3000);
+  toastTimer = setTimeout(() => setToastVisible(false), 3000);
 };
 
 // ── Navigation helper ──
 
 function navigate(page: string) {
-  setCurrentPage(page);
+  void router.navigate(pagePath(page));
 }
 
 // ── Sidebar Component ──
 
-function Sidebar() {
+function Sidebar({ currentPage }: { currentPage: () => string }) {
   const [collapsed, setCollapsed] = createSignal(false);
 
-  const navItem = (id: string, icon: string, label: string, badge?: number, disabled?: boolean) => (
-    <button
-      class={() => {
+  const navItem = (id: string, icon: string, label: string, badge?: number, disabled?: boolean) => {
+    const props = {
+      class: () => {
         const base = 'flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-all duration-150';
         const active = currentPage() === id
           ? 'bg-white/10 text-forma-green neon-glow'
           : 'text-gruvbox-gray hover:text-gruvbox-fg hover:bg-white/5';
-        const dis = disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer';
-        return `${base} ${active} ${dis}`;
-      }}
-      onClick={() => { if (!disabled) navigate(id); }}
-    >
-      <Icon d={icon} size={18} />
-      {createShow(
-        () => !collapsed(),
-        () => (
-          <>
-            <span class="flex-1 text-left">{label}</span>
-            {badge !== undefined && (
-              <span class="bg-gruvbox-red/20 text-gruvbox-red text-[10px] font-semibold px-1.5 py-0.5 rounded-full">{badge}</span>
-            )}
-          </>
-        ),
-      )}
-    </button>
-  );
+        return `${base} ${active} ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`;
+      },
+      'aria-label': label,
+      ...(disabled ? { disabled: true } : {
+        href: pagePath(id),
+        'aria-current': () => currentPage() === id ? 'page' : undefined,
+      }),
+    };
+    return h(disabled ? 'button' : 'a', props,
+      <Icon d={icon} size={18} />,
+      createShow(() => !collapsed(), () => <>
+        <span class="flex-1 text-left">{label}</span>
+        {badge !== undefined && <span class="bg-gruvbox-red/20 text-gruvbox-red text-[10px] font-semibold px-1.5 py-0.5 rounded-full">{badge}</span>}
+      </>),
+    );
+  };
 
   const sectionTitle = (title: string) =>
     createShow(
@@ -96,6 +95,8 @@ function Sidebar() {
           () => <span class="text-lg font-semibold text-gruvbox-fg tracking-tight">FormaOps</span>,
         )}
         <button
+          aria-label="Toggle sidebar"
+          aria-expanded={() => collapsed() ? 'false' : 'true'}
           class="ml-auto text-gruvbox-gray hover:text-gruvbox-fg transition-colors p-1 rounded hover:bg-white/5"
           onClick={() => setCollapsed(c => !c)}
         >
@@ -147,7 +148,7 @@ function Sidebar() {
 
 // ── TopBar Component ──
 
-function TopBar() {
+function TopBar({ currentPage }: { currentPage: () => string }) {
   return (
     <div class="flex items-center justify-between px-8 h-14 border-b border-gruvbox-border shrink-0">
       <div>
@@ -179,22 +180,10 @@ function TopBar() {
   );
 }
 
-// ── Mount ──
-
-mount(() => {
-  // History API sync
-  createEffect(() => {
-    const page = currentPage();
-    const path = '/' + (page === 'overview' ? '' : page);
-    if (location.pathname !== path) {
-      history.pushState(null, '', path);
-    }
-  });
-
-  const onPopState = () => setCurrentPage(location.pathname.slice(1) || 'overview');
-  window.addEventListener('popstate', onPopState);
-  onCleanup(() => window.removeEventListener('popstate', onPopState));
-
+// The layout's local state and listeners live until the router releases it.
+function Layout({ location, outlet }: RenderContext) {
+  const currentPage = () => location().url.pathname.slice(1) || 'overview';
+  onCleanup(() => clearTimeout(toastTimer));
   // ⌘K to open command palette
   const onKeyDown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -208,16 +197,13 @@ mount(() => {
   onCleanup(() => window.removeEventListener('keydown', onKeyDown));
 
   return (
-    <>
+    <div data-dashboard-layout>
       <div class="flex h-screen bg-gruvbox-bg text-gruvbox-fg overflow-hidden">
-        <Sidebar />
+        <Sidebar currentPage={currentPage} />
         <div class="flex-1 flex flex-col overflow-hidden">
-          <TopBar />
+          <TopBar currentPage={currentPage} />
           <main class="flex-1 overflow-y-auto p-8">
-            {createShow(() => currentPage() === 'overview', () => <OverviewPage />)}
-            {createShow(() => currentPage() === 'deployments', () => <DeploymentsPage />)}
-            {createShow(() => currentPage() === 'servers', () => <ServersPage />)}
-            {createShow(() => currentPage() === 'settings', () => <SettingsPage />)}
+            {outlet}
           </main>
         </div>
       </div>
@@ -278,6 +264,24 @@ mount(() => {
           </div>
         ),
       )}
-    </>
-  );
-}, '#app');
+    </div>
+  ) as HTMLElement;
+}
+
+const root = document.getElementById('app');
+if (!root) throw new Error('Dashboard root is missing');
+router = createRouter({
+  root,
+  adapter: createBrowserAdapter(),
+  routes: [{
+    id: 'dashboard', render: Layout,
+    children: [
+      { id: 'overview', index: true, render: () => <OverviewPage /> as HTMLElement },
+      { id: 'overview-alias', path: 'overview', render: () => <OverviewPage /> as HTMLElement },
+      { id: 'deployments', path: 'deployments', render: () => <DeploymentsPage /> as HTMLElement },
+      { id: 'servers', path: 'servers', render: () => <ServersPage /> as HTMLElement },
+      { id: 'settings', path: 'settings', render: () => <SettingsPage /> as HTMLElement },
+    ],
+  }],
+  title: location => `${PAGE_META[location.url.pathname.slice(1) || 'overview']?.title || 'Dashboard'} | FormaOps`,
+});

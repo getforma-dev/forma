@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateBurnInReport, CONTRACT, MIN_ACTIVE_NS, FUZZ_TARGETS, ENGINES, SKEW_CHECKS, readFuzzCompletion} from './release-burn-in-report.mjs';
+import { packageIdentitiesForVersion } from './release-package-inventory.mjs';
 const H = 'a'.repeat(64), COMMIT = 'b'.repeat(40);
 function fixture(version = '3.0.0-rc.1') {
-  const ids = [['crates','forma-ir'],['crates','forma-ir-derive'],['crates','forma-server'],['npm','@getforma/core'],['npm','@getforma/compiler'],['npm','@getforma/build'],['npm','@getforma/create-app']];
+  const ids = packageIdentitiesForVersion(version).map(id => id.split(':'));
   const expected = {rcTag:`v${version}`,sourceCommit:COMMIT,ds12Sha256:H,p17EvidenceSha256:H,d14EvidenceSha256:H,harnessSha256:H,packages:ids.map(([registry,name],i)=>({registry,name,version,file:`archive-${i}.tgz`,bytes:100+i,sha256:H})),hostileCaseIds:['native-call/control','confined-read/control'],fixtureCheckIds:['minimal/activation','dashboard/activation','Counter/update','indexed/set']};
   const taskIds=[...FUZZ_TARGETS.map(t=>`fuzz:${t}`),'hostile',...ENGINES.map(e=>`skew:${e}`),'fixtures'];
   let time=0n;
@@ -27,6 +28,15 @@ function fixture(version = '3.0.0-rc.1') {
   return {report,expected};
 }
 const refuses=edit=>{const {report,expected}=fixture();edit(report,expected);assert.throws(()=>validateBurnInReport(report,expected));};
+test('3.2 RC requires all eight original archives without changing active-hour or workload gates', () => {
+ const {report,expected}=fixture('3.2.0-rc.1');
+ assert.equal(expected.packages.length,8);
+ assert.equal(validateBurnInReport(report,expected).activeNanoseconds,String(MIN_ACTIVE_NS));
+ const missing=structuredClone(report);missing.packages=missing.packages.filter(p=>p.name!=='@getforma/router');
+ assert.throws(()=>validateBurnInReport(missing,expected),/versioned archives/);
+ const short=structuredClone(report);short.rounds.at(-1).tasks[0].fuzzSeconds=59;
+ assert.throws(()=>validateBurnInReport(short,expected));
+});
 test('3.1 RC retains the complete active-hour and matching seven-archive requirements', () => {
  const {report,expected}=fixture('3.1.0-rc.1');
  assert.equal(validateBurnInReport(report,expected).activeNanoseconds,String(MIN_ACTIVE_NS));

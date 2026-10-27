@@ -7,7 +7,7 @@
 
 Reactive DOM library with fine-grained signals. No virtual DOM — signals update only the DOM nodes that changed. Components run once.
 
-> **Where this sits.** One product, one repository, seven packages:
+> **Where this sits.** One product, one repository, eight source packages (including the optional router):
 >
 > ```
 > TS/JSX → @getforma/compiler → FMIR (binary) → forma-ir walker → HTML → @getforma/core adopts it
@@ -38,14 +38,14 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-This checkout prepares the coordinated `3.1.0` package set. The candidate
+This checkout prepares the coordinated `3.2.0-rc.1` package set. The candidate
 is not published yet; use the command below only after its release records
-confirm publication. The latest published stable set remains `3.0.0`.
-The [3.0.0 release](https://github.com/getforma-dev/forma/releases/tag/v3.0.0)
+confirm publication. The latest published stable set remains `3.1.0`.
+The [3.1.0 release](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
 contains its qualification and publication records.
 
 ```bash
-npm install @getforma/core@3.1.0
+npm install @getforma/core@3.2.0-rc.1
 ```
 
 For the separate stable 2.1.0 runtime, the following URLs are retained only as

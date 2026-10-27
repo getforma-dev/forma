@@ -1,0 +1,16 @@
+{
+  "scope": "Whole real portal application bundles, including different core versions and replacing the application navigator; not the router-only release size gate.",
+  "artifacts": {
+    "original": {
+      "rawBytes": 36659,
+      "gzip9Bytes": 13491,
+      "sha256": "b9ba2c22ce825b33a322a14dfac87f0dcf86147f86c6e25022e6bc44cc8542f1"
+    },
+    "candidate": {
+      "rawBytes": 56708,
+      "gzip9Bytes": 20382,
+      "sha256": "94cd64af9a2b22ae84140296ea8fae2ba176b6a04066f1fbdfc0d1628df86bc0"
+    }
+  },
+  "addedGzip9Bytes": 6891
+}

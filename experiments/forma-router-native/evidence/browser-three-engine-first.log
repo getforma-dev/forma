@@ -1,0 +1,40 @@
+PASS chromium native nested owner A-B-A retains layout island and disposes departing leaf
+PASS chromium scheduled island readiness preserves original served nodes
+PASS chromium latest held GET wins and stale response cannot change title URL or layout
+PASS chromium hash query revalidation Back Forward and replace preserve history ownership
+PASS chromium validation preserves form values and accessible summary without push
+PASS chromium successful typed POST refreshes props and replaces leaf while retaining layout
+PASS chromium managed GET form preserves query serialization without POST
+PASS chromium navigation during delayed POST revalidates newer current route
+PASS chromium competing submissions are busy and never queue a second send
+PASS chromium lost action result remains uncertain across GET and reload with one POST
+FAIL chromium real CSRF refusal revokes safely and undeclared endpoint never transmits locator.innerHTML: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-forma-router-root]')[22m
+
+PASS chromium explicit POST redirect becomes one admitted GET and preserves document
+PASS chromium formdata reentrant submission reserves one POST and dispose transmits none
+PASS chromium late validation settlement cannot discard the newer held GET destination
+FAIL chromium explicit context revocation clears owners before recovery and stale GET cannot reactivate locator.innerHTML: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-forma-router-root]')[22m
+
+PASS chromium foreground context check and persisted pageshow each use a fresh document boundary
+PASS chromium real changed policy makes one explicit document boundary
+PASS chromium actual second compiled build cannot mix owners and requires document boundary
+FAIL chromium malformed scoped state refuses destination activation before one document recovery locator.innerText: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#route-title')[22m
+
+FAIL chromium custom element and slash-is markup cannot execute constructors before document recovery page.evaluate: Target page, context or browser has been closed
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browserContext.close: Target page, context or browser has been closed
+    at async scenario (/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:40:14)
+    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/browser.mjs:164:3 {
+  log: []
+}
+
+Node.js v24.22.1

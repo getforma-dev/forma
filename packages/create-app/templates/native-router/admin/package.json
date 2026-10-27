@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx build.ts --strict",
+    "build:ssr": "tsx build.ts --strict",
+    "dev": "tsx build.ts --strict"
+  },
+  "dependencies": {
+    "@getforma/core": "=3.2.0-rc.1",
+    "@getforma/router": "=3.2.0-rc.1"
+  },
+  "devDependencies": {
+    "@getforma/build": "=3.2.0-rc.1",
+    "@getforma/compiler": "=3.2.0-rc.1",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents": false,
+    "@parcel/watcher": false
+  }
+}

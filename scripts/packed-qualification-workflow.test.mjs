@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT, CRATES, NPM, digest, assertReleaseSet, releaseMilestone } from './release-set.mjs';
+import { npmPackagesForVersion } from './release-package-inventory.mjs';
 import { performanceTarget } from './release-performance.mjs';
 import { P17_BUDGET_SECONDS, p17Time } from './release-measurements.mjs';
 import { SOAK_GATE, SOAK_POLICY } from './release-soak-deferral.mjs';
@@ -20,7 +21,7 @@ const wholeCommand = 'mkdir "$RUNNER_TEMP/p17"\npython3 scripts/release-owned-li
 function validate(workflow) {
   assert.deepEqual(Object.keys(workflow.on), ['workflow_dispatch']);
   assert.deepEqual(workflow.on.workflow_dispatch.inputs, { target_tag: {
-    description: 'Intended release tag; all seven checked-out versions must match',
+    description: 'Intended release tag; all coordinated checked-out versions must match',
     required: true, default: 'v3.0.0-beta.3', type: 'string',
   } });
   assert.equal(workflow.permissions, undefined);
@@ -107,7 +108,7 @@ function authenticate(version, mutate = () => {}, source = JSON.parse(readFileSy
     }
     const set = { schema: 1, dryRun: true, commit: 'a'.repeat(40), run: '42', contracts,
       packages: [...CRATES.map(name => ({ name, path: `crates/${name}`, registry: 'crates' })),
-        ...NPM.map(name => ({ name: `@getforma/${name}`, path: `packages/${name}`, registry: 'npm' }))]
+        ...npmPackagesForVersion(version).map(name => ({ name: `@getforma/${name}`, path: `packages/${name}`, registry: 'npm' }))]
         .map(row => ({ ...row, version, file: `${row.name.replace('@', '').replace('/', '-')}-${version}.${row.registry === 'crates' ? 'crate' : 'tgz'}` })) };
     for (const row of set.packages) { writeFileSync(join(dir, row.file), row.name); row.sha256 = digest(join(dir, row.file)); }
     writeFileSync(join(dir, 'Cargo.lock'), readFileSync(join(ROOT, 'Cargo.lock')));

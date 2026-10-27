@@ -1,0 +1,665 @@
+{
+  "sourceProducts": {
+    "experiments/forma-router-native/app/a.tsx": "6db029b7d38549d1510f32c09d84b0ef650557290edcca084d74d3a7391dcec4",
+    "experiments/forma-router-native/app/b.tsx": "4774d4c31a20bd18994d26ce389da09543a1c1d3ee456a030da001b66e27951b",
+    "experiments/forma-router-native/app/fixture.css": "4f842f31ca020fcc2ee239ec8921042b25bedf2bc02262fd09b834bd119065bd",
+    "experiments/forma-router-native/app/page-a.tsx": "c0d4d34f6bac46db64539622fdf6bb249a891ae8ac47edf0273a0debf4f5d965",
+    "experiments/forma-router-native/app/page-b.tsx": "1a79d01944a92f876e6a5e909258e6af22b0e9e1c97b3bc26d668d3935c6dc14",
+    "experiments/forma-router-native/app/page-shell.tsx": "c8b00dc4831e86dd28c589e03ff066edc84cc5234cc7fd10f9601a2fb1032c40",
+    "experiments/forma-router-native/app/plain-a.tsx": "0a26f9d23ec0f0198603f53f72cf8eb40f2992f85ba3d16bced4bca508420e1e",
+    "experiments/forma-router-native/app/plain-b.tsx": "0ec8cb2b4962a0e043f4775e66963b8269cd7a88f061113fdb67228cf3699c87",
+    "experiments/forma-router-native/app/plain-pages.tsx": "512b49a752f9125756c3fe84fc7bbb7dc9ee06230c89e4913bdf6f5a44ecdadf",
+    "experiments/forma-router-native/app/shell.tsx": "a5d9e46fc3f3cc281c498c33b71f5433d7862440146d306511b83d34d672e488",
+    "experiments/forma-router-native/client.ts": "450152e1c2b3ca4fea3b9ab1e0c8d99dd0eb5b15f87f6bb3208cfa241b6c91ee",
+    "package-lock.json": "bf24c31359c833e4b142721cafa2d1bfa34c53c0791423bbbcceaec1ba8703be",
+    "packages/build/dist/index.js": "86c09399bae67e69986a500572bf8d700d3c7cd8f55df9b69e367faea9cb74e4",
+    "packages/build/dist/raw-lint-cli.js": "ffab3dcf36038dd7da5a5c887aed9d52b9bdba4c3268fb25a44bdfe05c73b0d2",
+    "packages/build/package.json": "ed9f769da3b757c2bff80cb06a62db7f6846cfc2db08207b019d96e35ad57fc4",
+    "packages/compiler/dist/index.js": "1ec2e052933fcac6213e14b27a47b6b696f02395970fdb81cf588ffb2a5e8069",
+    "packages/compiler/package.json": "c7d45d58b15cfd646ff80e59419198d6e17967bf0a41b8caca893149129f88f2",
+    "packages/core/dist/chunk-2CJY5HA5.js": "c03b09d09f9df1fb50d004e80a3287db014f9320e0c030fbdf8e536c539f34cb",
+    "packages/core/dist/chunk-46JRMM2Y.js": "df1e7e22c1315c5690af5899556e0329494d282b2cb2cfa24ef33875206d9191",
+    "packages/core/dist/chunk-NTW6E4KC.js": "b7314b5e0a78ad5a728d9d3c5218f7b82d480efd9158265d7cc529d69f5da5cc",
+    "packages/core/dist/chunk-RRZJ6XRE.js": "5021d05173ccb615184c63ebefb53d2d7a8540f5a681f4d42c1ba01f1a5349cf",
+    "packages/core/dist/chunk-TY4YU4W6.js": "28252c53e7bc694ed77aca89ba568bd89624556793592c8633047274f3d559f3",
+    "packages/core/dist/compiled.js": "47d1f0fee975d7feab33a0b94ce0b7c25a140342220cf7e8004b3e37ad7ce770",
+    "packages/core/dist/dev/chunk-3FR6OLHS.js": "6bf63e623761283037488a5cd9f1582753b3857901da59b949052066097bca5e",
+    "packages/core/dist/dev/chunk-JO4VSDXG.js": "ea500d299f075394417f49084a9f56d4d0cb154d781fc9f9b027add498062677",
+    "packages/core/dist/dev/chunk-NIJKWI5L.js": "b4553a3d35664b85984cade2ba26a1dae093d4d0f63588319430885241adf73e",
+    "packages/core/dist/dev/chunk-QF55J27D.js": "1485c5d11feb54e8ae2d95610776b091d48cdb88c9b589a5824af2f8228e46f9",
+    "packages/core/dist/dev/chunk-RSLLCAKG.js": "71656101b2d305916d894e2237943dc7e6e4c060d8247ef3ed1de7d8268dd0dd",
+    "packages/core/dist/dev/compiled.js": "f54ad9d9cd2ea861008bc8be30380f7e10dba619828ad14d1e2c796144d3421f",
+    "packages/core/dist/dev/http.js": "ddc05c393a7be874964ad2b0ba864d3d04872df99489b7bc2c4724527f870ba1",
+    "packages/core/dist/dev/index.js": "8f5538221daaaffb6c7494531d35ea814558815f64018dbee79f8ddebd782e34",
+    "packages/core/dist/dev/navigation.js": "514132d696549732094074419dfbdb5cbbb27738d6c8631e52d86eb3da1dbd09",
+    "packages/core/dist/dev/runtime-hardened.js": "2e29e99650444cc56eb3319611712f0e66a2dae14f82f39b6e5378ff06879d1d",
+    "packages/core/dist/dev/runtime.js": "84f9abe3034179ae4ed447d7ba9a3bcbeb954980721c58498bee8a5f4b53a5df",
+    "packages/core/dist/dev/storage.js": "44dd88f4ecb64747e2ad8e68ed0b2ea8984d7eac69f759b4908323a8da1ac49c",
+    "packages/core/dist/dev/tc39-compat.js": "d2cdc8e912104844c32986903de2f2c9963e0b22467fc4bc369644565d93d0be",
+    "packages/core/dist/forma-runtime-csp.js": "7014c5b178911013ee59b2237027fe3f1e8b8501e5d8a7b8dc1ae0f0e2a94159",
+    "packages/core/dist/forma-runtime.js": "2bc5fa9c52e129135ce10fec5f4a277857a0ccc2a5073feffc2a92fc3c07dce3",
+    "packages/core/dist/forma.esm.js": "3aabc42b6fa8a23b01dec3d9119a23898781a5a1c00f1d6eb2c9dfe4f245cca6",
+    "packages/core/dist/formajs-frame.global.js": "ea88a2477b262403f14637a8a1bcf1048c2222c0a8e93af2dfb8a7e8022b4091",
+    "packages/core/dist/formajs-runtime-hardened.global.js": "7014c5b178911013ee59b2237027fe3f1e8b8501e5d8a7b8dc1ae0f0e2a94159",
+    "packages/core/dist/formajs-runtime.global.js": "2bc5fa9c52e129135ce10fec5f4a277857a0ccc2a5073feffc2a92fc3c07dce3",
+    "packages/core/dist/http.js": "c7219e6283c3cac7c97f4f6b02707f7303aa4c0696cf00ccb767dd10db561b39",
+    "packages/core/dist/index.js": "6b8db3f912d6f97d691f7c5c2e2d4840a2b7d436e256c38daba8315279aabb1f",
+    "packages/core/dist/navigation.js": "63824e3092cdb333f865dc740ae6c852530ec6ef795779d1d3d8fd38b07534d7",
+    "packages/core/dist/runtime-hardened.js": "66476b1332c18004f80d3973b55cc248a457f4b443f323b8a5ede53f837dcf43",
+    "packages/core/dist/runtime.js": "d6c01530d6cdd529639ba0953af1b057ec37404e9919fa5c188778ec146abe7f",
+    "packages/core/dist/storage.js": "14eaeba6ecbcee44baadbb1213dbf9f8db0b509def6acf92955935a11e806101",
+    "packages/core/dist/tc39-compat.js": "5ba65b40b0539e4f378eeaf90477ff866b7c8ff73beab4cc0d5bbb00682c9514",
+    "packages/core/package.json": "d1162092c8a4c6720ed6009561d0437ead5b06dc52efa7a75b174c3330f1301f",
+    "packages/router/dist/index.js": "c3d183e323e2110aa5e3b918e63462ffd41a68aa97dce4b713c35178d7aae077",
+    "packages/router/package.json": "51f08878337f4d597297a32dc12d5e1102c96be58128f38654bc9a36a50ee237"
+  },
+  "contract": "forma-301-size-v1",
+  "wholeP17": false,
+  "recordedAt": "2026-10-26T19:50:47.471Z",
+  "sourceCommit": "108cedda8cf6e4491061f1acd262402bd63a0710",
+  "sourceDirty": true,
+  "toolchain": {
+    "node": "v24.22.1",
+    "compiler": "3.1.0",
+    "build": "3.1.0"
+  },
+  "baseline": {
+    "name": "@getforma/core",
+    "version": "3.1.0",
+    "integrity": "sha512-sttf0ogV92qwJf1CL5jkremiWiebBmup+pDfb5XuhHw+mbR0bY+xxO6ZRnI2N5C6jR8/saWZ7zQBMb3PVhrEEA==",
+    "archiveSha256": "312149d7c863f54776bc5d0eb78fa920f009dc7e5867352535c877e16d4610b7"
+  },
+  "previousPlain": {
+    "routes": {
+      "/native/a": [
+        {
+          "file": "plain-a.65970b7c.js",
+          "sha256": "65970b7c27214dbc73a57f7e08083521a1ad2084a26fc9e3c81a63e56621718e",
+          "raw": 79920,
+          "gzip": 26843,
+          "brotli": 24044
+        },
+        {
+          "file": "sw.js",
+          "sha256": "c6c2a014487f7729cf000bad6de1caf747f0d0920abb046d3e353c3753d44b10",
+          "raw": 3337,
+          "gzip": 1614,
+          "brotli": 1389
+        }
+      ],
+      "/native/b": [
+        {
+          "file": "plain-b.ffe3bfb1.js",
+          "sha256": "ffe3bfb151062c4aa83988957e082f843b723548e768fb9bc286a3f0d9325b59",
+          "raw": 79920,
+          "gzip": 26843,
+          "brotli": 23989
+        },
+        {
+          "file": "sw.js",
+          "sha256": "c6c2a014487f7729cf000bad6de1caf747f0d0920abb046d3e353c3753d44b10",
+          "raw": 3337,
+          "gzip": 1614,
+          "brotli": 1389
+        }
+      ]
+    },
+    "assets": [
+      {
+        "file": "plain-a.65970b7c.js",
+        "sha256": "65970b7c27214dbc73a57f7e08083521a1ad2084a26fc9e3c81a63e56621718e",
+        "raw": 79920,
+        "gzip": 26843,
+        "brotli": 24044
+      },
+      {
+        "file": "sw.js",
+        "sha256": "c6c2a014487f7729cf000bad6de1caf747f0d0920abb046d3e353c3753d44b10",
+        "raw": 3337,
+        "gzip": 1614,
+        "brotli": 1389
+      },
+      {
+        "file": "plain-b.ffe3bfb1.js",
+        "sha256": "ffe3bfb151062c4aa83988957e082f843b723548e768fb9bc286a3f0d9325b59",
+        "raw": 79920,
+        "gzip": 26843,
+        "brotli": 23989
+      }
+    ],
+    "gzip": 55300,
+    "manifest": {
+      "version": 2,
+      "writer": "3.1.0",
+      "app": "forma-router-native",
+      "build": "4b02086634bd366a",
+      "aliases": {
+        "fixture.css": "fixture.4f842f31.css",
+        "plain-a.ir": "plain-a.57b13e42.ir",
+        "plain-a.js": "plain-a.65970b7c.js",
+        "plain-b.ir": "plain-b.f2431322.ir",
+        "plain-b.js": "plain-b.ffe3bfb1.js"
+      },
+      "assets": {
+        "fixture.4f842f31.css": {
+          "immutable": true,
+          "integrity": "sha384-coltEZ/1PU/Qu5sczTEh40TShB5Uat1wKnWm2MBMhQdfX6Sxb6ovx7wWQRnFwMPm"
+        },
+        "plain-a.57b13e42.ir": {
+          "immutable": true,
+          "integrity": "sha384-wLCK4/0jKaPFCzaQxCbGovE7i11DEPyhg8b6W1WTsCVFER3O/+hZKL8yGq7OcybJ"
+        },
+        "plain-a.65970b7c.js": {
+          "immutable": true,
+          "integrity": "sha384-k9xZosQPuC0LijOSfjO36bIhF4weAmjcPWi85BPhyLBMZM2U7y2IHqL68xDuS+NU"
+        },
+        "plain-b.f2431322.ir": {
+          "immutable": true,
+          "integrity": "sha384-KJ7KwqWEhlfRgLkeP/0aO8Jqt3XGQWxK7zNGN1ppGSiJM7RslxAyrkQykSHRRcCe"
+        },
+        "plain-b.ffe3bfb1.js": {
+          "immutable": true,
+          "integrity": "sha384-t1Aknn/PcQMLFjOJpP3jkli1B2cgqOld6n2Q2TE39fCnMA7HkDIxSiw4oKmyzLOg"
+        }
+      },
+      "routes": {
+        "/native/a": {
+          "mode": "ssr",
+          "js": [
+            "plain-a.65970b7c.js"
+          ],
+          "css": [
+            "fixture.4f842f31.css"
+          ],
+          "fonts": [],
+          "total_size_br": 24079,
+          "budget_warn_threshold": 200000,
+          "ir": "plain-a.57b13e42.ir"
+        },
+        "/native/b": {
+          "mode": "ssr",
+          "js": [
+            "plain-b.ffe3bfb1.js"
+          ],
+          "css": [
+            "fixture.4f842f31.css"
+          ],
+          "fonts": [],
+          "total_size_br": 24024,
+          "budget_warn_threshold": 200000,
+          "ir": "plain-b.f2431322.ir"
+        }
+      }
+    },
+    "sizes": [
+      {
+        "route": "/native/a",
+        "class": "islands",
+        "canvas": false,
+        "files": [
+          {
+            "file": "plain-a.65970b7c.js",
+            "raw": 79920,
+            "gzip": 26843,
+            "brotli": 24044,
+            "forma": {
+              "raw": 79043,
+              "gzip": 26548,
+              "brotli": 23780
+            },
+            "router": {
+              "raw": 0,
+              "gzip": 0,
+              "brotli": 0
+            }
+          }
+        ],
+        "raw": 79920,
+        "gzip": 26843,
+        "brotli": 24044,
+        "forma": {
+          "raw": 79043,
+          "gzip": 26548,
+          "brotli": 23780
+        },
+        "core": {
+          "raw": 79043,
+          "gzip": 26548,
+          "brotli": 23780
+        },
+        "router": {
+          "raw": 0,
+          "gzip": 0,
+          "brotli": 0
+        },
+        "application": {
+          "raw": 877,
+          "gzip": 295,
+          "brotli": 264
+        },
+        "worker": {
+          "raw": 3337,
+          "gzip": 1614,
+          "brotli": 1389
+        },
+        "javascript": {
+          "raw": 83257,
+          "gzip": 28457,
+          "brotli": 25433
+        },
+        "ceilings": {
+          "forma": 28420,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      },
+      {
+        "route": "/native/b",
+        "class": "islands",
+        "canvas": false,
+        "files": [
+          {
+            "file": "plain-b.ffe3bfb1.js",
+            "raw": 79920,
+            "gzip": 26843,
+            "brotli": 23989,
+            "forma": {
+              "raw": 79043,
+              "gzip": 26548,
+              "brotli": 23726
+            },
+            "router": {
+              "raw": 0,
+              "gzip": 0,
+              "brotli": 0
+            }
+          }
+        ],
+        "raw": 79920,
+        "gzip": 26843,
+        "brotli": 23989,
+        "forma": {
+          "raw": 79043,
+          "gzip": 26548,
+          "brotli": 23726
+        },
+        "core": {
+          "raw": 79043,
+          "gzip": 26548,
+          "brotli": 23726
+        },
+        "router": {
+          "raw": 0,
+          "gzip": 0,
+          "brotli": 0
+        },
+        "application": {
+          "raw": 877,
+          "gzip": 295,
+          "brotli": 263
+        },
+        "worker": {
+          "raw": 3337,
+          "gzip": 1614,
+          "brotli": 1389
+        },
+        "javascript": {
+          "raw": 83257,
+          "gzip": 28457,
+          "brotli": 25378
+        },
+        "ceilings": {
+          "forma": 28420,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      }
+    ]
+  },
+  "currentPlain": {
+    "routes": {
+      "/native/a": [
+        {
+          "file": "plain-a.16f75c69.js",
+          "sha256": "16f75c6948316ff55f6691bc4617e7582545720bfcf5315e093039028386ba68",
+          "raw": 80022,
+          "gzip": 26823,
+          "brotli": 24013
+        },
+        {
+          "file": "sw.js",
+          "sha256": "89ea03e78ddf2dd52f398cc084f61475c987efa2cd0b86d8f4e63dbe4c8a402f",
+          "raw": 3337,
+          "gzip": 1609,
+          "brotli": 1387
+        }
+      ],
+      "/native/b": [
+        {
+          "file": "plain-b.23d9fe08.js",
+          "sha256": "23d9fe084b876def8f478ecf3dbed7ccb9f85bad79861c0f921e3a0660671682",
+          "raw": 80022,
+          "gzip": 26824,
+          "brotli": 24022
+        },
+        {
+          "file": "sw.js",
+          "sha256": "89ea03e78ddf2dd52f398cc084f61475c987efa2cd0b86d8f4e63dbe4c8a402f",
+          "raw": 3337,
+          "gzip": 1609,
+          "brotli": 1387
+        }
+      ]
+    },
+    "assets": [
+      {
+        "file": "plain-a.16f75c69.js",
+        "sha256": "16f75c6948316ff55f6691bc4617e7582545720bfcf5315e093039028386ba68",
+        "raw": 80022,
+        "gzip": 26823,
+        "brotli": 24013
+      },
+      {
+        "file": "sw.js",
+        "sha256": "89ea03e78ddf2dd52f398cc084f61475c987efa2cd0b86d8f4e63dbe4c8a402f",
+        "raw": 3337,
+        "gzip": 1609,
+        "brotli": 1387
+      },
+      {
+        "file": "plain-b.23d9fe08.js",
+        "sha256": "23d9fe084b876def8f478ecf3dbed7ccb9f85bad79861c0f921e3a0660671682",
+        "raw": 80022,
+        "gzip": 26824,
+        "brotli": 24022
+      }
+    ],
+    "gzip": 55256,
+    "manifest": {
+      "version": 2,
+      "writer": "3.1.0",
+      "app": "forma-router-native",
+      "build": "504ceb740be722b6",
+      "aliases": {
+        "fixture.css": "fixture.4f842f31.css",
+        "plain-a.ir": "plain-a.57b13e42.ir",
+        "plain-a.js": "plain-a.16f75c69.js",
+        "plain-b.ir": "plain-b.f2431322.ir",
+        "plain-b.js": "plain-b.23d9fe08.js"
+      },
+      "assets": {
+        "fixture.4f842f31.css": {
+          "immutable": true,
+          "integrity": "sha384-coltEZ/1PU/Qu5sczTEh40TShB5Uat1wKnWm2MBMhQdfX6Sxb6ovx7wWQRnFwMPm"
+        },
+        "plain-a.16f75c69.js": {
+          "immutable": true,
+          "integrity": "sha384-SCiyrlgIeOSIf2f2Ei4/gAZZOsy7kXvN95eEVAb0NbeMdJ4JmMuAxqxza14AN1h1"
+        },
+        "plain-a.57b13e42.ir": {
+          "immutable": true,
+          "integrity": "sha384-wLCK4/0jKaPFCzaQxCbGovE7i11DEPyhg8b6W1WTsCVFER3O/+hZKL8yGq7OcybJ"
+        },
+        "plain-b.23d9fe08.js": {
+          "immutable": true,
+          "integrity": "sha384-aRdhqwBQUXkptlAIp+OYskxPmerwD9ENoU7ZO48PhcSkCoeDflHLYtKmzJ9t8p0r"
+        },
+        "plain-b.f2431322.ir": {
+          "immutable": true,
+          "integrity": "sha384-KJ7KwqWEhlfRgLkeP/0aO8Jqt3XGQWxK7zNGN1ppGSiJM7RslxAyrkQykSHRRcCe"
+        }
+      },
+      "routes": {
+        "/native/a": {
+          "mode": "ssr",
+          "js": [
+            "plain-a.16f75c69.js"
+          ],
+          "css": [
+            "fixture.4f842f31.css"
+          ],
+          "fonts": [],
+          "total_size_br": 24048,
+          "budget_warn_threshold": 200000,
+          "ir": "plain-a.57b13e42.ir"
+        },
+        "/native/b": {
+          "mode": "ssr",
+          "js": [
+            "plain-b.23d9fe08.js"
+          ],
+          "css": [
+            "fixture.4f842f31.css"
+          ],
+          "fonts": [],
+          "total_size_br": 24057,
+          "budget_warn_threshold": 200000,
+          "ir": "plain-b.f2431322.ir"
+        }
+      }
+    },
+    "sizes": [
+      {
+        "route": "/native/a",
+        "class": "islands",
+        "canvas": false,
+        "files": [
+          {
+            "file": "plain-a.16f75c69.js",
+            "raw": 80022,
+            "gzip": 26823,
+            "brotli": 24013,
+            "forma": {
+              "raw": 79145,
+              "gzip": 26529,
+              "brotli": 23750
+            },
+            "router": {
+              "raw": 0,
+              "gzip": 0,
+              "brotli": 0
+            }
+          }
+        ],
+        "raw": 80022,
+        "gzip": 26823,
+        "brotli": 24013,
+        "forma": {
+          "raw": 79145,
+          "gzip": 26529,
+          "brotli": 23750
+        },
+        "core": {
+          "raw": 79145,
+          "gzip": 26529,
+          "brotli": 23750
+        },
+        "router": {
+          "raw": 0,
+          "gzip": 0,
+          "brotli": 0
+        },
+        "application": {
+          "raw": 877,
+          "gzip": 294,
+          "brotli": 263
+        },
+        "worker": {
+          "raw": 3337,
+          "gzip": 1609,
+          "brotli": 1387
+        },
+        "javascript": {
+          "raw": 83359,
+          "gzip": 28432,
+          "brotli": 25400
+        },
+        "ceilings": {
+          "forma": 28420,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      },
+      {
+        "route": "/native/b",
+        "class": "islands",
+        "canvas": false,
+        "files": [
+          {
+            "file": "plain-b.23d9fe08.js",
+            "raw": 80022,
+            "gzip": 26824,
+            "brotli": 24022,
+            "forma": {
+              "raw": 79145,
+              "gzip": 26530,
+              "brotli": 23759
+            },
+            "router": {
+              "raw": 0,
+              "gzip": 0,
+              "brotli": 0
+            }
+          }
+        ],
+        "raw": 80022,
+        "gzip": 26824,
+        "brotli": 24022,
+        "forma": {
+          "raw": 79145,
+          "gzip": 26530,
+          "brotli": 23759
+        },
+        "core": {
+          "raw": 79145,
+          "gzip": 26530,
+          "brotli": 23759
+        },
+        "router": {
+          "raw": 0,
+          "gzip": 0,
+          "brotli": 0
+        },
+        "application": {
+          "raw": 877,
+          "gzip": 294,
+          "brotli": 263
+        },
+        "worker": {
+          "raw": 3337,
+          "gzip": 1609,
+          "brotli": 1387
+        },
+        "javascript": {
+          "raw": 83359,
+          "gzip": 28433,
+          "brotli": 25409
+        },
+        "ceilings": {
+          "forma": 28420,
+          "javascript": 76800
+        },
+        "exceeded": [],
+        "over": false
+      }
+    ]
+  },
+  "group": {
+    "routes": {
+      "/native/_shell": [
+        {
+          "file": "forma-navigation-native.94dfcaf1.js",
+          "sha256": "94dfcaf1a9145815270842e48385af84811e9730a9fbfcfa974eaccb8db6583b",
+          "raw": 118201,
+          "gzip": 39347,
+          "brotli": 35038
+        },
+        {
+          "file": "sw.js",
+          "sha256": "e70ec13a62d950f08a112f4c0097e8369cbae6965b91c1021148eb4abcb846a8",
+          "raw": 3246,
+          "gzip": 1543,
+          "brotli": 1317
+        }
+      ],
+      "/native/a": [
+        {
+          "file": "forma-navigation-native.94dfcaf1.js",
+          "sha256": "94dfcaf1a9145815270842e48385af84811e9730a9fbfcfa974eaccb8db6583b",
+          "raw": 118201,
+          "gzip": 39347,
+          "brotli": 35038
+        },
+        {
+          "file": "sw.js",
+          "sha256": "e70ec13a62d950f08a112f4c0097e8369cbae6965b91c1021148eb4abcb846a8",
+          "raw": 3246,
+          "gzip": 1543,
+          "brotli": 1317
+        }
+      ],
+      "/native/b": [
+        {
+          "file": "forma-navigation-native.94dfcaf1.js",
+          "sha256": "94dfcaf1a9145815270842e48385af84811e9730a9fbfcfa974eaccb8db6583b",
+          "raw": 118201,
+          "gzip": 39347,
+          "brotli": 35038
+        },
+        {
+          "file": "sw.js",
+          "sha256": "e70ec13a62d950f08a112f4c0097e8369cbae6965b91c1021148eb4abcb846a8",
+          "raw": 3246,
+          "gzip": 1543,
+          "brotli": 1317
+        }
+      ]
+    },
+    "assets": [
+      {
+        "file": "forma-navigation-native.94dfcaf1.js",
+        "sha256": "94dfcaf1a9145815270842e48385af84811e9730a9fbfcfa974eaccb8db6583b",
+        "raw": 118201,
+        "gzip": 39347,
+        "brotli": 35038
+      },
+      {
+        "file": "sw.js",
+        "sha256": "e70ec13a62d950f08a112f4c0097e8369cbae6965b91c1021148eb4abcb846a8",
+        "raw": 3246,
+        "gzip": 1543,
+        "brotli": 1317
+      }
+    ],
+    "gzip": 40890
+  },
+  "unionDifferenceGzip": -14410,
+  "verdict": {
+    "comparisons": [
+      {
+        "route": "/native/a",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28432,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12458
+      },
+      {
+        "route": "/native/b",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28433,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12457
+      }
+    ],
+    "incrementGzip": 12458,
+    "groupGzip": 40890,
+    "ceilings": {
+      "increment": 12288,
+      "group": 65536
+    },
+    "passed": false
+  }
+}

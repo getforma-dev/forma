@@ -158,6 +158,18 @@ jobs:
           FORMA_PARITY_BROWSER: ${{ matrix.browser }}
         run: node --test e2e/parity/tests/html-context.test.mts
 
+      - name: Build optional router
+        run: npm run build -w packages/router
+      - name: Native router owner and adversarial navigation controls
+        run: node scripts/run-router-native-proof.mjs --engines ${{ matrix.browser }} --skip-package-build
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: router-native-${{ matrix.browser }}
+          path: test-results/router-native/
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Build typed indexed SSR products
         env:
           FORMA_SSR_PROFILE: release

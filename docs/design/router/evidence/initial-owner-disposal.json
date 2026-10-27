@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-10-26T18:47:57.899315+00:00",
+  "scope": "Initial detached browser-owner cleanup after render-time revocation, plus explicit destination URL snapshot for one-time initialization. Existing public-dist reproduction rejected ROUTER_CANCELLED with cleanup0, expected1. Source evidence only.",
+  "sourceSha256": {
+    "packages/router/src/browser.ts": "de595e9e0f233cc742226e357c84279216f026b9b5db6fad2a12839a5b430ead",
+    "packages/router/src/types.ts": "806bde4664b99e284c9dcf0c4b5a5680926726a1552bfa18dc8c93f9e09d9075",
+    "packages/router/tests/adapter-boundaries.test.ts": "7d490cad6b2f9336cb1c7303601c0a84ba53b7c7f5fc5aa505faaad056e27c48",
+    "packages/router/dist/index.js": "ad45a6179fc391af4c485d29466eb6fe5cabca54a1ec217983ae96802499a2f6"
+  },
+  "before": {
+    "expectedFailure": true,
+    "command": "npm exec --workspace @getforma/router -- vitest run tests/adapter-boundaries.test.ts --maxWorkers=1",
+    "log": "\n RUN  v4.1.12 <checkout>/packages/router\n\n \u276f tests/adapter-boundaries.test.ts (9 tests | 1 failed) 18ms\n   \u00d7 disposes an initial detached owner when rendering revokes its session 3ms\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  tests/adapter-boundaries.test.ts > disposes an initial detached owner when rendering revokes its session\nAssertionError: expected +0 to be 1 // Object.is equality\n\n- Expected\n+ Received\n\n- 1\n+ 0\n\n \u276f tests/adapter-boundaries.test.ts:47:19\n     45|   } }]);\n     46|   await expect(session.initialize!({ ...context(), matches: matchRoute\u2026\n     47|   expect(cleaned).toBe(1); expect(root.childNodes).toHaveLength(0);\n       |                   ^\n     48|   session.dispose(); expect(cleaned).toBe(1);\n     49| });\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 8 passed (9)\n   Start at  14:44:05\n   Duration  498ms (transform 124ms, setup 0ms, import 156ms, tests 18ms, environment 225ms)\n\n"
+  },
+  "after": {
+    "passed": true,
+    "command": "npm exec --workspace @getforma/router -- vitest run tests/adapter-boundaries.test.ts --maxWorkers=1",
+    "log": "\n RUN  v4.1.12 <checkout>/packages/router\n\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  14:46:50\n   Duration  474ms (transform 127ms, setup 0ms, import 158ms, tests 21ms, environment 203ms)\n\n"
+  },
+  "integration": {
+    "typecheck": true,
+    "build": true,
+    "routerSuite": {
+      "passed": 121,
+      "files": 5,
+      "log": "\n> @getforma/router@3.1.0 test\n> vitest run --maxWorkers=2\n\n\n RUN  v4.1.12 <checkout>/packages/router\n\n\n Test Files  5 passed (5)\n      Tests  121 passed (121)\n   Start at  14:47:36\n   Duration  1.24s (transform 327ms, setup 0ms, import 507ms, tests 150ms, environment 1.04s)\n\n"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "calls": [
+    "connect",
+    "initialize-after-dispose",
+    "session-disposed"
+  ]
+}

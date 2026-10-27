@@ -54,6 +54,41 @@ This is the shipped 3.0 contract. Legacy `(element, props)` registrations,
 page and browser entry together. An uncompiled SSR callback is refused; a
 Browser-shell route remains an ordinary browser mount without this preflight.
 
+## Native navigation owners
+
+The optional `@getforma/core/navigation` entry provides the router's low-level
+owner lifecycle. This integration is separate from ordinary `activateIslands()`:
+the router admits a native response, imports its inert HTML into the destination
+document, and calls `prepareNativeOwner(registry, root, stateJson, { outlet })`
+while that non-island wrapper is detached. Its typed state envelope uses local
+occurrence indices. A parent outlet must be empty at this point and outside all
+island subtrees. The returned scope captures the owner's exact island hosts;
+its outlet permanently excludes the descendant owner's hosts.
+
+For the original document, `prepareInitialNativeOwners(registry, owners)` takes
+the ordered, already assembled owner branch before any island activation. The
+server supplies one ordinary head state envelope and globally reindexed
+occurrences. Preparation uses the original frozen document claims; it does not
+replace that document's state snapshot. Both preparation paths require compiled
+adopting registrations.
+
+After preparing every incoming owner, the router assembles the branch and calls
+`validateNativeOwnerTree(scopes)`. Every child wrapper must be the sole child of
+its preceding owner's exact outlet. Each scope also provides `validate()`.
+After insertion, `activate()` arms only its captured hosts and awaits load
+activation. Immediate adoption failures reject this promise; visible, idle and
+interaction islands remain deferred. Retained ancestor scopes are reused.
+Dispose departing scopes from child to parent before removal; disposal revokes
+their authority before releasing captured hosts and is idempotent.
+
+The parser sink `navigationHTML` passes admitted markup through Forma's existing
+`forma` Trusted Types policy. It performs no sanitization or protocol admission;
+those checks belong to the router before parsing and insertion. Applications
+must not pass unreviewed HTML directly to this internal sink.
+
+Verified by `src/dom/__tests__/native-owner.test.ts` > "retains two initial owners through three distinct leaf transitions without initial writes or repeated activation"
+Verified by `src/dom/__tests__/native-owner.test.ts` > "never discovers child hosts through a parent outlet and refuses a captured host moved there before a deferred trigger"
+
 ## Deployment mismatch
 
 Before state preflight or any trigger, `activateIslands` compares the consuming

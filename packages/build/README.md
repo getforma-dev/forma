@@ -59,6 +59,63 @@ the helper and the fallback description; all size gates remain in force. Adopted
 lists use the original JSX description even for rows added after adoption, so
 this option currently accelerates client-created lists, not server-adopted lists.
 
+### Optional native navigation groups
+
+`navigationGroups` coordinates separately rendered native owners with the optional
+`@getforma/router` package. Each owner names an existing native entry outfile base;
+its route mapping remains the source of its typed Rust `PageHandle` and FMIR module.
+
+```ts
+await build({
+  app: "my-app",
+  ssr: true,
+  entryPoints: [
+    { entry: "src/shell.tsx", outfile: "shell.js" },
+    { entry: "src/catalog.tsx", outfile: "catalog.js" },
+    { entry: "src/detail.tsx", outfile: "detail.js" },
+  ],
+  routes: {
+    "/_owners/shell": { js: ["shell"], css: [] },
+    "/catalog": { js: ["catalog"], css: [] },
+    "/catalog/:id": { js: ["detail"], css: [] },
+  },
+  navigationGroups: [{
+    id: "shop", owners: ["shell", "catalog", "detail"], client: "src/navigation.ts",
+  }],
+  outputDir: "dist",
+});
+```
+
+The client module default-exports a callback receiving `NavigationBootstrap`:
+immutable `registrations`, `app`, `build`, `group`, and `owners`. It configures the
+public router and native adapter; see the [router contract](../router/README.md).
+The build rewrites each owner's literal `activateIslands` declaration into a
+checked registry, removing compile-time mounts and automatic activation. Static
+owners need no empty activation call. Entry modules accept declarations and
+standalone mount/activation calls; initialization belongs in the callback.
+
+An owner with children declares one empty `<div data-forma-outlet="child" />`.
+The outlet name is a literal ASCII identifier, 1–128 characters, beginning with a
+letter. Duplicate, nested, nonempty, dynamic, and island-owned outlets fail the
+build. Leaf owners omit the outlet. All owners remain independently compiled
+native modules; the server composes their typed render products and the router
+retains only owners whose server-issued identity and contracts still match.
+
+Each group emits one hashed script containing all registration code and executable
+dependencies. Literal `import()` dependencies are included in it; variable imports,
+external imports, browser-only islands, and conflicting registration names fail.
+The same original island declaration and matching contract may appear in multiple
+owners. Each group's routes must share CSS/font sets and request no extra scripts.
+Manifest route metadata records `navigation: { group, owner, outlet }`; script SRI,
+deployment identity, atomic output replacement, retention and existing size gates
+apply normally. Router bytes count as Forma code. Authenticated groups use the fixed FORMA-301 group class described below; ordinary routes retain their existing N2 ceiling. Every owner and the initialization module affect build identity.
+
+Groups currently require production SSR (`watch` and `codeSplitting` are refused).
+Navigation is explicit: an ungrouped static route still emits no JavaScript, and
+ordinary watch/split configurations retain their existing behavior. A grouped
+static owner intentionally receives the group bootstrap. No response can introduce
+an additional script into that group.
+
 ### Optional shared ESM graph
 
 Set `codeSplitting: true` to share one runtime across entries and preserve native
@@ -248,6 +305,7 @@ the bytes, before anything is written.
 |---|---|---|---|
 | `no-interactive-region` | A server-rendered page with no island, or a route that lists no script | none | none (a service worker counted) |
 | `islands` | A server-rendered page with islands | 28,420 B | 75 KiB (76,800 B), 365 KiB for a canvas |
+| `navigation-group` | A compiler-checked native owner in an explicitly built closed group | 40,708 B (ordinary core ceiling + prospective 12 KiB increment) | 64 KiB (65,536 B), including the worker; canvas does not raise it |
 | `whole-page-mount` | An entry declared `ssr: false`, or any route of an application built without `ssr` | 28,420 B | as `islands` |
 
 The [3.1 performance decision](../../docs/release/3.1-PERFORMANCE-TRADEOFFS.md)
@@ -257,7 +315,9 @@ JavaScript limits stay unchanged. Fresh packed startup qualification remains
 required under the separately versioned acceptance policy. Source constants
 alone do not establish release qualification.
 
-Forma's code is `@getforma/core` and `alien-signals` as bundled, attributed
+The [FORMA-301 size contract](../../docs/proposals/FORMA-301-SIZE.md) adds the explicit group class under the reviewed N3/N4 design. Its aggregate build gate does not prove the separate 12 KiB incremental consumer target; that requires a paired measurement including new shared-core code. Ordinary class ceilings and the standalone core cap remain unchanged.
+
+Forma's code is `@getforma/core`, `@getforma/router` and `alien-signals` as bundled, attributed
 from the bundler's metafile, plus the identity banner Forma's build writes at
 the top of every JavaScript file (about 30 B gzip for each file the route
 loads cold); the application's own code is outside that ceiling. A route's JavaScript is the files the manifest lists for it and the
@@ -303,7 +363,7 @@ a route ships.
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route: its class (no interactive region, islands, whole-page mount), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (DR-35 and the 3.1 performance decision; the ceilings are not configurable): Forma's code at most 28,420 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount, authenticated navigation group), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core`, `@getforma/router` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (DR-35 and the 3.1 performance decision; the ceilings are not configurable): Forma's code at most 28,420 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region. Verified navigation groups have the separate fixed 40,708 B Forma / 64 KiB total class above |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 **A symlinked `outputDir` is refused (`BUILD-824`).** The swap renames a real directory over `outputDir`, which over a link would replace the link and leave the previous build in its target, where whatever serves the link keeps reading it (watch mode removes the link when it empties `outputDir`). Neither mode follows the link: the build fails first, before staging, deleting or writing anything, naming the link and the directory it points at, and the link and its target are left as they were. Set `outputDir` to the target, or build into a real directory and copy it where the link points. A link that points at nothing is refused too. Only `outputDir` itself is checked: a symlinked directory above it (`/var` on macOS, `link/dist` with `link` a symlink) is followed, and the output is swapped in beside `outputDir` inside the directory the link names. A mount point (a container volume) is not a link and still has its contents replaced in place.

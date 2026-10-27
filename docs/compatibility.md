@@ -1,11 +1,19 @@
 # Forma compatibility contract
 
-This is the shipped 3.x contract on FMIR v3 and manifest schema 2. The seven
-packages share a release version: `forma-ir`, `forma-ir-derive`, `forma-server`,
+Forma 3.x uses FMIR v3 and manifest schema 2. The published 3.0/3.1 lines
+coordinate seven packages at one release version: `forma-ir`, `forma-ir-derive`, `forma-server`,
 `@getforma/core`, `@getforma/compiler`, `@getforma/build` and `@getforma/create-app`.
-[3.0.0 is published](release/V3-AS-BUILT.md); historical A2, beta and RC records
+[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0); historical A2, beta and RC records
 retain their original scopes. Future releases require their own reviewed source,
 CI and packed qualification; a matching version label alone is not proof.
+
+The prepared **3.2.0-rc.1** candidate adds optional `@getforma/router` as the
+eighth coordinated package; publication remains gated. It requires the matching candidate core's `/navigation`
+entry and matching compiler/build/server contracts. Published 3.1 core does not
+provide that entry. The current source and template seeds are prepared at
+3.2.0-rc.1. Earlier feature-development archives carrying 3.1 labels remain
+historical evidence and cannot establish public router compatibility.
+See the [actual reader controls and release boundary](design/router/qualification.md#writerreader-result-and-release-consequence).
 
 ## Window and upgrade order
 
@@ -65,7 +73,7 @@ amended by L-56): 16 lowercase hex characters computed from every output of a fi
 bundling pass (bundles, `.ir` modules, css, fonts) and the writers' versions,
 compiled into every JavaScript bundle (`__FORMA_BUILD__` and a banner), and `dev` in
 watch. forma-server stamps it on the page's root (`data-forma-build`, both the
-JavaScript-enabled server-rendered form and the browser shell). The upcoming 3.1
+JavaScript-enabled server-rendered form and the browser shell). The 3.1
 plain-HTML mode omits that root attribute on explicit no-JavaScript SSR routes;
 3.0.0 retains it. Before `activateIslands` or `mount`,
 core compares the bundle identity with that root's attribute, freezes the verdict
@@ -95,6 +103,13 @@ app, modes and references. Startup loaders revalidate hand-constructed manifests
 Schema 1, missing app and incompatible writer versions are refused before module
 loading/binding, naming both versions where relevant. Unknown optional fields
 cannot restore removed WASM behavior. `AssetManifest::resolve` uses aliases.
+
+Candidate navigation groups add a reserved per-route `navigation` declaration.
+The new server refuses it with `MANIFEST-103` when compiled without the optional
+`navigation` feature. Published 3.1 readers ignore that previously unknown field;
+the future-minor writer version is therefore required to make those readers
+reject new group output before binding. Neither a same-version development pack
+nor an unknown-field parser alone provides the release boundary.
 
 Asset cache policy reads metadata, including retained entries and split chunks
 with uppercase hashes. A hash-looking filename marked mutable stays mutable;

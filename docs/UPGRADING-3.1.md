@@ -1,12 +1,12 @@
 # Upgrading from Forma 3.0 to 3.1
 
-**Preparation draft: final 3.1 is not published. RC2 is published; RC3 is being qualified.** This guide describes the reviewed
-changes being prepared for the coordinated release. The documented
-[performance tradeoffs](release/3.1-PERFORMANCE-TRADEOFFS.md), fresh exact-source
-qualification and independent release audit govern RC acceptance. Original
-missed effects and row-creation targets remain disclosed. Final publication additionally requires active burn-in
-of that published RC and final-delta qualification. The [3.0 guide](UPGRADING-3.0.md)
-remains the guide for upgrades from earlier releases.
+**[Forma 3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)**
+(2026-10-26). This guide describes that coordinated release. The documented
+[performance tradeoffs](release/3.1-PERFORMANCE-TRADEOFFS.md) retain the original
+missed effects and row-creation targets; publication does not erase those limits.
+The [3.0 guide](UPGRADING-3.0.md) remains the guide for upgrades from earlier releases.
+The optional router on this feature branch is a future-minor candidate and is
+not included in published 3.1.0.
 
 ## Upgrade the coordinated packages
 

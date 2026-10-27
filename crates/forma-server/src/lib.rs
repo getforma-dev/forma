@@ -57,6 +57,9 @@ pub mod frame;
 pub mod head;
 /// Loading and version-checking the per-route `.ir` modules at startup.
 pub mod ir;
+/// Opt-in typed native owner navigation and enhanced action contracts.
+#[cfg(feature = "navigation")]
+pub mod navigation;
 /// Bound page contracts and checked handler rendering.
 pub mod pages;
 /// Raw HTML: the one named type for markup written unescaped.
@@ -92,12 +95,19 @@ pub use frame::{FrameError, PreviewFrame, FRAME_RUNTIME_ASSET};
 pub use head::{HeadLink, HeadLinkError, ModulePreloads};
 #[allow(deprecated)]
 pub use ir::{load_ir_modules, IrLoadError};
+#[cfg(feature = "navigation")]
+pub use navigation::{
+    ActionContext, ActionResponse, NavigationBranch, NavigationConfig, NavigationOwner,
+    NavigationResponse, SealedNavigationPolicy,
+};
 pub use pages::{PageHandle, Pages};
 pub use raw::RawHtml;
 pub use render::{render_browser_shell, RenderCtx, RenderError};
 #[cfg(feature = "compression")]
 pub use response::CompressedPageResponse;
 pub use response::{PageParts, PageResponse, RenderCounts};
+#[cfg(feature = "navigation")]
+pub use types::RouteNavigation;
 pub use types::*;
 
 #[cfg(test)]

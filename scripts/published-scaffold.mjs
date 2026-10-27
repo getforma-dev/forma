@@ -2,12 +2,14 @@
 // The optional registry lane tests the exact coordinated published release. The
 // required candidate lane is independent of its publication/readiness result.
 import assert from 'node:assert/strict';
+import { templatesForPackages } from './template-lock-seeds.mjs';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { setTimeout as sleepFor } from 'node:timers/promises';
 import { ROOT, NPM, CRATES, SEMVER, json, save, digest, run, packedRuntimeLock } from './release-set.mjs';
+import { npmPackagesForVersion } from './release-package-inventory.mjs';
 import { runCandidate } from './candidate-scaffold.mjs';
 
 export function sourceVersion(root = ROOT) {
@@ -33,8 +35,8 @@ export async function publishedStatus(version, request = fetch, { sleep = sleepF
   assert(SEMVER.test(version) && Number(version.split('.')[0]) >= 3);
   if (version.endsWith('-dev')) return {ready:false, version, missing:['development versions are not published'], packages:[]};
   const packages = [], missing = [];
-  // Two retries across the entire seven-record lookup, not per package. Even
-  // nine 20-second timeouts plus 1s/2s backoff total at most 183s of network
+  // Two retries across the entire coordinated-set lookup, not per package. Even
+  // ten 20-second timeouts plus 1s/2s backoff total at most 203s of network
   // waits, leaving room for setup within the five-minute preflight job.
   let retries = 0;
   async function readRecord(url, name) {
@@ -61,7 +63,7 @@ export async function publishedStatus(version, request = fetch, { sleep = sleepF
       await sleep(delay);
     }
   }
-  for (const [registry, names] of [['npm', NPM.map(n=>`@getforma/${n}`)], ['crates', CRATES]]) {
+  for (const [registry, names] of [['npm', npmPackagesForVersion(version).map(n=>`@getforma/${n}`)], ['crates', CRATES]]) {
     for (const name of names) {
       const url = registry === 'npm' ? `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}` : `https://crates.io/api/v1/crates/${name}/${version}`;
       const { response, metadata } = await readRecord(url, name);
@@ -113,7 +115,7 @@ export async function preparePublished(work, request = fetch, version = sourceVe
   run('npm',['audit','signatures'],work,{stdio:'inherit'});
   const cli=join(work,location);
   assert(!existsSync(join(cli,'template-lock-seeds.json')),'published CLI must not carry source seed identity');
-  for(const template of ['minimal','dashboard']) {
+  for (const template of templatesForPackages(status.packages)) {
     const project=join(cli,'templates',template), npm=json(join(project,'admin/package-lock.json'));
     for(const [path,entry] of Object.entries(npm.packages)) {
       const name=/(?:^|\/)node_modules\/(@getforma\/[^/]+)$/.exec(path)?.[1];if(!name)continue;
@@ -128,7 +130,7 @@ export async function preparePublished(work, request = fetch, version = sourceVe
     }
   }
   save(join(work,'published-record.json'),status);
-  return {mode:'published',commit:run('git',['rev-parse','HEAD']).trim(),recordSha256:digest(join(work,'published-record.json')),staticHtml:publishedStaticHtml(status.version),work,cli:join(cli,'dist/index.js'),target:join(work,'target')};
+  return {mode:'published',templates:templatesForPackages(status.packages),commit:run('git',['rev-parse','HEAD']).trim(),recordSha256:digest(join(work,'published-record.json')),staticHtml:publishedStaticHtml(status.version),work,cli:join(cli,'dist/index.js'),target:join(work,'target')};
 }
 
 async function main() {

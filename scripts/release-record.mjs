@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import {packageIdentitiesForVersion} from './release-package-inventory.mjs';
 import { createHash } from 'node:crypto';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve, join, dirname, basename } from 'node:path';
@@ -128,7 +129,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   assert.equal(set.commit, process.env.GITHUB_SHA);
   assert.equal(report.commit, set.commit);
   assert.equal(report.passed, true, 'P17 did not pass');
-  assert(set.packages.length === 7 && set.packages.every(p => /^[a-f0-9]{64}$/.test(p.sha256)), 'incomplete release record');
+  assert(set.packages.length === packageIdentitiesForVersion(set.tag.slice(1)).length && set.packages.every(p => /^[a-f0-9]{64}$/.test(p.sha256)), 'incomplete release record');
   const version = set.tag.slice(1);
   const milestone = assertMilestoneReady(set.contracts, version);
   assert.equal(set.milestone?.name, milestone.name, 'packed set names another milestone');

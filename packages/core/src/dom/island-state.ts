@@ -157,19 +157,25 @@ function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boo
 }
 interface Entry { h: string; p: Record<string, unknown> }
 interface Claim { boundary: string | null; component: string | null; h: string | null; occurrence: number | null; duplicate: boolean }
-interface DocumentState {
+export interface DocumentState {
   entries: (Entry | null)[];
   claims: WeakMap<Element, Claim>;
   error?: IslandStateError;
 }
 const documents = new WeakMap<Document, DocumentState>();
-const validatedDocuments = new WeakMap<ValidatedIsland, Document>();
-function occurrenceOf(text: string | null): number | null {
+export interface IslandAuthority {
+  readonly state: DocumentState;
+  readonly contains: (host: HTMLElement) => boolean;
+  active: boolean;
+}
+export const validatedAuthorities = new WeakMap<ValidatedIsland, IslandAuthority>();
+
+export function occurrenceOf(text: string | null): number | null {
   if (text === null || !/^(0|[1-9][0-9]*)$/.test(text)) return null;
   const index = Number(text);
   return Number.isSafeInteger(index) ? index : null;
 }
-function readDocument(doc: Document): DocumentState {
+export function readDocument(doc: Document): DocumentState {
   const cached = documents.get(doc);
   if (cached) return cached;
   const state: DocumentState = { entries: [], claims: new WeakMap() };
@@ -189,31 +195,34 @@ function readDocument(doc: Document): DocumentState {
   try {
     const block = doc.head?.querySelector('script[type="application/json"][data-island-state]');
     if (!block) refuse('FORMA_E_ISLAND_STATE', 'missing first head state block');
-    const text = block.textContent ?? '';
-    // A UTF-16 code unit needs at least one encoded byte, so reject before
-    // allocation when that lower bound exceeds the ceiling. encodeInto writes
-    // only to this capped buffer and reports incomplete input on overflow.
-    if (text.length > MAX_STATE_BYTES) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
-    const target = new Uint8Array(Math.min(MAX_STATE_BYTES, text.length * 3));
-    if (stateEncoder.encodeInto(text, target).read !== text.length) {
-      refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
-    }
-    let envelope: unknown;
-    try { envelope = JSON.parse(text); } catch { refuse('FORMA_E_ISLAND_STATE', 'invalid state JSON'); }
-    if (!object(envelope) || !exactKeys(envelope, ['v', 's', 'i']) || envelope.v !== 1
-      || !Array.isArray(envelope.s) || envelope.s.length !== 0 || !Array.isArray(envelope.i)) {
-      refuse('FORMA_E_ISLAND_STATE', 'invalid v1 state envelope');
-    }
-    // The capped decoded JSON stays private. A null sentinel avoids allocating
-    // an Error and stack for each malformed entry; only requested hosts need
-    // diagnostics, and valid siblings remain independently eligible.
-    state.entries = envelope.i.map((entry: unknown) => object(entry) && exactKeys(entry, ['h', 'p'])
-      && typeof entry.h === 'string' && HASH.test(entry.h) && object(entry.p)
-      ? entry as unknown as Entry : null);
+    state.entries = readStateEntries(block.textContent ?? '');
   } catch (error) {
     state.error = error instanceof IslandStateError ? error : new IslandStateError('FORMA_E_ISLAND_STATE', 'cannot read state block');
   }
   return state;
+}
+
+export function readStateEntries(text: string): (Entry | null)[] {
+  // A UTF-16 code unit needs at least one encoded byte, so reject before
+  // allocation when that lower bound exceeds the ceiling. encodeInto writes
+  // only to this capped buffer and reports incomplete input on overflow.
+  if (text.length > MAX_STATE_BYTES) refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+  const target = new Uint8Array(Math.min(MAX_STATE_BYTES, text.length * 3));
+  if (stateEncoder.encodeInto(text, target).read !== text.length) {
+    refuse('FORMA_E_ISLAND_STATE', 'state block exceeds one MiB');
+  }
+  let envelope: unknown;
+  try { envelope = JSON.parse(text); } catch { refuse('FORMA_E_ISLAND_STATE', 'invalid state JSON'); }
+  if (!object(envelope) || !exactKeys(envelope, ['v', 's', 'i']) || envelope.v !== 1
+    || !Array.isArray(envelope.s) || envelope.s.length !== 0 || !Array.isArray(envelope.i)) {
+    refuse('FORMA_E_ISLAND_STATE', 'invalid v1 state envelope');
+  }
+  // The capped decoded JSON stays private. A null sentinel avoids allocating
+  // an Error and stack for each malformed entry; only requested hosts need
+  // diagnostics, and valid siblings remain independently eligible.
+  return envelope.i.map((entry: unknown) => object(entry) && exactKeys(entry, ['h', 'p'])
+    && typeof entry.h === 'string' && HASH.test(entry.h) && object(entry.p)
+    ? entry as unknown as Entry : null);
 }
 
 /** Bounded iterative projection. Only schema fields can enter the fresh output. */
@@ -285,7 +294,7 @@ function project(input: Record<string, unknown>, schema: IslandSchema): Record<s
   }
   return output;
 }
-function originalClaim(host: HTMLElement, state: DocumentState): Claim {
+export function originalClaim(host: HTMLElement, state: DocumentState): Claim {
   const claim = state.claims.get(host);
   if (!claim || claim.duplicate || claim.occurrence === null
     || host.getAttribute('data-forma-island') !== claim.boundary
@@ -298,15 +307,29 @@ function originalClaim(host: HTMLElement, state: DocumentState): Claim {
 }
 /** Recheck at the moment a deferred component would execute. Still no DOM write. */
 export function checkIslandClaim(value: ValidatedIsland): void {
-  const document = validatedDocuments.get(value);
-  if (!document || value.host.ownerDocument !== document || !document.contains(value.host)) {
+  const authority = validatedAuthorities.get(value);
+  // Containment also proves ownerDocument: DOM adoption moves an entire subtree.
+  if (!authority?.active || !authority.contains(value.host)) {
     refuse('FORMA_E_ISLAND_IDENTITY', 'island is outside its validated document');
   }
-  const state = readDocument(document);
-  const claim = originalClaim(value.host, state);
+  const claim = originalClaim(value.host, authority.state);
   if (claim.occurrence !== value.occurrence || claim.h !== value.registration.h) {
     refuse('FORMA_E_ISLAND_IDENTITY', 'island identity changed before activation');
   }
+}
+
+export function validateHost(registry: Record<string, (...args: never[]) => unknown>, host: HTMLElement, state: DocumentState): ValidatedIsland {
+  const claim = originalClaim(host, state);
+  const entry = state.entries[claim.occurrence!];
+  if (entry === undefined) refuse('FORMA_E_ISLAND_IDENTITY', 'state occurrence is out of range');
+  if (entry === null) refuse('FORMA_E_ISLAND_STATE', 'invalid state entry');
+  if (!claim.component || !own(registry, claim.component)) refuse('FORMA_E_ISLAND_REGISTRATION', 'missing own compiled registration');
+  const hydrate = registry[claim.component]!;
+  const registration = registrations.get(hydrate);
+  if (!registration) refuse('FORMA_E_ISLAND_REGISTRATION', 'SSR registration has no compiled contract');
+  if (claim.h !== entry.h || claim.h !== registration.h) refuse('FORMA_E_ISLAND_IDENTITY', 'root, state and compiled digests differ');
+  const props = project(entry.p, registration.schema);
+  return { host, occurrence: claim.occurrence!, registration, props };
 }
 
 /** Validate the whole requested set before any caller may arm a trigger. */
@@ -314,22 +337,13 @@ export function preflightIslands(registry: Record<string, (...args: never[]) => 
   const doc = (root as Node).nodeType === 9 ? root as Document : (root as Node).ownerDocument;
   if (!doc) return [];
   const state = readDocument(doc);
+  const authority: IslandAuthority = { state, active: true, contains: host => doc.contains(host) };
   const results: IslandPreflight[] = [];
   for (const host of root.querySelectorAll<HTMLElement>('[data-forma-island]')) {
     try {
       if (state.error) throw state.error;
-      const claim = originalClaim(host, state);
-      const entry = state.entries[claim.occurrence!];
-      if (entry === undefined) refuse('FORMA_E_ISLAND_IDENTITY', 'state occurrence is out of range');
-      if (entry === null) refuse('FORMA_E_ISLAND_STATE', 'invalid state entry');
-      if (!claim.component || !own(registry, claim.component)) refuse('FORMA_E_ISLAND_REGISTRATION', 'missing own compiled registration');
-      const hydrate = registry[claim.component]!;
-      const registration = registrations.get(hydrate);
-      if (!registration) refuse('FORMA_E_ISLAND_REGISTRATION', 'SSR registration has no compiled contract');
-      if (claim.h !== entry.h || claim.h !== registration.h) refuse('FORMA_E_ISLAND_IDENTITY', 'root, state and compiled digests differ');
-      const props = project(entry.p, registration.schema);
-      const value: ValidatedIsland = { host, occurrence: claim.occurrence!, registration, props };
-      validatedDocuments.set(value, doc);
+      const value = validateHost(registry, host, state);
+      validatedAuthorities.set(value, authority);
       results.push({ host, value });
     } catch (error) {
       results.push({ host, error: error instanceof IslandStateError ? error : new IslandStateError('FORMA_E_ISLAND_STATE', 'cannot validate island state') });
@@ -412,7 +426,7 @@ export function matchAdoptionChild(host: Element, description: ComponentDescript
   if (value.host !== host || description.component !== value.registration.component || description.args.length > 1) {
     throw new AdoptionDomError('FORMA_E_HYDRATE_STRUCTURE');
   }
-  const entry = readDocument(validatedDocuments.get(value)!).entries[value.occurrence];
+  const entry = validatedAuthorities.get(value)!.state.entries[value.occurrence];
   if (!entry) refuse('FORMA_E_ISLAND_STATE', 'original child state is unavailable');
   sameProps(description.args[0], entry.p, value.registration.schema);
 }

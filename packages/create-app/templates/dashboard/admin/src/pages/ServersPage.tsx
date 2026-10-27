@@ -89,7 +89,7 @@ export function ServersPage() {
                   <div class="h-2 w-full bg-gruvbox-border rounded animate-pulse-slow" />
                 </div>
               </div>
-            ))}
+            ) as HTMLDivElement)}
           </div>
         ),
       )}
@@ -135,7 +135,7 @@ export function ServersPage() {
                   <span>Uptime: {server.uptime}</span>
                 </div>
               </div>
-            ))}
+            ) as HTMLDivElement)}
           </div>
         ),
       )}

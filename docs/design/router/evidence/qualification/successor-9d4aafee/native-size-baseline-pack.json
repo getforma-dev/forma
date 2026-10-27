@@ -1,0 +1,506 @@
+[
+  {
+    "id": "@getforma/core@3.1.0",
+    "name": "@getforma/core",
+    "version": "3.1.0",
+    "size": 2197590,
+    "unpackedSize": 8737563,
+    "shasum": "9d90281f8ce88ecff943f4ad7c520405f972e3d5",
+    "integrity": "sha512-sttf0ogV92qwJf1CL5jkremiWiebBmup+pDfb5XuhHw+mbR0bY+xxO6ZRnI2N5C6jR8/saWZ7zQBMb3PVhrEEA==",
+    "filename": "getforma-core-3.1.0.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 1062,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 13194,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-2RYUWROU.cjs",
+        "size": 13631,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-2RYUWROU.cjs.map",
+        "size": 49765,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-46JRMM2Y.js",
+        "size": 3274,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-46JRMM2Y.js.map",
+        "size": 25650,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-J7XVXJ7C.cjs",
+        "size": 3707,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-J7XVXJ7C.cjs.map",
+        "size": 25690,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-MZNVTNKN.cjs",
+        "size": 26560,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-MZNVTNKN.cjs.map",
+        "size": 113419,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-NTW6E4KC.js",
+        "size": 13704,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-NTW6E4KC.js.map",
+        "size": 60204,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-RRZJ6XRE.js",
+        "size": 13241,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-RRZJ6XRE.js.map",
+        "size": 49534,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-TY4YU4W6.js",
+        "size": 25373,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-TY4YU4W6.js.map",
+        "size": 113335,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-ZUWTXXVD.cjs",
+        "size": 15212,
+        "mode": 420
+      },
+      {
+        "path": "dist/chunk-ZUWTXXVD.cjs.map",
+        "size": 60461,
+        "mode": 420
+      },
+      {
+        "path": "dist/compiled.cjs",
+        "size": 4533,
+        "mode": 420
+      },
+      {
+        "path": "dist/compiled.cjs.map",
+        "size": 12708,
+        "mode": 420
+      },
+      {
+        "path": "dist/compiled.d.cts",
+        "size": 895,
+        "mode": 420
+      },
+      {
+        "path": "dist/compiled.d.ts",
+        "size": 894,
+        "mode": 420
+      },
+      {
+        "path": "dist/compiled.js",
+        "size": 4325,
+        "mode": 420
+      },
+      {
+        "path": "dist/compiled.js.map",
+        "size": 12513,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-7TITUI4X.cjs",
+        "size": 28653,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-GZMXARPM.cjs",
+        "size": 13909,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-JO4VSDXG.js",
+        "size": 13520,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-NIJKWI5L.js",
+        "size": 13661,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-ONSU5VQQ.cjs",
+        "size": 4724,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-QF55J27D.js",
+        "size": 4292,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-RSLLCAKG.js",
+        "size": 27435,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/chunk-WES3Y5XN.cjs",
+        "size": 15168,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/compiled.cjs",
+        "size": 4495,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/compiled.js",
+        "size": 4288,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/http.cjs",
+        "size": 5683,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/http.js",
+        "size": 5421,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/index.cjs",
+        "size": 150856,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/index.js",
+        "size": 143452,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/runtime-hardened.cjs",
+        "size": 151611,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/runtime-hardened.js",
+        "size": 151324,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/runtime.cjs",
+        "size": 137307,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/runtime.js",
+        "size": 136516,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/storage.cjs",
+        "size": 5394,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/storage.js",
+        "size": 5304,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/tc39-compat.cjs",
+        "size": 590,
+        "mode": 420
+      },
+      {
+        "path": "dist/dev/tc39-compat.js",
+        "size": 526,
+        "mode": 420
+      },
+      {
+        "path": "dist/forma-runtime-csp.js",
+        "size": 166065,
+        "mode": 420
+      },
+      {
+        "path": "dist/forma-runtime.js",
+        "size": 168816,
+        "mode": 420
+      },
+      {
+        "path": "dist/forma.esm.js",
+        "size": 205517,
+        "mode": 420
+      },
+      {
+        "path": "dist/forma.esm.js.map",
+        "size": 696127,
+        "mode": 420
+      },
+      {
+        "path": "dist/formajs-frame.global.js",
+        "size": 163372,
+        "mode": 420
+      },
+      {
+        "path": "dist/formajs-runtime-hardened.global.js",
+        "size": 166065,
+        "mode": 420
+      },
+      {
+        "path": "dist/formajs-runtime-hardened.global.js.map",
+        "size": 618377,
+        "mode": 420
+      },
+      {
+        "path": "dist/formajs-runtime.global.js",
+        "size": 168816,
+        "mode": 420
+      },
+      {
+        "path": "dist/formajs-runtime.global.js.map",
+        "size": 550326,
+        "mode": 420
+      },
+      {
+        "path": "dist/http.cjs",
+        "size": 5717,
+        "mode": 420
+      },
+      {
+        "path": "dist/http.cjs.map",
+        "size": 19664,
+        "mode": 420
+      },
+      {
+        "path": "dist/http.d.cts",
+        "size": 4373,
+        "mode": 420
+      },
+      {
+        "path": "dist/http.d.ts",
+        "size": 4373,
+        "mode": 420
+      },
+      {
+        "path": "dist/http.js",
+        "size": 5454,
+        "mode": 420
+      },
+      {
+        "path": "dist/http.js.map",
+        "size": 19612,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.cjs",
+        "size": 150525,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.cjs.map",
+        "size": 421434,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.d.cts",
+        "size": 59844,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.d.ts",
+        "size": 59840,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.js",
+        "size": 143115,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.js.map",
+        "size": 420082,
+        "mode": 420
+      },
+      {
+        "path": "dist/jsx.d.ts",
+        "size": 14458,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime-hardened.cjs",
+        "size": 148835,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime-hardened.cjs.map",
+        "size": 592466,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime-hardened.d.cts",
+        "size": 11207,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime-hardened.d.ts",
+        "size": 11207,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime-hardened.js",
+        "size": 148547,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime-hardened.js.map",
+        "size": 592425,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.cjs",
+        "size": 136052,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.cjs.map",
+        "size": 474175,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.d.cts",
+        "size": 8321,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.d.ts",
+        "size": 8319,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.js",
+        "size": 135260,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.js.map",
+        "size": 473818,
+        "mode": 420
+      },
+      {
+        "path": "dist/signal-B5ZKb9uL.d.cts",
+        "size": 2578,
+        "mode": 420
+      },
+      {
+        "path": "dist/signal-B5ZKb9uL.d.ts",
+        "size": 2578,
+        "mode": 420
+      },
+      {
+        "path": "dist/storage.cjs",
+        "size": 5431,
+        "mode": 420
+      },
+      {
+        "path": "dist/storage.cjs.map",
+        "size": 17334,
+        "mode": 420
+      },
+      {
+        "path": "dist/storage.d.cts",
+        "size": 2177,
+        "mode": 420
+      },
+      {
+        "path": "dist/storage.d.ts",
+        "size": 2177,
+        "mode": 420
+      },
+      {
+        "path": "dist/storage.js",
+        "size": 5340,
+        "mode": 420
+      },
+      {
+        "path": "dist/storage.js.map",
+        "size": 17331,
+        "mode": 420
+      },
+      {
+        "path": "dist/tc39-compat.cjs",
+        "size": 631,
+        "mode": 420
+      },
+      {
+        "path": "dist/tc39-compat.cjs.map",
+        "size": 2512,
+        "mode": 420
+      },
+      {
+        "path": "dist/tc39-compat.d.cts",
+        "size": 1237,
+        "mode": 420
+      },
+      {
+        "path": "dist/tc39-compat.d.ts",
+        "size": 1236,
+        "mode": 420
+      },
+      {
+        "path": "dist/tc39-compat.js",
+        "size": 566,
+        "mode": 420
+      },
+      {
+        "path": "dist/tc39-compat.js.map",
+        "size": 2474,
+        "mode": 420
+      },
+      {
+        "path": "dist/trusted-html-CQ4YBquI.d.cts",
+        "size": 3049,
+        "mode": 420
+      },
+      {
+        "path": "dist/trusted-html-CQ4YBquI.d.ts",
+        "size": 3049,
+        "mode": 420
+      },
+      {
+        "path": "licenses/alien-signals.txt",
+        "size": 1076,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 7170,
+        "mode": 420
+      }
+    ],
+    "entryCount": 98,
+    "bundled": []
+  }
+]

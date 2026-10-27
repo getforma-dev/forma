@@ -1,0 +1,614 @@
+SSR mode enabled — emitting IR files
+   IR emitted (real): shell.ir (897 bytes, 1 islands)
+   IR emitted (real): a.ir (1297 bytes, 1 islands)
+   IR emitted (real): b.ir (1297 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist-perf/forma-navigation-native.7e859e10.js  115.8kb
+
+   8 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   FORMA-301 N3/N4: verified navigation groups allow 40,708 B aggregate Forma and 65,536 B total JavaScript; incremental <= 12,288 B requires paired consumer qualification.
+   /native/_shell  navigation group  Forma 38,143 of 40,708 B  JavaScript 41,059 of 65,536 B  [core/signals 27,965, router 10,178 B]  (Brotli: Forma 33,975, JavaScript 36,517)  forma-navigation-native.7e859e10.js
+   /native/a       navigation group  Forma 38,143 of 40,708 B  JavaScript 41,059 of 65,536 B  [core/signals 27,965, router 10,178 B]  (Brotli: Forma 33,975, JavaScript 36,517)  forma-navigation-native.7e859e10.js
+   /native/b       navigation group  Forma 38,143 of 40,708 B  JavaScript 41,059 of 65,536 B  [core/signals 27,965, router 10,178 B]  (Brotli: Forma 33,975, JavaScript 36,517)  forma-navigation-native.7e859e10.js
+   Service worker   sw.js  3,246 B raw, 1,539 B gzip, 1,316 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       466 ms: bundle 329 ms, hash 1 ms, compress 134 ms, manifest 2 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist-perf/manifest.json (build: 7a045f1332ba...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist-perf/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+{
+  "control": false,
+  "manifest": {
+    "version": 2,
+    "writer": "3.1.0",
+    "app": "forma-router-native",
+    "build": "7a045f1332ba998e",
+    "aliases": {
+      "a.ir": "a.4a378aac.ir",
+      "b.ir": "b.cba73e2c.ir",
+      "fixture.css": "fixture.4f842f31.css",
+      "forma-navigation-native.js": "forma-navigation-native.7e859e10.js",
+      "shell.ir": "shell.73e5b69f.ir",
+      "shell.js": "forma-navigation-native.7e859e10.js",
+      "a.js": "forma-navigation-native.7e859e10.js",
+      "b.js": "forma-navigation-native.7e859e10.js"
+    },
+    "assets": {
+      "a.4a378aac.ir": {
+        "immutable": true,
+        "integrity": "sha384-NWSO1YtyI5kq+vjy8fpramqOccuKDRikReqhlCO7IVdPISv+gFpP3c5Znsa7LNhT"
+      },
+      "b.cba73e2c.ir": {
+        "immutable": true,
+        "integrity": "sha384-0mXA7/GFyGP4tDeWrXJWCYtW4W4edCP7AaaAMPzt6sqJiZcRa+EW4mQjV6+RoHgt"
+      },
+      "fixture.4f842f31.css": {
+        "immutable": true,
+        "integrity": "sha384-coltEZ/1PU/Qu5sczTEh40TShB5Uat1wKnWm2MBMhQdfX6Sxb6ovx7wWQRnFwMPm"
+      },
+      "forma-navigation-native.7e859e10.js": {
+        "immutable": true,
+        "integrity": "sha384-2VWkY8fDtMnpreDtaBrUCBsnZC76/T7hU7lKyZZtHGQ/mG/ZfezebfdZSHqM3TGy"
+      },
+      "shell.73e5b69f.ir": {
+        "immutable": true,
+        "integrity": "sha384-EgpwAl/+kVc3isW/jCGUeIoeMj4J2omy7rTLlzVqZ2PVwIrV27IgUehmtiy171Ky"
+      }
+    },
+    "routes": {
+      "/native/_shell": {
+        "mode": "ssr",
+        "navigation": {
+          "group": "native",
+          "owner": "shell",
+          "outlet": "main"
+        },
+        "js": [
+          "forma-navigation-native.7e859e10.js"
+        ],
+        "css": [
+          "fixture.4f842f31.css"
+        ],
+        "fonts": [],
+        "total_size_br": 35236,
+        "budget_warn_threshold": 200000,
+        "ir": "shell.73e5b69f.ir"
+      },
+      "/native/a": {
+        "mode": "ssr",
+        "navigation": {
+          "group": "native",
+          "owner": "a",
+          "outlet": null
+        },
+        "js": [
+          "forma-navigation-native.7e859e10.js"
+        ],
+        "css": [
+          "fixture.4f842f31.css"
+        ],
+        "fonts": [],
+        "total_size_br": 35236,
+        "budget_warn_threshold": 200000,
+        "ir": "a.4a378aac.ir"
+      },
+      "/native/b": {
+        "mode": "ssr",
+        "navigation": {
+          "group": "native",
+          "owner": "b",
+          "outlet": null
+        },
+        "js": [
+          "forma-navigation-native.7e859e10.js"
+        ],
+        "css": [
+          "fixture.4f842f31.css"
+        ],
+        "fonts": [],
+        "total_size_br": 35236,
+        "budget_warn_threshold": 200000,
+        "ir": "b.cba73e2c.ir"
+      }
+    }
+  },
+  "sizes": [
+    {
+      "route": "/native/_shell",
+      "class": "navigation-group",
+      "canvas": false,
+      "files": [
+        {
+          "file": "forma-navigation-native.7e859e10.js",
+          "raw": 118597,
+          "gzip": 39520,
+          "brotli": 35201,
+          "forma": {
+            "raw": 114465,
+            "gzip": 38143,
+            "brotli": 33975
+          },
+          "router": {
+            "raw": 30544,
+            "gzip": 10178,
+            "brotli": 9066
+          }
+        }
+      ],
+      "raw": 118597,
+      "gzip": 39520,
+      "brotli": 35201,
+      "forma": {
+        "raw": 114465,
+        "gzip": 38143,
+        "brotli": 33975
+      },
+      "core": {
+        "raw": 83921,
+        "gzip": 27965,
+        "brotli": 24909
+      },
+      "router": {
+        "raw": 30544,
+        "gzip": 10178,
+        "brotli": 9066
+      },
+      "application": {
+        "raw": 4132,
+        "gzip": 1377,
+        "brotli": 1226
+      },
+      "worker": {
+        "raw": 3246,
+        "gzip": 1539,
+        "brotli": 1316
+      },
+      "javascript": {
+        "raw": 121843,
+        "gzip": 41059,
+        "brotli": 36517
+      },
+      "ceilings": {
+        "forma": 40708,
+        "javascript": 65536
+      },
+      "exceeded": [],
+      "over": false
+    },
+    {
+      "route": "/native/a",
+      "class": "navigation-group",
+      "canvas": false,
+      "files": [
+        {
+          "file": "forma-navigation-native.7e859e10.js",
+          "raw": 118597,
+          "gzip": 39520,
+          "brotli": 35201,
+          "forma": {
+            "raw": 114465,
+            "gzip": 38143,
+            "brotli": 33975
+          },
+          "router": {
+            "raw": 30544,
+            "gzip": 10178,
+            "brotli": 9066
+          }
+        }
+      ],
+      "raw": 118597,
+      "gzip": 39520,
+      "brotli": 35201,
+      "forma": {
+        "raw": 114465,
+        "gzip": 38143,
+        "brotli": 33975
+      },
+      "core": {
+        "raw": 83921,
+        "gzip": 27965,
+        "brotli": 24909
+      },
+      "router": {
+        "raw": 30544,
+        "gzip": 10178,
+        "brotli": 9066
+      },
+      "application": {
+        "raw": 4132,
+        "gzip": 1377,
+        "brotli": 1226
+      },
+      "worker": {
+        "raw": 3246,
+        "gzip": 1539,
+        "brotli": 1316
+      },
+      "javascript": {
+        "raw": 121843,
+        "gzip": 41059,
+        "brotli": 36517
+      },
+      "ceilings": {
+        "forma": 40708,
+        "javascript": 65536
+      },
+      "exceeded": [],
+      "over": false
+    },
+    {
+      "route": "/native/b",
+      "class": "navigation-group",
+      "canvas": false,
+      "files": [
+        {
+          "file": "forma-navigation-native.7e859e10.js",
+          "raw": 118597,
+          "gzip": 39520,
+          "brotli": 35201,
+          "forma": {
+            "raw": 114465,
+            "gzip": 38143,
+            "brotli": 33975
+          },
+          "router": {
+            "raw": 30544,
+            "gzip": 10178,
+            "brotli": 9066
+          }
+        }
+      ],
+      "raw": 118597,
+      "gzip": 39520,
+      "brotli": 35201,
+      "forma": {
+        "raw": 114465,
+        "gzip": 38143,
+        "brotli": 33975
+      },
+      "core": {
+        "raw": 83921,
+        "gzip": 27965,
+        "brotli": 24909
+      },
+      "router": {
+        "raw": 30544,
+        "gzip": 10178,
+        "brotli": 9066
+      },
+      "application": {
+        "raw": 4132,
+        "gzip": 1377,
+        "brotli": 1226
+      },
+      "worker": {
+        "raw": 3246,
+        "gzip": 1539,
+        "brotli": 1316
+      },
+      "javascript": {
+        "raw": 121843,
+        "gzip": 41059,
+        "brotli": 36517
+      },
+      "ceilings": {
+        "forma": 40708,
+        "javascript": 65536
+      },
+      "exceeded": [],
+      "over": false
+    }
+  ]
+}
+SSR mode enabled — emitting IR files
+   IR emitted (real): shell.ir (897 bytes, 1 islands)
+   IR emitted (real): a.ir (1297 bytes, 1 islands)
+   IR emitted (real): b.ir (1297 bytes, 1 islands)
+
+   /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist-perf-document/forma-navigation-native.5623cdbf.js  79.1kb
+
+   8 assets hashed
+   2 files compressed (brotli 11 + gzip 9)
+
+   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;
+   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code 28,420 B, the JavaScript of a page 76,800 B, of a canvas 373,760 B, a route with no interactive region none.
+   FORMA-301 N3/N4: verified navigation groups allow 40,708 B aggregate Forma and 65,536 B total JavaScript; incremental <= 12,288 B requires paired consumer qualification.
+   /native/_shell  navigation group  Forma 26,439 of 40,708 B  JavaScript 28,599 of 65,536 B  [core/signals 26,439, router 0 B]  (Brotli: Forma 23,691, JavaScript 25,562)  forma-navigation-native.5623cdbf.js
+   /native/a       navigation group  Forma 26,439 of 40,708 B  JavaScript 28,599 of 65,536 B  [core/signals 26,439, router 0 B]  (Brotli: Forma 23,691, JavaScript 25,562)  forma-navigation-native.5623cdbf.js
+   /native/b       navigation group  Forma 26,439 of 40,708 B  JavaScript 28,599 of 65,536 B  [core/signals 26,439, router 0 B]  (Brotli: Forma 23,691, JavaScript 25,562)  forma-navigation-native.5623cdbf.js
+   Service worker   sw.js  3,246 B raw, 1,540 B gzip, 1,316 B Brotli; counted in the JavaScript of each route that has JavaScript
+   Build time       230 ms: bundle 144 ms, hash 1 ms, compress 84 ms, manifest 1 ms
+
+Manifest written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist-perf-document/manifest.json (build: f5dc8ce65808...)
+Size report written: /Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router-native/dist-perf-document/size-report.json
+   SW generated: dist/sw.js (verified on-demand assets)
+{
+  "control": true,
+  "manifest": {
+    "version": 2,
+    "writer": "3.1.0",
+    "app": "forma-router-native",
+    "build": "f5dc8ce65808aa42",
+    "aliases": {
+      "a.ir": "a.4a378aac.ir",
+      "b.ir": "b.cba73e2c.ir",
+      "fixture.css": "fixture.4f842f31.css",
+      "forma-navigation-native.js": "forma-navigation-native.5623cdbf.js",
+      "shell.ir": "shell.73e5b69f.ir",
+      "shell.js": "forma-navigation-native.5623cdbf.js",
+      "a.js": "forma-navigation-native.5623cdbf.js",
+      "b.js": "forma-navigation-native.5623cdbf.js"
+    },
+    "assets": {
+      "a.4a378aac.ir": {
+        "immutable": true,
+        "integrity": "sha384-NWSO1YtyI5kq+vjy8fpramqOccuKDRikReqhlCO7IVdPISv+gFpP3c5Znsa7LNhT"
+      },
+      "b.cba73e2c.ir": {
+        "immutable": true,
+        "integrity": "sha384-0mXA7/GFyGP4tDeWrXJWCYtW4W4edCP7AaaAMPzt6sqJiZcRa+EW4mQjV6+RoHgt"
+      },
+      "fixture.4f842f31.css": {
+        "immutable": true,
+        "integrity": "sha384-coltEZ/1PU/Qu5sczTEh40TShB5Uat1wKnWm2MBMhQdfX6Sxb6ovx7wWQRnFwMPm"
+      },
+      "forma-navigation-native.5623cdbf.js": {
+        "immutable": true,
+        "integrity": "sha384-5pA/09HrVj4P4ljSiKBDIzAK/9yiPC9yjkilUvY1/by+FPMPBYxur5IgZiqNzpZu"
+      },
+      "shell.73e5b69f.ir": {
+        "immutable": true,
+        "integrity": "sha384-EgpwAl/+kVc3isW/jCGUeIoeMj4J2omy7rTLlzVqZ2PVwIrV27IgUehmtiy171Ky"
+      }
+    },
+    "routes": {
+      "/native/_shell": {
+        "mode": "ssr",
+        "navigation": {
+          "group": "native",
+          "owner": "shell",
+          "outlet": "main"
+        },
+        "js": [
+          "forma-navigation-native.5623cdbf.js"
+        ],
+        "css": [
+          "fixture.4f842f31.css"
+        ],
+        "fonts": [],
+        "total_size_br": 24281,
+        "budget_warn_threshold": 200000,
+        "ir": "shell.73e5b69f.ir"
+      },
+      "/native/a": {
+        "mode": "ssr",
+        "navigation": {
+          "group": "native",
+          "owner": "a",
+          "outlet": null
+        },
+        "js": [
+          "forma-navigation-native.5623cdbf.js"
+        ],
+        "css": [
+          "fixture.4f842f31.css"
+        ],
+        "fonts": [],
+        "total_size_br": 24281,
+        "budget_warn_threshold": 200000,
+        "ir": "a.4a378aac.ir"
+      },
+      "/native/b": {
+        "mode": "ssr",
+        "navigation": {
+          "group": "native",
+          "owner": "b",
+          "outlet": null
+        },
+        "js": [
+          "forma-navigation-native.5623cdbf.js"
+        ],
+        "css": [
+          "fixture.4f842f31.css"
+        ],
+        "fonts": [],
+        "total_size_br": 24281,
+        "budget_warn_threshold": 200000,
+        "ir": "b.cba73e2c.ir"
+      }
+    }
+  },
+  "sizes": [
+    {
+      "route": "/native/_shell",
+      "class": "navigation-group",
+      "canvas": false,
+      "files": [
+        {
+          "file": "forma-navigation-native.5623cdbf.js",
+          "raw": 81012,
+          "gzip": 27059,
+          "brotli": 24246,
+          "forma": {
+            "raw": 79156,
+            "gzip": 26439,
+            "brotli": 23691
+          },
+          "router": {
+            "raw": 0,
+            "gzip": 0,
+            "brotli": 0
+          }
+        }
+      ],
+      "raw": 81012,
+      "gzip": 27059,
+      "brotli": 24246,
+      "forma": {
+        "raw": 79156,
+        "gzip": 26439,
+        "brotli": 23691
+      },
+      "core": {
+        "raw": 79156,
+        "gzip": 26439,
+        "brotli": 23691
+      },
+      "router": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "application": {
+        "raw": 1856,
+        "gzip": 620,
+        "brotli": 555
+      },
+      "worker": {
+        "raw": 3246,
+        "gzip": 1540,
+        "brotli": 1316
+      },
+      "javascript": {
+        "raw": 84258,
+        "gzip": 28599,
+        "brotli": 25562
+      },
+      "ceilings": {
+        "forma": 40708,
+        "javascript": 65536
+      },
+      "exceeded": [],
+      "over": false
+    },
+    {
+      "route": "/native/a",
+      "class": "navigation-group",
+      "canvas": false,
+      "files": [
+        {
+          "file": "forma-navigation-native.5623cdbf.js",
+          "raw": 81012,
+          "gzip": 27059,
+          "brotli": 24246,
+          "forma": {
+            "raw": 79156,
+            "gzip": 26439,
+            "brotli": 23691
+          },
+          "router": {
+            "raw": 0,
+            "gzip": 0,
+            "brotli": 0
+          }
+        }
+      ],
+      "raw": 81012,
+      "gzip": 27059,
+      "brotli": 24246,
+      "forma": {
+        "raw": 79156,
+        "gzip": 26439,
+        "brotli": 23691
+      },
+      "core": {
+        "raw": 79156,
+        "gzip": 26439,
+        "brotli": 23691
+      },
+      "router": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "application": {
+        "raw": 1856,
+        "gzip": 620,
+        "brotli": 555
+      },
+      "worker": {
+        "raw": 3246,
+        "gzip": 1540,
+        "brotli": 1316
+      },
+      "javascript": {
+        "raw": 84258,
+        "gzip": 28599,
+        "brotli": 25562
+      },
+      "ceilings": {
+        "forma": 40708,
+        "javascript": 65536
+      },
+      "exceeded": [],
+      "over": false
+    },
+    {
+      "route": "/native/b",
+      "class": "navigation-group",
+      "canvas": false,
+      "files": [
+        {
+          "file": "forma-navigation-native.5623cdbf.js",
+          "raw": 81012,
+          "gzip": 27059,
+          "brotli": 24246,
+          "forma": {
+            "raw": 79156,
+            "gzip": 26439,
+            "brotli": 23691
+          },
+          "router": {
+            "raw": 0,
+            "gzip": 0,
+            "brotli": 0
+          }
+        }
+      ],
+      "raw": 81012,
+      "gzip": 27059,
+      "brotli": 24246,
+      "forma": {
+        "raw": 79156,
+        "gzip": 26439,
+        "brotli": 23691
+      },
+      "core": {
+        "raw": 79156,
+        "gzip": 26439,
+        "brotli": 23691
+      },
+      "router": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "application": {
+        "raw": 1856,
+        "gzip": 620,
+        "brotli": 555
+      },
+      "worker": {
+        "raw": 3246,
+        "gzip": 1540,
+        "brotli": 1316
+      },
+      "javascript": {
+        "raw": 84258,
+        "gzip": 28599,
+        "brotli": 25562
+      },
+      "ceilings": {
+        "forma": 40708,
+        "javascript": 65536
+      },
+      "exceeded": [],
+      "over": false
+    }
+  ]
+}

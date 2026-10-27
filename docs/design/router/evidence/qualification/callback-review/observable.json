@@ -1,0 +1,24 @@
+[
+  {
+    "scenario": "mutation-revalidating-navigate",
+    "commits": [
+      "/a"
+    ],
+    "activations": [
+      "/a"
+    ],
+    "path": "/a",
+    "title": ""
+  },
+  {
+    "scenario": "title-dispose",
+    "commits": [
+      "/b"
+    ],
+    "activations": [
+      "/b"
+    ],
+    "path": "/b",
+    "title": "stale-title"
+  }
+]

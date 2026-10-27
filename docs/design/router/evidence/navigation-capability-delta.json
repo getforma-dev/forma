@@ -1,0 +1,69 @@
+{
+  "recordedAt": "2026-10-26T18:34:32.626001+00:00",
+  "scope": "Focused final Rust capability delta; does not replace the full final npm check or release lanes. Test commands use CARGO_BUILD_JOBS=3.",
+  "sourceSha256": {
+    "crates/forma-server/src/types.rs": "b2cbb490c658aac8df053994283ee0fd564464640f533d9735b55a99e9bae588",
+    "crates/forma-server/tests/navigation_capability.rs": "0944bb1267bd218880b05065d70b9db2507be86d0095230a9c0edafbee6c0a0f",
+    "crates/forma-server/src/template.rs": "035c24fe938c3a2e0146c0045ecab6d5e6bee5c335f56b8ca42396f4fb364de8"
+  },
+  "checks": [
+    {
+      "name": "default",
+      "command": "cargo test --locked -p forma-server --test navigation_capability --test manifest_compatibility",
+      "passed": true,
+      "log": "   Compiling forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.01s\n     Running tests/manifest_compatibility.rs (target/debug/deps/manifest_compatibility-cf20a7cafe34f5e8)\n\nrunning 3 tests\ntest checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok\ntest a_retained_asset_must_be_immutable ... ok\ntest schema_writer_and_mode_refusals_happen_before_binding ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/navigation_capability.rs (target/debug/deps/navigation_capability-be675646417f2dd8)\n\nrunning 2 tests\ntest ordinary_routes_and_unrelated_forward_fields_remain_compatible ... ok\ntest disabled_reader_refuses_reserved_navigation_before_binding_instead_of_dropping_it ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "name": "enabled",
+      "command": "cargo test --locked -p forma-server --all-features --test navigation_capability --test manifest_compatibility",
+      "passed": true,
+      "log": "   Compiling forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.19s\n     Running tests/manifest_compatibility.rs (target/debug/deps/manifest_compatibility-93e337986335ad7a)\n\nrunning 3 tests\ntest checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok\ntest a_retained_asset_must_be_immutable ... ok\ntest schema_writer_and_mode_refusals_happen_before_binding ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/navigation_capability.rs (target/debug/deps/navigation_capability-de1b09e93d3ed8d6)\n\nrunning 2 tests\ntest ordinary_routes_and_unrelated_forward_fields_remain_compatible ... ok\ntest enabled_reader_admits_valid_capability_but_keeps_schema_and_writer_guards ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "name": "release-default",
+      "command": "cargo test --locked --release -p forma-server --test navigation_capability --test manifest_compatibility",
+      "passed": true,
+      "log": "   Compiling itoa v1.0.18\n   Compiling libc v0.2.190\n   Compiling pin-project-lite v0.2.17\n   Compiling bytes v1.12.1\n   Compiling futures-core v0.3.34\n   Compiling typenum v1.20.1\n   Compiling http v1.5.0\n   Compiling serde_core v1.0.229\n   Compiling hybrid-array v0.4.15\n   Compiling once_cell v1.21.4\n   Compiling tracing-core v0.1.36\n   Compiling http-body v1.1.0\n   Compiling socket2 v0.6.5\n   Compiling mio v1.2.4\n   Compiling cfg-if v1.0.5\n   Compiling log v0.4.34\n   Compiling tracing v0.1.44\n   Compiling crypto-common v0.2.2\n   Compiling tokio v1.53.3\n   Compiling block-buffer v0.12.1\n   Compiling tower-service v0.3.3\n   Compiling const-oid v0.10.2\n   Compiling httparse v1.10.1\n   Compiling digest v0.11.3\n   Compiling zmij v1.0.23\n   Compiling cpufeatures v0.3.1\n   Compiling same-file v1.0.6\n   Compiling atomic-waker v1.1.2\n   Compiling percent-encoding v2.3.2\n   Compiling httpdate v1.0.3\n   Compiling tower-layer v0.3.3\n   Compiling slab v0.4.12\n   Compiling smallvec v1.16.3\n   Compiling memchr v2.8.3\n   Compiling sync_wrapper v1.0.2\n   Compiling futures-task v0.3.34\n   Compiling futures-util v0.3.34\n   Compiling serde_json v1.0.154\n   Compiling hyper v1.12.0\n   Compiling form_urlencoded v1.2.2\n   Compiling walkdir v2.5.0\n   Compiling serde v1.0.229\n   Compiling sha2 v0.11.0\n   Compiling http-body-util v0.1.5\n   Compiling ryu v1.0.23\n   Compiling mime v0.3.17\n   Compiling serde_urlencoded v0.7.1\n   Compiling axum-core v0.5.6\n   Compiling rust-embed-utils v8.13.0\n   Compiling hyper-util v0.1.20\n   Compiling tower v0.5.3\n   Compiling serde_path_to_error v0.1.20\n   Compiling getrandom v0.2.17\n   Compiling forma-ir-derive v3.1.0 (<checkout>/crates/forma-ir-derive)\n   Compiling untrusted v0.9.0\n   Compiling matchit v0.8.4\n   Compiling ryu-js v1.0.3\n   Compiling ring v0.17.14\n   Compiling forma-ir v3.1.0 (<checkout>/crates/forma-ir)\n   Compiling axum v0.8.9\n   Compiling rust-embed v8.11.0\n   Compiling base64 v0.22.1\n   Compiling forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `release` profile [optimized] target(s) in 18.31s\n     Running tests/manifest_compatibility.rs (target/release/deps/manifest_compatibility-4192e7d43b1c301d)\n\nrunning 3 tests\ntest checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok\ntest a_retained_asset_must_be_immutable ... ok\ntest schema_writer_and_mode_refusals_happen_before_binding ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/navigation_capability.rs (target/release/deps/navigation_capability-aed9bf544b00371c)\n\nrunning 2 tests\ntest ordinary_routes_and_unrelated_forward_fields_remain_compatible ... ok\ntest disabled_reader_refuses_reserved_navigation_before_binding_instead_of_dropping_it ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "name": "release-enabled",
+      "command": "cargo test --locked --release -p forma-server --all-features --test navigation_capability --test manifest_compatibility",
+      "passed": true,
+      "log": "   Compiling alloc-no-stdlib v2.0.4\n   Compiling adler2 v2.0.1\n   Compiling simd-adler32 v0.3.10\n   Compiling alloc-stdlib v0.2.4\n   Compiling crc32fast v1.5.3\n   Compiling brotli-decompressor v5.0.3\n   Compiling miniz_oxide v0.9.1\n   Compiling flate2 v1.1.10\n   Compiling brotli v8.0.4\n   Compiling forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `release` profile [optimized] target(s) in 15.06s\n     Running tests/manifest_compatibility.rs (target/release/deps/manifest_compatibility-10209b50d9776ce9)\n\nrunning 3 tests\ntest checked_worker_configuration_does_not_seal_defaults_and_rejects_cross_app ... ok\ntest a_retained_asset_must_be_immutable ... ok\ntest schema_writer_and_mode_refusals_happen_before_binding ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/navigation_capability.rs (target/release/deps/navigation_capability-628e7028c7d64a6f)\n\nrunning 2 tests\ntest ordinary_routes_and_unrelated_forward_fields_remain_compatible ... ok\ntest enabled_reader_admits_valid_capability_but_keeps_schema_and_writer_guards ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --all --check",
+      "passed": true,
+      "log": ""
+    },
+    {
+      "name": "clippy-enabled",
+      "command": "cargo clippy --locked -p forma-server --all-targets --all-features -- -D warnings",
+      "passed": true,
+      "log": "    Checking forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.82s\n"
+    },
+    {
+      "name": "msrv-default",
+      "command": "cargo +1.85.0 check --locked -p forma-server --all-targets",
+      "passed": true,
+      "log": "   Compiling proc-macro2 v1.0.107\n   Compiling quote v1.0.47\n   Compiling unicode-ident v1.0.27\n   Compiling libc v0.2.190\n    Checking itoa v1.0.18\n    Checking pin-project-lite v0.2.17\n   Compiling serde_core v1.0.229\n   Compiling typenum v1.20.1\n   Compiling syn v2.0.119\n   Compiling syn v3.0.9\n   Compiling hybrid-array v0.4.15\n    Checking futures-core v0.3.34\n    Checking bytes v1.12.1\n    Checking http v1.5.0\n    Checking once_cell v1.21.4\n   Compiling tracing-attributes v0.1.31\n    Checking tracing-core v0.1.36\n    Checking http-body v1.1.0\n   Compiling tokio-macros v2.7.2\n   Compiling crypto-common v0.2.2\n   Compiling block-buffer v0.12.1\n    Checking mio v1.2.4\n    Checking socket2 v0.6.5\n   Compiling const-oid v0.10.2\n    Checking cfg-if v1.0.5\n   Compiling httparse v1.10.1\n   Compiling unicase v2.10.0\n   Compiling zmij v1.0.23\n    Checking log v0.4.34\n   Compiling mime_guess v2.0.5\n    Checking tracing v0.1.44\n   Compiling digest v0.11.3\n    Checking tokio v1.53.3\n   Compiling cpufeatures v0.3.1\n   Compiling serde v1.0.229\n   Compiling shlex v2.0.1\n    Checking tower-service v0.3.3\n   Compiling serde_json v1.0.154\n   Compiling find-msvc-tools v0.1.14\n   Compiling same-file v1.0.6\n   Compiling walkdir v2.5.0\n   Compiling cc v1.8.0\n   Compiling sha2 v0.11.0\n   Compiling serde_derive v1.0.229\n    Checking httpdate v1.0.3\n    Checking percent-encoding v2.3.2\n    Checking slab v0.4.12\n    Checking futures-task v0.3.34\n    Checking memchr v2.8.3\n    Checking sync_wrapper v1.0.2\n    Checking smallvec v1.16.3\n    Checking atomic-waker v1.1.2\n   Compiling mime v0.3.17\n    Checking tower-layer v0.3.3\n    Checking hyper v1.12.0\n   Compiling ring v0.17.14\n    Checking futures-util v0.3.34\n    Checking form_urlencoded v1.2.2\n   Compiling rust-embed-utils v8.13.0\n    Checking http-body-util v0.1.5\n    Checking ryu v1.0.23\n    Checking axum-core v0.5.6\n    Checking serde_urlencoded v0.7.1\n    Checking tower v0.5.3\n   Compiling rust-embed-impl v8.13.0\n    Checking hyper-util v0.1.20\n    Checking getrandom v0.2.17\n    Checking serde_path_to_error v0.1.20\n   Compiling forma-ir-derive v3.1.0 (<checkout>/crates/forma-ir-derive)\n    Checking ryu-js v1.0.3\n    Checking untrusted v0.9.0\n    Checking matchit v0.8.4\n    Checking forma-ir v3.1.0 (<checkout>/crates/forma-ir)\n    Checking axum v0.8.9\n    Checking rust-embed v8.11.0\n    Checking base64 v0.22.1\n    Checking forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.87s\n"
+    },
+    {
+      "name": "msrv-enabled",
+      "command": "cargo +1.85.0 check --locked -p forma-server --all-targets --all-features",
+      "passed": true,
+      "log": "   Compiling crc32fast v1.5.3\n    Checking alloc-no-stdlib v2.0.4\n    Checking simd-adler32 v0.3.10\n    Checking alloc-stdlib v0.2.4\n    Checking adler2 v2.0.1\n    Checking brotli-decompressor v5.0.3\n    Checking miniz_oxide v0.9.1\n    Checking flate2 v1.1.10\n    Checking brotli v8.0.4\n    Checking forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.14s\n"
+    },
+    {
+      "name": "clippy-default",
+      "command": "cargo clippy --locked -p forma-server --all-targets -- -D warnings",
+      "passed": true,
+      "priorFailure": {
+        "reason": "Existing cfg-dependent template String used a now redundant as_ref; server owner fixed it to borrow the String directly.",
+        "log": "    Checking forma-server v3.1.0 (<checkout>/crates/forma-server)\nerror: this call to `as_ref` does nothing\n   --> crates/forma-server/src/template.rs:256:9\n    |\n256 |         navigation_metadata.as_ref(),\n    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `navigation_metadata`\n    |\n    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#useless_asref\n    = note: `-D clippy::useless-asref` implied by `-D warnings`\n    = help: to override `-D warnings` add `#[allow(clippy::useless_asref)]`\n\nerror: could not compile `forma-server` (lib) due to 1 previous error\nwarning: build failed, waiting for other jobs to finish...\nerror: could not compile `forma-server` (lib test) due to 1 previous error\n"
+      },
+      "log": "    Checking forma-server v3.1.0 (<checkout>/crates/forma-server)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.81s\n"
+    }
+  ]
+}

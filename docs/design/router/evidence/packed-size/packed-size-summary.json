@@ -1,0 +1,244 @@
+{
+  "schema": "forma-301-packed-size-summary-v1",
+  "startedAt": "2026-10-26T20:52:14.633Z",
+  "node": "v24.22.1",
+  "passed": true,
+  "scope": "Authoritative paired N3 measurement over authenticated installed DS11 JavaScript archives. All eight archive identities are checked; only core/router/compiler/build execute in this size campaign. Authored fixture, build, measurement and fixed limits are unchanged. This is not another whole-P17 or publication result. This selected-fields summary is distinct from the complete raw receipt, retained at rawReceipt.path.",
+  "staging": "A separate sparse Git view at the sealed commit maps packages/{core,router,compiler,build} and node_modules to the authenticated isolated consumer. The view is intentionally dirty; its untracked staging marker and product symlinks are recorded. The original packed proof and its outputs remain untouched.",
+  "sourceCommit": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "releaseSet": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/candidate/release-set.json",
+    "sha256": "96472d312b1075dd409b89596d597335832a5609893fd33f637b28dc153382a6"
+  },
+  "originalPackedProof": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/packed-native.json",
+    "sha256": "83884f8b5fec73b764679d2838bda702ac48a5ba864f847da992992a58709ff5"
+  },
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.1.0",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.1.0.crate",
+      "sha256": "7b2724a3fc2a03b24d0629d66112fdde9e6d87a9262afeb82aa3e8ed7cee3f06"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.1.0",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.1.0.crate",
+      "sha256": "d0086bf6078717c3890b6fbc148d7fd30816ca64d1ab84fec3e076961591c462"
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.1.0",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.1.0.crate",
+      "sha256": "bd032192b11eff22f5a32f34bd9f522728934479ea0bdab62fa19d5ed79bd645"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.1.0",
+      "path": "packages/core",
+      "file": "getforma-core-3.1.0.tgz",
+      "sha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.1.0",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.1.0.tgz",
+      "sha256": "5dfeedc0ffad2bff505cf6a17e4d3bb4d5eac83804679e0325ceedf445821643"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.1.0",
+      "path": "packages/build",
+      "file": "getforma-build-3.1.0.tgz",
+      "sha256": "e73fc2e27a83b6924caa6460a83a75481be398893bff4591709322b78e2618ec"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/router",
+      "version": "3.1.0",
+      "path": "packages/router",
+      "file": "getforma-router-3.1.0.tgz",
+      "sha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.1.0",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.1.0.tgz",
+      "sha256": "d9a1f3dfaffd06dabb59422e43df81945d1c23eded4a9c43acbff594d7defd09"
+    }
+  ],
+  "consumerLock": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/package-lock.json",
+    "sha256": "5f4ee85fdf11575fc88352bc3b6cd99cc27863d5eb9734dacba4f6e8f270cb7b"
+  },
+  "authoredInputs": {
+    "package.json": "0091495bae82892bf05d6706f091550918dc8be8d9b2473ed5b9d34b851c4c41",
+    "package-lock.json": "bf24c31359c833e4b142721cafa2d1bfa34c53c0791423bbbcceaec1ba8703be",
+    "Cargo.toml": "f00c9a7818be86e2506d1435cfb4b3d58e440efac4c30ecca6a5b4a6f62fdbb4",
+    "Cargo.lock": "fb9dc2055fc9b5f2bf0572de5834d5fb514ac2ab436f28cb6a194ba6f6cd3bd2",
+    "experiments/forma-router-native/measure-size.mjs": "7318998daa5357521a781bfe80e2fb69f9e23e73a8b3e89e87dd3ee5484c8cc8",
+    "experiments/forma-router-native/build.mjs": "c159540dffd82ce254cca1a6a260e69d6629808ac3adeb7d2b8629df342cd894",
+    "experiments/forma-router-native/client.ts": "450152e1c2b3ca4fea3b9ab1e0c8d99dd0eb5b15f87f6bb3208cfa241b6c91ee",
+    "experiments/forma-router-native/client-next.ts": "a42a420de3d01d6f1133cd6f3f83e9d42be937a0960dab8cd9a45202b5b19d13",
+    "experiments/forma-router-native/app/a.tsx": "6db029b7d38549d1510f32c09d84b0ef650557290edcca084d74d3a7391dcec4",
+    "experiments/forma-router-native/app/b.tsx": "4774d4c31a20bd18994d26ce389da09543a1c1d3ee456a030da001b66e27951b",
+    "experiments/forma-router-native/app/fixture.css": "4f842f31ca020fcc2ee239ec8921042b25bedf2bc02262fd09b834bd119065bd",
+    "experiments/forma-router-native/app/page-a.tsx": "c0d4d34f6bac46db64539622fdf6bb249a891ae8ac47edf0273a0debf4f5d965",
+    "experiments/forma-router-native/app/page-b.tsx": "1a79d01944a92f876e6a5e909258e6af22b0e9e1c97b3bc26d668d3935c6dc14",
+    "experiments/forma-router-native/app/page-shell.tsx": "c8b00dc4831e86dd28c589e03ff066edc84cc5234cc7fd10f9601a2fb1032c40",
+    "experiments/forma-router-native/app/plain-a.tsx": "0a26f9d23ec0f0198603f53f72cf8eb40f2992f85ba3d16bced4bca508420e1e",
+    "experiments/forma-router-native/app/plain-b.tsx": "0ec8cb2b4962a0e043f4775e66963b8269cd7a88f061113fdb67228cf3699c87",
+    "experiments/forma-router-native/app/plain-pages.tsx": "512b49a752f9125756c3fe84fc7bbb7dc9ee06230c89e4913bdf6f5a44ecdadf",
+    "experiments/forma-router-native/app/shell.tsx": "a5d9e46fc3f3cc281c498c33b71f5433d7862440146d306511b83d34d672e488",
+    "scripts/navigation-size-contract.mjs": "9ab9e47131409500beba908af613ac59585e0c241a8605ac064e32b2be6b1a8e",
+    "scripts/router-size-baseline.json": "452238f10ed196df94ce35e31c006529dc4025e4e13b0bd2613b42f48d9813b1"
+  },
+  "stagingStatus": " D packages/build/README.md\n D packages/build/package.json\n D packages/compiler/README.md\n D packages/compiler/docs/subset.md\n D packages/compiler/package.json\n D packages/core/LICENSE\n D packages/core/README.md\n D packages/core/licenses/alien-signals.txt\n D packages/core/package.json\n D packages/router/LICENSE\n D packages/router/README.md\n D packages/router/package.json\n?? PACKED-MEASUREMENT-VIEW.json\n?? node_modules\n?? packages/build\n?? packages/compiler\n?? packages/core\n?? packages/router\n",
+  "moduleResolutions": {
+    "@getforma/core": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/core/dist/index.js",
+      "sha256": "6b8db3f912d6f97d691f7c5c2e2d4840a2b7d436e256c38daba8315279aabb1f"
+    },
+    "@getforma/core/navigation": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/core/dist/navigation.js",
+      "sha256": "63824e3092cdb333f865dc740ae6c852530ec6ef795779d1d3d8fd38b07534d7"
+    },
+    "@getforma/core/compiled": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/core/dist/compiled.js",
+      "sha256": "47d1f0fee975d7feab33a0b94ce0b7c25a140342220cf7e8004b3e37ad7ce770"
+    },
+    "@getforma/router": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/router/dist/index.js",
+      "sha256": "59c9ecf1437d2e0e5e5d8402c9cb2c8a28356d82668881f802c0ec1cced68e8b"
+    },
+    "@getforma/compiler": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/compiler/dist/index.js",
+      "sha256": "1ec2e052933fcac6213e14b27a47b6b696f02395970fdb81cf588ffb2a5e8069"
+    },
+    "@getforma/build": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/build/dist/index.js",
+      "sha256": "86c09399bae67e69986a500572bf8d700d3c7cd8f55df9b69e367faea9cb74e4"
+    },
+    "core dependency: alien-signals": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/core/node_modules/alien-signals/cjs/index.cjs",
+      "sha256": "82e581e64b9a6c02553bae18dfa71d449b1c50ebee11d2a7557613d7db40981f"
+    },
+    "build dependency: esbuild": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/build/node_modules/esbuild/lib/main.js",
+      "sha256": "8331fe1d8b3a07381f33cc425fcfaa94776e263113653f80ec3ba433e9657e73"
+    }
+  },
+  "baseline": {
+    "schema": 1,
+    "scope": "Published Forma 3.1.0 core baseline for the frozen FORMA-301 paired size contract.",
+    "name": "@getforma/core",
+    "version": "3.1.0",
+    "integrity": "sha512-sttf0ogV92qwJf1CL5jkremiWiebBmup+pDfb5XuhHw+mbR0bY+xxO6ZRnI2N5C6jR8/saWZ7zQBMb3PVhrEEA==",
+    "archiveSha256": "312149d7c863f54776bc5d0eb78fa920f009dc7e5867352535c877e16d4610b7",
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/successor-native-size/baseline/getforma-core-3.1.0.tgz",
+    "packReceipt": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/successor-native-size/baseline-pack.json",
+    "packReceiptSha256": "e7a4c6572b78667ae8a374c6720e1d09c4b6d94fda7dc79ad956e1dc17188212"
+  },
+  "groupAssetsMatchPackedProof": true,
+  "verdict": {
+    "comparisons": [
+      {
+        "route": "/native/a",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28432,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12281
+      },
+      {
+        "route": "/native/b",
+        "previousPlainGzip": 28457,
+        "currentPlainGzip": 28433,
+        "positiveSharedDeltaGzip": 0,
+        "incrementGzip": 12280
+      }
+    ],
+    "incrementGzip": 12281,
+    "groupGzip": 40713,
+    "ceilings": {
+      "increment": 12288,
+      "group": 65536
+    },
+    "passed": true
+  },
+  "measurement": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v5/size.json",
+    "sha256": "0f1def7d91b48f747a3b58c628e1ddfec0b020876fb78521f395d0799c67b40b"
+  },
+  "authoredInputsUnchanged": true,
+  "installedArchiveProductsUnchanged": true,
+  "originalProofAndOutputsUnchanged": true,
+  "allEightArchivesUnchanged": true,
+  "finishedAt": "2026-10-26T20:52:18.910Z",
+  "rawReceipt": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v5/packed-size.json",
+    "bytes": 479790,
+    "sha256": "a10c5d3396a9a3012fc68d6a8eec0e68920b37303536380357b5ac43f2c7a96f",
+    "schema": "forma-301-packed-size-v1"
+  },
+  "runner": {
+    "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/run-packed-size.mjs",
+    "sha256": "a6e662a22ef24fec1864d89cdf3bcccece252eab5dfdaa8cbd1ff1469f359790",
+    "retainedCopy": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-size-final-v5/runner.mjs"
+  },
+  "productInventoryHashAlgorithm": "sha256 of UTF-8 JSON with sorted object keys and compact separators; full relative-path inventories remain in the bound raw receipt.",
+  "installedProducts": {
+    "core": {
+      "realpath": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/core",
+      "archive": "getforma-core-3.1.0.tgz",
+      "archiveSha256": "679fd0553099f0d751254400676fc379fef11575eee0756330f8b42ed1c8d643",
+      "archiveOwnedFileCount": 112,
+      "archiveOwnedFilesSha256": "78e06e3317c27b3ce596c02ed768e1cf6dea5d2dd57ee6298aa6b4aa8c179d6a",
+      "nestedDependencyCount": 1,
+      "nestedFileCount": 9,
+      "nestedInstalledFilesSha256": "74ec055385b4b1aea5011977ee56362a43c9762a5fc68a29a2bc6b773cae0ede"
+    },
+    "router": {
+      "realpath": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/router",
+      "archive": "getforma-router-3.1.0.tgz",
+      "archiveSha256": "396d8b1551285983fed60d73b2387dfdd18a0e4f778e2f3ae26a169d5878822e",
+      "archiveOwnedFileCount": 7,
+      "archiveOwnedFilesSha256": "e68658b560ad73459654309a1ec9e46890a45542fb6bbc01250db8c5dc74a25a",
+      "nestedDependencyCount": 0,
+      "nestedFileCount": 0,
+      "nestedInstalledFilesSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "compiler": {
+      "realpath": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/compiler",
+      "archive": "getforma-compiler-3.1.0.tgz",
+      "archiveSha256": "5dfeedc0ffad2bff505cf6a17e4d3bb4d5eac83804679e0325ceedf445821643",
+      "archiveOwnedFileCount": 5,
+      "archiveOwnedFilesSha256": "adbfae6a4a79a6133cada3c4476f50973a0e4fb50174b0c724a43d6a4ebd8003",
+      "nestedDependencyCount": 51,
+      "nestedFileCount": 2008,
+      "nestedInstalledFilesSha256": "b805f53ca69ba28eb60981cbb4d87f0a3bdbbcd76af6e5e2ccd59efe34337397"
+    },
+    "build": {
+      "realpath": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/packed-native-final/consumer/node_modules/@getforma/build",
+      "archive": "getforma-build-3.1.0.tgz",
+      "archiveSha256": "e73fc2e27a83b6924caa6460a83a75481be398893bff4591709322b78e2618ec",
+      "archiveOwnedFileCount": 6,
+      "archiveOwnedFilesSha256": "f0492bf4dd89488de327c9f7f62fe202f39d25b71096ab878ed7e9bd30aca6a3",
+      "nestedDependencyCount": 7,
+      "nestedFileCount": 231,
+      "nestedInstalledFilesSha256": "5370f1be8d9c07d39d6a731c960a0d3e4ed2803cdc6ec0d777abfd756283c5b4"
+    }
+  }
+}

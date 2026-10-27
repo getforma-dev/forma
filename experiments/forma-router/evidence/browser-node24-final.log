@@ -1,0 +1,82 @@
+PASS chromium typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop
+PASS chromium latest navigation wins when delayed A finishes after B
+PASS chromium hash, Back and Forward retain owners and avoid additional push
+PASS chromium enhanced validation preserves form and valid submission refreshes Rust props once
+PASS chromium navigation during delayed POST keeps latest destination and revalidates it
+PASS chromium busy competing submissions do not queue a second POST
+PASS chromium security: lost mutation warning survives GET recovery without repeating POST
+PASS chromium forged CSRF is rejected before any mutation
+PASS chromium typed 303 action redirects through GET and preserves document
+PASS chromium policy mismatch is an explicit document fallback
+PASS chromium malformed native state is refused without replacing current route
+PASS chromium security: slash attributes and custom markup are refused before import or constructors
+PASS chromium security: only the exact declared POST endpoint is enhanced and unsupported forms stay native
+PASS chromium security: recursive formdata submission from a distinct form reserves exactly one POST
+PASS chromium security: disposed or revoked formdata ownership sends no POST
+PASS chromium security: failed form serialization releases the reserved action slot
+PASS chromium security: native context mismatch revokes live owners and private DOM before recovery
+PASS chromium security: explicit context invalidation revokes captured deferred island callbacks
+PASS chromium security: persisted pageshow revokes private owners before document recovery
+PASS chromium security: action context mismatch accepts no data and recovers without repeating POST
+PASS chromium security: action endpoint mismatch accepts no data and recovers without repeating POST
+PASS chromium security: recovery loop storage omits query data and stops after 32 distinct attempts
+PASS chromium security: stale validation and error outcomes cannot announce over a newer route
+PASS chromium 100 route cycles keep one scope and exactly one click handler
+PASS chromium dispose revokes route and restores scroll policy
+PASS chromium direct entry and explicit refresh render complete native HTML
+PASS chromium no-JavaScript links, validation and form mutation use same Rust handler
+PASS firefox typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop
+PASS firefox latest navigation wins when delayed A finishes after B
+PASS firefox hash, Back and Forward retain owners and avoid additional push
+PASS firefox enhanced validation preserves form and valid submission refreshes Rust props once
+PASS firefox navigation during delayed POST keeps latest destination and revalidates it
+PASS firefox busy competing submissions do not queue a second POST
+PASS firefox security: lost mutation warning survives GET recovery without repeating POST
+PASS firefox forged CSRF is rejected before any mutation
+PASS firefox typed 303 action redirects through GET and preserves document
+PASS firefox policy mismatch is an explicit document fallback
+PASS firefox malformed native state is refused without replacing current route
+PASS firefox security: slash attributes and custom markup are refused before import or constructors
+PASS firefox security: only the exact declared POST endpoint is enhanced and unsupported forms stay native
+PASS firefox security: recursive formdata submission from a distinct form reserves exactly one POST
+PASS firefox security: disposed or revoked formdata ownership sends no POST
+PASS firefox security: failed form serialization releases the reserved action slot
+PASS firefox security: native context mismatch revokes live owners and private DOM before recovery
+PASS firefox security: explicit context invalidation revokes captured deferred island callbacks
+PASS firefox security: persisted pageshow revokes private owners before document recovery
+PASS firefox security: action context mismatch accepts no data and recovers without repeating POST
+PASS firefox security: action endpoint mismatch accepts no data and recovers without repeating POST
+PASS firefox security: recovery loop storage omits query data and stops after 32 distinct attempts
+PASS firefox security: stale validation and error outcomes cannot announce over a newer route
+PASS firefox 100 route cycles keep one scope and exactly one click handler
+PASS firefox dispose revokes route and restores scroll policy
+PASS firefox direct entry and explicit refresh render complete native HTML
+PASS firefox no-JavaScript links, validation and form mutation use same Rust handler
+PASS webkit typed A-B-A keeps document/layout, fresh adopted controls and departing listeners stop
+PASS webkit latest navigation wins when delayed A finishes after B
+PASS webkit hash, Back and Forward retain owners and avoid additional push
+PASS webkit enhanced validation preserves form and valid submission refreshes Rust props once
+PASS webkit navigation during delayed POST keeps latest destination and revalidates it
+PASS webkit busy competing submissions do not queue a second POST
+PASS webkit security: lost mutation warning survives GET recovery without repeating POST
+PASS webkit forged CSRF is rejected before any mutation
+PASS webkit typed 303 action redirects through GET and preserves document
+PASS webkit policy mismatch is an explicit document fallback
+PASS webkit malformed native state is refused without replacing current route
+PASS webkit security: slash attributes and custom markup are refused before import or constructors
+PASS webkit security: only the exact declared POST endpoint is enhanced and unsupported forms stay native
+PASS webkit security: recursive formdata submission from a distinct form reserves exactly one POST
+PASS webkit security: disposed or revoked formdata ownership sends no POST
+PASS webkit security: failed form serialization releases the reserved action slot
+PASS webkit security: native context mismatch revokes live owners and private DOM before recovery
+PASS webkit security: explicit context invalidation revokes captured deferred island callbacks
+PASS webkit security: persisted pageshow revokes private owners before document recovery
+PASS webkit security: action context mismatch accepts no data and recovers without repeating POST
+PASS webkit security: action endpoint mismatch accepts no data and recovers without repeating POST
+PASS webkit security: recovery loop storage omits query data and stops after 32 distinct attempts
+PASS webkit security: stale validation and error outcomes cannot announce over a newer route
+PASS webkit 100 route cycles keep one scope and exactly one click handler
+PASS webkit dispose revokes route and restores scroll policy
+PASS webkit direct entry and explicit refresh render complete native HTML
+PASS webkit no-JavaScript links, validation and form mutation use same Rust handler
+{"passed":true,"checks":81,"failures":0,"output":"experiments/forma-router/evidence/browser-node24-final.json"}

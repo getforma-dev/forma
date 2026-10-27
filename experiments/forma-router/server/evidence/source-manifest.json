@@ -1,0 +1,20 @@
+{
+  "recorded_at_utc": "2026-10-26T16:08:36.364706+00:00",
+  "base": "9a570afece5eb5091824422f00134a875310e857",
+  "files": {
+    "crates/forma-server/Cargo.toml": "6509741e3020701c8d02e21972549d9d669af01b6dc43b5271e1a1cce6c58b0e",
+    "crates/forma-server/src/navigation.rs": "3b12c09455b1cb922f09c3429b42472ebdcfd1aa8d144f255633ac8379d31a0b",
+    "crates/forma-server/src/pages.rs": "2219a7e47f438cbf86047809ab8cad74e5a75825a4c8c426e43d287e16c8ea4b",
+    "crates/forma-server/src/render.rs": "abca85a8a9472466d2360abbb56167d1842e7a4b9c51cbe3006e8192da570919",
+    "crates/forma-server/src/response.rs": "a7fcc94c27de481e961b29ccde6c710d1d15d3a99413b39ffbb489755a650d14",
+    "crates/forma-server/src/template.rs": "7c6b6fb537b07d8ad20461253ad433810b234ad3473e7fad1e4e4abaa7c99f49",
+    "crates/forma-server/src/lib.rs": "691d9363ae1533ab38138da6b16abadcff908a36d85d47faa85b5145c6afce88",
+    "crates/forma-server/tests/navigation.rs": "8b900edcabafa84ec8d6aee16559ca9bd604f334604115ef151e63107ea49b4d",
+    "experiments/forma-router/server/src/main.rs": "605d9952684bd1e79b7343c0012a5dbc7ef34300c4adbd2de67e37b5990dd57d",
+    "experiments/forma-router/server/Cargo.lock": "b5665dbfd8801378668c2f866f09132c17cf1039c11802f07e2e8b3f0c7025d2",
+    "experiments/forma-router/server/Cargo.toml": "268edcc3053496cf232ccc4b87ab678edaabecc0d301b8a3b9cb0dcfb0012da2",
+    "experiments/forma-router/server/check_http.py": "313594badaef5a05373c6493804b8a377f9e6cb8c3c8ecbc7a31b44865be0e68",
+    "experiments/forma-router/server/README.md": "48a8c99263d7ad348a45dfa3191547d5c8599a349d56770cc5dcf77cdf5d49c7"
+  },
+  "note": "Unreleased experimental source; snapshots are not a publication receipt."
+}

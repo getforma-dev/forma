@@ -1,12 +1,12 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "e3f90c4871a9be4e8f25db944479681f9355e560",
-  "tree": "c9fe1a360bc8fad69a84ace448812b0dc85c1ed2",
+  "commit": "3c10b6d056b1b160db47c7f603693502e78e0c71",
+  "tree": "2263f1cc01c12b0eb19b5c2a4dff356371f9925b",
   "entries": [
     {
       "path": ".gitattributes",
       "mode": "100644",
-      "blob": "27e50e6a1a03932e832bcaa9826a372080d79f75"
+      "blob": "6bce1533e157b5013ad49b49d74d1f63bc6505ea"
     },
     {
       "path": ".github/CODEOWNERS",
@@ -36,7 +36,7 @@
     {
       "path": ".github/workflows/ci.yml",
       "mode": "100644",
-      "blob": "a6f76a9666176212aaf3b782242f32f7e95406d5"
+      "blob": "e1be93616c354e925dbfc6c6cbbb5493a16c0a6f"
     },
     {
       "path": ".github/workflows/compat.yml",
@@ -46,7 +46,7 @@
     {
       "path": ".github/workflows/e2e-engines.yml",
       "mode": "100644",
-      "blob": "d016ee11188d099b81aa28286eca032a19cf7062"
+      "blob": "211cfeeefe15ed6ae218cb6e6786403eb88fbeda"
     },
     {
       "path": ".github/workflows/fmir-fuzz.yml",
@@ -91,7 +91,7 @@
     {
       "path": ".github/workflows/packed-qualification.yml",
       "mode": "100644",
-      "blob": "08cf7d1cbfeaaf467098135bf7ef85d0bdcf4613"
+      "blob": "6df94a8a3fc756228f7f77d69b4decf3a9594638"
     },
     {
       "path": ".github/workflows/post-final-soak-v2.yml",
@@ -116,7 +116,7 @@
     {
       "path": ".github/workflows/release.yml",
       "mode": "100644",
-      "blob": "9f758a113a33882297f804be0c81e0ffaef19455"
+      "blob": "15ddf5aa60ef15c3d7909d9aff23f7cf2c8b295f"
     },
     {
       "path": ".github/workflows/scaffold-cache.yml",
@@ -151,22 +151,22 @@
     {
       "path": "CHANGELOG.md",
       "mode": "100644",
-      "blob": "5c4a14d4b6c1425e13c51d0eab903826fc5af0e8"
+      "blob": "43750007988b15a3aa6ed208cabf245ae605ad2e"
     },
     {
       "path": "CONTRIBUTING.md",
       "mode": "100644",
-      "blob": "fa85ee798ea92b62d3fa21c8370e18988421409c"
+      "blob": "8569eb9a74c31582fcd4574749fa7f94553ed3ee"
     },
     {
       "path": "Cargo.lock",
       "mode": "100644",
-      "blob": "662a414c7540e79ed701eafb4bba00d68191a70c"
+      "blob": "b6e08bcbaaad4ec3b71867f1b06eca79c8fadda1"
     },
     {
       "path": "Cargo.toml",
       "mode": "100644",
-      "blob": "1decc26956937a978fa8f4aa6c292a179f8776e1"
+      "blob": "154b30f45283610870b03ad82d639325f067f227"
     },
     {
       "path": "LICENSE",
@@ -176,7 +176,7 @@
     {
       "path": "README.md",
       "mode": "100644",
-      "blob": "23dbecd8f5c7440b397c3987fa09fa4f1e47fa53"
+      "blob": "72a82310cdb5504343ca147b8383efe1b5a9191f"
     },
     {
       "path": "SECURITY.md",
@@ -2856,7 +2856,7 @@
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
       "mode": "100644",
-      "blob": "4c6efbcceb5c943327a93f48624c7e06283f8e5d"
+      "blob": "8ca35367a82e355bd60382dba19003bcf5dc27f2"
     },
     {
       "path": "crates/forma-ir-derive/LICENSE",
@@ -2881,7 +2881,7 @@
     {
       "path": "crates/forma-ir/Cargo.toml",
       "mode": "100644",
-      "blob": "ce554558fd38ce0c068ba7448b7a300933bbc9ad"
+      "blob": "3f589a876a4c9380ed1228f3498311c28a21da0c"
     },
     {
       "path": "crates/forma-ir/README.md",
@@ -3956,17 +3956,17 @@
     {
       "path": "crates/forma-server/CHANGELOG.md",
       "mode": "100644",
-      "blob": "3d9b5087bd7d5e3cc25144f86c6a499071f42279"
+      "blob": "eed1387e488b6a359ad4535cc54a579fa2dcb284"
     },
     {
       "path": "crates/forma-server/Cargo.toml",
       "mode": "100644",
-      "blob": "2e664f767a4e0b23e3460ac234dc256a83d35639"
+      "blob": "7faa7ac7fdcbb7301a5dc894fa357568f96eff44"
     },
     {
       "path": "crates/forma-server/README.md",
       "mode": "100644",
-      "blob": "637fe56b34430de13dd74b37937ea0c49614d055"
+      "blob": "eeecdd7f92f61d40f74005c2603e5665eb7777df"
     },
     {
       "path": "crates/forma-server/examples/parity_render.rs",
@@ -4006,17 +4006,27 @@
     {
       "path": "crates/forma-server/src/ir.rs",
       "mode": "100644",
-      "blob": "2b440e50fa444c58e250a4139ed2f7c832e240af"
+      "blob": "7332abafad8f2bd5fb7fa9fc7f64fd87884870f3"
     },
     {
       "path": "crates/forma-server/src/lib.rs",
       "mode": "100644",
-      "blob": "561710906eee72c7b7bda04af7e519bcf432b1a3"
+      "blob": "816a1df808fa566b917d344506c5d803f53d6ec3"
+    },
+    {
+      "path": "crates/forma-server/src/navigation.rs",
+      "mode": "100644",
+      "blob": "85d630ed42763da3379f34e3c02dd5cb5976ba93"
+    },
+    {
+      "path": "crates/forma-server/src/navigation/owners.rs",
+      "mode": "100644",
+      "blob": "472558fa42961ebec9dca3340c0866412cddddf5"
     },
     {
       "path": "crates/forma-server/src/pages.rs",
       "mode": "100644",
-      "blob": "7346fe26b3cfd1ff24959a799a06a6d5910d03c5"
+      "blob": "2c08f77694962034728a9cd4c69b65be32d94d88"
     },
     {
       "path": "crates/forma-server/src/raw.rs",
@@ -4026,17 +4036,17 @@
     {
       "path": "crates/forma-server/src/render.rs",
       "mode": "100644",
-      "blob": "1dd73805ce75d49c3bbf00e4fa6229963f484619"
+      "blob": "3cbf5882cac00b8375b3549c96df7163d4a074c2"
     },
     {
       "path": "crates/forma-server/src/response.rs",
       "mode": "100644",
-      "blob": "883db7b1291f22575e8d48dc31fb8b1862263e5f"
+      "blob": "10c190fbb111aa671ad536d94c543e86ce2f0d7c"
     },
     {
       "path": "crates/forma-server/src/response/compression.rs",
       "mode": "100644",
-      "blob": "0ff80ee330c5d1dc1f6f087ec912113e6157f121"
+      "blob": "8c6b29c02a2e77fa7802d158b0ed802d841185c3"
     },
     {
       "path": "crates/forma-server/src/response/compression/tests.rs",
@@ -4051,12 +4061,12 @@
     {
       "path": "crates/forma-server/src/template.rs",
       "mode": "100644",
-      "blob": "028489b7c8d5bea62ad930c695ad156c1449e1b2"
+      "blob": "e8bec1ed0236bb2a106903d93c437d21e667d39a"
     },
     {
       "path": "crates/forma-server/src/types.rs",
       "mode": "100644",
-      "blob": "a9db4f94c82aa03e570505ec4dbf54e423cc6edf"
+      "blob": "db1ea268e9bd6a8b2454123a1a3937c629fb4d49"
     },
     {
       "path": "crates/forma-server/test_fixtures/app.a1b2c3d4.js",
@@ -4431,7 +4441,7 @@
     {
       "path": "crates/forma-server/tests/internal_renderer/checked_render.rs",
       "mode": "100644",
-      "blob": "deadc04b4e7c7659fa60a974218a1e32e6549cd4"
+      "blob": "dc2a27547212fc39290e9de5941e3729168b4da3"
     },
     {
       "path": "crates/forma-server/tests/internal_renderer/island_state.rs",
@@ -4441,27 +4451,27 @@
     {
       "path": "crates/forma-server/tests/internal_renderer/mod.rs",
       "mode": "100644",
-      "blob": "48be6d5f560a216b3ade32e944e580e3be64ef77"
+      "blob": "572d4809e8e3c39dc717d2f22571789e74215679"
     },
     {
       "path": "crates/forma-server/tests/internal_renderer/page_response.rs",
       "mode": "100644",
-      "blob": "915bef8dc220eadfe148b5cdc234394e855fac8a"
+      "blob": "d95b05d7ec97efa1a1d68c78631f308a1b2a6884"
     },
     {
       "path": "crates/forma-server/tests/internal_renderer/preview_frame.rs",
       "mode": "100644",
-      "blob": "9345674c0220e00301fad063d8d8eb479d5eb322"
+      "blob": "b387fa654cae7b4c5c2665b9ff34176c9d0d7ad2"
     },
     {
       "path": "crates/forma-server/tests/internal_renderer/raw_html.rs",
       "mode": "100644",
-      "blob": "bf7c883f0b119bb5bd2b88eb7c7b9fef26096a1d"
+      "blob": "1e0a097c736e59a7615cfbb1fffa9737a4f166d9"
     },
     {
       "path": "crates/forma-server/tests/internal_renderer/typed_homes.rs",
       "mode": "100644",
-      "blob": "d9fac1ad04dcee48d08ddc6676bf08bc39329022"
+      "blob": "9ab8e797be8128410ded3ee3f3b33c5f2bec730f"
     },
     {
       "path": "crates/forma-server/tests/island_state.rs",
@@ -4494,9 +4504,24 @@
       "blob": "c937f0064c1bf25e2fc0ce8c2d1d5f9ecaf416e4"
     },
     {
+      "path": "crates/forma-server/tests/navigation.rs",
+      "mode": "100644",
+      "blob": "0edf64d39e0c843c1e6e5926ce9aab3e96c2b618"
+    },
+    {
+      "path": "crates/forma-server/tests/navigation_capability.rs",
+      "mode": "100644",
+      "blob": "7a01ff151e77ffe2f7e9904c6bfe45a5f3994a1a"
+    },
+    {
+      "path": "crates/forma-server/tests/navigation_owners.rs",
+      "mode": "100644",
+      "blob": "48f5857080235fc8a1aae4400824dcfd7fb4c36c"
+    },
+    {
       "path": "crates/forma-server/tests/relaxation_log_bound.rs",
       "mode": "100644",
-      "blob": "1cb6ff99a57831671ccc9c5072218f5c625f1174"
+      "blob": "543c3b896561d63f07ca7ea398d3a049c984dd82"
     },
     {
       "path": "crates/forma-server/tests/service_worker_named_off.rs",
@@ -4506,12 +4531,12 @@
     {
       "path": "crates/forma-server/tests/service_worker_off.rs",
       "mode": "100644",
-      "blob": "20eb6a7489dbd8aa5afbe8708cfb50cac1f1ea30"
+      "blob": "4dc545d5431f90cb06e1ebc7ae3bb35efae1defa"
     },
     {
       "path": "crates/forma-server/tests/service_worker_on.rs",
       "mode": "100644",
-      "blob": "479528d246d5b9d39dace7f90916eae3b6e94757"
+      "blob": "4fe4e5e7895469e56838cda91b59ee2260e8232b"
     },
     {
       "path": "crates/forma-server/tests/startup_results.rs",
@@ -4536,7 +4561,7 @@
     {
       "path": "crates/forma-server/tests/trusted_types_report_only.rs",
       "mode": "100644",
-      "blob": "c81f121653e60241f24c1846f95502c5e2c01db9"
+      "blob": "14bfd0a802d557c451f33c75014821b4b82aaa75"
     },
     {
       "path": "crates/forma-server/tests/typed_pages.rs",
@@ -4586,12 +4611,12 @@
     {
       "path": "docs/README.md",
       "mode": "100644",
-      "blob": "685f7990455fd38a079b32275c294eabf8a17ec1"
+      "blob": "e7f665f42d1b5770b923e3d514fb2f869b5ff541"
     },
     {
       "path": "docs/RELEASING.md",
       "mode": "100644",
-      "blob": "a4416d770998f1e7d84fc10dc47f679aea94c41c"
+      "blob": "fb70e959fa45c2838b8bbc6baa2c1f50b9c54a2e"
     },
     {
       "path": "docs/REPOSITORY-LAYOUT.md",
@@ -4599,9 +4624,14 @@
       "blob": "c31cfe78da1dcb586767e7c2a44df5c8a48b801f"
     },
     {
+      "path": "docs/ROUTING.md",
+      "mode": "100644",
+      "blob": "ffb38190a0fc6a8d1c789c5d88f9fddb95619e02"
+    },
+    {
       "path": "docs/TESTING.md",
       "mode": "100644",
-      "blob": "38f7f53d092b648844042555355452b2207f3499"
+      "blob": "b84ba2184f3e31f76c52534f02d4044ae1340610"
     },
     {
       "path": "docs/TRUSTED-TYPES.md",
@@ -4616,7 +4646,12 @@
     {
       "path": "docs/UPGRADING-3.1.md",
       "mode": "100644",
-      "blob": "4479aa33c6990ebfa1c4685e95feee120bc49f1d"
+      "blob": "22965cd797ed29e2f0be8f87dfb6641c6e7b9731"
+    },
+    {
+      "path": "docs/UPGRADING-3.2.md",
+      "mode": "100644",
+      "blob": "e76b6a48f1cc59c3eccf5200972a83ad122faa0f"
     },
     {
       "path": "docs/archive/2026-10-15-FMIR-FORMAT-exact-stage.md",
@@ -11976,7 +12011,957 @@
     {
       "path": "docs/compatibility.md",
       "mode": "100644",
-      "blob": "37f216a74394e64b75b30428bb785687a1384cd4"
+      "blob": "5256a6ff1b90649d7b0a7acd4c030fdcc0f9fcb5"
+    },
+    {
+      "path": "docs/design/router/README.md",
+      "mode": "100644",
+      "blob": "ed8a75c092da973eebd000bacc41ab6aa0df7f23"
+    },
+    {
+      "path": "docs/design/router/acceptance-matrix-design.md",
+      "mode": "100644",
+      "blob": "386eeada1185749c4af8b8422b7eb9d8ac54de27"
+    },
+    {
+      "path": "docs/design/router/evidence/acceptance-3.2.json",
+      "mode": "100644",
+      "blob": "cde27d90eefe921b3aed8716272c3ea0cfd1d232"
+    },
+    {
+      "path": "docs/design/router/evidence/adapter-boundaries.json",
+      "mode": "100644",
+      "blob": "a4d603e6bb49df7ae790c50b4fe958dabd04050e"
+    },
+    {
+      "path": "docs/design/router/evidence/browser-owner-lifetimes.json",
+      "mode": "100644",
+      "blob": "c8c34daff4e2a0ac19dd9c90ed946715954a801f"
+    },
+    {
+      "path": "docs/design/router/evidence/callback-authority.json",
+      "mode": "100644",
+      "blob": "921cab6362ed5cb1ac88c76280bfd9876b49d75b"
+    },
+    {
+      "path": "docs/design/router/evidence/ci-helper-inventory.json",
+      "mode": "100644",
+      "blob": "accf41164b7cfadf2da9b9786807db653792dc30"
+    },
+    {
+      "path": "docs/design/router/evidence/document-identity-3.2.json",
+      "mode": "100644",
+      "blob": "4d3aeb7ffa21026ef2ade5e10eb15c6359944971"
+    },
+    {
+      "path": "docs/design/router/evidence/ecosystem-3.2-preparation.json",
+      "mode": "100644",
+      "blob": "4c5ebacb157be9265fc76948baa3801b8baac9e8"
+    },
+    {
+      "path": "docs/design/router/evidence/initial-owner-disposal.json",
+      "mode": "100644",
+      "blob": "bbf9314dce906e02a3a27c09451629b317e2d5be"
+    },
+    {
+      "path": "docs/design/router/evidence/mutation-cleanup-revocation.log",
+      "mode": "100644",
+      "blob": "5d9736e8e83f5261a61e3306a8097779a5d8674e"
+    },
+    {
+      "path": "docs/design/router/evidence/mutation-late-disposal.log",
+      "mode": "100644",
+      "blob": "c94bfca8ad1c18ebf8c170d1235f2ce08221745c"
+    },
+    {
+      "path": "docs/design/router/evidence/mutations.json",
+      "mode": "100644",
+      "blob": "bbd04b5d9f053591213f1a7f5d2446fcd253d071"
+    },
+    {
+      "path": "docs/design/router/evidence/navigation-capability-delta.json",
+      "mode": "100644",
+      "blob": "841b6e9a123a13753d9d0d1d8334829f27f1a06e"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/README.md",
+      "mode": "100644",
+      "blob": "874a5011c875cedd4a2c09ebe8453099cb330e39"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/archive-integrity-negative.json",
+      "mode": "100644",
+      "blob": "82c3cdc5df8ca1abfe0b502098cb755a60b49528"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/archive-integrity-negative.log",
+      "mode": "100644",
+      "blob": "53f67907b32c25c0b2fc32be2914a4135309c4b4"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/attempts.json",
+      "mode": "100644",
+      "blob": "e11ab982e1df7080e62025cb8f75a6eb1ea7c4a5"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/measurement.log",
+      "mode": "100644",
+      "blob": "34ba0f044ecfcbbc800429c7eb22478fec628dcb"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/packed-size-summary.json",
+      "mode": "100644",
+      "blob": "3838dfd5bf702bbb683100fa133ab7f843f48242"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/run-packed-size.mjs",
+      "mode": "100644",
+      "blob": "cda20c67fffa200937b1296bdabad54a12653ae9"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/size.json",
+      "mode": "100644",
+      "blob": "b61ebca17713bdd1cd4041b2b9e62dd1671aca78"
+    },
+    {
+      "path": "docs/design/router/evidence/packed-size/wrapper.log",
+      "mode": "100644",
+      "blob": "a2b85c108a01b346189f984c89fa54c417fd5e5e"
+    },
+    {
+      "path": "docs/design/router/evidence/pending-pop-links-3.2.json",
+      "mode": "100644",
+      "blob": "5c675e424dc7bc812e0e6b429237b9441be66c64"
+    },
+    {
+      "path": "docs/design/router/evidence/proof-process-cleanup.json",
+      "mode": "100644",
+      "blob": "025e25173fe99626c7adf395d32a9158d2802399"
+    },
+    {
+      "path": "docs/design/router/evidence/published-reader-compatibility.json",
+      "mode": "100644",
+      "blob": "b5c3cf0f139a89411e3f020bb5458f45ae974724"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/README.md",
+      "mode": "100644",
+      "blob": "fc555f744eb058b895498bf51f7bd0225059e8f5"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/SHA256SUMS",
+      "mode": "100644",
+      "blob": "a732e35770fbe42c5736b29929825efb28ef5995"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/callback-review/connect.json",
+      "mode": "100644",
+      "blob": "0e3b2d96cc9f9133d0d8562771ade613b9b86b83"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/callback-review/connect.mjs",
+      "mode": "100644",
+      "blob": "93fdb0d4656963c7c3a5cb43f171bf6a6d217069"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/callback-review/identity.json",
+      "mode": "100644",
+      "blob": "7f941db30f2e7898608049e6b25bf09ed18f30c5"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/callback-review/observable.json",
+      "mode": "100644",
+      "blob": "2f61ece01ce9674cbe22b7a0c248d4a93b616632"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/callback-review/observable.mjs",
+      "mode": "100644",
+      "blob": "be3a863847234e4aeab0242335a4b0dd04b01610"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-1/forma-301-candidate-scaffold-report.json",
+      "mode": "100644",
+      "blob": "2402003004d75ffca0619e7973ddb64df3916fc4"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-1/forma-301-candidate-scaffold.log",
+      "mode": "100644",
+      "blob": "cef46348af7501e91bc267ffad871c54ac0a200f"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-1/observations.jsonl",
+      "mode": "100644",
+      "blob": "340b44604a15da51a12234da21257bce0142831c"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-1/preparation.json",
+      "mode": "100644",
+      "blob": "e73d887eea241a6e65e4b2f90873fa2ef46d1f94"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-1/vitest.json",
+      "mode": "100644",
+      "blob": "85321c5ad3e3a5904aa8fc1e7fb3f6b5f8db0143"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-2/forma-301-candidate-scaffold-v2-report.json",
+      "mode": "100644",
+      "blob": "fd5244d5f521badf76c7209027d1eb61d2863626"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-2/forma-301-candidate-scaffold-v2.log",
+      "mode": "100644",
+      "blob": "be6ad877a71ce64bfc2c56529f1bf29043f57843"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-2/observations.jsonl",
+      "mode": "100644",
+      "blob": "fcc04801de178d595df08aba9726797dab652855"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-2/preparation.json",
+      "mode": "100644",
+      "blob": "e73d887eea241a6e65e4b2f90873fa2ef46d1f94"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/candidate-scaffold-attempt-2/vitest.json",
+      "mode": "100644",
+      "blob": "ad55c3cf2b3ea9f4537eca03abe7731aa786ad9e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-attempt-1.log",
+      "mode": "100644",
+      "blob": "be95eb3aaa140f35a004be8d20fa632269c09ac6"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-attempt-2.log",
+      "mode": "100644",
+      "blob": "0c9894411d39ac5cb50b2a430c1a52756fbd6a91"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-attempt-3.log",
+      "mode": "100644",
+      "blob": "eeb8f2fff8574af22fe6d5ba7c2880cc775238a7"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-attempt-4.log",
+      "mode": "100644",
+      "blob": "39852efdde4f99fabb7b938a2430ee9a75f2c87e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-builds-canonical.log",
+      "mode": "100644",
+      "blob": "d0bde297f9423f3901c81c9df1ac572fc9856e29"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-remaining-command.sh",
+      "mode": "100644",
+      "blob": "67b162ed70d6b96ec4c555e5bcba751cc40e09bb"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-remaining.log",
+      "mode": "100644",
+      "blob": "2d7117358cc5b7fd828da4bbf52847d785e12c9e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/check-resume-original.json",
+      "mode": "100644",
+      "blob": "46197368d469fa5e703b07d2bf00abd5483d4a82"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/ci-template-boundary.json",
+      "mode": "100644",
+      "blob": "4534199592c0a1bb27cc54aa0764aff44824d39a"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/core-pack-hoisting.log",
+      "mode": "100644",
+      "blob": "de342dbe111408b56a04ed67c7c59b394ccf8084"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/ds11-durable-verify.log",
+      "mode": "100644",
+      "blob": "14d57e5bc31f1da6a02580405e5e83cf4928209e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/ds11-pack.log",
+      "mode": "100644",
+      "blob": "28146daf3b4c1ac251567a515ab39c1a2c80675b"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/ds11-verify.log",
+      "mode": "100644",
+      "blob": "14d57e5bc31f1da6a02580405e5e83cf4928209e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/final-build.log",
+      "mode": "100644",
+      "blob": "49d41d40c28c5ee1a4b193da78d511d5a35b215e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/attributes/measurement.log",
+      "mode": "100644",
+      "blob": "d1193ccca36afa7e127a25848847f1d01d1209bb"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/attributes/qualification.json",
+      "mode": "100644",
+      "blob": "dc065bb363aa9412ab6df8f2ee83893757a6f45b"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/attributes/size.json",
+      "mode": "100644",
+      "blob": "a82f079fc0ae1c42b954b88450e74ae941615eba"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-context/measurement.log",
+      "mode": "100644",
+      "blob": "275ba4edcd8585d10b5a03d83961a55c2ab92379"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-context/qualification.json",
+      "mode": "100644",
+      "blob": "7e401a68e7e0142533b6acc6c1398ce3b1fac8ea"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-context/size.json",
+      "mode": "100644",
+      "blob": "ff77728757694a09c3f59c3f0e32e0e21810e696"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-final/measurement.log",
+      "mode": "100644",
+      "blob": "839570377d5a004427fe406e1de7a9f3bd693841"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-final/qualification.json",
+      "mode": "100644",
+      "blob": "b260b5584f9ebc399cdfbe2f494d85c026538c09"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-final/size.json",
+      "mode": "100644",
+      "blob": "6ea3a0927b5299df3f2cebf045a8b21145d35865"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-provisional/measurement.log",
+      "mode": "100644",
+      "blob": "620f95798264532df22e3cbe83558b756f288226"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-provisional/qualification.json",
+      "mode": "100644",
+      "blob": "32fb3b8923b5a5321e1bea1432ce17b0cad2c5eb"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/callback-provisional/size.json",
+      "mode": "100644",
+      "blob": "001a38d87646e23474991e4429ef0fc0cecc815b"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/media-pairs/measurement.log",
+      "mode": "100644",
+      "blob": "b89de858217765a6194d1b18e622a72cf9f8d2eb"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/media-pairs/qualification.json",
+      "mode": "100644",
+      "blob": "2dabb5b63835110dd2c6a905317ef06e851960e6"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/media-pairs/size.json",
+      "mode": "100644",
+      "blob": "57d84a3054fe08b1596a82fd3d41aaff61e9f952"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/media-tokens/measurement.log",
+      "mode": "100644",
+      "blob": "97cf9fbfb01dc2e941360e34bfb6e5b4078a4031"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/media-tokens/qualification.json",
+      "mode": "100644",
+      "blob": "4a17f0cecc183781ca8d76de12b689058034a146"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/media-tokens/size.json",
+      "mode": "100644",
+      "blob": "4dc966908b1f5740bff428a6c8af46a9b29ff24e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/route-rank/measurement.log",
+      "mode": "100644",
+      "blob": "777de43066d454204b02c715d0d7bd860639b2af"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/route-rank/qualification.json",
+      "mode": "100644",
+      "blob": "1dbdd0489932eea31da526816c364edb9cf3dc74"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/route-rank/size.json",
+      "mode": "100644",
+      "blob": "6150d04b49cdd904d97f2ff7c1bd81f596f38828"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/router-build.log",
+      "mode": "100644",
+      "blob": "482cfa84977b0d5140598bb9df68e69d388236d7"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/router-tests.log",
+      "mode": "100644",
+      "blob": "9a37b0ef03d2cd1d60c3284529fea0bb17cf7260"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/router-types.log",
+      "mode": "100644",
+      "blob": "1e978b26b59d4fec32863e88cd519cad561c5f34"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/snapshot-test-initial-expectation-failure.log",
+      "mode": "100644",
+      "blob": "e66cd459d9d8d4e88d8873e23032e8aa403a5469"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/snapshot/measurement.log",
+      "mode": "100644",
+      "blob": "e74599ec8788568f747ae2270909ef80cecd317a"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/snapshot/qualification.json",
+      "mode": "100644",
+      "blob": "816c0b31a9182c5337a5384925cac6424e45913e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/snapshot/size.json",
+      "mode": "100644",
+      "blob": "01c8a63bbdcc7f552ffc5b04ab856642e1c12d7e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/streaming-body-tests.log",
+      "mode": "100644",
+      "blob": "cafbcd673d4d59884db43454b0e459060164e730"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/n3-callback/summary.json",
+      "mode": "100644",
+      "blob": "82c2e6ba60cebe6995b5bf5614720d481274bda1"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/native-owned-final.log",
+      "mode": "100644",
+      "blob": "0e35ad52808603893147baa73fc3244198aef26f"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/native-owned-processes.log",
+      "mode": "100644",
+      "blob": "17c38690c639cab930d48d088b22013b495895c8"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/p17.json",
+      "mode": "100644",
+      "blob": "63838cfaa0cbd74ad29f6cc207e0936fc08b7c04"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/p17.log",
+      "mode": "100644",
+      "blob": "6e0e8a78468f9caf183c7b7220349c3a75f1ab5f"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/guard-before.json",
+      "mode": "100644",
+      "blob": "6850e74d15f0cfd81ee17095064da6d6137728de"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/guard-corrected.json",
+      "mode": "100644",
+      "blob": "d26ab91b4fd7c552242c7319a87f160df09cf3ad"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/guard-mutant.json",
+      "mode": "100644",
+      "blob": "d252e26d4a0e5cd4a6de16c656c0c820204d3078"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/guard-qualification.json",
+      "mode": "100644",
+      "blob": "da32cc48541d96ea4c7d576efd298f7ef00329c1"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/hostile-widgets.json",
+      "mode": "100644",
+      "blob": "83dc89559daac858934d6314d73879c7d4b22b4b"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/mutation-before.json",
+      "mode": "100644",
+      "blob": "8e2c9dee5f03dd6cf275ccd797da362f1b90b437"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/mutation-corrected.json",
+      "mode": "100644",
+      "blob": "246d1b8cb00f371300f27fe8a3c87bfa50a57300"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/mutation-mutant.json",
+      "mode": "100644",
+      "blob": "611465b26897511e9338521d1bfe503ec27d40d1"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-1/security/mutation-qualification.json",
+      "mode": "100644",
+      "blob": "e440fe76516338bd34fb3b126b89171fa154876d"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-2/p17-summary.json",
+      "mode": "100644",
+      "blob": "c99441dfbeb79e349f4b671715f863109fa1ac03"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/p17-attempt-2/p17.log",
+      "mode": "100644",
+      "blob": "c7f42be694a53ce90433c54238563b191c8155eb"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/qualification.json",
+      "mode": "100644",
+      "blob": "04a654f6469022ce93e8f3682048642f355e96ee"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/release-set.json",
+      "mode": "100644",
+      "blob": "2eb37f241c65ef19e3983f8f4c3063043a8c12b2"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/retained-raw-files.json",
+      "mode": "100644",
+      "blob": "390574b9142f09ecc070124b0f194b01662f11e4"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/router-final-pack.log",
+      "mode": "100644",
+      "blob": "a15872918f13dd09ff5d52bded618408c84c453a"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/router-final-types.log",
+      "mode": "100644",
+      "blob": "1e978b26b59d4fec32863e88cd519cad561c5f34"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/scaffold-gate-focused.log",
+      "mode": "100644",
+      "blob": "ede9161a27cfa211d0b5cad5e9a39d1b2d258416"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/scaffold-gate-initial-expectation-failure.log",
+      "mode": "100644",
+      "blob": "cbd6320b055c808c3d0c1f26853291a1923bd4ce"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/serial-probes-fixed.log",
+      "mode": "100644",
+      "blob": "46e4bc87d235c0127c8160b9eee30ecea32744b4"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/serial-probes-removed-override.log",
+      "mode": "100644",
+      "blob": "db2b8f43c2961e6adcff43fef7a738ffd8ad4bec"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/SHA256SUMS",
+      "mode": "100644",
+      "blob": "481b8a9d2f5ed4f90f9dc310d06d79f55611c21d"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/archive-verify.log",
+      "mode": "100644",
+      "blob": "971f4cfc9799e51043a56d9ed64971ddecba3806"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/ds11-pack.log",
+      "mode": "100644",
+      "blob": "42c8e1da3ea354a4591ba1a5a91ba57a9664e142"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/native-size-baseline-pack.json",
+      "mode": "100644",
+      "blob": "c5cc28914e8cf395ce850b37b1e75ae529799ec9"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/native-size-baseline-pack.log",
+      "mode": "100644",
+      "blob": "78e790b735421adb888660a5660e9fd9ee227d84"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/native-size-measurement.log",
+      "mode": "100644",
+      "blob": "30967e6fc1723c61a66d4564fd55ad454a07780d"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/native-size-qualification.json",
+      "mode": "100644",
+      "blob": "5ff7748d8e525b66b0736fc654fbe66dff87fad0"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/native-size-size.json",
+      "mode": "100644",
+      "blob": "84fe45fa203666a57567a02e35f78dfc8aa4ff30"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/p17-summary.json",
+      "mode": "100644",
+      "blob": "e1ca1eb1c4bc78e33dbcde5a85a26bb20372dc4d"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/p17.log",
+      "mode": "100644",
+      "blob": "8c357e797e0189fdcefea82cf86d7133150a91b9"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/qualification.json",
+      "mode": "100644",
+      "blob": "07c4595b4e40a3ce98cda62b662dc3d1141f5015"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/release-set.json",
+      "mode": "100644",
+      "blob": "92486751eea59f206579ac26948ae6225972482a"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/retained-raw-files.json",
+      "mode": "100644",
+      "blob": "da7ddbbd029b807b40ca181e3f4d1855d05b8f7e"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/router-build.log",
+      "mode": "100644",
+      "blob": "482cfa84977b0d5140598bb9df68e69d388236d7"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/router-pack.log",
+      "mode": "100644",
+      "blob": "a15872918f13dd09ff5d52bded618408c84c453a"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/router-tests.log",
+      "mode": "100644",
+      "blob": "9a37b0ef03d2cd1d60c3284529fea0bb17cf7260"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/router-types.log",
+      "mode": "100644",
+      "blob": "1e978b26b59d4fec32863e88cd519cad561c5f34"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/scaffold-observations.jsonl",
+      "mode": "100644",
+      "blob": "b150d99ed6afbed44236808c50cf3ea92d197fe1"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/scaffold-preparation.json",
+      "mode": "100644",
+      "blob": "29e6813685a318302164f04b043367741b47edfb"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/scaffold-report.json",
+      "mode": "100644",
+      "blob": "4e47ffbfca686d882c337c1ff04462844dce09d7"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/scaffold-vitest.json",
+      "mode": "100644",
+      "blob": "6fc6eb099820c50909d470d80e635dc6957a5791"
+    },
+    {
+      "path": "docs/design/router/evidence/qualification/successor-9d4aafee/scaffold.log",
+      "mode": "100644",
+      "blob": "060a69b89501f2a403c7ec0c19d6f75a47e347b7"
+    },
+    {
+      "path": "docs/design/router/evidence/recovery-scope-3.2.json",
+      "mode": "100644",
+      "blob": "27b5cd38e2a11193e5ddfe10d9cc9afb72dd0276"
+    },
+    {
+      "path": "docs/design/router/evidence/router-tests-restored.log",
+      "mode": "100644",
+      "blob": "26bbcd6e25d2acc212ef730c709b62098e76a2a3"
+    },
+    {
+      "path": "docs/design/router/evidence/scroll-bound-3.2.json",
+      "mode": "100644",
+      "blob": "735766fdafc21d09ad4c44fcc42e7be653e55e36"
+    },
+    {
+      "path": "docs/design/router/qualification-3.2.md",
+      "mode": "100644",
+      "blob": "d448229cd6023ddab71ce8a0be5fc36ce6f3a753"
+    },
+    {
+      "path": "docs/design/router/qualification.md",
+      "mode": "100644",
+      "blob": "0605181f46bc313559b8ec64ac19583f20d07cfe"
+    },
+    {
+      "path": "docs/design/router/research-manifest.json",
+      "mode": "100644",
+      "blob": "11c21ff7a3b51c5a05a0fc273299c625ae0ae6b3"
+    },
+    {
+      "path": "docs/design/router/research-map.json",
+      "mode": "100644",
+      "blob": "cbb59b39e5ad4e5eac3579aa1f632ca4654419af"
+    },
+    {
+      "path": "docs/design/router/research-map.md",
+      "mode": "100644",
+      "blob": "e7cfecff1c4c6bfc0f5d024f04a5f126aee21e66"
+    },
+    {
+      "path": "docs/design/router/research/COMPARISON.md",
+      "mode": "100644",
+      "blob": "367026119e7e3f8038d03594b3a357cfa26daff1"
+    },
+    {
+      "path": "docs/design/router/research/FORMA-IMPLICATIONS.md",
+      "mode": "100644",
+      "blob": "40762d65367a571da15e935cee3cc7e5e291dbda"
+    },
+    {
+      "path": "docs/design/router/research/METHODS.md",
+      "mode": "100644",
+      "blob": "73a265a86190000bc440f5d476c5e7104a2c9358"
+    },
+    {
+      "path": "docs/design/router/research/QUESTIONS.md",
+      "mode": "100644",
+      "blob": "41985eabc56ea36890b66cf9948c647415a4ee67"
+    },
+    {
+      "path": "docs/design/router/research/README.md",
+      "mode": "100644",
+      "blob": "57eb1991a39f94b615b11cb6c5bc57b65f054165"
+    },
+    {
+      "path": "docs/design/router/research/REBUILD-BLUEPRINT.md",
+      "mode": "100644",
+      "blob": "b9f9de68b0ded06dc52ed49d479bc870e6bfaa98"
+    },
+    {
+      "path": "docs/design/router/research/VALIDATION.md",
+      "mode": "100644",
+      "blob": "d7357fcdfa74aea924c221f803906b7d49dc2ae3"
+    },
+    {
+      "path": "docs/design/router/research/evidence/index.json",
+      "mode": "100644",
+      "blob": "28ace6bfe0edfe786443bfb2c0c525ec67225866"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/LICENSE.angular.txt",
+      "mode": "100644",
+      "blob": "5ec8e26b9eec0aa26838c4bfd32a260108524ad5"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/build-evidence-index.py",
+      "mode": "100644",
+      "blob": "5251c9ad3453b45381b3963382f78e97987175be"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/questions.md",
+      "mode": "100644",
+      "blob": "d5484b29cb83c3da295b0574f27498a8e2e67794"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/rea-summary.json",
+      "mode": "100644",
+      "blob": "b7618fd28721bddce6ad3448b9cd89c44074e3f6"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/report.md",
+      "mode": "100644",
+      "blob": "76a8de853fe5ca9d12d0a56753b265cc55dcec74"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/snippets/content-promise-cache.excerpt.ts",
+      "mode": "100644",
+      "blob": "bb460ca825653bfc828897e2baa31ac06b850708"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/snippets/first-successful-recognition.excerpt.ts",
+      "mode": "100644",
+      "blob": "ed593e634610d697ca19f55a6a79ac61e932fe9a"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/snippets/navigation-ownership.excerpt.ts",
+      "mode": "100644",
+      "blob": "735b8e0371ddb265611de9da4989b4007b363328"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/snippets/reconstruction-pseudocode.md",
+      "mode": "100644",
+      "blob": "eb66d3db0029a28b32d6cfe3d63b2a86abfaecb3"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/snippets/url-parser-host-alignment.excerpt.ts",
+      "mode": "100644",
+      "blob": "f9eb298ab81b9e14e9495aeae4d62d2fabf81e40"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/source-index.md",
+      "mode": "100644",
+      "blob": "4762ed047e03814ad2906339fb9f07231df72c6e"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/sources.json",
+      "mode": "100644",
+      "blob": "a410fa07b262153a00720530c1c71abe9f66cd93"
+    },
+    {
+      "path": "docs/design/router/research/research/angular/validation.json",
+      "mode": "100644",
+      "blob": "d261475b4563312d73e3b32eedcb8bc41d9ef3b7"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/licenses/docs-LICENSE.txt",
+      "mode": "100644",
+      "blob": "c5db5ad360d5e2e2f4de2d45ce97014141dc2968"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/licenses/framework-LICENSE.txt",
+      "mode": "100644",
+      "blob": "b3cd0c0f0e01d20109fc8660a4d6b7dc9a22bc49"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/licenses/starlight-LICENSE.txt",
+      "mode": "100644",
+      "blob": "385b09dbf084027aa08be278f255975d5fd27406"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/questions.md",
+      "mode": "100644",
+      "blob": "58e8e54a1f414cb775d7d3f88a4a6b6897d8c6c4"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/rea-findings.json",
+      "mode": "100644",
+      "blob": "9cbc8e856ad1ac509b23d12d4900167d73d714b2"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/report.md",
+      "mode": "100644",
+      "blob": "b78a6a2927f4ce7de0dcc86d5c3de843e14f4332"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/snippets/README.md",
+      "mode": "100644",
+      "blob": "b887217dca579e676e4145eb385191f0bd395458"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/snippets/default-swap.ts",
+      "mode": "100644",
+      "blob": "726106d326467dd4798a4e265513e946cb080ff8"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/snippets/island-unmount.ts",
+      "mode": "100644",
+      "blob": "586749198627cd22c1c6d17aeb9ef7c5f340f97f"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/snippets/navigation-ownership.ts",
+      "mode": "100644",
+      "blob": "b7ba1e9c1e67108e90cc625c8306e17eb7c6361a"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/snippets/reconstruction-pseudocode.md",
+      "mode": "100644",
+      "blob": "6e43070f01790f4f88355246cae014441d03bf3f"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/snippets/serialized-swap.ts",
+      "mode": "100644",
+      "blob": "ee4d32461e043f9e758b9f8036a7abca6cac4025"
+    },
+    {
+      "path": "docs/design/router/research/research/astro/sources.json",
+      "mode": "100644",
+      "blob": "fa0df3ac868daefd0a7bad2e7f1911a99f29f4af"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/README.md",
+      "mode": "100644",
+      "blob": "0513ed529f6549fe995a89db1997f437b2e38fb1"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/licenses/LICENSE-react-router.md",
+      "mode": "100644",
+      "blob": "7d0a32c385b04289862dd6e927d69c9cd7c88bd2"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/licenses/LICENSE-website.md",
+      "mode": "100644",
+      "blob": "dbd4682ef562361a8372957cbbb241fa12dfb5de"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/questions.md",
+      "mode": "100644",
+      "blob": "cb5b106fa253034a6e10d8e6c383c9a9d780d480"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/rea-observations.json",
+      "mode": "100644",
+      "blob": "521ac47b206226978f945e8c1c1b2b6b88a96073"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/report.md",
+      "mode": "100644",
+      "blob": "0376d700c6b6fb7ee4e1d427f1a829eddd2ea746"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/site-context.json",
+      "mode": "100644",
+      "blob": "2f8002d10a1aff976ceda99004027ba8e475badc"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/site-manifest-summary.json",
+      "mode": "100644",
+      "blob": "1db352dc0fa2bdc6dfae580d95d8907f65c187e0"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/snippets/README.md",
+      "mode": "100644",
+      "blob": "636ea0e6892f3e320e94a12ee27e8891de3cdc2c"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/snippets/test-results.tap",
+      "mode": "100644",
+      "blob": "85297cbf5db40108e6851b967d993f9309b4daa6"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/snippets/transaction-pattern.mjs",
+      "mode": "100644",
+      "blob": "cda86c7e55deb8b9389ddc8da5ef806d91c3f739"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/snippets/transaction-pattern.test.mjs",
+      "mode": "100644",
+      "blob": "337ba08ecb8849e3f2ecb20d574f104ec675473f"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/snippets/upstream-excerpts.md",
+      "mode": "100644",
+      "blob": "611eb0ba51ff5beb5a1e253b309eb1bf9ff193ea"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/sources.json",
+      "mode": "100644",
+      "blob": "c3cbf86b0541cf532ba1da0a5e13875cdc3251ff"
+    },
+    {
+      "path": "docs/design/router/research/research/react-router/validation.json",
+      "mode": "100644",
+      "blob": "22e29176f6ad52379949df7bf57303c31cd63833"
     },
     {
       "path": "docs/evidence/dashboard-tooltip-2026-10-16/README.md",
@@ -13869,6 +14854,16 @@
       "blob": "cc168a2ef415d8cc52b99534c0d6779fb09e295d"
     },
     {
+      "path": "docs/proposals/FORMA-301-ROUTER.md",
+      "mode": "100644",
+      "blob": "c6f8d2d72947804b22995a420f769cb49baa608c"
+    },
+    {
+      "path": "docs/proposals/FORMA-301-SIZE.md",
+      "mode": "100644",
+      "blob": "582878f19df98a9ac57e5ab426a0bcf0864aa349"
+    },
+    {
       "path": "docs/release-evidence/README.md",
       "mode": "100644",
       "blob": "a696ceb6ab6fb0d2793ba75709fe4c3ecc0fc857"
@@ -14651,12 +15646,12 @@
     {
       "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
       "mode": "100644",
-      "blob": "49b1b4030df4cf2378dfac4af09211e6b04b82e7"
+      "blob": "47fda95815963a8e8f67dbdd2fc392ea371e0972"
     },
     {
       "path": "docs/release/3.1-QUALIFICATION.md",
       "mode": "100644",
-      "blob": "fcb6979bd3b1f12efa9fc25747343204e0bcd99a"
+      "blob": "7f7e38a4eb459fc0592fe09ce2156102b4db3f9a"
     },
     {
       "path": "docs/release/ALPHA-RUNBOOK.md",
@@ -14681,7 +15676,7 @@
     {
       "path": "docs/release/FORMA-299-STARTUP.md",
       "mode": "100644",
-      "blob": "ee91895fc1d8435bb91530f70341067d1cc735c4"
+      "blob": "eff3cdb2bad8c32124dfde703839a06855f5826c"
     },
     {
       "path": "docs/release/L-66-QUOTA.md",
@@ -14701,7 +15696,7 @@
     {
       "path": "docs/release/RC-BURN-IN.md",
       "mode": "100644",
-      "blob": "ef4e465143611f30b3ae68c39011244197ba8603"
+      "blob": "6962d375f1eb2651ed6d8db8c4c63599c2fa0b68"
     },
     {
       "path": "docs/release/RC-QUALIFICATION.md",
@@ -14716,12 +15711,17 @@
     {
       "path": "docs/release/README.md",
       "mode": "100644",
-      "blob": "7527ca984ad8de8e6dc8243d2e2b7632e6fe4617"
+      "blob": "8559118144af88a7c0216e35adacc803a4fbedd9"
     },
     {
       "path": "docs/release/REGISTRY-RECONCILIATION.md",
       "mode": "100644",
       "blob": "e7429caf361653c23db89b8017b420b1ca4d3671"
+    },
+    {
+      "path": "docs/release/ROUTER-REGISTRY-ENROLLMENT.md",
+      "mode": "100644",
+      "blob": "3a2bb48b5d0b50859ff6485f388dd89be4618606"
     },
     {
       "path": "docs/release/SUPPORT-AND-RECALL.md",
@@ -14736,22 +15736,27 @@
     {
       "path": "docs/release/d14-input-manifest.json",
       "mode": "100644",
-      "blob": "de798263a8fec79b8840d1a894d139ab4618992c"
+      "blob": "de9aacc1ca198450d5e7c522fe70c85e06574a96"
     },
     {
       "path": "docs/release/d14-report.json",
       "mode": "100644",
-      "blob": "ea5a5089ed5c51d670517944aa3b4209d99042f8"
+      "blob": "25d702913f3eed3e29e88b71d83928eb2e0598e0"
     },
     {
       "path": "docs/release/d14-review-evidence.json",
       "mode": "100644",
-      "blob": "2c34c49e8cc07479b231b8b74c72b061d51f031a"
+      "blob": "b9b696335fb03a64a9fb63c76b4e0accdd18c89d"
     },
     {
       "path": "docs/release/post-release-soak.json",
       "mode": "100644",
       "blob": "345c7ad00a04834443297bbab082e996398a5f2f"
+    },
+    {
+      "path": "docs/release/rc-burn-in.json",
+      "mode": "100644",
+      "blob": "b41a5725ded60a477f96dcc6944a15fd4040b9d2"
     },
     {
       "path": "docs/repository-merge/CUT.md",
@@ -15001,7 +16006,7 @@
     {
       "path": "e2e/Cargo.lock",
       "mode": "100644",
-      "blob": "80cfe9cc9e2a4a1cd183437d0752ace142a7125f"
+      "blob": "c6192f41bf97156ac7c13c629353790d3ec94864"
     },
     {
       "path": "e2e/Cargo.toml",
@@ -16049,6 +17054,751 @@
       "blob": "dd3909e4d0fe5bfdfb4d53bb10184294bfe50f2e"
     },
     {
+      "path": "experiments/forma-router-native/.gitignore",
+      "mode": "100644",
+      "blob": "d58ec72c5fc1b15b9ef84899a3948dbc6ddae7fe"
+    },
+    {
+      "path": "experiments/forma-router-native/README.md",
+      "mode": "100644",
+      "blob": "00c5aae7e1baa2b986f963d46bede0839d9dcbf5"
+    },
+    {
+      "path": "experiments/forma-router-native/app/a.tsx",
+      "mode": "100644",
+      "blob": "19f7b654fd04e07f404355ba7f028575d54cc720"
+    },
+    {
+      "path": "experiments/forma-router-native/app/b.tsx",
+      "mode": "100644",
+      "blob": "fd3fee3b452764785db5e56303b6bd9048bdb2ab"
+    },
+    {
+      "path": "experiments/forma-router-native/app/fixture.css",
+      "mode": "100644",
+      "blob": "0d5d68130224cb4965d937522cd19d4bf575570e"
+    },
+    {
+      "path": "experiments/forma-router-native/app/page-a.tsx",
+      "mode": "100644",
+      "blob": "0a2ed43f6ca8ca5dee8052d1aa79e97b8dda9211"
+    },
+    {
+      "path": "experiments/forma-router-native/app/page-b.tsx",
+      "mode": "100644",
+      "blob": "b80dd70a4948562e7a86cad192ba9c8a726c5a05"
+    },
+    {
+      "path": "experiments/forma-router-native/app/page-shell.tsx",
+      "mode": "100644",
+      "blob": "0ceeb05eff773193de2708f1149791bd1d0d721e"
+    },
+    {
+      "path": "experiments/forma-router-native/app/plain-a.tsx",
+      "mode": "100644",
+      "blob": "faab3d15a0b2f94ed797df26e38f9b2e8d163288"
+    },
+    {
+      "path": "experiments/forma-router-native/app/plain-b.tsx",
+      "mode": "100644",
+      "blob": "56a65b9437bcddd83fa3d6fc2fc08e1bf99f59bc"
+    },
+    {
+      "path": "experiments/forma-router-native/app/plain-pages.tsx",
+      "mode": "100644",
+      "blob": "7710187570ed438ef05d872e726386d8ace4e212"
+    },
+    {
+      "path": "experiments/forma-router-native/app/shell.tsx",
+      "mode": "100644",
+      "blob": "995524709a339ae855f5dc91de270b74326d6e08"
+    },
+    {
+      "path": "experiments/forma-router-native/bench-client.ts",
+      "mode": "100644",
+      "blob": "55a9d6aea36e41330fe6bb6efc486b72d1df686a"
+    },
+    {
+      "path": "experiments/forma-router-native/bench-document-client.ts",
+      "mode": "100644",
+      "blob": "0fd74ca91412692dfc2c8ed3015efffedf00c06b"
+    },
+    {
+      "path": "experiments/forma-router-native/browser.mjs",
+      "mode": "100644",
+      "blob": "15f2de7acfa4f638fb234114fef17074ec29f9d2"
+    },
+    {
+      "path": "experiments/forma-router-native/build.mjs",
+      "mode": "100644",
+      "blob": "99154eedf289ccf1dd60e09409c220aef891d0ad"
+    },
+    {
+      "path": "experiments/forma-router-native/client-next.ts",
+      "mode": "100644",
+      "blob": "8292441e754af81311bafbd7381d183add5e4573"
+    },
+    {
+      "path": "experiments/forma-router-native/client.ts",
+      "mode": "100644",
+      "blob": "2149c88163245246e0a42e41e2c53d5b012a99ef"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-chromium-first.json",
+      "mode": "100644",
+      "blob": "0a94cfa6fc7e82405da1e9693c31a4549ed45ce8"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-chromium-first.log",
+      "mode": "100644",
+      "blob": "be6cc9ec4556bc025251ca58bd68308f3beddb54"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-final-recovery-sync.json",
+      "mode": "100644",
+      "blob": "3c1cceed13ff42b594fbc665608eaaba47b7e768"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-final-recovery-sync.log",
+      "mode": "100644",
+      "blob": "b8385f56f156f68f4dca362020b4d8a5cab65026"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-final.json",
+      "mode": "100644",
+      "blob": "c399da6bc90a052f390d6b3f6260e01471fdf2a4"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-final.log",
+      "mode": "100644",
+      "blob": "240a889a6bb4e7564406136fafcb2855a136cee1"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-harness-drift.json",
+      "mode": "100644",
+      "blob": "1142d3ce1e89e0a31148651a1cc070d8ea970aa4"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-harness-drift.log",
+      "mode": "100644",
+      "blob": "234bc0b66f0ecec32cdd0d6acccbcee374fe24f5"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-harness-interrupt-corrected.json",
+      "mode": "100644",
+      "blob": "aa7462d0475bf9ed606623ea7fdf0f85a6c614e1"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-harness-interrupt-corrected.log",
+      "mode": "100644",
+      "blob": "7b5e875626dace0454d20f38adb36d3f226e8f6b"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-harness-interrupt.json",
+      "mode": "100644",
+      "blob": "03bed1d1c7c15c114568f9a97f848960ceffcbce"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-harness-interrupt.log",
+      "mode": "100644",
+      "blob": "fea4486fd821450fda47b5f92216f2af6c99df54"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-history-final.json",
+      "mode": "100644",
+      "blob": "676ba2689743c7358326d00aeb83e0363f2a6d4a"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-history-final.log",
+      "mode": "100644",
+      "blob": "329875be6405185349c6e15e53baf56b13362fcd"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final-launcher.json",
+      "mode": "100644",
+      "blob": "e9a4fe62f0057366b98a1267cbe64ce398f4bf08"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final-server-build.log",
+      "mode": "100644",
+      "blob": "1d83ea9b7acb79ac3e4d2cf5d908743e342535e1"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final-server.log",
+      "mode": "100644",
+      "blob": "de890ac441feed9637ca3724c6d16ca718e1d55e"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final-size-qualification.json",
+      "mode": "100644",
+      "blob": "b185e468992a2611a3b652564514bc329e02667c"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final-size.json",
+      "mode": "100644",
+      "blob": "2a1da8512e2fa04535a43e1af17ee66c7676ed14"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final.json",
+      "mode": "100644",
+      "blob": "295ea4b371aa040410e69defad3554e7caee4688"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-owned-final.log",
+      "mode": "100644",
+      "blob": "d45fc2d82c91edd9645dab5d7dc059ba75f9b7d5"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-three-engine-first-termination.json",
+      "mode": "100644",
+      "blob": "60e3498852fabe2846d8d000dfb4583e023f5187"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-three-engine-first.log",
+      "mode": "100644",
+      "blob": "b9d108d5bbc9ac2da407d61cec3e850e8eb67bfc"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-three-engine-second.json",
+      "mode": "100644",
+      "blob": "65a73c91c326819ea41dc7b4bd4c88601d7bf0cf"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-three-engine-second.log",
+      "mode": "100644",
+      "blob": "03abb7b6e35ff9c14fe87a32b27daa3db7a7dbc3"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-three-engine-third.json",
+      "mode": "100644",
+      "blob": "d30ff0e3dda4ff51d97eb6ea8e69ee9b248b6cfc"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/browser-three-engine-third.log",
+      "mode": "100644",
+      "blob": "054192481bdbbe4dccf918097d5fb760fcb18a7a"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/build-native-first.log",
+      "mode": "100644",
+      "blob": "62cf362a6fe9f90189c563bb14224d4781d58e9b"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/build-native-fourth.log",
+      "mode": "100644",
+      "blob": "c10a464c8b63499d76acc91ddcc8da8bd4096ee5"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/build-native-second.log",
+      "mode": "100644",
+      "blob": "2d8656cac167aa6aaa0aaa91f2143b6543918acb"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/build-native-third.log",
+      "mode": "100644",
+      "blob": "1b2aff775bb6d3afdcd5e1d6973a17338f903367"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/build-original-budget-failure.log",
+      "mode": "100644",
+      "blob": "0ef5c51b16e1e6c60fa48d81ffd51519721149b6"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/packed-native-final-browser.json",
+      "mode": "100644",
+      "blob": "8b8fd69fffd662b71f13cca723bd80b675b4a5e5"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/packed-native-final-browser.log",
+      "mode": "100644",
+      "blob": "d41efe92fdc1ed6524dd94b68c019ff01c620d2b"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/packed-native-final-install.log",
+      "mode": "100644",
+      "blob": "b203a5a442de7d9c6384ed1fd5de1e38605f2a2e"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/packed-native-final-server-build.log",
+      "mode": "100644",
+      "blob": "187e96152e0d7c62404181c202b5ad0a5b088385"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/packed-native-final.json",
+      "mode": "100644",
+      "blob": "c9d45ad40ffe767e17ce107b56ed0c061c1882d9"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-build-coordinator.log",
+      "mode": "100644",
+      "blob": "56d0607926ded23ee9015b0037d75521b6c79b11"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-build-final.log",
+      "mode": "100644",
+      "blob": "97c342bd5b7779c5cf250f6f9a4501a66d700def"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-build-first.log",
+      "mode": "100644",
+      "blob": "c0b7c8e6036b98fd26927840be782719d5caf6f6"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-build-successor.log",
+      "mode": "100644",
+      "blob": "7d02b919ab49deb6e5c871e9f8f9922ed3894d69"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-server-build.log",
+      "mode": "100644",
+      "blob": "b6b68965d74adb5613c693a0563d5fe1cc9b8e4b"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-server-final.log",
+      "mode": "100644",
+      "blob": "363db13a4a89c3bf24b8cb3f736ea85574a61a2a"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/perf-server-successor.log",
+      "mode": "100644",
+      "blob": "af1c5f1fb9f2fadaacdf215ec28cec09d3c404ce"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-final.json",
+      "mode": "100644",
+      "blob": "bcf890f1d87206b7ab9143bf36852e3791c175fa"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-final.log",
+      "mode": "100644",
+      "blob": "c4caf0455222f173a99c97ec6470289a051cabbc"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-smoke-all.json",
+      "mode": "100644",
+      "blob": "7d1880b9abbf1f8def83391f16d35b873cecc47a"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-smoke-all.log",
+      "mode": "100644",
+      "blob": "48a7047ed717d0a885a34b1b24b956d83c14934b"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-smoke-coordinator.json",
+      "mode": "100644",
+      "blob": "00082644795a780aad580d37331c165fc2017d7f"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-smoke-coordinator.log",
+      "mode": "100644",
+      "blob": "6be99cbe7d963709046dc4d6ceb0a8748a7fc31e"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-smoke-first.json",
+      "mode": "100644",
+      "blob": "a3104e79db03676dc724b74fe904e020852724f3"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/performance-smoke-first.log",
+      "mode": "100644",
+      "blob": "41ca46c8c70120869f7930c004f154bf217d3d53"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-all-features-owners.log",
+      "mode": "100644",
+      "blob": "599f3af28780ed1ef25860992937ff31a53e008b"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-default-owners.log",
+      "mode": "100644",
+      "blob": "c0f054faf1b366f058e27896a67f2ad4a6ecc3c9"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-final-clippy.log",
+      "mode": "100644",
+      "blob": "22e3a562103e80e57f44370f66a59f45ca732359"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-final-default-clippy.log",
+      "mode": "100644",
+      "blob": "ae8c265cf605d240a79dd3497b24389b514a454d"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-final-profile-tests.log",
+      "mode": "100644",
+      "blob": "d16f7c876a02952d1ba53978876d0eac1bf737ec"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-mutation-reindex.log",
+      "mode": "100644",
+      "blob": "79874ec615eb129b08cc89c3e0055a3bef535dfc"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/rust-release-clippy-owners.log",
+      "mode": "100644",
+      "blob": "0fc477cca2fc278b5de370a52368deacdfece68c"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/size-v1.json",
+      "mode": "100644",
+      "blob": "24087c1df7495fe6663cbdcd2e0a91539285b0c5"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/size-v2.json",
+      "mode": "100644",
+      "blob": "d4d01db37a8f074ec65adb7c78fae8fe24d4ab54"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/size-v3.json",
+      "mode": "100644",
+      "blob": "9e3fd2f2c2f7e418da219b3c9acbdd234d41741c"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/size-v4.json",
+      "mode": "100644",
+      "blob": "a85d20c25a0cd370ff2979c1449fcdd60d2449f6"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/size-v5.json",
+      "mode": "100644",
+      "blob": "6150d04b49cdd904d97f2ff7c1bd81f596f38828"
+    },
+    {
+      "path": "experiments/forma-router-native/evidence/size-v5.log",
+      "mode": "100644",
+      "blob": "777de43066d454204b02c715d0d7bd860639b2af"
+    },
+    {
+      "path": "experiments/forma-router-native/measure-size.mjs",
+      "mode": "100644",
+      "blob": "a1d012cab3d2e961fc0149bc228949ae26293a96"
+    },
+    {
+      "path": "experiments/forma-router-native/packed-proof.mjs",
+      "mode": "100644",
+      "blob": "8a3c97f9b74b7ab5e50ba92a491cb781f79aaad4"
+    },
+    {
+      "path": "experiments/forma-router-native/perf-build.mjs",
+      "mode": "100644",
+      "blob": "e43ce366baa5f485df16b654e9bdd7d90840abf2"
+    },
+    {
+      "path": "experiments/forma-router-native/performance-report.md",
+      "mode": "100644",
+      "blob": "0e60fce1bb51316aa783139b5c9054733d2360e2"
+    },
+    {
+      "path": "experiments/forma-router-native/performance.mjs",
+      "mode": "100644",
+      "blob": "a07985b11ad4bb3bb25d199c7fce0c2c30aaa5a7"
+    },
+    {
+      "path": "experiments/forma-router-native/server/Cargo.lock",
+      "mode": "100644",
+      "blob": "a068fe48a35ba210c87bc37730d1ad0277b18caf"
+    },
+    {
+      "path": "experiments/forma-router-native/server/Cargo.toml",
+      "mode": "100644",
+      "blob": "6e691fa39f32fadb20e3182092c7cb0eb303ec19"
+    },
+    {
+      "path": "experiments/forma-router-native/server/src/main.rs",
+      "mode": "100644",
+      "blob": "329a32a190ac1927c446d68414234d032a70750a"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/.gitignore",
+      "mode": "100644",
+      "blob": "4736551cc62937f0fd06b658a9e0ed78c7463227"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/README.md",
+      "mode": "100644",
+      "blob": "1ec13b5ef2173ec25298d58768e46440c53d3d72"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/browser.mjs",
+      "mode": "100644",
+      "blob": "b41f95076d8dbe6a2ee346092b0421cea921f261"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/evidence/attempts.json",
+      "mode": "100644",
+      "blob": "e489d40211819476644d02f940cee6b5e0abdb3e"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/evidence/browser-three-engine-final.json",
+      "mode": "100644",
+      "blob": "c5ba984181217621be950ab09c550eeeb8cd96d7"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/evidence/browser-three-engine-sealed.json",
+      "mode": "100644",
+      "blob": "7b650614b80533e48e75d15102b5e5554a153e1d"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/evidence/browser-three-engine.json",
+      "mode": "100644",
+      "blob": "8ddab6e183712638a3fe7783e7e38d1a9834ddc4"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/evidence/sealed-candidate-identity.json",
+      "mode": "100644",
+      "blob": "4714f146b62b20096352636aa80f84f5f476c135"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/evidence/size-observation.json",
+      "mode": "100644",
+      "blob": "1044c95ec84cc66085b213bccaf73187cf2eacda"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/navigation.js",
+      "mode": "100644",
+      "blob": "b98421e88448b0d62bfd85c932b10bc5934266b1"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/prepare.mjs",
+      "mode": "100644",
+      "blob": "632599957dc9bba3684da8dbff9c38dc016f471b"
+    },
+    {
+      "path": "experiments/forma-router-site-pilot/serve.mjs",
+      "mode": "100644",
+      "blob": "c6d46e0a753b20021383cb54d3af1ec48be9e891"
+    },
+    {
+      "path": "experiments/forma-router/.gitignore",
+      "mode": "100644",
+      "blob": "5f8f1a046e960feedebd4dbd3a5a21bca6e917a5"
+    },
+    {
+      "path": "experiments/forma-router/README.md",
+      "mode": "100644",
+      "blob": "b7d5cd4b5eb254d02cb04a386213d836f6641dd7"
+    },
+    {
+      "path": "experiments/forma-router/admin/a.tsx",
+      "mode": "100644",
+      "blob": "19f7b654fd04e07f404355ba7f028575d54cc720"
+    },
+    {
+      "path": "experiments/forma-router/admin/b.tsx",
+      "mode": "100644",
+      "blob": "fd3fee3b452764785db5e56303b6bd9048bdb2ab"
+    },
+    {
+      "path": "experiments/forma-router/admin/page-a.tsx",
+      "mode": "100644",
+      "blob": "865230207311ec6de3c0eb7928291871c8566592"
+    },
+    {
+      "path": "experiments/forma-router/admin/page-b.tsx",
+      "mode": "100644",
+      "blob": "f3dc58146b10795cf962ebe4b65312f21ac8e575"
+    },
+    {
+      "path": "experiments/forma-router/browser-proof.mjs",
+      "mode": "100644",
+      "blob": "d2c9fecfc18b8cb076e4e630b590054cea70ccae"
+    },
+    {
+      "path": "experiments/forma-router/build.mjs",
+      "mode": "100644",
+      "blob": "7eba9b67365e2b2c7053128164aa025303048bdf"
+    },
+    {
+      "path": "experiments/forma-router/client.ts",
+      "mode": "100644",
+      "blob": "f5ab94d2520bf07ab89b15e5d9474c4806da593e"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-final.json",
+      "mode": "100644",
+      "blob": "d399881312571c708ca604fb01e0bace3b5f4b84"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-final.log",
+      "mode": "100644",
+      "blob": "4e11ce533e725725821530b315da46dee8a28abc"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-first.json",
+      "mode": "100644",
+      "blob": "aecd8edc817adb78a44d7e38c8ad99b4d13833af"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-node24-final.json",
+      "mode": "100644",
+      "blob": "ccbb54a562572ad3cd7c5a9947b38b89610935d2"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-node24-final.log",
+      "mode": "100644",
+      "blob": "35862460bb217711ad64db096fd815e747d83214"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-reviewed-final.json",
+      "mode": "100644",
+      "blob": "ba240deb440e202c3628acbcc568adc7692858cb"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-reviewed-final.log",
+      "mode": "100644",
+      "blob": "bb2a3b5ad74b89bbd8bc65520a3a389eb55429ed"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-second.json",
+      "mode": "100644",
+      "blob": "92f22407dc682f0e2567894cff3c56ce91838c9c"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-security-first.json",
+      "mode": "100644",
+      "blob": "f5c95ef0bcbd3162fa95e37050c20d5b3c11e70c"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-security-second.json",
+      "mode": "100644",
+      "blob": "d443050bd8469da3314cb621509658dabc07a8c2"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-security-third.json",
+      "mode": "100644",
+      "blob": "fec247e461ed20ef0803d6089b765ce75adf8f5d"
+    },
+    {
+      "path": "experiments/forma-router/evidence/browser-security-third.log",
+      "mode": "100644",
+      "blob": "4273b558b1f3ca6d3f9e00e18ede4b1ff2184430"
+    },
+    {
+      "path": "experiments/forma-router/evidence/build-node24-final.log",
+      "mode": "100644",
+      "blob": "d04f8c6a6be3b51fd89b61676e8e7c37e9254b0c"
+    },
+    {
+      "path": "experiments/forma-router/evidence/security-node24-source-manifest.json",
+      "mode": "100644",
+      "blob": "adeb040b05844711615af9bf90d1bafdc7834bb5"
+    },
+    {
+      "path": "experiments/forma-router/evidence/security-reviewed-source-manifest.json",
+      "mode": "100644",
+      "blob": "411d74ff595d14bc2ced699288bbdfea54d1a663"
+    },
+    {
+      "path": "experiments/forma-router/evidence/security-source-manifest.json",
+      "mode": "100644",
+      "blob": "6ce468c42d61ed5d992ba03c2761f2a96444e138"
+    },
+    {
+      "path": "experiments/forma-router/evidence/webkit-cycle-diagnostic.json",
+      "mode": "100644",
+      "blob": "c6070aadd81fc0f241e57c313e0672249539e3ba"
+    },
+    {
+      "path": "experiments/forma-router/server/.gitignore",
+      "mode": "100644",
+      "blob": "9280984eea9be084ca65e91404d1c449e8e7b7b6"
+    },
+    {
+      "path": "experiments/forma-router/server/Cargo.lock",
+      "mode": "100644",
+      "blob": "cc55ae88fc7b3de6dc95c05968e9b31f9e52ada6"
+    },
+    {
+      "path": "experiments/forma-router/server/Cargo.toml",
+      "mode": "100644",
+      "blob": "883ed158e095eebd218a2f77c056979b53ef94d0"
+    },
+    {
+      "path": "experiments/forma-router/server/README.md",
+      "mode": "100644",
+      "blob": "6f0f116c3486991508288dc686b9c89aa6c11149"
+    },
+    {
+      "path": "experiments/forma-router/server/check_http.py",
+      "mode": "100644",
+      "blob": "deb05efb7377fa9e418516ffacf55e660712eb7f"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/default-server-tests.json",
+      "mode": "100644",
+      "blob": "1d4b75c8cf58ad186a6045a074901234ba2dfd7e"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/default-server-tests.log",
+      "mode": "100644",
+      "blob": "bf8d6f7cf349dfda228595020ec7c34ecbda823b"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/experimental-server-tests.json",
+      "mode": "100644",
+      "blob": "49386cd1c9f71f5eb1b07bae696c23e465990298"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/experimental-server-tests.log",
+      "mode": "100644",
+      "blob": "194cf820954e341fff5a1889eef2cc1c3280c822"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/http-before-restart.json",
+      "mode": "100644",
+      "blob": "a1ff7b60682263345dc51e2ea03bf5443cd25ddb"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/http-final.json",
+      "mode": "100644",
+      "blob": "81f93be588acaaa8d16e53791528bf6980082e56"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/http-node24-final.json",
+      "mode": "100644",
+      "blob": "79e24ea1de7f4e69dc57989dc0f667159b3c8619"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/http-proof.json",
+      "mode": "100644",
+      "blob": "7d8e9bf701d7adf06ce6927dcef11b2246bb3e2e"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/http-reviewed-final.json",
+      "mode": "100644",
+      "blob": "e065a947ad65b7dbcc7488766afa547df0f1af41"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/navigation-tests.log",
+      "mode": "100644",
+      "blob": "cefaedaadf2153853cc9c1ed184f7154c3c91003"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/proof-server-build.log",
+      "mode": "100644",
+      "blob": "77dc7098591d271207fe8dae94c04b09878ee87f"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/proof-server-check.log",
+      "mode": "100644",
+      "blob": "1baa3c1b1a333546e27e888fe63a677e314bd38b"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/server-clippy.log",
+      "mode": "100644",
+      "blob": "1404b368b8751786bb7ce957ddbb8a908752442f"
+    },
+    {
+      "path": "experiments/forma-router/server/evidence/source-manifest.json",
+      "mode": "100644",
+      "blob": "d580c7cd722cff7864cea8bd7c665d018f448bfd"
+    },
+    {
+      "path": "experiments/forma-router/server/src/main.rs",
+      "mode": "100644",
+      "blob": "5bdf9682d0c39b55bc4d186c32d74c7044178003"
+    },
+    {
       "path": "fmir-constants.json",
       "mode": "100644",
       "blob": "e4c91dae90c35feef3ddf38fcaf77632e9db3d44"
@@ -16061,7 +17811,7 @@
     {
       "path": "fuzz/Cargo.lock",
       "mode": "100644",
-      "blob": "a779213802f8cf7947b843b4b532f793c9efe650"
+      "blob": "6793c4377a652eee724d0398ce76bce2e9bb25e7"
     },
     {
       "path": "fuzz/Cargo.toml",
@@ -16166,22 +17916,22 @@
     {
       "path": "package-lock.json",
       "mode": "100644",
-      "blob": "14685f4dc91085de0ae992bc823f8a1478e21bf8"
+      "blob": "ec801b56acec12525462b5031368b17c747aa0e7"
     },
     {
       "path": "package.json",
       "mode": "100644",
-      "blob": "5566fc08588e04c568b77c82102a2b2eaa52a95d"
+      "blob": "70ba7aa1c351f64c60f0effa2705274493d16817"
     },
     {
       "path": "packages/build/CHANGELOG.md",
       "mode": "100644",
-      "blob": "5c010ba88c86f0e5d39ecc32946cd11c9c5c92c7"
+      "blob": "2f1056b18aa490d1f63a578565dba328c6b8bb03"
     },
     {
       "path": "packages/build/README.md",
       "mode": "100644",
-      "blob": "066161d6c012f7266f7ad538c446dd07eb2d68f5"
+      "blob": "53f81482e88ff73adb38933fedc8faf6c976ed36"
     },
     {
       "path": "packages/build/browser-tests/helpers/README.md",
@@ -16211,7 +17961,7 @@
     {
       "path": "packages/build/package.json",
       "mode": "100644",
-      "blob": "95df3efeda0c6fe27f08f06cf570d1f501f8154c"
+      "blob": "8d316f87b03989a33cda85423804175264423576"
     },
     {
       "path": "packages/build/playwright.config.ts",
@@ -16226,7 +17976,7 @@
     {
       "path": "packages/build/src/build.ts",
       "mode": "100644",
-      "blob": "dc34aa94d439ff6326a285f0a4d11c7ec5389bae"
+      "blob": "6a47f349477537d1efccd85f563dab7a7116fab6"
     },
     {
       "path": "packages/build/src/compatibility-watch.ts",
@@ -16254,6 +18004,11 @@
       "blob": "9718eba51a9fc3f3a4882388b0ede5e0ebc2d31a"
     },
     {
+      "path": "packages/build/src/experimental-navigation.ts",
+      "mode": "100644",
+      "blob": "7ae78d99c13c0ac703e5c402ad690665b92d2703"
+    },
+    {
       "path": "packages/build/src/identity.ts",
       "mode": "100644",
       "blob": "6f8db25092d62828e349d3fc1edae51ff5643c14"
@@ -16261,7 +18016,7 @@
     {
       "path": "packages/build/src/index.ts",
       "mode": "100644",
-      "blob": "3248bfb4b3e37a4c16b1d8cae2c84f682303a156"
+      "blob": "33efb5d3a7d18c36a82caa4979b2f7186a1dab37"
     },
     {
       "path": "packages/build/src/jsx-namespace.ts",
@@ -16271,7 +18026,12 @@
     {
       "path": "packages/build/src/manifest.ts",
       "mode": "100644",
-      "blob": "2d38e3f78163883df3d51a2bd20574ddc1bef966"
+      "blob": "be6af280fcfbc12b347bd505ad57ffe5931f9887"
+    },
+    {
+      "path": "packages/build/src/navigation.ts",
+      "mode": "100644",
+      "blob": "2648c5fafb62e9147d91b9d85d043c1e7e804312"
     },
     {
       "path": "packages/build/src/output.ts",
@@ -16316,12 +18076,12 @@
     {
       "path": "packages/build/src/route-size.ts",
       "mode": "100644",
-      "blob": "de581b1e62656a40af9f3a1f07ee0c8498ebb744"
+      "blob": "7a5a30c6d408621accdb30bc048f469146a1fe01"
     },
     {
       "path": "packages/build/src/server-directives.ts",
       "mode": "100644",
-      "blob": "ef5cb0ab3a5079db87893e8b9d9e302228459405"
+      "blob": "8e13e559cd55588eb43598cc25fd865c677c822c"
     },
     {
       "path": "packages/build/src/service-worker.ts",
@@ -16336,7 +18096,7 @@
     {
       "path": "packages/build/src/types.ts",
       "mode": "100644",
-      "blob": "0177e4543e7d9180aa42f0575524669025108bc6"
+      "blob": "46bbffeda3acac9e0d95aa123c2d0e9077885021"
     },
     {
       "path": "packages/build/tests/alias-warning.test.ts",
@@ -16356,7 +18116,7 @@
     {
       "path": "packages/build/tests/client-template.test.ts",
       "mode": "100644",
-      "blob": "7f737c0e0b04e82f46f4fbe836e6a919d432f2c4"
+      "blob": "8ce5a461fb62ce840785b633d227bd1c6566c104"
     },
     {
       "path": "packages/build/tests/code-splitting.test.ts",
@@ -16377,6 +18137,11 @@
       "path": "packages/build/tests/development-condition.test.ts",
       "mode": "100644",
       "blob": "45e88c4466f4e2b65c1fd885e8fab4a56948923c"
+    },
+    {
+      "path": "packages/build/tests/experimental-navigation.test.ts",
+      "mode": "100644",
+      "blob": "82043c5a311e6396c1004862120b5f6ea498d769"
     },
     {
       "path": "packages/build/tests/fixtures/raw-lint/MountHandle-update/fail.ts",
@@ -16874,6 +18639,11 @@
       "blob": "eaf42bd25cabcb042237d304ce609c1110ca9c47"
     },
     {
+      "path": "packages/build/tests/navigation-groups.test.ts",
+      "mode": "100644",
+      "blob": "ae9a4691231521ec04a10c9be8d3caff5a1cf11c"
+    },
+    {
       "path": "packages/build/tests/output.test.ts",
       "mode": "100644",
       "blob": "cd2a555cf885f498450912c383a2628c70799ea3"
@@ -16911,7 +18681,7 @@
     {
       "path": "packages/build/tests/route-size.test.ts",
       "mode": "100644",
-      "blob": "465081712ff1fb67f8937d8c63e1295a77df0fe0"
+      "blob": "70e01a5e86ed2df8547c70254da67882627715b0"
     },
     {
       "path": "packages/build/tests/server-functions-removed.test.ts",
@@ -17006,22 +18776,22 @@
     {
       "path": "packages/compiler/CHANGELOG.md",
       "mode": "100644",
-      "blob": "1ecd999acca05cf69bb3f4fcc5475aee5370a727"
+      "blob": "a1c100e29a4548b114ef4bb2144b7500525bcb97"
     },
     {
       "path": "packages/compiler/README.md",
       "mode": "100644",
-      "blob": "ae73285d4fb2e00f2c3064869288b3a9744bb3ac"
+      "blob": "c9c385b430fee4a6704d90d04cb6c030469baf4c"
     },
     {
       "path": "packages/compiler/docs/subset.md",
       "mode": "100644",
-      "blob": "a1ea024bde53b655502cdf364f2bbcfdc2639d41"
+      "blob": "5e5c7194b72618f68240876f223752b7874e4a5f"
     },
     {
       "path": "packages/compiler/package.json",
       "mode": "100644",
-      "blob": "a4e9d91d164bcb3af9d11d4fb153e0737615312b"
+      "blob": "2c2cf76238280772dd1364efb00ff3df41c16f68"
     },
     {
       "path": "packages/compiler/scripts/check-release-workflow.rb",
@@ -17086,7 +18856,7 @@
     {
       "path": "packages/compiler/src/diagnostics.ts",
       "mode": "100644",
-      "blob": "2822b01ffdb3695bc5ebf8f1e1a7c27997099d45"
+      "blob": "1299b15962e04a732e4d7084779a29089d7e21db"
     },
     {
       "path": "packages/compiler/src/entry-policy.ts",
@@ -17096,7 +18866,7 @@
     {
       "path": "packages/compiler/src/esbuild-ssr-plugin.ts",
       "mode": "100644",
-      "blob": "c115f3980e6e908fa488b5aa386f240767c9d23e"
+      "blob": "e6929b036860543b1230374ac326a6318db13c8e"
     },
     {
       "path": "packages/compiler/src/export-resolver.ts",
@@ -17141,12 +18911,12 @@
     {
       "path": "packages/compiler/src/ir-emit.ts",
       "mode": "100644",
-      "blob": "3fa0bec12b7952a6cb745bf1a8b893f665bd73d4"
+      "blob": "3a570d210e1d5519432be34676b8b80b7e563c04"
     },
     {
       "path": "packages/compiler/src/ir-walk.ts",
       "mode": "100644",
-      "blob": "2eed1b1d11c8b8e643ed4af34b317699d7fe0e57"
+      "blob": "a5df61629a69599c7aaca8e396b1018b08e54318"
     },
     {
       "path": "packages/compiler/src/island-bindings.ts",
@@ -17161,7 +18931,7 @@
     {
       "path": "packages/compiler/src/island-product.ts",
       "mode": "100644",
-      "blob": "a38a7d4444041e1c478c28665cf12b9628f2ca38"
+      "blob": "5b72ad1038a023381c922bb0a23b5ccb303b26af"
     },
     {
       "path": "packages/compiler/src/island-registry.ts",
@@ -17216,7 +18986,7 @@
     {
       "path": "packages/compiler/src/ssr-product.ts",
       "mode": "100644",
-      "blob": "48a456c5b16d12665f23375d13943f77dbf603d4"
+      "blob": "802e9210229b40ca69ec8a3b59c61cd328362b7f"
     },
     {
       "path": "packages/compiler/src/utils.ts",
@@ -17271,7 +19041,7 @@
     {
       "path": "packages/compiler/tests/diagnostics-conformance.test.ts",
       "mode": "100644",
-      "blob": "7e5b499a9df96f1d7a1b4f920b6878e160ce8602"
+      "blob": "84fe1a6e5fff9259c9ef5e6ac420dc037018105c"
     },
     {
       "path": "packages/compiler/tests/entry-await.test.ts",
@@ -18324,6 +20094,11 @@
       "blob": "bac53a03cb0895dcc121e066d3a6e2796e971733"
     },
     {
+      "path": "packages/compiler/tests/navigation-registration.test.ts",
+      "mode": "100644",
+      "blob": "6b911d192c779f5d183f314d896e1a431d84ce47"
+    },
+    {
       "path": "packages/compiler/tests/props-bindings.test.ts",
       "mode": "100644",
       "blob": "d1fd1729c4f90e0af432f13938f6205edf9f1850"
@@ -18511,7 +20286,7 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "mode": "100644",
-      "blob": "6443126225a1855d1590b99764216f800890123b"
+      "blob": "f2cb963e6c1e11eaa8554dbb72415ebf73b5fab5"
     },
     {
       "path": "packages/core/CONTRIBUTING.md",
@@ -18521,7 +20296,7 @@
     {
       "path": "packages/core/CSP.md",
       "mode": "100644",
-      "blob": "4d98fbcd1381c2d605be7cbe6c099cd5bad23015"
+      "blob": "5e6005c0caa02c02ee4d0696431985c20cdf567a"
     },
     {
       "path": "packages/core/LICENSE",
@@ -18531,12 +20306,12 @@
     {
       "path": "packages/core/README.md",
       "mode": "100644",
-      "blob": "350360acd7f95083626d05554bbd65293ac867e0"
+      "blob": "2d12ed4d797282c99c963bca6fe077744c656d62"
     },
     {
       "path": "packages/core/SECURITY.md",
       "mode": "100644",
-      "blob": "886f14741f365e0bd45bcfc206ed93f32b373aaa"
+      "blob": "c142898777a6e73cf8ab36026f9cd613d3f9fd1b"
     },
     {
       "path": "packages/core/bench/_support.ts",
@@ -18591,7 +20366,7 @@
     {
       "path": "packages/core/docs/CDN-AND-EXPORTS.md",
       "mode": "100644",
-      "blob": "3632834580ff97282259bf5ee279ee0ce782fc4b"
+      "blob": "1aa36c515e320d9bae6b82e7991783d96b387df2"
     },
     {
       "path": "packages/core/docs/COMPARISONS.md",
@@ -18616,7 +20391,7 @@
     {
       "path": "packages/core/docs/ISLANDS.md",
       "mode": "100644",
-      "blob": "c128729ead4d1dd995d7b502175f7a26288b98a1"
+      "blob": "6567116a68c567cb24a18768836db2d537a5d671"
     },
     {
       "path": "packages/core/docs/PERFORMANCE.md",
@@ -19326,7 +21101,7 @@
     {
       "path": "packages/core/package.json",
       "mode": "100644",
-      "blob": "9a0896cc41a7f7036a027a7311bad5fcac7dec71"
+      "blob": "2cc93bae24368ef3aca6a8857ad2419b77288031"
     },
     {
       "path": "packages/core/playwright.config.ts",
@@ -19471,7 +21246,7 @@
     {
       "path": "packages/core/scripts/build-defines.mjs",
       "mode": "100644",
-      "blob": "2e98784e0834a33eb60ab64d7d8feb0028850192"
+      "blob": "f6d216f897b86635bd912900910362e9ea313587"
     },
     {
       "path": "packages/core/scripts/check-build-identity.mjs",
@@ -19481,7 +21256,7 @@
     {
       "path": "packages/core/scripts/check-pack-development.mjs",
       "mode": "100644",
-      "blob": "8bebf46d894641ceb652866fbf6d2a0f59362d15"
+      "blob": "184ecdd4e0082619e5b3e3ea9a7f93eadaa55e53"
     },
     {
       "path": "packages/core/scripts/check-release-workflow.rb",
@@ -19541,7 +21316,7 @@
     {
       "path": "packages/core/scripts/probe-reporter.test.mjs",
       "mode": "100644",
-      "blob": "4cf7553221788ee98284b38aabd8f69f1a146d4c"
+      "blob": "455b29dbd8bbc176c632695c1d45316f3fae6127"
     },
     {
       "path": "packages/core/scripts/probe-results.mjs",
@@ -19569,6 +21344,11 @@
       "blob": "fe43aceb5e399375e8805ad95112bea4c05453c4"
     },
     {
+      "path": "packages/core/scripts/readable-javascript.mjs",
+      "mode": "100644",
+      "blob": "0d0c7bca89f0c8c2216a83268139ecbb5019382c"
+    },
+    {
       "path": "packages/core/scripts/release-artifacts.sh",
       "mode": "100755",
       "blob": "6502680a3389c5068760e029de779f09964e9f29"
@@ -19576,7 +21356,7 @@
     {
       "path": "packages/core/scripts/run-probes.mjs",
       "mode": "100644",
-      "blob": "d67532c8ce24cfcfa3e9e2f232d0c2712ed2b967"
+      "blob": "0762e066b11fd72e2c656ef008f6eb8163441b5a"
     },
     {
       "path": "packages/core/scripts/runtime-mutation-errors.mjs",
@@ -19761,7 +21541,7 @@
     {
       "path": "packages/core/src/__tests__/index-surface.test.ts",
       "mode": "100644",
-      "blob": "865d2041d3bf9bb5f868608af7b7b889fc0bc131"
+      "blob": "13633b1c4ed9fc9c0d9d782863b6b3920f53436b"
     },
     {
       "path": "packages/core/src/__tests__/list-binding.test.ts",
@@ -19771,12 +21551,17 @@
     {
       "path": "packages/core/src/__tests__/package-exports.test.ts",
       "mode": "100644",
-      "blob": "74775de4d08bef3c726f1b2e20845df12622e825"
+      "blob": "e54b847b7ac763ad222312e5bb9cc87b1875fc1e"
     },
     {
       "path": "packages/core/src/__tests__/probe-corpus.test.ts",
       "mode": "100644",
       "blob": "fac7b95c3a89e42fb77b4653a1c2ebed83fd23e9"
+    },
+    {
+      "path": "packages/core/src/__tests__/readable-javascript.test.ts",
+      "mode": "100644",
+      "blob": "e957a6d3756557ca35090c62b053638e7fbb1420"
     },
     {
       "path": "packages/core/src/__tests__/readme-directive-table.test.ts",
@@ -20434,6 +22219,16 @@
       "blob": "45cef2d935a81b5e2044dc33c177ed6f753314c9"
     },
     {
+      "path": "packages/core/src/dom/__tests__/native-owner.test.ts",
+      "mode": "100644",
+      "blob": "228600d1e4c04bc934069530805fc8a7f188f992"
+    },
+    {
+      "path": "packages/core/src/dom/__tests__/navigation-adoption.test.ts",
+      "mode": "100644",
+      "blob": "574e41ca8cf2837882a8a91c16877d49ec8c9f0f"
+    },
+    {
       "path": "packages/core/src/dom/__tests__/normalize-text.test.ts",
       "mode": "100644",
       "blob": "02f5f9a0675b30ab1f5cbe1f2f9badc495ea8c73"
@@ -20576,7 +22371,7 @@
     {
       "path": "packages/core/src/dom/__tests__/trusted-html.test.ts",
       "mode": "100644",
-      "blob": "84c457c3f3ea443c9df15ddcceb32f5cefbfdcb0"
+      "blob": "8531294d68a8c4ea6eec2541efa52bb6212d9c3d"
     },
     {
       "path": "packages/core/src/dom/__tests__/value-rule-2-numbers.test.ts",
@@ -20621,7 +22416,7 @@
     {
       "path": "packages/core/src/dom/activate.ts",
       "mode": "100644",
-      "blob": "73c6926bc4674ad42ebb2f5eb165f8119b3941b6"
+      "blob": "414e5edc385dcf8b831986d125017306f1a361d0"
     },
     {
       "path": "packages/core/src/dom/adoption-attributes.ts",
@@ -20726,7 +22521,7 @@
     {
       "path": "packages/core/src/dom/island-state.ts",
       "mode": "100644",
-      "blob": "62a8f71c0489d458ff82b4d4d8b322b260dd8005"
+      "blob": "af80132cdc1a3d66d1a1a6f18a620915bbe28854"
     },
     {
       "path": "packages/core/src/dom/key-text.ts",
@@ -20752,6 +22547,16 @@
       "path": "packages/core/src/dom/namespace.ts",
       "mode": "100644",
       "blob": "35a0671d5c7f09e8e37cfcdc2f3f4502fd74aadb"
+    },
+    {
+      "path": "packages/core/src/dom/navigation-experiment.ts",
+      "mode": "100644",
+      "blob": "2ede48d8fb747d8be93308f6b09eee95ae15b012"
+    },
+    {
+      "path": "packages/core/src/dom/navigation-state.ts",
+      "mode": "100644",
+      "blob": "3fb84f5e14b691b98b66240c0021b304c1051f5c"
     },
     {
       "path": "packages/core/src/dom/normalize-text.ts",
@@ -21062,6 +22867,11 @@
       "path": "packages/core/src/jsx.d.ts",
       "mode": "100644",
       "blob": "9151f75f220ba1706ef151d90feeff156cf26730"
+    },
+    {
+      "path": "packages/core/src/navigation.ts",
+      "mode": "100644",
+      "blob": "bb52fb95277af8eb9a536ccf64b01837157353bf"
     },
     {
       "path": "packages/core/src/reactive/__tests__/adoption-lifecycle.test.ts",
@@ -21501,7 +23311,7 @@
     {
       "path": "packages/core/tsup.config.ts",
       "mode": "100644",
-      "blob": "6403f4f12915bf83a41c28ae3f8ec6ef90d0bd85"
+      "blob": "56828a752398aafd913fcbd93c72688b7a983514"
     },
     {
       "path": "packages/core/typedoc-theme.css",
@@ -21541,12 +23351,12 @@
     {
       "path": "packages/create-app/CHANGELOG.md",
       "mode": "100644",
-      "blob": "4d4f8203aeecd4999fb674e61cca2922d0e9fb05"
+      "blob": "6b4859dab270ff84649ae05ade4e2dbcd26262cf"
     },
     {
       "path": "packages/create-app/CONTRIBUTING.md",
       "mode": "100644",
-      "blob": "1d969fd9dd0bc0f5f22acc5318097c6a1de60576"
+      "blob": "ec57988ed3d693200111d7409c747b36dab3c280"
     },
     {
       "path": "packages/create-app/LICENSE",
@@ -21556,7 +23366,7 @@
     {
       "path": "packages/create-app/README.md",
       "mode": "100644",
-      "blob": "68b2499739a298941d31334162a29c6ccb0b3386"
+      "blob": "5fb6624d380b2f973a9cf9f350faf6088c9671eb"
     },
     {
       "path": "packages/create-app/docs/README.md",
@@ -21571,7 +23381,7 @@
     {
       "path": "packages/create-app/docs/TEMPLATES.md",
       "mode": "100644",
-      "blob": "12a0b0d1c36001ed1c3f677560e4d0ea0528f35a"
+      "blob": "f099da746d449aa4932f5ebdfc9f037cb826e0e1"
     },
     {
       "path": "packages/create-app/docs/UPGRADING-3.0.md",
@@ -21586,7 +23396,7 @@
     {
       "path": "packages/create-app/package.json",
       "mode": "100644",
-      "blob": "bb12d45161d7b07b6cc1f9cf8162167420cf0ab0"
+      "blob": "b43334cde9cccc0d69541663b0e62b5ba980a23a"
     },
     {
       "path": "packages/create-app/scripts/check-release-workflow.rb",
@@ -21606,37 +23416,37 @@
     {
       "path": "packages/create-app/src/index.ts",
       "mode": "100644",
-      "blob": "54deb2991c37a155f98404e6226e7c2d9cb36888"
+      "blob": "cedd7d5e57a079fe6951c9245bc7018b1fd6d991"
     },
     {
       "path": "packages/create-app/src/scaffold.ts",
       "mode": "100644",
-      "blob": "c1247638088aa436faa921eea356f9a9fba4f4f5"
+      "blob": "0f0b765042781eb318e54bb34a1519a8fb9c6e6a"
     },
     {
       "path": "packages/create-app/template-lock-seeds.json",
       "mode": "100644",
-      "blob": "76eedecf189463e43e9c940c5bc80ffffc2a30a2"
+      "blob": "bde7f049917122bce6667c0b295cbbd71273211d"
     },
     {
       "path": "packages/create-app/templates/dashboard/.github/workflows/build.yml",
       "mode": "100644",
-      "blob": "57edcc23b0d2c897fe3d9d5596fdc4ff1f90215f"
+      "blob": "6c83c5c0f7915cfb18eac52c0ebd5832ced5a9ac"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
       "mode": "100644",
-      "blob": "5e4c4d641374077ab256924ac361ed6b0c4fe00b"
+      "blob": "a14e4603e7d7ce75d1e44a543f85a7bdf0eefef0"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
       "mode": "100644",
-      "blob": "d81b187d5cdc92b8f319f3dceba6e562003e1d7f"
+      "blob": "60e2f3c3b23920df723c97423a2284d3a537a2d4"
     },
     {
       "path": "packages/create-app/templates/dashboard/README.md",
       "mode": "100644",
-      "blob": "8678fc05be1a7e2a9ed28030a340cc5716f22084"
+      "blob": "5e6c635d653e51465178907f34791d755ee3afc8"
     },
     {
       "path": "packages/create-app/templates/dashboard/_gitignore",
@@ -21656,12 +23466,12 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
       "mode": "100644",
-      "blob": "aa13044917fe809726a25a8f119fb48e2714fa32"
+      "blob": "641ddfd89c0b81a06d3c197d5e5fe8ffc576b486"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
       "mode": "100644",
-      "blob": "e75179f6f779e03e716759dde723f55721bf6606"
+      "blob": "39a7b2c011c42919410c737f2edd02054bd48999"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/playwright.config.ts",
@@ -21671,7 +23481,7 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/src/app.tsx",
       "mode": "100644",
-      "blob": "afbe2e5fc45f81a43c047abab3390cd663ef67c3"
+      "blob": "57d4603a8b4a4f7c79f20f56124822a6c1d45eca"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/src/components/Icon.tsx",
@@ -21704,19 +23514,24 @@
       "blob": "1eab0dca2d9e42722466854df1e709f0b77553bb"
     },
     {
+      "path": "packages/create-app/templates/dashboard/admin/src/jsx.d.ts",
+      "mode": "100644",
+      "blob": "2ebbd01d283dcc48c84f6cc844e93ea5b2090499"
+    },
+    {
       "path": "packages/create-app/templates/dashboard/admin/src/pages/DeploymentsPage.tsx",
       "mode": "100644",
-      "blob": "830864e5ce9472bc781e6ef2aac5c8f5e32c8c5d"
+      "blob": "17fcbdf1fdd266cc2a0b264fbcd0c17fd830097a"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/src/pages/OverviewPage.tsx",
       "mode": "100644",
-      "blob": "9ae58fa3370af118f8f91772e5f62e652878fc8c"
+      "blob": "b3589c784a3e34d45eda2c38df087bb3a4b07103"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/src/pages/ServersPage.tsx",
       "mode": "100644",
-      "blob": "76b359ca0af7f2f07a08bdadf501b4a779c5e7a3"
+      "blob": "a79864b1408f103c4abc2dbb44c73da4b1117e77"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/src/pages/SettingsPage.tsx",
@@ -21731,7 +23546,7 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/tests/dashboard.spec.ts",
       "mode": "100644",
-      "blob": "a61f9ad1f173e218e03222ca0b39f093e104af18"
+      "blob": "609e0e581fca27c41004c15bae059630bf478da4"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/tsconfig.json",
@@ -21751,17 +23566,17 @@
     {
       "path": "packages/create-app/templates/minimal/.github/workflows/build.yml",
       "mode": "100644",
-      "blob": "91dbb1ac0ff7efcaf578ed6d5d821f3fd59a89cf"
+      "blob": "57c27c67877a332d54083775664344ba509dcae9"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
       "mode": "100644",
-      "blob": "3e35efe0c2994230a84b09f8e2f35df22b2d6d00"
+      "blob": "3f052f752bdcb348cc4946918bcb1f21a31a3327"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
       "mode": "100644",
-      "blob": "1e3133efa3f4d977c85d856850b0b0ba3862d2e8"
+      "blob": "e4fd72d44dd818550063caa4b354ad922d1c079d"
     },
     {
       "path": "packages/create-app/templates/minimal/README.md",
@@ -21786,12 +23601,12 @@
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
       "mode": "100644",
-      "blob": "5ac23a83f5580f0b2da24e62932bebbd3b59480d"
+      "blob": "5d8d57196a254fccd26f104bb2444a2fb90f236b"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
       "mode": "100644",
-      "blob": "aef92cdfb4ef650c3a2b745d1ae86e757639c12e"
+      "blob": "ca7098ce5642ef91d98daf3d4d955a9f300b0bb7"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/src/about/app.tsx",
@@ -21817,6 +23632,86 @@
       "path": "packages/create-app/templates/minimal/src/main.rs",
       "mode": "100644",
       "blob": "a9e01b2ee44a5bb26fc5cf391780df5f05828e25"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/.github/workflows/build.yml",
+      "mode": "100644",
+      "blob": "57c27c67877a332d54083775664344ba509dcae9"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/Cargo.lock",
+      "mode": "100644",
+      "blob": "3f052f752bdcb348cc4946918bcb1f21a31a3327"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/Cargo.toml",
+      "mode": "100644",
+      "blob": "b32b25e82906a6da3b922d25123cb393acc62758"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/README.md",
+      "mode": "100644",
+      "blob": "daa4973a3935b774b769e6e71f67eac197373dec"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/_gitignore",
+      "mode": "100644",
+      "blob": "9b299b151df8e59edb31565d15384ae74be5af71"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/_npmrc",
+      "mode": "100644",
+      "blob": "d18cd578d934873529d6df408590382df956a4aa"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/build.ts",
+      "mode": "100644",
+      "blob": "6a92f47a61cfa7c7997e37f9583edf93567bdf7b"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/package-lock.json",
+      "mode": "100644",
+      "blob": "f1ed594818511300f983bc448689cb945b212227"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/package.json",
+      "mode": "100644",
+      "blob": "bed497b62eb7fafa75e8aec62089ca3101e44ca9"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/src/about/app.tsx",
+      "mode": "100644",
+      "blob": "514ef76edd38dc73b865dba9da79aaf21484844d"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/src/home/app.tsx",
+      "mode": "100644",
+      "blob": "ee5cc3f4ef4069b0328ba489556d144e288ccd95"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/src/navigation.ts",
+      "mode": "100644",
+      "blob": "e2014879bfb685419f7d2b1ddc19822b57803dbe"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/src/shell/app.tsx",
+      "mode": "100644",
+      "blob": "4b286e77b13c8d650c9397052e7b960cb4162994"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/src/styles/app.css",
+      "mode": "100644",
+      "blob": "9d65ddf9bc7bbc6aba0cb9ca6c7360c5ef40b164"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/admin/tsconfig.json",
+      "mode": "100644",
+      "blob": "7834943c40f7732e16339ef238ac769c5d5ff0ed"
+    },
+    {
+      "path": "packages/create-app/templates/native-router/src/main.rs",
+      "mode": "100644",
+      "blob": "21fa1fa311819515dbb3fb050d6f527444c760b3"
     },
     {
       "path": "packages/create-app/tests/diagnostics.test.ts",
@@ -21856,7 +23751,7 @@
     {
       "path": "packages/create-app/tests/helpers.ts",
       "mode": "100644",
-      "blob": "e277354437aaa9ef79c45a092657dabf80cade33"
+      "blob": "1d323a13ed7b8834c7a393c7a9c51aa33ce4ed3d"
     },
     {
       "path": "packages/create-app/tests/scaffold-lib.test.ts",
@@ -21866,7 +23761,7 @@
     {
       "path": "packages/create-app/tests/scaffold.test.ts",
       "mode": "100644",
-      "blob": "3be9977c8003a4dd9eb3ba37011e487120c57406"
+      "blob": "5d98de2964ea3f563d70818837bd7ecb4d5f8ca6"
     },
     {
       "path": "packages/create-app/tests/server-profile.test.ts",
@@ -21881,7 +23776,7 @@
     {
       "path": "packages/create-app/tests/templates.test.ts",
       "mode": "100644",
-      "blob": "03988ad9500dfc58bf454315014fbf73e37f0690"
+      "blob": "e98f38c72452b4d34f2eb599bb8e4421335e2721"
     },
     {
       "path": "packages/create-app/tsconfig.json",
@@ -21892,6 +23787,146 @@
       "path": "packages/create-app/vitest.config.ts",
       "mode": "100644",
       "blob": "4a58023e55a4ff35fd17ead67bbb2157c7726070"
+    },
+    {
+      "path": "packages/router/CHANGELOG.md",
+      "mode": "100644",
+      "blob": "70bc6789aff6487dc2a81e620e7201ec524ad724"
+    },
+    {
+      "path": "packages/router/LICENSE",
+      "mode": "100644",
+      "blob": "929f32d40bffad9349f33e38f6f1aa6695e8603b"
+    },
+    {
+      "path": "packages/router/README.md",
+      "mode": "100644",
+      "blob": "28320d797464e162d05100c1c362308d5bf759ba"
+    },
+    {
+      "path": "packages/router/package.json",
+      "mode": "100644",
+      "blob": "69d94a72944890ddb6afbe10b5905d3c4eaf741c"
+    },
+    {
+      "path": "packages/router/src/browser.ts",
+      "mode": "100644",
+      "blob": "4e1b6bdd6e6a4e875e1000b27141883f11462ba0"
+    },
+    {
+      "path": "packages/router/src/components.ts",
+      "mode": "100644",
+      "blob": "ac9ea4e3c03b935d437fad62aefc13b3eb2003cc"
+    },
+    {
+      "path": "packages/router/src/html.ts",
+      "mode": "100644",
+      "blob": "f7e4f397823e0d3cc1dde03088de510461a94b9d"
+    },
+    {
+      "path": "packages/router/src/index.ts",
+      "mode": "100644",
+      "blob": "da2112d412823a2f46f7b287511f0f7e96da570e"
+    },
+    {
+      "path": "packages/router/src/native.ts",
+      "mode": "100644",
+      "blob": "5d0c691f5dc104fd8d9a5b09a892372df50fc581"
+    },
+    {
+      "path": "packages/router/src/router.ts",
+      "mode": "100644",
+      "blob": "6e6e960908ae4785445cd158394a7edfa336d8f7"
+    },
+    {
+      "path": "packages/router/src/routes.ts",
+      "mode": "100644",
+      "blob": "f373f30bd865321d03f271d0b273de18fe657768"
+    },
+    {
+      "path": "packages/router/src/transport.ts",
+      "mode": "100644",
+      "blob": "4dfafb92173e639738231e887883538f7fe0a126"
+    },
+    {
+      "path": "packages/router/src/types.ts",
+      "mode": "100644",
+      "blob": "b37d0b1b4e004f47db37658509ad1d6fc9f660f3"
+    },
+    {
+      "path": "packages/router/tests/adapter-boundaries.test.ts",
+      "mode": "100644",
+      "blob": "fad77df073a6ffd846773ce7943be68c8071408f"
+    },
+    {
+      "path": "packages/router/tests/browser-lifetimes.test.ts",
+      "mode": "100644",
+      "blob": "facb15e35cbb5db16adf169c5a820a4752d95166"
+    },
+    {
+      "path": "packages/router/tests/callback-authority.test.ts",
+      "mode": "100644",
+      "blob": "9c5229e4fe68beda4228ba1321a2a582f3582f14"
+    },
+    {
+      "path": "packages/router/tests/limits.test.ts",
+      "mode": "100644",
+      "blob": "b5650f9b18090b3242eec3a4f94c7f28303d309b"
+    },
+    {
+      "path": "packages/router/tests/native-recovery-lifetime.test.ts",
+      "mode": "100644",
+      "blob": "15f86bb388e0a58a79ae0efe9d57ef162519547b"
+    },
+    {
+      "path": "packages/router/tests/native.test.ts",
+      "mode": "100644",
+      "blob": "8980fe1628a8651428168d38893d1bbe96eaaef9"
+    },
+    {
+      "path": "packages/router/tests/platform-contracts.test.ts",
+      "mode": "100644",
+      "blob": "e64c8f129acbd1a7b31c55d399151985eb00bc47"
+    },
+    {
+      "path": "packages/router/tests/revalidation-recovery.test.ts",
+      "mode": "100644",
+      "blob": "c46e05f534909abbb3d40dce9515a8d110cf245e"
+    },
+    {
+      "path": "packages/router/tests/route-rank.test.ts",
+      "mode": "100644",
+      "blob": "d9b8baeefe0be5b51606f8727b22ae85eeef700c"
+    },
+    {
+      "path": "packages/router/tests/router.test.ts",
+      "mode": "100644",
+      "blob": "22001aeaf311a599876edd57f34d29d34f242388"
+    },
+    {
+      "path": "packages/router/tests/snapshot-boundary.test.ts",
+      "mode": "100644",
+      "blob": "1fffe20a089ca72ff5bfb6734b08b67225fc2916"
+    },
+    {
+      "path": "packages/router/tests/transport-body.test.ts",
+      "mode": "100644",
+      "blob": "61cc495645010256efe64f579801f5ba65cababf"
+    },
+    {
+      "path": "packages/router/tests/transport.test.ts",
+      "mode": "100644",
+      "blob": "19fa224a72c99dc3a7a53e4e8dddef0a419df44e"
+    },
+    {
+      "path": "packages/router/tsconfig.json",
+      "mode": "100644",
+      "blob": "503d59699f3d0d150882d36d288a51eca9427337"
+    },
+    {
+      "path": "packages/router/vitest.config.ts",
+      "mode": "100644",
+      "blob": "aa3bd57be28772a0508d3ed2d8bfc5cf247f7ddc"
     },
     {
       "path": "packages/shared/jsx-namespace.d.mts",
@@ -21916,17 +23951,17 @@
     {
       "path": "scripts/candidate-scaffold.mjs",
       "mode": "100644",
-      "blob": "0d1d29eb030773c4bf53c2bf6eb4e3eea216d97e"
+      "blob": "3b3347c3cf1f7afce592e3f4a2d888054f793e21"
     },
     {
       "path": "scripts/candidate-scaffold.test.mjs",
       "mode": "100644",
-      "blob": "699e562a34db6050b9a0a06655a6897d28b06a7c"
+      "blob": "8c98e71c58d5691fea916bfcf5faae6da6acc376"
     },
     {
       "path": "scripts/check-advisories.sh",
       "mode": "100755",
-      "blob": "76e8c7fca80385a693dae970d31dd00f734095e5"
+      "blob": "f57b04b357a0895393ae564ddd69de9c0d3299c8"
     },
     {
       "path": "scripts/check-builds.sh",
@@ -21936,7 +23971,7 @@
     {
       "path": "scripts/check-builds.test.mjs",
       "mode": "100644",
-      "blob": "52e4b77a3201e428ca199302bb0ab6952d1916b8"
+      "blob": "8824da4377dd293cf699d9e01fb9cc5b638c94a4"
     },
     {
       "path": "scripts/check-core-browser.sh",
@@ -21956,7 +23991,7 @@
     {
       "path": "scripts/check-msrv-fresh.sh",
       "mode": "100644",
-      "blob": "119b7714963de14377b9cdcaa51211b76cdee1d9"
+      "blob": "dbc67a1576355c7a84901f85538d795678ded3d3"
     },
     {
       "path": "scripts/check-published-crate.sh",
@@ -21981,7 +24016,12 @@
     {
       "path": "scripts/check-release-workflow.rb",
       "mode": "100644",
-      "blob": "3b8d101adccc87a35dd4dd9ba6e9941eb9f22be6"
+      "blob": "e9a68b37c2240783dae36ac94810d8e0dbf2092a"
+    },
+    {
+      "path": "scripts/check-router-research.mjs",
+      "mode": "100644",
+      "blob": "6b9e102a4cca56423e1bd457b2e0c5cdd08ffb63"
     },
     {
       "path": "scripts/check-supply-chain.rb",
@@ -21991,12 +24031,12 @@
     {
       "path": "scripts/check-toolchain-policy.rb",
       "mode": "100644",
-      "blob": "59ea71b0e45f8f7e99853a2ab57d0a01f3a7eab3"
+      "blob": "2555e68d5a6debbb3574680e904a89db5ee0466c"
     },
     {
       "path": "scripts/check.sh",
       "mode": "100755",
-      "blob": "4d952f1bffc3080118319bbcf1d75fd641d6e715"
+      "blob": "9f5cd15ad7adb8dd6c9f7e20cdf8ef0100694a23"
     },
     {
       "path": "scripts/compatibility-package.test.mjs",
@@ -22161,12 +24201,27 @@
     {
       "path": "scripts/n8-size-start.mjs",
       "mode": "100644",
-      "blob": "276d26d92d430bf8986090f99cb08d4177cb0995"
+      "blob": "ffc18a1a6a74411e1147fe20ca2bfc95637749ef"
     },
     {
       "path": "scripts/n8-size-start.test.mjs",
       "mode": "100644",
-      "blob": "5b5335190d3bb23ef0370b2c2c82acd33c169e96"
+      "blob": "896162acd65e24d18092ab7e5a897f6ae683fc36"
+    },
+    {
+      "path": "scripts/navigation-reader-compatibility.mjs",
+      "mode": "100644",
+      "blob": "da6afddeabaac461cc558e2e5164c85dff8e8a1d"
+    },
+    {
+      "path": "scripts/navigation-size-contract.mjs",
+      "mode": "100644",
+      "blob": "9b2480ece5655c2ce81c847b63dce40dea3c980e"
+    },
+    {
+      "path": "scripts/navigation-size-contract.test.mjs",
+      "mode": "100644",
+      "blob": "bc86e265f842b34a29516adf2805a7ae831e2de4"
     },
     {
       "path": "scripts/owned-server.d.mts",
@@ -22186,12 +24241,12 @@
     {
       "path": "scripts/package-metadata.test.mjs",
       "mode": "100644",
-      "blob": "caaaf3203f697ab992848ab50d26e8d471d9d1a8"
+      "blob": "36ef18dbd35c89a78adf7ac76935325327af7fee"
     },
     {
       "path": "scripts/packed-qualification-workflow.test.mjs",
       "mode": "100644",
-      "blob": "5d82e92bab6427380dbbd1c166fc3cf1ece2eeeb"
+      "blob": "97394db3a1114de8af6c48a9c660d94d4725a3da"
     },
     {
       "path": "scripts/playwright-deps-timeout.test.py",
@@ -22226,7 +24281,7 @@
     {
       "path": "scripts/published-scaffold.mjs",
       "mode": "100644",
-      "blob": "34edc1787cedcd97341a6e1998ef46d6fb5488cc"
+      "blob": "fc2d8c9aa07f609eb1fe4a28301e291651058f59"
     },
     {
       "path": "scripts/published-scaffold.test.mjs",
@@ -22234,14 +24289,19 @@
       "blob": "006cf1babfd68ef13bb20659241234c71576bb35"
     },
     {
+      "path": "scripts/qualify-router-size.mjs",
+      "mode": "100644",
+      "blob": "f088dcabcfa039fc9d3cf84fc6551fc33654e878"
+    },
+    {
       "path": "scripts/recall.mjs",
       "mode": "100644",
-      "blob": "967633ef80e1bb951c295ce59e2772dbd51f2270"
+      "blob": "0b366acdce9021251914d3e757935aff5bebd24a"
     },
     {
       "path": "scripts/registry-reconcile-policy.json",
       "mode": "100644",
-      "blob": "ed0cc34459f5627be7394f48b0c027e2b28fb4a9"
+      "blob": "478ae9327839d03be503a4f2d1030c50af17a960"
     },
     {
       "path": "scripts/registry-reconcile-workflow.test.mjs",
@@ -22251,12 +24311,12 @@
     {
       "path": "scripts/registry-reconcile.mjs",
       "mode": "100644",
-      "blob": "484f39be61fceaf8567991fe6af7ba092137384c"
+      "blob": "dde7cb6a1907ff2e19ad69bf52f1e186b4ca7491"
     },
     {
       "path": "scripts/registry-reconcile.test.mjs",
       "mode": "100644",
-      "blob": "61061e381aa5b091c118f34674aa9f8eb4c9a5a8"
+      "blob": "87a91461be59cf52f20ca79cb8d9165c38c108c3"
     },
     {
       "path": "scripts/release-activation-observer.mjs",
@@ -22276,7 +24336,7 @@
     {
       "path": "scripts/release-audit.mjs",
       "mode": "100644",
-      "blob": "29b14d5d753f25106c9f8dc560b36c3b430cf6a9"
+      "blob": "dda52c6cb20a9d056b205523a5e250ef51889b50"
     },
     {
       "path": "scripts/release-audit.test.mjs",
@@ -22291,17 +24351,17 @@
     {
       "path": "scripts/release-burn-in-final.mjs",
       "mode": "100644",
-      "blob": "ad1f1a481095cceeff36a7b8774cbd154ef19b7b"
+      "blob": "463f29bfea6df46637b5d1086a8578d743524e6d"
     },
     {
       "path": "scripts/release-burn-in-final.test.mjs",
       "mode": "100644",
-      "blob": "b2b020374ef152f983a0221fa89bdec86ab7f14d"
+      "blob": "399c8fcb90321e99aa29549847a1f09dd106c748"
     },
     {
       "path": "scripts/release-burn-in-identities.mjs",
       "mode": "100644",
-      "blob": "c8e290160c64fc80b5f7758ea7ce61c1b6b69d5c"
+      "blob": "4c250b9bea088c3e7b4368d9d222eac0a8755f2d"
     },
     {
       "path": "scripts/release-burn-in-inputs.mjs",
@@ -22316,12 +24376,12 @@
     {
       "path": "scripts/release-burn-in-report.mjs",
       "mode": "100644",
-      "blob": "7d9e604b1d74f288de8cbb1dad814b5a21608955"
+      "blob": "b3a15c36b9d265f79317fdf3d4068a635fcc6e2e"
     },
     {
       "path": "scripts/release-burn-in-report.test.mjs",
       "mode": "100644",
-      "blob": "cb6097851d7299b19e53edc30929ae52d3c7111b"
+      "blob": "0d2957aff9d472a9f43de0c3e0baa52b352fa0cc"
     },
     {
       "path": "scripts/release-burn-in-setup.mjs",
@@ -22336,7 +24396,7 @@
     {
       "path": "scripts/release-burn-in-stage.mjs",
       "mode": "100644",
-      "blob": "f22e9fc6e318465f30d43e549cb2af137edec1fc"
+      "blob": "b34c014c0f6667742fc8a05a3d2fc1fb263a72fd"
     },
     {
       "path": "scripts/release-burn-in-stage.test.mjs",
@@ -22361,12 +24421,12 @@
     {
       "path": "scripts/release-burn-in.mjs",
       "mode": "100644",
-      "blob": "e1f2bd23b1a84a0173264208d839c264a8c33f94"
+      "blob": "d894ae92f350c4fe6869d43779382610947536be"
     },
     {
       "path": "scripts/release-cargo-closure.test.mjs",
       "mode": "100644",
-      "blob": "324fac2e7c52bba4b781694151fd4888707dd550"
+      "blob": "d5aa453d5e9cad34db9a9850e63426e19305f958"
     },
     {
       "path": "scripts/release-cargo-lock.mjs",
@@ -22376,7 +24436,7 @@
     {
       "path": "scripts/release-contracts.json",
       "mode": "100644",
-      "blob": "d17a8942066d945be30078d735661078e8e8c1c2"
+      "blob": "2746610df1a3a6e6668f63aff4e858a59e507eaa"
     },
     {
       "path": "scripts/release-corpus.test.mjs",
@@ -22402,6 +24462,11 @@
       "path": "scripts/release-fixture-apps.test.mjs",
       "mode": "100644",
       "blob": "ea48d2135bfd89576249d2a8da668fbe3df8f81f"
+    },
+    {
+      "path": "scripts/release-historical-inventory.test.mjs",
+      "mode": "100644",
+      "blob": "8adcd31f4fddf2dc15f11611127b2c5c4132bce9"
     },
     {
       "path": "scripts/release-integrity.test.mjs",
@@ -22439,6 +24504,16 @@
       "blob": "2b4af7c78415183d18ba2229f8027a7f7fa1d2db"
     },
     {
+      "path": "scripts/release-package-inventory.mjs",
+      "mode": "100644",
+      "blob": "3ff5fd29a6b9c97246e317ed154087e63213c5e4"
+    },
+    {
+      "path": "scripts/release-package-inventory.test.mjs",
+      "mode": "100644",
+      "blob": "08c819dbc008797a7491e7f27b8d1352f1357455"
+    },
+    {
       "path": "scripts/release-packed-resolution.mjs",
       "mode": "100644",
       "blob": "9968f6efd3b42dc891ce919c5c2108e63b6b5986"
@@ -22466,7 +24541,7 @@
     {
       "path": "scripts/release-performance-baseline.mjs",
       "mode": "100644",
-      "blob": "dc18fb37ae317aa57bdb8bb5af8814bb3e0ffedb"
+      "blob": "f2938cb7ba1b0b956061576de47b09db9c14b18b"
     },
     {
       "path": "scripts/release-performance-baseline.test.mjs",
@@ -22591,12 +24666,12 @@
     {
       "path": "scripts/release-plane-events.mjs",
       "mode": "100644",
-      "blob": "ca1da9f61b34566d041dea3c61c954a04ef491e9"
+      "blob": "047860d4517e45ff77899ad2d1cf0c2c288635fe"
     },
     {
       "path": "scripts/release-plane-events.test.mjs",
       "mode": "100644",
-      "blob": "d3b29ab60a492ce6e8f11ae1c89eb0b2c0380e14"
+      "blob": "bdc20e40e0109f3f923d0650519886a6eec10875"
     },
     {
       "path": "scripts/release-plane-observe.mjs",
@@ -22611,7 +24686,7 @@
     {
       "path": "scripts/release-publish.mjs",
       "mode": "100644",
-      "blob": "0cc9ae4c6e51db55f254e56225efd7b672057e71"
+      "blob": "062d714378d2074d8e352f892a22e89c616d8677"
     },
     {
       "path": "scripts/release-record-download.test.mjs",
@@ -22631,12 +24706,22 @@
     {
       "path": "scripts/release-record.mjs",
       "mode": "100644",
-      "blob": "fbd3eb7c0b26feecb84a3cd8a46a3b833272c835"
+      "blob": "086f67e995bc05c71d4a613f9415860d41686837"
     },
     {
       "path": "scripts/release-record.test.mjs",
       "mode": "100644",
       "blob": "a80543c39c1304225db2fce90ccdcefeb90bb72e"
+    },
+    {
+      "path": "scripts/release-router-bootstrap.test.mjs",
+      "mode": "100644",
+      "blob": "d41b94280663a7c0b83cb79d7c62a9af663527ab"
+    },
+    {
+      "path": "scripts/release-router-package.test.mjs",
+      "mode": "100644",
+      "blob": "37fa53f80ad1d1cd4901dea03bb6420a12e317d1"
     },
     {
       "path": "scripts/release-security.mjs",
@@ -22651,7 +24736,7 @@
     {
       "path": "scripts/release-set.mjs",
       "mode": "100644",
-      "blob": "ab12f6e284bee7dfcd44f41b45c61b15a1236243"
+      "blob": "39931305d1c3b170cdf5cc9895f5d2ee6d4759ae"
     },
     {
       "path": "scripts/release-signatures.test.mjs",
@@ -22716,7 +24801,7 @@
     {
       "path": "scripts/release-support.mjs",
       "mode": "100644",
-      "blob": "5fe6dbc54187884c2b7bece9a68c6999fb6eaa3c"
+      "blob": "f0232644275f087f7056d86b0fe0581f7db16ffc"
     },
     {
       "path": "scripts/release-support.test.mjs",
@@ -22726,22 +24811,32 @@
     {
       "path": "scripts/release-template-islands.d.mts",
       "mode": "100644",
-      "blob": "e504254410c3a7a16aa49c46c14e62405603c71b"
+      "blob": "7d7d7f52e1a462f80e377b711e91800d68bdf113"
     },
     {
       "path": "scripts/release-template-islands.mjs",
       "mode": "100644",
-      "blob": "a510305415ca1faedb86e9fd10f24e615cddb649"
+      "blob": "4290b9ca0f6d9d1660292b766332c590975bd8a6"
     },
     {
       "path": "scripts/release-template-lock.test.mjs",
       "mode": "100644",
-      "blob": "b14fd377138bcc26661899bcbc6be3cb4515ded5"
+      "blob": "d213d58af78f21a40b1e48ea21487d32dde48092"
+    },
+    {
+      "path": "scripts/release-template-navigation.d.mts",
+      "mode": "100644",
+      "blob": "c5f8716740ba24c1054a3cec53b05e57b0969dd5"
+    },
+    {
+      "path": "scripts/release-template-navigation.mjs",
+      "mode": "100644",
+      "blob": "7951ca9f098e90dbd5435585e2b6fdbcf9ece175"
     },
     {
       "path": "scripts/release-template-source.test.mjs",
       "mode": "100644",
-      "blob": "d5adb0ff2041681a66c5988c7d87300df2913402"
+      "blob": "2d1ef89bbe0a734bcf946d1ece96828d10902119"
     },
     {
       "path": "scripts/release-template-sources.mjs",
@@ -22781,7 +24876,7 @@
     {
       "path": "scripts/release.test.mjs",
       "mode": "100644",
-      "blob": "f1667b15c8ea569f3ba49314bf4c3d8c3a10123a"
+      "blob": "93e555508b54a977370bcfa46ad6c0a96a82d2e4"
     },
     {
       "path": "scripts/reviewer-static-executable.test.mjs",
@@ -22792,6 +24887,26 @@
       "path": "scripts/reviewer-template-observation.test.mjs",
       "mode": "100644",
       "blob": "3f52666e9c9f92cc339a31da38492a9b4c4af99c"
+    },
+    {
+      "path": "scripts/router-proof-process.mjs",
+      "mode": "100644",
+      "blob": "51d98a1107ff2b93f4ee0158606dae417fe84e64"
+    },
+    {
+      "path": "scripts/router-proof-process.test.mjs",
+      "mode": "100644",
+      "blob": "d6bf72170df2e4f7bacfef0223fbd0ecdeeca4ed"
+    },
+    {
+      "path": "scripts/router-size-baseline.json",
+      "mode": "100644",
+      "blob": "2ab18657fdc31b7a3f46c8ef2aad4046371e5dd3"
+    },
+    {
+      "path": "scripts/run-router-native-proof.mjs",
+      "mode": "100644",
+      "blob": "f8b7274c59a538cfb5ff4917d6772f3091271bc5"
     },
     {
       "path": "scripts/scaffold-cache-measure.mjs",
@@ -22846,12 +24961,12 @@
     {
       "path": "scripts/template-lock-seeds.mjs",
       "mode": "100644",
-      "blob": "aa7b7b3ff720cf4964705d14d07f3b713df5adbb"
+      "blob": "62d14afb328b5497af21b6eff392bf767fddc6aa"
     },
     {
       "path": "scripts/template-lock-seeds.test.mjs",
       "mode": "100644",
-      "blob": "e0b2b269fee4c696ebd63e92ec410e4d9f8146c9"
+      "blob": "76c07e5f023f7e6e0bcf8dd263c36f7fa409db83"
     },
     {
       "path": "scripts/test-check-forma-ir-requirement.sh",
@@ -22876,7 +24991,7 @@
     {
       "path": "scripts/tests/supply-chain.test.mjs",
       "mode": "100644",
-      "blob": "b60f0762719c14da8157966a92d30792010f65b0"
+      "blob": "ac880a778eff3490a0d63022652b1e8070211311"
     },
     {
       "path": "scripts/toolchain-matrix.mjs",
@@ -22886,12 +25001,12 @@
     {
       "path": "scripts/toolchain-policy.test.mjs",
       "mode": "100644",
-      "blob": "5db013c0b1e3aebc8f6aef1b7e74ee82041170f6"
+      "blob": "7b79d7dacd6c094386af2ddc574d049db2465cf9"
     },
     {
       "path": "scripts/verify-release-set.mjs",
       "mode": "100644",
-      "blob": "a3f1070faa341eb0371c4827b6940d0a7d56e8bb"
+      "blob": "877b54a2610cbe59e2ef609b927ef88d557cdc06"
     }
   ]
 }

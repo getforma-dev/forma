@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "passed": true,
+  "originalSha256": "2bc5fa9c52e129135ce10fec5f4a277857a0ccc2a5073feffc2a92fc3c07dce3",
+  "mutantSha256": "7a0cb3b2a30d0335af6a3b2011f760c87e0d5b228f79bc739e57c69c681cca12",
+  "removedSource": "      if (!bound.dom)\n        throw exprError(\"FORMA_E_GRANT_DOM\", `${host.label}.${method}() reads past the element (no dom grant)`, at);",
+  "runs": [
+    {
+      "mode": "before",
+      "exit": 0,
+      "sha256": "c05f2a3db8700a7e6a5008d92b7f9872b56c205fb35d950b059d17cd6896b9dc",
+      "report": "guard-before.json"
+    },
+    {
+      "mode": "mutant",
+      "exit": 1,
+      "sha256": "5daa422411870b1d27318d9531ee580dfb97f6c4ff0920355e39bca3827cc818",
+      "report": "guard-mutant.json"
+    },
+    {
+      "mode": "corrected",
+      "exit": 0,
+      "sha256": "c78e56ac89b0111e90343e00952619f2eb814a503da6975b38a99c0ed4169469",
+      "report": "guard-corrected.json"
+    }
+  ]
+}

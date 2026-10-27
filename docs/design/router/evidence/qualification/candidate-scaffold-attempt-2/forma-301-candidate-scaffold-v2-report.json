@@ -1,0 +1,1598 @@
+{
+  "schema": 1,
+  "passed": true,
+  "mode": "candidate",
+  "commit": "33ae2bcea038f6797e2fc46d3b7433ff56242c6a",
+  "recordSha256": "e922d6eeaf91a7feea80e2f36ae015be18a88d2e2630960a5e3c3605ea80183d",
+  "platform": "darwin",
+  "templates": [
+    "minimal",
+    "dashboard",
+    "native-router"
+  ],
+  "observations": [
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "hook: create-app probe-minimal --template minimal",
+      "phases": {
+        "cli": 157,
+        "staging": 72
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > minimal > tells an npm user to install with npm ci, which leaves the shipped lockfile as it is: create-app npmci-minimal --template minimal",
+      "phases": {
+        "cli": 132,
+        "staging": 70
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > minimal > refuses to scaffold over the directory it just created: create-app probe-minimal --template minimal",
+      "phases": {
+        "cli": 42
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > minimal > refuses to scaffold over the directory it just created: create-app probe-dashboard --template dashboard",
+      "phases": {
+        "cli": 142,
+        "staging": 65
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > dashboard > tells an npm user to install with npm ci, which leaves the shipped lockfile as it is: create-app npmci-dashboard --template dashboard",
+      "phases": {
+        "cli": 142,
+        "staging": 72
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > dashboard > refuses to scaffold over the directory it just created: create-app probe-dashboard --template dashboard",
+      "phases": {
+        "cli": 42
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > dashboard > refuses to scaffold over the directory it just created: create-app probe-native-router --template native-router",
+      "phases": {
+        "cli": 124,
+        "staging": 73
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > native-router > tells an npm user to install with npm ci, which leaves the shipped lockfile as it is: create-app npmci-native-router --template native-router",
+      "phases": {
+        "cli": 124,
+        "staging": 71
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > native-router > refuses to scaffold over the directory it just created: create-app probe-native-router --template native-router",
+      "phases": {
+        "cli": 39
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses ../escape (path traversal) before writing anything, naming the rule: create-app ../escape --template minimal",
+      "phases": {
+        "cli": 39
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses .. (parent directory) before writing anything, naming the rule: create-app .. --template minimal",
+      "phases": {
+        "cli": 41
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses a/b (forward slash) before writing anything, naming the rule: create-app a/b --template minimal",
+      "phases": {
+        "cli": 40
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses a\\b (backslash) before writing anything, naming the rule: create-app a\\b --template minimal",
+      "phases": {
+        "cli": 40
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses /abs (absolute path) before writing anything, naming the rule: create-app /abs --template minimal",
+      "phases": {
+        "cli": 42
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses C:tricky (drive-relative path) before writing anything, naming the rule: create-app C:tricky --template minimal",
+      "phases": {
+        "cli": 43
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses My-App (upper case) before writing anything, naming the rule: create-app My-App --template minimal",
+      "phases": {
+        "cli": 52
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses 0app (leading digit) before writing anything, naming the rule: create-app 0app --template minimal",
+      "phases": {
+        "cli": 48
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses -leading (leading hyphen) before writing anything, naming the rule: create-app -leading --template minimal",
+      "phases": {
+        "cli": 48
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses _leading (leading underscore) before writing anything, naming the rule: create-app _leading --template minimal",
+      "phases": {
+        "cli": 46
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses fn (Rust keyword) before writing anything, naming the rule: create-app fn --template minimal",
+      "phases": {
+        "cli": 45
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses build (cargo's build directory) before writing anything, naming the rule: create-app build --template minimal",
+      "phases": {
+        "cli": 44
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses test (Rust's test library) before writing anything, naming the rule: create-app test --template minimal",
+      "phases": {
+        "cli": 44
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses con (Windows device name) before writing anything, naming the rule: create-app con --template minimal",
+      "phases": {
+        "cli": 49
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (over-long name) before writing anything, naming the rule: create-app xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx --template minimal",
+      "phases": {
+        "cli": 42
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > rejects an unknown template without touching the filesystem: create-app ok-name --template ../../etc",
+      "phases": {
+        "cli": 48
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > rejects --template with no value: create-app ok-name --template",
+      "phases": {
+        "cli": 46
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > rejects --template followed by another flag: create-app ok-name --template --dry-run",
+      "phases": {
+        "cli": 43
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > accepts a project name that happens to equal the template name: create-app minimal --template minimal --dry-run",
+      "phases": {
+        "cli": 45
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > --dry-run creates nothing: create-app dry-probe --template dashboard --dry-run",
+      "phases": {
+        "cli": 43
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > refuses to scaffold onto a dangling symlink: create-app dangling --template minimal",
+      "phases": {
+        "cli": 43
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 1
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolding > input validation > --version prints the package version: create-app --version",
+      "phases": {
+        "cli": 42
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: npm ci, frontend build, cargo check --locked: create-app e2e-minimal --template minimal",
+      "phases": {
+        "cli": 149,
+        "staging": 78
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "native-router template > compiles each actual scaffolded owner with independent declared props and island registrations: create-app native-page --template native-router",
+      "phases": {
+        "cli": 143,
+        "staging": 79
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "minimal template > compiles the actual scaffolded local page with one declared SERVER count and a Counter island: create-app declared-page --template minimal",
+      "phases": {
+        "cli": 139,
+        "staging": 71
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "minimal declared island source > scaffolds a declared Counter and a separate truly static native page: create-app island-page --template minimal",
+      "phases": {
+        "cli": 141,
+        "staging": 75
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "minimal declared island source > pairs actual Counter metadata with its native module and never mounts the native page in JavaScript: create-app island-page --template minimal",
+      "phases": {
+        "cli": 140,
+        "staging": 77
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "minimal declared island source > classifies the actual About source as static and removes its native selector: create-app island-page --template minimal",
+      "phases": {
+        "cli": 138,
+        "staging": 75
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "minimal declared island source > retains ordinary explicit Browser mounting with its separate zero default: create-app island-page --template minimal",
+      "phases": {
+        "cli": 135,
+        "staging": 66
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "minimal: esbuild inventory",
+      "installed": [
+        "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "node_modules/esbuild@0.28.2"
+      ],
+      "consumers": {
+        "@getforma/build": "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "@getforma/compiler": "node_modules/esbuild@0.28.2"
+      },
+      "optionalOmitted": [
+        "node_modules/@getforma/compiler/node_modules/esbuild@0.28.1"
+      ]
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: npm ci, frontend build, cargo check --locked: create-app e2e-dashboard --template dashboard",
+      "phases": {
+        "cli": 166,
+        "staging": 79
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "dashboard: esbuild inventory",
+      "installed": [
+        "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "node_modules/esbuild@0.28.2"
+      ],
+      "consumers": {
+        "@getforma/build": "node_modules/@getforma/build/node_modules/esbuild@0.28.1"
+      },
+      "optionalOmitted": []
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: npm ci, frontend build, cargo check --locked: create-app e2e-native-router --template native-router",
+      "phases": {
+        "cli": 142,
+        "staging": 79
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "native-router: esbuild inventory",
+      "installed": [
+        "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "node_modules/esbuild@0.28.2"
+      ],
+      "consumers": {
+        "@getforma/build": "node_modules/@getforma/build/node_modules/esbuild@0.28.1",
+        "@getforma/compiler": "node_modules/esbuild@0.28.2"
+      },
+      "optionalOmitted": [
+        "node_modules/@getforma/compiler/node_modules/esbuild@0.28.1"
+      ]
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: build:ssr emits real IR, not a placeholder: create-app e2e-ssr --template minimal",
+      "phases": {
+        "cli": 133,
+        "staging": 69
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: build:ssr emits real IR, not a placeholder: e2e-ssr (debug)",
+      "phases": {
+        "listening": 23,
+        "ready": 65
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell: create-app e2e-dr11 --template minimal",
+      "phases": {
+        "cli": 142,
+        "staging": 73
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell: e2e-dr11 (debug)",
+      "phases": {
+        "listening": 15,
+        "ready": 55
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line: create-app e2e-strict --template minimal",
+      "phases": {
+        "cli": 122,
+        "staging": 68
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: declared count reaches SSR and invalid bindings refuse before listening: create-app e2e-typed-props --template minimal",
+      "phases": {
+        "cli": 125,
+        "staging": 67
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: declared count reaches SSR and invalid bindings refuse before listening: e2e-typed-props (debug)",
+      "phases": {
+        "listening": 16,
+        "ready": 55
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: packed native island adopts without writes and static route requests no code in all engines: create-app e2e-island-static --template minimal",
+      "phases": {
+        "cli": 130,
+        "staging": 66
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: packed native island adopts without writes and static route requests no code in all engines: e2e-island-static (release)",
+      "phases": {
+        "listening": 8,
+        "ready": 56
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "minimal: chromium actual native island and static route",
+      "engine": "chromium",
+      "profile": "release",
+      "island": {
+        "before": {
+          "count": 7,
+          "hash": "7da448f287da96ce",
+          "nodes": 22
+        },
+        "adoption": {
+          "mutations": [],
+          "sameNodes": true,
+          "sameHost": true,
+          "count": "7"
+        },
+        "transitions": [
+          7,
+          8,
+          0,
+          1
+        ],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-76JJzhvwBlkdlRZsxHi7LZNuUueYOPVxX/hkjzf7oFQ=' 'strict-dynamic' 'self'; style-src 'nonce-76JJzhvwBlkdlRZsxHi7LZNuUueYOPVxX/hkjzf7oFQ=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "errors": [],
+        "violations": [],
+        "workers": []
+      },
+      "staticRoute": {
+        "route": "/about",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:61156/about",
+            "type": "document"
+          },
+          {
+            "url": "http://127.0.0.1:61156/_assets/app.8098e2c0.css",
+            "type": "stylesheet"
+          }
+        ],
+        "workers": [],
+        "executableScripts": 0,
+        "modulepreloads": 0,
+        "errors": [],
+        "violations": [],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-bbpmdePWW1HIr6SIjH+Hmj1imbFvCd3LWxX2R+0FA34=' 'strict-dynamic' 'self'; style-src 'nonce-bbpmdePWW1HIr6SIjH+Hmj1imbFvCd3LWxX2R+0FA34=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+      }
+    },
+    {
+      "name": "timing: browser chromium",
+      "id": "TIMING",
+      "kind": "browser chromium",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: packed native island adopts without writes and static route requests no code in all engines: chromium",
+      "phases": {
+        "launch": 575,
+        "checks": 1161
+      },
+      "ok": true,
+      "version": "156.0.8078.4"
+    },
+    {
+      "name": "minimal: firefox actual native island and static route",
+      "engine": "firefox",
+      "profile": "release",
+      "island": {
+        "before": {
+          "count": 7,
+          "hash": "7da448f287da96ce",
+          "nodes": 22
+        },
+        "adoption": {
+          "mutations": [],
+          "sameNodes": true,
+          "sameHost": true,
+          "count": "7"
+        },
+        "transitions": [
+          7,
+          8,
+          0,
+          1
+        ],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-FbWvTmbAjyC00eubdCmuA90SS9xNkFzCu5GyOdrJeb0=' 'strict-dynamic' 'self'; style-src 'nonce-FbWvTmbAjyC00eubdCmuA90SS9xNkFzCu5GyOdrJeb0=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "errors": [],
+        "violations": [],
+        "workers": []
+      },
+      "staticRoute": {
+        "route": "/about",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:61156/about",
+            "type": "document"
+          },
+          {
+            "url": "http://127.0.0.1:61156/_assets/app.8098e2c0.css",
+            "type": "stylesheet"
+          }
+        ],
+        "workers": [],
+        "executableScripts": 0,
+        "modulepreloads": 0,
+        "errors": [],
+        "violations": [],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-EsdZqnVg1s+k2rF7F65ru/oxdTUS0Htboy+hjxn+za4=' 'strict-dynamic' 'self'; style-src 'nonce-EsdZqnVg1s+k2rF7F65ru/oxdTUS0Htboy+hjxn+za4=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+      }
+    },
+    {
+      "name": "timing: browser firefox",
+      "id": "TIMING",
+      "kind": "browser firefox",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: packed native island adopts without writes and static route requests no code in all engines: firefox",
+      "phases": {
+        "launch": 1377,
+        "checks": 2025
+      },
+      "ok": true,
+      "version": "157.0"
+    },
+    {
+      "name": "minimal: webkit actual native island and static route",
+      "engine": "webkit",
+      "profile": "release",
+      "island": {
+        "before": {
+          "count": 7,
+          "hash": "7da448f287da96ce",
+          "nodes": 22
+        },
+        "adoption": {
+          "mutations": [],
+          "sameNodes": true,
+          "sameHost": true,
+          "count": "7"
+        },
+        "transitions": [
+          7,
+          8,
+          0,
+          1
+        ],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-oefGuNY/oUZqYtb473+/1kGja5QMXVclN4PfCVcOo9A=' 'strict-dynamic' 'self'; style-src 'nonce-oefGuNY/oUZqYtb473+/1kGja5QMXVclN4PfCVcOo9A=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+        "errors": [],
+        "violations": [],
+        "workers": []
+      },
+      "staticRoute": {
+        "route": "/about",
+        "requests": [
+          {
+            "url": "http://127.0.0.1:61156/about",
+            "type": "document"
+          },
+          {
+            "url": "http://127.0.0.1:61156/_assets/app.8098e2c0.css",
+            "type": "stylesheet"
+          }
+        ],
+        "workers": [],
+        "executableScripts": 0,
+        "modulepreloads": 0,
+        "errors": [],
+        "violations": [],
+        "servedPolicy": "default-src 'none'; script-src 'nonce-bDQtmOo073vWJprq7FM2oG5KqY6SzrKEozPS/bF1gX4=' 'strict-dynamic' 'self'; style-src 'nonce-bDQtmOo073vWJprq7FM2oG5KqY6SzrKEozPS/bF1gX4=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime"
+      }
+    },
+    {
+      "name": "timing: browser webkit",
+      "id": "TIMING",
+      "kind": "browser webkit",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: packed native island adopts without writes and static route requests no code in all engines: webkit",
+      "phases": {
+        "launch": 591,
+        "checks": 1845
+      },
+      "ok": true,
+      "version": "27.2"
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: typed navigation preserves its layout and works without JavaScript in all engines: create-app e2e-native-navigation --template native-router",
+      "phases": {
+        "cli": 159,
+        "staging": 81
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: typed navigation preserves its layout and works without JavaScript in all engines: e2e-native-navigation (release)",
+      "phases": {
+        "listening": 7,
+        "ready": 56
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "native-router: chromium actual typed navigation",
+      "engine": "chromium",
+      "profile": "release",
+      "navigation": {
+        "typedNavigations": 3,
+        "scripts": 1,
+        "persistentLayout": true,
+        "removedLeafReset": true,
+        "noJavaScript": true
+      }
+    },
+    {
+      "name": "timing: browser chromium",
+      "id": "TIMING",
+      "kind": "browser chromium",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: typed navigation preserves its layout and works without JavaScript in all engines: chromium",
+      "phases": {
+        "launch": 201,
+        "checks": 625
+      },
+      "ok": true,
+      "version": "156.0.8078.4"
+    },
+    {
+      "name": "native-router: firefox actual typed navigation",
+      "engine": "firefox",
+      "profile": "release",
+      "navigation": {
+        "typedNavigations": 3,
+        "scripts": 1,
+        "persistentLayout": true,
+        "removedLeafReset": true,
+        "noJavaScript": true
+      }
+    },
+    {
+      "name": "timing: browser firefox",
+      "id": "TIMING",
+      "kind": "browser firefox",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: typed navigation preserves its layout and works without JavaScript in all engines: firefox",
+      "phases": {
+        "launch": 598,
+        "checks": 1595
+      },
+      "ok": true,
+      "version": "157.0"
+    },
+    {
+      "name": "native-router: webkit actual typed navigation",
+      "engine": "webkit",
+      "profile": "release",
+      "navigation": {
+        "typedNavigations": 3,
+        "scripts": 1,
+        "persistentLayout": true,
+        "removedLeafReset": true,
+        "noJavaScript": true
+      }
+    },
+    {
+      "name": "timing: browser webkit",
+      "id": "TIMING",
+      "kind": "browser webkit",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: typed navigation preserves its layout and works without JavaScript in all engines: webkit",
+      "phases": {
+        "launch": 224,
+        "checks": 1248
+      },
+      "ok": true,
+      "version": "27.2"
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: serves each page as its browser shell, by declaration (ssr: false): create-app e2e-phase1 --template dashboard",
+      "phases": {
+        "cli": 164,
+        "staging": 70
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: serves each page as its browser shell, by declaration (ssr: false): e2e-phase1 (debug)",
+      "phases": {
+        "listening": 13,
+        "ready": 54
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: chart tooltip keeps API values as text under enforced policy in all engines: create-app e2e-dashboard-tooltip --template dashboard",
+      "phases": {
+        "cli": 148,
+        "staging": 69
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: chart tooltip keeps API values as text under enforced policy in all engines: e2e-dashboard-tooltip (release)",
+      "phases": {
+        "listening": 7,
+        "ready": 54
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "dashboard: chromium tooltip text and policy",
+      "engine": "chromium",
+      "profile": "release",
+      "interacted": true,
+      "tooltip": {
+        "normal": [
+          {
+            "hour": "00:00",
+            "values": [
+              "1,200",
+              "12"
+            ],
+            "hiddenOnLeave": true
+          },
+          {
+            "hour": "23:00",
+            "values": [
+              "1,300",
+              "10"
+            ],
+            "hiddenOnLeave": true
+          }
+        ],
+        "hostile": {
+          "hour": "<img data-forma-tooltip-probe src=\"/__forma_tooltip_probe__\" onerror=\"globalThis.__formaTooltipExecuted=true\">",
+          "values": [
+            "1,234",
+            "7"
+          ],
+          "hiddenOnLeave": true
+        },
+        "apiTextStayedText": true,
+        "violations": {
+          "normal": [],
+          "hostile": []
+        }
+      },
+      "csp": "default-src 'none'; script-src 'nonce-Wb6TcFalVtg0Hwef5obzmL+rlAtqQmyJtnmNgCF8cpE=' 'strict-dynamic' 'self'; style-src 'nonce-Wb6TcFalVtg0Hwef5obzmL+rlAtqQmyJtnmNgCF8cpE=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+      "pageErrors": [],
+      "violations": []
+    },
+    {
+      "name": "timing: browser chromium",
+      "id": "TIMING",
+      "kind": "browser chromium",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: chart tooltip keeps API values as text under enforced policy in all engines: chromium",
+      "phases": {
+        "launch": 192,
+        "checks": 1897
+      },
+      "ok": true,
+      "version": "156.0.8078.4"
+    },
+    {
+      "name": "dashboard: firefox tooltip text and policy",
+      "engine": "firefox",
+      "profile": "release",
+      "interacted": true,
+      "tooltip": {
+        "normal": [
+          {
+            "hour": "00:00",
+            "values": [
+              "1,200",
+              "12"
+            ],
+            "hiddenOnLeave": true
+          },
+          {
+            "hour": "23:00",
+            "values": [
+              "1,300",
+              "10"
+            ],
+            "hiddenOnLeave": true
+          }
+        ],
+        "hostile": {
+          "hour": "<img data-forma-tooltip-probe src=\"/__forma_tooltip_probe__\" onerror=\"globalThis.__formaTooltipExecuted=true\">",
+          "values": [
+            "1,234",
+            "7"
+          ],
+          "hiddenOnLeave": true
+        },
+        "apiTextStayedText": true,
+        "violations": {
+          "normal": [],
+          "hostile": []
+        }
+      },
+      "csp": "default-src 'none'; script-src 'nonce-Rur3OoEdnunLzVgZn2dDmfBAq5mokfM8NJvnbayH0Ao=' 'strict-dynamic' 'self'; style-src 'nonce-Rur3OoEdnunLzVgZn2dDmfBAq5mokfM8NJvnbayH0Ao=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+      "pageErrors": [],
+      "violations": []
+    },
+    {
+      "name": "timing: browser firefox",
+      "id": "TIMING",
+      "kind": "browser firefox",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: chart tooltip keeps API values as text under enforced policy in all engines: firefox",
+      "phases": {
+        "launch": 605,
+        "checks": 2370
+      },
+      "ok": true,
+      "version": "157.0"
+    },
+    {
+      "name": "dashboard: webkit tooltip text and policy",
+      "engine": "webkit",
+      "profile": "release",
+      "interacted": true,
+      "tooltip": {
+        "normal": [
+          {
+            "hour": "00:00",
+            "values": [
+              "1,200",
+              "12"
+            ],
+            "hiddenOnLeave": true
+          },
+          {
+            "hour": "23:00",
+            "values": [
+              "1,300",
+              "10"
+            ],
+            "hiddenOnLeave": true
+          }
+        ],
+        "hostile": {
+          "hour": "<img data-forma-tooltip-probe src=\"/__forma_tooltip_probe__\" onerror=\"globalThis.__formaTooltipExecuted=true\">",
+          "values": [
+            "1,234",
+            "7"
+          ],
+          "hiddenOnLeave": true
+        },
+        "apiTextStayedText": true,
+        "violations": {
+          "normal": [],
+          "hostile": []
+        }
+      },
+      "csp": "default-src 'none'; script-src 'nonce-CJERAJATTPfyKKut73u2kHmCgFZs86fy9EDh2tj3TUk=' 'strict-dynamic' 'self'; style-src 'nonce-CJERAJATTPfyKKut73u2kHmCgFZs86fy9EDh2tj3TUk=' 'self'; style-src-attr 'unsafe-inline'; worker-src 'self'; object-src 'none'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; require-trusted-types-for 'script'; trusted-types forma forma-runtime",
+      "pageErrors": [],
+      "violations": []
+    },
+    {
+      "name": "timing: browser webkit",
+      "id": "TIMING",
+      "kind": "browser webkit",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: chart tooltip keeps API values as text under enforced policy in all engines: webkit",
+      "phases": {
+        "launch": 211,
+        "checks": 2162
+      },
+      "ok": true,
+      "version": "27.2"
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: no locked crate needs a newer Rust than the template declares: create-app e2e-msrv-minimal --template minimal",
+      "phases": {
+        "cli": 157,
+        "staging": 71
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: no locked crate needs a newer Rust than the template declares: create-app e2e-msrv-dashboard --template dashboard",
+      "phases": {
+        "cli": 136,
+        "staging": 63
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: no locked crate needs a newer Rust than the template declares: create-app e2e-msrv-native-router --template native-router",
+      "phases": {
+        "cli": 131,
+        "staging": 74
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: a user's own cargo update keeps every crate within the template's rust-version: create-app e2e-update-minimal --template minimal",
+      "phases": {
+        "cli": 119,
+        "staging": 69
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: a user's own cargo update keeps every crate within the template's rust-version: create-app e2e-update-dashboard --template dashboard",
+      "phases": {
+        "cli": 135,
+        "staging": 63
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: a user's own cargo update keeps every crate within the template's rust-version: create-app e2e-update-native-router --template native-router",
+      "phases": {
+        "cli": 133,
+        "staging": 77
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal scaffolded as tracing, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it: create-app tracing --template minimal",
+      "phases": {
+        "cli": 121,
+        "staging": 70
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard scaffolded as serde, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it: create-app serde --template dashboard",
+      "phases": {
+        "cli": 135,
+        "staging": 65
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: build:ssr reads ssrEntryPoints by page name: create-app e2e-ssr-key --template minimal",
+      "phases": {
+        "cli": 134,
+        "staging": 71
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker: create-app e2e-headers-minimal --template minimal",
+      "phases": {
+        "cli": 130,
+        "staging": 72
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker: e2e-headers-minimal (debug)",
+      "phases": {
+        "listening": 20,
+        "ready": 56
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker: e2e-headers-minimal (debug)",
+      "phases": {
+        "listening": 16,
+        "ready": 56
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: every page answers no-store with a fresh nonce per fetch, and registers no service worker: create-app e2e-headers-dashboard --template dashboard",
+      "phases": {
+        "cli": 150,
+        "staging": 69
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > dashboard: every page answers no-store with a fresh nonce per fetch, and registers no service worker: e2e-headers-dashboard (debug)",
+      "phases": {
+        "listening": 13,
+        "ready": 54
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: scaffold CLI",
+      "id": "TIMING",
+      "kind": "scaffold CLI",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: every page answers no-store with a fresh nonce per fetch, and registers no service worker: create-app e2e-headers-native-router --template native-router",
+      "phases": {
+        "cli": 138,
+        "staging": 72
+      },
+      "budgets": {
+        "cli": 25000,
+        "staging": 25000
+      },
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: every page answers no-store with a fresh nonce per fetch, and registers no service worker: e2e-headers-native-router (debug)",
+      "phases": {
+        "listening": 15,
+        "ready": 57
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    },
+    {
+      "name": "timing: owned server",
+      "id": "TIMING",
+      "kind": "owned server",
+      "label": "scaffolded projects build (FORMA_SCAFFOLD_E2E=1) > native-router: every page answers no-store with a fresh nonce per fetch, and registers no service worker: e2e-headers-native-router (debug)",
+      "phases": {
+        "listening": 15,
+        "ready": 55
+      },
+      "budgets": {
+        "listening": 30000
+      },
+      "ok": true
+    }
+  ],
+  "cases": {
+    "total": 218,
+    "heavy": 24,
+    "required": [
+      "minimal: npm ci, frontend build, cargo check --locked",
+      "minimal: no locked crate needs a newer Rust than the template declares",
+      "minimal: a user's own cargo update keeps every crate within the template's rust-version",
+      "minimal: every page answers no-store with a fresh nonce per fetch, and registers no service worker",
+      "dashboard: npm ci, frontend build, cargo check --locked",
+      "dashboard: no locked crate needs a newer Rust than the template declares",
+      "dashboard: a user's own cargo update keeps every crate within the template's rust-version",
+      "dashboard: every page answers no-store with a fresh nonce per fetch, and registers no service worker",
+      "native-router: npm ci, frontend build, cargo check --locked",
+      "native-router: no locked crate needs a newer Rust than the template declares",
+      "native-router: a user's own cargo update keeps every crate within the template's rust-version",
+      "native-router: every page answers no-store with a fresh nonce per fetch, and registers no service worker",
+      "minimal: build:ssr emits real IR, not a placeholder",
+      "minimal: a corrupt module stops the server before it binds, and a failed render answers 500, with neither its error nor a shell",
+      "minimal: build:ssr is strict: a construct the server cannot render fails the build, naming its code, file and line",
+      "dashboard: serves each page as its browser shell, by declaration (ssr: false)",
+      "minimal scaffolded as tracing, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it",
+      "dashboard scaffolded as serde, a crate in its own graph: cargo --locked accepts the lockfile and plain cargo leaves it",
+      "minimal: build:ssr reads ssrEntryPoints by page name",
+      "cargo new accepts every project name the scaffolder accepts, and refuses every name it says cargo refuses",
+      "minimal: declared count reaches SSR and invalid bindings refuse before listening",
+      "minimal: packed native island adopts without writes and static route requests no code in all engines",
+      "dashboard: chart tooltip keeps API values as text under enforced policy in all engines",
+      "native-router: typed navigation preserves its layout and works without JavaScript in all engines"
+    ]
+  }
+}

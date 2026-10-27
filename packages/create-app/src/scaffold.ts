@@ -9,7 +9,7 @@ import * as fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
-export const TEMPLATES = ['dashboard', 'minimal'];
+export const TEMPLATES = ['dashboard', 'minimal', 'native-router'];
 
 /**
  * What the CLI tells a user each template is, in the picker and in `--help`.
@@ -27,6 +27,10 @@ export const TEMPLATE_INFO: Record<string, { title: string; description: string 
   dashboard: {
     title: 'dashboard',
     description: 'Client-rendered admin panel — 4 pages, 8 JSON API routes, SVG chart, dark theme',
+  },
+  'native-router': {
+    title: 'native-router',
+    description: 'Typed native navigation, persistent layout and Counter islands',
   },
   minimal: {
     title: 'minimal',

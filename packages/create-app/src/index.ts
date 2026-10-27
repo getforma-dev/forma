@@ -240,6 +240,11 @@ ${bold('Examples:')}
     console.log(dim('  • createFetch, createSignal, createShow, createComputed, createList, createEffect'));
     console.log(dim('  • Hand-rolled SVG chart, command palette (Cmd+K), Tailwind CSS v4'));
     console.log();
+  } else if (template === 'native-router') {
+    console.log(dim('  Native navigation is enabled by the generated group bootstrap.'));
+    console.log(dim('  The layout counter persists between Home and About; links also work without JavaScript.'));
+    console.log(dim('  Rebuild admin/ and restart the Rust server after source changes.'));
+    console.log();
   } else {
     console.log(dim('  Server-side rendering:'));
     console.log(dim(`  • ${runCmd} build:ssr  in admin/ — the server then renders the page from IR`));

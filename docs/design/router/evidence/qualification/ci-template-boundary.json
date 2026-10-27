@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-26T20:40:21.458368+00:00",
+  "scope": "CI template-harness correction only. The candidate/source lane still compiles actual native owner scaffolds; the historical published CLI instead proves refusal of its unavailable native-router template. Both use the same validated selected-CLI inventory; neither registers skipped tests.",
+  "sourceCommitBeforeRepair": "9d4aafee0c99cde4faff3f39a8fca2705e70a398",
+  "sourceSha256": {
+    "packages/create-app/tests/helpers.ts": "3fdf4f17e0a4b3866028212bc5aa2007440dc65c1647d3909cc9ff12c600fbe8",
+    "packages/create-app/tests/scaffold.test.ts": "b5147bbecb9f0a833f52cc4682830450be9ae933a2a966c666d8532deec9d05a",
+    "packages/create-app/tests/templates.test.ts": "df31cfeca8b88a5748e4bb256bd44c435a192664af90f8085f82b03926f7d77b"
+  },
+  "before": [
+    {
+      "platform": "ubuntu",
+      "jobUrl": "https://github.com/getforma-dev/forma/actions/runs/40394077438/job/121824340253",
+      "passed": 203,
+      "failed": 1,
+      "failure": "Published 3.1.0 CLI correctly refuses the unavailable native-router template; current-source test incorrectly required it.",
+      "logSha256": "67b54bfd80997cc189f5e485fccf3a04d5472910f83a031cee4197c72086f78d"
+    },
+    {
+      "platform": "windows",
+      "jobUrl": "https://github.com/getforma-dev/forma/actions/runs/40394077438/job/121824340105",
+      "passed": 203,
+      "failed": 1,
+      "failure": "Published 3.1.0 CLI correctly refuses the unavailable native-router template; current-source test incorrectly required it.",
+      "logSha256": "3a1d63911db39d28efd0956c286e0ffb3fd07398c4797e392913d524042daa36"
+    }
+  ],
+  "after": {
+    "sourceTemplates": {
+      "passed": 76,
+      "failed": 0,
+      "logSha256": "996f967faed5e92829a0ba49415523cb51de7b79f9a89fdca2874caeeb3ee368"
+    },
+    "publishedTemplates": {
+      "passed": 76,
+      "failed": 0,
+      "logSha256": "9bc0a885330d3c3f94f492b53a44726310046fddba23db2b6d5b31d875f5cc65"
+    },
+    "publishedCLI": {
+      "version": "3.1.0",
+      "tarball": "https://registry.npmjs.org/@getforma/create-app/-/create-app-3.1.0.tgz",
+      "integrity": "sha512-jUdy5YqklDhnYf/JN6d3r8eV+IwDgBMnX1aEPvtE2XNDTElzYnFSXQFTCMROs9sHkw7dDjAbh4nIc0e8WioolA==",
+      "recordSha256": "6128d634e629f821e06e3c6515d45b81840531491e008b0e46d555decb013e32"
+    }
+  },
+  "rawEvidenceDirectory": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ci-9d4aafee",
+  "limits": "These focused replays do not substitute for the corrected complete published/candidate CI jobs. The sealed runtime archives are unchanged."
+}

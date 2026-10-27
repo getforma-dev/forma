@@ -1,0 +1,101 @@
+{
+  "schema": "forma-router-recovery-scope-source-v1",
+  "scope": "Source-only D14-3.2-001 correction; not packed, independent-audit acceptance, publication or hosted soak",
+  "node": "24.22.0",
+  "finding": "Transferred browser/native owners remained active after irreversible navigation failure. Detach and dispose failed session before recovery, even at journal limit, preserving newer callback authority.",
+  "sourceFiles": [
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router/src/router.ts",
+      "sha256": "3af493df34a50da0f83b0187d18c3e525b2e1b3f9a5d4d42b45bed54aeba7c9c",
+      "bytes": 36044
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router/tests/revalidation-recovery.test.ts",
+      "sha256": "dbad7f29486a3bc93b6fc19bc5ea1d6e643c9190800666ff4abe6e077d60b82b",
+      "bytes": 6416
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/forma/packages/router/tests/native-recovery-lifetime.test.ts",
+      "sha256": "aa4b798172b5c786cf83198187d77bed98d66a7a3638c688fe78369afd847e40",
+      "bytes": 5210
+    }
+  ],
+  "checks": {
+    "routerSuite": {
+      "passed": 225,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "build": "passed",
+    "correctedBeforeFix": {
+      "failed": 6,
+      "passed": 6,
+      "mutation": "Remove only the seven-line failed-session cleanup block; restore source in finally"
+    },
+    "sourcePairedSize": {
+      "comparisons": [
+        {
+          "route": "/native/a",
+          "previousPlainGzip": 28456,
+          "currentPlainGzip": 28428,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12274
+        },
+        {
+          "route": "/native/b",
+          "previousPlainGzip": 28456,
+          "currentPlainGzip": 28429,
+          "positiveSharedDeltaGzip": 0,
+          "incrementGzip": 12273
+        }
+      ],
+      "incrementGzip": 12274,
+      "groupGzip": 40702,
+      "ceilings": {
+        "increment": 12288,
+        "group": 65536
+      },
+      "passed": true
+    }
+  },
+  "invalidAttempts": {
+    "paths": [
+      "recovery-scope-before.log",
+      "recovery-scope-after.log",
+      "native-recovery-scope.log"
+    ],
+    "reason": "Initial new controls registered onCleanup directly in render; Forma requires registering this cleanup inside createEffect. Retained for diagnostics, not failure proof."
+  },
+  "logs": [
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/recovery-scope-corrected-before-fix.log",
+      "sha256": "8b76dbaf01a7ea7d90b34c871f5ab0b377b1dbd74341170aa8bbbfc76c2eb54a",
+      "bytes": 4605
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/recovery-scope-corrected-fixtures.log",
+      "sha256": "030fbe2efcc8125023c003201c21f57f88db35fa922b8c8cd019a5914f3c4bf9",
+      "bytes": 311
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/recovery-scope-types.log",
+      "sha256": "ffd6e1892068ccfd0be45934461a466775fcb73a02d2d09cf45be58d4168ae3d",
+      "bytes": 57
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/recovery-scope-build.log",
+      "sha256": "19ea9713a4c845bbb576c36df05dc9ccf1778a97bc896c320416748173c1bacc",
+      "bytes": 507
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/router-size-scope-recovery/qualification.json",
+      "sha256": "4dbf69f4ab6b332dc629a59f41ddadb3c9635419944c824d060ee716682a686d",
+      "bytes": 1157
+    },
+    {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/router-size-scope-recovery/size.json",
+      "sha256": "edb1b242e60ad5e5de0c060c5de70a222d39f5d4db8fdde304c61f7158f5c493",
+      "bytes": 21564
+    }
+  ]
+}

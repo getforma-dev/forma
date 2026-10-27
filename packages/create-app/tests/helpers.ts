@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { expect } from 'vitest';
+import { TEMPLATES as SOURCE_TEMPLATES } from '../src/scaffold';
 import type { Browser } from '@playwright/test';
 import { commandInvocation } from '../../../scripts/portable-command.mjs';
 import { withOwnedServer } from '../../../scripts/owned-server.mjs';
@@ -17,6 +18,11 @@ export const REPO_ROOT = path.join(here, '..');
 export const TEMPLATES_DIR = path.join(REPO_ROOT, 'templates');
 export const CLI = process.env.FORMA_SCAFFOLD_CLI ?? path.join(REPO_ROOT, 'dist', 'index.js');
 export const CANDIDATE_CONTEXT = process.env.FORMA_SCAFFOLD_CONTEXT;
+// The selected CLI's authenticated inventory can predate the source templates.
+export const CLI_TEMPLATES: string[] = process.env.FORMA_SCAFFOLD_TEMPLATES
+  ? JSON.parse(process.env.FORMA_SCAFFOLD_TEMPLATES) : SOURCE_TEMPLATES;
+if (!Array.isArray(CLI_TEMPLATES) || !CLI_TEMPLATES.length || new Set(CLI_TEMPLATES).size !== CLI_TEMPLATES.length
+  || CLI_TEMPLATES.some(template => !SOURCE_TEMPLATES.includes(template))) throw new Error('unknown scaffold template inventory');
 const candidateScript = path.resolve(REPO_ROOT, '../../scripts/candidate-scaffold.mjs');
 
 /**

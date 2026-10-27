@@ -124,8 +124,12 @@ export const EXTERNAL_DEPS_OUTPUTS = Object.freeze([
   'dist/index.cjs',
   'dist/compiled.js',
   'dist/compiled.cjs',
+  'dist/navigation.js',
+  'dist/navigation.cjs',
   `${DEV_OUT_DIR}/index.js`,
   `${DEV_OUT_DIR}/index.cjs`,
   `${DEV_OUT_DIR}/compiled.js`,
   `${DEV_OUT_DIR}/compiled.cjs`,
+  `${DEV_OUT_DIR}/navigation.js`,
+  `${DEV_OUT_DIR}/navigation.cjs`,
 ]);

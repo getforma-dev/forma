@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+- FORMA-301: add opt-in `navigation` typed owner composition with compiler-declared
+  outlets, checked-prop/module reuse digests, an explicit complete-policy profile,
+  bounded native JSON and full documents sharing one initial island-state authority.
+  Preserve typed 404/410/500/503 statuses (including compression), admitted GET
+  redirects and declared bound action endpoints. Default document output and the
+  historical experimental harness remain compatible. Qualification is required
+  on the eventual release candidate; these changes do not declare publication.
+
 - FORMA-257: plain HTML for no-JavaScript routes without islands. The additive
   counted `RenderMode::Static` walk omits adoption markers, empty-text holders
   and injected row keys while retaining value, key and resource checks. The

@@ -1,0 +1,32 @@
+   IR emitted (real): proof-a.ir (1480 bytes, 1 islands)
+   IR emitted (real): proof-b.ir (1483 bytes, 1 islands)
+   IR emitted (real): proof-a.ir (1480 bytes, 1 islands)
+   IR emitted (real): proof-b.ir (1483 bytes, 1 islands)
+{
+  "app": "forma-router-proof",
+  "build": "fd535f312f59d75c",
+  "routes": {
+    "/proof/a": {
+      "mode": "ssr",
+      "js": [
+        "proof-group.b9bc2dd6d7a9.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 30551,
+      "budget_warn_threshold": 200000,
+      "ir": "proof-a.43f5de560348.ir"
+    },
+    "/proof/b": {
+      "mode": "ssr",
+      "js": [
+        "proof-group.b9bc2dd6d7a9.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 30551,
+      "budget_warn_threshold": 200000,
+      "ir": "proof-b.3b409ecab892.ir"
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "observedAt": "2026-10-26T16:06:05.314Z",
+  "origin": "http://127.0.0.1:51216",
+  "scope": "Experimental native two-route/static-shell proof; not nested-layout, packed-release or complete ticket qualification.",
+  "browsers": [
+    {
+      "engine": "webkit",
+      "version": "27.2"
+    }
+  ],
+  "results": [
+    {
+      "engine": "webkit",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"i\":99,\"r\":{\"kind\":\"failed\",\"reason\":\"Attempt to use history.pushState() more than 100 times per 10 seconds\"}}\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:117:12\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:114:3"
+    }
+  ],
+  "failures": [
+    {
+      "engine": "webkit",
+      "name": "100 route cycles keep one scope and exactly one click handler",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"i\":99,\"r\":{\"kind\":\"failed\",\"reason\":\"Attempt to use history.pushState() more than 100 times per 10 seconds\"}}\n    at file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:117:12\n    at async scenario (file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:19:7)\n    at async file:///Users/victorvillacis/dev/Forma/work/FORMA-301/forma/experiments/forma-router/browser-proof.mjs:114:3"
+    }
+  ],
+  "clientSha256": "2a3fb31c3bc752d4715154322dc5306fab598f0fc408ec865d4ebae5b50e0c99",
+  "manifest": {
+    "version": 2,
+    "writer": "3.1.0",
+    "app": "forma-router-proof",
+    "build": "3902e74a8f7c9804",
+    "aliases": {
+      "proof-group.js": "proof-group.f3a4761a849b.js",
+      "proof-a.ir": "proof-a.43f5de560348.ir",
+      "proof-b.ir": "proof-b.3b409ecab892.ir",
+      "proof-a.js": "proof-group.f3a4761a849b.js",
+      "proof-b.js": "proof-group.f3a4761a849b.js"
+    },
+    "assets": {
+      "proof-a.43f5de560348.ir": {
+        "immutable": true,
+        "integrity": "sha384-yhKqomMpUlrt3xGZb6gniVmclO5sm0VyXmIkuri5EcL5cTDK9fnhU6qoIwMHq3NN"
+      },
+      "proof-b.3b409ecab892.ir": {
+        "immutable": true,
+        "integrity": "sha384-C9xCXsx6WZAEKjB0SQICzGf8cm/Fk1bjJDDALsXgCMiTaGuFYyrXy5iW4LUAsuhm"
+      },
+      "proof-group.f3a4761a849b.js": {
+        "immutable": true,
+        "integrity": "sha384-BU5E5gSQMIEGDCpzeDD8lQfX1o/yei9/1NS2GSFQP6SagnDHVOpBTUmMMueetcXT"
+      }
+    },
+    "routes": {
+      "/proof/a": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.f3a4761a849b.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 28600,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-a.43f5de560348.ir"
+      },
+      "/proof/b": {
+        "mode": "ssr",
+        "js": [
+          "proof-group.f3a4761a849b.js"
+        ],
+        "css": [],
+        "fonts": [],
+        "total_size_br": 28600,
+        "budget_warn_threshold": 200000,
+        "ir": "proof-b.3b409ecab892.ir"
+      }
+    }
+  },
+  "passed": false
+}

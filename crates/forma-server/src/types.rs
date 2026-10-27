@@ -165,6 +165,10 @@ pub enum RouteMode {
 /// Per-route asset references.
 #[derive(Debug, Clone, Deserialize)]
 pub struct RouteAssets {
+    /// Compiler-verified owner and outlet for an opt-in native navigation group.
+    #[cfg(feature = "navigation")]
+    #[serde(default)]
+    pub navigation: Option<RouteNavigation>,
     /// Explicit browser or server rendering, independent of file availability.
     pub mode: RouteMode,
     /// JS modules for this route, in load order. An empty list on an SSR route
@@ -184,6 +188,19 @@ pub struct RouteAssets {
     /// Required for SSR, absent for an intentional browser route.
     #[serde(default)]
     pub ir: Option<String>,
+}
+
+/// Compiler/build declaration for one independently rendered navigation owner.
+#[cfg(feature = "navigation")]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RouteNavigation {
+    /// Shared verified bootstrap group.
+    pub group: String,
+    /// Owner identity within that group.
+    pub owner: String,
+    /// Literal empty div outside all island subtrees, or no child outlet.
+    pub outlet: Option<String>,
 }
 
 impl RouteAssets {
@@ -215,6 +232,19 @@ impl<'de> Deserialize<'de> for AssetManifest {
                 {
                     return Err(serde::de::Error::custom(format!(
                         "MANIFEST-103 missing or non-string SHA-384 integrity for {name:?}"
+                    )));
+                }
+            }
+        }
+        // The reserved navigation capability must not disappear as an unknown
+        // serde field when this reader was built without its feature. Ordinary
+        // forward-compatible fields retain their existing behavior.
+        #[cfg(not(feature = "navigation"))]
+        if let Some(routes) = value.get("routes").and_then(serde_json::Value::as_object) {
+            for (pattern, route) in routes {
+                if route.get("navigation").is_some() {
+                    return Err(serde::de::Error::custom(format!(
+                        "MANIFEST-103 route {pattern}: native navigation capability requires the forma-server navigation feature"
                     )));
                 }
             }
@@ -333,6 +363,23 @@ impl AssetManifest {
             }
             if route.is_static_ssr() && !route.modulepreload.is_empty() {
                 return Err(format!("MANIFEST-103 route {pattern}: static SSR must not declare module preloads without a JavaScript entry"));
+            }
+            #[cfg(feature = "navigation")]
+            if let Some(nav) = &route.navigation {
+                if !crate::navigation::identifier(&nav.group)
+                    || !crate::navigation::identifier(&nav.owner)
+                    || nav
+                        .outlet
+                        .as_deref()
+                        .is_some_and(|name| !crate::navigation::identifier(name))
+                    || route.mode != RouteMode::Ssr
+                    || route.js.len() != 1
+                    || !route.modulepreload.is_empty()
+                {
+                    return Err(format!(
+                        "MANIFEST-103 route {pattern}: invalid native navigation owner declaration"
+                    ));
+                }
             }
             for file in route
                 .js
