@@ -71,7 +71,7 @@ The complete handle boundary catches unwinding request faults, including custom 
 
 The old `try_render`, tuple loader, public IrModules/RenderMode, PageOutput, render_page, caller-nonce renderer and raw config_script are removed. [The previous staged README](../../docs/archive/2026-10-15-bound-render/forma-server-README.md) is preserved for migration context. The maintained minimal and dashboard templates use the current typed-page and explicit Browser APIs. Publication is controlled by the release milestone gates and trusted-publishing workflow.
 
-The [3.0 migration guide](../../docs/UPGRADING-3.0.md) covers startup, request metadata, limits and deployment profiles.
+Use the [declared-props guide](../../docs/DECLARED-PROPS.md) for typed startup and request data, and the [routing guide](../../docs/ROUTING.md) for native navigation and deployment contracts.
 
 Asset serving, opt-in checked service-worker configuration and the named preview frame retain their existing APIs. See their module documentation and [release runbook](../../docs/RELEASING.md).
 

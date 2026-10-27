@@ -1,5 +1,14 @@
 # FORMA-301 qualification ledger
 
+## Current release disposition
+
+Stable [Forma 3.2.0 is published](../../release/3.2-PUBLICATION.md). That record
+identifies the completed final-source/package checks, bounded manual evidence,
+explicitly waived N7/soak work and separate website rollout. The original rows
+below retain their historical scopes and do not restore superseded release gates.
+
+## Historical feature and candidate ledger
+
 2026-10-26. This ledger maps every one of the **57 frozen RT IDs** to current
 implementation evidence or an explicit remaining gate. It does not edit
 [the design acceptance matrix](acceptance-matrix-design.md), and a row pointing
@@ -8,12 +17,12 @@ to source tests is not a claim of complete packed-release qualification.
 The later [3.2 candidate supplement](qualification-3.2.md) records the fresh
 862d native, resource, limits and history campaigns and their exact identities.
 The historical rows and receipts below remain unchanged in scope; later source
-or archive identities are not silently substituted. Publication, current-source
-P17/D14 and stable manual/production acceptance remain pending.
+or archive identities are not silently substituted. At that checkpoint, publication, current-source P17/D14 and stable
+manual/production acceptance remained pending.
 
-## Release preparation after the feature qualification
+## Historical release preparation after the feature qualification
 
-The current source is prepared as the coordinated **3.2.0-rc.1** candidate.
+That source was prepared as the coordinated **3.2.0-rc.1** candidate.
 The website rollout now includes the shared router, versioned guides, a native lab
 and a downloadable routed application. The dashboard uses the browser adapter.
 These are later changes; the feature receipts below remain bound to their

@@ -1,7 +1,7 @@
 # Unified releases
 
 Forma 3.2.0 coordinates eight packages, including optional `@getforma/router`.
-The current source prepares stable 3.2.0; its
+Stable 3.2.0 is published; its
 [release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0) is the
 publication authority. Historical 3.0/3.1 records keep their seven-package
 inventory, and published 3.2 prereleases keep their original outcomes.
@@ -19,6 +19,16 @@ historical 3.0 L-66-QUOTA deferral remains distinct: it promised a future soak
 and required an authenticated published RC. Never reuse a tag or version.
 Read `scripts/release-contracts.json` for actual milestone readiness; a version
 string or a pending checklist does not authorize publication.
+
+## Public documentation baseline
+
+Forma 3.2.0 is the public launch baseline. Public entry points explain how to
+build with the current release; earlier releases and migration notes belong in
+the release history. Keep existing historical records intact. Record subsequent
+changes in the affected package changelogs. Add upgrade guidance when a change
+requires action in an application built against the public baseline or a later
+release; do not create an upgrade sequence merely because internal versions
+existed before launch.
 
 ## Prepare and test
 

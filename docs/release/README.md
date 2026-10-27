@@ -1,17 +1,19 @@
 # Release documentation
 
-The current source prepares **Forma 3.2.0**, with eight coordinated packages and
+**Forma 3.2.0 is published**, with eight coordinated packages and
 the optional router. The [stable release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0)
-is the publication authority. See the [3.2 upgrade guide](../UPGRADING-3.2.md)
-and [routing guide](../ROUTING.md) for application instructions.
+is the publication authority. Read the [publication and acceptance outcome](3.2-PUBLICATION.md).
+For application instructions, start with the [scaffolder](../../packages/create-app/README.md)
+and [routing guide](../ROUTING.md).
 
 The maintainer approved a [streamlined release](3.2-PERFORMANCE-DECISION.md):
 retain source security, core correctness, exact-source audit, ordinary CI,
 tagged packed qualification, artifact integrity and trusted publishing. Waive
 the extra timing campaign and active soak, without claiming those passed, along
 with extra RC publication solely for soak inputs and the staged rollback exercise.
-The stable website, docs, examples and downloads update together after registry
-publication; no additional public RC preview is planned.
+The stable website, current docs, examples and downloads are deployed together
+from the published 3.2.0 packages; the [publication outcome](3.2-PUBLICATION.md)
+records the actual image identity and live acceptance.
 
 The [router implementation record](../design/router/README.md) preserves the
 research, design and qualification evidence. Published
@@ -28,6 +30,15 @@ RC1's failed record job and RC2's inventory-only recovery remain in the
 - [Support and recall](SUPPORT-AND-RECALL.md): maintenance windows, security fixes and version recall.
 - [Packed verification evidence](P17-EVIDENCE.md): evidence structure and validation.
 - [RC audit and burn-in](RC-BURN-IN.md): audit identity, active work and later completion verification.
+
+## Historical migration notes
+
+These preserve changes between internal development baselines for maintainers.
+New applications start directly with Forma 3.2.0; no upgrade sequence is needed.
+
+- [3.0 migration notes](../UPGRADING-3.0.md) and [template comparison](../../packages/create-app/docs/UPGRADING-3.0.md).
+- [3.0 to 3.1 migration notes](../UPGRADING-3.1.md).
+- [3.2 migration notes](../UPGRADING-3.2.md).
 
 ## Dated 3.0 records
 

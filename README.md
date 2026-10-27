@@ -10,7 +10,7 @@ with typed request data. Interactive islands adopt the server's existing DOM.
 The Rust rendering path needs no JavaScript server runtime.
 
 **Forma 3.2.0** coordinates eight packages, including the optional router.
-Start with the [documentation](docs/README.md), [3.2 upgrade guide](docs/UPGRADING-3.2.md),
+Start with the [documentation](docs/README.md), [application setup](packages/create-app/README.md),
 or [release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0).
 Read the [routing guide](docs/ROUTING.md) and [router API](packages/router/README.md)
 for browser navigation, persistent layouts and typed native transitions.
@@ -45,7 +45,7 @@ That path does not require Rust or FMIR.
 
 Native compilation accepts a [defined subset](packages/compiler/docs/subset.md),
 not arbitrary TypeScript execution. Unsupported native source fails with a coded
-diagnostic; Browser mode is an explicit choice. Forma 3.0 does not provide React
+diagnostic; Browser mode is an explicit choice. Forma 3.2 does not provide React
 component compatibility, JavaScript SSR, streaming native pages or an integrated
 server-component caching layer. Application APIs, authentication and storage
 remain application responsibilities. See [architecture](docs/ARCHITECTURE-3.0.md).

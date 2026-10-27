@@ -1,6 +1,15 @@
-# FORMA-301: 3.2 candidate qualification
+# FORMA-301: 3.2 qualification
 
-## Stable release preparation — revised 2026-10-27 decision
+## Current stable release
+
+[Forma 3.2.0 publication and acceptance](../../release/3.2-PUBLICATION.md) is the
+current disposition. Main CI, the tagged P17 and browser engines, both registry
+publishers and DS12 completed successfully. Extra N7/soak work is explicitly
+waived. The dated checkpoints and all 57 original row dispositions below remain
+historical evidence, including their original pending requirements and failures;
+they do not reopen requirements superseded by the maintainer decision.
+
+## Historical stable preparation — revised 2026-10-27 decision
 
 The maintainer directed a streamlined stable 3.2.0 release. The
 [decision](../../release/3.2-PERFORMANCE-DECISION.md) explicitly waives the extra
@@ -29,7 +38,7 @@ precede publication. Original checkpoints below retain their measured identities
 failed results and then-applicable requirements.
 
 
-## Successor status — 2026-10-27 UTC
+## Historical successor status — 2026-10-27 UTC
 
 [3.2.0-rc.2 is published](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
 from `3b6c7766a1b47558e666f76236a53697b3737bde`: eight registry archives,

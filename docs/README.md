@@ -1,7 +1,11 @@
 # Forma documentation
 
-Forma 3.2.0 coordinates eight packages, including the optional router. The
-[3.2 upgrade guide](UPGRADING-3.2.md) explains version alignment and migration.
+Forma 3.2.0 is the public launch baseline for new applications. It coordinates
+eight packages, including the optional router. Start with the
+[scaffolder](../packages/create-app/README.md) or the
+[browser core quickstart](../packages/core/README.md), then add the capabilities
+your application needs. Use matching 3.2.0 package versions and commit both
+npm and Cargo lockfiles when using the native stack.
 The [release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0)
 records publication; historical decisions and evidence remain in the
 [release archive](release/README.md).
@@ -10,7 +14,7 @@ records publication; historical decisions and evidence remain in the
 
 | Need | Start here |
 |---|---|
-| Understand the rendering choices and tradeoffs | [3.0 architecture](ARCHITECTURE-3.0.md) |
+| Understand the rendering choices and tradeoffs | [Stack architecture](ARCHITECTURE-3.0.md) |
 | Start a Rust + TypeScript app | [Scaffolder](../packages/create-app/README.md) and [rendering modes](../packages/create-app/docs/RENDERING-PHASES.md) |
 | Build browser UI or a static site | [Core quickstart](../packages/core/README.md) and [API](../packages/core/docs/API.md) |
 | Use Rust request data in a page | [Declared props](DECLARED-PROPS.md) and [server API](../crates/forma-server/README.md) |
@@ -19,9 +23,7 @@ records publication; historical decisions and evidence remain in the
 | Use the explicit HTML runtime | [HTML runtime](../packages/core/docs/HTML-RUNTIME.md) |
 | Know what compiles natively | [Admitted subset and build diagnostics](../packages/compiler/docs/subset.md) |
 | Configure a build or deployment | [Build package](../packages/build/README.md) |
-| Upgrade to published 3.0 | [Upgrade guide](UPGRADING-3.0.md) and [compatibility](compatibility.md) |
-| Upgrade to published 3.1 | [3.0 → 3.1 upgrade guide](UPGRADING-3.1.md) |
-| Upgrade an application to 3.2 | [3.2 upgrade guide](UPGRADING-3.2.md) |
+| Check package and runtime compatibility | [Compatibility contract](compatibility.md) |
 | Diagnose a failure | [Diagnostic catalogue](DIAGNOSTICS.md) |
 
 ## Contracts and security
@@ -42,8 +44,9 @@ maintainer procedures; it is not required to build an application.
 
 ## Release status and history
 
-- [3.0 as-built summary](release/V3-AS-BUILT.md): actual publication, qualification,
-  completed post-release soak and remaining limits.
+- [3.2 publication and router acceptance](release/3.2-PUBLICATION.md): completed
+  qualification, actual publication, explicit waivers and website rollout.
+
 - [Release records index](release/README.md): current procedures versus dated evidence.
 - [Repository/documentation layout](REPOSITORY-LAYOUT.md): public documentation,
   internal work records and older repository maintenance.

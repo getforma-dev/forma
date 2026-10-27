@@ -18,8 +18,6 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 > **[the stack architecture](https://github.com/getforma-dev/forma/blob/main/docs/ARCHITECTURE-3.0.md)**
 > — it explains the pipeline. All eight source packages live in
 > [getforma-dev/forma](https://github.com/getforma-dev/forma) and publish as one set.
-> Existing 0.6.x projects can follow the
-> [3.0 template migration](docs/UPGRADING-3.0.md).
 
 ## Usage
 
@@ -76,12 +74,10 @@ exists.
 | `minimal` | Browser, or native SSR with `npm run build:ssr` | Rust server + a Counter page and a static About page |
 | `native-router` | Native SSR with optional owned navigation | Persistent layout, typed owner branches, ordinary links and history |
 
-`native-router` is included in 3.2.0; it is absent from
-published 3.0/3.1 archives. For unpublished changes use the documented packed
-candidate workflow and select `--template native-router` from that candidate CLI.
-The 3.2 set adds `@getforma/router` to this template and the dashboard. The dashboard remains an
-explicit Browser application, with retained layout and routed page ownership.
-The minimal template keeps its existing dependency graph and rendering behavior. See its
+`native-router` and `dashboard` include `@getforma/router`. The dashboard uses
+Browser rendering with a retained layout and routed page ownership. The minimal
+template uses ordinary document navigation and does not require the router.
+See the native router starter’s
 [ownership and deployment guide](templates/native-router/README.md) and the
 [connected routing walkthrough](../../docs/ROUTING.md).
 
