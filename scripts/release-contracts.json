@@ -125,8 +125,8 @@
           "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78"
         },
         "FORMA-145 documentation": {
-          "status": "pending",
-          "scope": "3.2 routing, scaffold, compatibility and upgrade guides match the coordinated candidate; published 3.0/3.1 records remain historical"
+          "status": "done",
+          "scope": "3.2 router APIs, route profiles, scaffold, compatibility, upgrade and release guides match the coordinated candidate; the 57-row current qualification ledger and exact evidence index are independently reviewed. Historical 3.0/3.1 and failed attempts retain their identities; publication, device and deployment outcomes are not anticipated."
         },
         "FORMA-116": {
           "status": "done",
@@ -173,12 +173,12 @@
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         },
         "FORMA-301 candidate": {
-          "status": "pending",
-          "scope": "exact-source 3.2 candidate CI, all eight sealed archives, all three starters, packed native navigation, original paired size limits and hosted P17; prior same-version development packs remain historical evidence"
+          "status": "done",
+          "scope": "Prepared 3.2.0-rc.1 product/harness source 4c59db07 passed current CI 40423335934 and engines/security/budgets/scaffold-cache lanes; hosted P17 40423336544 authenticates all eight DS11 archives and three starters, with 75/75 checks, unchanged performance floors and complete cleanup. The same final archive set passes native90 and paired 12,287/12,288 B incremental and 40,715/65,536 B group limits. Later factual documentation and gate-completion deltas are independently reviewed; exact final main/tag CI and tagged P17 remain mandatory."
         },
         "FORMA-301 publisher": {
-          "status": "pending",
-          "scope": "reviewed first-router bootstrap confined to the qualified v3.2.0-rc.1 tag archive, actual temporary npm-publish credential readiness, and tested version-aware monitoring preparation; real trusted-publisher enrollment and five-package live monitoring follow the verified first publication"
+          "status": "done",
+          "scope": "The reviewed first-router bootstrap is confined to the qualified v3.2.0-rc.1 router archive; actual npm-publish environment credential readiness is recorded, including the explicitly authorized broader seven-day token exception. Five-package observer and eight-package registry policy are staged and tested before source freeze, preserving historical readers and missing-package failure. Actual publication, immediate secret removal/token revocation, trusted-publisher enrollment and live registry observation remain post-publication obligations."
         }
       }
     },

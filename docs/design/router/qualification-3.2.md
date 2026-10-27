@@ -35,7 +35,7 @@ corresponding Forma archive checksum cascade, with dependency versions unchanged
 The fresh current paired-size replay (M4) also passes at 12,287 B incremental and
 40,715 B whole-group gzip against the unchanged ceilings, linked to N4 and its
 eight original archives. The [complete hosted P17](https://github.com/getforma-dev/forma/actions/runs/40423336544)
-remains pending. All five current 4c59 pull-request CI planes pass: full CI
+now passes all 75 checks with independently authenticated original artifacts. All five current 4c59 pull-request CI planes pass: full CI
 (including the Windows candidate starter), three-engine E2E, budgets, scaffold
 release cache and security mutation probes. These are current branch results,
 not future main/tag CI or the separate full Nightly mutation campaign.
@@ -55,14 +55,17 @@ not interchangeable.
 |---|---|---|
 | N4 / N32 | Separate 4c59 and 862d campaigns each pass 90/90 native cases across three engines; no input/output drift; owned processes stopped | No screen reader, physical device or production claim |
 | M4 / M32 | Separate current and earlier archive measurements each report 12,287 B incremental gzip; 40,715 B whole group | Unchanged 12,288/65,536 B ceilings; one byte incremental headroom |
-| H32 | 117/117 URL/history/blocker/redirect/click cases across three engines | Actual BFCache restoration remains unobserved |
+| H32 | 117/117 URL/history/blocker/redirect/click cases across three engines | Actual BFCache witness is recorded separately as BF32 |
 | O32 | 1,500 ownership cycles and 18 causal negative controls | Tracked application resources, not a global/native-worker leak proof |
 | L32 / LS32 | 44 API/model limit cases and two corrected scroll-bound regressions | HappyDOM, fake clock/simulated POP and diagnostic instrumentation are explicit |
 | LB32 | 45 real-browser/HTTP recovery/clock cases across three engines | Synthetic protocol admission is separate from Rust/proxy attestation |
 | PF32 | Four fixed timing cells pass; bounded heap observation retained | Document-control comparison; no physical-device or global leak claim |
 | SK32 | 54/54 scroll/prefetch checks: 48 positive assertions and six causal negatives | Public HTML adapter, controlled readiness/action admission, actual browser coordinates |
-| CI4 | Five current 4c59 PR CI planes pass, including platform starters | Future main/tag CI, whole P17 and full Nightly mutation remain separate |
-| MAC32 | User confirms the six Mac keyboard/VoiceOver/Reduce Motion tasks: “ok done all good” | No per-step notes; iPhone and genuine BFCache remain pending |
+| P174 | Current hosted P17 passes 75/75 in 1,240.829 s against the unchanged 1,800 s limit | Read-only rehearsal; future main/tag publication and D14 remain separate |
+| CI4 | Five current 4c59 PR CI planes pass, including platform starters | Future main/tag CI, hosted P17 and original Nightly have separate receipts |
+| BF32 | One genuine trusted Chromium BFCache restore; synchronous root revocation and one recovery GET | Public no-cache/no-cookie BrowserAdapter only; no private/native or all-engine eligibility claim |
+| MUT32 | Original 328-mutant campaign passes: 326 caught, two actual survivors; all 169 security and 98 expression mutants caught | Measured source 988; 617 unchanged inputs establish applicability, not final-source execution |
+| MAC32 | User confirms the six Mac keyboard/VoiceOver/Reduce Motion tasks: “ok done all good” | No per-step notes; physical iPhone remains pending |
 | ASC32 | 90/90 strict-CSP native action/security cases, including all 15 new form/error assertions | Actual fixture handlers; not production authorization or proxy acceptance |
 | ADF32 / PEER32 | Separate duplicate-core diagnostic 3/3 and strict-peer lock-only resolution 2/2 | Diagnostic CSP exception is separate; peer resolution is not another full install |
 | AS8 | Earlier 8ee: 75 sealed-profile cases, three separate duplicate-core diagnostic cases and peer-resolution controls | Historical product identity, preserved after the separate complete ASC32 replay |
@@ -139,6 +142,69 @@ owned-process cleanup pass. The first attempt failed before measurement because
 `dist-next` was missing; its receipt is preserved. The unchanged application
 build supplied those files before the successful complete second attempt.
 
+## Genuine public-profile BFCache witness
+
+A separately declared public BrowserAdapter profile now supplies one actual
+headed Chromium 156 restore. All authored responses use `Cache-Control: no-cache`,
+with no cookies, authorization or private content. A trusted `pageshow` has
+`persisted=true` and the original Document/token before the router runs; immediately
+after the handler the same Document has an empty router root. Exactly one recovery
+GET then creates a new Document/token. Products and harness remain unchanged and
+owned processes stop cleanly. Only Playwright’s default BFCache-disabling argument
+was omitted; the complete remaining launch arguments are retained.
+
+This witnesses the common coordinator’s actual restore/recovery behavior. It does
+not establish private/native `no-store` eligibility, a universal public-cache
+guarantee, all-engine behavior or physical-device acceptance. The earlier headed
+`no-store` diagnostic remains **not exercised**, with `persisted=false` and recorded
+cache-control/browsing-instance reasons. Its policy was not weakened or its result
+rewritten to obtain the public-profile witness.
+
+## Original full mutation campaign
+
+The [original hosted Nightly run](https://github.com/getforma-dev/forma/actions/runs/40412642649)
+passes on measured source `988893020498004844a92652c25e86ecf961a46f`. Original artifact
+bytes and all 993 raw files are retained. Reclassification of all 328 scored rows
+finds **326 caught, two survived, zero equivalent and zero unqualified**; the raw
+99.3902% result exceeds the unchanged 85% floor. All 169 security mutants and all
+98 expression mutants are caught. The clean before/restored baselines each execute
+4,320 tests without skips and restore exactly.
+
+`list/small-threshold-1` and `list/small-threshold-huge` are genuine survivors,
+not reclassified equivalents: changing the list strategy affects public NaN-key
+identity semantics. Their original process/report/log evidence remains counted.
+All 617 subject/oracle/dependency/toolchain input entries are identical through
+4c59 and the documentation-only 4948 commit. That establishes applicability;
+it does not relabel the hosted execution as a later source run. Independent review
+(MUTREVIEW32) authenticates all 328 raw classifications, all three provider ZIPs and
+993 + 4 + 5 extracted files. It accepts this applicable core campaign; whole-release
+D14 acceptance remains separate.
+
+## Current whole hosted P17
+
+The original current 4c59 run, attempt 1, passes **75/75** uniquely named checks
+in **1,240.829 seconds**, below the unchanged 1,800-second limit. The independent
+review authenticates the successful pack/verify jobs, DS11, all eight archives and
+artifact 12699851463; its ZIP SHA-256 is
+`2c5cac3c43c00405a1e0f0b14668730ef421f2723e4f449866fc1fdf5c917b3e`.
+The full original P17 report hashes to
+`64b421156a709feabe1c67df478fc331e0a8e631493880bfa720f2a649f04e59`.
+All three starters are exercised with public packed-product resolution.
+
+All 198 raw performance records and 11 producer hashes revalidate. The five N1
+shapes retain 20,000 samples each and pass both the absolute and authenticated
+published-3.1 predecessor-relative floors without normalization or changed limits.
+Decoder p95 is 8.6/20.5 ms for its two fixed shapes. Forty cold mobile visits retain
+zero p95 TBT and no exceptional startup tasks. The 2,082 hostile cases, 100,000
+expression cases and their actual counterfactual controls pass; owned-process
+cleanup is complete. These results are not substituted from the earlier failed
+862d or successful d3 runs.
+
+This is a read-only `workflow_dispatch` rehearsal, not the eventual tag’s own
+qualification/publication or independent whole-release D14 acceptance. Original
+pending milestone fields remain untouched in the raw result; later factual gate
+closure is reviewed separately before the audit freeze.
+
 ## Retained hosted qualification failure
 
 The [862d P17 run](https://github.com/getforma-dev/forma/actions/runs/40421106022)
@@ -153,7 +219,7 @@ The failed run recorded an AMD EPYC 7763; the published 3.1 baseline and the
 recorded EPYC 9V45. The d3/862d producer and input comparisons support hardware
 variation as a possible explanation, not a controlled causal proof. No hardware
 normalization, threshold change or result substitution is applied. A new current
-whole-P17 pass must stand on its own.
+whole-P17 pass must stand on its own; P174 does so with a separate complete original receipt.
 
 ## Disposition of the 57 frozen requirements
 
@@ -166,15 +232,15 @@ Historical/source keys refer to the unchanged links in the previous ledger.
 | RT-E01 | historical-design | The frozen research manifest/map retains 105 questions, 49 snapshot files, immutable upstream pins, licenses and failed/bounded REA attempts. | Source inspection remains distinct from upstream execution; preserved research is not re-certified as a new browser run. |
 | RT-P01 | N4, N32, ADF32, PEER32 | N4/N32 install isolated public exports and one Cargo identity per Forma crate. Offline strict-peer lock-only resolution accepts compatible packages and refuses published 3.1 core with ERESOLVE; all engines refuse an independent duplicate core while the original succeeds. | Peer-resolution commands are not a second full install. Duplicate-core diagnostics remove CSP only in separate contexts; strict-policy behavior is qualified independently by ASC32. |
 | RT-P02 | historical-compatibility | Actual published 3.1 reader refuses the planned 3.2 writer before binding; the feature-disabled new reader rejects reserved navigation metadata. Prepared package versions are now 3.2.0-rc.1. | The historical reader receipt keeps its own identity. Current coordinated archive/platform qualification is still required. |
-| RT-P03 | N4, N32, PACK4, CI4 | Optional groups, no-JavaScript behavior and current eight-package/three-starter inventory retain source and packed fixture coverage. Historical 3.0/3.1 inventory remains seven packages/two starters. | Current 4c59 PR platform/starter CI passes; complete hosted P17 remains pending. A successful pack or platform lane does not substitute for whole P17. |
+| RT-P03 | N4, N32, PACK4, CI4, P174 | Optional groups, no-JavaScript behavior and current eight-package/three-starter inventory retain source and packed fixture coverage. Historical 3.0/3.1 inventory remains seven packages/two starters. | Complete current hosted P17 and PR platform/starter CI pass. Future main/tag qualification and actual publication remain separate; historical inventories are unchanged. |
 | RT-U01 | H32 | Real browsers exercise encoded slash/Unicode, repeated keys, plus versus space, prototype-like parameters and malformed encoding refusal. | The declared grammar/profile is covered; no new grammar or universal URL-normalization claim is made. |
 | RT-U02 | H32 | Real browsers exercise static/parameter/splat rank, pathless/index branches and complete child consumption; existing source tests retain duplicate/ambiguous grammar refusals. | No optional, named-outlet, matrix or regex expansion is admitted. |
 | RT-U03 | H32, N4, N32 | Relative, root-relative, fragment and imperative links under a non-root base resolve from the committed view during a pending POP. N32 covers POP repair before revalidation and mutation. | The d3 fix and prior failing controls remain preserved; current H32 is a complete 117-case pass, not selected results from failed attempts. |
 | RT-U04 | H32, L32 | Malformed/out-of-base input refuses before commit; API/model controls cover route count 1,000 and depth 32 at the boundary. | Route-boundary models are identified as models, not actual Rust transport or resource-allocation benchmarks. |
 | RT-U05 | H32, N4, N32 | Same URL, query, fragment and explicit revalidation have distinct outcomes; fragment navigation cancels held page work without replacing owners. | Scroll-coordinate coverage for encoded/empty fragments is tracked separately under A02. |
 | RT-H01 | H32, N4, N32 | Actual PUSH/REPLACE/Back/Forward, distinct duplicate-URL keys, unrelated state retention, multi-entry traversal and redirected POP are exercised without an extra PUSH. | Physical-device gestures remain under A04/A05. |
-| RT-H02 | H32, N4, N32 | Real unsaved-form link/API cancellation and confirmation, known traversal compensation/replay and two foreign-entry forms are exercised; foreign recovery records one document GET. | This is the finite supported history matrix; genuine BFCache restoration is a separate H03 obligation. |
-| RT-H03 | H32, N4, N32 | Disposal/reinstall restore scrollRestoration and avoid duplicate handlers; foreground checks and persisted-pageshow dispatch exercise revocation/recovery. | Actual BFCache restoration was not obtained in two bounded browser attempts. Synthetic persisted events and ordinary Back/Forward do not close that gate. |
+| RT-H02 | H32, N4, N32 | Real unsaved-form link/API cancellation and confirmation, known traversal compensation/replay and two foreign-entry forms are exercised; foreign recovery records one document GET. | This is the finite supported history matrix; the separate public-profile BFCache witness is recorded under H03. |
+| RT-H03 | H32, N4, N32, BF32, BFR32, BFNS32 | Teardown/reinstall restores scroll policy and avoids duplicate handlers. One actual headed Chromium return emits trusted persisted=true with the original Document/token; the router synchronously empties its root and performs one method-safe GET to a new Document. | The genuine witness is public BrowserAdapter/no-cache/no-cookie only. Earlier no-store attempts remain not exercised; private/native and all-engine BFCache eligibility are not claimed. |
 | RT-H04 | H32, N4, N32 | Relative/internal/external/out-of-base redirects, cycles, hop limit and redirected POP are exercised with final destination semantics. | No intermediate successful UI commit or reused historical success is credited. |
 | RT-L01 | H32 | Trusted modified/non-primary clicks, target/download, opt-out/external/unsafe/defaultPrevented links and nested/composed-path anchors are exercised in all three engines. | Engine-specific native behavior is compared with its actual native control; physical gestures are not inferred from automation. |
 | RT-C01 | N4, N32, O32, LB32, SK32 | Held GET races, ignored-abort deadline and preparation/activation cancellation preserve the newer view; application resources from cancelled work are released. | SK32 additionally observes stale readiness/scroll and prefetch revocation through public wrappers; source/native/application scopes stay distinct. |
@@ -188,13 +254,13 @@ Historical/source keys refer to the unchanged links in the previous ledger.
 | RT-N02 | N4, N32, historical-source | Malformed scoped state refuses activation; source ownership controls preserve original claims, captured outlets and deferred/departed-host authority. | The source controls are not relabeled as new browser cases. |
 | RT-N03 | N4, N32, L32, LB32 | Actual Rust malformed-state refusal complements installed-API state/body/owner/island bounds and real-HTTP schema/media/asset negatives. | Synthetic native HTTP admission controls do not attest Rust PageResponse or deployed proxy headers. |
 | RT-N04 | N4, N32, historical-source | Scheduled readiness preserves original served nodes and early input; source deferred-owner controls prevent later activation after revocation. | Initial-adoption and deferred-authority source controls keep their own evidence identity. |
-| RT-N05 | N4, N32 | Direct URL, refresh and JavaScript-disabled native forms return meaningful typed HTML and fresh props. | Current starter/platform P17 and production direct-route checks remain separate. |
+| RT-N05 | N4, N32, P174 | Direct URL, refresh and JavaScript-disabled native forms return meaningful typed HTML and fresh props. | P174 separately qualifies current packed starters; actual production direct-route and deployment checks remain pending. |
 | RT-N06 | LB32, historical-source, historical-site | Browser/generated-HTML boundaries, unregistered HTML and adapter switching recover explicitly; historical source/pilot controls refuse native state or executable claims in the HTML adapter. | The full updated consuming-site campaign with real registry pins is pending; a local portal pilot is not production. |
 | RT-S01 | N4, N32, ASC32 | Fresh nonces under the sealed profile navigate; changed policy takes one document boundary. ASC32 exercises exact action-policy admission with strict CSP intact. | Final deployed middleware/proxy policy attestation remains pending. |
 | RT-S02 | N4, N32, LB32 | A second actual compiled build requires a document boundary; an asset-identity mismatch is refused by the real-HTTP client admission harness. | Synthetic envelope checks remain distinct from compiled build and production deployment identity. |
 | RT-S03 | N4, N32, historical-source | N32 executes the emitted registration group; build/source controls enforce closed executable dependencies and integrity-bearing entry semantics. | No new lazy JavaScript discovery or cross-route executable graph capability is claimed. |
 | RT-S04 | N4, N32, historical-source | Actual hostile markup is refused before upgrade/activation under strict policy; source parser and ownership counterfactuals remain preserved. | The separate duplicate-core diagnostic has a deliberately relaxed CSP and is never used to qualify strict policy. |
-| RT-S05 | N4, N32, ASC32 | Native no-store/context/foreground barriers, held stale checks and actual two-tab session revocation pass in the complete fresh campaigns. | Genuine BFCache restoration and deployed application cookie/cache/proxy review remain pending. Dispatched persisted events are not a BFCache witness. |
+| RT-S05 | N4, N32, ASC32, BF32 | Native no-store/context/foreground barriers, held stale checks and actual two-tab session revocation pass in the complete fresh campaigns. | The genuine public-profile BFCache witness exercises the common coordinator only. Private/native no-store eligibility is not observed or claimed; deployed application cookie/cache/proxy review remains pending. |
 | RT-S06 | L32, LS32, LB32 | Boundary controls cover payload/state, routes, owners/islands, branches, parser tokens/depth, registry entries, two prefetches, 32 recovery keys and 1,000 scroll entries. Real clocks exercise the 15-second ignored-abort deadline and 60 writes/10 seconds. | API/model clock/Map instrumentation is explicit. Scroll failures found in older products are fixed and pass both installed regressions; no allocation benchmark is implied. |
 | RT-F01 | N4, N32, ASC32 | Actual enhanced/native GET and POST handlers, including multipart POST files and fields, revalidate typed data and remain usable without JavaScript. | The consumer is an explicit fixture application, not production session/authorization acceptance. |
 | RT-F02 | N4, N32, ASC32 | Real multipart file bytes/repeated/disabled/named controls, constraint-validation zero-send behavior and a genuine submitter URL/method override all pass in the complete 90-case strict campaign. | Browser serialization is observed in three engines; physical-device usability is a separate manual gate. |
@@ -207,34 +273,37 @@ Historical/source keys refer to the unchanged links in the previous ledger.
 | RT-F09 | N4, N32, ASC32 | Typed 303 follows one GET; real raw 307/308 responses refuse POST replay and latch uncertainty. Undeclared endpoints never transmit as enhanced actions. | Unsupported native forms remain document behavior, separate from enhanced POST recovery. |
 | RT-F10 | ASC32 | The complete strict campaign preserves 409/422/500/503 and 401/403 semantics and refuses endpoint/context/policy/action-set/transport-envelope mismatches before UI admission. | The separate duplicate-core diagnostic is not used as CSP evidence; production authorization and policy remain application obligations. |
 | RT-X01 | N4, N32, LB32, ASC32 | Typed GET 404/410/500/503 boundaries and matching direct/no-JavaScript statuses pass. Real HTTP socket/media/JSON/schema/body failures recover explicitly rather than becoming not-found. | Synthetic malformed-envelope controls and actual Rust typed statuses retain their separate scopes. |
-| RT-X02 | LC32, N4, N32, H32 | The finite recovery catalogue combines unsupported profile/adapter, foreign history, build/policy/assets/context, auth, malformed transport/state, adoption/readiness and storage limits. Admitted recovery asserts one GET and state loss; refused journals assert zero GET. | Genuine BFCache restoration and production rollback remain open. The catalogue is a documented category map, not an exhaustive list of every internal error string. |
+| RT-X02 | LC32, N4, N32, H32, BF32 | The finite recovery catalogue combines unsupported profile/adapter, foreign history, build/policy/assets/context, auth, malformed transport/state, adoption/readiness and storage limits. Admitted recovery asserts one GET and state loss; refused journals assert zero GET. | BF32 adds a real public-profile BFCache recovery witness. Private/native eligibility is not claimed; production rollback remains pending. The catalogue maps documented categories, not every internal error string. |
 | RT-A01 | N4, N32, MAN32, MAC32, UX009 | Automated title/summary/heading focus and retained selection checks pass; the user confirms the requested Mac keyboard/VoiceOver tasks. | No per-step spoken transcript was supplied. D14-3.2-009 records repeated DOM live-region text; the Mac confirmation does not prove repetition absent. iPhone remains pending. |
-| RT-A02 | N4, N32, H32, SK32 | Actual Back/Forward entry scroll, new-route top, encoded/empty-fragment coordinates and delayed older readiness that cannot scroll or focus the newer page pass; negative controls detect deliberately wrong scroll coordinates and a real document reload. | Real browser coordinates and retained-view identity are measured. Physical gestures and genuine BFCache restoration remain separate. |
+| RT-A02 | N4, N32, H32, SK32 | Actual Back/Forward entry scroll, new-route top, encoded/empty-fragment coordinates and delayed older readiness that cannot scroll or focus the newer page pass; negative controls detect deliberately wrong scroll coordinates and a real document reload. | Real browser coordinates and retained-view identity are measured. Physical gestures remain pending; BF32 separately witnesses common-coordinator recovery in the public profile. |
 | RT-A03 | N4, N32, MAC32, historical-source | Three-engine reduced-motion routing requires no View Transitions; the user confirms the Mac Reduce Motion task. Immutable same-group assets or a document boundary define CSS behavior. | Physical iPhone Reduce Motion review remains pending; dynamic CSS/visual choreography is outside the admitted profile. |
 | RT-A04 | MAN32, MAC32, UX009 | The actual staged native/form preview passed automated smoke; the user confirms all six requested Mac Safari keyboard/VoiceOver/Reduce Motion tasks. | iPhone HTTPS/gesture acceptance remains pending. The broad confirmation supplies no individual notes and does not refute the known repeated warning text; no whole A04 closure is claimed. |
-| RT-A05 | N4, N32, H32, MAC32 | Native/forms/history/lifecycle run in Chromium/Firefox/WebKit at the recorded mobile viewport; the user separately confirms the Mac manual checklist. | Emulated viewport and Mac confirmation do not establish physical iPhone gestures or genuine BFCache restoration; both remain pending. |
+| RT-A05 | N4, N32, H32, MAC32, BF32 | Native/forms/history/lifecycle run in Chromium/Firefox/WebKit at the recorded mobile viewport; the user separately confirms the Mac manual checklist. | Emulated viewport, Mac confirmation and one public Chromium BFCache witness do not establish physical iPhone gestures or private/native/all-engine BFCache eligibility. |
 | RT-K01 | L32, SK32 | Installed-browser cases cover default-off/denied prefetch, save-data/offline refusal, two-task API/model concurrency and absence of completed reuse. | Save-data uses an explicit navigator.connection property control; offline uses real browser network emulation. This is not mobile data-plan or native Rust transport measurement. |
 | RT-K02 | SK32 | Real HTTP proves shared in-flight claim without another GET, failed fresh retry, no completed reuse, actual POST invalidation and accepted/rejected context cancellation. | A custom application action admission and controlled context-check result test coordinator ownership; native Rust wire/security behavior remains in N32 and the action campaign. |
 | RT-M01 | M4, M32 | Separate current 4c59 and earlier 862d archive measurements each report 40,715 B whole-group gzip and maximum increment 12,287 B, against unchanged 65,536/12,288 B ceilings. Plain baseline is 28,456 B; candidate controls are 28,428/28,429 B. | Each outer receipt authenticates its own installed archives and intentionally staged view. The original source/artifact outputs remain unchanged; no ceiling is raised. |
 | RT-M02 | PF32, PFR32 | All four fixed cells pass with 30 samples per direction per mode after five warmups. Maximum commit p95 is 0.5/3/1 ms for desktop Chromium/Firefox/WebKit and 3.10 ms for throttled mobile Chromium, below unchanged 16/50 ms budgets. | Cold n=3 per route/mode is descriptive; two rAF callbacks measure scheduling, not compositor paint. Ordinary host processes remain recorded; this is not a physical phone or hosted P17. |
 | RT-M03 | O32, PF32 | O32 deterministic resource baselines complement Chromium heap observation: used heap 2,132,376 to 2,392,492 B (+260,116 B) after 10 warmups, 100 transitions and two bounded GC requests. | Browser history intentionally grows. No heap threshold, zero-leak or universal untracked-resource conclusion is claimed. |
-| RT-D01 | PACK4, CI4, historical-scaffold | Current 4c59 PR CI passes its platform/candidate-starter lanes and release-cache checks for the version-aware inventory; minimal, dashboard and native-router remain the three starters. | Complete current-source hosted P17 remains pending; future exact main/tag CI is required separately. Historical scaffold results are not relabeled current-source runs. |
+| RT-D01 | P174, PACK4, CI4, historical-scaffold | Complete 75-check current hosted P17 authenticates all eight archives and all three starters, alongside current PR platform/candidate-starter and release-cache lanes. Actual isolated public resolution is retained. | This is a workflow_dispatch rehearsal plus PR CI, not future exact main/tag publication. Historical scaffold results retain their original identities. |
 | RT-D02 | historical-site | The preserved bounded site pilot authenticates original packed runtime inputs and local build rollback. Updated portal/lab/download work has separate local evidence. | Real registry pins, complete final site/container qualification, OVH deployment identity, live routes and production rollback verification remain pending. |
 
 ## Publication and stable acceptance remain separate
 
-Before RC publication, the current candidate still needs complete hosted P17,
-required final-source/main CI, complete audited mutation accounting, truthful
-non-audit gate closures and the actual final independent D14 review. Pack success,
-partial old runs and this document do not complete those gates.
+Current hosted P17 and the original full mutation campaign are complete and
+independently reviewed within their stated scopes. The accompanying release-contract
+delta records the documentation, candidate and publisher preparation rows done. RC
+publication still requires the final independent D14 review of that completed input
+tree, followed by the required final-source/main/tag checks. The final tagged
+workflow qualifies its own archives. This document does not complete D14 or claim
+publication.
 
 The user confirmed the six requested Mac Safari keyboard/VoiceOver/Reduce Motion
 tasks with **“ok done all good.”** That actual confirmation is retained with the
 original checklist and preview hashes; no individual speech transcript or per-step
 notes are invented. A read-only lookup afterwards found macOS 26.1 (25B78) and
 installed Safari 26.1 (21622.2.11.11.9); those versions were not supplied by the
-user. Physical iPhone checks still require HTTPS, and genuine BFCache restoration
-must be observed separately from synthetic events and ordinary reload/history.
+user. Physical iPhone checks still require HTTPS. The separate genuine public
+Chromium BFCache witness does not imply iPhone or private/native eligibility.
 
 Known low-severity observation **D14-3.2-009** remains disclosed: the installed
 router repeats the visible/live-region unknown-outcome sentence with doubled

@@ -18,7 +18,7 @@
     "scope": "Six reviewed monitor/documentation files differ; supplementary evidence retains its original producer identity.",
     "packedRecordSha256": "573866aafb8bfebbf3a0f50eea9dbf4d24deb95d5ce28d8d58468b4c0f212869",
     "p17Run": 40423336544,
-    "p17Status": "pending",
+    "p17Status": "passed-authenticated-hosted-rehearsal",
     "nativeCampaign": {
       "evidence": "N4",
       "passed": 90,
@@ -36,6 +36,19 @@
       "status": "passed",
       "evidence": "CI4",
       "futureMainAndTagCI": "required-separately"
+    },
+    "p17": {
+      "evidence": "P174",
+      "rawEvidence": "P17RAW4",
+      "run": 40423336544,
+      "attempt": 1,
+      "tests": 75,
+      "passed": 75,
+      "elapsedSeconds": 1240.829,
+      "limitSeconds": 1800,
+      "artifactId": 12699851463,
+      "artifactSha256": "2c5cac3c43c00405a1e0f0b14668730ef421f2723e4f449866fc1fdf5c917b3e",
+      "futureMainTagAndD14": "required separately"
     }
   },
   "evidenceRoot": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem",
@@ -192,7 +205,7 @@
       "sha256": "c64e1baa0b6e4587d5632400d033c1608f7c346b882cf0920e7d847c6339f7f9",
       "bytes": 1873,
       "status": "pack-only",
-      "scope": "Fresh 4c59 DS11 authenticated; whole P17 run 40423336544 still pending.",
+      "scope": "Original fresh 4c59 pack-only authentication; complete whole-P17 acceptance is separately recorded by P174. Its original pending statement remains a historical checkpoint.",
       "commit": "4c59db070575591c1e4be300bafb5c07552970fa",
       "recordSha256": "573866aafb8bfebbf3a0f50eea9dbf4d24deb95d5ce28d8d58468b4c0f212869"
     },
@@ -472,6 +485,361 @@
           "rawSha256": "f50e42cd40caaa000b7d20424aa8b27e759adfffed17823eda27e56ea752ea99"
         }
       ]
+    },
+    "BF32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/acceptance-862d/bfcache-public/summary.json",
+      "relativeToEvidenceRoot": "acceptance-862d/bfcache-public/summary.json",
+      "sha256": "9de000fce24ae98ba0c6772acfb7167d8da2bc1db69b7edb23f3b50f11fd307b",
+      "bytes": 6258,
+      "status": "passed-public-profile",
+      "scope": "One genuine headed Chromium BFCache restore with trusted persisted=true and the original Document/token. Router synchronously empties the root, then one method-safe GET creates a new Document. Public BrowserAdapter, no-cache/no-cookie profile only.",
+      "source": "862d18dc1e2eb06f9b7f947cc22f020d6fa646e9",
+      "recordSha256": "db107da977429f6df8d323b96f19b3dc111f5df3d018ae4122cc314589db26d7",
+      "node": "v24.22.0"
+    },
+    "BFR32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/acceptance-862d/bfcache-public/public-headful-once/receipt.json",
+      "relativeToEvidenceRoot": "acceptance-862d/bfcache-public/public-headful-once/receipt.json",
+      "sha256": "f31217d98ea6e89c649d9ad288ad068a19a492c8b1fefeedb8dbe5df7467b724",
+      "bytes": 18270,
+      "status": "passed-public-profile",
+      "scope": "Raw trusted lifecycle events, actual launch arguments, requests and unchanged installed products for the single public-profile BFCache witness.",
+      "commit": "862d18dc1e2eb06f9b7f947cc22f020d6fa646e9",
+      "recordSha256": "db107da977429f6df8d323b96f19b3dc111f5df3d018ae4122cc314589db26d7",
+      "node": "v24.22.0",
+      "startedAt": "2026-10-27T00:28:22.693Z",
+      "completedAt": "2026-10-27T00:28:26.046Z"
+    },
+    "BFNS32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/acceptance-862d/bfcache/summary.json",
+      "relativeToEvidenceRoot": "acceptance-862d/bfcache/summary.json",
+      "sha256": "66e643b01e7e0e6cd494d2e19a5165955e0c6ee7f2043e3448d01595125025ac",
+      "bytes": 4937,
+      "status": "not-exercised",
+      "scope": "Preserved headed no-store diagnostic: persisted=false, with cache-control/browsing-instance eligibility reasons. No private/native BFCache credit.",
+      "source": "862d18dc1e2eb06f9b7f947cc22f020d6fa646e9",
+      "recordSha256": "db107da977429f6df8d323b96f19b3dc111f5df3d018ae4122cc314589db26d7",
+      "node": "v24.22.0"
+    },
+    "MUT32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/nightly-40412642649/summary.json",
+      "relativeToEvidenceRoot": "nightly-40412642649/summary.json",
+      "sha256": "fa367482db15009b7f12e2bbb5b5634ed05140a6c6dbf74f7f6c98aeffbde76b",
+      "bytes": 7051,
+      "status": "passed-original-campaign",
+      "scope": "Original hosted full core mutation campaign at source 988: 328 scored, 326 caught, two actual survivors, zero equivalent/unqualified; all 169 security and 98 expression mutants caught. Input applicability is separate from measured source; no D14 acceptance.",
+      "measuredSource": "988893020498004844a92652c25e86ecf961a46f",
+      "completedAt": "2026-10-27T00:26:25Z",
+      "run": 40412642649,
+      "url": "https://github.com/getforma-dev/forma/actions/runs/40412642649"
+    },
+    "MUTRAW32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/nightly-40412642649/accounting.json",
+      "relativeToEvidenceRoot": "nightly-40412642649/accounting.json",
+      "sha256": "ab0a0f1ffbc05a0f93b6a08b4103a691db5357f4eced6d2717dd395585a2a738",
+      "bytes": 214240,
+      "status": "passed-original-accounting",
+      "scope": "Original raw rows reclassified with unchanged measured-source classifiers; before/restored baselines each execute 4,320 tests with zero skips. All 328 rows retain original evidence/process/log hashes.",
+      "source": "988893020498004844a92652c25e86ecf961a46f",
+      "run": 40412642649
+    },
+    "MUTCLOSE32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/nightly-40412642649/input-closure-final.json",
+      "relativeToEvidenceRoot": "nightly-40412642649/input-closure-final.json",
+      "sha256": "1f7c2d16c8a0b72b6ff9ad63bd6f0f675203c45ceaaecc9d0d2262ea734b288d",
+      "bytes": 1093,
+      "status": "identical-input-closure",
+      "scope": "All 617 measured subject/oracle/dependency/toolchain path/mode/blob inputs are identical across 988, 4c59 and 4948. Establishes unchanged-input applicability, not exact-final-source execution."
+    },
+    "P174": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/independent-review/p17-current-independent-review.json",
+      "relativeToEvidenceRoot": "independent-review/p17-current-independent-review.json",
+      "sha256": "2735a41a3cfc2b24edea617e4e8958043a832108e8bde19f9d86e0509a18cff3",
+      "bytes": 61367,
+      "status": "passed-authenticated-hosted-rehearsal",
+      "scope": "Independently authenticated complete current 4c59 hosted rehearsal: 75/75 in 1,240.829 seconds; all eight archives, 198 raw performance files and unchanged policy verified. Not future main/tag publication or D14 acceptance.",
+      "source": "4c59db070575591c1e4be300bafb5c07552970fa",
+      "recordSha256": "573866aafb8bfebbf3a0f50eea9dbf4d24deb95d5ce28d8d58468b4c0f212869",
+      "run": 40423336544,
+      "attempt": 1,
+      "elapsedSeconds": 1240.829
+    },
+    "P17RAW4": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-4c59db07/p17-original/extracted/p17/p17.json",
+      "relativeToEvidenceRoot": "hosted-4c59db07/p17-original/extracted/p17/p17.json",
+      "sha256": "64b421156a709feabe1c67df478fc331e0a8e631493880bfa720f2a649f04e59",
+      "bytes": 74001989,
+      "status": "passed-authenticated-hosted-rehearsal",
+      "scope": "Original full hosted P17 report, source 4c59/run40423336544/attempt1. All 75 uniquely named checks pass; original pending milestone values record that execution checkpoint.",
+      "commit": "4c59db070575591c1e4be300bafb5c07552970fa",
+      "elapsedSeconds": 1240.829
+    },
+    "P17PROVIDER4": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/hosted-4c59db07/p17-original/provider-metadata.json",
+      "relativeToEvidenceRoot": "hosted-4c59db07/p17-original/provider-metadata.json",
+      "sha256": "c8fb5c2fa2751ebd0238dba48380efe30b7b36c8a8c82ae7f177f0da2f91be9e",
+      "bytes": 27676,
+      "status": "passed-authenticated-hosted-rehearsal",
+      "scope": "Original provider run/job/artifact metadata authenticates current P17 source, attempt and successful producer; independent review also checks original job logs and artifact bytes.",
+      "run": {
+        "id": 40423336544,
+        "name": "Packed qualification",
+        "node_id": "WFR_kwLORmaO2s8AAAAJaWsqYA",
+        "head_branch": "codex/forma-301-router",
+        "head_sha": "4c59db070575591c1e4be300bafb5c07552970fa",
+        "path": ".github/workflows/packed-qualification.yml",
+        "display_title": "Packed qualification",
+        "run_number": 33,
+        "event": "workflow_dispatch",
+        "status": "completed",
+        "conclusion": "success",
+        "workflow_id": 387424737,
+        "check_suite_id": 109562935003,
+        "check_suite_node_id": "CS_kwDORmaO2s8AAAAZgnW22w",
+        "url": "https://api.github.com/repos/getforma-dev/forma/actions/runs/40423336544",
+        "html_url": "https://github.com/getforma-dev/forma/actions/runs/40423336544",
+        "pull_requests": [
+          {
+            "url": "https://api.github.com/repos/getforma-dev/forma/pulls/204",
+            "id": 5024009065,
+            "number": 204,
+            "head": {
+              "ref": "codex/forma-301-router",
+              "sha": "4c59db070575591c1e4be300bafb5c07552970fa",
+              "repo": {
+                "id": 1181126362,
+                "url": "https://api.github.com/repos/getforma-dev/forma",
+                "name": "forma"
+              }
+            },
+            "base": {
+              "ref": "main",
+              "sha": "9a570afece5eb5091824422f00134a875310e857",
+              "repo": {
+                "id": 1181126362,
+                "url": "https://api.github.com/repos/getforma-dev/forma",
+                "name": "forma"
+              }
+            }
+          }
+        ],
+        "created_at": "2026-10-26T23:58:32Z",
+        "updated_at": "2026-10-27T00:24:09Z",
+        "actor": {
+          "login": "Victor-Villacis",
+          "id": 15230422,
+          "node_id": "MDQ6VXNlcjE1MjMwNDIy",
+          "avatar_url": "https://avatars.githubusercontent.com/u/15230422?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/Victor-Villacis",
+          "html_url": "https://github.com/Victor-Villacis",
+          "followers_url": "https://api.github.com/users/Victor-Villacis/followers",
+          "following_url": "https://api.github.com/users/Victor-Villacis/following{/other_user}",
+          "gists_url": "https://api.github.com/users/Victor-Villacis/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/Victor-Villacis/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/Victor-Villacis/subscriptions",
+          "organizations_url": "https://api.github.com/users/Victor-Villacis/orgs",
+          "repos_url": "https://api.github.com/users/Victor-Villacis/repos",
+          "events_url": "https://api.github.com/users/Victor-Villacis/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/Victor-Villacis/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "run_attempt": 1,
+        "referenced_workflows": [],
+        "run_started_at": "2026-10-26T23:58:32Z",
+        "triggering_actor": {
+          "login": "Victor-Villacis",
+          "id": 15230422,
+          "node_id": "MDQ6VXNlcjE1MjMwNDIy",
+          "avatar_url": "https://avatars.githubusercontent.com/u/15230422?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/Victor-Villacis",
+          "html_url": "https://github.com/Victor-Villacis",
+          "followers_url": "https://api.github.com/users/Victor-Villacis/followers",
+          "following_url": "https://api.github.com/users/Victor-Villacis/following{/other_user}",
+          "gists_url": "https://api.github.com/users/Victor-Villacis/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/Victor-Villacis/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/Victor-Villacis/subscriptions",
+          "organizations_url": "https://api.github.com/users/Victor-Villacis/orgs",
+          "repos_url": "https://api.github.com/users/Victor-Villacis/repos",
+          "events_url": "https://api.github.com/users/Victor-Villacis/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/Victor-Villacis/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "jobs_url": "https://api.github.com/repos/getforma-dev/forma/actions/runs/40423336544/jobs",
+        "logs_url": "https://api.github.com/repos/getforma-dev/forma/actions/runs/40423336544/logs",
+        "check_suite_url": "https://api.github.com/repos/getforma-dev/forma/check-suites/109562935003",
+        "artifacts_url": "https://api.github.com/repos/getforma-dev/forma/actions/runs/40423336544/artifacts",
+        "cancel_url": "https://api.github.com/repos/getforma-dev/forma/actions/runs/40423336544/cancel",
+        "rerun_url": "https://api.github.com/repos/getforma-dev/forma/actions/runs/40423336544/rerun",
+        "previous_attempt_url": null,
+        "workflow_url": "https://api.github.com/repos/getforma-dev/forma/actions/workflows/387424737",
+        "head_commit": {
+          "id": "4c59db070575591c1e4be300bafb5c07552970fa",
+          "tree_id": "4c10c98b1c3df98bba7bbef312d6c22b575269a5",
+          "message": "chore(release): stage complete router monitor inventory before freeze",
+          "timestamp": "2026-10-26T23:55:24Z",
+          "author": {
+            "name": "Victor Villacis",
+            "email": "victor.villacis@outlook.com"
+          },
+          "committer": {
+            "name": "Victor Villacis",
+            "email": "victor.villacis@outlook.com"
+          }
+        },
+        "repository": {
+          "id": 1181126362,
+          "node_id": "R_kgDORmaO2g",
+          "name": "forma",
+          "full_name": "getforma-dev/forma",
+          "private": false,
+          "owner": {
+            "login": "getforma-dev",
+            "id": 268000170,
+            "node_id": "O_kgDOD_lbqg",
+            "avatar_url": "https://avatars.githubusercontent.com/u/268000170?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/getforma-dev",
+            "html_url": "https://github.com/getforma-dev",
+            "followers_url": "https://api.github.com/users/getforma-dev/followers",
+            "following_url": "https://api.github.com/users/getforma-dev/following{/other_user}",
+            "gists_url": "https://api.github.com/users/getforma-dev/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/getforma-dev/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/getforma-dev/subscriptions",
+            "organizations_url": "https://api.github.com/users/getforma-dev/orgs",
+            "repos_url": "https://api.github.com/users/getforma-dev/repos",
+            "events_url": "https://api.github.com/users/getforma-dev/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/getforma-dev/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/getforma-dev/forma",
+          "description": "TypeScript UI and fine-grained signals, with optional native Rust SSR through FMIR and checked island adoption.",
+          "fork": false,
+          "url": "https://api.github.com/repos/getforma-dev/forma",
+          "forks_url": "https://api.github.com/repos/getforma-dev/forma/forks",
+          "keys_url": "https://api.github.com/repos/getforma-dev/forma/keys{/key_id}",
+          "collaborators_url": "https://api.github.com/repos/getforma-dev/forma/collaborators{/collaborator}",
+          "teams_url": "https://api.github.com/repos/getforma-dev/forma/teams",
+          "hooks_url": "https://api.github.com/repos/getforma-dev/forma/hooks",
+          "issue_events_url": "https://api.github.com/repos/getforma-dev/forma/issues/events{/number}",
+          "events_url": "https://api.github.com/repos/getforma-dev/forma/events",
+          "assignees_url": "https://api.github.com/repos/getforma-dev/forma/assignees{/user}",
+          "branches_url": "https://api.github.com/repos/getforma-dev/forma/branches{/branch}",
+          "tags_url": "https://api.github.com/repos/getforma-dev/forma/tags",
+          "blobs_url": "https://api.github.com/repos/getforma-dev/forma/git/blobs{/sha}",
+          "git_tags_url": "https://api.github.com/repos/getforma-dev/forma/git/tags{/sha}",
+          "git_refs_url": "https://api.github.com/repos/getforma-dev/forma/git/refs{/sha}",
+          "trees_url": "https://api.github.com/repos/getforma-dev/forma/git/trees{/sha}",
+          "statuses_url": "https://api.github.com/repos/getforma-dev/forma/statuses/{sha}",
+          "languages_url": "https://api.github.com/repos/getforma-dev/forma/languages",
+          "stargazers_url": "https://api.github.com/repos/getforma-dev/forma/stargazers",
+          "contributors_url": "https://api.github.com/repos/getforma-dev/forma/contributors",
+          "subscribers_url": "https://api.github.com/repos/getforma-dev/forma/subscribers",
+          "subscription_url": "https://api.github.com/repos/getforma-dev/forma/subscription",
+          "commits_url": "https://api.github.com/repos/getforma-dev/forma/commits{/sha}",
+          "git_commits_url": "https://api.github.com/repos/getforma-dev/forma/git/commits{/sha}",
+          "comments_url": "https://api.github.com/repos/getforma-dev/forma/comments{/number}",
+          "issue_comment_url": "https://api.github.com/repos/getforma-dev/forma/issues/comments{/number}",
+          "contents_url": "https://api.github.com/repos/getforma-dev/forma/contents/{+path}",
+          "compare_url": "https://api.github.com/repos/getforma-dev/forma/compare/{base}...{head}",
+          "merges_url": "https://api.github.com/repos/getforma-dev/forma/merges",
+          "archive_url": "https://api.github.com/repos/getforma-dev/forma/{archive_format}{/ref}",
+          "downloads_url": "https://api.github.com/repos/getforma-dev/forma/downloads",
+          "issues_url": "https://api.github.com/repos/getforma-dev/forma/issues{/number}",
+          "pulls_url": "https://api.github.com/repos/getforma-dev/forma/pulls{/number}",
+          "milestones_url": "https://api.github.com/repos/getforma-dev/forma/milestones{/number}",
+          "notifications_url": "https://api.github.com/repos/getforma-dev/forma/notifications{?since,all,participating}",
+          "labels_url": "https://api.github.com/repos/getforma-dev/forma/labels{/name}",
+          "releases_url": "https://api.github.com/repos/getforma-dev/forma/releases{/id}",
+          "deployments_url": "https://api.github.com/repos/getforma-dev/forma/deployments"
+        },
+        "head_repository": {
+          "id": 1181126362,
+          "node_id": "R_kgDORmaO2g",
+          "name": "forma",
+          "full_name": "getforma-dev/forma",
+          "private": false,
+          "owner": {
+            "login": "getforma-dev",
+            "id": 268000170,
+            "node_id": "O_kgDOD_lbqg",
+            "avatar_url": "https://avatars.githubusercontent.com/u/268000170?v=4",
+            "gravatar_id": "",
+            "url": "https://api.github.com/users/getforma-dev",
+            "html_url": "https://github.com/getforma-dev",
+            "followers_url": "https://api.github.com/users/getforma-dev/followers",
+            "following_url": "https://api.github.com/users/getforma-dev/following{/other_user}",
+            "gists_url": "https://api.github.com/users/getforma-dev/gists{/gist_id}",
+            "starred_url": "https://api.github.com/users/getforma-dev/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/getforma-dev/subscriptions",
+            "organizations_url": "https://api.github.com/users/getforma-dev/orgs",
+            "repos_url": "https://api.github.com/users/getforma-dev/repos",
+            "events_url": "https://api.github.com/users/getforma-dev/events{/privacy}",
+            "received_events_url": "https://api.github.com/users/getforma-dev/received_events",
+            "type": "Organization",
+            "user_view_type": "public",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/getforma-dev/forma",
+          "description": "TypeScript UI and fine-grained signals, with optional native Rust SSR through FMIR and checked island adoption.",
+          "fork": false,
+          "url": "https://api.github.com/repos/getforma-dev/forma",
+          "forks_url": "https://api.github.com/repos/getforma-dev/forma/forks",
+          "keys_url": "https://api.github.com/repos/getforma-dev/forma/keys{/key_id}",
+          "collaborators_url": "https://api.github.com/repos/getforma-dev/forma/collaborators{/collaborator}",
+          "teams_url": "https://api.github.com/repos/getforma-dev/forma/teams",
+          "hooks_url": "https://api.github.com/repos/getforma-dev/forma/hooks",
+          "issue_events_url": "https://api.github.com/repos/getforma-dev/forma/issues/events{/number}",
+          "events_url": "https://api.github.com/repos/getforma-dev/forma/events",
+          "assignees_url": "https://api.github.com/repos/getforma-dev/forma/assignees{/user}",
+          "branches_url": "https://api.github.com/repos/getforma-dev/forma/branches{/branch}",
+          "tags_url": "https://api.github.com/repos/getforma-dev/forma/tags",
+          "blobs_url": "https://api.github.com/repos/getforma-dev/forma/git/blobs{/sha}",
+          "git_tags_url": "https://api.github.com/repos/getforma-dev/forma/git/tags{/sha}",
+          "git_refs_url": "https://api.github.com/repos/getforma-dev/forma/git/refs{/sha}",
+          "trees_url": "https://api.github.com/repos/getforma-dev/forma/git/trees{/sha}",
+          "statuses_url": "https://api.github.com/repos/getforma-dev/forma/statuses/{sha}",
+          "languages_url": "https://api.github.com/repos/getforma-dev/forma/languages",
+          "stargazers_url": "https://api.github.com/repos/getforma-dev/forma/stargazers",
+          "contributors_url": "https://api.github.com/repos/getforma-dev/forma/contributors",
+          "subscribers_url": "https://api.github.com/repos/getforma-dev/forma/subscribers",
+          "subscription_url": "https://api.github.com/repos/getforma-dev/forma/subscription",
+          "commits_url": "https://api.github.com/repos/getforma-dev/forma/commits{/sha}",
+          "git_commits_url": "https://api.github.com/repos/getforma-dev/forma/git/commits{/sha}",
+          "comments_url": "https://api.github.com/repos/getforma-dev/forma/comments{/number}",
+          "issue_comment_url": "https://api.github.com/repos/getforma-dev/forma/issues/comments{/number}",
+          "contents_url": "https://api.github.com/repos/getforma-dev/forma/contents/{+path}",
+          "compare_url": "https://api.github.com/repos/getforma-dev/forma/compare/{base}...{head}",
+          "merges_url": "https://api.github.com/repos/getforma-dev/forma/merges",
+          "archive_url": "https://api.github.com/repos/getforma-dev/forma/{archive_format}{/ref}",
+          "downloads_url": "https://api.github.com/repos/getforma-dev/forma/downloads",
+          "issues_url": "https://api.github.com/repos/getforma-dev/forma/issues{/number}",
+          "pulls_url": "https://api.github.com/repos/getforma-dev/forma/pulls{/number}",
+          "milestones_url": "https://api.github.com/repos/getforma-dev/forma/milestones{/number}",
+          "notifications_url": "https://api.github.com/repos/getforma-dev/forma/notifications{?since,all,participating}",
+          "labels_url": "https://api.github.com/repos/getforma-dev/forma/labels{/name}",
+          "releases_url": "https://api.github.com/repos/getforma-dev/forma/releases{/id}",
+          "deployments_url": "https://api.github.com/repos/getforma-dev/forma/deployments"
+        }
+      }
+    },
+    "MUTREVIEW32": {
+      "path": "/Users/victorvillacis/dev/Forma/work/FORMA-301/qualification/ecosystem/independent-review/nightly-current-independent-review.json",
+      "relativeToEvidenceRoot": "independent-review/nightly-current-independent-review.json",
+      "sha256": "5fb021ffab4958b2d922d55fafa1b452691251a68d6d8a243faa9e32dd54438f",
+      "bytes": 129067,
+      "status": "accepted-applicable-core-campaign",
+      "scope": "Independent reclassification authenticates all 328 original scored rows, both 4,320-test baselines, three provider ZIPs and 993+4+5 extracted files. All 617 measured inputs remain identical through 4948; this is core-campaign acceptance, not exact-final-source execution or whole-release D14 acceptance.",
+      "measuredSource": "988893020498004844a92652c25e86ecf961a46f",
+      "run": 40412642649,
+      "attempt": 1
     }
   },
   "historicalReferences": {
@@ -482,13 +850,12 @@
     "historical-scaffold": "qualification.md: Q/CT records; not current-source P17"
   },
   "pending": [
-    "Complete current-source hosted P17; later final-source/main/tag CI remain separately required",
-    "Successful complete full-core mutation accounting and unchanged-input binding",
-    "Physical iPhone HTTPS/gesture checks and genuine BFCache witness; Mac six-task checklist is user-confirmed",
+    "Final-source/main/tag CI and tagged release qualification remain separately required",
+    "Physical iPhone HTTPS/gesture checks; Mac six-task checklist is user-confirmed, separate public-profile BFCache is witnessed",
     "Real registry publication and router OIDC/monitor enrollment",
     "Final registry-pinned website qualification, production proxy/deployment/rollback and live acceptance",
     "Same-line published RC soak with at least 3,600 fault-free credited active seconds",
-    "Actual non-audit gate closures and final independent D14 before publication"
+    "Final independent D14 of the completed non-audit input tree before publication"
   ],
   "rows": [
     {
@@ -524,10 +891,11 @@
         "N4",
         "N32",
         "PACK4",
-        "CI4"
+        "CI4",
+        "P174"
       ],
       "observed": "Optional groups, no-JavaScript behavior and current eight-package/three-starter inventory retain source and packed fixture coverage. Historical 3.0/3.1 inventory remains seven packages/two starters.",
-      "remaining": "Current 4c59 PR platform/starter CI passes; complete hosted P17 remains pending. A successful pack or platform lane does not substitute for whole P17."
+      "remaining": "Complete current hosted P17 and PR platform/starter CI pass. Future main/tag qualification and actual publication remain separate; historical inventories are unchanged."
     },
     {
       "id": "RT-U01",
@@ -592,17 +960,20 @@
         "N32"
       ],
       "observed": "Real unsaved-form link/API cancellation and confirmation, known traversal compensation/replay and two foreign-entry forms are exercised; foreign recovery records one document GET.",
-      "remaining": "This is the finite supported history matrix; genuine BFCache restoration is a separate H03 obligation."
+      "remaining": "This is the finite supported history matrix; the separate public-profile BFCache witness is recorded under H03."
     },
     {
       "id": "RT-H03",
       "evidence": [
         "H32",
         "N4",
-        "N32"
+        "N32",
+        "BF32",
+        "BFR32",
+        "BFNS32"
       ],
-      "observed": "Disposal/reinstall restore scrollRestoration and avoid duplicate handlers; foreground checks and persisted-pageshow dispatch exercise revocation/recovery.",
-      "remaining": "Actual BFCache restoration was not obtained in two bounded browser attempts. Synthetic persisted events and ordinary Back/Forward do not close that gate."
+      "observed": "Teardown/reinstall restores scroll policy and avoids duplicate handlers. One actual headed Chromium return emits trusted persisted=true with the original Document/token; the router synchronously empties its root and performs one method-safe GET to a new Document.",
+      "remaining": "The genuine witness is public BrowserAdapter/no-cache/no-cookie only. Earlier no-store attempts remain not exercised; private/native and all-engine BFCache eligibility are not claimed."
     },
     {
       "id": "RT-H04",
@@ -738,10 +1109,11 @@
       "id": "RT-N05",
       "evidence": [
         "N4",
-        "N32"
+        "N32",
+        "P174"
       ],
       "observed": "Direct URL, refresh and JavaScript-disabled native forms return meaningful typed HTML and fresh props.",
-      "remaining": "Current starter/platform P17 and production direct-route checks remain separate."
+      "remaining": "P174 separately qualifies current packed starters; actual production direct-route and deployment checks remain pending."
     },
     {
       "id": "RT-N06",
@@ -798,10 +1170,11 @@
       "evidence": [
         "N4",
         "N32",
-        "ASC32"
+        "ASC32",
+        "BF32"
       ],
       "observed": "Native no-store/context/foreground barriers, held stale checks and actual two-tab session revocation pass in the complete fresh campaigns.",
-      "remaining": "Genuine BFCache restoration and deployed application cookie/cache/proxy review remain pending. Dispatched persisted events are not a BFCache witness."
+      "remaining": "The genuine public-profile BFCache witness exercises the common coordinator only. Private/native no-store eligibility is not observed or claimed; deployed application cookie/cache/proxy review remains pending."
     },
     {
       "id": "RT-S06",
@@ -931,10 +1304,11 @@
         "LC32",
         "N4",
         "N32",
-        "H32"
+        "H32",
+        "BF32"
       ],
       "observed": "The finite recovery catalogue combines unsupported profile/adapter, foreign history, build/policy/assets/context, auth, malformed transport/state, adoption/readiness and storage limits. Admitted recovery asserts one GET and state loss; refused journals assert zero GET.",
-      "remaining": "Genuine BFCache restoration and production rollback remain open. The catalogue is a documented category map, not an exhaustive list of every internal error string."
+      "remaining": "BF32 adds a real public-profile BFCache recovery witness. Private/native eligibility is not claimed; production rollback remains pending. The catalogue maps documented categories, not every internal error string."
     },
     {
       "id": "RT-A01",
@@ -957,7 +1331,7 @@
         "SK32"
       ],
       "observed": "Actual Back/Forward entry scroll, new-route top, encoded/empty-fragment coordinates and delayed older readiness that cannot scroll or focus the newer page pass; negative controls detect deliberately wrong scroll coordinates and a real document reload.",
-      "remaining": "Real browser coordinates and retained-view identity are measured. Physical gestures and genuine BFCache restoration remain separate."
+      "remaining": "Real browser coordinates and retained-view identity are measured. Physical gestures remain pending; BF32 separately witnesses common-coordinator recovery in the public profile."
     },
     {
       "id": "RT-A03",
@@ -986,10 +1360,11 @@
         "N4",
         "N32",
         "H32",
-        "MAC32"
+        "MAC32",
+        "BF32"
       ],
       "observed": "Native/forms/history/lifecycle run in Chromium/Firefox/WebKit at the recorded mobile viewport; the user separately confirms the Mac manual checklist.",
-      "remaining": "Emulated viewport and Mac confirmation do not establish physical iPhone gestures or genuine BFCache restoration; both remain pending."
+      "remaining": "Emulated viewport, Mac confirmation and one public Chromium BFCache witness do not establish physical iPhone gestures or private/native/all-engine BFCache eligibility."
     },
     {
       "id": "RT-K01",
@@ -1038,12 +1413,13 @@
     {
       "id": "RT-D01",
       "evidence": [
+        "P174",
         "PACK4",
         "CI4",
         "historical-scaffold"
       ],
-      "observed": "Current 4c59 PR CI passes its platform/candidate-starter lanes and release-cache checks for the version-aware inventory; minimal, dashboard and native-router remain the three starters.",
-      "remaining": "Complete current-source hosted P17 remains pending; future exact main/tag CI is required separately. Historical scaffold results are not relabeled current-source runs."
+      "observed": "Complete 75-check current hosted P17 authenticates all eight archives and all three starters, alongside current PR platform/candidate-starter and release-cache lanes. Actual isolated public resolution is retained.",
+      "remaining": "This is a workflow_dispatch rehearsal plus PR CI, not future exact main/tag publication. Historical scaffold results retain their original identities."
     },
     {
       "id": "RT-D02",
@@ -1054,7 +1430,7 @@
       "remaining": "Real registry pins, complete final site/container qualification, OVH deployment identity, live routes and production rollback verification remain pending."
     }
   ],
-  "recordedAtUtc": "2026-10-27T00:21:56.164472+00:00",
+  "recordedAtUtc": "2026-10-27T00:46:22.032433Z",
   "knownLimitations": [
     {
       "id": "D14-3.2-009",
@@ -1068,8 +1444,37 @@
     "mac": "passed-user-confirmed",
     "evidence": "MAC32",
     "iphone": "pending-hosted-HTTPS",
-    "genuineBFCache": "not-observed",
+    "genuineBFCache": "Observed separately in one public no-cache/no-cookie Chromium BrowserAdapter case (BF32); not human/iPhone/private-native/all-engine acceptance.",
     "perStepNotes": "not supplied",
     "environmentAttribution": "macOS26.1/build25B78 and installed Safari26.1/build21622.2.11.11.9 were observed by read-only host tools after confirmation, not stated by the user."
+  },
+  "fullCoreMutation": {
+    "evidence": "MUT32",
+    "measuredSource": "988893020498004844a92652c25e86ecf961a46f",
+    "scored": 328,
+    "caught": 326,
+    "survived": 2,
+    "equivalent": 0,
+    "unqualified": 0,
+    "securityCaught": 169,
+    "securityTotal": 169,
+    "expressionCaught": 98,
+    "expressionTotal": 98,
+    "beforeAndRestoredExecuted": 4320,
+    "skipped": 0,
+    "applicability": "617 inputs identical through 4948; original measured source remains 988.",
+    "d14Acceptance": "pending",
+    "independentReview": "MUTREVIEW32",
+    "independentReviewStatus": "accepted-applicable-core-campaign"
+  },
+  "nonAuditRcGateClosures": {
+    "status": "recorded-for-final-independent-review",
+    "path": "scripts/release-contracts.json",
+    "rows": [
+      "FORMA-145 documentation",
+      "FORMA-301 candidate",
+      "FORMA-301 publisher"
+    ],
+    "scope": "The accompanying factual gate-completion delta records these three rows done; final independent D14 and exact final main/tag checks remain pending. This does not claim publication, token cleanup, trusted-publisher enrollment, production or device acceptance."
   }
 }
