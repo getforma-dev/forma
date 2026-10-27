@@ -1,111 +1,153 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "12476b5c14e00414f3c6e4c52215b65a40efadf2",
-  "reviewedTree": "55e593629ff66f9f1d24dba820a1c51acf152fd1",
-  "inputManifestSha256": "7eaf46a1dc6affee0e78b2c347ec7ba9aef6528d833dfb34ec36394d82414d2b",
+  "reviewedCommit": "9c5c0916412d2e398a96513daa9fd9d2966023db",
+  "reviewedTree": "56db0b08dcc392fefbf939c0b4f9c762d908476b",
+  "inputManifestSha256": "6f27c65f072a5f1871845d31c936b80e697c9e67eb4e9a7cd05f2415d9fa12a2",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "3236edc51ac87a28a9432beb3cb3d26341f3f5f501006c2573c2ddf6a2a3691f"
+    "sessionEvidenceSha256": "26d4f6c917110c8ac80b83df61d0f083d67815459fefb8a3827b7849518eb277"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "df8c07a91cae37c9a2eaee5432cab899097c16215c8762ab6a68e7e0dac1e3b2"
+    "sessionEvidenceSha256": "fba3f150c498c98401e80a30b0f6135fb156fce03e99fd9cd4f868db1cb34f0b"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "d24c71b5980373608205a11619faa3c906950c5fe3a9b7c6ccc7e2eed5379760"
+    "initializationEvidenceSha256": "0f43b2b0a8d20eac141b47217231244f1f9fc1ed4907613f2f8e1ba9f4a77ed5"
   },
-  "reviewedAt": "2026-10-27T03:47:10.778Z",
+  "reviewedAt": "2026-10-27T07:16:48.532Z",
   "accepted": true,
   "findings": [
     {
       "id": "D14-3.2-001",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Irreversible revalidation commit failures now recover even without a history write. Failed committed adapter sessions are detached and disposed before bounded recovery, including exhausted journals; generation checks preserve newer reentrant/async authority. Independent original/fixed browser controls and 12 recovery/native tests support the repair. Current packed navigation/ownership/security campaigns and exact final source bind it.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "Historical recovery defect remains resolved. Current source sets irreversible before owner commit, detaches the failed session before cleanup/recovery, and fences reentrant generation/mutation authority. Original recovery controls retain their original identities; current unchanged product source and fresh packed native/P17 proof support applicability without relabeling the older controls.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-002",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Current documentation identifies prepared RC.2 as eight packages and three starters and preserves the actual RC.1 publication/record failure. The stale core README RC.1 pin caused completed check/Node 22 / Node 24 failures before the original run was cancelled by PR replacement. Five factual Markdown corrections in5b44312e pass unchanged docs-truth 20/20 and the replacement CI (19 successful jobs, one intentional published-scaffold skip). All 57 frozen row bytes and 49 indexed evidence files remain historical; current supplemental evidence retains actual source identities.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "Current documentation accurately distinguishes stable 3.1, published RC2 and unpublished prepared RC3, eight packages and three starters, original failed publication/qualification observations, and later required gates. The 57 historical row dispositions and their 49 evidence files retain original identities. The two-file final closure delta was independently read against current receipts and changes no product, harness or version inputs.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-003",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "The source advisory gate explicitly covers the current native-router starter through the version-selected inventory. Independent ten-control replay verifies native-only advisory/unreachable/missing-starter refusal and historical behavior. Fresh current P17 also passes source and packed advisory/signature gates. This was a coverage defect, not evidence of a present uncovered runtime vulnerability.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The previously repaired native-router advisory coverage remains in the current version-selected inventory. Current source CI and fresh packed P17 cover all shipped crate locks and all three starters. No uncovered present vulnerability is inferred from the earlier coverage defect.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-004",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "All three shipped consumer workflows now enforce scripts-off complete npm installation, registry signatures, full npm advisories and pinned cargo-deny with live database fetch before builds. Independent parsed-workflow/mutation/fail-fast shell/packed-byte controls pass. Current candidate source/template equality and all three P17 starter runs bind the shipped correction.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The previously repaired consumer workflows remain scripts-off with complete npm installation, registry signatures/full advisories and pinned cargo-deny/live advisory fetch. Current original packed templates match checked-in sources and all three starter P17 paths pass. This retains the historical repair, rather than treating old workflow controls as newly executed.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-005",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "The historical broader bootstrap credential remains a disclosed founder-authorized finite exception. Actual observer receipts now verify GitHub secret removal, the named token already absent from the actual owner token list, saved router trust for getforma-dev/forma, release.yml, npm-publish, and require 2FA/disallow-bypass-token policy. No exact revocation instant is inferred. RC.2 source neither needs nor authorizes bootstrap credentials. First actual OIDC publication and post-record observation/reconciliation remain later operational outcomes; saved configuration is not successful publication. The historical exception is not silently erased or presented as least privilege.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The broader historical bootstrap credential remains a disclosed founder-authorized finite exception, with the original removal/token-absence/trust-policy observations retained. RC3 requires ordinary trusted publication and authorizes no new bootstrap credential. The current record accurately reports actual RC2 OIDC observation and explicitly does not claim independent attestation signature-chain verification. This historical governance residual is not erased or described as least privilege.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-006",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Click interception reads the raw href and resolves it against the committed view during a held POP; missing href is not synthesized into navigation. The original three-engine failure, corrected 12-case replay and full 117-case history campaign retain their actual source identities. The two removed irreversible assignments were immediately overwritten unconditionally and did not create a new callback boundary.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The held-POP click repair remains in source: raw href is resolved through the committed-view eligibility path, and a missing href stays native. Original failed/corrected three-engine and complete history evidence retains its original source. Current router runtime is byte-identical to the authenticated prior product and the fresh packed navigation proof passes.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-007",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Scroll bookkeeping now inserts/prunes immediately after current assignment and before signal/title callbacks. Independent original/fixed title-failure/full-journal/preparation-failure controls show exactly 1000 records with the current key retained; the earlier prune relocation failed that control. Corrected installed regressions and current source/packed size preserve the original caps.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The scroll-bound repair remains immediately after current-entry assignment and before value/title callbacks: insert current key, then prune to 1000. Original failure/corrected controls and actual installed receipts remain retained; no cap is raised and no later callback can precede this bookkeeping.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-008",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "Five-package observer defaults and eight-package registry policy are prepared before the audit freeze, removing the runbook requirement for prohibited post-RC source edits. Independent 43-test replay verifies missing-router 404/nonzero/incomplete/no snapshot, immutable historical baseline, expansion/shrink behavior and missing package/record/hash rejection. Preexisting policy data and historical inventory readers are unchanged. Configuration is not live enrollment or a successful registry observation.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "Five-package observer defaults and eight-package registry inventory remain prepared before freeze. Current RC3 adds only the finite authenticated router holding-artifact path, with unknown stubs/changed bytes/duplicate claims refused. Full live SR2 remains failed: future RC3 recording can account for router 0.0.0-stage only; inherited forma-ir-derive 0.0.0 remains FORMA-224. Configuration and source tests do not stand in for live success.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-009",
       "severity": "low",
       "disposition": "nonblocking",
-      "rationale": "The first uncertain-outcome announcement repeats the warning sentence and doubles punctuation. An independent installed 4c59 control observes the DOM text while confirming one POST, retained uncertainty and refusal of a subsequent submit. This is a visible/live-region wording defect, not an observed speech failure. The general Mac checklist confirmation does not refute it. Retained for follow-up; no fixed claim or runtime change is required for this RC.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The repeated visible/live-region unknown-outcome warning remains a low-severity wording defect. Source still appends the warning to an already-warning announcement. Original one-send/uncertainty/refusal evidence is retained, current form/native controls pass, and no new speech result or runtime fix is claimed. This does not compromise the preserved no-automatic-retry safety behavior.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-010",
       "severity": "high",
       "disposition": "resolved",
-      "rationale": "The original immutableRC1 run published all eight archives after 75-check P17 but failed record 121967590802 because the exact changelog heading was absent. High historical release-blocker severity is preserved. Corrected preflight shares changelogEntry with recording and reads exact committed CHANGELOG before either publisher. Independent36control replay verifies missing, empty or neighboring entries and uncommitted repairs cannot pass. RC.2 has its exact heading. Original failedworkflow/no ordinary DS12 remains visible; finite recovery admits inventory only and cannot turn it into a baseline. Source repair is resolved; actualRC2record success remains a future release outcome.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "High historical RC1 record failure severity is preserved. The committed exact-version changelog preflight/shared parser repair remains in source, RC3 has its actual heading, and current source/release control tests pass. RC1 remains a failed immutable workflow with inventory-only recovery. Actual RC2 recording subsequently succeeded; prospective RC3 recording is still a future outcome.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-011",
       "severity": "medium",
       "disposition": "resolved",
-      "rationale": "The initial reconciler treated recovery proof contents as opaque after digest authentication, so internally rehashed malformed proof could admit recovered claims. The source owner added shared validatePublicationRecoveryProof after authenticated receipt/proof binding and before any recovered addRecord. Original nine negative failures are retained. All nine semantic controls pass after bdc691e1, and this reviewer independently replayed 216 recovery/reconciliation/workflow/historical-reader controls with zero failures or skips. Nonhost releases remain no-op; strictinvalidrecovery admits no RC.1 claims and actual failed producer / separate recorder remain distinct.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "The historical opaque-proof validation defect remains resolved through the shared semantic validator before recovered claims are admitted. This reviewer independently replayed the retained original recovery evidence and current field/cause checks. Current placeholder accounting separately authenticates canonical preparation bytes, actual host/check/record executions and the exact plan; it cannot promote RC1 or the holding archive to qualification.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     },
     {
       "id": "D14-3.2-012",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "The maintainability shortfall/evidence gap is real and retained. Severity medium reflects longer maintainer feedback and CI cost; the observation is not a failed functional test, safety/security invariant violation or publication-integrity defect. It is nonblocking for the prepared RC audit, whose report explicitly preserves unmet/unestablished targets and does not approve stable release. This classification does not mark N7 met, change the 600-second threshold / 20-run protocol, create a timing waiver, claim a cold-cache excuse, infer a p95 failure, or infer a product regression from noncomparable 3.0 data. A current N7 conformance claim requires the prescribed actual20-run qualification or an explicit applicable founder disposition.",
-      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+      "rationale": "Current N7 is a measured maintainability target miss, no longer merely an evidence gap: all twenty complete normal commands/tee exits succeed, but rank-19 p95 is 748.73 seconds and maximum 760.10 against strict p95 <600. All original samples/artifacts and per-run indexed vectors remain; indexed acceptance passes in all twenty. Severity medium reflects slower maintainer feedback and CI cost, with no observed functional/security or publication-integrity failure. Independently classified nonblocking for this prepared prerelease audit only. N7 remains unmet; this does not waive its requirement, permit retry-to-green, claim stable conformance, or infer a CPU/cache cause. Stable acceptance remains open.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
+    },
+    {
+      "id": "D14-RC3-001",
+      "severity": "info",
+      "disposition": "resolved",
+      "rationale": "Prospective donor review and final local/remote Git identity were verified before the single authorized dispatch. Original all 20 attempt 1 evidence is now complete. This closes the collection/identity condition only; the failed timing requirement remains D14-3.2-012.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
+    },
+    {
+      "id": "D14-RC3-002",
+      "severity": "info",
+      "disposition": "resolved",
+      "rationale": "Actual current dry-pack P17 run 40460337225/attempt 1 and all 214 original ZIP members independently authenticate:75/75 in 1,364.505 s. Full raw measurement/current validator replay and independent guard/cost-mutation byte/cause checks pass against real published RC2 predecessor DS12 e17542c6. No historical P17 is relabeled and tagged qualification remains required.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
+    },
+    {
+      "id": "D14-RC3-003",
+      "severity": "info",
+      "disposition": "resolved",
+      "rationale": "Final exact review input 9c5c0916412d2e398a96513daa9fd9d2966023db / tree 56db0b08dcc392fefbf939c0b4f9c762d908476b has a complete 5,010-blob manifest. The only delta from measured 342 is additive preparation documentation and actual documentation/candidate gate closure; audit remains pending at the reviewed tree. All non-audit RC gates are done with actual evidence; final/device/site/soak gates remain separate.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
+    },
+    {
+      "id": "D14-RC3-004",
+      "severity": "medium",
+      "disposition": "nonblocking",
+      "rationale": "The full registry reconciliation residual remains explicit. The closed router holding-archive plan is inventory-only and prospective until successful actual RC3 recording and reconciliation. Inherited forma-ir-derive0.0.0 remains FORMA-224 without any exemption or clean-SR2 claim. This preserved accounting backlog is nonblocking for this prepared RC audit, not a declaration of SR2 conformity.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
+    },
+    {
+      "id": "D14-RC3-005",
+      "severity": "low",
+      "disposition": "resolved",
+      "rationale": "The wrong-source native preflight refusal followed by unintended helper execution/interruption remains preserved as an invalid operational attempt, with no qualification credit and no claimed product regression. Separate verified-source final native 90/90 and size evidence authenticate original archives, installed files and cleanup. The corrected operational evidence resolves the current input ambiguity without erasing history.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
+    },
+    {
+      "id": "D14-RC3-006",
+      "severity": "info",
+      "disposition": "nonblocking",
+      "rationale": "Normal R17 security reports all retain sourceClean=false after preceding check stages; no dirty-path inventory exists, so its contents are not invented. Actual source/runtime/harness/worker/engine hashes and intended mutant causes independently match current authenticated product evidence. These observations prove original command scope, not clean-source P17. The separate packed-P17 security evidence supplies the stronger release qualification.",
+      "evidenceSha256": "39bace116f6114703b279561b8057c68902f8b3e706f9d3028869df667ca5aed"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "1461f5be13153fc95095929eecc69db42c17b89f0e539706e3ceed6cc4dbeab7"
+  "acceptanceEvidenceSha256": "df2db2651771ea004f32566e13d92d09c8297dd7824b62c49f88fe4592b5f5d1"
 }
