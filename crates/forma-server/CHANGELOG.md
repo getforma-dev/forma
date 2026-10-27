@@ -2,13 +2,18 @@
 
 ## [Unreleased]
 
+Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
+3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+is published. The development notes below retain their earlier scope; the RC3
+entry records the new coordinated preparation separately.
+
 - FORMA-301: add opt-in `navigation` typed owner composition with compiler-declared
   outlets, checked-prop/module reuse digests, an explicit complete-policy profile,
   bounded native JSON and full documents sharing one initial island-state authority.
   Preserve typed 404/410/500/503 statuses (including compression), admitted GET
   redirects and declared bound action endpoints. Default document output and the
-  historical experimental harness remain compatible. Qualification is required
-  on the eventual release candidate; these changes do not declare publication.
+  historical experimental harness remain compatible. RC2 publication is recorded above;
+  the new RC3 source still requires its own qualification.
 
 - FORMA-257: plain HTML for no-JavaScript routes without islands. The additive
   counted `RenderMode::Static` walk omits adoption markers, empty-text holders
@@ -19,6 +24,15 @@
   `PageResponse::with_compression` opt-in. Negotiate Brotli/gzip/identity with
   quality refusals, preserve the document policy and no-store headers, and keep
   ordinary responses unchanged. Document the BREACH exclusion and rollback.
+
+## [3.2.0-rc.3] - Prepared; publication pending
+
+- Coordinate this package with the eight-package RC3 set. No package runtime
+  behavior changes are introduced by these release-record and harness repairs.
+- The finite router placeholder receipt and duplicate-work reduction require new
+  exact-source qualification. Published RC2 and all historical entries remain
+  unchanged. See [RC3 preparation](../../docs/release/3.2-RC3-PREPARATION.md) for
+  evidence and remaining acceptance.
 
 ## [3.0.0] - Prepared; publication pending
 

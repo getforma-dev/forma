@@ -24,6 +24,7 @@ jobs:
       started-at: ${{ steps.ci.outputs.started-at }}
       ci-run: ${{ steps.ci.outputs.ci-run }}
       recovery-sha256: ${{ steps.recovery.outputs.manifest-sha256 }}
+      placeholder-sha256: ${{ steps.placeholder.outputs.manifest-sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -56,6 +57,19 @@ jobs:
         with:
           name: release-publication-recovery
           path: ${{ runner.temp }}/publication-recovery/
+          if-no-files-found: error
+          overwrite: true
+      - name: Authenticate the finite provider placeholder before publishing
+        id: placeholder
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-provider-placeholder.mjs prepare "$RUNNER_TEMP/provider-placeholder"
+      - name: Retain authenticated provider placeholder
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.placeholder.outputs.manifest-sha256 != ''
+        with:
+          name: release-provider-placeholder
+          path: ${{ runner.temp }}/provider-placeholder/
           if-no-files-found: error
           overwrite: true
 
@@ -251,6 +265,7 @@ jobs:
     needs: [check, pack, engines, verify, publish-crates, publish-npm]
     permissions:
       contents: write
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -286,6 +301,12 @@ jobs:
           name: release-publication-recovery
           path: ${{ runner.temp }}/publication-recovery
           digest-mismatch: error
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: needs.check.outputs.placeholder-sha256 != ''
+        with:
+          name: release-provider-placeholder
+          path: ${{ runner.temp }}/provider-placeholder
+          digest-mismatch: error
       - name: Write DS12, the compatibility record and elapsed time
         env:
           GH_TOKEN: ${{ github.token }}
@@ -295,4 +316,6 @@ jobs:
           P17_RUN_ATTEMPT: ${{ needs.verify.outputs.p17-run-attempt }}
           PUBLICATION_RECOVERY_DIRECTORY: ${{ needs.check.outputs.recovery-sha256 != '' && format('{0}/publication-recovery', runner.temp) || '' }}
           PUBLICATION_RECOVERY_SHA256: ${{ needs.check.outputs.recovery-sha256 }}
+          PROVIDER_PLACEHOLDER_DIRECTORY: ${{ needs.check.outputs.placeholder-sha256 != '' && format('{0}/provider-placeholder', runner.temp) || '' }}
+          PROVIDER_PLACEHOLDER_SHA256: ${{ needs.check.outputs.placeholder-sha256 }}
         run: node scripts/release-record.mjs "$RUNNER_TEMP/release" "$RUNNER_TEMP/p17/p17.json"

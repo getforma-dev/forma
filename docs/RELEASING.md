@@ -1,10 +1,13 @@
 # Unified releases
 
-The source workspace prepares 3.2.0-rc.2 with eight coordinated packages,
-including the optional `@getforma/router`. **[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)**;
-RC.2 qualification and publication remain pending. RC.1's archives were published,
-but its release-record job failed; [the recovery record](release/3.2-RECORD-RECOVERY.md)
-preserves that partial outcome. Published 3.0 and 3.1 records
+The source workspace prepares **3.2.0-rc.3**, an unpublished eight-package
+successor including the optional `@getforma/router`. Stable
+[3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0) remains available;
+[3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is the authenticated published router prerelease.
+The [RC3 preparation record](release/3.2-RC3-PREPARATION.md) distinguishes its
+remaining gates from RC2's actual outcome. RC2 also hosts the separate
+inventory-only RC1 recovery; [the incident record](release/3.2-RECORD-RECOVERY.md)
+preserves the original failed record job. Published 3.0 and 3.1 records
 retain their original seven-package inventory. The [3.0 as-built summary](release/V3-AS-BUILT.md)
 records its qualification and completed post-release verification. This document explains the release
 mechanisms and retains historical 3.0 examples. Never reuse an existing tag or
@@ -49,7 +52,7 @@ CI and packed qualification are green. Use merge commits and never move a tag.
 
 ### Adding the optional router to the coordinated release
 
-The candidate source is prepared as 3.2.0-rc.2. `release-set.mjs version` updates
+The candidate source is prepared as 3.2.0-rc.3. `release-set.mjs version` updates
 the router manifest and lock together, including its core peer range. A 3.2-or-later release requires all eight
 packages; an eight-package live 3.1 tag is refused. No existing tag is reused.
 
@@ -68,24 +71,41 @@ records select only their two original starters. The new starter adds five heavy
 cases, including native navigation and persistent shell state in all three browser
 engines, and a Linux N8 row at the existing 3 MB / 100 ms limits.
 
-Before the first router publication, qualify the candidate and complete the
-reviewed bootstrap and monitor preparation in the
-[router enrollment procedure](release/ROUTER-REGISTRY-ENROLLMENT.md). npm requires
-an existing package before trusted-publisher enrollment. The finite,
-founder-authorized first-package exception applies only to the qualified
-`@getforma/router@3.2.0-rc.1` archive; it never replaces CI, archive verification,
-P17, provenance or D14. Configure the target five-package npm observer and
-eight-package registry policy before D14 and the published-RC source freeze;
-this source preparation is already present and does not claim live enrollment.
-Missing-package 404s remain failures, historical baselines remain unchanged, and
-no post-publication source edit or activation switch is needed. After the actual
-eight-package publication is verified, remove the bootstrap secret, revoke its
-credential, enroll the real router trusted publisher and deploy/run the audited
-observers to establish genuine complete monitoring evidence. An existing external
-four-package monitor can continue its historical version until then. Those
-post-publication obligations remain pending. Do not invent a registry identity,
-suppress a 404 or treat local tests as operational enrollment. Historical 3.0/3.1
-records retain their seven-package identities.
+The [router enrollment procedure](release/ROUTER-REGISTRY-ENROLLMENT.md) retains
+the finite, founder-authorized first-package bootstrap exception for the actual
+`@getforma/router@3.2.0-rc.1` archive. That exception is exhausted; RC2 used the
+normal trusted publisher with its bootstrap environment empty. The secret/token
+absence and saved publish-only 2FA policy were separately observed. Future
+releases use trusted publishing, without extending the RC1 exception.
+
+A complete live reconciliation after RC2 authenticated 93 archives but failed
+with two missing records: npm's router `0.0.0-stage` placeholder and the inherited
+`forma-ir-derive@0.0.0` bootstrap issue tracked by FORMA-224. These findings are
+not historical-baseline exceptions. The [RC3 preparation record](release/3.2-RC3-PREPARATION.md)
+describes the finite router repair; FORMA-224 remains a separate open obligation.
+Historical 3.0/3.1 records retain their seven-package identities.
+
+### RC3 provider-placeholder record
+
+Only `v3.2.0-rc.3` may host the receipt in the checked-in
+[finite plan](release/npm-provider-placeholder-router.json). Its normal check job
+must authenticate the exact public metadata and archive before either publisher,
+then transfer the hashed preparation artifact. The normal record job verifies
+that artifact, the actual original check/step execution and its own recorder
+context before creating the DS12 pointer and durable receipt. Preparation and
+recording may come from different attempts of the same run; copied provider job
+metadata must not be reported as a new execution.
+
+Reconciliation authenticates the actual host tag, source, successful original
+recorder, DS12 and receipt assets, preparation manifest and original check, then
+verifies the registry archive again. Check, record and the weekly reader need
+read-only Actions access for this provenance; publisher authority is unchanged.
+The receipt is inventory-only, with no product, support, performance-baseline or
+soak eligibility. Router's historical baseline stays empty. An absent host record,
+unknown placeholder, changed byte/metadata identity, unavailable provider or
+ambiguous extra claim still fails. Do not write a source-only exemption or attach
+this receipt to another host tag. RC2's RC1 recovery remains attached to RC2 and
+is only read by later inventories. See [registry reconciliation](release/REGISTRY-RECONCILIATION.md).
 
 ### Hosted packed rehearsal
 

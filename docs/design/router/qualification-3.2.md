@@ -1,5 +1,26 @@
 # FORMA-301: 3.2 candidate qualification
 
+## Successor status — 2026-10-27 UTC
+
+[3.2.0-rc.2 is published](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+from `3b6c7766a1b47558e666f76236a53697b3737bde`: eight registry archives,
+DS12 and D14 are authenticated; actual attempt 2 passed 75/75 P17 in
+1,236.041 seconds. Attempt 1's failed N1 result remains a failed observation.
+RC2's finite RC1 inventory receipt does not qualify RC1 for performance or soak.
+
+This checkout prepares **unpublished 3.2.0-rc.3**. Its
+[preparation record](../../release/3.2-RC3-PREPARATION.md) records the finite npm
+placeholder receipt, three-file duplicate-work reduction and current limits:
+failed full SR2, unestablished N7 timing conformance, missed RC2 outer clock,
+and outstanding site/device/stable/soak acceptance. RC3 requires its own evidence.
+
+The original checkpoint below, including **all 57 row dispositions**, measured
+source identities and the unchanged [evidence index](evidence/acceptance-3.2.json),
+is retained verbatim. Its references to current RC2 preparation or future
+publication describe that earlier checkpoint, not the present release status.
+
+## Original RC2 preparation checkpoint
+
 Observed **2026-10-27 UTC**. The release and gate statuses below describe this
 checkpoint; later outcomes require their own evidence.
 

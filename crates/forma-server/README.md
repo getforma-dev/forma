@@ -154,7 +154,11 @@ Browser rendering revalidates a manually constructed manifest. A missing/invalid
 
 Declared island inputs are projected at each native `ISLAND_START` into private owned state. Every SSR response includes exactly one head `<script type="application/json" data-island-state>` before the body, including the empty envelope when no island executes. Browser shells have no state block. Host `data-forma-state` occurrence indices and `data-forma-h` digests refer to those snapshots; the retired inline props and `__forma_islands` channels are not emitted. Invalid mapping/value returns `RENDER-501` with route, component and field path. The exact escaped state JSON limit is 1 MiB (`RENDER-502`); it is independently included in the complete response budget.
 
-## Native owner navigation — FORMA-301 (unreleased)
+## Native owner navigation — FORMA-301 (3.2 prerelease)
+
+This API is included in [published 3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2).
+The current checkout prepares unpublished RC3; use a matching coordinated
+compiler/build/core/router set and the [routing guide](../../docs/ROUTING.md).
 
 Enable the additive `navigation` Cargo feature and a compiler/build navigation
 group. Every owner is an existing finalized `PageHandle<P>` with its own checked

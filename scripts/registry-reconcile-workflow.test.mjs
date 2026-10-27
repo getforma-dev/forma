@@ -9,7 +9,7 @@ const readWorkflow = name => JSON.parse(execFileSync('ruby', ['-rjson', '-ryaml'
 const actual = readWorkflow('registry-reconcile.yml');
 
 function validate(workflow) {
-  assert.deepEqual(workflow.permissions, { contents: 'read' });
+  assert.deepEqual(workflow.permissions, { contents: 'read', actions: 'read' });
   assert.deepEqual(Object.keys(workflow.on).sort(), ['schedule', 'workflow_dispatch']);
   assert.equal(workflow.on.schedule.length, 1);
   assert.equal(workflow.on.schedule[0].cron, '43 8 * * 1');
@@ -40,6 +40,8 @@ test('scheduled reconciliation is bounded, read-only, fail-closed and preserves 
 test('permission escalation, skip, failure masking and failure-evidence loss are rejected', () => {
   for (const mutate of [
     w => { w.permissions.contents = 'write'; },
+    w => { w.permissions.actions = 'write'; },
+    w => { delete w.permissions.actions; },
     w => { w.permissions['id-token'] = 'write'; },
     w => { w.jobs.reconcile['continue-on-error'] = true; },
     w => { w.jobs.reconcile.steps.find(s => s.env?.GH_TOKEN).if = 'false'; },
@@ -55,5 +57,5 @@ test('ordinary PR CI runs the offline discrepancy and workflow controls', () => 
   const ci = readWorkflow('ci.yml');
   const step = ci.jobs['release-workflow'].steps.find(s => s.name === 'Registry reconciliation failures and read-only workflow controls');
   assert(step && !step.if && !step['continue-on-error']);
-  assert.equal(step.run, 'node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs scripts/release-publication-recovery.test.mjs');
+  assert.equal(step.run, 'node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs scripts/release-publication-recovery.test.mjs scripts/release-provider-placeholder.test.mjs');
 });

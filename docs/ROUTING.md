@@ -3,9 +3,10 @@
 Forma's optional `@getforma/router` keeps compatible layouts alive while the URL
 and page content change. Rust can continue rendering the destination HTML and
 typed props; client navigation does not require moving rendering into JavaScript.
-The router is introduced by the coordinated **3.2 candidate**. Check the
-[release record](https://github.com/getforma-dev/forma/releases) for publication
-status before installing a candidate. Published 3.1.0 does not include it.
+The router is available in the published coordinated **[3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**.
+Stable 3.1.0 does not include it. This source checkout prepares unpublished
+3.2.0-rc.3; [its release preparation](release/3.2-RC3-PREPARATION.md) does not
+change the registry version used in the walkthrough below.
 
 ## Choose a rendering path
 
@@ -22,7 +23,7 @@ route stays a useful option even in an application with routed pages.
 
 ## Start with a connected application
 
-Use the `native-router` template from a published 3.2 candidate or stable release:
+Use the `native-router` template from the published 3.2.0-rc.2 candidate:
 
 ```sh
 npx @getforma/create-app@3.2.0-rc.2 my-routed-app --template native-router
@@ -31,8 +32,8 @@ cd admin && npm ci && npm run build && cd ..
 cargo run --locked
 ```
 
-The command above requires the named candidate to have been published. Before
-publication, contributors use the [packed candidate workflow](../packages/create-app/README.md#development).
+The command above selects the published RC2 CLI and its coordinated dependencies.
+For unpublished RC3 work, contributors use the [packed candidate workflow](../packages/create-app/README.md#development).
 Open `http://localhost:3000`. Change the shell counter and input, then follow Home
 and About. The shell's nodes and state survive; the Home counter belongs to its
 leaf and starts again after that owner is replaced. Refresh or disable JavaScript

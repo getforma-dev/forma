@@ -1,12 +1,15 @@
 # Release documentation
 
-**[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).**
-The current source prepares 3.2.0-rc.2 with the optional router and eight
-coordinated packages. Its qualification, publication and website rollout remain
-pending; prepared version strings do not establish a release.
-RC.1's eight archives were published before its record job failed. The
-[incident and finite recovery](3.2-RECORD-RECOVERY.md) preserve that partial
-outcome and the remaining RC.2 gates.
+**[3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0) remains the latest stable release.**
+**[3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is published** with the optional router and eight
+authenticated registry archives. Current source prepares **3.2.0-rc.3**, which
+is not yet published. Its [preparation record](3.2-RC3-PREPARATION.md) covers the
+finite npm placeholder record, bounded duplicate-work reduction and outstanding
+qualification. RC2 publication does not complete stable, site/device or soak acceptance.
+
+RC1's eight archives were published before its record job failed. RC2 now hosts
+the separate inventory-only receipt. The [incident record and dated follow-up](3.2-RECORD-RECOVERY.md)
+preserve the failed original outcome without granting RC1 qualification or soak credit.
 
 ## 3.2 router preparation
 
