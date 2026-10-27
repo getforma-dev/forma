@@ -66,6 +66,68 @@ detects discrepancies between them; it cannot establish integrity if an attacker
 can replace both. Immutable tags, trusted publishing, independent review and the
 existing release checks remain separate controls.
 
+## One npm provider holding artifact
+
+A public `@getforma/router@0.0.0-stage` holding artifact with `stub:true` was
+observed during the original router publication. npm [documents this placeholder
+version](https://docs.npmjs.com/staged-publishing/) for newly staged packages.
+The original RC1 workflow log shows ordinary `npm publish`, and the placeholder's
+registry timestamp falls inside that publication interval. This association does
+not establish an explicit staging command or npm's internal backend mechanism.
+The actual 364-byte archive contains only package metadata and a holding README;
+it contains no router implementation. Its two regular files total 338 bytes.
+
+`docs/release/npm-provider-placeholder-router.json` is a closed, reviewed plan
+for this exact identity, timestamp, metadata and archive. It pins the original
+publication evidence, all three archive digests and the inspected members. It
+does not add a historical exemption: router `baseline` remains empty. Under the
+literal L-48 contract, the plan alone cannot satisfy the missing release record.
+
+The prospective `v3.2.0-rc.3` release first authenticates live metadata and archive
+bytes in its check job, then transfers the bounded observation with the existing
+evidence manifest. The record job verifies that transfer, the tagged plan and
+its actual current run before generating the inventory-only receipt. It may use
+an earlier successful check attempt in the same run. The receipt claims no
+success for its still-running recorder. Ordinary DS12 `packages` remains the
+eight product packages. A separate `providerPlaceholders` pointer names the
+attached `npm-provider-placeholder-router-0.0.0-stage.json` asset, byte length
+and SHA256.
+
+The receipt durably retains the exact canonical `prepared.json` and its one-file
+evidence manifest. Their contents, byte lengths, file digest and manifest digest
+are recomputed by the reader; a merely well-formed hash is insufficient. The
+reader authenticates the original check attempt and its successful named prepare
+and upload steps, including execution intervals and upload-before-record ordering.
+The observation time must fall inside preparation, with less than one second of
+endpoint allowance for GitHub's timestamp precision. A check can have succeeded
+in an overall failed earlier attempt. The active recorder can also consume a
+completed check in the same still-running attempt. Neither case invents an overall
+success. Long-term verification does not depend on retaining Actions artifacts.
+
+On later reconciliation the host DS12 and receipt must match their GitHub asset
+digests and lengths. The receipt must match the finite source plan, pointer,
+actual annotated RC3 tag and commit, plan bytes retrieved from that commit, and
+the completed successful original recorder attempt/job/step. A copied
+earlier job interval cannot establish a new recorder execution. Only after these
+checks does the receipt contribute its single archive claim. Every reconciliation
+then downloads the live archive and checks its length and SHA256/SHA1/SHA512,
+canonical URL, publication timestamp and exact stub metadata again.
+
+The latest run must still identify the same source/tag and an equal or later
+attempt. A later attempt's actual status and conclusion remain separate report
+fields; they neither replace nor relabel the original successful recorder.
+
+The report separates `verifiedProviderPlaceholders` and each package's
+`providerPlaceholders` count from ordinary verified product archives. The receipt
+is ineligible for qualification, support, performance baselines and soak. Existing
+publish, baseline and support readers do not consume it. Later releases discover
+the original RC3 attachment; they cannot generate a second claim. Missing
+planned pointers, unavailable providers, replaced source or bytes, other
+`stub:true` identities, extra claims and attempts to list the artifact as an
+ordinary product package all fail. No registry artifact is unpublished or
+rewritten. The immutable RC2 source is unchanged, and strict SR2 remains open
+until an actual successful successor DS12 and attachment exist.
+
 ## Run and triage
 
 Use the Node version in `.node-version`. Local execution needs only Node's
@@ -74,7 +136,7 @@ in the environment. No registry credential is used.
 
 ```sh
 node scripts/registry-reconcile.mjs --policy scripts/registry-reconcile-policy.json --output /tmp/forma-registry-reconciliation.json
-node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs
+node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs scripts/release-provider-placeholder.test.mjs
 ```
 
 On failure, retain the report and identify the package/version and finding.
@@ -86,7 +148,7 @@ evidence; it does not make the original run successful.
 
 ## Governance boundary
 
-The workflow has `contents: read` only, no OIDC publishing permission, no
+The workflow has `contents: read` and `actions: read`, no OIDC publishing permission, no
 persisted checkout credentials and no package installation. Its GitHub token is
 used only for approved GitHub API requests, never for registry archive downloads.
 

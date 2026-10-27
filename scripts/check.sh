@@ -89,6 +89,7 @@ node --test scripts/compatibility-package.test.mjs scripts/core-raw-package.test
 step "packed integrity gate: resource observations and mandatory native checks"
 node --test scripts/release-integrity.test.mjs
 node --test scripts/release-publication-recovery.test.mjs
+node --test scripts/release-provider-placeholder.test.mjs
 node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs scripts/package-metadata.test.mjs
 ruby scripts/check-toolchain-policy.rb
 step "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"

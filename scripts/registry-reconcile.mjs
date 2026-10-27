@@ -9,6 +9,9 @@ import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
 import { packageIdentitiesForVersion } from './release-package-inventory.mjs';
 import { recoveryPlanForTag, validatePublicationRecoveryReceipt, validatePublicationRecoveryProof,
   PUBLICATION_RECOVERY_CONTRACT, PUBLICATION_RECOVERY_MAX_BYTES } from './release-publication-recovery.mjs';
+import { PLACEHOLDER_CONTRACT, PLACEHOLDER_HOST, PLACEHOLDER_ASSET, PLACEHOLDER_PLAN_PATH, PLACEHOLDER_MAX_BYTES,
+  placeholderPlan, validatePlaceholderReceipt, authenticatePlaceholderHost, validatePlaceholderMetadata,
+  validatePlaceholderArchive } from './release-provider-placeholder.mjs';
 
 const identities = [
   ['npm', '@getforma/core', 'getforma-dev/formajs', 'v', '2.0.3'],
@@ -71,7 +74,7 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
   // provider. The CLI exposes neither a plan flag nor an environment override.
   recoveryPlanForTagImpl = recoveryPlanForTag }) {
   const report = { schema: 1, startedAt: new Date().toISOString(), passed: false,
-    externalAlertDelivery: 'deferred-L60', findings: [], packages: [], verifiedArchives: [] };
+    externalAlertDelivery: 'deferred-L60', findings: [], packages: [], verifiedArchives: [], verifiedProviderPlaceholders: [] };
   const finding = (code, message, detail = {}) => report.findings.push({ code, message, ...detail });
   const finish = () => { report.completedAt = new Date().toISOString(); report.passed = report.findings.length === 0; return report; };
   try { validatePolicy(policy); } catch (e) { finding('BASELINE_INVALID', e.message); return finish(); }
@@ -81,7 +84,12 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
   const repos = new Set(policy.packages.flatMap(p => p.recordRepositories));
   function apiAllowed(u) {
     return u.hostname === 'api.github.com' && [...repos].some(repo =>
-      u.pathname === `/repos/${repo}/releases` || new RegExp(`^/repos/${repo}/releases/assets/[1-9][0-9]*$`).test(u.pathname));
+      u.pathname === `/repos/${repo}/releases` || new RegExp(`^/repos/${repo}/releases/assets/[1-9][0-9]*$`).test(u.pathname) ||
+      (repo === 'getforma-dev/forma' && (
+        /^\/repos\/getforma-dev\/forma\/actions\/runs\/[1-9][0-9]*(?:\/attempts\/[1-9][0-9]*(?:\/jobs)?)?$/.test(u.pathname) ||
+        u.pathname === `/repos/${repo}/git/ref/tags/${PLACEHOLDER_HOST}` ||
+        /^\/repos\/getforma-dev\/forma\/git\/tags\/[a-f0-9]{40}$/.test(u.pathname) ||
+        (u.pathname === `/repos/${repo}/contents/${PLACEHOLDER_PLAN_PATH}` && /^[a-f0-9]{40}$/.test(u.searchParams.get('ref') ?? '')))));
   }
   // Each request's initial address is constructed from checked identities. Only
   // GitHub's asset CDN may receive a redirect; the API credential is not forwarded.
@@ -191,6 +199,25 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
           { ...source, name: p.name, version: p.version });
     }
   }
+  async function placeholderClaim(release, record, source) {
+    assert.equal(record.tag, PLACEHOLDER_HOST, 'provider placeholder has an unplanned host');
+    assert(Array.isArray(record.providerPlaceholders) && record.providerPlaceholders.length === 1, 'planned provider placeholder requires exactly one DS12 pointer');
+    const pointer = record.providerPlaceholders[0];
+    assert(pointer && typeof pointer === 'object' && !Array.isArray(pointer));
+    assert.deepEqual(Object.keys(pointer).sort(), ['asset', 'bytes', 'contract', 'sha256']);
+    assert.equal(pointer.contract, PLACEHOLDER_CONTRACT); assert.equal(pointer.asset, PLACEHOLDER_ASSET); assert(hashPattern.test(pointer.sha256), 'invalid placeholder pointer hash');
+    assert(Number.isSafeInteger(pointer.bytes) && pointer.bytes > 0 && pointer.bytes <= PLACEHOLDER_MAX_BYTES);
+    const assets = release.assets.filter(asset => asset.name === PLACEHOLDER_ASSET); assert.equal(assets.length, 1, 'missing or duplicate placeholder receipt');
+    const asset = assets[0]; assert(Number.isSafeInteger(asset.id) && asset.id > 0);
+    const bytes = await read(`https://api.github.com/repos/getforma-dev/forma/releases/assets/${asset.id}`, Math.min(budget.recordBytes, PLACEHOLDER_MAX_BYTES), { asset: true });
+    const actual = authenticateAsset(asset, bytes, PLACEHOLDER_MAX_BYTES);
+    assert.equal(actual.sha256, pointer.sha256); assert.equal(actual.bytes, pointer.bytes);
+    const binding = placeholderPlan(), receipt = validatePlaceholderReceipt(JSON.parse(bytes), { hostTag: record.tag, hostCommit: record.commit, hostRunId: record.run, binding });
+    const hostObservation = await authenticatePlaceholderHost({ receipt, binding, get: url => json(url) });
+    const plan = binding.plan;
+    addRecord({ registry: plan.registry, name: plan.name, version: plan.version, file: artifactFilename(plan.registry, plan.name, plan.version), sha256: plan.archive.sha256 },
+      { ...source, kind: 'provider-placeholder', disposition: plan.disposition, assetId: asset.id, assetSha256: pointer.sha256, planSha256: binding.sha256, hostObservation });
+  }
   // Inventory releases first, including old maintenance repositories. No missing
   // API response or malformed record becomes an exemption.
   for (const repo of repos) {
@@ -228,7 +255,7 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
                 ids.add(identityKey(p));
               }
               const recoveryPlan = recoveryPlanForTagImpl(tag);
-              if (recoveryPlan || Object.hasOwn(record, 'publicationRecoveries'))
+              if (recoveryPlan || Object.hasOwn(record, 'publicationRecoveries') || tag === PLACEHOLDER_HOST || Object.hasOwn(record, 'providerPlaceholders'))
                 authenticateAsset(asset, recordBytes, budget.recordBytes);
               for (const p of record.packages) {
                 addRecord(p, { ...source, assetId: asset.id });
@@ -237,6 +264,8 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
               }
               if (recoveryPlan || Object.hasOwn(record, 'publicationRecoveries'))
                 await recoveryClaims(release, record, source, recoveryPlan);
+              if (tag === PLACEHOLDER_HOST || Object.hasOwn(record, 'providerPlaceholders'))
+                await placeholderClaim(release, record, source);
             } catch (e) { finding('RECORD_INVALID', e.message, source); }
           } else {
             for (const spec of identities) {
@@ -261,13 +290,14 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
     } catch (e) { finding('RECORD_UNREADABLE', e.message, { repository: repo }); }
   }
   for (const p of policy.packages) {
-    const detail = { registry: p.registry, name: p.name }, result = { ...detail, versions: 0, baseline: 0, verified: 0 };
+    const detail = { registry: p.registry, name: p.name }, result = { ...detail, versions: 0, baseline: 0, verified: 0, providerPlaceholders: 0 };
     report.packages.push(result);
-    let versions;
+    let versions, publicationTimes;
     try {
       versions = new Map();
       if (p.registry === 'npm') {
         const data = await json(`https://registry.npmjs.org/${encodeURIComponent(p.name)}`);
+        publicationTimes = data.time;
         assert(data.name === p.name && data.versions && typeof data.versions === 'object' && !Array.isArray(data.versions), 'invalid npm version inventory');
         for (const [version, row] of Object.entries(data.versions)) {
           assert(versionPattern.test(version) && row.name === p.name && row.version === version, 'invalid npm version identity');
@@ -297,13 +327,26 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
       for (const b of p.baseline) assert(versions.has(b.version), `baseline version absent: ${b.version}`);
     } catch (e) { finding('REGISTRY_UNREADABLE', e.message, detail); continue; }
     for (const [version, row] of versions) {
-      if (p.baseline.some(b => b.version === version)) { result.baseline++; continue; }
       const identity = { ...detail, version }, matches = records.get(key(p.registry, p.name, version)) ?? [];
+      if (row.stub === true && !(p.registry === 'npm' && p.name === '@getforma/router' && version === '0.0.0-stage')) {
+        finding('UNKNOWN_PROVIDER_PLACEHOLDER', 'unplanned registry placeholder', identity); continue;
+      }
+      if (p.baseline.some(b => b.version === version)) { result.baseline++; continue; }
       if (!matches.length) { finding('MISS_RECORD', 'published version has no valid release record', identity); continue; }
       if (matches.length !== 1) { finding('AMBIGUOUS_RECORD', 'multiple records claim this version', { ...identity, sources: matches.map(m => m.source) }); continue; }
       const expected = matches[0];
       try {
         const url = p.registry === 'npm' ? npmArchive(p.name, version) : crateArchive(p.name, version);
+        if (expected.source.kind === 'provider-placeholder') {
+          const plan = placeholderPlan().plan;
+          validatePlaceholderMetadata(row, publicationTimes?.[version], plan);
+          const bytes = await read(url, Math.min(budget.archiveBytes, plan.archive.bytes));
+          validatePlaceholderArchive(bytes, plan); result.providerPlaceholders++;
+          report.verifiedProviderPlaceholders.push({ ...identity, sha256: plan.archive.sha256, bytes: bytes.length, archiveUrl: url, source: expected.source,
+            qualificationEligible: false, supportEligible: false, performanceBaselineEligible: false, soakEligible: false });
+          continue;
+        }
+        assert(row.stub !== true, 'ordinary release record cannot qualify a provider placeholder');
         if (p.registry === 'npm') assert.equal(row.dist?.tarball, url, 'npm archive URL differs from canonical package URL');
         const actual = await read(url, budget.archiveBytes, { hash: true });
         if (actual.sha256 !== expected.sha256 || (p.registry === 'crates' && actual.sha256 !== row.checksum)) {
@@ -332,7 +375,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const policy = JSON.parse(readFileSync(options['--policy'] ?? new URL('./registry-reconcile-policy.json', import.meta.url), 'utf8'));
     const report = await reconcile({ policy, token: process.env.GH_TOKEN ?? '' });
     mkdirSync(dirname(output), { recursive: true }); writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
-    console.log(`Registry reconciliation ${report.passed ? 'PASS' : 'FAIL'}: ${report.packages.reduce((n, p) => n + p.verified, 0)} archives verified; ${report.findings.length} findings. External delivery deferred (L-60).`);
+    console.log(`Registry reconciliation ${report.passed ? 'PASS' : 'FAIL'}: ${report.packages.reduce((n, p) => n + p.verified, 0)} product archives and ${report.verifiedProviderPlaceholders.length} provider placeholders verified; ${report.findings.length} findings. External delivery deferred (L-60).`);
     for (const f of report.findings) console.log(JSON.stringify(f));
     if (!report.passed) process.exitCode = 1;
   } catch (e) {

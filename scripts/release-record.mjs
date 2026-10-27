@@ -14,6 +14,7 @@ import { AUDIT_FILES, readRcAudit } from './release-audit.mjs';
 import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
 import { SOAK_GATE, readSoakDeferral, soakDisposition } from './release-soak-deferral.mjs';
 import { consumePublicationRecovery } from './release-publication-recovery.mjs';
+import { consumeProviderPlaceholder } from './release-provider-placeholder.mjs';
 
 export function releaseRecordBytes(record, maxBytes = RELEASE_RECORD_MAX_BYTES) {
   const bytes = Buffer.from(JSON.stringify(record, null, 2) + '\n');
@@ -144,11 +145,20 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     expectedSha256: process.env.PUBLICATION_RECOVERY_SHA256 ?? '',
     outputDirectory: join(dir, 'publication-recovery'),
   });
+  const placeholder = await consumeProviderPlaceholder({
+    tag: set.tag, commit: set.commit,
+    runId: runNumber(process.env.GITHUB_RUN_ID, 'GITHUB_RUN_ID'),
+    runAttempt: runNumber(process.env.GITHUB_RUN_ATTEMPT, 'GITHUB_RUN_ATTEMPT'),
+    directory: process.env.PROVIDER_PLACEHOLDER_DIRECTORY,
+    expectedSha256: process.env.PROVIDER_PLACEHOLDER_SHA256 ?? '',
+    outputDirectory: join(dir, 'provider-placeholder'),
+  });
   const started = Date.parse(process.env.RELEASE_STARTED_AT);
   assert(Number.isFinite(started), 'missing original tag-run timestamp');
   let now = new Date();
   const record = { ...set, ...qualification.fields, milestone, ciRun: process.env.CI_RUN, startedAt: new Date(started).toISOString(), recordedAt: now.toISOString(), elapsedSeconds: (now.getTime() - started) / 1000, timingBasis: 'GitHub tag-triggered workflow created_at to release record write (queue included)', measurements: report };
   if (recovery.publicationRecoveries.length) record.publicationRecoveries = recovery.publicationRecoveries;
+  if (placeholder.providerPlaceholders.length) record.providerPlaceholders = placeholder.providerPlaceholders;
   const changelog = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
   const entry = changelogEntry(changelog, version);
   record.changelog = entry;
@@ -157,6 +167,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     notes += '\nInventory-only publication recovery: the attached receipt records the original archives and failed recording outcome for ' +
       recovery.publicationRecoveries.map(item => `\`${item.originalTag}\``).join(', ') +
       '. It does not establish a performance or burn-in baseline, and does not change the original failed workflow.\n';
+  }
+  if (placeholder.providerPlaceholders.length) {
+    notes += '\nProvider holding artifact: the attached inventory-only receipt accounts for npm\'s `@getforma/router@0.0.0-stage` placeholder. It is separate from the eight product packages and establishes no qualification, support, performance or soak eligibility.\n';
   }
   const recordPath = join(dir, 'release-record.json'), notesPath = join(dir, 'release-notes.md');
   writeFileSync(recordPath, releaseRecordBytes(record)); writeFileSync(notesPath, notes);
@@ -183,6 +196,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   notes = notes.replace(/Tag-event run to record: [^;]+;/, `Tag-event run to acknowledged release write: ${record.elapsedSeconds.toFixed(1)} seconds;`);
   writeFileSync(notesPath, notes);
   run('gh', ['release', 'edit', set.tag, '--notes-file', notesPath]);
-  run('gh', ['release', 'upload', set.tag, recordPath, reportPath, securityPath, join(dir, 'SHA256SUMS'), ...qualification.assets, ...recovery.assets, '--clobber']);
+  run('gh', ['release', 'upload', set.tag, recordPath, reportPath, securityPath, join(dir, 'SHA256SUMS'), ...qualification.assets, ...recovery.assets, ...placeholder.assets, '--clobber']);
   assert(run('gh', ['release', 'view', set.tag, '--json', 'assets']).includes('release-record.json'), 'SR2: GitHub Release has no compatibility record');
 } catch (error) { console.error(`release-record: ${error.message}`); process.exitCode = 1; }

@@ -1,0 +1,57 @@
+{
+  "contract": "forma-npm-provider-placeholder-plan-v1",
+  "hostTag": "v3.2.0-rc.3",
+  "registry": "npm",
+  "name": "@getforma/router",
+  "version": "0.0.0-stage",
+  "disposition": "provider-placeholder-inventory-only",
+  "qualificationEligible": false,
+  "supportEligible": false,
+  "performanceBaselineEligible": false,
+  "soakEligible": false,
+  "metadata": {
+    "name": "@getforma/router",
+    "version": "0.0.0-stage",
+    "_id": "@getforma/router@0.0.0-stage",
+    "stub": true,
+    "description": "Temporary package placeholder for staged publishing",
+    "publishedAt": "2026-10-27T02:07:01.211Z",
+    "fileCount": 2,
+    "unpackedSize": 338
+  },
+  "archive": {
+    "url": "https://registry.npmjs.org/@getforma/router/-/router-0.0.0-stage.tgz",
+    "bytes": 364,
+    "sha256": "846480ebca8b85660824c70ef4a64ffdd3b6af2aed8776941392ba64ea9a7954",
+    "sha1": "026a9400cb2aae640064febda3e80aaea9d21dfc",
+    "integrity": "sha512-Bysk+NLfMw1wR5CyyjlkAgKUIX+f/RNVvChbchRoin0nuebDoim8rdZdJDdlGm42CNmnu6inYAL/TDNsBjgzSA=="
+  },
+  "members": [
+    {
+      "name": "package/package.json",
+      "bytes": 148,
+      "sha256": "195a4c108c79e8a9eee25f32dd601c3e4db43c0ecccc23753664ee567fef1f3d"
+    },
+    {
+      "name": "package/README.md",
+      "bytes": 190,
+      "sha256": "e9a4a2e10e03f9e46ab3c2e5020b354b3ab20cc2c89381ce91f5b2a756e6b122"
+    }
+  ],
+  "evidence": {
+    "providerDocumentation": "https://docs.npmjs.com/staged-publishing/",
+    "observedDuring": {
+      "tag": "v3.2.0-rc.1",
+      "commit": "6e5e2e4937e5ed9dc60e6669cb4887508ccdbdb8",
+      "runId": 40433276229,
+      "runAttempt": 1,
+      "publisherJobId": 121964065609,
+      "publisherLogSha256": "3497f3798b51fb3e519c576e542929aa64a984b3b27d3bea18723ef4a945017c",
+      "routerArchiveSha256": "3d56164da29f88210af82f44a0f4a9940384ff1113112d537fde61cba4aab45a"
+    },
+    "registryObservationSha256": "1816bb76b969ca12e6a005daf607d6207639830a006e2e6869f93db0c99e16aa",
+    "archiveAuthenticationSha256": "d17ec98cc4088508ac688b93095c4461aeb98a0b8d62d70581dbf308f2173da5",
+    "originObservationSha256": "8174af5f10e767950cb1d23b0956a71c9083c5c07cce7860297f966462449b31",
+    "causality": "Observed during ordinary RC1 npm publish; no explicit stage command or internal backend mechanism is established."
+  }
+}

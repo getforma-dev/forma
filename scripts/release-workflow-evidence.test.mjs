@@ -19,6 +19,9 @@ const evidenceCheck = doc => doc.jobs.record.steps.find(step => step.name === 'V
 const recoveryPrepare = doc => doc.jobs.check.steps.find(step => step.id === 'recovery');
 const recoveryUpload = doc => doc.jobs.check.steps.find(step => step.with?.name === 'release-publication-recovery');
 const recoveryDownload = doc => doc.jobs.record.steps.find(step => step.with?.name === 'release-publication-recovery');
+const placeholderPrepare = doc => doc.jobs.check.steps.find(step => step.id === 'placeholder');
+const placeholderUpload = doc => doc.jobs.check.steps.find(step => step.with?.name === 'release-provider-placeholder');
+const placeholderDownload = doc => doc.jobs.record.steps.find(step => step.with?.name === 'release-provider-placeholder');
 const writer = doc => doc.jobs.record.steps.find(step => step.run?.startsWith('node scripts/release-record.mjs'));
 
 function lint(doc) {
@@ -60,6 +63,8 @@ test('actual release workflow retains failed P17 bytes without changing publish 
 });
 
 const mutations = [
+  ['recorder cannot authenticate its actual attempt', 'P2', doc => { delete doc.jobs.record.permissions.actions; }],
+  ['recorder Actions permission exceeds observation', 'P2', doc => { doc.jobs.record.permissions.actions = 'write'; }],
   ['missing inventory recovery prepublication gate', 'K10', doc => { doc.jobs.check.steps = doc.jobs.check.steps.filter(step => step !== recoveryPrepare(doc)); }],
   ['conditional recovery preparation', 'E1', doc => { recoveryPrepare(doc).if = 'false'; }],
   ['recovery preparation uses another token', 'K10', doc => { recoveryPrepare(doc).env.GH_TOKEN = '${{ secrets.PAT }}'; }],
@@ -72,6 +77,18 @@ const mutations = [
   ['record downloads inventory recovery after writing', 'K10', doc => { const steps = doc.jobs.record.steps, step = recoveryDownload(doc); steps.splice(steps.indexOf(step), 1); steps.push(step); }],
   ['record trusts the packed-set hash for inventory recovery', 'K10', doc => { writer(doc).env.PUBLICATION_RECOVERY_SHA256 = '${{ needs.pack.outputs.record-sha256 }}'; }],
   ['record consumes a different inventory recovery directory', 'K10', doc => { writer(doc).env.PUBLICATION_RECOVERY_DIRECTORY = '${{ runner.temp }}/other'; }],
+  ['missing inventory placeholder prepublication gate', 'K11', doc => { doc.jobs.check.steps = doc.jobs.check.steps.filter(step => step !== placeholderPrepare(doc)); }],
+  ['conditional placeholder preparation', 'E1', doc => { placeholderPrepare(doc).if = 'false'; }],
+  ['placeholder preparation uses another token', 'K11', doc => { placeholderPrepare(doc).env.GH_TOKEN = '${{ secrets.PAT }}'; }],
+  ['placeholder preparation allows an external plan', 'K11', doc => { placeholderPrepare(doc).run += ' --plan other.json'; }],
+  ['placeholder upload silently skips its proof', 'K11', doc => { placeholderUpload(doc).if = 'false'; }],
+  ['placeholder upload tolerates absent files', 'K11', doc => { placeholderUpload(doc).with['if-no-files-found'] = 'warn'; }],
+  ['placeholder hash output trusts another producer', 'K11', doc => { doc.jobs.check.outputs['placeholder-sha256'] = '${{ steps.ci.outputs.ci-run }}'; }],
+  ['record omits the inventory placeholder download', 'K11', doc => { doc.jobs.record.steps = doc.jobs.record.steps.filter(step => step !== placeholderDownload(doc)); }],
+  ['record ignores placeholder archive digest mismatch', 'K11', doc => { placeholderDownload(doc).with['digest-mismatch'] = 'warn'; }],
+  ['record downloads inventory placeholder after writing', 'K11', doc => { const steps = doc.jobs.record.steps, step = placeholderDownload(doc); steps.splice(steps.indexOf(step), 1); steps.push(step); }],
+  ['record trusts the packed-set hash for inventory placeholder', 'K11', doc => { writer(doc).env.PROVIDER_PLACEHOLDER_SHA256 = '${{ needs.pack.outputs.record-sha256 }}'; }],
+  ['record consumes a different inventory placeholder directory', 'K11', doc => { writer(doc).env.PROVIDER_PLACEHOLDER_DIRECTORY = '${{ runner.temp }}/other'; }],
   ['missing RC/final qualification', 'K9', doc => { doc.jobs.check.steps = doc.jobs.check.steps.filter(step => step.run !== 'node scripts/check-release-qualification.mjs'); }],
   ['qualification with a different token source', 'K9', doc => { doc.jobs.check.steps.find(step => step.run === 'node scripts/check-release-qualification.mjs').env.GH_TOKEN = '${{ secrets.PAT }}'; }],
   ['shallow RC qualification checkout', 'K9', doc => { delete doc.jobs.check.steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth']; }],

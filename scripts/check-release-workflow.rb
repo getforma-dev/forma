@@ -50,6 +50,24 @@ RECOVERY_DOWNLOAD = {
   'with' => { 'name' => 'release-publication-recovery', 'path' => '${{ runner.temp }}/publication-recovery',
               'digest-mismatch' => 'error' }
 }.freeze
+PLACEHOLDER_PREPARE = {
+  'name' => 'Authenticate the finite provider placeholder before publishing',
+  'id' => 'placeholder', 'env' => { 'GH_TOKEN' => '${{ github.token }}' },
+  'run' => 'node scripts/release-provider-placeholder.mjs prepare "$RUNNER_TEMP/provider-placeholder"'
+}.freeze
+PLACEHOLDER_UPLOAD = {
+  'name' => 'Retain authenticated provider placeholder',
+  'uses' => 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
+  'if' => "steps.placeholder.outputs.manifest-sha256 != ''",
+  'with' => { 'name' => 'release-provider-placeholder', 'path' => '${{ runner.temp }}/provider-placeholder/',
+              'if-no-files-found' => 'error', 'overwrite' => true }
+}.freeze
+PLACEHOLDER_DOWNLOAD = {
+  'uses' => 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333',
+  'if' => "needs.check.outputs.placeholder-sha256 != ''",
+  'with' => { 'name' => 'release-provider-placeholder', 'path' => '${{ runner.temp }}/provider-placeholder',
+              'digest-mismatch' => 'error' }
+}.freeze
 
 def steps(job)
   job.is_a?(Hash) && job['steps'].is_a?(Array) ? job['steps'] : []
@@ -76,7 +94,7 @@ def violations(doc)
     want = if PUBLISH.key?(name)
              { 'contents' => 'read', 'id-token' => 'write' }
            elsif name == 'record'
-             { 'contents' => 'write' }
+             { 'contents' => 'write', 'actions' => 'read' }
            elsif name == 'check'
              { 'contents' => 'read', 'actions' => 'read' }
            else
@@ -94,7 +112,8 @@ def violations(doc)
       evidence_upload = name == 'verify' && step == P17_UPLOAD
       # Only artifact transfer is conditional. The preparation gate and writer
       # always run and refuse a missing recovery proof for its exact host tag.
-      recovery_transfer = (name == 'check' && step == RECOVERY_UPLOAD) || (name == 'record' && step == RECOVERY_DOWNLOAD)
+      recovery_transfer = (name == 'check' && step == RECOVERY_UPLOAD) || (name == 'record' && step == RECOVERY_DOWNLOAD) ||
+                          (name == 'check' && step == PLACEHOLDER_UPLOAD) || (name == 'record' && step == PLACEHOLDER_DOWNLOAD)
       out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || (step.key?('if') && !evidence_upload && !recovery_transfer)
       out << "E5 #{name} shell must fail fast" if step.key?('shell') && !%w[bash sh].include?(step['shell'])
       if step['uses']
@@ -203,13 +222,14 @@ def violations(doc)
   check_steps = steps(jobs['check'])
   preparation = check_steps.each_index.select { |i| check_steps[i] == RECOVERY_PREPARE }
   qualification_index = check_steps.index { |s| s['run'] == 'node scripts/check-release-qualification.mjs' }
-  recovery_uploads = check_steps.each_index.select { |i| action(check_steps[i]) == 'actions/upload-artifact' }
+  recovery_uploads = check_steps.each_index.select { |i| action(check_steps[i]) == 'actions/upload-artifact' && check_steps[i].dig('with', 'name') == 'release-publication-recovery' }
   prepare_bound = preparation.length == 1 && qualification_index && qualification_index < preparation.first &&
                   recovery_uploads.length == 1 && recovery_uploads.first > preparation.first &&
                   check_steps[recovery_uploads.first] == RECOVERY_UPLOAD &&
                   jobs['check']['outputs'] == { 'started-at' => '${{ steps.ci.outputs.started-at }}',
                                                'ci-run' => '${{ steps.ci.outputs.ci-run }}',
-                                               'recovery-sha256' => '${{ steps.recovery.outputs.manifest-sha256 }}' }
+                                               'recovery-sha256' => '${{ steps.recovery.outputs.manifest-sha256 }}',
+                                               'placeholder-sha256' => '${{ steps.placeholder.outputs.manifest-sha256 }}' }
   out << 'K10 inventory recovery must be authenticated and transferred before publishing' unless prepare_bound
   recovery_downloads = record_steps.each_index.select { |i| action(record_steps[i]) == 'actions/download-artifact' && record_steps[i].dig('with', 'name') == 'release-publication-recovery' }
   consume_bound = recovery_downloads.length == 1 && writers.length == 1 && recovery_downloads.first < writers.first &&
@@ -217,6 +237,23 @@ def violations(doc)
                   record_steps[writers.first].dig('env', 'PUBLICATION_RECOVERY_DIRECTORY') == %q(${{ needs.check.outputs.recovery-sha256 != '' && format('{0}/publication-recovery', runner.temp) || '' }}) &&
                   record_steps[writers.first].dig('env', 'PUBLICATION_RECOVERY_SHA256') == '${{ needs.check.outputs.recovery-sha256 }}'
   out << 'K10 record must consume the independently anchored recovery artifact before writing' unless consume_bound
+  preparation = check_steps.each_index.select { |i| check_steps[i] == PLACEHOLDER_PREPARE }
+  qualification_index = check_steps.index { |s| s['run'] == 'node scripts/check-release-qualification.mjs' }
+  placeholder_uploads = check_steps.each_index.select { |i| action(check_steps[i]) == 'actions/upload-artifact' && check_steps[i].dig('with', 'name') == 'release-provider-placeholder' }
+  prepare_bound = preparation.length == 1 && qualification_index && qualification_index < preparation.first &&
+                  placeholder_uploads.length == 1 && placeholder_uploads.first > preparation.first &&
+                  check_steps[placeholder_uploads.first] == PLACEHOLDER_UPLOAD &&
+                  jobs['check']['outputs'] == { 'started-at' => '${{ steps.ci.outputs.started-at }}',
+                                               'ci-run' => '${{ steps.ci.outputs.ci-run }}',
+                                               'recovery-sha256' => '${{ steps.recovery.outputs.manifest-sha256 }}',
+                                               'placeholder-sha256' => '${{ steps.placeholder.outputs.manifest-sha256 }}' }
+  out << 'K11 inventory placeholder must be authenticated and transferred before publishing' unless prepare_bound
+  placeholder_downloads = record_steps.each_index.select { |i| action(record_steps[i]) == 'actions/download-artifact' && record_steps[i].dig('with', 'name') == 'release-provider-placeholder' }
+  consume_bound = placeholder_downloads.length == 1 && writers.length == 1 && placeholder_downloads.first < writers.first &&
+                  record_steps[placeholder_downloads.first] == PLACEHOLDER_DOWNLOAD &&
+                  record_steps[writers.first].dig('env', 'PROVIDER_PLACEHOLDER_DIRECTORY') == %q(${{ needs.check.outputs.placeholder-sha256 != '' && format('{0}/provider-placeholder', runner.temp) || '' }}) &&
+                  record_steps[writers.first].dig('env', 'PROVIDER_PLACEHOLDER_SHA256') == '${{ needs.check.outputs.placeholder-sha256 }}'
+  out << 'K11 record must consume the independently anchored placeholder artifact before writing' unless consume_bound
   out
 end
 

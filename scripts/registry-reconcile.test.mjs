@@ -6,6 +6,8 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {reconcile, validatePolicy} from './registry-reconcile.mjs';
 import {validatePublicationRecoveryProof} from './release-publication-recovery.mjs';
+import {actualPlaceholderBytes, placeholderFixture} from './fixtures/provider-placeholder.mjs';
+import {PLACEHOLDER_HOST, PLACEHOLDER_ASSET, PLACEHOLDER_CONTRACT} from './release-provider-placeholder.mjs';
 
 const identities = [
   ['npm', '@getforma/core', 'getforma-dev/formajs'],
@@ -620,4 +622,102 @@ test('configured metadata byte bound refuses oversized input', async () => {
     limits: {metadataBytes: 10000, timeoutMs: 1000, deadlineMs: 10000}});
   assert.equal(result.passed, false);
   assert(codes(result).includes('REGISTRY_UNREADABLE'), JSON.stringify(result.findings));
+});
+
+// The archive and finite plan are the actual authenticated provider bytes. All
+// future RC3 host/run/receipt responses here are labeled synthetic offline data.
+function providerPlaceholderFixture() {
+  const f = fixture(PLACEHOLDER_HOST.slice(1), true), ph = placeholderFixture();
+  const doc = f.metadata.get('@getforma/router');
+  doc.versions['0.0.0-stage'] = clone(ph.metadata); doc.time['0.0.0-stage'] = ph.binding.plan.metadata.publishedAt;
+  f.archives.set('getforma-router-0.0.0-stage.tgz', actualPlaceholderBytes);
+  f.placeholder = ph; f.receipt = ph.receipt;
+  const hosted = f.releases.get('getforma-dev/forma')[0];
+  const receiptAsset = {id: 987, name: PLACEHOLDER_ASSET, url: 'https://api.github.com/repos/getforma-dev/forma/releases/assets/987'};
+  hosted.assets.push(receiptAsset);
+  f.refresh = () => {
+    const bytes = Buffer.from(JSON.stringify(f.receipt));
+    Object.assign(receiptAsset, {size: bytes.length, digest: `sha256:${sha(bytes)}`});
+    f.record.providerPlaceholders = [{contract: PLACEHOLDER_CONTRACT, asset: PLACEHOLDER_ASSET, bytes: bytes.length, sha256: sha(bytes)}];
+    f.refreshHost();
+  };
+  f.refreshHost = () => {
+    const bytes = Buffer.from(JSON.stringify(f.record));
+    Object.assign(hosted.assets[0], {size: bytes.length, digest: `sha256:${sha(bytes)}`});
+  };
+  f.refresh();
+  f.overrides.push(url => {
+    if (url.pathname.endsWith('/releases/assets/987')) return jsonResponse(f.receipt);
+    if (ph.provider.has(url.href)) return jsonResponse(ph.provider.get(url.href));
+  });
+  return f;
+}
+test('finite provider placeholder requires a real DS12 attachment, with ordinary package counts unchanged', async () => {
+  const f = providerPlaceholderFixture(), result = await run(f);
+  assert.equal(result.passed, true, JSON.stringify(result.findings));
+  assert.equal(result.verifiedArchives.length, 8); assert.equal(result.verifiedProviderPlaceholders.length, 1);
+  assert.equal(result.verifiedProviderPlaceholders[0].sha256, sha(actualPlaceholderBytes));
+  assert.equal(result.verifiedProviderPlaceholders[0].source.kind, 'provider-placeholder');
+  assert.equal(result.verifiedProviderPlaceholders[0].qualificationEligible, false);
+  const router = result.packages.find(p => p.name === '@getforma/router');
+  assert.equal(router.baseline, 0); assert.equal(router.verified, 1); assert.equal(router.providerPlaceholders, 1);
+  assert(f.calls.some(call => call.url === f.placeholder.binding.plan.archive.url));
+  for (const call of f.calls.filter(call => call.url.startsWith('https://registry.'))) assert.equal(call.authorization, null);
+});
+test('before successor receipt exists the actual placeholder remains a missing record', async () => {
+  const f = fixture('3.2.0-rc.1', true), ph = placeholderFixture(), doc = f.metadata.get('@getforma/router');
+  doc.versions['0.0.0-stage'] = ph.metadata; doc.time['0.0.0-stage'] = ph.binding.plan.metadata.publishedAt;
+  f.archives.set('getforma-router-0.0.0-stage.tgz', actualPlaceholderBytes);
+  const result = await run(f); assert.equal(result.passed, false);
+  assert(result.findings.some(row => row.code === 'MISS_RECORD' && row.version === '0.0.0-stage'));
+  assert.equal(result.verifiedProviderPlaceholders.length, 0);
+});
+for (const [name, mutate, code] of [
+  ['planned pointer missing', f => { delete f.record.providerPlaceholders; f.refreshHost(); }, 'RECORD_INVALID'],
+  ['pointer hash wrong', f => { f.record.providerPlaceholders[0].sha256 = '0'.repeat(64); f.refreshHost(); }, 'RECORD_INVALID'],
+  ['pointer asset wrong', f => { f.record.providerPlaceholders[0].asset = 'other.json'; f.refreshHost(); }, 'RECORD_INVALID'],
+  ['pointer duplicated', f => { f.record.providerPlaceholders.push(clone(f.record.providerPlaceholders[0])); f.refreshHost(); }, 'RECORD_INVALID'],
+  ['receipt missing', f => { f.releases.get('getforma-dev/forma')[0].assets.pop(); }, 'RECORD_INVALID'],
+  ['receipt provider digest wrong', f => { f.releases.get('getforma-dev/forma')[0].assets[1].digest = `sha256:${'0'.repeat(64)}`; }, 'RECORD_INVALID'],
+  ['host record provider digest wrong', f => { f.releases.get('getforma-dev/forma')[0].assets[0].digest = `sha256:${'0'.repeat(64)}`; }, 'RECORD_INVALID'],
+  ['rehashed receipt has wrong source', f => { f.receipt.recordedBy.commit = 'e'.repeat(40); f.refresh(); }, 'RECORD_INVALID'],
+  ['rehashed receipt has wrong embedded bytes', f => { f.receipt.observation.archiveBase64 = Buffer.from('bad').toString('base64'); f.refresh(); }, 'RECORD_INVALID'],
+  ['rehashed receipt invents qualification', f => { f.receipt.qualificationEligible = true; f.refresh(); }, 'RECORD_INVALID'],
+  ['rehashed receipt invents transfer digest', f => { f.receipt.preparedManifestSha256 = '0'.repeat(64); f.refresh(); }, 'RECORD_INVALID'],
+  ['provider workflow failure', f => { [...f.placeholder.provider.values()][0].conclusion = 'failure'; }, 'RECORD_INVALID'],
+  ['original check upload failed', f => { f.placeholder.checkJobs.jobs[0].steps[1].conclusion = 'failure'; }, 'RECORD_INVALID'],
+  ['provider API unavailable', f => { f.overrides.unshift(url => url.pathname.includes('/actions/runs/') ? new Response('unavailable', {status: 503}) : undefined); }, 'RECORD_INVALID'],
+  ['provider source replaced', f => { const source = [...f.placeholder.provider.values()].find(v => v.type === 'file'); source.content = 'e30='; source.size = 2; }, 'RECORD_INVALID'],
+  ['live stub marker removed', f => { f.metadata.get('@getforma/router').versions['0.0.0-stage'].stub = false; }, 'ARCHIVE_UNREADABLE'],
+  ['live publication time changed', f => { f.metadata.get('@getforma/router').time['0.0.0-stage'] = '2026-10-27T02:07:02.211Z'; }, 'ARCHIVE_UNREADABLE'],
+  ['live canonical URL changed', f => { f.metadata.get('@getforma/router').versions['0.0.0-stage'].dist.tarball = 'https://example.invalid/bad.tgz'; }, 'ARCHIVE_UNREADABLE'],
+  ['live bytes changed', f => { f.archives.set('getforma-router-0.0.0-stage.tgz', Buffer.from('bad')); }, 'ARCHIVE_UNREADABLE'],
+  ['live archive missing', f => { f.archives.delete('getforma-router-0.0.0-stage.tgz'); }, 'ARCHIVE_UNREADABLE'],
+  ['live archive unavailable', f => { f.overrides.unshift(url => url.href === f.placeholder.binding.plan.archive.url ? new Response('unavailable', {status: 503}) : undefined); }, 'ARCHIVE_UNREADABLE'],
+  ['live version missing', f => { delete f.metadata.get('@getforma/router').versions['0.0.0-stage']; }, 'REGISTRY_MISSING'],
+  ['unplanned package stub', f => { f.metadata.get('@getforma/core').versions['3.2.0-rc.3'].stub = true; }, 'UNKNOWN_PROVIDER_PLACEHOLDER'],
+  ['unplanned version stub', f => { const row = clone(f.metadata.get('@getforma/router').versions['0.0.0-stage']); row.version = '0.0.1-stage'; f.metadata.get('@getforma/router').versions['0.0.1-stage'] = row; }, 'UNKNOWN_PROVIDER_PLACEHOLDER'],
+  ['ordinary product claim for placeholder', f => { f.record.packages.find(p => p.name === '@getforma/router').version = '0.0.0-stage'; f.refreshHost(); }, 'RECORD_INVALID'],
+]) test(`provider placeholder reconciliation refuses ${name}`, async () => {
+  const f = providerPlaceholderFixture(); mutate(f); const result = await run(f);
+  assert.equal(result.passed, false); assert(codes(result).includes(code), JSON.stringify(result.findings));
+});
+test('a second host cannot silently deduplicate or replace the finite receipt', async () => {
+  const f = providerPlaceholderFixture(), original = f.releases.get('getforma-dev/forma')[0], second = clone(original);
+  second.id = 88; second.tag_name = 'v3.2.0'; second.assets[0].id = 124;
+  const secondRecord = clone(f.record); secondRecord.tag = 'v3.2.0';
+  for (const p of secondRecord.packages) { p.version = '3.2.0'; p.file = filename(p.registry, p.name, p.version); }
+  const bytes = Buffer.from(JSON.stringify(secondRecord)); second.assets[0].size = bytes.length; second.assets[0].digest = `sha256:${sha(bytes)}`;
+  f.releases.get('getforma-dev/forma').push(second);
+  f.overrides.unshift(url => url.pathname.endsWith('/releases/assets/124') ? new Response(bytes) : undefined);
+  const result = await run(f); assert.equal(result.passed, false);
+  assert(result.findings.some(row => row.code === 'RECORD_INVALID' && /unplanned host/.test(row.message)));
+});
+test('later provider attempt does not overwrite the original successful recorder attribution', async () => {
+  const f = providerPlaceholderFixture(), latest = [...f.placeholder.provider.values()][0];
+  latest.run_attempt = 3; latest.conclusion = 'failure';
+  const result = await run(f); assert.equal(result.passed, true, JSON.stringify(result.findings));
+  const observed = result.verifiedProviderPlaceholders[0].source.hostObservation;
+  assert.deepEqual(observed.recorded, {jobId: 54321, runAttempt: 2});
+  assert.deepEqual(observed.latestObserved, {runAttempt: 3, status: 'completed', conclusion: 'failure'});
 });
