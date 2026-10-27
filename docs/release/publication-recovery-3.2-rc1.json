@@ -1,0 +1,181 @@
+{
+  "contract": "forma-publication-recovery-plan-v1",
+  "hostTag": "v3.2.0-rc.2",
+  "original": {
+    "tag": "v3.2.0-rc.1",
+    "tagObject": "b214f418d9334f05758a45c403f63166034097a6",
+    "commit": "6e5e2e4937e5ed9dc60e6669cb4887508ccdbdb8",
+    "runId": 40433276229,
+    "runAttempt": 1,
+    "workflow": ".github/workflows/release.yml",
+    "event": "push",
+    "conclusion": "failure",
+    "recordJobId": 121967590802,
+    "failure": "missing CHANGELOG entry for 3.2.0-rc.1"
+  },
+  "jobs": [
+    {
+      "id": 121955845093,
+      "name": "check",
+      "conclusion": "success"
+    },
+    {
+      "id": 121955945158,
+      "name": "pack",
+      "conclusion": "success"
+    },
+    {
+      "id": 121955945298,
+      "name": "engines / parity (firefox)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121955945355,
+      "name": "engines / e2e (chromium)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121955945386,
+      "name": "engines / e2e (webkit)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121955945399,
+      "name": "engines / parity (webkit)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121955945457,
+      "name": "engines / e2e (firefox)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121956209549,
+      "name": "verify",
+      "conclusion": "success"
+    },
+    {
+      "id": 121963856283,
+      "name": "publish-crates",
+      "conclusion": "success"
+    },
+    {
+      "id": 121964065609,
+      "name": "publish-npm",
+      "conclusion": "success"
+    },
+    {
+      "id": 121967590802,
+      "name": "record",
+      "conclusion": "failure"
+    }
+  ],
+  "artifacts": {
+    "packed": {
+      "id": 12703082058,
+      "name": "release-packed",
+      "bytes": 3099450,
+      "sha256": "6d90dc21a3f8890fce3cc7183d1db001f106ebf2b55bf0fb53c44e60a076fdc3",
+      "manifestSha256": "7d95a0ba981646a83805148ddac0ea519def1922d3b991e08b5dbc706b246b7a",
+      "setSha256": "4eeb1099b3e835aab81e7ec55a720e269cc697616789df829eea3d53a85e2721"
+    },
+    "p17": {
+      "id": 12703647080,
+      "name": "release-p17",
+      "bytes": 61070474,
+      "sha256": "ad88be142a435ad4c9996cd657e5b17788afddde338302e0b97d12e8ce572346",
+      "manifestSha256": "2cbd0b3f9aefa001fe77c6d7f17a1f5022d23b05431476a29c3f597250fff443",
+      "reportSha256": "4425e24be8c54ab238e5ccd2cafc1ae26795b48959c7ef65d3aae7eb34fc72fb",
+      "checks": 75
+    }
+  },
+  "d14": {
+    "d14-report.json": "32aefdbf8bec72ecdb600c40609e5fa062ef616ce9902f219969cbf90569b27b",
+    "d14-input-manifest.json": "f49c8cfdcce3c71cdd2e733857a2068178bd2905884b64bf4c6e948bd2bb3dd1",
+    "d14-review-evidence.json": "3099b559bb9edfbc0abf9ec069f8f4068569ddb0c3c1b23d7050d5467e4cbafc"
+  },
+  "packages": [
+    {
+      "registry": "crates",
+      "name": "forma-ir",
+      "version": "3.2.0-rc.1",
+      "path": "crates/forma-ir",
+      "file": "forma-ir-3.2.0-rc.1.crate",
+      "sha256": "eaf1f337753e8f6fc309ce5c66024d14e6c6a18fa0f7b35e3d570b42abb15db0",
+      "bytes": 276751
+    },
+    {
+      "registry": "crates",
+      "name": "forma-ir-derive",
+      "version": "3.2.0-rc.1",
+      "path": "crates/forma-ir-derive",
+      "file": "forma-ir-derive-3.2.0-rc.1.crate",
+      "sha256": "70f1fdab2cd4c539bd4b2228d5ff1583e53f2554e376832529e1c33bcc4fdd0b",
+      "bytes": 5952
+    },
+    {
+      "registry": "crates",
+      "name": "forma-server",
+      "version": "3.2.0-rc.1",
+      "path": "crates/forma-server",
+      "file": "forma-server-3.2.0-rc.1.crate",
+      "sha256": "cc0060d1d68dbc50525a66fcaedfc28173636ab67ceaab325439c183963f747b",
+      "bytes": 231554
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/core",
+      "version": "3.2.0-rc.1",
+      "path": "packages/core",
+      "file": "getforma-core-3.2.0-rc.1.tgz",
+      "sha256": "5072144a3ff514ef3a5b44eabf156547b268a847fe1eb44b1d165c64b7394efd",
+      "bytes": 2210757,
+      "integrity": "sha512-T7Oz/0gB7GGjHr9kVY7DZafKz3mxLlcTa3MGocyMRAZISKydfTOoEL+A3HdLcP1vVhHo2UgbzOb9f8nQ/OSOlw==",
+      "shasum": "8af69da00f4b3f82ba7334e01bded954dfea5b5e"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/compiler",
+      "version": "3.2.0-rc.1",
+      "path": "packages/compiler",
+      "file": "getforma-compiler-3.2.0-rc.1.tgz",
+      "sha256": "385254faf4a2cafee62801e3cf4e865c60a29d4335243f14f6ccb13b58d003eb",
+      "bytes": 134463,
+      "integrity": "sha512-ow+ER+vUwxQAGknGkbXWaWDtwNxOYMoOfrKRTMNsUM8ePMg9Gt8hOmc6INnKdLCIaFH6KR8973PrOhghR2ncyQ==",
+      "shasum": "78f01854719edbea000512f6b5f00bf414036c85"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/build",
+      "version": "3.2.0-rc.1",
+      "path": "packages/build",
+      "file": "getforma-build-3.2.0-rc.1.tgz",
+      "sha256": "a868ef565be673cb58825410daf822bf03729b4ddbd6cc845efca3f1f5137be2",
+      "bytes": 92828,
+      "integrity": "sha512-JWqU3S0nnqChk9AhkChWeH03f/UF5FqvMHM9mbiywfuQfPHRD0qb9g9alhzChQlZtqI0OOzD4WS7mIWyQMTa9Q==",
+      "shasum": "f5c83e0eb4466617b89cd4b592bbee48ea06bdf2"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/router",
+      "version": "3.2.0-rc.1",
+      "path": "packages/router",
+      "file": "getforma-router-3.2.0-rc.1.tgz",
+      "sha256": "3d56164da29f88210af82f44a0f4a9940384ff1113112d537fde61cba4aab45a",
+      "bytes": 43398,
+      "integrity": "sha512-fYlBdA6v6295X9aELaKmBF69LraNXuhdQ4aoUAx4fB9XwG7/+liTLX6LvkmcGPSYg2GtUfnHyPc5Zg3S1KM/4g==",
+      "shasum": "c83fe948085fe1b8b4010581a1f318d8dc6bfed8"
+    },
+    {
+      "registry": "npm",
+      "name": "@getforma/create-app",
+      "version": "3.2.0-rc.1",
+      "path": "packages/create-app",
+      "file": "getforma-create-app-3.2.0-rc.1.tgz",
+      "sha256": "7f8f8371ed3275263cdb89dcfb90fa18f002f72f9637ffa3c567ea95c3ffcdd7",
+      "bytes": 93090,
+      "integrity": "sha512-yT2Avo67vL+7AGi5ekZjkZ23vV0RpKzjYaUy4qOZt4kP8RhTHcfqnZWVDpxLQS4Zkg+ngNnsZ92y4/oHP9B7ng==",
+      "shasum": "914bb1d238852e8ea60490675b2e8cadf3f993fd"
+    }
+  ]
+}
