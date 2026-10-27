@@ -173,8 +173,8 @@
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         },
         "FORMA-301 candidate": {
-          "status": "pending",
-          "scope": "The RC.2 successor requires current packed qualification for all eight coordinated archives and three starters after the finite release-record repair. Original RC.1 tagged P17 run 40433276229 passed 75/75 and published all eight archives, but recording failed; it remains historical and cannot provide a successful release or burn-in baseline. Retained runtime/native/mutation evidence needs explicit unchanged-source applicability; exact final main/tag CI and tagged P17 remain mandatory."
+          "status": "done",
+          "scope": "RC.2 product/harness source bdc691e1 passed hosted packed qualification 40441486845: all eight coordinated archives and three starters, 75/75 P17 checks in 1266.223 seconds, unchanged limits and complete cleanup. The same archives pass native90 and paired 12,287/12,288 B incremental and 40,715 B group limits. Documentation-only successor 5b44312e passed CI 40442597606 plus security, budgets and scaffold-cache checks; original failed README-pin jobs and cancellation remain retained. Independent review preserves narrow documentation/source applicability and original archive identities. Exact final main/tag CI and tagged P17 still qualify their own archives; failed immutable RC.1 is not a release or burn-in baseline."
         },
         "FORMA-301 publisher": {
           "status": "done",

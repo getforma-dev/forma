@@ -25,8 +25,9 @@ The historical D14 review missed this preparation defect, recorded as
 reject a missing or empty exact-version entry in committed source before publishing.
 Its retained negative controls reproduce the missing refusal, and the corrected
 focused suites pass **36/36**. The current manifests, lockfiles and starter seeds
-match all **27** RC.2 version-projection files. Helper/reconciler source is present;
-its local validation and fresh whole-release review remain ongoing at this checkpoint.
+match all **27** RC.2 version-projection files. Local release integration passes
+529 checks; the shared proof validator also resolves **D14-3.2-011**, with nine
+retained failing-before controls. Final whole-release acceptance remains pending.
 
 The finite recovery attaches a distinct **inventory-only** RC.1 receipt through
 the normal RC.2 record job for reconciliation. It does not create an ordinary
@@ -34,8 +35,13 @@ RC.1 DS12, P17/performance baseline exception or support/soak authorization. The
 [RC.1 incident and RC.2 recovery record](../../release/3.2-RECORD-RECOVERY.md)
 preserves the actual run/tag, all eight archive hashes and original receipt hashes,
 and distinguishes the implemented source boundary from pending hosted execution.
-Fresh RC.2 D14, branch/main/tag CI, its own P17, first OIDC publication and successful
-release recording remain pending.
+The [later candidate qualification](../../release/3.2-RECORD-RECOVERY.md#later-candidate-qualification)
+records the fresh bdc RC.2 archives: **75/75 P17 in 1,266.223 seconds**, **90/90
+native checks**, and **12,287 / 12,288 B** incremental delivery. The five-Markdown
+pin correction at 5b44312e passes current branch CI, security, cache and budget
+checks; the original failed jobs and subsequent cancellation are preserved.
+Evidence stays bound to its actual source/archives. Final RC.2 D14, exact main/tag
+CI, tagged P17, first OIDC publication and successful release recording remain pending.
 
 The campaign narrative, **57 row dispositions** and unchanged
 [machine-readable index](evidence/acceptance-3.2.json) below retain their original
