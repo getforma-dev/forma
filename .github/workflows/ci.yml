@@ -1,50 +1,47 @@
-name: CI
+name: Forma 3.2 RC4 whole-R17 N7 measurement
 
-# One CI for the whole stack (FORMA-113; v2 R17, G6). The `check` job runs
-# scripts/check.sh, the one command that builds every package in both
-# languages and runs every test from a clean clone; the jobs beside it are the
-# builds that need another toolchain, target or operating system, and the
-# release-workflow lint. No job checks out another repository: the compiler,
-# the walker and the client runtime are all in this tree, so the FMIR contract
-# and the e2e lanes that used to clone forma and formajs build from the
-# workspace (A2 audit F5).
+# Prepared external donor: independent review and dispatch authorization pending.
+# Frozen measured source: 79153778ea26ded21c053009e1da209bd69a75b7.
+# Measurement-only donor. NEVER MERGE. The registered CI workflow
+# identity is reused only to dispatch twenty independent runner jobs. The exact
+# reviewed RC source is an input; no sample or failed command is rerun/replaced.
+# This workflow has no publishing job, secrets, or write permission. Retain all
+# twenty outcomes; an absent/incomplete/failed sample cannot support a passing
+# campaign. No aggregation here silently drops samples or changes N7's limit.
 on:
-  push:
-    branches: [main]
-    # Doc-only pushes to main do not need the runners. Deliberately NOT applied
-    # to `pull_request`: if any of these jobs is a required status check, a
-    # skipped workflow leaves the check permanently pending and the PR can
-    # never merge.
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
-  pull_request:
-    branches: [main, merge/forma-stack, codex/forma-upgrade-review]
   workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Frozen RC4 source 79153778ea26ded21c053009e1da209bd69a75b7 (exact commit required)
+        required: true
+        type: string
 
-# One run per ref. A second push to the same branch cancels the first.
+# Serialize accidental second dispatches without cancelling an active campaign.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: forma-301-r17-measurement
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
-  # Incremental artifacts are pure overhead on an ephemeral runner and bloat
-  # the rust-cache payload.
   CARGO_INCREMENTAL: 0
-  # crates.io and static.rust-lang.org both returned 5xx during the 2026-08-06
-  # Actions incident. Retrying is free; a failed run over a blip is not.
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
 
-# Every job declares its token (FORMA-010): each one only reads this
-# repository. The cache and artifact steps authenticate with the runner's own
-# service token, which `permissions:` does not govern.
 jobs:
-  # R17's command. Everything scripts/check.sh lists, in one job, so its wall
-  # time is the number G6 bounds.
   check:
+    name: check (${{ matrix.sample }})
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        sample: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    env:
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      SAMPLE: ${{ matrix.sample }}
+      WORKFLOW_COMMIT: ${{ github.workflow_sha }}
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -54,7 +51,52 @@ jobs:
     # runner; the two browser install steps are bounded on their own.
     timeout-minutes: 25
     steps:
+      - name: Validate immutable source and record runner
+        shell: bash
+        run: |
+          evidence="$RUNNER_TEMP/n7-sample"
+          mkdir -p "$evidence"
+          python3 - <<'PROFILE'
+          import json, os, pathlib
+          keys = ['SOURCE_COMMIT', 'SAMPLE', 'WORKFLOW_COMMIT', 'GITHUB_SHA',
+                  'GITHUB_REPOSITORY', 'GITHUB_WORKFLOW_REF', 'GITHUB_REF',
+                  'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'RUNNER_NAME',
+                  'RUNNER_OS', 'RUNNER_ARCH', 'ImageOS', 'ImageVersion']
+          record = {key: os.environ.get(key) for key in keys}
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'n7-sample' / 'identity.json'
+          target.write_text(json.dumps(record, indent=2) + '\n')
+          PROFILE
+          uname -a > "$evidence/uname.txt"
+          cat /etc/os-release > "$evidence/os-release.txt"
+          lscpu --json > "$evidence/lscpu.json"
+          cat /proc/meminfo > "$evidence/meminfo.txt"
+          taskset -pc $$ > "$evidence/cpu-affinity.txt"
+          nproc > "$evidence/available-processors.txt"
+          if [[ ! "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo '::error::source_commit must be an exact lowercase 40-hex commit'
+            exit 64
+          fi
+          if [[ "$SOURCE_COMMIT" != 79153778ea26ded21c053009e1da209bd69a75b7 ]]; then
+            echo '::error::This campaign admits only the frozen reviewed RC4 source'
+            exit 64
+          fi
+          if [[ "$GITHUB_RUN_ATTEMPT" != 1 ]]; then
+            echo '::error::This measurement does not permit rerun or replacement samples'
+            exit 64
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          persist-credentials: false
+      - name: Assert actual checkout identity
+        shell: bash
+        run: |
+          actual=$(git rev-parse HEAD)
+          printf '%s\n' "$actual" > "$RUNNER_TEMP/n7-sample/checkout-commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/n7-sample/checkout-tree.txt"
+          test "$actual" = "$SOURCE_COMMIT"
+          test "$(git rev-parse 'HEAD^{tree}')" = 7a3306b38132c3e3bae146d41a64c34f9a661ee2
+          test -z "$(git status --porcelain)"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
@@ -152,15 +194,124 @@ jobs:
           echo "::error::installing chromium failed twice; see the output above"
           exit 1
 
+      - name: Record installed toolchains
+        shell: bash
+        run: |
+          {
+            node --version
+            npm --version
+            rustc --version --verbose
+            cargo --version --verbose
+          } > "$RUNNER_TEMP/n7-sample/toolchains.txt"
+
       - name: R17's command
-        run: npm run check
+        id: r17
+        shell: bash
+        run: |
+          evidence="$RUNNER_TEMP/n7-sample"
+          date --iso-8601=ns > "$evidence/command-start.txt"
+          # GNU time measures only the unchanged R17 command, excluding setup
+          # and evidence uploads. Both its raw timing and npm output survive
+          # ordinary command failure; the original command exit still fails
+          # this step. A killed job is incomplete, never a replacement sample.
+          set +e
+          /usr/bin/time --format='elapsed_seconds=%e\nuser_seconds=%U\nsystem_seconds=%S' --output="$evidence/command-time.txt" npm run check 2>&1 | tee "$evidence/r17.log"
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf 'command_exit=%s\nlog_exit=%s\n' "${statuses[0]}" "${statuses[1]}" > "$evidence/command-status.txt"
+          date --iso-8601=ns > "$evidence/command-end.txt"
+          if [[ "${statuses[0]}" != 0 ]]; then exit "${statuses[0]}"; fi
+          exit "${statuses[1]}"
+
+      - name: Record sample outcome
+        if: always()
+        shell: bash
+        env:
+          R17_OUTCOME: ${{ steps.r17.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/n7-sample"
+          printf 'r17_step_outcome=%s\n' "$R17_OUTCOME" > "$RUNNER_TEMP/n7-sample/step-outcome.txt"
+
+      - name: Observe final scheduler mode and complete ownership
+        if: always()
+        shell: bash
+        env:
+          R17_OUTCOME: ${{ steps.r17.outcome }}
+        run: |
+          python3 - <<'OBSERVE'
+          # Read-only qualification observation AFTER the complete timed normal command.
+          # This never invokes admission, tests, a build, a benchmark, or any warm-up.
+          import hashlib, json, os, pathlib
+          root = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
+          evidence = pathlib.Path(os.environ['RUNNER_TEMP']) / 'n7-sample'
+          sha = lambda value: hashlib.sha256(value).hexdigest()
+          record = {'scope': 'post-command original receipt observation only', 'faults': [], 'complete': False}
+          def observe(label, function):
+              try: return function()
+              except Exception as error: record['faults'].append(label + ': ' + str(error)); return None
+          def require(condition, message):
+              if not condition: raise AssertionError(message)
+          def load(path):
+              value = json.loads(path.read_bytes())
+              record.setdefault('files', []).append({'path': str(path), 'sha256': sha(path.read_bytes())})
+              return value
+          paths = sorted(pathlib.Path(os.environ['RUNNER_TEMP']).glob('forma-r17-*'))
+          record['schedulerDirectories'] = [str(path) for path in paths]
+          observe('one invocation', lambda: require(len(paths) == 1 and paths[0].is_dir(), 'expected exactly one original scheduler directory'))
+          status = observe('command status', lambda: dict(line.split('=', 1) for line in (evidence / 'command-status.txt').read_text().splitlines()))
+          record['commandStatus'] = status
+          observe('complete command and logger', lambda: require(status == {'command_exit': '0', 'log_exit': '0'}, 'command or logger did not finish successfully'))
+          observe('Actions command outcome', lambda: require(os.environ.get('R17_OUTCOME') == 'success', 'R17 step did not succeed'))
+          if len(paths) == 1 and paths[0].is_dir():
+              directory = paths[0]
+              admission = observe('admission', lambda: load(directory / 'admission.json'))
+              completion = observe('completion', lambda: load(directory / 'complete.json'))
+              join = observe('join', lambda: load(directory / 'overlap' / 'join.json'))
+              if admission:
+                  record['mode'] = admission.get('mode'); record['profileVersion'] = admission.get('profileVersion')
+                  record['sourceCommit'] = admission.get('sourceCommit')
+                  observe('admitted mode', lambda: require(admission.get('mode') == 'linux-overlap' and admission.get('reasons') == [], 'serial fallback or refused admission is not a qualifying optimized sample'))
+                  observe('actual source', lambda: require(admission.get('sourceCommit') == os.environ['SOURCE_COMMIT'], 'admission source differs from exact checkout'))
+                  observe('profile', lambda: require(admission.get('profileVersion') == '3.2.0-rc.4', 'unexpected finite source profile'))
+                  observe('resource manifest', lambda: require(admission.get('manifestSha256') == sha((root / 'scripts/check-scheduler-inputs.json').read_bytes()), 'resource manifest identity differs'))
+              if completion:
+                  observe('full completion', lambda: require(completion.get('complete') is True and completion.get('mode') == 'linux-overlap' and completion.get('sourceCommit') == os.environ['SOURCE_COMMIT'], 'complete normal invocation is required'))
+                  observe('completion binding', lambda: require(completion.get('admissionSha256') == sha((directory / 'admission.json').read_bytes()), 'completion does not bind original admission'))
+              if join:
+                  observe('joined outcome', lambda: require(join.get('complete') is True and join.get('interrupted') is False and join.get('faults') == [], 'both lanes must complete without faults'))
+                  lanes = join.get('lanes', [])
+                  observe('two original lanes', lambda: require([row.get('id') for row in lanes] == ['a', 'b'], 'missing or reordered lane identity'))
+                  for row in lanes:
+                      def check_lane(row=row):
+                          result = row['outcome']; owner = result['owner']; cleanup = owner['cleanup']
+                          require(row['status'] == 'passed' and result['complete'] is True and owner['complete'] is True and owner['exitCode'] == 0, 'lane or owner did not pass')
+                          require(cleanup['complete'] is True and cleanup['remainingOwnedPids'] == [], 'owned cleanup did not complete')
+                          require(result['outerGroup']['processGroupGone'] is True, 'outer group still exists')
+                          require((directory / 'overlap' / row['id'] / 'worker.log').is_file(), 'complete worker log missing')
+                      observe('lane ' + str(row.get('id')), check_lane)
+                  seal = observe('input seal', lambda: load(directory / 'overlap' / 'input-seal.json'))
+                  observe('nonempty source/product seal', lambda: require(isinstance(seal, list) and len(seal) > 0, 'source/product seal missing or empty'))
+          record['complete'] = not record['faults']
+          evidence.mkdir(parents=True, exist_ok=True)
+          (evidence / 'scheduler-observation.json').write_text(json.dumps(record, indent=2) + '\n')
+          print(json.dumps({'complete': record['complete'], 'mode': record.get('mode'), 'faults': record['faults']}))
+          raise SystemExit(0 if record['complete'] else 1)
+          OBSERVE
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: n7-sample-${{ matrix.sample }}
+          path: ${{ runner.temp }}/n7-sample/
+          if-no-files-found: error
+          retention-days: 30
 
       # Scheduler admission and both lane logs survive success, failure and
       # root Playwright output cleanup. No setup or workload moves out of R17.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: r17-scheduler
+          name: r17-scheduler-${{ matrix.sample }}
           path: ${{ runner.temp }}/forma-r17-*/
           include-hidden-files: true
           if-no-files-found: warn
@@ -169,7 +320,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: r17-native-proof
+          name: r17-native-proof-${{ matrix.sample }}
           path: test-results/router-native/
           include-hidden-files: true
           if-no-files-found: warn
@@ -178,7 +329,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.sample }}
           path: |
             test-results/
             packages/core/playwright-report/
@@ -189,7 +340,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: indexed-public-set-chromium
+          name: indexed-public-set-chromium-${{ matrix.sample }}
           path: test-results/indexed-chromium/**/indexed-public-set.json
           if-no-files-found: warn
           retention-days: 14
@@ -199,7 +350,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: parity-report
+          name: parity-report-${{ matrix.sample }}
           path: ${{ runner.temp }}/parity/
           if-no-files-found: warn
           retention-days: 14
@@ -208,642 +359,9 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: security-campaigns
+          name: security-campaigns-${{ matrix.sample }}
           path: |
             packages/core/e2e/hostile-widgets/out/*.json
             packages/core/fuzz/expressions/out/*.json
           if-no-files-found: warn
           retention-days: 30
-
-  # The npm packages on every Node line they support. The lowest entry here is
-  # what packages/core's `engines.node` may claim: a floor no job executes is an
-  # untested promise. Keep them in step.
-  # Verified by: src/__tests__/package-exports.test.ts > "the engines floor is a version CI actually runs"
-  toolchains:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      node-versions: ${{ steps.matrix.outputs.node_versions }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-      - id: matrix
-        run: node scripts/toolchain-matrix.mjs --github-output
-
-  node:
-    needs: toolchains
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    # MEASURED in the four repositories' CI: `npm ci` 30-60s, the builds and
-    # unit suites under a minute each. 15 bounds a slow runner.
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: ${{ fromJSON(needs.toolchains.outputs.node-versions) }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-      # `npm ci` installs exactly what package-lock.json records and fails when
-      # it disagrees with package.json; `npm install` may resolve anew and
-      # rewrite it (FORMA-010, DR-32).
-      - run: npm ci --ignore-scripts
-      - run: npm run build
-      - run: npm test --workspaces
-      - run: npm run test:engine --workspace packages/core
-      - run: npx tsc --noEmit -p packages/create-app
-      - run: node packages/build/scripts/test-raw-lint-bin.mjs
-
-  # The compiler and build package on Windows, as forma-tools ran them: this
-  # toolchain's first field-reported bug was Windows-only and structural (the
-  # tailwind step spawned `npx` with execFileSync and no shell, which
-  # CreateProcess cannot use to run the `npx.cmd` shim), and the primary
-  # consumer develops on Windows. Core and create-app never ran on Windows in
-  # their repositories; this job keeps the coverage that existed, not more.
-  windows-node:
-    permissions:
-      contents: read
-    runs-on: windows-latest
-    # MEASURED in forma-tools' CI: 2-3m for the install, ~45s for the two
-    # builds, 3s for the suites. 20 bounds the install on a slow runner.
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - run: npm run build -w packages/compiler -w packages/build
-      # The build suite's package bridge (tests/static-hook-product.test.ts)
-      # copies core's built distribution as the fixture's installed dependency,
-      # as R17's command has it after `npm run build`. Core is built here for
-      # that fixture only; its own suite still runs on Linux.
-      - run: npm run build -w packages/core -w packages/router
-      - run: npm test -w packages/compiler -w packages/build -w packages/router
-      # SR8 through the package as an application installs it (FORMA-126),
-      # through npm's .cmd shim.
-      - run: node packages/build/scripts/test-raw-lint-bin.mjs
-
-  # The crates on Windows, as forma's CI ran them: ksx Studio, the first
-  # consumer planned for release, is a Windows app.
-  windows-rust:
-    permissions:
-      contents: read
-    runs-on: windows-latest
-    # MEASURED in forma's CI: 6.5m on windows (run #16). 20 is ~3x.
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          key: windows
-      - run: cargo fmt --all --check
-      - run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
-      - run: cargo test --locked --workspace
-      - run: cargo test --locked -p forma-server --all-features
-      - run: cargo doc --locked --workspace --no-deps
-
-  # Run the suite where `usize` is 32 bits. Arithmetic that cannot wrap
-  # on 64-bit can wrap there; running the tests detects those overflows.
-  test-32bit:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    needs: check
-    # MEASURED: 5.3m in forma's CI (run #16, healthy runner). 20 is ~4x.
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: stable
-          targets: i686-unknown-linux-gnu
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          key: i686
-      - name: Install 32-bit toolchain
-        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
-      - run: cargo test --locked --workspace --target i686-unknown-linux-gnu
-
-  # forma-server has code that exists only in release builds
-  # (`cfg(not(debug_assertions))`): the per-type file-name cache behind
-  # `serve_asset`. Every other job builds the dev profile, so none of them
-  # compiles that code, let alone runs it. 0.2.0 shipped a release-only defect
-  # there with all of them green. This job lints and runs forma-server's whole
-  # suite with the release profile the crate ships in.
-  test-release:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    needs: check
-    # MEASURED: 34s in forma's CI on a cold key. 20 leaves room for a slow runner.
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: stable
-          components: clippy
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          key: release
-      - run: cargo clippy --locked -p forma-server --all-targets --all-features --release -- -D warnings
-      - run: cargo test --locked -p forma-server --release
-      - run: cargo test --locked -p forma-server --all-features --release
-
-  # The crates publish different `rust-version` values and each is load-bearing
-  # on crates.io/docs.rs, so each is built at exactly the declared version.
-  # Since the merge the workspace commits its Cargo.lock, made with Cargo's
-  # MSRV-aware resolver (`CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`,
-  # which honours the lowest `rust-version` among the members, forma-ir's 1.71,
-  # for the whole graph), so each leg builds the committed lock with --locked:
-  # a lock the declared Rust cannot build fails here, not at a consumer.
-  msrv:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    needs: check
-    # MEASURED: 3.5m in forma's CI for `msrv (forma-server)` (run #16). 15 is ~4x.
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - crate: forma-ir
-            rust: "1.71"
-          - crate: forma-ir-derive
-            rust: "1.71"
-          - crate: forma-server
-            rust: "1.85"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          # An MSRV toolchain produces incompatible artifacts; keying by crate
-          # AND version stops the legs evicting each other's cache.
-          key: msrv-${{ matrix.crate }}-${{ matrix.rust }}
-      - run: cargo check -p ${{ matrix.crate }} --all-targets --locked
-      - name: Check all optional server features at the declared MSRV
-        if: matrix.crate == 'forma-server'
-        run: cargo check -p forma-server --all-targets --all-features --locked
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: stable
-      - run: bash scripts/check-msrv-fresh.sh "${{ matrix.crate }}" "${{ matrix.rust }}"
-
-  # deny.toml ships in the repo; running it is what makes it a policy rather
-  # than a file. It checks the committed lock, the graph the crates ship with.
-  deny:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    # A cold locked cargo-deny install compiles the tool; later runs cache it.
-    # Advisory data must be fetched successfully on every run.
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24.22.0
-      - name: Supply-chain regression tests
-        run: |
-          ruby scripts/check-supply-chain.rb
-          node --test scripts/tests/supply-chain.test.mjs
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - name: Install reviewed cargo-deny from its release lockfile
-        run: cargo install cargo-deny --version 0.20.2 --locked
-      - name: Fresh advisory data, locked root and e2e graphs
-        run: |
-          bash scripts/check-advisories.sh
-          bash scripts/check-advisories.sh e2e/Cargo.toml
-          cargo deny --locked check
-
-  # `[patch.crates-io]` silently falls back to the PUBLISHED forma-ir if the
-  # local version stops satisfying forma-server's requirement, which would
-  # mean CI green-lights a workspace it never actually tested.
-  patch-is-live:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    # `cargo tree` resolves the graph without building it. MEASURED: <5s warm
-    # locally; cold it is dominated by the registry index fetch.
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          key: patch-is-live
-      - name: forma-server must resolve forma-ir from this workspace
-        run: |
-          cargo tree --locked -p forma-server -i forma-ir | tee /tmp/tree.txt
-          grep -q "crates/forma-ir" /tmp/tree.txt \
-            || { echo "::error::forma-server is building against the PUBLISHED forma-ir, not this tree"; exit 1; }
-      # The patch above also masks a requirement looser than the tree's
-      # forma-ir (0.2.2 carried `"0.2.0"` until FORMA-138): the requirement,
-      # normal and dev, must equal forma-ir's version (A2 audit F8, FORMA-180);
-      # FORMA-112 replaces this with the one-version rule.
-      - name: forma-server's forma-ir requirement equals forma-ir's version
-        run: |
-          bash scripts/test-check-forma-ir-requirement.sh
-          bash scripts/check-forma-ir-requirement.sh
-
-  # SR43 (FORMA-134): release.yml keeps `id-token: write` on its publish job
-  # alone, with no cache and no dependency code beside it. actionlint checks
-  # every workflow's syntax and, with the runner's shellcheck, its scripts;
-  # check-release-workflow.rb checks SR43's shape and, with --self-test, that
-  # each of its rules catches a violation seeded into a copy of the workflow;
-  # test-release-artifacts.sh checks that a packed file altered between the
-  # pack and publish jobs fails the check the publish job runs first.
-  # The npm packages' release workflow and their copies of these scripts
-  # (packages/*/scripts/) are unified by FORMA-115a; until then the crates'
-  # release.yml is the only one here and the only one this job lints.
-  release-workflow:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    # MEASURED locally: actionlint and shellcheck under 1s over these
-    # workflows, the lint and its self-test under 1s, the artefact tests about
-    # 1s; the actionlint download is 2.4 MB. 5 bounds a slow download.
-    timeout-minutes: 5
-    env:
-      ACTIONLINT_VERSION: 1.7.12
-      # SHA-256 of actionlint_1.7.12_linux_amd64.tar.gz, checked on 2026-10-14
-      # against the release's checksums file and GitHub's asset digest, with
-      # its build provenance verified (`gh attestation verify -R
-      # rhysd/actionlint`: signed by the release workflow at refs/tags/v1.7.12).
-      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - name: Install locked release-helper dependencies
-        # SR43's self-test runs the release helpers, including the pinned parser
-        # used to prove the current startup exception; absence must still refuse.
-        run: npm ci --ignore-scripts
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: '1.93.1'
-      - name: Install actionlint, checked against its pinned SHA-256
-        run: |
-          curl -fsSL --retry 3 -o "$RUNNER_TEMP/actionlint.tar.gz" \
-            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
-          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check --strict
-          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
-      - name: actionlint
-        run: |
-          shellcheck --version | head -2
-          "$RUNNER_TEMP/actionlint" -version
-          "$RUNNER_TEMP/actionlint"
-      - name: Build core and router for actual packed public-export controls
-        run: npm run build -w packages/core -w packages/router
-      - name: SR43 lint and its seeded violations
-        run: |
-          ruby --version
-          ruby scripts/check-release-workflow.rb --self-test
-      - name: Linux burn-in ownership and archive controls
-        run: |
-          python3 scripts/release-owned-linux.test.py
-          python3 scripts/release-unpack.test.py
-          node --test scripts/packed-qualification-workflow.test.mjs
-      - name: A packed file altered between jobs fails the publish job's check
-        run: bash scripts/test-release-artifacts.sh
-      - name: After a publish, a different checksum fails and a late version warns
-        run: bash scripts/test-check-published-crate.sh
-      - name: Support history and toolchain drift controls
-        run: |
-          node --test scripts/release-support.test.mjs scripts/release-support-history.test.mjs scripts/toolchain-policy.test.mjs scripts/package-metadata.test.mjs
-          ruby scripts/check-toolchain-policy.rb
-      - name: Registry reconciliation failures and read-only workflow controls
-        run: node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs scripts/release-publication-recovery.test.mjs scripts/release-provider-placeholder.test.mjs
-      - name: Dependabot archive exclusions and active dependency controls
-        run: node --test scripts/dependabot-policy.test.mjs
-
-  # Candidate archives are always built and tested, even while registry versions
-  # are unpublished. No publication credential or registry preflight gates these.
-  candidate-pack:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      record-sha256: ${{ steps.pack.outputs.record-sha256 }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: '1.93.1'
-      - run: npm ci --ignore-scripts
-      - run: npm audit signatures
-      - run: npm run build
-      - name: Candidate boundary controls
-        run: node --test scripts/candidate-scaffold.test.mjs scripts/n8-size-start.test.mjs scripts/published-scaffold.test.mjs scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/template-lock-seeds.test.mjs scripts/release-template-source.test.mjs scripts/release-router-bootstrap.test.mjs scripts/release.test.mjs
-      - name: Pack committed candidates and record ten-file restoration
-        id: pack
-        run: node scripts/candidate-scaffold.mjs pack "$RUNNER_TEMP/candidate artifacts"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: scaffold-candidates
-          path: ${{ runner.temp }}/candidate artifacts
-          if-no-files-found: error
-          retention-days: 14
-
-  # Setup validation before any immutable RC: same dry-pack archives, no browsers
-  # or soak credit. The published-RC workflow authenticates registry inputs later.
-  burn-in-setup:
-    permissions:
-      contents: read
-    needs: candidate-pack
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    env:
-      CARGO_BUILD_JOBS: '3'
-      CARGO_INCREMENTAL: '0'
-      CARGO_TERM_COLOR: never
-      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: '1.93.1'
-      - name: Install committed setup tools and pinned ASan compiler
-        run: |
-          bash scripts/install-deps.sh
-          npm audit signatures
-          rustup toolchain install nightly-2026-10-01 --profile minimal
-          cargo +nightly-2026-10-01 install cargo-fuzz --version 0.13.2 --locked
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: scaffold-candidates
-          path: ${{ runner.temp }}/candidate artifacts
-          digest-mismatch: error
-      - name: Actual Linux ownership controls
-        run: python3 scripts/release-owned-linux.test.py
-      - name: Rehearse exact dry-packed setup and four bounded ASan seed controls
-        env:
-          RECORD_SHA256: ${{ needs.candidate-pack.outputs.record-sha256 }}
-        run: |
-          python3 scripts/release-owned-linux.py "$RUNNER_TEMP/burn-in-setup-owned" 2700 -- node scripts/release-burn-in-setup.mjs worker "$RUNNER_TEMP/candidate artifacts" "$RECORD_SHA256" "$GITHUB_SHA" "$RUNNER_TEMP/burn-in-setup-work" "$RUNNER_TEMP/burn-in-setup-evidence"
-      - name: Verify rehearsal files and complete owned cleanup
-        run: node scripts/release-burn-in-setup.mjs finalize "$RUNNER_TEMP/burn-in-setup-evidence" "$RUNNER_TEMP/burn-in-setup-owned" "$RUNNER_TEMP/burn-in-setup-work"
-      - name: Preserve original setup failures and results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: burn-in-setup
-          path: |
-            ${{ runner.temp }}/burn-in-setup-evidence/
-            ${{ runner.temp }}/burn-in-setup-owned/
-          if-no-files-found: error
-          retention-days: 30
-
-  candidate-scaffold:
-    permissions:
-      contents: read
-    needs: candidate-pack
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: '1.93.1'
-      - name: Cache downloaded Cargo registry only
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-          key: candidate-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: candidate-registry-${{ runner.os }}-
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: scaffold-candidates
-          path: ${{ runner.temp }}/candidate artifacts
-          digest-mismatch: error
-      - run: npm ci --ignore-scripts
-      - run: npm audit signatures
-      - name: Portable commands and owned listener controls
-        run: node --test scripts/owned-server.test.mjs scripts/portable-command.test.mjs scripts/scaffold-diagnostics.test.mjs
-      - name: Resolve Linux scaffold system-package cache
-        if: runner.os == 'Linux'
-        id: scaffold-pw
-        shell: bash
-        run: |
-          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
-          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
-      - name: Cache Linux scaffold system-package archives
-        if: runner.os == 'Linux'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/playwright-apt
-          key: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-all
-          # Seed from the same image/version's WebKit cache; apt validates
-          # archives against its signed index and downloads missing packages.
-          restore-keys: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-webkit
-      - name: Restore Linux scaffold system-package archives
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
-          shopt -s nullglob
-          mkdir -p ~/.cache/playwright-apt
-          cached=(~/.cache/playwright-apt/*.deb)
-          echo "${#cached[@]} archives restored from the cache"
-          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
-      - name: Install locked three-engine template runners
-        timeout-minutes: 8
-        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
-      - name: Retain Linux scaffold system-package archives
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          shopt -s nullglob
-          fresh=(/var/cache/apt/archives/*.deb)
-          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
-          echo "${#fresh[@]} archives kept for the cache"
-      - name: Packed candidate full scaffold suite
-        env:
-          RECORD_SHA256: ${{ needs.candidate-pack.outputs.record-sha256 }}
-        # Node reads host paths itself. No shell builds an npm command string;
-        # the owned scratch and artifact paths deliberately contain spaces.
-        run: node --input-type=module -e "import {prepareCandidate,runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process'; const tmp=process.env.RUNNER_TEMP; const sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(); runCandidate(prepareCandidate(join(tmp,'candidate artifacts'),process.env.RECORD_SHA256,sha,join(tmp,'candidate scaffold')),join(tmp,'candidate-scaffold-report.json'));"
-      # N8 (FORMA-164): what Forma adds to each template's release binary and to its
-      # start, measured inside the suite above (scripts/n8-size-start.mjs). The suite
-      # fails over 3 MB or 100 ms; this puts the figures on the run page.
-      - name: N8 figures in the job summary
-        if: always() && runner.os == 'Linux'
-        run: |
-          if [ -f "$RUNNER_TEMP/candidate-scaffold-report.json" ]; then
-            node scripts/n8-size-start.mjs summary "$RUNNER_TEMP/candidate-scaffold-report.json" >> "$GITHUB_STEP_SUMMARY"
-          fi
-      - name: Preserve scaffold evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: candidate-scaffold-${{ matrix.os }}
-          path: |
-            ${{ runner.temp }}/candidate-scaffold-report.json
-            ${{ runner.temp }}/candidate scaffold/preparation.json
-            ${{ runner.temp }}/candidate scaffold/vitest.json
-          if-no-files-found: warn
-          retention-days: 14
-
-  # Registry coverage remains distinct: it consumes the exact published CLI's
-  # sealed templates after all versioned coordinated packages exist. A 404 means
-  # unpublished; an unreadable registry is an error. Neither skips candidates.
-  preflight:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-      missing: ${{ steps.check.outputs.missing }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - name: Exact coordinated published version
-        id: check
-        run: node scripts/published-scaffold.mjs preflight
-
-  scaffold:
-    permissions:
-      contents: read
-    needs: [preflight, node]
-    if: needs.preflight.outputs.ready == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
-        with:
-          toolchain: '1.93.1'
-      - name: Cache downloaded Cargo registry only
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-          key: published-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: published-registry-${{ runner.os }}-
-      - run: npm ci --ignore-scripts
-      - run: npm audit signatures
-      - name: Resolve Linux scaffold system-package cache
-        if: runner.os == 'Linux'
-        id: scaffold-pw
-        shell: bash
-        run: |
-          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
-          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
-      - name: Cache Linux scaffold system-package archives
-        if: runner.os == 'Linux'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/playwright-apt
-          key: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-all
-          # Seed from the same image/version's WebKit cache; apt validates
-          # archives against its signed index and downloads missing packages.
-          restore-keys: playwright-apt-${{ steps.scaffold-pw.outputs.image }}-${{ steps.scaffold-pw.outputs.version }}-webkit
-      - name: Restore Linux scaffold system-package archives
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          python3 scripts/prefer-ubuntu-archive.py --runner-environment '${{ runner.environment }}'
-          shopt -s nullglob
-          mkdir -p ~/.cache/playwright-apt
-          cached=(~/.cache/playwright-apt/*.deb)
-          echo "${#cached[@]} archives restored from the cache"
-          if [ "${#cached[@]}" -gt 0 ]; then sudo cp "${cached[@]}" /var/cache/apt/archives/; fi
-      - name: Install locked three-engine template runners
-        timeout-minutes: 8
-        run: node node_modules/@playwright/test/cli.js install --with-deps chromium firefox webkit
-      - name: Retain Linux scaffold system-package archives
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          shopt -s nullglob
-          fresh=(/var/cache/apt/archives/*.deb)
-          if [ "${#fresh[@]}" -gt 0 ]; then cp "${fresh[@]}" ~/.cache/playwright-apt/; fi
-          echo "${#fresh[@]} archives kept for the cache"
-      - name: Published CLI full scaffold suite
-        run: node --input-type=module -e "import {preparePublished} from './scripts/published-scaffold.mjs'; import {runCandidate} from './scripts/candidate-scaffold.mjs'; import {join} from 'node:path'; const tmp=process.env.RUNNER_TEMP; runCandidate(await preparePublished(join(tmp,'published scaffold')),join(tmp,'published-scaffold-report.json'));"
-      - name: N8 figures in the job summary
-        if: always() && runner.os == 'Linux'
-        run: |
-          if [ -f "$RUNNER_TEMP/published-scaffold-report.json" ]; then
-            node scripts/n8-size-start.mjs summary "$RUNNER_TEMP/published-scaffold-report.json" >> "$GITHUB_STEP_SUMMARY"
-          fi
-      - name: Preserve registry scaffold evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: published-scaffold-${{ matrix.os }}
-          path: |
-            ${{ runner.temp }}/published-scaffold-report.json
-            ${{ runner.temp }}/published scaffold/published-record.json
-            ${{ runner.temp }}/published scaffold/vitest.json
-          if-no-files-found: warn
-          retention-days: 14
