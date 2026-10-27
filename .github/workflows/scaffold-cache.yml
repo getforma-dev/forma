@@ -33,9 +33,47 @@ jobs:
         with:
           node-version-file: .node-version
           package-manager-cache: false
+      - name: Isolate the cache experiment toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          # rust-cache hashes every installed toolchain. Start both jobs with
+          # the same dedicated home, independent of the runner image inventory.
+          scaffold_rustup_home="$RUNNER_TEMP/forma-scaffold-rustup"
+          if [[ -e "$scaffold_rustup_home" || -L "$scaffold_rustup_home" ]]; then
+            echo '::error::Scaffold toolchain home must be fresh'
+            exit 1
+          fi
+          printf 'RUSTUP_HOME=%s\n' "$scaffold_rustup_home" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: '1.93.1'
+      - name: Verify the cache experiment toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          scaffold_toolchain='1.93.1-x86_64-unknown-linux-gnu'
+          test "$RUSTUP_HOME" = "$RUNNER_TEMP/forma-scaffold-rustup"
+          test -d "$RUSTUP_HOME"
+          test ! -L "$RUSTUP_HOME"
+          scaffold_inventory="$(rustup toolchain list --quiet)"
+          printf 'Installed toolchain: %s\n' "$scaffold_inventory"
+          test "$scaffold_inventory" = "$scaffold_toolchain"
+          scaffold_bin="$RUSTUP_HOME/toolchains/$scaffold_toolchain/bin"
+          scaffold_rustc="$(rustup which rustc)"
+          scaffold_cargo="$(rustup which cargo)"
+          printf 'Toolchain home: %s\nSelected rustc: %s\nSelected cargo: %s\n' "$RUSTUP_HOME" "$scaffold_rustc" "$scaffold_cargo"
+          test "$scaffold_rustc" = "$scaffold_bin/rustc"
+          test "$scaffold_cargo" = "$scaffold_bin/cargo"
+          scaffold_rustc_info="$(rustc -vV)"
+          scaffold_selected_info="$("$scaffold_rustc" -vV)"
+          test "$scaffold_rustc_info" = "$scaffold_selected_info"
+          test "$(printf '%s\n' "$scaffold_rustc_info" | sed -n 's/^release: //p')" = '1.93.1'
+          test "$(printf '%s\n' "$scaffold_rustc_info" | sed -n 's/^host: //p')" = 'x86_64-unknown-linux-gnu'
+          scaffold_cargo_info="$(cargo -V)"
+          scaffold_selected_cargo="$("$scaffold_cargo" -V)"
+          test "$scaffold_cargo_info" = "$scaffold_selected_cargo"
+          printf '%s\n%s\n' "$scaffold_rustc_info" "$scaffold_cargo_info"
       - run: npm ci --ignore-scripts
       - run: node scripts/scaffold-cache-measure.mjs prepare ${{ matrix.template }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
@@ -78,9 +116,47 @@ jobs:
         with:
           node-version-file: .node-version
           package-manager-cache: false
+      - name: Isolate the cache experiment toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          # rust-cache hashes every installed toolchain. Start both jobs with
+          # the same dedicated home, independent of the runner image inventory.
+          scaffold_rustup_home="$RUNNER_TEMP/forma-scaffold-rustup"
+          if [[ -e "$scaffold_rustup_home" || -L "$scaffold_rustup_home" ]]; then
+            echo '::error::Scaffold toolchain home must be fresh'
+            exit 1
+          fi
+          printf 'RUSTUP_HOME=%s\n' "$scaffold_rustup_home" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: '1.93.1'
+      - name: Verify the cache experiment toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          scaffold_toolchain='1.93.1-x86_64-unknown-linux-gnu'
+          test "$RUSTUP_HOME" = "$RUNNER_TEMP/forma-scaffold-rustup"
+          test -d "$RUSTUP_HOME"
+          test ! -L "$RUSTUP_HOME"
+          scaffold_inventory="$(rustup toolchain list --quiet)"
+          printf 'Installed toolchain: %s\n' "$scaffold_inventory"
+          test "$scaffold_inventory" = "$scaffold_toolchain"
+          scaffold_bin="$RUSTUP_HOME/toolchains/$scaffold_toolchain/bin"
+          scaffold_rustc="$(rustup which rustc)"
+          scaffold_cargo="$(rustup which cargo)"
+          printf 'Toolchain home: %s\nSelected rustc: %s\nSelected cargo: %s\n' "$RUSTUP_HOME" "$scaffold_rustc" "$scaffold_cargo"
+          test "$scaffold_rustc" = "$scaffold_bin/rustc"
+          test "$scaffold_cargo" = "$scaffold_bin/cargo"
+          scaffold_rustc_info="$(rustc -vV)"
+          scaffold_selected_info="$("$scaffold_rustc" -vV)"
+          test "$scaffold_rustc_info" = "$scaffold_selected_info"
+          test "$(printf '%s\n' "$scaffold_rustc_info" | sed -n 's/^release: //p')" = '1.93.1'
+          test "$(printf '%s\n' "$scaffold_rustc_info" | sed -n 's/^host: //p')" = 'x86_64-unknown-linux-gnu'
+          scaffold_cargo_info="$(cargo -V)"
+          scaffold_selected_cargo="$("$scaffold_cargo" -V)"
+          test "$scaffold_cargo_info" = "$scaffold_selected_cargo"
+          printf '%s\n%s\n' "$scaffold_rustc_info" "$scaffold_cargo_info"
       - run: npm ci --ignore-scripts
       - run: node scripts/scaffold-cache-measure.mjs prepare ${{ matrix.template }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
