@@ -1,7 +1,7 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "9c5c0916412d2e398a96513daa9fd9d2966023db",
-  "tree": "56db0b08dcc392fefbf939c0b4f9c762d908476b",
+  "commit": "aa3f913f7e9cefcdd808066ca58823a5eed4b54c",
+  "tree": "10bcae43d78f4b4f311b9bf370a8e350a5461c4b",
   "entries": [
     {
       "path": ".gitattributes",
@@ -36,7 +36,7 @@
     {
       "path": ".github/workflows/ci.yml",
       "mode": "100644",
-      "blob": "4129efbb8d6fcb7ea4265c0b3b5d46cb25e6b040"
+      "blob": "7dea95d3b265d2cd96858969157f0f362f65fb90"
     },
     {
       "path": ".github/workflows/compat.yml",
@@ -121,7 +121,7 @@
     {
       "path": ".github/workflows/scaffold-cache.yml",
       "mode": "100644",
-      "blob": "6357585dae98969c98f6bd38a0e46ac94eb80eaa"
+      "blob": "f1f82feeec198a01a7de2894bc1fccec44973b6d"
     },
     {
       "path": ".github/workflows/security-probes.yml",
@@ -151,7 +151,7 @@
     {
       "path": "CHANGELOG.md",
       "mode": "100644",
-      "blob": "1827441a8d4e06a1ed0ccd62ec7eb53a76f43b32"
+      "blob": "36a16c990365d1b2abcfd714f53f36d44051316a"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -161,12 +161,12 @@
     {
       "path": "Cargo.lock",
       "mode": "100644",
-      "blob": "239834efb7cf8141226ce59d512517f0a01fb023"
+      "blob": "e66f2e05287b75fed2cc02c9823bc75f459b5ef2"
     },
     {
       "path": "Cargo.toml",
       "mode": "100644",
-      "blob": "8efa856df1ddf2b72cb7847904cdbff8c20261ad"
+      "blob": "359205f9043280ea275fb90eaa0b4539c87262b6"
     },
     {
       "path": "LICENSE",
@@ -176,7 +176,7 @@
     {
       "path": "README.md",
       "mode": "100644",
-      "blob": "0ef3bff935e7ab050bc623cb0cde9a24b62dff28"
+      "blob": "06e330eeb29489e5b6ae291b0d7d495cc38aa6e0"
     },
     {
       "path": "SECURITY.md",
@@ -2856,7 +2856,7 @@
     {
       "path": "crates/forma-ir-derive/Cargo.toml",
       "mode": "100644",
-      "blob": "a429f0950768a636b12961e3ce8fee82dc20207b"
+      "blob": "7f7c5101959a762b0be247b775ed6b56ff6a9608"
     },
     {
       "path": "crates/forma-ir-derive/LICENSE",
@@ -2866,7 +2866,7 @@
     {
       "path": "crates/forma-ir-derive/README.md",
       "mode": "100644",
-      "blob": "8ec6c4a6676e9eacea7ef1fb919c6909fce335df"
+      "blob": "69193fd190b21acfd3898a0d0cf7a5df8ff86b72"
     },
     {
       "path": "crates/forma-ir-derive/src/lib.rs",
@@ -2881,12 +2881,12 @@
     {
       "path": "crates/forma-ir/Cargo.toml",
       "mode": "100644",
-      "blob": "ba15ee442febacc495116a836769780ecccfeee3"
+      "blob": "5c861304a0d22405b50b224829e41c9aa231591e"
     },
     {
       "path": "crates/forma-ir/README.md",
       "mode": "100644",
-      "blob": "220bb9cab75efd7dda0d8a1470047301a3ad2090"
+      "blob": "bf8de59f527f9794bfb2d318d72e2271f7d055ce"
     },
     {
       "path": "crates/forma-ir/benches/README.md",
@@ -3961,12 +3961,12 @@
     {
       "path": "crates/forma-server/Cargo.toml",
       "mode": "100644",
-      "blob": "9ed8ef63deed1017f05efd44d1f184915005a6c0"
+      "blob": "f36197fd8be84d8cad354895d8f31452d1cebd5b"
     },
     {
       "path": "crates/forma-server/README.md",
       "mode": "100644",
-      "blob": "b191d6d85b87dc6fd48aab32fe8dfebdff7ef357"
+      "blob": "6ec65aa6553043809953ec4a0b7f98f4670f7314"
     },
     {
       "path": "crates/forma-server/examples/parity_render.rs",
@@ -4611,12 +4611,12 @@
     {
       "path": "docs/README.md",
       "mode": "100644",
-      "blob": "69b569278e0891f1e8363fe47777dc882150e115"
+      "blob": "2de1bc189010d883df982b013ecd650c3eb1e0dd"
     },
     {
       "path": "docs/RELEASING.md",
       "mode": "100644",
-      "blob": "2a0cd70971bb8fafddbf2b45b54b940bf3485b63"
+      "blob": "6e7ee5504abe52a6c55391a18b58e72c638edfdf"
     },
     {
       "path": "docs/REPOSITORY-LAYOUT.md",
@@ -4626,12 +4626,12 @@
     {
       "path": "docs/ROUTING.md",
       "mode": "100644",
-      "blob": "2c6ca901ae516cc050b237d38f6e5f985b6f2723"
+      "blob": "379a5eec6617cbc5da58c8381b10f1143a463569"
     },
     {
       "path": "docs/TESTING.md",
       "mode": "100644",
-      "blob": "b84ba2184f3e31f76c52534f02d4044ae1340610"
+      "blob": "f1cf8063cdd852bf8aa743b386ace067c781ea21"
     },
     {
       "path": "docs/TRUSTED-TYPES.md",
@@ -4651,7 +4651,7 @@
     {
       "path": "docs/UPGRADING-3.2.md",
       "mode": "100644",
-      "blob": "91d3c2341e834eb3c218d89f0f37b3891a3dc3b1"
+      "blob": "00d4c2f9ecda8c949e77ef529278ff4c13861cbd"
     },
     {
       "path": "docs/archive/2026-10-15-FMIR-FORMAT-exact-stage.md",
@@ -12011,7 +12011,7 @@
     {
       "path": "docs/compatibility.md",
       "mode": "100644",
-      "blob": "ba1c1e5fb31b7a914e8367e51cb5738e633061f4"
+      "blob": "cc8de8a1ceba63a0905de2f59f71c0c73aca7ccd"
     },
     {
       "path": "docs/design/router/README.md",
@@ -12021,7 +12021,7 @@
     {
       "path": "docs/design/router/acceptance-matrix-design.md",
       "mode": "100644",
-      "blob": "386eeada1185749c4af8b8422b7eb9d8ac54de27"
+      "blob": "9d1e17e180ec8b791b4018c2a32f5ce3633ac35b"
     },
     {
       "path": "docs/design/router/evidence/acceptance-3.2.json",
@@ -12696,7 +12696,7 @@
     {
       "path": "docs/design/router/qualification-3.2.md",
       "mode": "100644",
-      "blob": "ad19d9e40aa0cbc8b657dffc817824f06a242b2f"
+      "blob": "16c0b8ee42de7f6dcdd264ad50c4925c950e047b"
     },
     {
       "path": "docs/design/router/qualification.md",
@@ -15654,14 +15654,34 @@
       "blob": "7f7e38a4eb459fc0592fe09ce2156102b4db3f9a"
     },
     {
+      "path": "docs/release/3.2-PERFORMANCE-DECISION.md",
+      "mode": "100644",
+      "blob": "1c0f5334892f8067441228cc5bf0bd157155217f"
+    },
+    {
       "path": "docs/release/3.2-RC3-PREPARATION.md",
       "mode": "100644",
       "blob": "f08be65482c368142595d5988d2cc641b22503f5"
     },
     {
+      "path": "docs/release/3.2-RC3-PUBLICATION.md",
+      "mode": "100644",
+      "blob": "769dd2111a78f69471abb7c2e47f261276d59650"
+    },
+    {
+      "path": "docs/release/3.2-RC4-PREPARATION.md",
+      "mode": "100644",
+      "blob": "6202a014e8655808d96e681be05ec7202560ee82"
+    },
+    {
       "path": "docs/release/3.2-RECORD-RECOVERY.md",
       "mode": "100644",
       "blob": "7662760835f19406519cffe9751aa67d5a7be634"
+    },
+    {
+      "path": "docs/release/3.2-STREAMLINED-RELEASE.json",
+      "mode": "100644",
+      "blob": "2e9f0610d8b0e45d5896e335ddc9f4d6a2664f6b"
     },
     {
       "path": "docs/release/ALPHA-RUNBOOK.md",
@@ -15721,7 +15741,7 @@
     {
       "path": "docs/release/README.md",
       "mode": "100644",
-      "blob": "e4e156eb1f1c2320f8d96325ec0912ca2c015668"
+      "blob": "29c91d0b822189bb046d6bc9b3a8623f7315271e"
     },
     {
       "path": "docs/release/REGISTRY-RECONCILIATION.md",
@@ -15746,17 +15766,17 @@
     {
       "path": "docs/release/d14-input-manifest.json",
       "mode": "100644",
-      "blob": "a65ab48c93e4a30750ce8cc58248ef4dff440aa2"
+      "blob": "9d0c2e9eb12b2400026bff97bb0ecb330c4b3a59"
     },
     {
       "path": "docs/release/d14-report.json",
       "mode": "100644",
-      "blob": "399ed65b208c79a301495c42957cfeddbaeaea8a"
+      "blob": "03c65156287ce9037f1173502f70c3a83002001d"
     },
     {
       "path": "docs/release/d14-review-evidence.json",
       "mode": "100644",
-      "blob": "eb1730dd5c4bf59c42de0d943c069c9ac4264923"
+      "blob": "9834c8175b47ceaebd1c2c24aaad6486260af1c4"
     },
     {
       "path": "docs/release/npm-provider-placeholder-router.json",
@@ -16026,7 +16046,7 @@
     {
       "path": "e2e/Cargo.lock",
       "mode": "100644",
-      "blob": "d201fc6a4c1c8650298d0c4db44b803b83315a53"
+      "blob": "2b623c2cddfe3f299734121e88cc9dfd32d956a5"
     },
     {
       "path": "e2e/Cargo.toml",
@@ -17516,7 +17536,7 @@
     {
       "path": "experiments/forma-router-native/server/Cargo.lock",
       "mode": "100644",
-      "blob": "b0e209e182ae0884cd1af5249b8f2abfff0759d4"
+      "blob": "acb859416189fdb3478574f92eea39e1a7c9eb93"
     },
     {
       "path": "experiments/forma-router-native/server/Cargo.toml",
@@ -17831,7 +17851,7 @@
     {
       "path": "fuzz/Cargo.lock",
       "mode": "100644",
-      "blob": "cc1752eaf0e4d54d80ded7aa365d3d15e07cd7a7"
+      "blob": "0a3da787d5dc840491d5a2f698c365ed997e0259"
     },
     {
       "path": "fuzz/Cargo.toml",
@@ -17936,7 +17956,7 @@
     {
       "path": "package-lock.json",
       "mode": "100644",
-      "blob": "39a7160327d1bdd6bfc614f4f85edf7261ccea2d"
+      "blob": "c1a6de90a8ef7aa3e6bacaa847acab7ede1b7112"
     },
     {
       "path": "package.json",
@@ -17951,7 +17971,7 @@
     {
       "path": "packages/build/README.md",
       "mode": "100644",
-      "blob": "53f81482e88ff73adb38933fedc8faf6c976ed36"
+      "blob": "be3e96f5d69aa6593179ad93d22e74c0e5715aeb"
     },
     {
       "path": "packages/build/browser-tests/helpers/README.md",
@@ -17981,7 +18001,7 @@
     {
       "path": "packages/build/package.json",
       "mode": "100644",
-      "blob": "ee25c8b44774a8688d17bc0fa6577c82cfc6005f"
+      "blob": "3b436cb45e3a695dc14e171a3a5f2f6a5b46bf66"
     },
     {
       "path": "packages/build/playwright.config.ts",
@@ -17996,7 +18016,7 @@
     {
       "path": "packages/build/src/build.ts",
       "mode": "100644",
-      "blob": "6a47f349477537d1efccd85f563dab7a7116fab6"
+      "blob": "66ffa0c2b3fd2638b88941120494559a96e8882d"
     },
     {
       "path": "packages/build/src/compatibility-watch.ts",
@@ -18117,6 +18137,11 @@
       "path": "packages/build/src/types.ts",
       "mode": "100644",
       "blob": "46bbffeda3acac9e0d95aa123c2d0e9077885021"
+    },
+    {
+      "path": "packages/build/src/watch-source-recovery.ts",
+      "mode": "100644",
+      "blob": "1870333ae14400d5e00dd7ad1c0959f8ae28244a"
     },
     {
       "path": "packages/build/tests/alias-warning.test.ts",
@@ -18779,6 +18804,16 @@
       "blob": "2c3fd34b08e1a2acdca970d6f54d21fbcfdb5923"
     },
     {
+      "path": "packages/build/tests/watch-source-queue.test.ts",
+      "mode": "100644",
+      "blob": "a7604d35694c44df0ebf3e9f2b1c6b33f084b4d6"
+    },
+    {
+      "path": "packages/build/tests/watch-source-recovery.test.ts",
+      "mode": "100644",
+      "blob": "2170f3f2e3f9385aa92cf00a65300270ab28e137"
+    },
+    {
       "path": "packages/build/tests/worker-build-contract.test.ts",
       "mode": "100644",
       "blob": "a28c0809d19c43343e2dd6c59912b8d865f232f3"
@@ -18801,7 +18836,7 @@
     {
       "path": "packages/compiler/README.md",
       "mode": "100644",
-      "blob": "c9c385b430fee4a6704d90d04cb6c030469baf4c"
+      "blob": "0c1755fe0a0de664784c0ce3abedc472914f60dd"
     },
     {
       "path": "packages/compiler/docs/subset.md",
@@ -18811,7 +18846,7 @@
     {
       "path": "packages/compiler/package.json",
       "mode": "100644",
-      "blob": "a0849e65b11ed6e07357f58c2c1f3ffdff54ff17"
+      "blob": "dc8e0adf0d7f33e44b99f739fcba563fe07cd156"
     },
     {
       "path": "packages/compiler/scripts/check-release-workflow.rb",
@@ -18886,7 +18921,7 @@
     {
       "path": "packages/compiler/src/esbuild-ssr-plugin.ts",
       "mode": "100644",
-      "blob": "e6929b036860543b1230374ac326a6318db13c8e"
+      "blob": "cd863a1c98d283095a438fe4e1cf74f972d6bf04"
     },
     {
       "path": "packages/compiler/src/export-resolver.ts",
@@ -19001,7 +19036,7 @@
     {
       "path": "packages/compiler/src/ssr-compilation.ts",
       "mode": "100644",
-      "blob": "ca57bd0f2420c976ef4acf7f81799a68ca01e94e"
+      "blob": "bbb7bb5b148c75e563c18098915c32a9c1d0eb27"
     },
     {
       "path": "packages/compiler/src/ssr-product.ts",
@@ -20216,7 +20251,7 @@
     {
       "path": "packages/compiler/tests/ssr-compilation.test.ts",
       "mode": "100644",
-      "blob": "8e4722552b8f9bd920ae0803af4b2361f8051569"
+      "blob": "b394ec45c4b02cf6cfe7838bc9d5243cb4047b1f"
     },
     {
       "path": "packages/compiler/tests/ssr-emission.test.ts",
@@ -20326,7 +20361,7 @@
     {
       "path": "packages/core/README.md",
       "mode": "100644",
-      "blob": "3b545b5b542d33b49a94cf4682869c4a7b5ec09d"
+      "blob": "85b824cdda919f7cc8cce1948f28e92da6029f39"
     },
     {
       "path": "packages/core/SECURITY.md",
@@ -20386,7 +20421,7 @@
     {
       "path": "packages/core/docs/CDN-AND-EXPORTS.md",
       "mode": "100644",
-      "blob": "1aa36c515e320d9bae6b82e7991783d96b387df2"
+      "blob": "980ee6bad5beb399118026dd7be13cafba4b77ec"
     },
     {
       "path": "packages/core/docs/COMPARISONS.md",
@@ -20411,7 +20446,7 @@
     {
       "path": "packages/core/docs/ISLANDS.md",
       "mode": "100644",
-      "blob": "6567116a68c567cb24a18768836db2d537a5d671"
+      "blob": "fca28ddf42b0ef5a28c59334571d48ff8a9ccf4c"
     },
     {
       "path": "packages/core/docs/PERFORMANCE.md",
@@ -20946,7 +20981,7 @@
     {
       "path": "packages/core/e2e/hostile-widgets/run.mjs",
       "mode": "100644",
-      "blob": "8a6688e2806744b19063bf1f15faa28a69a5a418"
+      "blob": "17dd3f62befd1fced386fb0e826213d83586c6bc"
     },
     {
       "path": "packages/core/e2e/hostile-widgets/server.mjs",
@@ -21121,7 +21156,7 @@
     {
       "path": "packages/core/package.json",
       "mode": "100644",
-      "blob": "190b3fd55fee90395fd012573e3cd366a22c50f7"
+      "blob": "e6ca7f26cac003ec4f38e4c6f56c8f66a31a190d"
     },
     {
       "path": "packages/core/playwright.config.ts",
@@ -21561,7 +21596,7 @@
     {
       "path": "packages/core/src/__tests__/index-surface.test.ts",
       "mode": "100644",
-      "blob": "13633b1c4ed9fc9c0d9d782863b6b3920f53436b"
+      "blob": "eb6cb6c7af5e1468ca1f00719a4c5cdf63a35bba"
     },
     {
       "path": "packages/core/src/__tests__/list-binding.test.ts",
@@ -22891,7 +22926,7 @@
     {
       "path": "packages/core/src/navigation.ts",
       "mode": "100644",
-      "blob": "bb52fb95277af8eb9a536ccf64b01837157353bf"
+      "blob": "b024be4c25ef8db81eae7b69f6a974bf4dacae9a"
     },
     {
       "path": "packages/core/src/reactive/__tests__/adoption-lifecycle.test.ts",
@@ -23386,7 +23421,7 @@
     {
       "path": "packages/create-app/README.md",
       "mode": "100644",
-      "blob": "fbbec5d37ff11e16de22668f5e946d8a9ee91776"
+      "blob": "8df84ea7e17d56b8bb63c411f4be95b64b9c652c"
     },
     {
       "path": "packages/create-app/docs/README.md",
@@ -23416,7 +23451,7 @@
     {
       "path": "packages/create-app/package.json",
       "mode": "100644",
-      "blob": "33e80b037c12c056432c792832ee370da8d1ed39"
+      "blob": "6da642c421a2b99c0bbd34765c1cbfefa417bd9e"
     },
     {
       "path": "packages/create-app/scripts/check-release-workflow.rb",
@@ -23446,7 +23481,7 @@
     {
       "path": "packages/create-app/template-lock-seeds.json",
       "mode": "100644",
-      "blob": "1cec82bce1b619b73d033a4146411e97bb6f1703"
+      "blob": "a75c02008f9d59dd709a68c8afa5587744cbbda5"
     },
     {
       "path": "packages/create-app/templates/dashboard/.github/workflows/build.yml",
@@ -23456,12 +23491,12 @@
     {
       "path": "packages/create-app/templates/dashboard/Cargo.lock",
       "mode": "100644",
-      "blob": "50f15e57c14190cb030a339f0a4e984b84a80ddd"
+      "blob": "a3f640f9a97469cf65c6ac98a6b9f2ce43d7561f"
     },
     {
       "path": "packages/create-app/templates/dashboard/Cargo.toml",
       "mode": "100644",
-      "blob": "c12645b7b08322b1e676749f1866340286ed6ff5"
+      "blob": "38a62f457640ad1caab36b9727480a968fb04137"
     },
     {
       "path": "packages/create-app/templates/dashboard/README.md",
@@ -23486,12 +23521,12 @@
     {
       "path": "packages/create-app/templates/dashboard/admin/package-lock.json",
       "mode": "100644",
-      "blob": "abc44a8406ae2aac8fe8af2c99160e7209d777e1"
+      "blob": "e2b9a6f2ec0c39196e78fa8fa468e87312215704"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/package.json",
       "mode": "100644",
-      "blob": "d3af318204cca7b70f43bc15d6f2eab554088102"
+      "blob": "12eea70875d7668f053b94571cfc4d6d72eb8efe"
     },
     {
       "path": "packages/create-app/templates/dashboard/admin/playwright.config.ts",
@@ -23591,12 +23626,12 @@
     {
       "path": "packages/create-app/templates/minimal/Cargo.lock",
       "mode": "100644",
-      "blob": "225a8a2b41f1eb3ac0e234b00a6b27b74153cb0f"
+      "blob": "4a133f4c7ac0a407d88bf151eb22f5233de7affc"
     },
     {
       "path": "packages/create-app/templates/minimal/Cargo.toml",
       "mode": "100644",
-      "blob": "d8e3637d965c221ffc7487928e6fd4a6f486c9de"
+      "blob": "a5e21fa4947375bad9973c8a61e4b34b7804f785"
     },
     {
       "path": "packages/create-app/templates/minimal/README.md",
@@ -23621,12 +23656,12 @@
     {
       "path": "packages/create-app/templates/minimal/admin/package-lock.json",
       "mode": "100644",
-      "blob": "5fc0530991f3c1f54a6515f07ec9aec867d3a633"
+      "blob": "26fa37de70f519162a4c88023385a6e8f0f88165"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/package.json",
       "mode": "100644",
-      "blob": "db2e40a8a44bb8f1dbf07536625c6e4e80394b6b"
+      "blob": "27740ad3818bca9be7d1ac266b6234af02657206"
     },
     {
       "path": "packages/create-app/templates/minimal/admin/src/about/app.tsx",
@@ -23661,12 +23696,12 @@
     {
       "path": "packages/create-app/templates/native-router/Cargo.lock",
       "mode": "100644",
-      "blob": "225a8a2b41f1eb3ac0e234b00a6b27b74153cb0f"
+      "blob": "4a133f4c7ac0a407d88bf151eb22f5233de7affc"
     },
     {
       "path": "packages/create-app/templates/native-router/Cargo.toml",
       "mode": "100644",
-      "blob": "ce919af30b3f3eef24a54116ecf15960df12d336"
+      "blob": "e55ea10108945a50518d4f037737ebc409b5bb9f"
     },
     {
       "path": "packages/create-app/templates/native-router/README.md",
@@ -23691,12 +23726,12 @@
     {
       "path": "packages/create-app/templates/native-router/admin/package-lock.json",
       "mode": "100644",
-      "blob": "c80ccabe1599b8863e553de6b20956fe97543021"
+      "blob": "d593872f513eb74a8ba3b8b2fc64cf6eb4301b65"
     },
     {
       "path": "packages/create-app/templates/native-router/admin/package.json",
       "mode": "100644",
-      "blob": "d7a101ef2e5b6d1d6f9cd2f2f3dd20dc11b2384c"
+      "blob": "f5d1396cdbd37a518a43a6b482e6ea4204501dd3"
     },
     {
       "path": "packages/create-app/templates/native-router/admin/src/about/app.tsx",
@@ -23811,7 +23846,7 @@
     {
       "path": "packages/router/CHANGELOG.md",
       "mode": "100644",
-      "blob": "875a4fba695d907e44eb963665b97005519f2466"
+      "blob": "db4bb1b40fc338c67df7e4821bf24e62779a8b48"
     },
     {
       "path": "packages/router/LICENSE",
@@ -23821,12 +23856,12 @@
     {
       "path": "packages/router/README.md",
       "mode": "100644",
-      "blob": "427b24a4bcff92e0ef88959484a95bf221bb3b3f"
+      "blob": "3cdc1fec94a268374d4ebef4515f4d08776456fc"
     },
     {
       "path": "packages/router/package.json",
       "mode": "100644",
-      "blob": "3473520cfde061523e2d4fe45bc5a696d56f32e2"
+      "blob": "fe2f56d1b0ada5b1d2ab327f9168257dcdd71c05"
     },
     {
       "path": "packages/router/src/browser.ts",
@@ -23836,7 +23871,7 @@
     {
       "path": "packages/router/src/components.ts",
       "mode": "100644",
-      "blob": "ac9ea4e3c03b935d437fad62aefc13b3eb2003cc"
+      "blob": "ad0d9e593a61ae4e65096e6d595ae30d25cac1de"
     },
     {
       "path": "packages/router/src/html.ts",
@@ -23856,7 +23891,7 @@
     {
       "path": "packages/router/src/router.ts",
       "mode": "100644",
-      "blob": "6e6e960908ae4785445cd158394a7edfa336d8f7"
+      "blob": "c717de5119fd99d773a91dc0b79872cb7dc9ad50"
     },
     {
       "path": "packages/router/src/routes.ts",
@@ -23871,7 +23906,7 @@
     {
       "path": "packages/router/src/types.ts",
       "mode": "100644",
-      "blob": "b37d0b1b4e004f47db37658509ad1d6fc9f660f3"
+      "blob": "ac8affadf1ef071da362d2339c1b0bb7984eb78c"
     },
     {
       "path": "packages/router/tests/adapter-boundaries.test.ts",
@@ -23887,6 +23922,11 @@
       "path": "packages/router/tests/callback-authority.test.ts",
       "mode": "100644",
       "blob": "9c5229e4fe68beda4228ba1321a2a582f3582f14"
+    },
+    {
+      "path": "packages/router/tests/components.test.ts",
+      "mode": "100644",
+      "blob": "5308007bc77e33005c10641c7f818d898eedbce9"
     },
     {
       "path": "packages/router/tests/limits.test.ts",
@@ -23921,7 +23961,7 @@
     {
       "path": "packages/router/tests/router.test.ts",
       "mode": "100644",
-      "blob": "22001aeaf311a599876edd57f34d29d34f242388"
+      "blob": "1a252cd98fa23ec87e0576a20f7b5e5a54454a9c"
     },
     {
       "path": "packages/router/tests/snapshot-boundary.test.ts",
@@ -23986,7 +24026,7 @@
     {
       "path": "scripts/check-builds.sh",
       "mode": "100644",
-      "blob": "29a5be631677d17781db2bc5cb869eeda2d261bc"
+      "blob": "aa9fc8f770a805a5e28834c6c450ed0df3e3b84c"
     },
     {
       "path": "scripts/check-builds.test.mjs",
@@ -23994,9 +24034,29 @@
       "blob": "8824da4377dd293cf699d9e01fb9cc5b638c94a4"
     },
     {
+      "path": "scripts/check-compile-phase.mjs",
+      "mode": "100644",
+      "blob": "1c839402942ad82dfd6f1b3389dd95e6c5565750"
+    },
+    {
+      "path": "scripts/check-compile-phase.test.mjs",
+      "mode": "100644",
+      "blob": "295568082febd6e9a9231793e522de0aaefd7b77"
+    },
+    {
       "path": "scripts/check-core-browser.sh",
       "mode": "100644",
-      "blob": "1abd0482021b8c2aa93ca48c9f5f551be9407fd8"
+      "blob": "22bed042525b18209dbed8859f5cd439d4daa94e"
+    },
+    {
+      "path": "scripts/check-core-partition.json",
+      "mode": "100644",
+      "blob": "85c9b2461a7291696b9fd129e022d64776f713fe"
+    },
+    {
+      "path": "scripts/check-core-partition.mjs",
+      "mode": "100644",
+      "blob": "a2265f38ca25ab040999e39969f88985240dbaf0"
     },
     {
       "path": "scripts/check-fmir-corpus.mjs",
@@ -24026,7 +24086,7 @@
     {
       "path": "scripts/check-release-qualification.mjs",
       "mode": "100644",
-      "blob": "19d2f3bc5ebe2558ef6ff54a8e2ad2f7e18af135"
+      "blob": "c6501c3bfaca3be25d243cfaa2b2475cc36425b6"
     },
     {
       "path": "scripts/check-release-support.mjs",
@@ -24036,12 +24096,52 @@
     {
       "path": "scripts/check-release-workflow.rb",
       "mode": "100644",
-      "blob": "ddb7a1058c27b0b2ea91071e51c23c34d505dc72"
+      "blob": "43765bc87bbe42f2ea67b7c1ab6186da4ac984c1"
     },
     {
       "path": "scripts/check-router-research.mjs",
       "mode": "100644",
       "blob": "6b9e102a4cca56423e1bd457b2e0c5cdd08ffb63"
+    },
+    {
+      "path": "scripts/check-scheduler-admission.mjs",
+      "mode": "100644",
+      "blob": "7e160c29bfd79d3267c833269eb8a014afe0584b"
+    },
+    {
+      "path": "scripts/check-scheduler-inputs.json",
+      "mode": "100644",
+      "blob": "d65841a28bfc6370de71b82683f351f70fbbb002"
+    },
+    {
+      "path": "scripts/check-scheduler-lanes.sh",
+      "mode": "100644",
+      "blob": "a4911d1a50bf8444ef3f02a7a88f17db95190a9c"
+    },
+    {
+      "path": "scripts/check-scheduler-owned.test.mjs",
+      "mode": "100644",
+      "blob": "56077fa49ddec566380db1c9015917c81ad284e6"
+    },
+    {
+      "path": "scripts/check-scheduler-pair.mjs",
+      "mode": "100644",
+      "blob": "abe087e55265abd06b47aa75ed7c4d27ff65e81b"
+    },
+    {
+      "path": "scripts/check-scheduler-workload.json",
+      "mode": "100644",
+      "blob": "7cd3fe3e388ca523805b0dcd13e5e7e98bc05176"
+    },
+    {
+      "path": "scripts/check-scheduler.test.mjs",
+      "mode": "100644",
+      "blob": "88234cd81ca54e89d7ca26c0e28b4fbca24165a3"
+    },
+    {
+      "path": "scripts/check-stages.sh",
+      "mode": "100644",
+      "blob": "86b74b4bd33e64d496bbaa74c4be8a5c2231ed7c"
     },
     {
       "path": "scripts/check-supply-chain.rb",
@@ -24056,7 +24156,7 @@
     {
       "path": "scripts/check.sh",
       "mode": "100755",
-      "blob": "4d24f4ab59b40fc1c9b7db1ece9d73569a54afed"
+      "blob": "50960c73aef069a2f83f7798a1b8396eebbd018e"
     },
     {
       "path": "scripts/compatibility-package.test.mjs",
@@ -24071,7 +24171,7 @@
     {
       "path": "scripts/core-raw-package.test.mjs",
       "mode": "100644",
-      "blob": "3effb0999545b52efce0398ea217d56976caf1ad"
+      "blob": "2126f345d0284eb5349bd0bffd62e32cb333870d"
     },
     {
       "path": "scripts/decoder-compiler-package.test.mjs",
@@ -24461,7 +24561,7 @@
     {
       "path": "scripts/release-contracts.json",
       "mode": "100644",
-      "blob": "511c74e5f28de42ea0e5881dfbd7578a63d52e2a"
+      "blob": "203df1b5c0a585372a8b1dd872278062076573c9"
     },
     {
       "path": "scripts/release-corpus.test.mjs",
@@ -24477,6 +24577,16 @@
       "path": "scripts/release-evidence.test.mjs",
       "mode": "100644",
       "blob": "930a66f544cc5fbe686ec45cb3f3c22a37ec02b7"
+    },
+    {
+      "path": "scripts/release-final-waiver.mjs",
+      "mode": "100644",
+      "blob": "52d9f33b58f65acdc7e5e218c73ef61fc124963f"
+    },
+    {
+      "path": "scripts/release-final-waiver.test.mjs",
+      "mode": "100644",
+      "blob": "badfb8afc87d203629c06ab3e4d2485aa62a8c3d"
     },
     {
       "path": "scripts/release-fixture-apps.mjs",
@@ -24601,12 +24711,12 @@
     {
       "path": "scripts/release-performance-decoder.mjs",
       "mode": "100644",
-      "blob": "0c825665d0add9671f3eb77890df56d085375716"
+      "blob": "33ba0ecec378631d4ef3da1943f66bf53661754c"
     },
     {
       "path": "scripts/release-performance-decoder.test.mjs",
       "mode": "100644",
-      "blob": "0082b51538a1298cb57241e6796cea85ecd7b2d7"
+      "blob": "b795a92564e98d669a28e74277716da56ea5f53c"
     },
     {
       "path": "scripts/release-performance-durability.test.mjs",
@@ -24751,7 +24861,7 @@
     {
       "path": "scripts/release-record.mjs",
       "mode": "100644",
-      "blob": "92eafe333ee2356660d8a762b33122277e18de99"
+      "blob": "9811f0bf0d44768a1b48158489991ce898c2ed90"
     },
     {
       "path": "scripts/release-record.test.mjs",
@@ -24771,17 +24881,17 @@
     {
       "path": "scripts/release-security.mjs",
       "mode": "100644",
-      "blob": "2ffc672816a80e26e916ea94afd6a89e419a9d59"
+      "blob": "e78012be1558115ee541aa9d7e6f3d4cd172eb09"
     },
     {
       "path": "scripts/release-security.test.mjs",
       "mode": "100644",
-      "blob": "6dc9ad83185862b4f57b87994fc97386c31b7e44"
+      "blob": "039c35be797b96ff35437803556b3b9e3f964b7a"
     },
     {
       "path": "scripts/release-set.mjs",
       "mode": "100644",
-      "blob": "39931305d1c3b170cdf5cc9895f5d2ee6d4759ae"
+      "blob": "10bf0c1aa2b1e4fd592a8ca9b2cf607f844c0a2c"
     },
     {
       "path": "scripts/release-signatures.test.mjs",
@@ -24821,7 +24931,7 @@
     {
       "path": "scripts/release-soak-deferral.test.mjs",
       "mode": "100644",
-      "blob": "01b8da1f8a9aa8bda1fb81be7dd03783e3931fb9"
+      "blob": "16f0267aaa27b92efbe74f009b5aeecb978febbe"
     },
     {
       "path": "scripts/release-soak-v2.test.mjs",
@@ -24921,7 +25031,7 @@
     {
       "path": "scripts/release.test.mjs",
       "mode": "100644",
-      "blob": "93e555508b54a977370bcfa46ad6c0a96a82d2e4"
+      "blob": "90b795807a139c64db8fb820bc6f9ac598d6f7c3"
     },
     {
       "path": "scripts/reviewer-static-executable.test.mjs",
@@ -24951,7 +25061,7 @@
     {
       "path": "scripts/run-router-native-proof.mjs",
       "mode": "100644",
-      "blob": "58c54ae48c6184457a658013bf4a86675552d780"
+      "blob": "ca632309219484f6cc9d9c45aa15ba21dae1c2c0"
     },
     {
       "path": "scripts/scaffold-cache-measure.mjs",
