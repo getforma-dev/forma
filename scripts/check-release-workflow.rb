@@ -33,6 +33,23 @@ P17_UPLOAD = {
   'if' => 'always()',
   'with' => { 'name' => 'release-p17', 'path' => '${{ runner.temp }}/p17/', 'if-no-files-found' => 'error', 'overwrite' => true }
 }.freeze
+RECOVERY_PREPARE = {
+  'name' => 'Authenticate any prior partial-publication inventory before publishing',
+  'id' => 'recovery', 'env' => { 'GH_TOKEN' => '${{ github.token }}' },
+  'run' => 'node scripts/release-publication-recovery.mjs prepare "$RUNNER_TEMP/publication-recovery"'
+}.freeze
+RECOVERY_UPLOAD = {
+  'uses' => 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
+  'if' => "steps.recovery.outputs.manifest-sha256 != ''",
+  'with' => { 'name' => 'release-publication-recovery', 'path' => '${{ runner.temp }}/publication-recovery/',
+              'if-no-files-found' => 'error', 'overwrite' => true }
+}.freeze
+RECOVERY_DOWNLOAD = {
+  'uses' => 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333',
+  'if' => "needs.check.outputs.recovery-sha256 != ''",
+  'with' => { 'name' => 'release-publication-recovery', 'path' => '${{ runner.temp }}/publication-recovery',
+              'digest-mismatch' => 'error' }
+}.freeze
 
 def steps(job)
   job.is_a?(Hash) && job['steps'].is_a?(Array) ? job['steps'] : []
@@ -75,7 +92,10 @@ def violations(doc)
       # Only this exact diagnostic upload may run after failure. The failed verify
       # job still blocks every downstream publisher; its success record is not run.
       evidence_upload = name == 'verify' && step == P17_UPLOAD
-      out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || (step.key?('if') && !evidence_upload)
+      # Only artifact transfer is conditional. The preparation gate and writer
+      # always run and refuse a missing recovery proof for its exact host tag.
+      recovery_transfer = (name == 'check' && step == RECOVERY_UPLOAD) || (name == 'record' && step == RECOVERY_DOWNLOAD)
+      out << "E1 #{name} step must fail closed" if step.key?('continue-on-error') || (step.key?('if') && !evidence_upload && !recovery_transfer)
       out << "E5 #{name} shell must fail fast" if step.key?('shell') && !%w[bash sh].include?(step['shell'])
       if step['uses']
         out << "S3 #{name} action must be SHA-pinned" unless step['uses'].match?(%r{\A[\w-]+/[\w./-]+@[a-f0-9]{40}\z})
@@ -180,6 +200,23 @@ def violations(doc)
   out << 'K8 record must authenticate the complete nested P17 tree against the verifier output before writing DS12' unless anchored
   out << 'K9 DS12 must retain the verifier manifest identity' unless writers.length == 1 && record_steps[writers.first].dig('env', 'P17_MANIFEST_SHA256') == '${{ needs.verify.outputs.report-sha256 }}'
   out << 'K9 DS12 must retain the verifier attempt on partial reruns' unless writers.length == 1 && record_steps[writers.first].dig('env', 'P17_RUN_ATTEMPT') == '${{ needs.verify.outputs.p17-run-attempt }}'
+  check_steps = steps(jobs['check'])
+  preparation = check_steps.each_index.select { |i| check_steps[i] == RECOVERY_PREPARE }
+  qualification_index = check_steps.index { |s| s['run'] == 'node scripts/check-release-qualification.mjs' }
+  recovery_uploads = check_steps.each_index.select { |i| action(check_steps[i]) == 'actions/upload-artifact' }
+  prepare_bound = preparation.length == 1 && qualification_index && qualification_index < preparation.first &&
+                  recovery_uploads.length == 1 && recovery_uploads.first > preparation.first &&
+                  check_steps[recovery_uploads.first] == RECOVERY_UPLOAD &&
+                  jobs['check']['outputs'] == { 'started-at' => '${{ steps.ci.outputs.started-at }}',
+                                               'ci-run' => '${{ steps.ci.outputs.ci-run }}',
+                                               'recovery-sha256' => '${{ steps.recovery.outputs.manifest-sha256 }}' }
+  out << 'K10 inventory recovery must be authenticated and transferred before publishing' unless prepare_bound
+  recovery_downloads = record_steps.each_index.select { |i| action(record_steps[i]) == 'actions/download-artifact' && record_steps[i].dig('with', 'name') == 'release-publication-recovery' }
+  consume_bound = recovery_downloads.length == 1 && writers.length == 1 && recovery_downloads.first < writers.first &&
+                  record_steps[recovery_downloads.first] == RECOVERY_DOWNLOAD &&
+                  record_steps[writers.first].dig('env', 'PUBLICATION_RECOVERY_DIRECTORY') == %q(${{ needs.check.outputs.recovery-sha256 != '' && format('{0}/publication-recovery', runner.temp) || '' }}) &&
+                  record_steps[writers.first].dig('env', 'PUBLICATION_RECOVERY_SHA256') == '${{ needs.check.outputs.recovery-sha256 }}'
+  out << 'K10 record must consume the independently anchored recovery artifact before writing' unless consume_bound
   out
 end
 

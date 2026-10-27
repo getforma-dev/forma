@@ -1,6 +1,6 @@
 {
   "name": "@getforma/router",
-  "version": "3.2.0-rc.1",
+  "version": "3.2.0-rc.2",
   "description": "Optional owned navigation, persistent layouts and typed native transitions for Forma",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -30,7 +30,7 @@
     "check:pack": "publint && attw --pack ."
   },
   "peerDependencies": {
-    "@getforma/core": "^3.2.0 || =3.2.0-rc.1"
+    "@getforma/core": "^3.2.0 || =3.2.0-rc.2"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

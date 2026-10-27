@@ -137,7 +137,7 @@
           "scope": "the recall script and SECURITY.md generated from the release record"
         },
         "FORMA-145 audit": {
-          "status": "done",
+          "status": "pending",
           "scope": "fresh-context independent whole-release review of the exact 3.2 candidate and retained evidence, with an empty blocking list (D14)"
         },
         "FORMA-257": {
@@ -173,12 +173,12 @@
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         },
         "FORMA-301 candidate": {
-          "status": "done",
-          "scope": "Prepared 3.2.0-rc.1 product/harness source 4c59db07 passed current CI 40423335934 and engines/security/budgets/scaffold-cache lanes; hosted P17 40423336544 authenticates all eight DS11 archives and three starters, with 75/75 checks, unchanged performance floors and complete cleanup. The same final archive set passes native90 and paired 12,287/12,288 B incremental and 40,715/65,536 B group limits. Later factual documentation and gate-completion deltas are independently reviewed; exact final main/tag CI and tagged P17 remain mandatory."
+          "status": "pending",
+          "scope": "The RC.2 successor requires current packed qualification for all eight coordinated archives and three starters after the finite release-record repair. Original RC.1 tagged P17 run 40433276229 passed 75/75 and published all eight archives, but recording failed; it remains historical and cannot provide a successful release or burn-in baseline. Retained runtime/native/mutation evidence needs explicit unchanged-source applicability; exact final main/tag CI and tagged P17 remain mandatory."
         },
         "FORMA-301 publisher": {
           "status": "done",
-          "scope": "The reviewed first-router bootstrap is confined to the qualified v3.2.0-rc.1 router archive; actual npm-publish environment credential readiness is recorded, including the explicitly authorized broader seven-day token exception. Five-package observer and eight-package registry policy are staged and tested before source freeze, preserving historical readers and missing-package failure. Actual publication, immediate secret removal/token revocation, trusted-publisher enrollment and live registry observation remain post-publication obligations."
+          "scope": "The qualified RC.1 router bootstrap published the exact verified archive. The temporary GitHub secret was removed and the npm token was confirmed absent. The actual router GitHub trusted publisher names getforma-dev/forma, release.yml and npm-publish; package policy requires 2FA and disallows bypass tokens. Its first actual OIDC publication remains an RC.2 outcome to verify. No bootstrap credential is needed or authorized for RC.2. Complete five-package observer and eight-package registry reconciliation remain post-record obligations."
         }
       }
     },
