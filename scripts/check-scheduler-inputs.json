@@ -4863,7 +4863,7 @@
       },
       {
         "path": "packages/core/src/__tests__/index-surface.test.ts",
-        "sha256": "f306aa1dbcd6360104eac642f8906c9ab2da773a33203a7d52043760b3cf816b"
+        "sha256": "57906e64ec20d417281ac24c11aea4452557b9a47d8e87a76bba5a3d85dfac24"
       },
       {
         "path": "packages/core/src/__tests__/list-binding.test.ts",
@@ -6771,7 +6771,7 @@
       },
       {
         "path": "scripts/check-core-partition.json",
-        "sha256": "dcf53d05de8393ba363a4cd9e59f4dac5d78401eebfffd833a68b6592d555e91"
+        "sha256": "e9b494753eded91dc9e16633e2de7a49534eeb8103197639c2e6fea68081ff69"
       },
       {
         "path": "scripts/check-core-partition.mjs",
@@ -12353,7 +12353,7 @@
       },
       {
         "path": "packages/core/src/__tests__/index-surface.test.ts",
-        "sha256": "f306aa1dbcd6360104eac642f8906c9ab2da773a33203a7d52043760b3cf816b"
+        "sha256": "57906e64ec20d417281ac24c11aea4452557b9a47d8e87a76bba5a3d85dfac24"
       },
       {
         "path": "packages/core/src/__tests__/list-binding.test.ts",
@@ -14261,7 +14261,7 @@
       },
       {
         "path": "scripts/check-core-partition.json",
-        "sha256": "dcf53d05de8393ba363a4cd9e59f4dac5d78401eebfffd833a68b6592d555e91"
+        "sha256": "e9b494753eded91dc9e16633e2de7a49534eeb8103197639c2e6fea68081ff69"
       },
       {
         "path": "scripts/check-core-partition.mjs",

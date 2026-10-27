@@ -89,9 +89,9 @@
       },
       {
         "file": "src/__tests__/index-surface.test.ts",
-        "sha256": "f306aa1dbcd6360104eac642f8906c9ab2da773a33203a7d52043760b3cf816b",
+        "sha256": "57906e64ec20d417281ac24c11aea4452557b9a47d8e87a76bba5a3d85dfac24",
         "phase": "overlap",
-        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+        "reason": "Exact public export inventory includes the coordinated router URL-policy re-export; only expected names change, with no new executable import, process or resource owner."
       },
       {
         "file": "src/__tests__/list-binding.test.ts",

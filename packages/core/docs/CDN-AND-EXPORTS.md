@@ -147,8 +147,11 @@ raw-entry lint. It is not a separate self-contained CDN build.
 
 The navigation entry is an internal integration surface for the coordinated
 `@getforma/router` package. It exports `prepareNativeOwner`,
-`prepareInitialNativeOwners`, `validateNativeOwnerTree`, and the admitted server
-parser sink `navigationHTML`. Application code normally uses the router. The
+`prepareInitialNativeOwners`, `validateNativeOwnerTree`, the admitted server
+parser sink `navigationHTML`, and core's shared `isDangerousUrl` predicate.
+The router uses that existing URL policy for anchors created in a caller-supplied
+document, then applies its separate navigation-eligibility checks. Application
+code normally uses the router. The
 entry has ESM, CJS, declaration and development artifacts; it has no standalone
 CDN artifact. See [ISLANDS.md](ISLANDS.md#native-navigation-owners) for its owner
 lifecycle and initial document state contract.
