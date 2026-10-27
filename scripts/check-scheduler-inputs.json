@@ -2383,7 +2383,7 @@
       },
       {
         "path": "packages/build/src/build.ts",
-        "sha256": "a90ec355733b482cf227c688519f79e988a81b6f8e9aabbeef0f515701157a54"
+        "sha256": "e432be09d58768cb06533a82544ae889eb7a96ef0d74f996e89881e458af5c48"
       },
       {
         "path": "packages/build/src/compatibility-watch.ts",
@@ -2480,6 +2480,10 @@
       {
         "path": "packages/build/src/types.ts",
         "sha256": "a3f2c892c6b7718d4ba53057192853f02ff44cbef2ea6b6a0b5de0999eab8f94"
+      },
+      {
+        "path": "packages/build/src/watch-source-recovery.ts",
+        "sha256": "5a127c473e940b052ad73e9c0aae8d594500bbc5cfba86a0405a4e7390c046d9"
       },
       {
         "path": "packages/build/tests/alias-warning.test.ts",
@@ -3010,6 +3014,14 @@
         "sha256": "3d462d312a523e948c9c413a510b3ba88f1a5381970234d6b5b004004d5a5ca1"
       },
       {
+        "path": "packages/build/tests/watch-source-queue.test.ts",
+        "sha256": "b01f16173245e4b8b9aceaefdcfd5b6fd2959e68a2dfd116ac0683e1ebc1072d"
+      },
+      {
+        "path": "packages/build/tests/watch-source-recovery.test.ts",
+        "sha256": "d48ac717b860f5b984b7a515eb53d82f3a446543f667fb3b45c117e926364f17"
+      },
+      {
         "path": "packages/build/tests/worker-build-contract.test.ts",
         "sha256": "ac2a3ebda89f1c698fa8076a4b7725a5c76cee21fc64266649a85cc9fc259b9e"
       },
@@ -3083,7 +3095,7 @@
       },
       {
         "path": "packages/compiler/src/esbuild-ssr-plugin.ts",
-        "sha256": "6ceee707708984b0a84e2f734e662b28651a4ed1062a5dc99a3099ba6889a8f0"
+        "sha256": "b1b4b55e8f43ed9f339677f9cfebb80ac259407d6856e08a61cc742ad4eb1e95"
       },
       {
         "path": "packages/compiler/src/export-resolver.ts",
@@ -3175,7 +3187,7 @@
       },
       {
         "path": "packages/compiler/src/ssr-compilation.ts",
-        "sha256": "96c535f6bf017ae3102ac77f6c1d447a1f73dd0f5ed7ea1159486b7b1f23562e"
+        "sha256": "814f35ab8aa778283159314d7cf2a34bcad7366671f2f1bd8b3a29f38b35885d"
       },
       {
         "path": "packages/compiler/src/ssr-product.ts",
@@ -4147,7 +4159,7 @@
       },
       {
         "path": "packages/compiler/tests/ssr-compilation.test.ts",
-        "sha256": "bb79576e51affb98b245d57a32cdd0e3533ed876852c273b70aa1e17b92ce821"
+        "sha256": "f9837e304ed957cde1c779d013508b6416207ba06587118b8320b82c87a67a38"
       },
       {
         "path": "packages/compiler/tests/ssr-emission.test.ts",
@@ -4375,7 +4387,7 @@
       },
       {
         "path": "packages/core/e2e/hostile-widgets/run.mjs",
-        "sha256": "aed2657d540e0efc21a029c8840a223c869922854644d742ed48482292e5a379"
+        "sha256": "cf08d89f80a9ba6b77c419da1317820d859d1665d174b728a3d69fe9b74ae36d"
       },
       {
         "path": "packages/core/e2e/hostile-widgets/server.mjs",
@@ -6759,11 +6771,19 @@
       },
       {
         "path": "scripts/check-builds.sh",
-        "sha256": "d9dedcac4b3c4ec4904d4974efb7545621fcd135daa4d2aaeb702a77e7d0a9e4"
+        "sha256": "192ce992100d64a263cfb47c6ea920ccb657c42c30cc442befc98a9fc3ece88a"
       },
       {
         "path": "scripts/check-builds.test.mjs",
         "sha256": "9dd7176961c78dab85889ec6f12cc050bea794fe9ef7cfd5a26d5ed667e30642"
+      },
+      {
+        "path": "scripts/check-compile-phase.mjs",
+        "sha256": "da20fa2e05a2e049b543606381e3e296431d65930bae38a1d1f01072173eec7f"
+      },
+      {
+        "path": "scripts/check-compile-phase.test.mjs",
+        "sha256": "700568cdaffdb41bd6cbea3a2577e9c003dd1ba75a668cc5f39de83699ff850d"
       },
       {
         "path": "scripts/check-core-browser.sh",
@@ -6775,7 +6795,7 @@
       },
       {
         "path": "scripts/check-core-partition.mjs",
-        "sha256": "9df1f2fdc310a3d059383d23d5b01e75f9ad63c0c3688bf3e8c5af7b52a5b3d3"
+        "sha256": "aaebbf37dfe54515be3dabb10460f94b522ffd9fe1bfb4d4651106ac4f8519d8"
       },
       {
         "path": "scripts/check-fmir-corpus.mjs",
@@ -6815,31 +6835,31 @@
       },
       {
         "path": "scripts/check-scheduler-admission.mjs",
-        "sha256": "bfd2ea57a231eeb603a604a344c04b85eb6a2f99140e4de94a193574f1456ac3"
+        "sha256": "3f601d903c8d892c4ad59a5c5725bbc72a5ebe38d2d4de0b585eca9a0939d5fc"
       },
       {
         "path": "scripts/check-scheduler-lanes.sh",
-        "sha256": "702bb20ae0baafda79a6571348c5ab23e6298ba2e73040d3b7d57719e4c869f7"
+        "sha256": "67a8d1ab0c485bf80f20ccb6a72e791f54dd567c18d5f4437ea521305f1d8a48"
       },
       {
         "path": "scripts/check-scheduler-owned.test.mjs",
-        "sha256": "01b9682b450e3be1550194debec9814ce154c9970db1533e8c482ce2477aadd2"
+        "sha256": "5b048b723b86686cd8430bb980e33e354ceb9725c6a6c98d270b85f1835b80c1"
       },
       {
         "path": "scripts/check-scheduler-pair.mjs",
-        "sha256": "e215f6a535ae14bcba47653c0fbd9ae5acf97e543383d38a422907818a4110b8"
+        "sha256": "28639694021cc66849c93f15dc294d130ae48f4b6b852f53bc0a5b687e36b169"
       },
       {
         "path": "scripts/check-scheduler-workload.json",
-        "sha256": "7751e13fa24d30e5226c2c859d7cee532721253613a5b81efec5583a6ad31d33"
+        "sha256": "271398db45b73a30adee1c5fbc2b47eacaf3bb183d7f40d1ec0065809cc34d14"
       },
       {
         "path": "scripts/check-scheduler.test.mjs",
-        "sha256": "b526a7a6c0b4e35908d76452d3445cf983c59e029693aae14a07b3a9d06923c4"
+        "sha256": "ffdeb4d85b244a262e0dea7a085f58028f7b11051474c113e1595fd6ef110b2a"
       },
       {
         "path": "scripts/check-stages.sh",
-        "sha256": "a5e7137e2c9f7b46306de06a4259b196d7cd30df911f261ab57e3f71d23745b1"
+        "sha256": "4b12a4cb288c72141cc50890a5c191ae18ab0b98edd03c0cb8a5cb886fccfd4d"
       },
       {
         "path": "scripts/check-supply-chain.rb",
@@ -6851,7 +6871,7 @@
       },
       {
         "path": "scripts/check.sh",
-        "sha256": "46cb1662eee860daa5fb1a0661a0a44a65b121963abd2d230bcd55a95c83f8aa"
+        "sha256": "8309422f2c8609ec968dceb068e1a02a5035dbd1f4e70157f135c34cabfa05ae"
       },
       {
         "path": "scripts/compatibility-package.test.mjs",
@@ -7419,11 +7439,11 @@
       },
       {
         "path": "scripts/release-security.mjs",
-        "sha256": "1aa9b7045b1eb420bce8eb7b7f4148e5c004e733175f0af26ab0b3679497d478"
+        "sha256": "7f9057b91051e52a12b1c517da2df4f11f22cea5e9c80f937eab5473fc80cf80"
       },
       {
         "path": "scripts/release-security.test.mjs",
-        "sha256": "83c584543935d642c291886c63f5d4036fba3a7bb443b8fe4a53a31670c16c87"
+        "sha256": "b159724bdb6bf0f99128b6582d5c02e4dfbf4faa87ffced8ea46a093fa595875"
       },
       {
         "path": "scripts/release-set.mjs",
@@ -9873,7 +9893,7 @@
       },
       {
         "path": "packages/build/src/build.ts",
-        "sha256": "a90ec355733b482cf227c688519f79e988a81b6f8e9aabbeef0f515701157a54"
+        "sha256": "e432be09d58768cb06533a82544ae889eb7a96ef0d74f996e89881e458af5c48"
       },
       {
         "path": "packages/build/src/compatibility-watch.ts",
@@ -9970,6 +9990,10 @@
       {
         "path": "packages/build/src/types.ts",
         "sha256": "a3f2c892c6b7718d4ba53057192853f02ff44cbef2ea6b6a0b5de0999eab8f94"
+      },
+      {
+        "path": "packages/build/src/watch-source-recovery.ts",
+        "sha256": "5a127c473e940b052ad73e9c0aae8d594500bbc5cfba86a0405a4e7390c046d9"
       },
       {
         "path": "packages/build/tests/alias-warning.test.ts",
@@ -10500,6 +10524,14 @@
         "sha256": "3d462d312a523e948c9c413a510b3ba88f1a5381970234d6b5b004004d5a5ca1"
       },
       {
+        "path": "packages/build/tests/watch-source-queue.test.ts",
+        "sha256": "b01f16173245e4b8b9aceaefdcfd5b6fd2959e68a2dfd116ac0683e1ebc1072d"
+      },
+      {
+        "path": "packages/build/tests/watch-source-recovery.test.ts",
+        "sha256": "d48ac717b860f5b984b7a515eb53d82f3a446543f667fb3b45c117e926364f17"
+      },
+      {
         "path": "packages/build/tests/worker-build-contract.test.ts",
         "sha256": "ac2a3ebda89f1c698fa8076a4b7725a5c76cee21fc64266649a85cc9fc259b9e"
       },
@@ -10573,7 +10605,7 @@
       },
       {
         "path": "packages/compiler/src/esbuild-ssr-plugin.ts",
-        "sha256": "6ceee707708984b0a84e2f734e662b28651a4ed1062a5dc99a3099ba6889a8f0"
+        "sha256": "b1b4b55e8f43ed9f339677f9cfebb80ac259407d6856e08a61cc742ad4eb1e95"
       },
       {
         "path": "packages/compiler/src/export-resolver.ts",
@@ -10665,7 +10697,7 @@
       },
       {
         "path": "packages/compiler/src/ssr-compilation.ts",
-        "sha256": "96c535f6bf017ae3102ac77f6c1d447a1f73dd0f5ed7ea1159486b7b1f23562e"
+        "sha256": "814f35ab8aa778283159314d7cf2a34bcad7366671f2f1bd8b3a29f38b35885d"
       },
       {
         "path": "packages/compiler/src/ssr-product.ts",
@@ -11637,7 +11669,7 @@
       },
       {
         "path": "packages/compiler/tests/ssr-compilation.test.ts",
-        "sha256": "bb79576e51affb98b245d57a32cdd0e3533ed876852c273b70aa1e17b92ce821"
+        "sha256": "f9837e304ed957cde1c779d013508b6416207ba06587118b8320b82c87a67a38"
       },
       {
         "path": "packages/compiler/tests/ssr-emission.test.ts",
@@ -11865,7 +11897,7 @@
       },
       {
         "path": "packages/core/e2e/hostile-widgets/run.mjs",
-        "sha256": "aed2657d540e0efc21a029c8840a223c869922854644d742ed48482292e5a379"
+        "sha256": "cf08d89f80a9ba6b77c419da1317820d859d1665d174b728a3d69fe9b74ae36d"
       },
       {
         "path": "packages/core/e2e/hostile-widgets/server.mjs",
@@ -14249,11 +14281,19 @@
       },
       {
         "path": "scripts/check-builds.sh",
-        "sha256": "d9dedcac4b3c4ec4904d4974efb7545621fcd135daa4d2aaeb702a77e7d0a9e4"
+        "sha256": "192ce992100d64a263cfb47c6ea920ccb657c42c30cc442befc98a9fc3ece88a"
       },
       {
         "path": "scripts/check-builds.test.mjs",
         "sha256": "9dd7176961c78dab85889ec6f12cc050bea794fe9ef7cfd5a26d5ed667e30642"
+      },
+      {
+        "path": "scripts/check-compile-phase.mjs",
+        "sha256": "da20fa2e05a2e049b543606381e3e296431d65930bae38a1d1f01072173eec7f"
+      },
+      {
+        "path": "scripts/check-compile-phase.test.mjs",
+        "sha256": "700568cdaffdb41bd6cbea3a2577e9c003dd1ba75a668cc5f39de83699ff850d"
       },
       {
         "path": "scripts/check-core-browser.sh",
@@ -14265,7 +14305,7 @@
       },
       {
         "path": "scripts/check-core-partition.mjs",
-        "sha256": "9df1f2fdc310a3d059383d23d5b01e75f9ad63c0c3688bf3e8c5af7b52a5b3d3"
+        "sha256": "aaebbf37dfe54515be3dabb10460f94b522ffd9fe1bfb4d4651106ac4f8519d8"
       },
       {
         "path": "scripts/check-fmir-corpus.mjs",
@@ -14305,31 +14345,31 @@
       },
       {
         "path": "scripts/check-scheduler-admission.mjs",
-        "sha256": "bfd2ea57a231eeb603a604a344c04b85eb6a2f99140e4de94a193574f1456ac3"
+        "sha256": "3f601d903c8d892c4ad59a5c5725bbc72a5ebe38d2d4de0b585eca9a0939d5fc"
       },
       {
         "path": "scripts/check-scheduler-lanes.sh",
-        "sha256": "702bb20ae0baafda79a6571348c5ab23e6298ba2e73040d3b7d57719e4c869f7"
+        "sha256": "67a8d1ab0c485bf80f20ccb6a72e791f54dd567c18d5f4437ea521305f1d8a48"
       },
       {
         "path": "scripts/check-scheduler-owned.test.mjs",
-        "sha256": "01b9682b450e3be1550194debec9814ce154c9970db1533e8c482ce2477aadd2"
+        "sha256": "5b048b723b86686cd8430bb980e33e354ceb9725c6a6c98d270b85f1835b80c1"
       },
       {
         "path": "scripts/check-scheduler-pair.mjs",
-        "sha256": "e215f6a535ae14bcba47653c0fbd9ae5acf97e543383d38a422907818a4110b8"
+        "sha256": "28639694021cc66849c93f15dc294d130ae48f4b6b852f53bc0a5b687e36b169"
       },
       {
         "path": "scripts/check-scheduler-workload.json",
-        "sha256": "7751e13fa24d30e5226c2c859d7cee532721253613a5b81efec5583a6ad31d33"
+        "sha256": "271398db45b73a30adee1c5fbc2b47eacaf3bb183d7f40d1ec0065809cc34d14"
       },
       {
         "path": "scripts/check-scheduler.test.mjs",
-        "sha256": "b526a7a6c0b4e35908d76452d3445cf983c59e029693aae14a07b3a9d06923c4"
+        "sha256": "ffdeb4d85b244a262e0dea7a085f58028f7b11051474c113e1595fd6ef110b2a"
       },
       {
         "path": "scripts/check-stages.sh",
-        "sha256": "a5e7137e2c9f7b46306de06a4259b196d7cd30df911f261ab57e3f71d23745b1"
+        "sha256": "4b12a4cb288c72141cc50890a5c191ae18ab0b98edd03c0cb8a5cb886fccfd4d"
       },
       {
         "path": "scripts/check-supply-chain.rb",
@@ -14341,7 +14381,7 @@
       },
       {
         "path": "scripts/check.sh",
-        "sha256": "46cb1662eee860daa5fb1a0661a0a44a65b121963abd2d230bcd55a95c83f8aa"
+        "sha256": "8309422f2c8609ec968dceb068e1a02a5035dbd1f4e70157f135c34cabfa05ae"
       },
       {
         "path": "scripts/compatibility-package.test.mjs",
@@ -14909,11 +14949,11 @@
       },
       {
         "path": "scripts/release-security.mjs",
-        "sha256": "1aa9b7045b1eb420bce8eb7b7f4148e5c004e733175f0af26ab0b3679497d478"
+        "sha256": "7f9057b91051e52a12b1c517da2df4f11f22cea5e9c80f937eab5473fc80cf80"
       },
       {
         "path": "scripts/release-security.test.mjs",
-        "sha256": "83c584543935d642c291886c63f5d4036fba3a7bb443b8fe4a53a31670c16c87"
+        "sha256": "b159724bdb6bf0f99128b6582d5c02e4dfbf4faa87ffced8ea46a093fa595875"
       },
       {
         "path": "scripts/release-set.mjs",

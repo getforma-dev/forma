@@ -24,18 +24,22 @@ dispositions without rewriting their original evidence:
 
 | Area | Later observation | Still required |
 |---|---|---|
-| R17 / N7 | All 20 original commands passed functionally, but rank-19 p95 was 748.73 seconds, failing the unchanged strict 600-second bound. A separate scheduler development pilot passed once in 493.39 seconds. | Independently reviewed integration, exact-source functional CI and a fresh complete 20-command campaign. The pilot supplies zero N7 credit. |
-| Router cleanup / RT-A01 / RT-A04 | Source commit `cad3d616` guards router-created link URLs through core's existing policy and removes repeated unknown-outcome wording; 252 router tests pass. Independent focused review found no actionable issue. | Fresh packed qualification and publication. The earlier Mac confirmation remains scoped to its original preview; no new speech-output observation is claimed. |
-| Size / RT-M01 | The first RC4 source comparison failed at 12,296 incremental bytes. The single reviewed helper-inline change at `9eb701de` measures 12,276 incremental and 40,704 total group bytes against unchanged limits. | Fresh measurement from actual sealed RC4 archives. The failed source result is preserved; the passing diagnostic is not packed acceptance. |
-| Site / RT-D02 | The registry-pinned RC2 site, native lab, docs and downloads are deployed on OVH as source `b0b832466ad37698b581f448aeec506bbcf65acf`, image `sha256:43801e24efabcb65e322eafa597f80fcc3a1e528fc0e9bccf9e95fd8304d7b5f`. Independent acceptance binds local 86, production 86, portal 66 and all 241 then-current download members. | Actual production rollback, final stable pins and their complete deployment flow. Later theme/search/guide fixes pass separate PR CI at `4ccb83be`, including 244 download members, but that result is not a deployment. |
-| Recovery / RT-X02 | Original local rollback and bounded recovery evidence remain applicable within their recorded scopes. | An actual production rollback and matching restored-artifact verification; archive availability alone is insufficient. |
-| Devices / RT-A03–A05 and stable soak | The user's six-task Mac confirmation remains recorded below. Published RC3 has no credited active soak. | Physical iPhone HTTPS/gesture acceptance and at least 3,600 fault-free credited active hosted seconds on a settled qualified same-line RC. |
+| R17 / N7 | Earlier complete campaigns failed at p95 748.73s and 665.29s. Campaign 40518419051 on source 79153778 finished with 19 successful commands and one watch-recovery failure. All 20 original durations remain retained; raw rank19 is 624.07s and maximum 688.08s. The failed 246.81s command is incomplete workload, not an accepted performance sample. | Correct the watch failure and qualify the reviewed optimizations through exact-source CI and a new complete 20-command campaign. No replacement samples or timing exception. |
+| Router cleanup / RT-A01 / RT-A04 | Source 79153778 passes independently authenticated CI 40514491500, packed P17 run 40514976863 (75/75, 1,345.655s) and packed native 90. The targeted watch-race fix subsequently recovers edits made during both split and non-split refused builds; original causal failures remain retained. | Fresh qualification of the corrected source and publication. The earlier Mac confirmation remains scoped to its original preview; no new speech-output observation is claimed. |
+| Size / RT-M01 | The first RC4 source comparison failed at 12,296 incremental bytes. The actual 79153778 sealed archives subsequently pass 12,276 incremental and 40,704 total group bytes against unchanged 12,288/65,536 limits, with independent consumer review. | Bind final source/archives and review applicability; earlier execution is not relabeled as a successor execution. |
+| Site / RT-D02 | The registry-pinned RC2 site, native lab, docs and downloads are deployed on OVH as source 8f272729078ef8d61552da7b3a4aadcef22bea9c, image sha256:8d7adaa4387678465725bc90cd58919750478d107b155aaf7fa25b12d2a086e7. Independent acceptance binds local 92, production 92, portal 66 and 244 live download members, including the theme/search/guide fixes. | Actual production rollback, final stable pins and their complete deployment flow. |
+| Recovery / RT-X02 | Original local rollback and bounded recovery evidence remain applicable within their recorded scopes. The independently reviewed production plan requires actual current/previous identities and an incompatible native-group document. | Execute the production rollback/rollforward with exact restored-artifact verification; archive availability alone is insufficient. |
+| Devices / RT-A03–A05 and stable soak | The user confirmed the six Mac tasks and gave positive overall feedback for the live RC2 iPhone checklist, reporting iPhone 17 Pro Max/iOS 26.7.1. Bounded manual applicability is independently reviewed. Published RC3 has no credited active soak. | Bind final source applicability and at least 3,600 fault-free credited active hosted seconds on a settled qualified same-line RC. No fresh device session is inferred. |
 
-The live-site receipt is retained in the external FORMA-301 qualification
+The final 8f live-site review is retained in the external FORMA-301 qualification
 workspace with SHA256
-`967f52d6cc42c450c6facce61bf074011a393d8479371794ed4c79820499b9e1`.
-The later PR CI receipt is
-`e7c3281d071229b4482be658a7c8af0d33af29218b9365744ec337b9c12bcce8`.
+`43788a8c60585ad682c78ae5b676c33ca47de042a98e62b0d7418d0e9729eba8`.
+The current 7915 source CI, packed P17 and native/size review receipts have SHA256
+`92b1642ff679e64277718d4b09c40ef8681729347001e5c6b2a9d19eb59985d1`,
+`d7d892fa26e15606c9680f35cb9dd9d43f257dab5bdc303c11ad3e2893d335a1`
+and `8b3d0daf8bf17bdc1f2c7788540a60907678dca6fa8dbe04f60bac367727ffcf`.
+The failed N7 campaign review is
+`0b38d1b971eae04033a236360b247541055a020174c315a960693a1894193aeb`.
 These identities locate scoped evidence; this document does not present local
 receipts as publicly hosted artifacts or claim the whole ledger is closed.
 

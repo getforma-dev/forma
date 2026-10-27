@@ -39,7 +39,11 @@ test('all original core files are unchanged and dispatched once, with timing/hea
     assert.deepEqual(commands.flatMap(command => command.files).sort(), inventory.groups[kind].map(row => row.file).sort());
     assert.equal(new Set(commands.flatMap(command => command.files)).size, inventory.groups[kind].length);
     assert.deepEqual(commands.slice(1).map(command => command.files.length), inventory.groups[kind].filter(row => row.phase === 'exclusive').map(() => 1));
-    if (kind === 'unit') for (const command of commands) assert.deepEqual(command.args.slice(4), command.files);
+    if (kind === 'unit') {
+      assert.deepEqual(commands[0].args.slice(4), [...commands[0].files, '--pool=threads', '--isolate=true']);
+      for (const command of commands.slice(1)) assert.deepEqual(command.args.slice(4), command.files);
+      assert(commands.every(command => !command.args.some(arg => /maxWorkers|minWorkers|fileParallelism/.test(arg))), 'preserve the original worker-count resolver');
+    }
     if (kind === 'browser') for (const command of commands) for (const [index, file] of command.files.entries()) {
       const filter = new RegExp(command.args[6 + index]);
       const full = resolve(ROOT, 'packages/core', file);

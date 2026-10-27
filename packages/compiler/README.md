@@ -283,6 +283,15 @@ other validation hooks; commit them together with that cycle's graph and
 manifest. Refused watch cycles retain the previously accepted records and files.
 The compiler exposes no mutable `onStart` metadata callback.
 
+If source files or their resolutions change during compilation, the compiler
+refuses that generation and calls the optional `onSourcesChanged(page)` callback,
+including when another compilation error already exists. A custom watch owner
+can use this notification to schedule a fresh build after the current cycle
+finishes. Do not await `rebuild()` inside `onEnd`; it can join the cycle whose
+callback is still running. `@getforma/build` handles this recovery for both split
+and non-split builds, coalesces requests, and stops after an unchanged invalid
+generation. Cancellation and disposal clear pending recovery work.
+
 
 ### Islands-only browser entries (FORMA-105)
 

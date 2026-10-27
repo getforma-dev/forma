@@ -341,10 +341,22 @@ percentages above are not current coverage or mutation results.
 
 `npm run check` uses one [stage catalogue](../scripts/check-stages.sh). On Linux,
 an explicitly reviewed [resource inventory](../scripts/check-scheduler-inputs.json)
-admits two lanes: Node/unit work and one browser lane with at most two workers.
-Actual Cargo and each timing/heap-sensitive core file remain exclusive. Both
-lanes, their logs and owned descendant cleanup must join before later work starts.
-The full source and shared products are sealed across that interval.
+first admits independent npm installation/auditing/builds and one Cargo lane
+with three build jobs. The Cargo lane runs formatting, clippy, the old-renderer
+compatibility control and documentation generation. Both producers, logs and
+owned descendants must join before the workspace/server runtime test suites.
+A fresh one-use receipt binds that invocation's source and complete output bytes
+before its parent shell can reuse the five successful npm builds. It cannot
+authorize a later invocation or provide an exported build-skip flag.
+
+The later two lanes contain Node/unit work and browser work with at most two
+workers. Core correctness files use isolated threads with the original worker
+count; timing/heap files keep their original pool and run individually after
+the join. The hostile matrix has at most two active profiles, each with its own
+context, origins and request journal; cases within each profile remain sequential.
+No Cargo work overlaps these two lanes. Their complete logs and owned cleanup
+must join before later work starts. Source inputs are sealed across both phases;
+shared built products are also sealed across the later test phase.
 
 Closed package/repository config discovery includes new local config helpers;
 external ancestor tsup/TypeScript configuration refuses overlap. Caller-selected
@@ -372,8 +384,9 @@ input, failed command, lost log or incomplete cleanup after work starts fails
 that invocation instead of retrying it serially.
 
 Every run prints its fresh external `forma-r17-*` evidence directory. CI retains
-admission/plan identities, both complete worker logs, hidden browser result files,
-cleanup and native-success evidence alongside the existing reports. A successful
+admission/plan identities, both phases' complete worker logs and cleanup, the
+consumed build receipt, hidden browser result files and native-success evidence
+alongside the existing reports. A successful
 local or single hosted run does not establish N7: its fresh 20-command campaign
 must time this normal entrypoint and retain the admitted mode and every original
 outcome, without mixing serial fallbacks or replacing failed observations.

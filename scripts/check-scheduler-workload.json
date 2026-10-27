@@ -165,18 +165,8 @@
     "s31"
   ],
   "beforeFork": [
-    "s00",
-    "s01",
-    "s02",
-    "s03",
-    "s04",
-    "s05",
-    "s06",
     "s07",
     "s08",
-    "s09",
-    "s10",
-    "s11",
     "scheduler-controls",
     "s20",
     "s22",
@@ -241,5 +231,29 @@
       "cargoPools": 0
     }
   },
-  "policy": "Every current complete core file occurs exactly once. Every exclusive file is its own sequential invocation after both lanes and cleanup join. Original workload bodies live only in check-stages.sh."
+  "policy": "Every current complete core file occurs exactly once. Every exclusive file is its own sequential invocation after both lanes and cleanup join. Original workload bodies live only in check-stages.sh.",
+  "compileCargo": [
+    "s05",
+    "s06",
+    "s09",
+    "s10"
+  ],
+  "compileNpm": [
+    "s00",
+    "s01",
+    "s02",
+    "s03",
+    "s04",
+    "s11"
+  ],
+  "compileResources": {
+    "cargo": {
+      "browserWorkers": 0,
+      "cargoPools": 1
+    },
+    "npm": {
+      "browserWorkers": 0,
+      "cargoPools": 0
+    }
+  }
 }

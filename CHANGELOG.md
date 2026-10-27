@@ -19,6 +19,10 @@ preparation entries below. New changes in this section are not in that release.
 - Prepare the eight coordinated versions and source template seeds for the
   reviewed Link URL-policy and uncertain-outcome wording fixes, unused type-field
   removal, and islands/navigation documentation clarification.
+- Recover source edits made during a native watch compilation, including a
+  refused compilation. Queue a fresh coherent generation without requiring
+  another edit, while retaining the last valid output and avoiding retries of
+  unchanged invalid source.
 - Integrate a maintained R17 schedule with shared stage implementations, explicit
   resource admission, a complete serial fallback before work begins, and owned
   parallel cleanup. No test, resource threshold or sampling requirement is removed.

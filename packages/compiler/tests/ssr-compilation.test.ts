@@ -13,7 +13,7 @@ const core:Plugin={name:'coordinator-core',setup(b){
  b.onResolve({filter:/^@getforma\/core$/},()=>({path:'core',namespace:'fixture'}));
  b.onLoad({filter:/.*/,namespace:'fixture'},()=>({loader:'js',contents:'export function h(...args){return args};export function mount(){throw Error("unexpected native mount")};export function activateIslands(registry){globalThis.events.push(Object.keys(registry))};export function __islandRegistration(component,metadata){component.metadata=metadata;return component};'}));
 }};
-function fixture(){
+function fixture(onSourcesChanged?: (page:string)=>void){
  const root=mkdtempSync(join(tmpdir(),'forma-compilation-context-'));roots.push(root);
  const outdir=join(root,'dist');
  writeFileSync(join(root,'shared.ts'),'import {h} from "@getforma/core";globalThis.events??=[];globalThis.events.push("shared once");export function A(){return h("b",null,"A")};export function B(){return h("i",null,"B")}');
@@ -21,7 +21,7 @@ function fixture(){
   writeFileSync(join(root,`${entry}-page.ts`),`import {h} from "@getforma/core";import {${island}} from "./shared";export function Page(){return h("main",null,${island}())}`);
   writeFileSync(join(root,`${entry}.ts`),`import {mount,activateIslands} from "@getforma/core";import {Page} from "./${entry}-page";import {${island}} from "./shared";activateIslands({${island}});mount(Page,"#app");`);
  }
- const plugins=['a','b'].map(page=>formaSsrPlugin({page,outDir:outdir,entryPoint:join(root,`${page}.ts`)}));
+ const plugins=['a','b'].map(page=>formaSsrPlugin({page,outDir:outdir,entryPoint:join(root,`${page}.ts`),onSourcesChanged}));
  const options:BuildOptions={entryPoints:[join(root,'a.ts'),join(root,'b.ts')],outdir,bundle:true,splitting:true,format:'esm',write:false,logLevel:'silent',plugins:[core,...plugins]};
  return {root,outdir,plugins,options};
 }
@@ -82,10 +82,11 @@ describe('build-scoped original compilation coordinator',()=>{
   } finally {release.resolve();await first.catch(()=>{});}
  });
  it('refuses unequal original source snapshots between entries instead of picking the first load',async()=>{
-  const f=fixture(),path=join(f.root,'shared.ts'),original=readFileSync(path,'utf8');let mutate=true;
+  const changed:string[]=[],f=fixture(page=>changed.push(page)),path=join(f.root,'shared.ts'),original=readFileSync(path,'utf8');let mutate=true;
   const edit:Plugin={name:'between-entry-analyses',setup(b){b.onStart(()=>{if(mutate)writeFileSync(path,original.replace('"B"','"changed B"'));});}};
   f.options.plugins=[core,f.plugins[0]!,edit,f.plugins[1]!];
   await expect(build(f.options)).rejects.toThrow(/BUILD-610.*different original source bytes/);
+  expect(changed).toEqual(['a','b']);
   mutate=false;writeFileSync(path,original);expect(getSsrEntryProducts(await build(f.options))).toHaveLength(2);
  });
  it('retains the second contributor snapshot guard across refused and recovered cycles',async()=>{

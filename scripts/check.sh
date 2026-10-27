@@ -51,6 +51,16 @@ if [ "$check_mode" = serial ]; then
     forma_check_stage "$stage_id"
   done
 else
+  step "compile Rust and npm in owned lanes, then verify their complete join"
+  node scripts/check-compile-phase.mjs "$scheduler_evidence/compile" "$started" &
+  scheduler_pid=$!
+  trap 'kill -TERM "$scheduler_pid" 2>/dev/null || true; wait "$scheduler_pid" || true; exit 130' INT
+  trap 'kill -TERM "$scheduler_pid" 2>/dev/null || true; wait "$scheduler_pid" || true; exit 143' TERM
+  if wait "$scheduler_pid"; then scheduler_status=0; else scheduler_status=$?; fi
+  trap - INT TERM
+  test "$scheduler_status" -eq 0
+  source scripts/check-builds.sh
+  forma_check_import_compile "$scheduler_evidence/compile"
   plan="$(node scripts/check-scheduler-admission.mjs --plan beforeFork)"
   for stage_id in $plan; do
     forma_check_stage "$stage_id"

@@ -32,12 +32,17 @@ export function validatePlan(root = ROOT, plan = json(root, planFile)) {
   const catalogue = readFileSync(resolve(root, 'scripts/check-stages.sh'), 'utf8');
   const defined = [...catalogue.matchAll(/^    ([a-z0-9-]+)\)$/gm)].map(row => row[1]);
   assert.equal(new Set(defined).size, defined.length);
-  const concurrent = [...plan.beforeFork, ...plan.a, ...plan.b, ...plan.afterJoin];
+  const concurrent = [...plan.compileCargo, ...plan.compileNpm,
+    ...plan.beforeFork, ...plan.a, ...plan.b, ...plan.afterJoin];
   assert.equal(new Set(concurrent).size, concurrent.length, 'a stage cannot execute in two phases');
   const expanded = stages.flatMap(id => plan.replacements[id] ?? [id]);
   assert.deepEqual([...concurrent].sort(), [...expanded, ...plan.additional].sort(), 'all work must occur exactly once');
   for (const id of [...stages, ...concurrent]) assert(defined.includes(id), `undefined stage ${id}`);
   assert.deepEqual(plan.resources, { a: { browserWorkers: 0, cargoPools: 0 }, b: { browserWorkers: 2, cargoPools: 0 } });
+  assert.deepEqual(plan.compileCargo, ['s05', 's06', 's09', 's10']);
+  assert.deepEqual(plan.compileNpm, ['s00', 's01', 's02', 's03', 's04', 's11']);
+  assert.deepEqual(plan.compileResources, { cargo: { browserWorkers: 0, cargoPools: 1 }, npm: { browserWorkers: 0, cargoPools: 0 } });
+  assert.deepEqual(plan.beforeFork.slice(0, 2), ['s07', 's08'], 'runtime Rust guards must follow the complete compile join');
   for (const id of ['s15-cargo', 's25-worker', 's25-prepare']) assert(plan.beforeFork.includes(id));
   assert.deepEqual(plan.afterJoin.slice(0, 2), ['s12-exclusive', 's25-core-exclusive']);
   assert.deepEqual(plan.afterJoin.slice(-5), ['s26', 's28', 's29', 's30', 's31']);
@@ -202,7 +207,7 @@ export function evidenceDirectory(root = ROOT, parent = process.env.RUNNER_TEMP 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [command, argument] = process.argv.slice(2);
   if (command === '--plan') {
-    assert(['serial', 'beforeFork', 'a', 'b', 'afterJoin'].includes(argument));
+    assert(['serial', 'compileCargo', 'compileNpm', 'beforeFork', 'a', 'b', 'afterJoin'].includes(argument));
     console.log(validatePlan()[argument].join(' '));
   } else if (command === '--admit') {
     const decision = decideSchedule(), directory = evidenceDirectory();

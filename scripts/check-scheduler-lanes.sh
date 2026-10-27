@@ -4,7 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 [ "$#" -eq 3 ] || exit 2
 lane="$1"; started="$2"; scheduler_evidence="$3"
-case "$lane" in a|b) ;; *) exit 2;; esac
+case "$lane" in a|b|compileCargo|compileNpm) ;; *) exit 2;; esac
+if [ "$lane" = compileCargo ]; then
+  test "${CARGO_BUILD_JOBS:-}" = 3
+  echo "R17 compile Cargo jobs: $CARGO_BUILD_JOBS"
+fi
 check_mode=linux-overlap
 step() { echo; echo "### $* ($(( $(date +%s) - started ))s)"; }
 source scripts/check-stages.sh

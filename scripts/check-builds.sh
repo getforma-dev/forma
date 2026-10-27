@@ -28,6 +28,18 @@ forma_check_build_package() {
   fi
 }
 
+# A child compile phase cannot export this shell's success array. Import only
+# its fresh, consumed-once receipt after independent source/product/owner checks.
+# The verifier emits no shell code or caller-selected package paths.
+forma_check_import_compile() {
+  local package_dir
+  [ -z "${_forma_check_built_packages[*]-}" ] || return 1
+  node "$_forma_check_root/scripts/check-compile-phase.mjs" --verify-import "$1" || return
+  for package_dir in packages/compiler packages/build packages/core packages/router packages/create-app; do
+    _forma_check_built_packages+=("$(cd "$_forma_check_root/$package_dir" && pwd -P)")
+  done
+}
+
 # Shared core browser preparation, private to the same successful-build state.
 # It neither exports an authorization flag nor reuses a previous invocation.
 forma_check_prepare_core_browser() {

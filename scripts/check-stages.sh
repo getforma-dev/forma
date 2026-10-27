@@ -223,7 +223,7 @@ forma_check_stage() {
     scheduler-controls)
       step "scheduler: complete current partition and fake-child controls"
       node scripts/check-core-partition.mjs --verify
-      node --test scripts/check-scheduler.test.mjs
+      node --test scripts/check-scheduler.test.mjs scripts/check-compile-phase.test.mjs
       FORMA_SCHEDULER_CONTROL_EVIDENCE="$scheduler_evidence/owner-controls" node --test scripts/check-scheduler-owned.test.mjs
       ;;
     *) echo "Unknown R17 stage: $stage_id" >&2; return 2;;

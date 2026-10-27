@@ -39,11 +39,25 @@ export function assertSeal(root, paths, before) {
   assert.deepEqual(seal(root, paths), before, 'shared source/product changed across concurrent lanes');
 }
 
-export async function runPair({ specs, start, verifyInputs, save, signal }) {
+export async function runPair(options) {
+  const { specs } = options;
   assert.equal(specs.length, 2);
   assert.equal(new Set(specs.map(spec => spec.id)).size, 2);
   assert(specs.every(spec => spec.cargoPools === 0), 'Cargo work must remain exclusive');
   assert(specs.reduce((n, spec) => n + spec.browserWorkers, 0) <= 2, 'global browser admission exceeds two');
+  return runOwnedPair(options);
+}
+
+// Separate compile-only admission; the later A/B resource rule stays unchanged.
+export async function runCompilePair(options) {
+  assert.deepEqual(options.specs, [
+    { id: 'cargo', browserWorkers: 0, cargoPools: 1 },
+    { id: 'npm', browserWorkers: 0, cargoPools: 0 },
+  ], 'compile phase permits only one Cargo pool and no browser work');
+  return runOwnedPair(options);
+}
+
+async function runOwnedPair({ specs, start, verifyInputs, save, signal }) {
   const record = { complete: false, interrupted: false, lanes: specs.map(spec => ({ ...spec, status: 'not-started' })), faults: [] };
   const live = new Map();
   let refused = false;
@@ -94,10 +108,10 @@ export async function runPair({ specs, start, verifyInputs, save, signal }) {
   return record;
 }
 
-export function ownedCommand(command, directory, seconds, cwd = ROOT) {
+export function ownedCommand(command, directory, seconds, cwd = ROOT, env = process.env) {
   const descriptor = openSync(`${directory}-owner.log`, 'wx');
   let handle;
-  try { handle = spawnProofProcess('python3', [resolve(ROOT, 'scripts/release-owned-linux.py'), directory, String(seconds), '--', ...command], { cwd, env: process.env }); }
+  try { handle = spawnProofProcess('python3', [resolve(ROOT, 'scripts/release-owned-linux.py'), directory, String(seconds), '--', ...command], { cwd, env }); }
   catch (error) { closeSync(descriptor); throw error; }
   let logError;
   const cancel = () => { if (!handle.ended && handle.child.pid) handle.child.kill('SIGTERM'); };

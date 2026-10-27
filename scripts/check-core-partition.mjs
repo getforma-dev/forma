@@ -52,7 +52,10 @@ export function partitionCommand(kind, phase, root = ROOT, inventory = validateP
     // Vitest's file filters are path substrings. Prove that these literal full
     // relative filenames select exactly this partition, not similar filenames.
     assert.deepEqual(inventory.groups.unit.filter(row => files.some(file => row.file.includes(file))).map(row => row.file).sort(), [...files].sort());
-    return { command: 'npm', args: ['test', '-w', 'packages/core', '--', ...files], cwd: root, files };
+    // Correctness files retain a fresh isolated worker per file. Leave the
+    // original worker-count resolver and exclusive timing/heap pool unchanged.
+    const pool = phase === 'overlap' ? ['--pool=threads', '--isolate=true'] : [];
+    return { command: 'npm', args: ['test', '-w', 'packages/core', '--', ...files, ...pool], cwd: root, files };
   }
   assert(output && output !== resolve(root, 'packages/core/test-results'), 'use a distinct retained output for each core partition');
   const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
