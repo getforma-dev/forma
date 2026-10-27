@@ -2,10 +2,24 @@
 
 ## [Unreleased]
 
-- Add the opt-in `native-router` starter with a checked native group, typed Rust owner branches, persistent layout state, history navigation and ordinary no-JavaScript links. The new template is sealed and qualified with the next coordinated router release; its source lock is not a published install receipt.
+Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
+3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+is published. The development notes below retain their earlier scope; the RC3
+entry records the new coordinated preparation separately.
+
+- Add the opt-in `native-router` starter with a checked native group, typed Rust owner branches, persistent layout state, history navigation and ordinary no-JavaScript links. The template is included in published RC2; current RC3 source locks are seeds, not a published install receipt.
 - Move dashboard navigation to the browser router adapter, retaining the layout and disposing replaced route content. The minimal starter keeps its existing rendering model.
 - Verify registry signatures and current npm/Rust advisories in all three generated CI workflows before builds, including development dependencies and refusal on an unavailable advisory feed.
 
+## [3.2.0-rc.3] - Prepared; publication pending
+
+- Coordinate this package with the eight-package RC3 set. Keep the native-router
+  and dashboard routing opt-ins and minimal template graph; coordinate source
+  template seeds with RC3.
+- The finite router placeholder receipt and duplicate-work reduction require new
+  exact-source qualification. Published RC2 and all historical entries remain
+  unchanged. See [RC3 preparation](../../docs/release/3.2-RC3-PREPARATION.md) for
+  evidence and remaining acceptance.
 
 ## [3.0.0] - Prepared; publication pending
 

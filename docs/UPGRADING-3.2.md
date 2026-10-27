@@ -2,9 +2,11 @@
 
 3.2 introduces optional `@getforma/router`, the `@getforma/core/navigation`
 ownership entry, native navigation groups and typed Rust owner/action responses.
-This guide accompanies candidate source; consult the
-[release record](https://github.com/getforma-dev/forma/releases) for available
-versions. Existing published 3.0/3.1 records are unchanged.
+The coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is published.
+This checkout prepares 3.2.0-rc.3, which is not yet published; use RC2 for the
+registry walkthroughs or the sealed packed workflow for RC3 development.
+[RC3 preparation](release/3.2-RC3-PREPARATION.md) records the remaining checks.
+Stable 3.1.0 and existing 3.0/3.1 records are unchanged.
 
 ## Upgrade the coordinated set
 

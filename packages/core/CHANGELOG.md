@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-Changes after published 3.1.0 are recorded here. Earlier preparation entries
+Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
+3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+is published. The development notes below retain their earlier scope; the RC3
+entry records the new coordinated preparation separately.
+
+Development notes since stable 3.1.0 are retained here. Earlier preparation entries
 retain their original evidence; [the coordinated release](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)
 establishes publication on 2026-10-26.
 
@@ -15,6 +20,15 @@ establishes publication on 2026-10-26.
   omit descriptive comments while retaining licenses, purity annotations and
   source-map positions. Main measures 49,165 B gzip against its unchanged
   49,926 B cap; browser and all runtime caps remain unchanged.
+
+## [3.2.0-rc.3] - Prepared; publication pending
+
+- Coordinate this package with the eight-package RC3 set. No package runtime
+  behavior changes are introduced by these release-record and harness repairs.
+- The finite router placeholder receipt and duplicate-work reduction require new
+  exact-source qualification. Published RC2 and all historical entries remain
+  unchanged. See [RC3 preparation](../../docs/release/3.2-RC3-PREPARATION.md) for
+  evidence and remaining acceptance.
 
 ## [3.1.0] - Prepared; publication pending
 

@@ -3,16 +3,31 @@
 Optional client navigation for Forma: ranked routes, persistent layouts, owned
 cleanup, browser history and progressively enhanced typed Rust actions.
 
-This is **Forma 3.2 candidate source**. Forma 3.1.0 is already published and does
-not contain this API. Use one coordinated published candidate or the sealed packed
-candidate for qualification; the release record determines registry availability.
-Do not install published 3.1.0 core expecting its new `/navigation` entry.
+The router is published in **[Forma 3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**.
+This checkout prepares **3.2.0-rc.3**, which is not yet published. Stable 3.1.0
+does not contain this API or core's `/navigation` entry. Use one coordinated
+published candidate or the sealed packed candidate for qualification; do not
+mix a 3.2 router with 3.1 core. The [RC3 preparation record](../../docs/release/3.2-RC3-PREPARATION.md)
+keeps source validation, publication and stable acceptance separate.
 Start with the [routing guide](../../docs/ROUTING.md) for rendering choices and a
 connected application, or the [3.2 upgrade guide](../../docs/UPGRADING-3.2.md).
 
 The router is a separate package with one peer instance of `@getforma/core`.
 Installing core does not enable routing. Ordinary SSR, native anchors/forms and
 static routes continue to work without a router bootstrap.
+
+## Install the published candidate
+
+For an existing browser application with the matching 3.2 toolchain:
+
+```sh
+npm install --save-exact @getforma/core@3.2.0-rc.2 @getforma/router@3.2.0-rc.2
+```
+
+Native applications also coordinate compiler, build and Rust crate versions;
+follow the [upgrade guide](../../docs/UPGRADING-3.2.md). For a complete connected
+example, use the published [native-router starter](../../docs/ROUTING.md#start-with-a-connected-application).
+Core-only applications can keep their existing graph without installing router.
 
 ## Browser routes
 

@@ -14,11 +14,12 @@ The published release has seven coordinated packages. Start with the
 [documentation](docs/README.md), [3.1 upgrade guide](docs/UPGRADING-3.1.md), or
 [release records](docs/release/README.md).
 
-This feature branch also contains the **unreleased optional router**, planned for
-the coordinated 3.2 candidate. Read the [routing guide](docs/ROUTING.md),
-[3.2 upgrade guide](docs/UPGRADING-3.2.md), [API](packages/router/README.md) and
-[qualification ledger](docs/design/router/qualification.md) distinguish candidate
-behavior from the published release.
+The optional router is available in the published **[3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**,
+as part of eight coordinated packages. This checkout prepares **3.2.0-rc.3**,
+which is not yet published. Read the [routing guide](docs/ROUTING.md),
+[3.2 upgrade guide](docs/UPGRADING-3.2.md) and [router API](packages/router/README.md)
+to try the published candidate. The [RC3 preparation record](docs/release/3.2-RC3-PREPARATION.md)
+distinguishes published evidence from remaining release and website acceptance.
 
 ## Start an application
 
@@ -62,8 +63,8 @@ remain application responsibilities. See [architecture](docs/ARCHITECTURE-3.0.md
 | [`@getforma/core`](packages/core) | Signals, DOM components, island adoption and the explicit HTML runtime |
 | [`@getforma/compiler`](packages/compiler) | TypeScript/TSX subset, declared schemas and FMIR emission |
 | [`@getforma/build`](packages/build) | Bundling, assets, manifests, integrity and deployment retention |
-| [`@getforma/router`](packages/router) | Unreleased opt-in browser navigation, persistent layouts and typed native transitions |
-| [`@getforma/create-app`](packages/create-app) | Minimal/dashboard starters; unreleased native-router candidate starter |
+| [`@getforma/router`](packages/router) | Optional browser navigation, persistent layouts and typed native transitions in the 3.2 prerelease |
+| [`@getforma/create-app`](packages/create-app) | Minimal/dashboard starters; native-router starter in the 3.2 prerelease |
 | [`forma-ir`](crates/forma-ir) | FMIR validation, typed props and native HTML walking |
 | [`forma-ir-derive`](crates/forma-ir-derive) | Rust `PageProps` derive |
 | [`forma-server`](crates/forma-server) | Typed pages, complete responses, assets and Axum integration |

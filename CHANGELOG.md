@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [3.2.0-rc.3] - Prepared; publication pending
+
+- Prepare all eight coordinated versions and starter locks/seeds. Stable 3.1.0
+  remains available; [3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+  is published with authenticated registry archives, DS12, D14 and second-attempt
+  75/75 P17. Preserve its first failed P17 attempt and missed outer release clock.
+- Add a finite inventory-only record for npm's exact router `0.0.0-stage`
+  placeholder, attached only through RC3's actual future DS12. Authenticate
+  preparation/recording provenance and registry bytes; keep historical baselines,
+  ordinary product inventory, support/performance/soak readers and refusal rules.
+- Remove duplicate positive TypeScript compilations and the duplicate native
+  fixture build without removing checks or changing thresholds. Fresh source
+  review/qualification remains required; no measured timing saving is claimed.
+- Update router installation, scaffold and release documentation. Full SR2 still
+  fails for the router placeholder and inherited FORMA-224 bootstrap record;
+  current N7, site/device, stable acceptance and hosted soak remain outstanding.
+  See [RC3 preparation](docs/release/3.2-RC3-PREPARATION.md). Historical entries
+  below retain their original preparation wording and measured evidence.
+
 ## [3.2.0-rc.2] - Prepared; publication pending
 
 This successor requires coordinated version preparation, fresh independent review,

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
+3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
+is published. The development notes below retain their earlier scope; the RC3
+entry records the new coordinated preparation separately.
+
 - FORMA-257: plain HTML for no-JavaScript routes without islands. The additive
   counted `RenderMode::Static` walk omits adoption markers, empty-text holders
   and injected row keys while retaining value, key and resource checks. The
@@ -13,6 +18,15 @@
   remain unchanged. A counted Grand Prix walker benchmark records about 19%
   lower render time and 42% fewer allocations at 100 and 1,000 rows on an M1 Pro
   (FORMA-258); these are walker measurements, not HTTP throughput claims.
+
+## [3.2.0-rc.3] - Prepared; publication pending
+
+- Coordinate this package with the eight-package RC3 set. No package runtime
+  behavior changes are introduced by these release-record and harness repairs.
+- The finite router placeholder receipt and duplicate-work reduction require new
+  exact-source qualification. Published RC2 and all historical entries remain
+  unchanged. See [RC3 preparation](../../docs/release/3.2-RC3-PREPARATION.md) for
+  evidence and remaining acceptance.
 
 ## [3.0.0] - Prepared; publication pending
 
