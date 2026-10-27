@@ -4,10 +4,9 @@ Forma 3.x uses FMIR v3 and manifest schema 2. Forma 3.2.0 coordinates eight
 packages: `forma-ir`, `forma-ir-derive`, `forma-server`, `@getforma/core`,
 `@getforma/compiler`, `@getforma/build`, optional `@getforma/router`, and
 `@getforma/create-app`. Router requires core's `/navigation` entry and matching
-compiler/build/server contracts. Published 3.0/3.1 archives contain seven
-packages and do not provide that entry. Keep each application's versions and
-locks aligned and rebuild all deployment artifacts when upgrading.
-See the [3.2 upgrade guide](UPGRADING-3.2.md) and the
+compiler/build/server contracts. Use the coordinated 3.2.0 package set, retain
+your npm and Cargo locks, and build the server, manifest and browser assets
+together. See the [routing guide](ROUTING.md) and the
 [reader controls](design/router/qualification.md#writerreader-result-and-release-consequence).
 
 ## Window and upgrade order

@@ -1,6 +1,6 @@
-# Forma 3.0 architecture
+# Forma stack architecture
 
-Forma is one repository and seven coordinated packages. TypeScript components compile to FMIR v3; Rust renders the binary module with typed request data; the browser adopts declared islands using signals. Static page markup stays outside island activation. This describes the implemented 3.0 contracts; release acceptance is recorded separately by the [release gates](release/3.0-GATE-DISPOSITIONS.md) and the published release record.
+Forma 3.2.0 is one repository and eight coordinated packages. TypeScript components compile to FMIR v3; Rust renders the binary module with typed request data; the browser adopts declared islands using signals. Static page markup stays outside island activation. The optional router preserves compatible layouts during client navigation. The [publication record](release/3.2-PUBLICATION.md) describes the release checks and their scope.
 
 ## Packages and boundaries
 
@@ -9,7 +9,8 @@ Forma is one repository and seven coordinated packages. TypeScript components co
 | `@getforma/compiler` | The admitted native source subset, declared props/schema, island identity and FMIR emission |
 | `@getforma/build` | Entry bundling, route manifest, asset identities/integrity, compression, size reporting and deployment retention |
 | `@getforma/core` | Signals, DOM construction, checked island adoption, updates and the explicit HTML runtime |
-| `@getforma/create-app` | The minimal and dashboard templates and their coordinated dependency seeds |
+| `@getforma/router` | Navigation transactions, browser history, persistent owners and native/browser/generated-HTML adapters |
+| `@getforma/create-app` | The minimal, dashboard and native-router templates and their coordinated dependency seeds |
 | `forma-ir` | Binary parsing/validation, props conversion and native HTML walking |
 | `forma-ir-derive` | The Rust `PageProps` derive |
 | `forma-server` | Startup binding, typed render handles, complete responses, assets and explicit Browser mode |
@@ -24,7 +25,9 @@ The build emits the FMIR module, JavaScript entries, CSS/assets and a manifest w
 
 Native HTML includes the marker/key vocabulary and one bounded inert head-state block. Compiler-bound registrations associate an island's identity with its schema and component. Activation validates original document claims and state before invoking components. Each SSR island adopts existing nodes without an initial repair write; a mismatch refuses that island while healthy siblings remain eligible. Signals and keyed/indexed updates retain ownership after activation. See [islands](../packages/core/docs/ISLANDS.md) and [indexed replacement](../packages/core/docs/API.md#indexed-item-replacement).
 
-A static SSR route has no executable JavaScript entry. An explicit Browser route has a separate construction path. The HTML runtime is another deliberate entry: callers mount through an owner with an explicit security tier and grants. Importing it does not automatically scan or start the document. See the [upgrade guide](UPGRADING-3.0.md) for each public transition.
+A static SSR route has no executable JavaScript entry. An explicit Browser route has a separate construction path. The HTML runtime is another deliberate entry: callers mount through an owner with an explicit security tier and grants. Importing it does not automatically scan or start the document. See the [rendering guide](../packages/create-app/docs/RENDERING-PHASES.md) when choosing a path.
+
+Native navigation groups keep compatible typed owners and their islands alive while replacing changed branches. Browser routes render owned content in JavaScript; generated-HTML routes adopt registered content regions. One coordinator owns navigation in each document, and crossing incompatible profiles loads a new document. Routing remains optional. See [routing and islands](ROUTING.md#islands-and-navigation-work-together) for lifecycle and build constraints.
 
 ## Security and compatibility
 
@@ -34,17 +37,11 @@ Deployment identity couples served HTML and JavaScript. A mismatch remains inert
 
 ## Qualification and release
 
-R17 checks the integrated source; the blocking parity harness compares native and browser products. P17 runs against all seven packed artifacts with workspace builds unavailable, including both templates, internal fixture applications, security and deployment drills, and recorded performance measurements. Independent review and green applicable CI precede merge commits. Publishing uses the trusted-publishing workflow and immutable version tags.
+R17 checks the integrated source; the blocking parity harness compares native and browser products. P17 runs against all eight packed artifacts with workspace builds unavailable, including the three templates, internal fixture applications, security and deployment drills, and recorded performance measurements. Independent review and green applicable CI precede merge commits. Publishing uses the trusted-publishing workflow and immutable version tags.
 
-The [3.0 as-built summary](release/V3-AS-BUILT.md) records actual final publication,
-P17 results and the completed post-release burn-in. The [gate decisions](release/3.0-GATE-DISPOSITIONS.md)
-retain the original scopes and deferrals. N2 bounds Forma code on the release
-fixtures at 28,100 gzip bytes, not total application size. The startup gate counts
-application tasks separately from retained browser/layout observations; field
-performance still requires measurement. L-60's live identity/protection/alert
-rollout remains deferred. External application migrations are separate work.
+The [3.2 publication outcome](release/3.2-PUBLICATION.md) records actual qualification, publication and explicit timing/soak waivers. Historical results retain their measured versions and scopes; application performance and authorization still require application-specific checks. Release history and maintainer procedures are in the [release documentation](release/README.md).
 
 The [historical architecture](ARCHITECTURE.md) preserves earlier rationale and
-APIs. It is not the current API reference. The 3.0 native path emits complete
+APIs. It is not the current API reference. The native path emits complete
 responses, with no integrated streaming-page or server-component cache layer.
 Static asset caching and deployment retention do not imply request-data caching.

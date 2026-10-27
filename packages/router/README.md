@@ -3,10 +3,10 @@
 Optional client navigation for Forma: ranked routes, persistent layouts, owned
 cleanup, browser history and progressively enhanced typed Rust actions.
 
-The router is part of **Forma 3.2.0**. Use one coordinated package set; do not
-mix a 3.2 router with 3.1 core, which lacks the `/navigation` entry.
+The router is part of **Forma 3.2.0**. Use matching 3.2.0 versions for core,
+router and the compiler/build/server packages used by your application.
 Start with the [routing guide](../../docs/ROUTING.md) for rendering choices and a
-connected application, or the [3.2 upgrade guide](../../docs/UPGRADING-3.2.md).
+connected application.
 
 The router is a separate package with one peer instance of `@getforma/core`.
 Installing core does not enable routing. Ordinary SSR, native anchors/forms and
@@ -23,15 +23,15 @@ explains the supported combinations and current native-group build constraints.
 
 ## Install
 
-For an existing browser application with the matching 3.2 toolchain:
+For a browser application:
 
 ```sh
 npm install --save-exact @getforma/core@3.2.0 @getforma/router@3.2.0
 ```
 
-Native applications also coordinate compiler, build and Rust crate versions;
-follow the [upgrade guide](../../docs/UPGRADING-3.2.md). For a complete connected
-example, use the published [native-router starter](../../docs/ROUTING.md#start-with-a-connected-application).
+For a complete native application with matching compiler, build and Rust crate
+versions, use the [native-router starter](../../docs/ROUTING.md#start-with-a-connected-application).
+Build and deploy the server executable, manifest and browser assets together.
 Core-only applications can keep their existing graph without installing router.
 
 ## Browser routes

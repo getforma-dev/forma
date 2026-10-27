@@ -1,5 +1,9 @@
 # Upgrading to Forma 3.0
 
+> Historical maintainer migration notes. New applications start directly with
+> Forma 3.2.0 using the [scaffolder](../packages/create-app/README.md) and
+> [current documentation](README.md). This is not an onboarding sequence.
+
 This guide describes the published coordinated 3.0.0 APIs. See the [as-built summary](release/V3-AS-BUILT.md) for actual publication and qualification. It explains an application upgrade; it does not claim that any external application has already migrated.
 
 ## Move the coordinated set

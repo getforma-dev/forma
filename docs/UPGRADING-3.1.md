@@ -1,5 +1,9 @@
 # Upgrading from Forma 3.0 to 3.1
 
+> Historical maintainer migration notes. New applications start directly with
+> Forma 3.2.0 using the [scaffolder](../packages/create-app/README.md) and
+> [current documentation](README.md). This is not an onboarding sequence.
+
 **[Forma 3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0)**
 (2026-10-26). This guide describes that coordinated release. The documented
 [performance tradeoffs](release/3.1-PERFORMANCE-TRADEOFFS.md) retain the original

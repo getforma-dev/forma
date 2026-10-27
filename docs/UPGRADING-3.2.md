@@ -1,5 +1,9 @@
 # Upgrade to Forma 3.2
 
+> Historical maintainer migration notes. New applications start directly with
+> Forma 3.2.0 using the [scaffolder](../packages/create-app/README.md) and
+> [current documentation](README.md). This is not an onboarding sequence.
+
 3.2 introduces optional `@getforma/router`, the `@getforma/core/navigation`
 ownership entry, native navigation groups and typed Rust owner/action responses.
 Use the coordinated 3.2.0 packages and rebuild your complete deployment.

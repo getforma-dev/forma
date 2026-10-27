@@ -4,7 +4,7 @@ Forma's optional `@getforma/router` keeps compatible layouts alive while the URL
 and page content change. Rust can continue rendering the destination HTML and
 typed props; client navigation does not require moving rendering into JavaScript.
 The router is part of the coordinated **Forma 3.2.0** set. Use matching core,
-compiler, build and server versions; 3.1.0 does not include the navigation API.
+compiler, build and server versions throughout your application.
 
 ## Islands and navigation work together
 
