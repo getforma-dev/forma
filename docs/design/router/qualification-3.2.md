@@ -8,11 +8,36 @@ DS12 and D14 are authenticated; actual attempt 2 passed 75/75 P17 in
 1,236.041 seconds. Attempt 1's failed N1 result remains a failed observation.
 RC2's finite RC1 inventory receipt does not qualify RC1 for performance or soak.
 
-This checkout prepares **unpublished 3.2.0-rc.3**. Its
-[preparation record](../../release/3.2-RC3-PREPARATION.md) records the finite npm
-placeholder receipt, three-file duplicate-work reduction and current limits:
-failed full SR2, unestablished N7 timing conformance, missed RC2 outer clock,
-and outstanding site/device/stable/soak acceptance. RC3 requires its own evidence.
+[3.2.0-rc.3 is published](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)
+from `0cf47cdd6b487543f488f60695f74553282bbe9c`. Its
+[publication outcome](../../release/3.2-RC3-PUBLICATION.md) authenticates all eight
+archives, normal trusted publication and DS12, plus the finite inventory-only
+npm placeholder receipt. Original attempt 1 failed; the separately authorized
+whole P17 repeat passed 75/75 in 1,266.953 seconds. The outer publication clock
+still missed its target. Full SR2 is not closed: FORMA-224's historical derive
+bootstrap record remains separate.
+
+This checkout prepares **unpublished 3.2.0-rc.4** for reviewed router cleanup and
+the maintained R17 schedule. Its [preparation record](../../release/3.2-RC4-PREPARATION.md)
+states the fresh qualification required. Later observations change these specific
+dispositions without rewriting their original evidence:
+
+| Area | Later observation | Still required |
+|---|---|---|
+| R17 / N7 | All 20 original commands passed functionally, but rank-19 p95 was 748.73 seconds, failing the unchanged strict 600-second bound. A separate scheduler development pilot passed once in 493.39 seconds. | Independently reviewed integration, exact-source functional CI and a fresh complete 20-command campaign. The pilot supplies zero N7 credit. |
+| Router cleanup / RT-A01 / RT-A04 | Source commit `cad3d616` guards router-created link URLs through core's existing policy and removes repeated unknown-outcome wording; 252 router tests pass. Independent focused review found no actionable issue. | Fresh packed qualification and publication. The earlier Mac confirmation remains scoped to its original preview; no new speech-output observation is claimed. |
+| Size / RT-M01 | The first RC4 source comparison failed at 12,296 incremental bytes. The single reviewed helper-inline change at `9eb701de` measures 12,276 incremental and 40,704 total group bytes against unchanged limits. | Fresh measurement from actual sealed RC4 archives. The failed source result is preserved; the passing diagnostic is not packed acceptance. |
+| Site / RT-D02 | The registry-pinned RC2 site, native lab, docs and downloads are deployed on OVH as source `b0b832466ad37698b581f448aeec506bbcf65acf`, image `sha256:43801e24efabcb65e322eafa597f80fcc3a1e528fc0e9bccf9e95fd8304d7b5f`. Independent acceptance binds local 86, production 86, portal 66 and all 241 then-current download members. | Actual production rollback, final stable pins and their complete deployment flow. Later theme/search/guide fixes pass separate PR CI at `4ccb83be`, including 244 download members, but that result is not a deployment. |
+| Recovery / RT-X02 | Original local rollback and bounded recovery evidence remain applicable within their recorded scopes. | An actual production rollback and matching restored-artifact verification; archive availability alone is insufficient. |
+| Devices / RT-A03–A05 and stable soak | The user's six-task Mac confirmation remains recorded below. Published RC3 has no credited active soak. | Physical iPhone HTTPS/gesture acceptance and at least 3,600 fault-free credited active hosted seconds on a settled qualified same-line RC. |
+
+The live-site receipt is retained in the external FORMA-301 qualification
+workspace with SHA256
+`967f52d6cc42c450c6facce61bf074011a393d8479371794ed4c79820499b9e1`.
+The later PR CI receipt is
+`e7c3281d071229b4482be658a7c8af0d33af29218b9365744ec337b9c12bcce8`.
+These identities locate scoped evidence; this document does not present local
+receipts as publicly hosted artifacts or claim the whole ledger is closed.
 
 The original checkpoint below, including **all 57 row dispositions**, measured
 source identities and the unchanged [evidence index](evidence/acceptance-3.2.json),
