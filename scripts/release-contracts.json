@@ -125,8 +125,8 @@
           "scope": "formaAlias warns once per build for every bare formajs importer and preserves the 3.x mapping; reviewed implementation 76df14bf in PR78"
         },
         "FORMA-145 documentation": {
-          "status": "pending",
-          "scope": "RC.3 current guides must distinguish authenticated published RC.2 from this prepared successor, preserve the research and historical evidence, and describe the finite router placeholder receipt and bounded harness changes without anticipating publication, site/device, N7 or stable acceptance."
+          "status": "done",
+          "scope": "RC3 current guides distinguish stable 3.1, authenticated published RC2 and unpublished RC3, preserve research and historical bodies, and describe the finite placeholder receipt and bounded harness changes. The 22-file docs change at 34277d43 passed 21 owning tests, 35 relative links and independent review. The additive current candidate checkpoint states actual source/packed results and remaining N7, publication, site/device and stable obligations; this does not advance the whole-release audit."
         },
         "FORMA-116": {
           "status": "done",
@@ -173,8 +173,8 @@
           "scope": "freeze the round2 protocol before implementation, run native island correctness for all 11 entrants, rerace and report each fix, establish the qualified native Linux baseline, and enforce memory \u2264 8 MiB, boot \u2264 50 ms and image \u2264 150 MB with source/browser/image identity, scoped cleanup and retained failures; the user-approved 2026-10-24 gha-4-v1 baseline is a separate profile with Class A 1 CPU/1 GiB, Class B 2 CPU/2 GiB and disjoint 2-CPU load generation, preserving the original native-8-v1 profile and prohibiting cross-profile performance-gain claims"
         },
         "FORMA-301 candidate": {
-          "status": "pending",
-          "scope": "Qualify the exact coordinated RC.3 source and eight archives after the reviewed finite npm placeholder accounting and removal of duplicate test work. Require current source CI, complete packed P17, native/archive and unchanged paired-size evidence, preserving original failures and exact input identities. Published RC.2 is authenticated but does not substitute for new archive qualification; whole-R17 N7 remains unqualified pending its own current distribution."
+          "status": "done",
+          "scope": "Exact 34277d43 source passed all four PR planes (CI 40460309193: 19 executed jobs and one intentional published-scaffold skip; security 40460309075; scaffold 40460308951; budgets 40460309137), with the actual synthetic checkout tree authenticated. The original eight-archive RC3 dry pack from run 40460337225, attempt 1, DS11 e7b39879a43ae713e2545abcdb42d3ad366079c039d5b9fc0ee9bd0fd2a55700, passed 75/75 packed P17 checks in 1,364.505 s against 1,800 s; the actual prior-performance baseline is published RC2. Fresh packed native 90/90 and unchanged paired-size limits pass at 12,287/12,288 B incremental and 40,715/65,536 B whole group. The initially mis-invoked wrong-source local proof and interrupted outputs remain excluded and preserved. Current source changes after 342 are evidence-only docs/gate closure; tagged archives and exact-main checks remain required. Ordinary R17 passed in 651 s; current 20-run whole-R17 N7 campaign 40462310769 is still pending, not a timing waiver or stable acceptance."
         },
         "FORMA-301 publisher": {
           "status": "done",
