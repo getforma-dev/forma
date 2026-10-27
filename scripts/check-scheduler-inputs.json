@@ -6863,7 +6863,7 @@
       },
       {
         "path": "scripts/core-raw-package.test.mjs",
-        "sha256": "729dc6dfcc0a5a18776a8ad24a82caa2a813f95aefb7422962bfb34af732b9f8"
+        "sha256": "10bf1120a62dfeac10530d6679f1fd7860f8bbf9e5064c219f32f6978d179e35"
       },
       {
         "path": "scripts/decoder-compiler-package.test.mjs",
@@ -7563,7 +7563,7 @@
       },
       {
         "path": "scripts/run-router-native-proof.mjs",
-        "sha256": "23d832a193d3048008c0fc7ef8db8948ddda377277f429d759e31c6f72d8664f"
+        "sha256": "374d027db273c9d454f8fa4f5285901422cd6cb3d7a94e4ac2009a19a4c51f3e"
       },
       {
         "path": "scripts/scaffold-cache-measure.mjs",
@@ -14353,7 +14353,7 @@
       },
       {
         "path": "scripts/core-raw-package.test.mjs",
-        "sha256": "729dc6dfcc0a5a18776a8ad24a82caa2a813f95aefb7422962bfb34af732b9f8"
+        "sha256": "10bf1120a62dfeac10530d6679f1fd7860f8bbf9e5064c219f32f6978d179e35"
       },
       {
         "path": "scripts/decoder-compiler-package.test.mjs",
@@ -15053,7 +15053,7 @@
       },
       {
         "path": "scripts/run-router-native-proof.mjs",
-        "sha256": "23d832a193d3048008c0fc7ef8db8948ddda377277f429d759e31c6f72d8664f"
+        "sha256": "374d027db273c9d454f8fa4f5285901422cd6cb3d7a94e4ac2009a19a4c51f3e"
       },
       {
         "path": "scripts/scaffold-cache-measure.mjs",
