@@ -7479,7 +7479,7 @@
       },
       {
         "path": "scripts/release-soak-deferral.test.mjs",
-        "sha256": "a5458360e69ace19b4c6d5ea4e169b043cb76db25bd41f7d7c53f556ba2a0427"
+        "sha256": "8f9b3f0976dd72759bb0432ffc469518a8d37379b271f94975da01f50a556024"
       },
       {
         "path": "scripts/release-soak-v2.test.mjs",
@@ -14989,7 +14989,7 @@
       },
       {
         "path": "scripts/release-soak-deferral.test.mjs",
-        "sha256": "a5458360e69ace19b4c6d5ea4e169b043cb76db25bd41f7d7c53f556ba2a0427"
+        "sha256": "8f9b3f0976dd72759bb0432ffc469518a8d37379b271f94975da01f50a556024"
       },
       {
         "path": "scripts/release-soak-v2.test.mjs",

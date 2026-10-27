@@ -188,6 +188,10 @@ async function completionFixture(t) {
     runtimeSha256: sha(runtime), harnessSha256: sha(execFileSync('git', ['ls-tree', '-r', '-z', f.reference.rcCommit], { cwd: f.root })), hostileCaseIds: hostileIds(), fixtureCheckIds: fixtureCheckIds() };
   const hostile = { schema: 1, passed: true, completeMatrix: true, selection: null, sourceCommit: f.reference.rcCommit,
     sourceClean: true, runtimeSha256: sha(runtime), harnessSources: securityHarnessHashes(), pageErrors: [],
+    // Synthetic current-reader evidence, bound to the current harness above.
+    profileConcurrency: 2,
+    profileRuns: profiles.map((profile, index) => ({ profile, passed: true, cleanupComplete: true, runtimeSha256: sha(runtime),
+      origin: `http://127.0.0.1:${4000 + index * 2}`, otherOrigin: `http://127.0.0.1:${4001 + index * 2}`, policy: 'synthetic source-bound policy' })),
     requested: cases().length, requestedCapabilityControls: capabilityCases.length * profiles.length,
     cases: cases().map(({ id }) => ({ id, live: true, executed: 0, outsideReads: 0, unauthorizedRequests: 0 })),
     capabilities: capabilityCases.flatMap(({ id }) => profiles.map(profile => ({ id: `${id}/${profile}` }))),
