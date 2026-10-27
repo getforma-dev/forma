@@ -1,9 +1,12 @@
 # Release documentation
 
 **[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).**
-The current source prepares 3.2.0-rc.1 with the optional router and eight
+The current source prepares 3.2.0-rc.2 with the optional router and eight
 coordinated packages. Its qualification, publication and website rollout remain
 pending; prepared version strings do not establish a release.
+RC.1's eight archives were published before its record job failed. The
+[incident and finite recovery](3.2-RECORD-RECOVERY.md) preserve that partial
+outcome and the remaining RC.2 gates.
 
 ## 3.2 router preparation
 

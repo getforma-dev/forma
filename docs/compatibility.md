@@ -7,11 +7,11 @@ coordinate seven packages at one release version: `forma-ir`, `forma-ir-derive`,
 retain their original scopes. Future releases require their own reviewed source,
 CI and packed qualification; a matching version label alone is not proof.
 
-The prepared **3.2.0-rc.1** candidate adds optional `@getforma/router` as the
+The prepared **3.2.0-rc.2** candidate adds optional `@getforma/router` as the
 eighth coordinated package; publication remains gated. It requires the matching candidate core's `/navigation`
 entry and matching compiler/build/server contracts. Published 3.1 core does not
 provide that entry. The current source and template seeds are prepared at
-3.2.0-rc.1. Earlier feature-development archives carrying 3.1 labels remain
+3.2.0-rc.2. Earlier feature-development archives carrying 3.1 labels remain
 historical evidence and cannot establish public router compatibility.
 See the [actual reader controls and release boundary](design/router/qualification.md#writerreader-result-and-release-consequence).
 
