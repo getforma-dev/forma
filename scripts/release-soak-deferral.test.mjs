@@ -43,6 +43,7 @@ function fixture(t) {
   for (const gate of Object.values(before.milestones.final.gates)) { gate.status = 'pending'; delete gate.deferral; }
   write('scripts/release-contracts.json', encode(before));
   write('runtime.js', 'original product\n'); write('README.md', 'original documentation\n');
+  write('CHANGELOG.md', '# Synthetic changelog\n\n## [3.0.0]\n\nFinal fixture.\n\n## [3.0.0-rc.1]\n\nRC fixture.\n');
   git('add', '.'); git('commit', '--quiet', '-m', 'synthetic RC (no audit acceptance)');
   const rcCommit = git('rev-parse', 'HEAD'); git('tag', 'v3.0.0-rc.1');
   for (const [path, text] of versionFiles(root, '3.0.0')) write(path, text);

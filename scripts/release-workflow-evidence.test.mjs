@@ -16,6 +16,10 @@ const upload = doc => doc.jobs.verify.steps.find(step => step.with?.name === 're
 const p17 = doc => doc.jobs.verify.steps.find(step => step.name === 'P17 packed corpus and both templates');
 const record = doc => doc.jobs.verify.steps.find(step => step.id === 'record');
 const evidenceCheck = doc => doc.jobs.record.steps.find(step => step.name === 'Verify P17 evidence');
+const recoveryPrepare = doc => doc.jobs.check.steps.find(step => step.id === 'recovery');
+const recoveryUpload = doc => doc.jobs.check.steps.find(step => step.with?.name === 'release-publication-recovery');
+const recoveryDownload = doc => doc.jobs.record.steps.find(step => step.with?.name === 'release-publication-recovery');
+const writer = doc => doc.jobs.record.steps.find(step => step.run?.startsWith('node scripts/release-record.mjs'));
 
 function lint(doc) {
   const directory = mkdtempSync(join(tmpdir(), 'forma-release-evidence-'));
@@ -56,6 +60,18 @@ test('actual release workflow retains failed P17 bytes without changing publish 
 });
 
 const mutations = [
+  ['missing inventory recovery prepublication gate', 'K10', doc => { doc.jobs.check.steps = doc.jobs.check.steps.filter(step => step !== recoveryPrepare(doc)); }],
+  ['conditional recovery preparation', 'E1', doc => { recoveryPrepare(doc).if = 'false'; }],
+  ['recovery preparation uses another token', 'K10', doc => { recoveryPrepare(doc).env.GH_TOKEN = '${{ secrets.PAT }}'; }],
+  ['recovery preparation allows an external plan', 'K10', doc => { recoveryPrepare(doc).run += ' --plan other.json'; }],
+  ['recovery upload silently skips its proof', 'K10', doc => { recoveryUpload(doc).if = 'false'; }],
+  ['recovery upload tolerates absent files', 'K10', doc => { recoveryUpload(doc).with['if-no-files-found'] = 'warn'; }],
+  ['recovery hash output trusts another producer', 'K10', doc => { doc.jobs.check.outputs['recovery-sha256'] = '${{ steps.ci.outputs.ci-run }}'; }],
+  ['record omits the inventory recovery download', 'K10', doc => { doc.jobs.record.steps = doc.jobs.record.steps.filter(step => step !== recoveryDownload(doc)); }],
+  ['record ignores recovery archive digest mismatch', 'K10', doc => { recoveryDownload(doc).with['digest-mismatch'] = 'warn'; }],
+  ['record downloads inventory recovery after writing', 'K10', doc => { const steps = doc.jobs.record.steps, step = recoveryDownload(doc); steps.splice(steps.indexOf(step), 1); steps.push(step); }],
+  ['record trusts the packed-set hash for inventory recovery', 'K10', doc => { writer(doc).env.PUBLICATION_RECOVERY_SHA256 = '${{ needs.pack.outputs.record-sha256 }}'; }],
+  ['record consumes a different inventory recovery directory', 'K10', doc => { writer(doc).env.PUBLICATION_RECOVERY_DIRECTORY = '${{ runner.temp }}/other'; }],
   ['missing RC/final qualification', 'K9', doc => { doc.jobs.check.steps = doc.jobs.check.steps.filter(step => step.run !== 'node scripts/check-release-qualification.mjs'); }],
   ['qualification with a different token source', 'K9', doc => { doc.jobs.check.steps.find(step => step.run === 'node scripts/check-release-qualification.mjs').env.GH_TOKEN = '${{ secrets.PAT }}'; }],
   ['shallow RC qualification checkout', 'K9', doc => { delete doc.jobs.check.steps.find(step => step.uses?.startsWith('actions/checkout@')).with['fetch-depth']; }],

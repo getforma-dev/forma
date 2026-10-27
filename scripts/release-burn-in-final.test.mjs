@@ -110,6 +110,7 @@ function versionFixture(t, documents = {}, version = '3.0.0') {
   const write = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text); };
   for (const [path, text] of versionFiles(ROOT, `${version}-rc.1`)) write(path, text);
   write('runtime.js', 'original product bytes\n');
+  write('CHANGELOG.md', `# Synthetic changelog\n\n## [${version}]\n\nFinal fixture.\n\n## [${version}-rc.1]\n\nRC fixture.\n\n## [${version}-beta.1]\n\nBeta fixture.\n`);
   for (const [path, text] of Object.entries(documents)) write(path, text);
   write('scripts/release-contracts.json', JSON.stringify({ version, milestones: { final: { gates: { 'FORMA-145': { status: 'pending', scope: 'burn-in' } } } } }));
   git('add', '.'); git('commit', '--quiet', '-m', 'synthetic audited RC');

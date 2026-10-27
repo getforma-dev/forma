@@ -7,6 +7,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
 import { packageIdentitiesForVersion } from './release-package-inventory.mjs';
+import { recoveryPlanForTag, validatePublicationRecoveryReceipt, validatePublicationRecoveryProof,
+  PUBLICATION_RECOVERY_CONTRACT, PUBLICATION_RECOVERY_MAX_BYTES } from './release-publication-recovery.mjs';
 
 const identities = [
   ['npm', '@getforma/core', 'getforma-dev/formajs', 'v', '2.0.3'],
@@ -64,7 +66,10 @@ function safeUrl(input) {
   return u;
 }
 
-export async function reconcile({ policy, fetchImpl = fetch, token = '', limits = {} }) {
+export async function reconcile({ policy, fetchImpl = fetch, token = '', limits = {},
+  // Offline fixtures may supply a synthetic finite plan alongside their fetch
+  // provider. The CLI exposes neither a plan flag nor an environment override.
+  recoveryPlanForTagImpl = recoveryPlanForTag }) {
   const report = { schema: 1, startedAt: new Date().toISOString(), passed: false,
     externalAlertDelivery: 'deferred-L60', findings: [], packages: [], verifiedArchives: [] };
   const finding = (code, message, detail = {}) => report.findings.push({ code, message, ...detail });
@@ -130,6 +135,62 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
     const previous = records.get(k) ?? [];
     previous.push({ registry: p.registry, name: p.name, version: p.version, sha256: p.sha256, source }); records.set(k, previous);
   }
+  function authenticateAsset(asset, bytes, maxBytes) {
+    assert(Number.isSafeInteger(asset.id) && asset.id > 0 && Number.isSafeInteger(asset.size) &&
+      asset.size > 0 && asset.size <= maxBytes, 'invalid recovery asset size/id');
+    assert.equal(bytes.length, asset.size, 'recovery asset provider length differs');
+    const sha256 = createHash('sha256').update(bytes).digest('hex');
+    assert.equal(asset.digest, `sha256:${sha256}`, 'recovery asset provider digest differs');
+    return { sha256, bytes: bytes.length };
+  }
+  async function recoveryClaims(release, record, source, plan) {
+    assert(plan, 'publication recovery has no approved host plan');
+    assert(Array.isArray(record.publicationRecoveries) && record.publicationRecoveries.length === 1,
+      'planned publication recovery requires exactly one DS12 pointer');
+    const pointer = record.publicationRecoveries[0];
+    assert(pointer && typeof pointer === 'object' && !Array.isArray(pointer), 'invalid publication recovery pointer');
+    assert.deepEqual(Object.keys(pointer).sort(), ['asset', 'bytes', 'contract', 'originalTag', 'proof', 'sha256'],
+      'publication recovery pointer fields differ');
+    assert.equal(pointer.contract, PUBLICATION_RECOVERY_CONTRACT, 'publication recovery pointer contract differs');
+    assert.equal(pointer.originalTag, plan.original.tag, 'publication recovery original tag differs');
+    assert.equal(pointer.asset, `publication-recovery-${pointer.originalTag}.json`, 'publication recovery asset name differs');
+    assert(pointer.proof && typeof pointer.proof === 'object' && !Array.isArray(pointer.proof), 'publication recovery proof pointer absent');
+    assert.deepEqual(Object.keys(pointer.proof).sort(), ['asset', 'bytes', 'sha256'], 'publication recovery proof pointer fields differ');
+    assert.equal(pointer.proof.asset, `publication-recovery-${pointer.originalTag}-proof.json`, 'publication recovery proof asset name differs');
+    const maxBytes = Math.min(budget.recordBytes, PUBLICATION_RECOVERY_MAX_BYTES);
+    async function boundAsset(ref) {
+      assert(hashPattern.test(ref.sha256) && Number.isSafeInteger(ref.bytes) && ref.bytes > 0 && ref.bytes <= maxBytes,
+        'invalid publication recovery pointer digest/length');
+      const assets = release.assets.filter(a => a.name === ref.asset);
+      assert.equal(assets.length, 1, 'missing or duplicate publication recovery asset');
+      const asset = assets[0];
+      assert(Number.isSafeInteger(asset.id) && asset.id > 0 && asset.size === ref.bytes,
+        'publication recovery pointer/provider identity differs');
+      const bytes = await read(`https://api.github.com/repos/${source.repository}/releases/assets/${asset.id}`, maxBytes, { asset: true });
+      const actual = authenticateAsset(asset, bytes, maxBytes);
+      assert.equal(actual.sha256, ref.sha256, 'publication recovery DS12 pointer digest differs');
+      assert.equal(actual.bytes, ref.bytes, 'publication recovery DS12 pointer length differs');
+      return { asset, bytes };
+    }
+    const receiptAsset = await boundAsset(pointer);
+    const receipt = validatePublicationRecoveryReceipt(JSON.parse(receiptAsset.bytes.toString('utf8')),
+      { hostTag: record.tag, hostCommit: record.commit, hostRunId: String(record.run), plan });
+    assert.deepEqual(receipt.proof, pointer.proof, 'publication recovery receipt/proof pointer differs');
+    const proofAsset = await boundAsset(pointer.proof);
+    validatePublicationRecoveryProof(JSON.parse(proofAsset.bytes.toString('utf8')), plan);
+    // The shared validator admits inventory-only claims, never qualification.
+    // Add the complete set only after both linked assets authenticate and their
+    // semantic contracts pass. Duplicate claims deliberately remain separate
+    // records for AMBIGUOUS_RECORD below.
+    for (const p of receipt.packages) {
+      addRecord(p, { ...source, kind: 'publication-recovery', assetId: receiptAsset.asset.id,
+        assetSha256: pointer.sha256, proofAssetId: proofAsset.asset.id,
+        originalTag: receipt.original.tag, disposition: receipt.disposition });
+      if (!policy.packages.some(item => identityKey(item) === identityKey(p)))
+        finding('POLICY_PACKAGE_UNENROLLED', 'recovered published package is absent from the active registry monitor policy',
+          { ...source, name: p.name, version: p.version });
+    }
+  }
   // Inventory releases first, including old maintenance repositories. No missing
   // API response or malformed record becomes an exemption.
   for (const repo of repos) {
@@ -155,7 +216,8 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
               assert.equal(assets.length, 1, 'missing or duplicate release-record.json');
               const asset = assets[0];
               assert(Number.isSafeInteger(asset.id) && asset.id > 0 && Number.isSafeInteger(asset.size) && asset.size > 0 && asset.size <= budget.recordBytes, 'invalid release record asset size/id');
-              const record = await json(`https://api.github.com/repos/${repo}/releases/assets/${asset.id}`, budget.recordBytes, { asset: true });
+              const recordBytes = await read(`https://api.github.com/repos/${repo}/releases/assets/${asset.id}`, budget.recordBytes, { asset: true });
+              const record = JSON.parse(recordBytes.toString('utf8'));
               assert(record.schema === 1 && record.dryRun === false && record.tag === tag && /^[a-f0-9]{40}$/.test(record.commit) && /^[1-9][0-9]*$/.test(String(record.run)), 'record producer/tag binding invalid');
               assert(Array.isArray(record.packages), 'incomplete unified package set');
               assert.deepEqual(record.packages.map(identityKey).sort(), packageIdentitiesForVersion(tag.slice(1)), 'incomplete versioned unified package set');
@@ -165,11 +227,16 @@ export async function reconcile({ policy, fetchImpl = fetch, token = '', limits 
                 assert(hashPattern.test(p.sha256) && p.file === artifactFilename(p.registry, p.name, p.version), 'invalid unified digest/filename');
                 ids.add(identityKey(p));
               }
+              const recoveryPlan = recoveryPlanForTagImpl(tag);
+              if (recoveryPlan || Object.hasOwn(record, 'publicationRecoveries'))
+                authenticateAsset(asset, recordBytes, budget.recordBytes);
               for (const p of record.packages) {
                 addRecord(p, { ...source, assetId: asset.id });
                 if (!policy.packages.some(item => identityKey(item) === identityKey(p)))
                   finding('POLICY_PACKAGE_UNENROLLED', 'published package is absent from the active registry monitor policy', { ...source, name: p.name, version: p.version });
               }
+              if (recoveryPlan || Object.hasOwn(record, 'publicationRecoveries'))
+                await recoveryClaims(release, record, source, recoveryPlan);
             } catch (e) { finding('RECORD_INVALID', e.message, source); }
           } else {
             for (const spec of identities) {

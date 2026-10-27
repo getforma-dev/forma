@@ -7,11 +7,15 @@ import { ROOT, run, json, assertMilestoneReady } from './release-set.mjs';
 import { readRcAudit } from './release-audit.mjs';
 import { SOAK_GATE, readSoakDeferral } from './release-soak-deferral.mjs';
 import { releaseLine } from './release-line.mjs';
+import { changelogEntry } from './release-record.mjs';
 
 export async function checkReleaseQualification({ tag, commit, root = ROOT, finalReader, deferredReader } = {}) {
   assert.match(commit ?? '', /^[a-f0-9]{40}$/); assert.equal(run('git', ['rev-parse', 'HEAD'], root).trim(), commit);
   const line = releaseLine(tag), contracts = json(join(root, 'scripts/release-contracts.json'));
   assert.equal(contracts.version, line.finalVersion, 'release qualification contract names another version line');
+  // DS12 uses this same parser after publication. Refuse an unrecordable tag
+  // before either publisher, binding the entry to committed source, not a local patch.
+  changelogEntry(run('git', ['show', `${commit}:CHANGELOG.md`], root), line.version);
   if (line.milestone === 'rc') return { milestone: 'rc', audit: readRcAudit(commit, root).binding };
   if (line.milestone === 'final') {
     const module = await import('./release-burn-in-final.mjs');

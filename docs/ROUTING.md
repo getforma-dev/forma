@@ -25,7 +25,7 @@ route stays a useful option even in an application with routed pages.
 Use the `native-router` template from a published 3.2 candidate or stable release:
 
 ```sh
-npx @getforma/create-app@3.2.0-rc.1 my-routed-app --template native-router
+npx @getforma/create-app@3.2.0-rc.2 my-routed-app --template native-router
 cd my-routed-app
 cd admin && npm ci && npm run build && cd ..
 cargo run --locked

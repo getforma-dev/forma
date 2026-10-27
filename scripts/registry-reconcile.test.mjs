@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {reconcile, validatePolicy} from './registry-reconcile.mjs';
+import {validatePublicationRecoveryProof} from './release-publication-recovery.mjs';
 
 const identities = [
   ['npm', '@getforma/core', 'getforma-dev/formajs'],
@@ -97,6 +100,256 @@ function fixture(version = '3.0.0', router = false) {
 const run = f => reconcile({policy: f.policy, fetchImpl: f.fetchImpl, token: 'mock-github-token',
   limits: {timeoutMs: 1000, deadlineMs: 10000}});
 const codes = result => result.findings.map(f => f.code);
+
+// Offline synthetic providers only. The injected finite plan has the same
+// strict contract as the audited plan, but its archive hashes describe these
+// small fixture bytes; it is never a live publication/qualification receipt.
+function syntheticRecoveryProof(plan) {
+  const original = plan.original;
+  const actualRun = {repository: {full_name: 'getforma-dev/forma'}, id: original.runId,
+    run_attempt: original.runAttempt, head_sha: original.commit, head_branch: original.tag,
+    path: original.workflow, event: original.event, status: 'completed', conclusion: 'failure'};
+  const provider = {latestRun: clone(actualRun), attempt: clone(actualRun),
+    jobs: {total_count: plan.jobs.length, jobs: plan.jobs.map(job => ({...job,
+      run_id: original.runId, run_attempt: original.runAttempt, head_sha: original.commit,
+      head_branch: original.tag, status: 'completed', steps: job.name === 'record'
+        ? [{name: 'Write DS12, the compatibility record and elapsed time', conclusion: 'failure'}]
+        : job.name === 'verify' ? [{name: 'P17 packed corpus and both templates', conclusion: 'success'}] : [],
+    }))},
+    tagRef: {ref: `refs/tags/${original.tag}`, object: {type: 'tag', sha: original.tagObject}},
+    annotatedTag: {tag: original.tag, sha: original.tagObject, object: {type: 'commit', sha: original.commit}},
+    inventory: {total_count: 2, artifacts: Object.values(plan.artifacts).map(item => ({id: item.id,
+      name: item.name, size_in_bytes: item.bytes, digest: `sha256:${item.sha256}`, expired: false,
+      workflow_run: {id: original.runId, head_sha: original.commit, head_branch: original.tag},
+      archive_download_url: `https://api.github.com/repos/getforma-dev/forma/actions/artifacts/${item.id}/zip`}))},
+    recordLog: `release-record: ${original.failure}\n`,
+  };
+  const ds11 = {content: '{"fixture":"synthetic DS11; not qualification"}\n', sha256sums: 'synthetic checksums\n'};
+  plan.artifacts.packed.setSha256 = sha(ds11.content);
+  plan.artifacts.packed.manifestSha256 = sha(ds11.sha256sums);
+  const d14 = {files: Object.fromEntries(Object.keys(plan.d14).map(name => [name, `${name}: synthetic test input\n`])),
+    binding: {}, scope: 'offline test only'};
+  for (const [name, bytes] of Object.entries(d14.files)) plan.d14[name] = sha(bytes);
+  return {contract: 'forma-publication-recovery-proof-v1', disposition: 'inventory-only', original: clone(original),
+    planSha256: sha(JSON.stringify(plan)), provider, ds11,
+    p17: {...plan.artifacts.p17, filesVerified: 1, passed: true, elapsedSeconds: 1200, rawEvidenceAttached: false},
+    d14, registry: plan.packages.map(item => {
+      const archiveUrl = item.registry === 'npm'
+        ? `https://registry.npmjs.org/${item.name}/-/${item.name.split('/')[1]}-${item.version}.tgz`
+        : `https://static.crates.io/crates/${item.name}/${item.name}-${item.version}.crate`;
+      const metadata = item.registry === 'npm'
+        ? {name: item.name, version: item.version, dist: {integrity: item.integrity, shasum: item.shasum, tarball: archiveUrl}}
+        : {version: {crate: item.name, num: item.version, checksum: item.sha256, yanked: false}};
+      return {...item, archiveUrl, metadataUrl: 'offline synthetic fixture', metadata};
+    })};
+}
+function recoveryFixture() {
+  const f = fixture('3.2.0-rc.2', true), original = fixture('3.2.0-rc.1', true);
+  const plan = JSON.parse(readFileSync(new URL('../docs/release/publication-recovery-3.2-rc1.json', import.meta.url), 'utf8'));
+  for (const [name, metadata] of original.metadata) {
+    const current = f.metadata.get(name);
+    if (metadata.versions && !Array.isArray(metadata.versions)) Object.assign(current.versions, metadata.versions);
+    else { current.versions.push(...metadata.versions); current.meta.total = current.versions.length; }
+  }
+  for (const [name, bytes] of original.archives) f.archives.set(name, bytes);
+  for (const p of plan.packages) {
+    const bytes = f.archives.get(p.file);
+    p.sha256 = sha(bytes); p.bytes = bytes.length;
+    if (p.registry === 'npm') {
+      p.integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
+      p.shasum = createHash('sha1').update(bytes).digest('hex');
+    }
+  }
+  const proofValue = syntheticRecoveryProof(plan);
+  let proofBytes = Buffer.from(JSON.stringify(proofValue));
+  const proof = { asset: `publication-recovery-${plan.original.tag}-proof.json`, sha256: sha(proofBytes), bytes: proofBytes.length };
+  const preparedBy = {tag: f.record.tag, commit: f.record.commit, runId: Number(f.record.run), runAttempt: 1,
+    workflow: '.github/workflows/release.yml', event: 'push', job: 'check'};
+  const receipt = {contract: 'forma-publication-recovery-v1', disposition: 'inventory-only',
+    performanceBaselineEligible: false, soakEligible: false, preparedBy,
+    recordedBy: {...preparedBy, job: 'record'}, original: clone(plan.original), packages: clone(plan.packages), proof,
+    preparedManifestSha256: 'b'.repeat(64), planSha256: sha(JSON.stringify(plan)),
+    preparedAt: '2026-10-27T05:00:00.000Z', recordedAt: '2026-10-27T05:01:00.000Z'};
+  const host = f.releases.get('getforma-dev/forma')[0], assets = new Map();
+  const providerAsset = (id, name, bytes) => ({id, name, size: bytes.length, digest: `sha256:${sha(bytes)}`});
+  f.plan = plan; f.receipt = receipt; f.host = host; f.assetBodies = assets; f.proof = proofValue;
+  f.sync = () => {
+    const receiptBytes = Buffer.from(JSON.stringify(receipt));
+    const pointer = {contract: receipt.contract, originalTag: plan.original.tag,
+      asset: `publication-recovery-${plan.original.tag}.json`, sha256: sha(receiptBytes), bytes: receiptBytes.length, proof: clone(receipt.proof)};
+    f.record.publicationRecoveries = [pointer];
+    assets.set(124, receiptBytes); assets.set(125, proofBytes);
+    host.assets = [providerAsset(123, 'release-record.json', Buffer.from(JSON.stringify(f.record))),
+      providerAsset(124, pointer.asset, receiptBytes), providerAsset(125, pointer.proof.asset, proofBytes)];
+  };
+  f.syncProof = () => {
+    proofBytes = Buffer.from(JSON.stringify(f.proof));
+    receipt.proof = {asset: proof.asset, sha256: sha(proofBytes), bytes: proofBytes.length};
+    f.sync();
+  };
+  f.syncHost = () => { host.assets[0] = providerAsset(123, 'release-record.json', Buffer.from(JSON.stringify(f.record))); };
+  f.sync();
+  f.overrides.push(url => {
+    if (url.hostname === 'api.github.com') {
+      const match = /^\/repos\/getforma-dev\/forma\/releases\/assets\/(\d+)$/.exec(url.pathname);
+      if (match && assets.has(Number(match[1]))) return new Response(assets.get(Number(match[1])));
+    }
+  });
+  f.run = () => reconcile({policy: f.policy, fetchImpl: f.fetchImpl, token: 'mock-github-token',
+    limits: {timeoutMs: 1000, deadlineMs: 10000}, recoveryPlanForTagImpl: tag => tag === plan.hostTag ? plan : null});
+  return f;
+}
+function alterAssetByte(f, id) {
+  const changed = Buffer.from(f.assetBodies.get(id)); changed[0] ^= 1;
+  f.assetBodies.set(id, changed);
+}
+
+test('authenticated inventory-only recovery verifies all original and host archives without baseline promotion', async () => {
+  const f = recoveryFixture(), policy = clone(f.policy);
+  assert.equal(validatePublicationRecoveryProof(f.proof, f.plan), f.proof);
+  const result = await f.run();
+  assert.equal(result.passed, true, JSON.stringify(result.findings));
+  assert.equal(result.verifiedArchives.length, 16);
+  const recovered = result.verifiedArchives.filter(row => row.version === '3.2.0-rc.1');
+  assert.equal(recovered.length, 8);
+  assert(recovered.every(row => row.source.kind === 'publication-recovery' && row.source.tag === 'v3.2.0-rc.2' &&
+    row.source.originalTag === 'v3.2.0-rc.1' && row.source.disposition === 'inventory-only'));
+  assert(f.calls.some(c => c.url.endsWith('/releases/assets/125')), 'proof bytes are retrieved');
+  assert.equal(result.packages.reduce((n, p) => n + p.baseline, 0), 0);
+  assert.deepEqual(f.policy, policy);
+});
+
+test('recovery receipt semantic refusals preserve the independently valid host but admit no original claims', async t => {
+  for (const [name, change] of [
+    ['performance eligibility', r => { r.performanceBaselineEligible = true; }],
+    ['soak eligibility', r => { r.soakEligible = true; }],
+    ['disposition', r => { r.disposition = 'qualified'; }],
+    ['partial inventory', r => { r.packages.pop(); }],
+    ['duplicate inventory', r => { r.packages[7] = clone(r.packages[0]); }],
+    ['original tuple', r => { r.original.commit = 'c'.repeat(40); }],
+    ['recorder context', r => { r.recordedBy.runId++; }],
+    ['host commit', r => { r.preparedBy.commit = 'c'.repeat(40); }],
+    ['prepared plan', r => { r.planSha256 = 'c'.repeat(64); }],
+  ]) await t.test(name, async () => {
+    const f = recoveryFixture(); change(f.receipt); f.sync();
+    const result = await f.run();
+    assert.equal(result.passed, false);
+    assert(codes(result).includes('RECORD_INVALID'), JSON.stringify(result.findings));
+    assert.equal(result.verifiedArchives.length, 8);
+    assert(result.verifiedArchives.every(row => row.version === '3.2.0-rc.2'));
+    assert.equal(result.findings.filter(row => row.code === 'MISS_RECORD').length, 8);
+  });
+});
+
+test('internally rehashed recovery proofs still require the complete shared semantic contract', async t => {
+  for (const [name, change] of [
+    ['wrong schema', proof => { proof.contract = 'other-proof-v1'; }],
+    ['incomplete proof', proof => { delete proof.provider; }],
+    ['original failure erased', proof => { proof.provider.latestRun.conclusion = 'success'; }],
+    ['original source changed', proof => { proof.original.commit = 'c'.repeat(40); }],
+    ['partial registry inventory', proof => { proof.registry.pop(); }],
+    ['registry metadata mismatch', proof => { proof.registry.find(item => item.registry === 'npm').metadata.dist.integrity = 'wrong'; }],
+    ['DS11 bytes altered', proof => { proof.ds11.content += ' '; }],
+    ['D14 bytes altered', proof => { proof.d14.files['d14-report.json'] += ' '; }],
+    ['P17 qualification promoted', proof => { proof.p17.rawEvidenceAttached = true; }],
+  ]) await t.test(name, async () => {
+    const f = recoveryFixture(); change(f.proof); f.syncProof();
+    const result = await f.run();
+    assert.equal(result.passed, false);
+    assert(codes(result).includes('RECORD_INVALID'), JSON.stringify(result.findings));
+    assert.equal(result.verifiedArchives.length, 8, 'valid host survives, no recovered claims enter');
+    assert.equal(result.findings.filter(row => row.code === 'MISS_RECORD').length, 8);
+  });
+});
+
+test('recovery requires the finite host pointer and provider-authenticated receipt and proof', async t => {
+  for (const [name, change] of [
+    ['missing pointer', f => { delete f.record.publicationRecoveries; f.syncHost(); }],
+    ['duplicate pointer', f => { f.record.publicationRecoveries.push(clone(f.record.publicationRecoveries[0])); f.syncHost(); }],
+    ['wrong host', f => { f.plan.hostTag = 'v3.2.0-rc.3'; }],
+    ['missing receipt', f => { f.host.assets = f.host.assets.filter(a => a.id !== 124); }],
+    ['duplicate receipt', f => { f.host.assets.push({...f.host.assets[1], id: 126}); }],
+    ['receipt HTTP 404', f => { f.overrides.unshift(url => url.pathname.endsWith('/assets/124') ? new Response('missing', {status: 404}) : undefined); }],
+    ['altered receipt bytes', f => { alterAssetByte(f, 124); }],
+    ['receipt provider digest', f => { f.host.assets[1].digest = `sha256:${'c'.repeat(64)}`; }],
+    ['receipt provider length', f => { f.host.assets[1].size++; }],
+    ['receipt pointer digest', f => { f.record.publicationRecoveries[0].sha256 = 'c'.repeat(64); f.syncHost(); }],
+    ['receipt pointer name', f => { f.record.publicationRecoveries[0].asset = 'other.json'; f.syncHost(); }],
+    ['missing proof', f => { f.host.assets = f.host.assets.filter(a => a.id !== 125); }],
+    ['altered proof bytes', f => { alterAssetByte(f, 125); }],
+    ['proof provider digest', f => { f.host.assets[2].digest = `sha256:${'c'.repeat(64)}`; }],
+    ['proof pointer disagreement', f => { f.record.publicationRecoveries[0].proof.sha256 = 'c'.repeat(64); f.syncHost(); }],
+  ]) await t.test(name, async () => {
+    const f = recoveryFixture(); change(f);
+    const result = await f.run();
+    assert.equal(result.passed, false);
+    assert(codes(result).includes('RECORD_INVALID'), JSON.stringify(result.findings));
+    assert.equal(result.verifiedArchives.length, 8);
+    assert.equal(result.findings.filter(row => row.code === 'MISS_RECORD').length, 8);
+  });
+});
+
+test('recovery host DS12 must itself match the GitHub provider hash and length', async t => {
+  for (const field of ['digest', 'size']) await t.test(field, async () => {
+    const f = recoveryFixture();
+    if (field === 'digest') f.host.assets[0].digest = `sha256:${'c'.repeat(64)}`;
+    else f.host.assets[0].size++;
+    const result = await f.run();
+    assert.equal(result.passed, false); assert(codes(result).includes('RECORD_INVALID'));
+    assert.equal(result.verifiedArchives.length, 0);
+  });
+});
+
+test('audited default plan requires the RC2 recovery pointer even without fixture injection', async () => {
+  const f = recoveryFixture(); delete f.record.publicationRecoveries; f.syncHost();
+  const result = await run(f);
+  assert.equal(result.passed, false);
+  assert(result.findings.some(row => row.code === 'RECORD_INVALID' && /requires exactly one DS12 pointer/.test(row.message)));
+});
+
+test('recovered inventory still refuses missing registry versions and mismatched archive bytes', async t => {
+  for (const scenario of ['missing version', 'archive mismatch', 'archive 404']) await t.test(scenario, async () => {
+    const f = recoveryFixture();
+    if (scenario === 'missing version') delete f.metadata.get('@getforma/core').versions['3.2.0-rc.1'];
+    else if (scenario === 'archive mismatch') f.archives.set('getforma-core-3.2.0-rc.1.tgz', Buffer.from('altered registry archive'));
+    else f.archives.delete('getforma-core-3.2.0-rc.1.tgz');
+    const result = await f.run();
+    assert.equal(result.passed, false);
+    assert.equal(result.verifiedArchives.length, 15);
+    assert(result.findings.some(row => row.name === '@getforma/core' && row.version === '3.2.0-rc.1' && row.code ===
+      {'missing version': 'REGISTRY_MISSING', 'archive mismatch': 'HASH_MISMATCH', 'archive 404': 'ARCHIVE_UNREADABLE'}[scenario]));
+  });
+});
+
+test('ordinary and recovered duplicate claims remain AMBIGUOUS_RECORD', async () => {
+  const f = recoveryFixture();
+  const ordinary = {schema: 1, dryRun: false, tag: 'v3.2.0-rc.1', commit: f.plan.original.commit,
+    run: String(f.plan.original.runId), packages: clone(f.plan.packages)};
+  f.assetBodies.set(126, Buffer.from(JSON.stringify(ordinary)));
+  f.releases.get('getforma-dev/forma').push(release(78, ordinary.tag, {assets: [
+    {id: 126, name: 'release-record.json', size: JSON.stringify(ordinary).length},
+  ]}));
+  const result = await f.run();
+  assert.equal(result.passed, false);
+  assert.equal(result.findings.filter(row => row.code === 'AMBIGUOUS_RECORD').length, 8);
+  assert.equal(result.verifiedArchives.length, 8);
+});
+
+test('later recovery does not suppress a malformed original release record', async () => {
+  const f = recoveryFixture();
+  f.releases.get('getforma-dev/forma').push(release(78, 'v3.2.0-rc.1'));
+  const result = await f.run();
+  assert.equal(result.passed, false);
+  assert.equal(result.verifiedArchives.length, 16);
+  assert(result.findings.some(row => row.code === 'RECORD_INVALID' && row.tag === 'v3.2.0-rc.1'));
+});
+
+test('the real CLI does not expose the offline fixture plan injection', () => {
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('./registry-reconcile.mjs', import.meta.url)),
+    '--recovery-plan', 'untrusted-plan.json'], {encoding: 'utf8'});
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /unknown\/duplicate option/);
+});
 
 // Use the shipped default policy, including its exact historical exemptions.
 // Synthetic metadata supplies those same old versions; no live baseline changes.

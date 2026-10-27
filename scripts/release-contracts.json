@@ -174,11 +174,11 @@
         },
         "FORMA-301 candidate": {
           "status": "done",
-          "scope": "Prepared 3.2.0-rc.1 product/harness source 4c59db07 passed current CI 40423335934 and engines/security/budgets/scaffold-cache lanes; hosted P17 40423336544 authenticates all eight DS11 archives and three starters, with 75/75 checks, unchanged performance floors and complete cleanup. The same final archive set passes native90 and paired 12,287/12,288 B incremental and 40,715/65,536 B group limits. Later factual documentation and gate-completion deltas are independently reviewed; exact final main/tag CI and tagged P17 remain mandatory."
+          "scope": "RC.2 product/harness source bdc691e1 passed hosted packed qualification 40441486845: all eight coordinated archives and three starters, 75/75 P17 checks in 1266.223 seconds, unchanged limits and complete cleanup. The same archives pass native90 and paired 12,287/12,288 B incremental and 40,715 B group limits. Documentation-only successor 5b44312e passed CI 40442597606 plus security, budgets and scaffold-cache checks; original failed README-pin jobs and cancellation remain retained. Independent review preserves narrow documentation/source applicability and original archive identities. Exact final main/tag CI and tagged P17 still qualify their own archives; failed immutable RC.1 is not a release or burn-in baseline."
         },
         "FORMA-301 publisher": {
           "status": "done",
-          "scope": "The reviewed first-router bootstrap is confined to the qualified v3.2.0-rc.1 router archive; actual npm-publish environment credential readiness is recorded, including the explicitly authorized broader seven-day token exception. Five-package observer and eight-package registry policy are staged and tested before source freeze, preserving historical readers and missing-package failure. Actual publication, immediate secret removal/token revocation, trusted-publisher enrollment and live registry observation remain post-publication obligations."
+          "scope": "The qualified RC.1 router bootstrap published the exact verified archive. The temporary GitHub secret was removed and the npm token was confirmed absent. The actual router GitHub trusted publisher names getforma-dev/forma, release.yml and npm-publish; package policy requires 2FA and disallows bypass tokens. Its first actual OIDC publication remains an RC.2 outcome to verify. No bootstrap credential is needed or authorized for RC.2. Complete five-package observer and eight-package registry reconciliation remain post-record obligations."
         }
       }
     },
