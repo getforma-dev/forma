@@ -126,7 +126,7 @@
         },
         "FORMA-145 documentation": {
           "status": "done",
-          "scope": "RC3 current guides distinguish stable 3.1, authenticated published RC2 and unpublished RC3, preserve research and historical bodies, and describe the finite placeholder receipt and bounded harness changes. The 22-file docs change at 34277d43 passed 21 owning tests, 35 relative links and independent review. The additive current candidate checkpoint states actual source/packed results and remaining N7, publication, site/device and stable obligations; this does not advance the whole-release audit."
+          "scope": "Current 3.2.0 guides cover optional router APIs, islands/native navigation, three starters, coordinated installation/upgrade and known group limitations. Independent current-doc/canonical27 review is accepted; original 49 research inputs, 105 questions and 57 acceptance IDs remain verified. Website current docs and package pins update together after stable publication; no preview deployment is required."
         },
         "FORMA-116": {
           "status": "done",
@@ -138,7 +138,7 @@
         },
         "FORMA-145 audit": {
           "status": "done",
-          "scope": "fresh-context independent whole-release review of the exact 3.2 candidate and retained evidence, with an empty blocking list (D14)"
+          "scope": "Independent review binds the exact prepared stable 3.2.0 source, security/runtime/release-policy changes, applicable original evidence and an empty blocking list through the existing D14 input and evidence validator. The direct-final waiver removes extra RC publication and soak, not source audit or publication integrity."
         },
         "FORMA-257": {
           "status": "done",
@@ -174,11 +174,11 @@
         },
         "FORMA-301 candidate": {
           "status": "done",
-          "scope": "Exact 34277d43 source passed all four PR planes (CI 40460309193: 19 executed jobs and one intentional published-scaffold skip; security 40460309075; scaffold 40460308951; budgets 40460309137), with the actual synthetic checkout tree authenticated. The original eight-archive RC3 dry pack from run 40460337225, attempt 1, DS11 e7b39879a43ae713e2545abcdb42d3ad366079c039d5b9fc0ee9bd0fd2a55700, passed 75/75 packed P17 checks in 1,364.505 s against 1,800 s; the actual prior-performance baseline is published RC2. Fresh packed native 90/90 and unchanged paired-size limits pass at 12,287/12,288 B incremental and 40,715/65,536 B whole group. The initially mis-invoked wrong-source local proof and interrupted outputs remain excluded and preserved. Current source changes after 342 are evidence-only docs/gate closure; tagged archives and exact-main checks remain required. Ordinary R17 passed in 651 s; current 20-run whole-R17 N7 campaign 40462310769 is still pending, not a timing waiver or stable acceptance."
+          "scope": "Original 0e116ebf source CI 40537713511 passes 19 jobs plus one expected legacy skip, both 221-case platform starters; full P17 40537706950 passes 75/75 in 1303.893 s with original security controls and cleanup. Exact eight-archive consumers pass 90 native cases and unchanged gzip 12,276/12,288 B incremental,40,704/65,536 B group. Stable 27-file version projection changes no external dependencies or runtime source; reviewed decoder/release-policy changes and 594 helper tests preserve security/provenance. Exact stable-source CI and tagged P17/engines remain enforced before publication, without relabeling earlier execution."
         },
         "FORMA-301 publisher": {
           "status": "done",
-          "scope": "RC.2 completed normal GitHub OIDC publication for all five npm packages, including router configuration 444b6303-11f2-4327-8837-8f009fe445fa, with no bootstrap token; source, registry bytes and provenance are independently bound. Installed site graphs pass npm signature verification. The actual five-package external observation is complete without delivery/baseline promotion. Full reconciliation verifies 93 archives but remains FAIL for the new router placeholder and inherited FORMA-224; the prospective RC.3 receipt handles only the router finding. No bootstrap credential, historical baseline exception or clean SR2 claim is authorized."
+          "scope": "RC2 and RC3 completed normal GitHub OIDC publication for all five npm packages, including router trusted publisher 444b6303-11f2-4327-8837-8f009fe445fa, with an empty bootstrap environment. Exact source/registry bytes and provenance metadata are retained; bootstrap secret/token absence and npm 2FA policy were observed. Actual RC3 DS12 hosts the finite inventory-only router placeholder receipt; inherited FORMA-224 derive0.0.0 remains open. This existing enrollment evidence does not claim RC4 publication, clean full reconciliation, signature-chain verification, external alert delivery or soak."
         }
       }
     },
@@ -187,24 +187,40 @@
       "tags": "v3.2.0: npm latest, Cargo 3.2.0",
       "gates": {
         "FORMA-144 slice 3": {
-          "status": "pending",
-          "scope": "final template and release cleanup"
+          "status": "done",
+          "scope": "All 27 coordinated stable 3.2.0 version/lock/seed files match the original version-preparation function. Three starters retain reviewed API/dependency graphs and original packed/platform qualification; actual stable-tag packing authenticates template archive checksums before publication. No invented registry checksum or source-lock substitution."
         },
         "FORMA-191": {
-          "status": "pending",
-          "scope": "the per-release measurements in P17"
+          "status": "done",
+          "scope": "Original 0e11 P17 measurements and raw samples are independently authenticated: 75/75 in 1303.893 s, decoder p95 9.8/27.7 ms within original 30 ms, 90 native cases and size budgets passed. Stable preparation preserves runtime source and reviewed canonical version changes; actual stable-tag P17 recomputes per-release measurements before either publisher. No N7 or soak result is inferred."
         },
         "FORMA-146": {
           "status": "done",
           "scope": "Q10 to Q13 and Q14 to Q18 defaults confirmed by the founder in L-57 on 2026-10-15; see docs/release/3.0-GATE-DISPOSITIONS.md"
         },
         "FORMA-145 soak": {
-          "status": "pending",
-          "scope": "L-62: at least 3600 seconds of continuous fault-free CI burn-in on the exact packed RC set, including stress, fuzzers and skew/upgrade drills, after RC P17 and the independent whole-release audit"
+          "status": "waived",
+          "scope": "Maintainer explicitly waived the extra one-hour active soak for stable 3.2.0 on 2026-10-27. Zero active seconds credited; no burn-in pass or future-soak promise. Security, core correctness, exact source audit and package integrity remain required.",
+          "waiver": {
+            "decision": "FORMA-3.2-STREAMLINED-RELEASE-20261027",
+            "finalVersion": "3.2.0",
+            "reference": "docs/release/3.2-STREAMLINED-RELEASE.json",
+            "sha256": "f1ff0da25d3771916c4326b40141ca8220c81a3900af76a9b3ccb49482726b8e"
+          }
         },
         "FORMA-301 acceptance": {
-          "status": "pending",
-          "scope": "remaining supported-profile acceptance including assistive-technology/device review and documented scenario obligations, plus real getforma.dev router rollout acceptance; no fixture timing or dispatch-only event claim substitutes for those checks"
+          "status": "done",
+          "scope": "Supported source scenarios have reviewed original evidence, including bounded Mac VoiceOver and physical iPhone 17 Pro Max / iOS 26.7.1 applicability. Full mutation 326/328 with two actual nonsecurity survivors and all 169 security / 98 expression mutants caught remains applicable to unchanged runtime. Stable version/release-policy changes do not alter routing UI; independent source audit, exact stable CI and tagged packed security/correctness remain required. N7/soak are explicitly waived separately. Final website/docs/download deployment and live verification follow stable publication; staged rollback exercise is waived, existing rollback capability retained."
+        },
+        "FORMA-301 N7": {
+          "status": "waived",
+          "scope": "Maintainer waived the additional 20-command N7 timing campaign to streamline3.2.0. Original failed/incomplete campaigns remain unchanged; no current distribution pass is claimed. Ordinary exact-source CI remains required.",
+          "waiver": {
+            "decision": "FORMA-3.2-STREAMLINED-RELEASE-20261027",
+            "finalVersion": "3.2.0",
+            "reference": "docs/release/3.2-STREAMLINED-RELEASE.json",
+            "sha256": "f1ff0da25d3771916c4326b40141ca8220c81a3900af76a9b3ccb49482726b8e"
+          }
         }
       }
     }
@@ -231,6 +247,10 @@
       "version": "3.1.0",
       "source": "9a570afece5eb5091824422f00134a875310e857",
       "scope": "Inherited unchanged gates retain their prior completed baseline; new 3.2 candidate, documentation, independent audit, publisher and final gates remain pending until independently evidenced."
+    },
+    "FORMA-301 stable website rollout": {
+      "status": "not-run",
+      "scope": "After stable 3.2.0 publication, update all current getforma.dev homepage/docs/examples/downloads and package pins together, deploy through normal OVH flow, and verify live behavior/artifact identity. No further interim RC site update. Overall release task and FORMA-301 remain open until this rollout completes."
     }
   },
   "trustedTypes": "enforced-v1",

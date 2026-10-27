@@ -9,24 +9,18 @@ static site, or compile supported components to FMIR and render them in Rust
 with typed request data. Interactive islands adopt the server's existing DOM.
 The Rust rendering path needs no JavaScript server runtime.
 
-**[Forma 3.1.0 is released](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).**
-The published release has seven coordinated packages. Start with the
-[documentation](docs/README.md), [3.1 upgrade guide](docs/UPGRADING-3.1.md), or
-[release records](docs/release/README.md).
-
-The optional router is available in the published **[3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**,
-as part of eight coordinated packages. This checkout prepares **3.2.0-rc.3**,
-which is not yet published. Read the [routing guide](docs/ROUTING.md),
-[3.2 upgrade guide](docs/UPGRADING-3.2.md) and [router API](packages/router/README.md)
-to try the published candidate. The [RC3 preparation record](docs/release/3.2-RC3-PREPARATION.md)
-distinguishes published evidence from remaining release and website acceptance.
+**Forma 3.2.0** coordinates eight packages, including the optional router.
+Start with the [documentation](docs/README.md), [3.2 upgrade guide](docs/UPGRADING-3.2.md),
+or [release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0).
+Read the [routing guide](docs/ROUTING.md) and [router API](packages/router/README.md)
+for browser navigation, persistent layouts and typed native transitions.
 
 ## Start an application
 
 With Node 22+ and Rust 1.85+:
 
 ```sh
-npx @getforma/create-app@3.1.0 my-app --template minimal
+npx @getforma/create-app@3.2.0 my-app --template minimal
 cd my-app
 ```
 
@@ -37,7 +31,7 @@ build; the dashboard template uses Browser rendering. See
 [rendering modes](packages/create-app/docs/RENDERING-PHASES.md).
 
 For a browser-only application or static landing page, install
-`@getforma/core@3.1.0` and follow the [core quickstart](packages/core/README.md).
+`@getforma/core@3.2.0` and follow the [core quickstart](packages/core/README.md).
 That path does not require Rust or FMIR.
 
 ## Choose what runs where
@@ -63,8 +57,8 @@ remain application responsibilities. See [architecture](docs/ARCHITECTURE-3.0.md
 | [`@getforma/core`](packages/core) | Signals, DOM components, island adoption and the explicit HTML runtime |
 | [`@getforma/compiler`](packages/compiler) | TypeScript/TSX subset, declared schemas and FMIR emission |
 | [`@getforma/build`](packages/build) | Bundling, assets, manifests, integrity and deployment retention |
-| [`@getforma/router`](packages/router) | Optional browser navigation, persistent layouts and typed native transitions in the 3.2 prerelease |
-| [`@getforma/create-app`](packages/create-app) | Minimal/dashboard starters; native-router starter in the 3.2 prerelease |
+| [`@getforma/router`](packages/router) | Optional browser navigation, persistent layouts and typed native transitions |
+| [`@getforma/create-app`](packages/create-app) | Minimal, dashboard and native-router starters |
 | [`forma-ir`](crates/forma-ir) | FMIR validation, typed props and native HTML walking |
 | [`forma-ir-derive`](crates/forma-ir-derive) | Rust `PageProps` derive |
 | [`forma-server`](crates/forma-server) | Typed pages, complete responses, assets and Axum integration |

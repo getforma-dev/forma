@@ -37,7 +37,6 @@ export interface NavigationContext {
 export interface PreparedView {
   readonly title?: string;
   readonly status?: number;
-  readonly focus?: HTMLElement;
   validate(): void;
   commit(): void;
   activate(): Promise<void>;

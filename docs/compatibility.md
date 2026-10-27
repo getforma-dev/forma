@@ -1,19 +1,14 @@
 # Forma compatibility contract
 
-Forma 3.x uses FMIR v3 and manifest schema 2. The published 3.0/3.1 lines
-coordinate seven packages at one release version: `forma-ir`, `forma-ir-derive`, `forma-server`,
-`@getforma/core`, `@getforma/compiler`, `@getforma/build` and `@getforma/create-app`.
-[3.1.0 is published](https://github.com/getforma-dev/forma/releases/tag/v3.1.0); historical A2, beta and RC records
-retain their original scopes. Future releases require their own reviewed source,
-CI and packed qualification; a matching version label alone is not proof.
-
-The prepared **3.2.0-rc.2** candidate adds optional `@getforma/router` as the
-eighth coordinated package; publication remains gated. It requires the matching candidate core's `/navigation`
-entry and matching compiler/build/server contracts. Published 3.1 core does not
-provide that entry. The current source and template seeds are prepared at
-3.2.0-rc.2. Earlier feature-development archives carrying 3.1 labels remain
-historical evidence and cannot establish public router compatibility.
-See the [actual reader controls and release boundary](design/router/qualification.md#writerreader-result-and-release-consequence).
+Forma 3.x uses FMIR v3 and manifest schema 2. Forma 3.2.0 coordinates eight
+packages: `forma-ir`, `forma-ir-derive`, `forma-server`, `@getforma/core`,
+`@getforma/compiler`, `@getforma/build`, optional `@getforma/router`, and
+`@getforma/create-app`. Router requires core's `/navigation` entry and matching
+compiler/build/server contracts. Published 3.0/3.1 archives contain seven
+packages and do not provide that entry. Keep each application's versions and
+locks aligned and rebuild all deployment artifacts when upgrading.
+See the [3.2 upgrade guide](UPGRADING-3.2.md) and the
+[reader controls](design/router/qualification.md#writerreader-result-and-release-consequence).
 
 ## Window and upgrade order
 

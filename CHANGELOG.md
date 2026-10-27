@@ -1,6 +1,52 @@
 # Changelog
 
+## [3.2.0] - 2026-10-27
+
+- Add optional `@getforma/router` for browser routes, generated HTML and typed
+  native SSR navigation, with persistent layouts, owned cleanup and enhanced
+  actions. Native islands retain their selective activation and ownership.
+- Ship the connected `native-router` starter and browser-routed dashboard in the
+  eight-package coordinated release. Ordinary SSR and core-only applications
+  remain supported.
+- Guard router links with core's URL policy, avoid duplicate uncertain-submission
+  announcements, and recover source edits made during refused native watch builds.
+- Preserve source security, packed correctness, artifact integrity and trusted
+  publishing. The maintainer waived the extra N7 campaign and active soak for
+  this release; they are not passing measurements. See the
+  [release decision](docs/release/3.2-PERFORMANCE-DECISION.md).
+
+## Historical preparation checkpoints
+
 ## [Unreleased]
+
+- Guard router-created links with core's existing URL policy, including
+  obfuscated executable schemes, while preserving caller-supplied documents.
+- Announce uncertain submission outcomes once and remove the unused
+  `PreparedView.focus` declaration.
+- Clarify that native islands and client navigation work together, with explicit
+  document boundaries between rendering profiles. Correct current publication
+  pointers and the research-map link.
+
+RC3 publication completed on 2026-10-27; its
+[dated outcome](docs/release/3.2-RC3-PUBLICATION.md) supplements the unchanged
+preparation entries below. New changes in this section are not in that release.
+
+## [3.2.0-rc.4] - Preparation checkpoint
+
+- Prepare the eight coordinated versions and source template seeds for the
+  reviewed Link URL-policy and uncertain-outcome wording fixes, unused type-field
+  removal, and islands/navigation documentation clarification.
+- Recover source edits made during a native watch compilation, including a
+  refused compilation. Queue a fresh coherent generation without requiring
+  another edit, while retaining the last valid output and avoiding retries of
+  unchanged invalid source.
+- Integrate a maintained R17 schedule with shared stage implementations, explicit
+  resource admission, a complete serial fallback before work begins, and owned
+  parallel cleanup. No test, resource threshold or sampling requirement is removed.
+- Require fresh source/platform/packed qualification, native paired-size proof
+  and independent whole-release review. The previous N7 failure and both scheduler
+  development pilots retain their original scopes. Preparation is not publication
+  or stable acceptance. See [RC4 preparation](docs/release/3.2-RC4-PREPARATION.md).
 
 ## [3.2.0-rc.3] - Prepared; publication pending
 

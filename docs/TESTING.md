@@ -339,6 +339,60 @@ Current source is [the integrated check](../scripts/check.sh),
 [nightly probes](../.github/workflows/nightly-probes.yml). Historical audit
 percentages above are not current coverage or mutation results.
 
+`npm run check` uses one [stage catalogue](../scripts/check-stages.sh). On Linux,
+an explicitly reviewed [resource inventory](../scripts/check-scheduler-inputs.json)
+first admits independent npm installation/auditing/builds and one Cargo lane
+with three build jobs. The Cargo lane runs formatting, clippy, the old-renderer
+compatibility control and documentation generation. Both producers, logs and
+owned descendants must join before the workspace/server runtime test suites.
+A fresh one-use receipt binds that invocation's source and complete output bytes
+before its parent shell can reuse the five successful npm builds. It cannot
+authorize a later invocation or provide an exported build-skip flag.
+
+The later two lanes contain Node/unit work and browser work with at most two
+workers. Core correctness files use isolated threads with the original worker
+count; timing/heap files keep their original pool and run individually after
+the join. The hostile matrix has at most two active profiles, each with its own
+context, origins and request journal; cases within each profile remain sequential.
+No Cargo work overlaps these two lanes. Their complete logs and owned cleanup
+must join before later work starts. Source inputs are sealed across both phases;
+shared built products are also sealed across the later test phase.
+
+Closed package/repository config discovery includes new local config helpers;
+external ancestor tsup/TypeScript configuration refuses overlap. Caller-selected
+fixture roots, scaffold executables/context/templates/report paths, emitter paths and browser
+channels also use complete serial because they change reviewed inputs or writers.
+Node module/preload, Bash startup and Linux preload overrides also refuse overlap;
+admission records their presence, not their values.
+New or changed tests, helpers, configuration or dependencies do not silently join
+an overlapping lane. Before work begins, unreviewed inputs produce a visible
+reason and select the **complete serial schedule**. Mac and the existing heavy
+scaffold, list-key evidence and custom Cargo-target contexts also stay serial.
+Linux with fewer than four available CPUs stays serial to preserve its original
+browser-worker default.
+Update the resource and complete-file classification only after reviewing its
+process/resource effects; normal check never refreshes these hashes. The live release-gate
+record and narrative documents outside execution-fixture roots do not assign
+resources and are outside admission; their exact tracked bytes remain in the
+per-run seal. Package versions and locks remain exact reviewed inputs. The
+manifest contains complete RC4 and prospective 3.2.0 snapshots: one coordinated
+version selects the whole snapshot, never independent hashes per file. Only the
+27 precomputed `release-set.versionFiles` paths differ; mixed graphs, unknown
+versions or any other changed input select full serial. This prepares the
+version-only transition without changing the scheduler. A changed
+input, failed command, lost log or incomplete cleanup after work starts fails
+that invocation instead of retrying it serially.
+
+Every run prints its fresh external `forma-r17-*` evidence directory. CI retains
+admission/plan identities, both phases' complete worker logs and cleanup, the
+consumed build receipt, hidden browser result files and native-success evidence
+alongside the existing reports. A successful
+local or single hosted run does not establish N7. A qualifying 20-command campaign
+must time this normal entrypoint and retain the admitted mode and every original
+outcome, without mixing serial fallbacks or replacing failed observations.
+The maintainer [waived the extra campaign for 3.2.0](release/3.2-PERFORMANCE-DECISION.md);
+ordinary CI still runs this complete entrypoint, and no N7 pass is claimed.
+
 | Gate | Current owner |
 |---|---|
 | Workspace builds, unit tests, core/router types and packaging | `npm run check` builds/tests all five npm source packages and the three Rust crates. Published 3.0/3.1 records retain their original four-npm-package scope. |

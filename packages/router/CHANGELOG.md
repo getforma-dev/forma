@@ -1,11 +1,33 @@
 # Changelog
 
+## [3.2.0] - 2026-10-27
+
+- Release optional owned routing with browser, generated-HTML and typed native
+  adapters, persistent layouts, safe links, cancellation and history handling.
+- Preserve islands within compatible native owner groups and ordinary document
+  navigation across rendering profiles. Include typed actions, mutation
+  uncertainty, context revocation, bounded recovery, focus and scroll behavior.
+- Apply core's URL policy to `Link`, announce uncertain outcomes once, and remove
+  the unused `PreparedView.focus` type field.
+
+## Historical preparation checkpoints
+
 ## [Unreleased]
 
-Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
-3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
-is published. The development notes below retain their earlier scope; the RC3
-entry records the new coordinated preparation separately.
+- Guard `Link` URLs with core's existing policy without requiring an ambient
+  document when the caller supplies one.
+- Avoid repeating the unknown-submission warning in the live region while
+  retaining the persistent uncertainty marker and no-resend behavior.
+- Remove the unused `PreparedView.focus` declaration before stable 3.2.
+- Explain how islands and native navigation work together and how one
+  application can use different rendering profiles across document boundaries.
+
+The coordinated [3.2.0-rc.3 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)
+is published; the changes above are subsequent work. Stable 3.1.0 remains
+available. The [dated publication outcome](../../docs/release/3.2-RC3-PUBLICATION.md)
+supplements the historical preparation entry below.
+
+## Original router development scope
 
 - Add optional owned client navigation with ranked routes, persistent layouts,
   History API coordination, safe links, bounded speculation and three explicit
@@ -17,8 +39,8 @@ entry records the new coordinated preparation separately.
   outcome handling, context revocation, bounded recovery and accessible status,
   focus and scroll behavior.
 - Include source and real-browser regressions, packed release integration and an
-  opt-in typed Rust starter. These capabilities are included in published RC2 and
-  absent from stable Forma 3.1.0; the prepared RC3 successor remains unpublished.
+  opt-in typed Rust starter. These capabilities are included in published RC2
+  and RC3 and absent from stable Forma 3.1.0.
 
 ## [3.2.0-rc.3] - Prepared; publication pending
 

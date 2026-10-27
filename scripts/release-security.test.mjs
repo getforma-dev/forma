@@ -8,6 +8,9 @@ const expected = { commit, runtimeSha256: sha, harnessSources: securityHarnessHa
 function hostile() {
   return { schema: 1, passed: true, completeMatrix: true, selection: null, sourceCommit: commit, sourceClean: true,
     runtimeSha256: sha, catalogueSha256: sha, harnessSources: structuredClone(expected.harnessSources), pageErrors: [], requested: cases().length,
+    profileConcurrency: 2,
+    profileRuns: profiles.map((profile, index) => ({ profile, passed: true, cleanupComplete: true, runtimeSha256: sha,
+      origin: `http://127.0.0.1:${4000 + index * 2}`, otherOrigin: `http://127.0.0.1:${4001 + index * 2}`, policy: 'source-bound policy' })),
     requestedCapabilityControls: capabilityCases.length * profiles.length,
     cases: cases().map(({ id }) => ({ id, live: true, executed: 0, outsideReads: 0, unauthorizedRequests: 0 })),
     capabilities: capabilityCases.flatMap(({ id }) => profiles.map(profile => ({ id: `${id}/${profile}` }))),
@@ -22,6 +25,11 @@ test('P17 refuses partial, stale, duplicated, disconnected and unsafe hostile pr
   for (const mutate of [
     r => r.completeMatrix = false, r => r.sourceCommit = 'c'.repeat(40), r => r.sourceClean = false,
     r => r.runtimeSha256 = 'c'.repeat(64), r => delete r.harnessSources['observers.mjs'],
+    r => r.profileConcurrency = 3, r => r.profileRuns.pop(), r => r.profileRuns.reverse(),
+    r => r.profileRuns[0].passed = false, r => r.profileRuns[0].cleanupComplete = false,
+    r => r.profileRuns[0].runtimeSha256 = 'c'.repeat(64), r => r.profileRuns[0].error = 'cleanup failed',
+    r => r.profileRuns[0].otherOrigin = r.profileRuns[0].origin,
+    r => r.profileRuns[1].origin = r.profileRuns[0].origin,
     r => r.cases.pop(), r => r.cases[1] = r.cases[0], r => r.capabilities.pop(),
     r => r.cases[0].executed = 1, r => r.cases[0].outsideReads = 1,
     r => r.cases[0].unauthorizedRequests = 1, r => r.cases[0].live = false,

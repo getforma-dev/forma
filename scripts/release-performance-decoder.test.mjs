@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {DECODER_CSP,DECODER_PROFILE,DECODER_FIXTURES,decoderSource,decoderPayload,validateDecoder} from './release-performance-decoder.mjs';
+import {DECODER_CSP,DECODER_PROFILE,DECODER_32_PROFILE,DECODER_FIXTURES,decoderProfile,decoderSource,decoderPayload,validateDecoder} from './release-performance-decoder.mjs';
 
 import {decoder as valid} from './release-performance-test-fixtures.mjs';
 const sha=value=>createHash('sha256').update(value).digest('hex');
@@ -92,6 +92,30 @@ test('old every-sample policies and changed p95 identities cannot qualify',()=>{
   for(const mutate of [p=>{delete p.policy;},p=>{p.policy='public-decoder-p95-v0';},
     p=>{p.statistic='median';},p=>{p.maxP95Ms=30.0001;}]) {
     const report=valid();mutate(report.profile);
+    assert.throws(()=>validateDecoder(report),/actual measurement profile differs/);
+  }
+});
+test('3.2 explicitly accepts at most 30.7 ms without rewriting legacy profiles or other releases',()=>{
+  for(const version of ['3.2.0-rc.4','3.2.0']) {
+    const report=currentProof(version);
+    report.profile={...decoderProfile(version)};
+    assert.deepEqual(report.profile,DECODER_32_PROFILE);
+    for(const row of report.cases) {
+      for(const [index,sample] of row.samples.entries())sample.elapsedMs=index<2?90:30.7;
+      row.summary={minMs:30.7,medianMs:30.7,p95Ms:30.7,maxMs:90};
+    }
+    assert.equal(validateDecoder(report),report);
+    const historical=structuredClone(report);historical.profile={...DECODER_PROFILE};
+    assert.throws(()=>validateDecoder(historical),/p95: exceeds 30ms/);
+    const excessive=structuredClone(report);excessive.cases[1].samples[20].elapsedMs=30.7001;
+    excessive.cases[1].summary.p95Ms=30.7001;
+    assert.throws(()=>validateDecoder(excessive),/p95: exceeds 30.7ms/);
+    const corrupt=structuredClone(report);corrupt.controls[1].observation.calls=1;
+    assert.throws(()=>validateDecoder(corrupt),/incorrect component entry count/);
+  }
+  for(const version of ['3.0.0','3.1.0','3.2.1','3.3.0','3.2.0-beta.1','3.2.0-rc.0']) {
+    assert.equal(decoderProfile(version),DECODER_PROFILE);
+    const report=currentProof(version);report.profile={...DECODER_32_PROFILE};
     assert.throws(()=>validateDecoder(report),/actual measurement profile differs/);
   }
 });

@@ -1,0 +1,259 @@
+{
+  "schema": 2,
+  "stages": [
+    {
+      "id": "s00",
+      "label": "npm ci --ignore-scripts"
+    },
+    {
+      "id": "s01",
+      "label": "npm advisory gate (fails closed)"
+    },
+    {
+      "id": "s02",
+      "label": "npm audit signatures"
+    },
+    {
+      "id": "s03",
+      "label": "router design and reverse-engineering provenance are complete"
+    },
+    {
+      "id": "s04",
+      "label": "FMIR shared constants are current"
+    },
+    {
+      "id": "s05",
+      "label": "cargo fmt --all --check"
+    },
+    {
+      "id": "s06",
+      "label": "cargo clippy --locked --workspace --all-targets --all-features -- -D warnings"
+    },
+    {
+      "id": "s07",
+      "label": "cargo test --locked --workspace"
+    },
+    {
+      "id": "s08",
+      "label": "cargo test --locked -p forma-server --all-features"
+    },
+    {
+      "id": "s09",
+      "label": "actual renderer 3.1 accepts older writers and refuses 3.2 before bind"
+    },
+    {
+      "id": "s10",
+      "label": "cargo doc --locked --workspace --no-deps"
+    },
+    {
+      "id": "s11",
+      "label": "npm run build (compiler, build, core, router, create-app)"
+    },
+    {
+      "id": "s12",
+      "label": "npm test --workspaces"
+    },
+    {
+      "id": "s13",
+      "label": "declared props: compiler bytes match the native typed-handler fixtures"
+    },
+    {
+      "id": "s14",
+      "label": "packed compiler API and actual optional-compiler compatibility"
+    },
+    {
+      "id": "s15",
+      "label": "packed integrity gate: resource observations and mandatory native checks"
+    },
+    {
+      "id": "s16",
+      "label": "P17's fixture applications and measurement step: staging, pruned lock, resolution, budgets (FORMA-188)"
+    },
+    {
+      "id": "s17",
+      "label": "packed decoder: actual built compiler regenerates the timed contracts"
+    },
+    {
+      "id": "s18",
+      "label": "core: typecheck, size gate, packaging lint, probe anchors"
+    },
+    {
+      "id": "s19",
+      "label": "expression qualification:100000 generated cases, removed-charge control and independent nightly floor"
+    },
+    {
+      "id": "s20",
+      "label": "router: types and packed public exports"
+    },
+    {
+      "id": "s21",
+      "label": "build: the packed forma-raw-lint bin"
+    },
+    {
+      "id": "s22",
+      "label": "FMIR contract: historical and current-writer corpus preserve exact payloads and HTML"
+    },
+    {
+      "id": "s23",
+      "label": "e2e lanes: fixtures, the SSR site, the preview frame, the fixture applications"
+    },
+    {
+      "id": "s24",
+      "label": "fixture applications' servers: rustfmt and clippy (FORMA-188; an e2e workspace member)"
+    },
+    {
+      "id": "s25",
+      "label": "browser tests: build's worker upgrade, the lanes, core's suite (Chromium)"
+    },
+    {
+      "id": "s26",
+      "label": "native router: real compiled owners, server and Chromium navigation controls"
+    },
+    {
+      "id": "s27",
+      "label": "hostile widgets: complete reviewed-tier matrix and real removed-grant control"
+    },
+    {
+      "id": "s28",
+      "label": "parity harness (FORMA-183): generator, comparison, serializer, renderBoth"
+    },
+    {
+      "id": "s29",
+      "label": "blocking parity: step 1, 100 states, typed P1/P2/P3 with no exceptions"
+    },
+    {
+      "id": "s30",
+      "label": "value rules: deterministic generator, actual native metadata, 1,000 comparisons/rule"
+    },
+    {
+      "id": "s31",
+      "label": "N3: actual indexed public-set timing, serial Chromium"
+    }
+  ],
+  "serial": [
+    "s00",
+    "s01",
+    "s02",
+    "s03",
+    "s04",
+    "s05",
+    "s06",
+    "s07",
+    "s08",
+    "s09",
+    "s10",
+    "s11",
+    "s12",
+    "s13",
+    "s14",
+    "s15",
+    "s16",
+    "s17",
+    "s18",
+    "s19",
+    "s20",
+    "s21",
+    "s22",
+    "s23",
+    "s24",
+    "s25",
+    "s26",
+    "s27",
+    "s28",
+    "s29",
+    "s30",
+    "s31"
+  ],
+  "beforeFork": [
+    "s07",
+    "s08",
+    "scheduler-controls",
+    "s20",
+    "s22",
+    "s23",
+    "s24",
+    "s15-cargo",
+    "s25-worker",
+    "s25-prepare"
+  ],
+  "a": [
+    "s12-overlap",
+    "s13",
+    "s14",
+    "s15-controls",
+    "s16",
+    "s17",
+    "s18",
+    "s19",
+    "s21"
+  ],
+  "b": [
+    "s27",
+    "s25-browser",
+    "s25-core-overlap"
+  ],
+  "afterJoin": [
+    "s12-exclusive",
+    "s25-core-exclusive",
+    "s26",
+    "s28",
+    "s29",
+    "s30",
+    "s31"
+  ],
+  "replacements": {
+    "s12": [
+      "s12-overlap",
+      "s12-exclusive"
+    ],
+    "s15": [
+      "s15-cargo",
+      "s15-controls"
+    ],
+    "s25": [
+      "s25-worker",
+      "s25-browser",
+      "s25-prepare",
+      "s25-core-overlap",
+      "s25-core-exclusive"
+    ]
+  },
+  "additional": [
+    "scheduler-controls"
+  ],
+  "resources": {
+    "a": {
+      "browserWorkers": 0,
+      "cargoPools": 0
+    },
+    "b": {
+      "browserWorkers": 2,
+      "cargoPools": 0
+    }
+  },
+  "policy": "Every current complete core file occurs exactly once. Every exclusive file is its own sequential invocation after both lanes and cleanup join. Original workload bodies live only in check-stages.sh.",
+  "compileCargo": [
+    "s05",
+    "s06",
+    "s09",
+    "s10"
+  ],
+  "compileNpm": [
+    "s00",
+    "s01",
+    "s02",
+    "s03",
+    "s04",
+    "s11"
+  ],
+  "compileResources": {
+    "cargo": {
+      "browserWorkers": 0,
+      "cargoPools": 1
+    },
+    "npm": {
+      "browserWorkers": 0,
+      "cargoPools": 0
+    }
+  }
+}

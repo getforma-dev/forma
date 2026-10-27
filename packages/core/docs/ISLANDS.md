@@ -56,6 +56,13 @@ Browser-shell route remains an ordinary browser mount without this preflight.
 
 ## Native navigation owners
 
+Islands can participate in client-side navigation without moving page rendering
+into JavaScript. The optional router's native adapter keeps compatible layouts
+and their islands alive, disposes departing owners, and activates the incoming
+owners' declared islands. Ordinary islands pages do not need a router. Start with
+the [routing guide](../../../docs/ROUTING.md#islands-and-navigation-work-together)
+for application patterns; the APIs below describe the lower-level integration.
+
 The optional `@getforma/core/navigation` entry provides the router's low-level
 owner lifecycle. This integration is separate from ordinary `activateIslands()`:
 the router admits a native response, imports its inert HTML into the destination

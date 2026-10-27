@@ -28,11 +28,15 @@ if (major !== 24 || minor < 22) throw Error('Use the repository-pinned Node 24 t
 const runDir = join(outputDir, new Date().toISOString().replace(/[:.]/g, '-') + '-' + process.pid);
 await mkdir(runDir, { recursive: true });
 process.chdir(repo);
-const env = { ...process.env, PATH: dirname(process.execPath) + delimiter + (process.env.PATH ?? ''), CARGO_BUILD_JOBS: '3', CARGO_TARGET_DIR: join(fixture,'server/target') };
+// Cargo checks the locked fixture's own dependency/features graph on every run.
+// Share its target directory with the workspace checks already performed by R17
+// so matching dependency artifacts need not be compiled into a second directory.
+const cargoTargetDir = join(repo, 'target');
+const env = { ...process.env, PATH: dirname(process.execPath) + delimiter + (process.env.PATH ?? ''), CARGO_BUILD_JOBS: '3', CARGO_TARGET_DIR: cargoTargetDir };
 const children = new Map();
 const commands = [];
 let server, origin, status = 'running', interrupted = false;
-const receipt = { startedAt: new Date().toISOString(), node: process.version, engines: engines.split(','), commands, scope: 'Source integration; no packed release or deployment qualification.' };
+const receipt = { startedAt: new Date().toISOString(), node: process.version, engines: engines.split(','), cargoTargetDir, commands, scope: 'Source integration; no packed release or deployment qualification.' };
 function owned(command, commandArgs, log, extra = {}) {
   commands.push({ command, args: commandArgs });
   const stream = createWriteStream(join(runDir, log), { flags: 'wx' });
@@ -58,7 +62,7 @@ try {
   // retains its diagnostics in size/measurement.log before Cargo or browsers.
   await run(process.execPath, [join(repo,'scripts/qualify-router-size.mjs'),join(runDir,'size')], 'paired-size.log');
   await run('cargo', ['build','--locked','--manifest-path',join(fixture,'server/Cargo.toml')], 'server-build.log');
-  const binary = join(fixture, `server/target/debug/forma-router-native-fixture${process.platform === 'win32' ? '.exe' : ''}`);
+  const binary = join(cargoTargetDir, `debug/forma-router-native-fixture${process.platform === 'win32' ? '.exe' : ''}`);
   if (interrupted) throw Error('Proof run interrupted');
   server = owned(binary, [], 'server.log', { PORT:'0' });
   origin = await new Promise((resolveOrigin, reject) => {

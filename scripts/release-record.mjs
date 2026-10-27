@@ -15,6 +15,7 @@ import { RELEASE_RECORD_MAX_BYTES } from './release-record-limits.mjs';
 import { SOAK_GATE, readSoakDeferral, soakDisposition } from './release-soak-deferral.mjs';
 import { consumePublicationRecovery } from './release-publication-recovery.mjs';
 import { consumeProviderPlaceholder } from './release-provider-placeholder.mjs';
+import { usesFinalWaiver, readFinalWaiver } from './release-final-waiver.mjs';
 
 export function releaseRecordBytes(record, maxBytes = RELEASE_RECORD_MAX_BYTES) {
   const bytes = Buffer.from(JSON.stringify(record, null, 2) + '\n');
@@ -49,7 +50,13 @@ export async function qualificationEvidence({ set, reportPath, directory, env = 
   assert.equal(report.passed, true, 'P17 did not pass');
   const fields = { p17Evidence: { runId, runAttempt, artifactName: 'release-p17', manifestSha256: env.P17_MANIFEST_SHA256 } };
   const assets = [];
-  if (milestoneOf(set.tag.slice(1)) === 'rc') {
+  const finalWaiver = milestoneOf(set.tag.slice(1)) === 'final' && usesFinalWaiver(set.contracts);
+  let retainedWaiver;
+  if (finalWaiver) {
+    assertMilestoneReady(set.contracts, set.tag.slice(1));
+    retainedWaiver = readFinalWaiver({ root, contracts: set.contracts, version: set.tag.slice(1), commit: set.commit });
+  }
+  if (milestoneOf(set.tag.slice(1)) === 'rc' || finalWaiver) {
     const audit = readRcAudit(set.commit, root);
     const contents = [audit.reportBytes, audit.inputBytes, Buffer.from(JSON.stringify(audit.binding, null, 2) + '\n'), audit.evidenceBytes];
     fields.d14 = {};
@@ -61,6 +68,13 @@ export async function qualificationEvidence({ set, reportPath, directory, env = 
     }
   }
   if (milestoneOf(set.tag.slice(1)) === 'final') {
+    if (retainedWaiver) {
+      const file = join(directory, retainedWaiver.assetName);
+      writeFileSync(file, retainedWaiver.bytes);
+      fields.releaseWaiver = { ...retainedWaiver.disposition, file: retainedWaiver.assetName, sha256: retainedWaiver.sha256 };
+      assets.push(file);
+      return { fields, assets, report };
+    }
     // The check job authenticates the hosted result before either publisher.
     // Record the same immutable source pointer; do not replace that preflight
     // with a post-publication network check or manufacture a new pass here.
@@ -117,7 +131,9 @@ export function releaseNotes(set, record, entry, milestone) {
   const later = Object.entries(milestone.later).map(([name, gates]) => `- before ${name} (${set.contracts.milestones[name].plan}): ${gates.join('; ')}`);
   const pending = later.length ? `Pending before later milestones:\n${later.join('\n')}` : 'Pending before later milestones: none.';
   const rows = set.packages.map(p => `| ${p.name} | ${p.version} | \`${p.sha256}\` |`).join('\n');
-  const gates = milestone.deferred?.length
+  const gates = milestone.waived?.length
+    ? 'The 3.2 maintainer decision waives active soak and a new N7 twenty-run campaign, plus an extra prerelease solely for soak and a staged rollback exercise. Zero active soak credit, no soak or N7 pass, and no future soak promise are claimed. All remaining publication gates are done; the exact decision and final-source independent audit are attached.'
+    : milestone.deferred?.length
     ? 'All other gates are done. FORMA-145 soak is deferred until after this final release under L-66-QUOTA: 3,600 active seconds remain required on the authenticated RC; zero credit and no burn-in pass are claimed.'
     : `Every gate of ${milestone.name} and its predecessors is done.`;
   return `${entry}\n\nMilestone: ${milestone.name} (${milestone.plan}), ${standing}. ${gates}\n\n${pending}\n\nCommit: \`${set.commit}\` · run: ${set.run} · CI: ${record.ciRun}\n\n| Package | Version | SHA-256 |\n|---|---|---|\n${rows}\n\nContract versions: \`${JSON.stringify(set.contracts)}\`\n\nTag-event run to record: ${record.elapsedSeconds.toFixed(1)} seconds; target 1800 seconds. Full measurements and DS11 hashes are in the attached JSON.\n${measurementsNotes(record.measurements ?? {})}`;

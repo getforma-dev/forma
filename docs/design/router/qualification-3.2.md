@@ -1,5 +1,34 @@
 # FORMA-301: 3.2 candidate qualification
 
+## Stable release preparation — revised 2026-10-27 decision
+
+The maintainer directed a streamlined stable 3.2.0 release. The
+[decision](../../release/3.2-PERFORMANCE-DECISION.md) explicitly waives the extra
+20-command N7 campaign and one-hour active soak; neither is passed. It also
+removes new RC publication solely for soak inputs and the staged production
+rollback exercise. Security, core correctness, independent source review,
+ordinary CI, tagged qualification and trusted publishing remain required.
+The website will update once, after stable publication, with current 3.2.0
+docs, examples and downloads and live deployment verification.
+
+Source `0e116ebf77cb34e15c04d946a706ac0f0556db93` has successful original
+[CI 40537713511](https://github.com/getforma-dev/forma/actions/runs/40537713511)
+(19 successful jobs and one expected legacy scaffold skip). Its ordinary R17
+command took 620 seconds; that is one observation, not an N7 distribution.
+Its original [P17 40537706950](https://github.com/getforma-dev/forma/actions/runs/40537706950)
+passes all 75 checks in 1,303.893 seconds, with independently authenticated raw
+evidence, security controls and complete cleanup. Decoder p95 values of 9.8 and
+27.7 ms satisfy the original 30 ms bound without an exception.
+The same archive set passes 90 native cases and the unchanged paired-size
+limits: 12,276/12,288 incremental gzip bytes and 40,704/65,536 group bytes.
+
+Stable preparation changes coordinated versions, release policy and current
+documentation. Earlier execution is not relabeled as stable-tag execution.
+Final source audit, ordinary stable-source CI and the actual tagged P17 still
+precede publication. Original checkpoints below retain their measured identities,
+failed results and then-applicable requirements.
+
+
 ## Successor status — 2026-10-27 UTC
 
 [3.2.0-rc.2 is published](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
@@ -8,11 +37,40 @@ DS12 and D14 are authenticated; actual attempt 2 passed 75/75 P17 in
 1,236.041 seconds. Attempt 1's failed N1 result remains a failed observation.
 RC2's finite RC1 inventory receipt does not qualify RC1 for performance or soak.
 
-This checkout prepares **unpublished 3.2.0-rc.3**. Its
-[preparation record](../../release/3.2-RC3-PREPARATION.md) records the finite npm
-placeholder receipt, three-file duplicate-work reduction and current limits:
-failed full SR2, unestablished N7 timing conformance, missed RC2 outer clock,
-and outstanding site/device/stable/soak acceptance. RC3 requires its own evidence.
+[3.2.0-rc.3 is published](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)
+from `0cf47cdd6b487543f488f60695f74553282bbe9c`. Its
+[publication outcome](../../release/3.2-RC3-PUBLICATION.md) authenticates all eight
+archives, normal trusted publication and DS12, plus the finite inventory-only
+npm placeholder receipt. Original attempt 1 failed; the separately authorized
+whole P17 repeat passed 75/75 in 1,266.953 seconds. The outer publication clock
+still missed its target. Full SR2 is not closed: FORMA-224's historical derive
+bootstrap record remains separate.
+
+This checkout prepares **unpublished 3.2.0-rc.4** for reviewed router cleanup and
+the maintained R17 schedule. Its [preparation record](../../release/3.2-RC4-PREPARATION.md)
+states the fresh qualification required. Later observations change these specific
+dispositions without rewriting their original evidence:
+
+| Area | Later observation | Still required |
+|---|---|---|
+| R17 / N7 | Earlier complete campaigns failed at p95 748.73s and 665.29s. Campaign 40518419051 on source 79153778 finished with 19 successful commands and one watch-recovery failure. All 20 original durations remain retained; raw rank19 is 624.07s and maximum 688.08s. The failed 246.81s command is incomplete workload, not an accepted performance sample. | Correct the watch failure and qualify the reviewed optimizations through exact-source CI and a new complete 20-command campaign. No replacement samples or timing exception. |
+| Router cleanup / RT-A01 / RT-A04 | Source 79153778 passes independently authenticated CI 40514491500, packed P17 run 40514976863 (75/75, 1,345.655s) and packed native 90. The targeted watch-race fix subsequently recovers edits made during both split and non-split refused builds; original causal failures remain retained. | Fresh qualification of the corrected source and publication. The earlier Mac confirmation remains scoped to its original preview; no new speech-output observation is claimed. |
+| Size / RT-M01 | The first RC4 source comparison failed at 12,296 incremental bytes. The actual 79153778 sealed archives subsequently pass 12,276 incremental and 40,704 total group bytes against unchanged 12,288/65,536 limits, with independent consumer review. | Bind final source/archives and review applicability; earlier execution is not relabeled as a successor execution. |
+| Site / RT-D02 | The registry-pinned RC2 site, native lab, docs and downloads are deployed on OVH as source 8f272729078ef8d61552da7b3a4aadcef22bea9c, image sha256:8d7adaa4387678465725bc90cd58919750478d107b155aaf7fa25b12d2a086e7. Independent acceptance binds local 92, production 92, portal 66 and 244 live download members, including the theme/search/guide fixes. | Actual production rollback, final stable pins and their complete deployment flow. |
+| Recovery / RT-X02 | Original local rollback and bounded recovery evidence remain applicable within their recorded scopes. The independently reviewed production plan requires actual current/previous identities and an incompatible native-group document. | Execute the production rollback/rollforward with exact restored-artifact verification; archive availability alone is insufficient. |
+| Devices / RT-A03–A05 and stable soak | The user confirmed the six Mac tasks and gave positive overall feedback for the live RC2 iPhone checklist, reporting iPhone 17 Pro Max/iOS 26.7.1. Bounded manual applicability is independently reviewed. Published RC3 has no credited active soak. | Bind final source applicability and at least 3,600 fault-free credited active hosted seconds on a settled qualified same-line RC. No fresh device session is inferred. |
+
+The final 8f live-site review is retained in the external FORMA-301 qualification
+workspace with SHA256
+`43788a8c60585ad682c78ae5b676c33ca47de042a98e62b0d7418d0e9729eba8`.
+The current 7915 source CI, packed P17 and native/size review receipts have SHA256
+`92b1642ff679e64277718d4b09c40ef8681729347001e5c6b2a9d19eb59985d1`,
+`d7d892fa26e15606c9680f35cb9dd9d43f257dab5bdc303c11ad3e2893d335a1`
+and `8b3d0daf8bf17bdc1f2c7788540a60907678dca6fa8dbe04f60bac367727ffcf`.
+The failed N7 campaign review is
+`0b38d1b971eae04033a236360b247541055a020174c315a960693a1894193aeb`.
+These identities locate scoped evidence; this document does not present local
+receipts as publicly hosted artifacts or claim the whole ledger is closed.
 
 The original checkpoint below, including **all 57 row dispositions**, measured
 source identities and the unchanged [evidence index](evidence/acceptance-3.2.json),

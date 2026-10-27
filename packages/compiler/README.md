@@ -11,10 +11,10 @@ The Vite plugins (`formaCompiler`, `formaServer`), `compileFormaJSX` and `transf
 
 ## Install
 
-These examples target the published, coordinated `3.0.0` package set. Select that version explicitly:
+These examples use the coordinated `3.2.0` package set. Select that version explicitly:
 
 ```bash
-npm install -D @getforma/compiler@3.0.0
+npm install -D @getforma/compiler@3.2.0
 ```
 
 ## esbuild SSR Plugin — `formaSsrPlugin`
@@ -65,7 +65,7 @@ current wire contract.
 ### Build diagnostics
 
 The [server-renderable subset and diagnostic catalogue](docs/subset.md) define
-what 3.0 can publish. Unsupported native constructs fail the build with a stable
+what the compiler can publish. Unsupported native constructs fail the build with a stable
 code, original source location, reason and fix. There is no warning-only SSR mode
 or placeholder module. `strict: false` and `FORMA_STRICT=0` remain accepted as
 compatibility inputs and cannot downgrade an error.
@@ -229,7 +229,7 @@ imports are not package exports. The runtime surface is pinned by
 ## Peer Dependencies
 
 - `esbuild >=0.17.0` (optional — for esbuild SSR plugin)
-- `@getforma/core ^3.0.0` for the current minor. Patch differences are compatible.
+- `@getforma/core ^3.2.0` for the current minor. Patch differences are compatible.
 
 ## Part of the Forma Stack
 
@@ -282,6 +282,15 @@ A build integration may read records from its final guarded publisher, after all
 other validation hooks; commit them together with that cycle's graph and
 manifest. Refused watch cycles retain the previously accepted records and files.
 The compiler exposes no mutable `onStart` metadata callback.
+
+If source files or their resolutions change during compilation, the compiler
+refuses that generation and calls the optional `onSourcesChanged(page)` callback,
+including when another compilation error already exists. A custom watch owner
+can use this notification to schedule a fresh build after the current cycle
+finishes. Do not await `rebuild()` inside `onEnd`; it can join the cycle whose
+callback is still running. `@getforma/build` handles this recovery for both split
+and non-split builds, coalesces requests, and stops after an unchanged invalid
+generation. Cancellation and disposal clear pending recovery work.
 
 
 ### Islands-only browser entries (FORMA-105)

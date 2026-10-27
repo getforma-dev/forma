@@ -100,7 +100,11 @@ class CompilationContext {
   unchanged():boolean {
     // Keep each contributor's resolution checks, plus any union-only reads that
     // the adoption collector makes through the prepared source snapshot.
-    return [...this.participants.values()].every(record=>record.input?.snapshot.unchanged())&&this.prepare().snapshot.unchanged();
+    // Refused builds may never have prepared a browser product. Inspect only
+    // snapshots actually observed; preparing here can throw for conflicting
+    // contributions and would hide the source change that needs recovery.
+    return [...this.participants.values()].every(record=>record.input?.snapshot.unchanged())
+      &&(!this.prepared||this.prepared.snapshot.unchanged());
   }
 }
 

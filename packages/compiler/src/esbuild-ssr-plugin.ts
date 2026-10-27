@@ -72,6 +72,10 @@ export interface SsrPluginOptions {
   /** Receives the page's diagnostics after each emission (`@getforma/build`
    *  gathers them for its result, its JSON report and aggregate failure). */
   onDiagnostics?: (diagnostics: Diagnostic[], page: string) => void;
+  /** Reports a source/resolution change during this compilation, even when it
+   * was refused. A watch owner may queue a fresh build after this one completes;
+   * the callback must not await a rebuild from inside onEnd. */
+  onSourcesChanged?: (page: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -614,10 +618,12 @@ export function formaSsrPlugin(options: SsrPluginOptions): Plugin {
         return {...captured,loader,resolveDir:dirname(file)};
       });
       build.onEnd(result=>{
+        const unchanged=compilation.unchanged();
+        if(!unchanged)options.onSourcesChanged?.(options.page);
         if(result.errors.length)return;
         const errors:PartialMessage[]=diagnostics.filter(d=>d.strict).map(d=>({id:d.code,text:`${d.code} ${d.message}`,location:d.file?{file:d.file,line:d.line||1,column:Math.max(0,d.column-1)}:null,notes:[{text:`why: ${d.why}`},{text:`fix: ${d.fix}`}]}));
         if(fatal&&!errors.length)errors.push({text:`BUILD-606 IR emission failed for ${options.page}: ${fatal.message}`});
-        if(!fatal&&!compilation.unchanged())errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
+        if(!unchanged)errors.push({text:`BUILD-610 sources changed while compiling ${options.page}; retry to publish a coherent browser/IR pair`});
         if(errors.length)return {errors};
         if(!product||!entry||!client)return {errors:[{text:`BUILD-610 ${options.page} requires a successful native product; a placeholder cannot establish static or island entry policy`}]};
         if(!bytes||!result.outputFiles)return {errors:[{text:`BUILD-606 missing paired output for ${options.page}`}]};

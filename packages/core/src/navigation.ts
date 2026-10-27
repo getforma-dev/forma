@@ -8,6 +8,9 @@ import {
 } from './dom/navigation-state.js';
 import { IslandStateError } from './dom/island-state.js';
 
+/** @internal Shared URL policy for router-created anchors, including caller-owned documents. */
+export { isDangerousUrl } from './security/url-safety.js';
+
 export type NativeIslandRegistry = Record<string, (...args: never[]) => unknown>;
 export interface NativeOwnerRoot {
   readonly root: HTMLElement;

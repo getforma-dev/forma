@@ -15,6 +15,12 @@ MILESTONES = %w[alpha beta rc final].freeze
 GATE_KEY = %r{\AFORMA-\d{3}( [A-Za-z0-9()./-]+)*\z}.freeze
 PUBLISH = { 'publish-crates' => 'crates', 'publish-npm' => 'npm' }.freeze
 ROUTER_BOOTSTRAP = "${{ github.ref == 'refs/tags/v3.2.0-rc.1' && secrets.NPM_ROUTER_BOOTSTRAP_TOKEN || '' }}".freeze
+FINAL_WAIVER_GATES = ['FORMA-145 soak', 'FORMA-301 N7'].freeze
+FINAL_WAIVER_POLICY = {
+  'decision' => 'FORMA-3.2-STREAMLINED-RELEASE-20261027', 'finalVersion' => '3.2.0',
+  'reference' => 'docs/release/3.2-STREAMLINED-RELEASE.json',
+  'sha256' => 'f1ff0da25d3771916c4326b40141ca8220c81a3900af76a9b3ccb49482726b8e'
+}.freeze
 VERIFY = 'bash scripts/release-artifacts.sh verify "$RUNNER_TEMP/release" "$RECORD_SHA256"'
 NEEDS = {
   'check' => [], 'engines' => ['check'], 'pack' => ['check'], 'verify' => %w[check pack],
@@ -259,8 +265,14 @@ end
 
 def soak_deferral?(version, milestone, ticket, gate)
   version == '3.0.0' && milestone == 'final' && ticket == 'FORMA-145 soak' &&
-    gate.is_a?(Hash) && gate['status'] == 'deferred' &&
+    gate.is_a?(Hash) && gate['status'] == 'deferred' && !gate.key?('waiver') &&
     gate['deferral'] == { 'decision' => 'L-66-QUOTA', 'finalVersion' => '3.0.0', 'reference' => 'docs/release/post-release-soak.json' }
+end
+
+def final_waiver?(version, milestone, ticket, gate)
+  version == '3.2.0' && milestone == 'final' && FINAL_WAIVER_GATES.include?(ticket) &&
+    gate.is_a?(Hash) && gate.keys.sort == %w[scope status waiver] && gate['status'] == 'waived' &&
+    gate['waiver'] == FINAL_WAIVER_POLICY
 end
 
 def contract_violations(contracts)
@@ -270,20 +282,22 @@ def contract_violations(contracts)
   out << 'C5 the contract must name the one release version its gates are written for (X.Y.Z, 3.0.0 or later)' unless contracts['version'].is_a?(String) && contracts['version'].match?(/\A(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\z/) && contracts['version'].split('.').first.to_i >= 3
   milestones = contracts['milestones']
   return out + ['C1 contract must name exactly alpha, beta, rc and final, in that order'] unless milestones.is_a?(Hash) && milestones.keys == MILESTONES
-  seen = {}
+  seen = {}; waived = []
   milestones.each do |name, m|
     well_formed = m.is_a?(Hash) && m['plan'].to_s.match?(/\AM\d\z/) && m['gates'].is_a?(Hash) && !m['gates'].empty?
     out << "C2 #{name} needs a plan milestone and non-empty gates" unless well_formed
     next unless m.is_a?(Hash) && m['gates'].is_a?(Hash)
     m['gates'].each do |ticket, gate|
       out << "C2 #{name}: #{ticket} is not a ticket gate" unless ticket.is_a?(String) && ticket.match?(GATE_KEY)
-      ordinary = gate.is_a?(Hash) && %w[done pending].include?(gate['status']) && !gate.key?('deferral')
-      stated = gate.is_a?(Hash) && (ordinary || soak_deferral?(contracts['version'], name, ticket, gate)) && gate['scope'].is_a?(String) && !gate['scope'].strip.empty?
+      ordinary = gate.is_a?(Hash) && %w[done pending].include?(gate['status']) && !gate.key?('deferral') && !gate.key?('waiver')
+      waived << ticket if gate.is_a?(Hash) && gate['status'] == 'waived'
+      stated = gate.is_a?(Hash) && (ordinary || soak_deferral?(contracts['version'], name, ticket, gate) || final_waiver?(contracts['version'], name, ticket, gate)) && gate['scope'].is_a?(String) && !gate['scope'].strip.empty?
       out << "C2 #{name}: #{ticket} needs a done/pending status and a scope" unless stated
       out << "C3 #{ticket} gates both #{seen[ticket]} and #{name}" if seen.key?(ticket)
       seen[ticket] = name
     end
   end
+  out << 'C2 exactly both 3.2 non-security waivers must be stated together' unless waived.empty? || waived.sort == FINAL_WAIVER_GATES.sort
   out
 end
 
@@ -314,6 +328,13 @@ if ARGV.include?('--self-test') && errors.empty?
   # L-66-QUOTA belongs to the 3.0.0 contract alone, so the accepted case names
   # that release whatever line the live contract is written for.
   deferred = Marshal.load(Marshal.dump(contracts))
+  deferred['milestones'].each_value do |milestone|
+    milestone['gates'].each_value do |gate|
+      if gate['status'] == 'waived'
+        gate['status'] = 'pending'; gate.delete('waiver')
+      end
+    end
+  end
   deferred['version'] = '3.0.0'
   deferred['milestones']['final']['gates']['FORMA-145 soak'].merge!('status' => 'deferred', 'deferral' => {
     'decision' => 'L-66-QUOTA', 'finalVersion' => '3.0.0', 'reference' => 'docs/release/post-release-soak.json'
@@ -338,6 +359,22 @@ if ARGV.include?('--self-test') && errors.empty?
   deferral_seeds.each do |name, mutate|
     seeded = Marshal.load(Marshal.dump(deferred)); mutate.call(seeded)
     errors << "self-test failed to reject soak deferral #{name}" if contract_violations(seeded).empty?
+  end
+  waived = Marshal.load(Marshal.dump(contracts)); waived['version'] = '3.2.0'
+  FINAL_WAIVER_GATES.each { |ticket| waived['milestones']['final']['gates'][ticket] = { 'status' => 'waived', 'scope' => 'finite synthetic non-security disposition', 'waiver' => FINAL_WAIVER_POLICY.dup } }
+  errors << 'self-test rejected explicit 3.2 final waivers' unless contract_violations(waived).empty?
+  waiver_seeds = [
+    ['wrong release', ->(c) { c['version'] = '3.2.1' }],
+    ['security gate waived', ->(c) { c['milestones']['rc']['gates']['FORMA-145 audit'] = c['milestones']['final']['gates'].delete('FORMA-301 N7') }],
+    ['wrong decision', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['waiver']['decision'] = 'other' }],
+    ['wrong human evidence', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['waiver']['sha256'] = '0' * 64 }],
+    ['missing second waiver', ->(c) { c['milestones']['final']['gates'].delete('FORMA-301 N7') }],
+    ['done with waiver', ->(c) { c['milestones']['final']['gates']['FORMA-301 N7']['status'] = 'done' }],
+    ['future obligation added', ->(c) { c['milestones']['final']['gates']['FORMA-145 soak']['deferral'] = {} }]
+  ]
+  waiver_seeds.each do |name, mutate|
+    seeded = Marshal.load(Marshal.dump(waived)); mutate.call(seeded)
+    errors << "self-test failed to reject final waiver #{name}" if contract_violations(seeded).empty?
   end
   seeds = [
     ['branch trigger', 'T1', ->(d) { d['on']['push']['branches'] = ['main'] }],
@@ -382,11 +419,13 @@ if ARGV.include?('--self-test') && errors.empty?
   end
   puts "#{seeds.length} SR13/SR43 workflow and #{contract_seeds.length} milestone-contract seeded violations rejected" if errors.empty?
   puts "explicit post-release soak accepted; #{deferral_seeds.length} invalid deferrals rejected" if errors.empty?
+  puts "explicit 3.2 final waivers accepted; #{waiver_seeds.length} invalid waivers rejected" if errors.empty?
   errors << 'release helper tests failed' unless system('node', '--test', *Dir.glob('scripts/release*.test.mjs').sort)
 end
 abort(errors.join("\n")) unless errors.empty?
 ready = MILESTONES.select do |name|
-  MILESTONES[0..MILESTONES.index(name)].all? { |m| contracts['milestones'][m]['gates'].all? { |ticket, g| g['status'] == 'done' || (name == 'final' && soak_deferral?(contracts['version'], m, ticket, g)) } }
+  MILESTONES[0..MILESTONES.index(name)].all? { |m| contracts['milestones'][m]['gates'].all? { |ticket, g| g['status'] == 'done' || (name == 'final' && (soak_deferral?(contracts['version'], m, ticket, g) || final_waiver?(contracts['version'], m, ticket, g))) } }
 end
 puts "release workflow: tag → exact CI → (locked pack → P17) alongside three engines → crates → npm → record; both verification gates required before publication; credential jobs constrained; milestones ready to publish: #{ready.empty? ? 'none' : ready.join(', ')}"
 puts 'FORMA-145 soak: deferred after final 3.0.0 under L-66-QUOTA; zero active credit, not passed' if contracts.dig('milestones', 'final', 'gates', 'FORMA-145 soak', 'status') == 'deferred'
+puts '3.2 final: active soak and new N7 campaign waived; zero active credit, neither passed, no future soak promise' if contracts.dig('milestones', 'final', 'gates', 'FORMA-145 soak', 'status') == 'waived'

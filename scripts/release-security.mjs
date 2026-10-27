@@ -24,6 +24,16 @@ export function validateHostileProof(report, { commit, runtimeSha256, harnessSou
   assert.equal(report.runtimeSha256, runtimeSha256, 'hostile runtime differs from candidate bytes');
   assert.deepEqual(report.harnessSources, harnessSources, 'hostile harness differs from current source');
   assert.deepEqual(report.pageErrors, []);
+  assert.equal(report.profileConcurrency, 2, 'full profiles must retain the two-context ceiling');
+  assert.deepEqual(report.profileRuns.map(row => row.profile), profiles, 'profile evidence missing or reordered');
+  for (const row of report.profileRuns) {
+    assert.equal(row.passed, true); assert.equal(row.cleanupComplete, true);
+    assert.equal(row.runtimeSha256, runtimeSha256); assert.equal(row.error, undefined);
+    assert.notEqual(row.origin, row.otherOrigin, 'a profile must retain two distinct origins');
+    assert.equal(typeof row.policy, 'string');
+  }
+  assert.equal(new Set(report.profileRuns.slice(0, 2).flatMap(row => [row.origin, row.otherOrigin])).size, 4,
+    'concurrent profiles must not share an origin or request journal');
   const expected = cases().map(item => item.id);
   const expectedCapabilities = capabilityCases.flatMap(item => profiles.map(profile => `${item.id}/${profile}`));
   assert.equal(report.requested, expected.length);

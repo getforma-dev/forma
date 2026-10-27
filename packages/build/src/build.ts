@@ -14,6 +14,7 @@ import * as esbuild from 'esbuild';
 import { generateManifest } from './manifest.js';
 import { BUILD_WRITER_VERSION, checkProjectCompatibility, requireCompatibleCompiler, resolveAppName } from './compatibility.js';
 import { compatibilityGuard } from './compatibility-watch.js';
+import { watchSourceRecovery } from './watch-source-recovery.js';
 import { duplicateCoreDiagnostic } from './core-instances.js';
 import { createHash } from 'node:crypto';
 import {
@@ -609,10 +610,11 @@ type SsrPluginFactory = (opts: {
   navigationOwner?: boolean;
   strict?: boolean;
   onDiagnostics?: (diagnostics: CompilerDiagnostic[], page: string) => void;
+  onSourcesChanged?: (page: string) => void;
 }) => esbuild.Plugin;
 
 /** What every SSR plugin instance of one build is given besides its page. */
-type SsrPluginShared = Pick<Parameters<SsrPluginFactory>[0], 'strict' | 'onDiagnostics'>;
+type SsrPluginShared = Pick<Parameters<SsrPluginFactory>[0], 'strict' | 'onDiagnostics' | 'onSourcesChanged'>;
 
 // ---------------------------------------------------------------------------
 // Main Build Function
@@ -1001,11 +1003,13 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       const clock:esbuild.Plugin={name:'forma-paired-clock',setup(builder){builder.onStart(()=>{cycleStarted=performance.now();});}};
 
       if (config.codeSplitting && config.entryPoints.length) {
+        const recovery=watchSourceRecovery();
+        const watchOptions=splitOptionsFor(shared,{...pluginShared,onSourcesChanged:()=>recovery.changed()});
         let firstBuilt!:()=>void;const firstBuild=new Promise<void>(resolve=>{firstBuilt=resolve;});
-        const ctx = await esbuild.context({
-          ...splitOptions,
+        const ctx = recovery.attach(await esbuild.context({
+          ...watchOptions,
           write: false,
-          plugins: [clock,...(splitOptions.plugins ?? []), {
+          plugins: [clock,...(watchOptions.plugins ?? []), {
             name: 'forma-split-manifest',
             setup(builder) {
               builder.onEnd(result => {
@@ -1014,13 +1018,14 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
                 publishWatch(result,'split',config.entryPoints);
               });
             },
-          }],
-        });
+          },recovery.plugin],
+        }));
         await ctx.watch();
         await firstBuild;
       } else for (const entry of config.entryPoints) {
+        const recovery=watchSourceRecovery();
         let firstBuilt!:()=>void;const firstBuild=new Promise<void>(resolve=>{firstBuilt=resolve;});
-        const ctx = await esbuild.context({
+        const ctx = recovery.attach(await esbuild.context({
           ...shared,
           entryPoints: [{in:entry.entry,out:basename(entry.outfile,'.js')}],
           outdir: distDir,
@@ -1028,10 +1033,10 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
           assetNames: 'asset.[hash]',
           metafile: true,
           write: false,
-          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared})]:[]),...(config.clientTemplates?[compiler!.formaClientPlugin()]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
+          plugins: [clock,...(shared.plugins??[]),...(formaSsrPlugin&&entry.ssr!==false?[formaSsrPlugin({page:basename(entry.outfile,'.js'),outDir:distDir,entryPoint:config.ssrEntryPoints?.[basename(entry.outfile,'.js')]??entry.entry,clientEntryPoint:entry.entry,...pluginShared,onSourcesChanged:()=>recovery.changed()})]:[]),...(config.clientTemplates?[compiler!.formaClientPlugin()]:[]),jsxNamespaceFallback(),{name:'forma-paired-publish',setup(builder){
             builder.onEnd(result=>{try{if(!result.errors.length&&result.metafile)publishWatch(result,basename(entry.outfile,'.js'),[entry]);}finally{firstBuilt();}});
-          }}],
-        });
+          }},recovery.plugin],
+        }));
         await ctx.watch();
         await firstBuild;
       }

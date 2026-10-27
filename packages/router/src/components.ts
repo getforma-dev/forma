@@ -1,3 +1,5 @@
+import { isDangerousUrl } from '@getforma/core/navigation';
+
 export interface LinkProps {
   href: string | URL;
   children?: string | Node | readonly (string | Node)[];
@@ -11,7 +13,8 @@ export interface LinkProps {
 /** An ordinary anchor; interception belongs to the root coordinator. */
 export function Link(props: LinkProps): HTMLAnchorElement {
   const anchor = (props.document ?? document).createElement('a');
-  anchor.href = String(props.href);
+  const href = String(props.href);
+  if (!isDangerousUrl(href, 'a')) anchor.href = href;
   if (props.target !== undefined) anchor.target = props.target;
   if (props.download !== undefined) anchor.download = props.download;
   if (props.class !== undefined) anchor.className = props.class;

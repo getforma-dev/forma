@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "decision": "FORMA-3.2-STREAMLINED-RELEASE-20261027",
+  "recordedAt": "2026-10-27T16:33:45.148569+00:00",
+  "authority": "Direct human user message in current release chat; assistant transcription, not an independently signed artifact.",
+  "threadId": "01a1782a-181f-7b22-8e5a-043fa1534446",
+  "exactUserText": "ok in in regards to soak and all those other stuff, skip, just streamline to the finish line, skip what you can that does not compromise security and get 3.2 released",
+  "scope": "Forma 3.2.0 only; supersedes the earlier no-exception instruction and the preceding receipt requirement to keep an active one-hour soak.",
+  "waived": {
+    "activeSoak": {
+      "requiredActiveSeconds": 3600,
+      "creditedActiveSeconds": 0,
+      "passed": false
+    },
+    "n7TwentyRunCampaign": {
+      "completedCampaignForCurrentSource": false,
+      "passed": false
+    },
+    "additionalPerformanceOptimization": true,
+    "preStableExtraRcPublication": true,
+    "stagedProductionRollbackExercise": true
+  },
+  "scopeNote": "Only soak is named individually; N7 repetition, extra prerelease publication and a staged rollback exercise are waived under the explicit authorization to skip non-security work. Preserve real rollback capability and deploy verification.",
+  "retained": [
+    "source security checks and original full mutation evidence within reviewed applicability",
+    "core functionality and package consumer correctness",
+    "independent review of release/security-critical changes",
+    "exact source and package version consistency",
+    "package/archive integrity and provenance",
+    "existing trusted publishing workflow and protected publishing environment",
+    "ordinary final source CI and tagged package qualification",
+    "real stable website deployment and live docs/download checks"
+  ],
+  "historicalEvidence": "Preserve original failures and incomplete observations; never label waived work as passed.",
+  "site": "Next public update only after stable3.2.0publication; all current public surfaces use3.2.0."
+}

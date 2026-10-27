@@ -38,16 +38,15 @@ No re-renders. No dependency arrays. No `useMemo`. The button text updates becau
 
 ## Install
 
-This checkout prepares the coordinated `3.2.0-rc.3` package set. It is not
-published yet; use the candidate command below only after its release record
-confirms publication. [3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) is the published router prerelease;
-the latest stable set remains [3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0).
-See [RC3 preparation](../../docs/release/3.2-RC3-PREPARATION.md) for the distinction
-and the [routing guide](../../docs/ROUTING.md) for a published RC2 walkthrough.
+Install the coordinated 3.2.0 core:
 
 ```bash
-npm install @getforma/core@3.2.0-rc.3
+npm install @getforma/core@3.2.0
 ```
+
+Add the optional [router](../router/README.md) for client navigation. The
+[routing guide](../../docs/ROUTING.md) explains browser rendering, islands and
+native navigation; core-only applications do not need the router.
 
 For the separate stable 2.1.0 runtime, the following URLs are retained only as
 historical examples. They use the old automatic lifecycle, not the explicit

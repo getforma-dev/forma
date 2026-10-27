@@ -1,0 +1,1700 @@
+{
+  "schema": 1,
+  "policy": "Reviewed current exhaustive whole-file classification. New or changed files/configuration require resource review before overlap; ordinary check uses the full serial plan until admitted. Real timing/heap/Cargo files run individually after both lanes and cleanup join.",
+  "groups": {
+    "unit": [
+      {
+        "file": "src/__tests__/build-artifacts.test.ts",
+        "sha256": "2d8014ec6622e79ce4c4bae4bd81e7ce39674e1a00ed96239de53b892449bbd8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/build-config.test.ts",
+        "sha256": "b0aafc52130f1a2c9f2ce83820d5eaf4b74120f78ab511c28c52c1a81d05491b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/build-identity.test.ts",
+        "sha256": "f9b9289d34eb0a29f2e4138048402ceaf1d125695dc19f5bb24546ded17fca53",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/check-size.test.ts",
+        "sha256": "b04c426a01e1185153efb20503c6e35b5e7977f9f93d05cfe0f390f59f43ff67",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/csp-parser-extensions.test.ts",
+        "sha256": "18e6c25b596cc53ef89495902368487311b7666413f889910da729754aeb23b7",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/csp-parser-precedence.test.ts",
+        "sha256": "6c5d80cdec9a0ee244c3d4d2b71ecc5f866b186e8bf2c511c927e0184868ebc1",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/csp-string-literal.test.ts",
+        "sha256": "9d704a7935db4c41198c3fa416664e79fef96ab0f0430578dffb868a9cfce68a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/dev-fold-build.test.ts",
+        "sha256": "3280f7746783015508af86bf2fcbd8735afb1c2749e1e183d36cd97883eea67d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/development-build.test.ts",
+        "sha256": "dd9c7645cd6793a1a0916b6f53243ff6f06f991fdbad6bee0ba82d1c938dfa3f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/docs-truth.test.ts",
+        "sha256": "5e5e13bd2372303db7a6fb087e93c0f1288c6d4cd4be57d85077b9164fefd7a0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/dom-adversarial-fixes.test.ts",
+        "sha256": "59fb66fa6a4a59ea1a9bd47fecb75ae283be6422ebcf31a0fc6bd4ea11e4e3c8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/failure-semantics.test.ts",
+        "sha256": "22957a5036b87d0f5fd28b47150750aba9a2e0fe4869ba8634f58dfd0becd069",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/http-integration.test.ts",
+        "sha256": "ac9798810f12d40aa89b0ff70bc5ae7d2a4da16b9d3490f94799f3e8338e89f0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/hydration-observability.test.ts",
+        "sha256": "331c1f9f27f975e8eec46c2a7bfc9c5f474ee0a44855bd6cea2b13e228d107f2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/index-surface.test.ts",
+        "sha256": "57906e64ec20d417281ac24c11aea4452557b9a47d8e87a76bba5a3d85dfac24",
+        "phase": "overlap",
+        "reason": "Exact public export inventory includes the coordinated router URL-policy re-export; only expected names change, with no new executable import, process or resource owner."
+      },
+      {
+        "file": "src/__tests__/list-binding.test.ts",
+        "sha256": "33927fc3317f8b4fc4cfdde0431d8266582155a13c8296fc6c51fd9722864b1c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/package-exports.test.ts",
+        "sha256": "a6e0ff7edf19305ee933c1a9783aac1d87e62f5733659f641084e50e19216efd",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/probe-corpus.test.ts",
+        "sha256": "8e2949f79bda85bf75a7dc7c18f15dcac8f93ea0d07f2b91a24c78da7aacfc86",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/readable-javascript.test.ts",
+        "sha256": "fd843457dee9842ebf4550fb1968be7b0f1a1b7de8d3e4254b18c9a126394f13",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/readme-directive-table.test.ts",
+        "sha256": "94a4e0865618bff0eca8a261bf46bdeff90b6da1c19759f24e173d5d27f596fc",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/readme-examples.test.ts",
+        "sha256": "4698790064681487bc8c6d85bca12f10f69915731181b4ecd28b2a4e1eef6ace",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/readme-flagship.test.ts",
+        "sha256": "23dffc43947d7fce0e7402f6d3a43b098bc8fcd2e0537fc8c5a2b3db089e82f6",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/reconcile.test.ts",
+        "sha256": "878045e0ff50ca1cb9236cd8fc68ed43f61723d62727cc58f26d4da63cc2fa1c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/renderer-contract.test.ts",
+        "sha256": "64a6cbb4d243270ad64a7448ff411b0f1fd68828a4717191479ec2272cbec66b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-bind-security.test.ts",
+        "sha256": "b61a7cac76d056388bb80a53479386ab36904d14ea4c681e0f57babc3f29c9f7",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-computed.test.ts",
+        "sha256": "5665c6ff697a680daebccd10565d00f6a3fb9ef8b9f466ed99b9de4b5d6c280f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-csp-default.test.ts",
+        "sha256": "99762f7d1815f9c20c02d76ba3c5d2b8a7178c7c4d8609c4e5933a2f294278a5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-datamodel-list-1.3.0.test.ts",
+        "sha256": "32e3c481808be8cf828af40fa94bf198f886c3dc7270a949b820e8adcbd3384a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-event-modifiers.test.ts",
+        "sha256": "7e062da8cb362bbf746b793a4d72c85e085f6f02e5a361aead2d48772734af5b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-explicit-mount.test.ts",
+        "sha256": "178f31e449f662add990ddf51baa796c1c3dfb681e44d36d07c5a44ae40dcf85",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-fetch-redirect.test.ts",
+        "sha256": "4f731e6c026009a82b44d953a91e07910f3fad4edb3803c9172c91f9f0cd5f20",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-fetch-timeout.test.ts",
+        "sha256": "916e50c71d0494520a01cc6083f9fd6146fdab1ebe7f0d27000e6844bf69ae20",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-frame.test.ts",
+        "sha256": "8708a41e9ecc7218e74a8186e7bb4aa3d973bf0e8b84c8070028fa1a61b3ee49",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-hardening.test.ts",
+        "sha256": "6e6ef8f76f220752b1248a2abeb5efb2bd88fd361c0ca9433e8bd2154a588e8e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-if-branch.test.ts",
+        "sha256": "d28309d27b6768f1c7620dfdea8d6e7f4cbe65bac0091b37b160ed7503cfddcf",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-list-cap.test.ts",
+        "sha256": "beaf284f470aacc04bae03f88764a3af2cab9f253be3f6a130e551482f2b788d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-list-template-snapshot.test.ts",
+        "sha256": "0c14aedc61759dc68e6d959e1db9dc1278deccedeaa2bed8c2121509f9f80af2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-magics-identity.test.ts",
+        "sha256": "8216af571d631aa0f30494e21b4e8256b99f35724b840383b9dff0f5567e225a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-mount-failure.test.ts",
+        "sha256": "67dd7443a4a794bfa5b839d6d276f03f166693362fcc467311d110b51377df64",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-native-throw.test.ts",
+        "sha256": "9a22a752da8d045820a0d0c45e2d0bd88bef90019eaba33540abc5bf98ce47cc",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-nested-scope.test.ts",
+        "sha256": "05981177d7220f797f37a3085d96d33f7af3607fb420abdebb10f496d39a8e82",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-performance.test.ts",
+        "sha256": "d38b157a230716d7c4381b9827ebc7c0320350d4e3103352d5894c2d6bfe600a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-refs.test.ts",
+        "sha256": "fbee4893d5f2ad2332d7924fb254f4bfbf71a9784c772093bdb5005e08a166f2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-srcdoc.test.ts",
+        "sha256": "65f47c9a34b02e934740e9b2a75d93f71a816d0aa2a16ab7d203197d1a923514",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-state-parsing.test.ts",
+        "sha256": "15ab63a1c1086c07ed5063e3ec27fe489972c06c08ae2126155fb2cbe270263b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-task-budget.test.ts",
+        "sha256": "1f0ee90e90d47e7788f94b0fdfa251c1d2ef07df99bb8ae8543af26ef1f76ab1",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-text-cost.test.ts",
+        "sha256": "c3417670447f0a57979be8fb20316cda41c26dd244ea004f3ebd06b32113b5b0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-throw-paths.test.ts",
+        "sha256": "4c421b572e85398c102b929d22ab773600c0b3123074c38cb86ad0e3fdb3c8c8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/runtime-tiered-mount.test.ts",
+        "sha256": "be8610060b52ee97defb8b5ce91a38d088cc67d9cf29fcba9b26f1ff8dbeff62",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/storage-integration.test.ts",
+        "sha256": "dfb16ede4eb8b00e9e1f3ea4e447cf095a4b5f76853991cfdeb3e42b91c1146d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/test-policy.test.ts",
+        "sha256": "5aba138eb33a1d014997cda4409dcf547e86ea23c42b2487fffd4e3807c991fb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/__tests__/transition.test.ts",
+        "sha256": "34d51afe10ce818b9d64fc925df2a1e01663ef322eb91fdb12656db25a89f3c2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/component/__tests__/component-lifecycle.test.ts",
+        "sha256": "fc01c346e97f51cd2dfd3897eed3053b17d2ec629369f9fcc69d23e64e045e9a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/component/__tests__/context-teardown-fixes.test.ts",
+        "sha256": "d83ebfef007e85331f33a2b276ca36065bb3f9ddec469a8bc5ad1708c02b2c0a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/component/__tests__/context.test.ts",
+        "sha256": "adb7cf67bc6abaf1587c785d3cee708b231e855505686a0339e46ddc0fbdd4e3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/component/__tests__/define.test.ts",
+        "sha256": "e8985dcf2d7273a375a3f709baa6a19d2a467c17702136010acbe09533656d18",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-isolation.test.ts",
+        "sha256": "709a2756405cce0528db76515a13457e938124d36c90ab7b2c51b00fd8c26b94",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-load-queue.prototype.test.ts",
+        "sha256": "ad71a106513b4e3d64e908e2c4655ca15b5413d38399b4ebb58ef03d8c625bc8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-load-queue.test.ts",
+        "sha256": "9e17f5daef169c2134b60b4439506dcab2931ffefcd51721f3cd13b39dddc046",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-reactivate.test.ts",
+        "sha256": "644b6c458587eab47dea887bed15aeda25426bd5ad6aade1d04147f7ca712f9e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-triggers.test.ts",
+        "sha256": "3c4a1485c5fc2395c0d5007a602bef615ac4b7eb61de9a84fcfa285b889788fc",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-visible-leak.test.ts",
+        "sha256": "3fa21f0161f1287a0422e8967f22ebc154e0d4840a2702f66f6d3d4780eb4ef9",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate-visible.test.ts",
+        "sha256": "bc8f555737f63ae91c099a78caeaa5b7ad1553086e10a77a669689b3fdb01e3e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activate.test.ts",
+        "sha256": "006fec2140bc2f632310db80aa3becdf556ecd6e133aa577bd2d4fab7a6a4a81",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/activation-transaction.test.ts",
+        "sha256": "90c7514e315bfad733cf0533a2e5b62522c79827279410c8f2bdf10ff0d61c23",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adopt-inner-html.test.ts",
+        "sha256": "636bbb2dbe9c6262924d03b763997f376e9e4a9b7912afb2cfec0ef8db5136c8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-callback-mode.test.ts",
+        "sha256": "01b0f02fc9db824d821ba759af841e9a46d96f92158fbcb1c94f6ebaa8d93167",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-child-boundary.test.ts",
+        "sha256": "a50c2c6996042d2b607e8a5e5df0d4666e61dae034b6fa00175d7b33e4d6ab8f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-conditional-generations.test.ts",
+        "sha256": "c43654d7e5e1c6def601d2818a7a13dcdcb0f0f9149dafafbf0b12225e675f5b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-conditional-walker.test.ts",
+        "sha256": "01dfcd1d736ed6bb7a9a38e44cc830e396bcae2301ec7676f7467007923728ed",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-conditional.test.ts",
+        "sha256": "fb67c8d7604291e6e5a38981bfa4f020fe61490003c8b1df180545158f64d4e9",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-content-walker.test.ts",
+        "sha256": "82cf2d4956ad381680ffe490331e3cd0c81e298c0f3bf51b3f55e69163202075",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-content.test.ts",
+        "sha256": "5f915ab88c47d262f80168eccb5692794bb94dd2b408ff8f2f2cd1a9bb22aefd",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-control-bindings.test.ts",
+        "sha256": "541cd51bafd762f5a166275b871a4593d1b83ecdbc312b3ead3e34d4d3ca1da5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-control-diagnostics.test.ts",
+        "sha256": "3b719b65abb205b8735157cc9f2246000000cfe4ecc19966164aa04d97598137",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-controls.test.ts",
+        "sha256": "1bc5096ae9a34b17ca67be9366deb2307a74e190259ab4538316f569f35bbe95",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-description.test.ts",
+        "sha256": "40c99dff37b057258c588a23dfec8f3ef1a63fa78bb256229c3e9f7c97c21da8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-errors.test.ts",
+        "sha256": "39915330c717bf61a17c7d630a6e8098c3770ab842e2b839c1dc93d8db08ca89",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-events.test.ts",
+        "sha256": "c6d176c53b75bfcaf0d949f57144436871c973afd825192cb71207595cc840f1",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-keyed-list.test.ts",
+        "sha256": "4588bf241362c36562b234ef40111f4939349f9c0b68004037462b054033b9ac",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-list.test.ts",
+        "sha256": "bfe2bcfb81de57fbc2ca7901e07cb3e7ad0e77367ea2bdc2d9586bfa57321291",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-listener-installation.test.ts",
+        "sha256": "ee506341b3102ee7342457ab625a7a78a8fc63ca1fbf9f827c139f7893d411be",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-live-ranges.test.ts",
+        "sha256": "166f8136d468ba5fc611d0fb28a05832987b5654e64f4ee0d1726cc7bd2e9a83",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-materialize.test.ts",
+        "sha256": "1e26538b51652b1ca35c2c443608d455878d443608421c5c87f667bfaa47721f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-plan.test.ts",
+        "sha256": "e09fb8b159d062c79a240bc711ce56e02ccaee2d592543fe12203f58be697a9a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-postcommit-materialize.test.ts",
+        "sha256": "9233266f1b246c84fea15ec9070f21de5dc988e8bca6ec19c1bff3aef66dd072",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-public-target.test.ts",
+        "sha256": "722c646053ee0174eba6837d8462256e4be0d7c2f87ef1f2c47c148a08e1ce29",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-registered-child.test.ts",
+        "sha256": "dc12c497c2aef11002866ce897bd572d50c7f5557aceb431a2793e508b0509e6",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-title.test.ts",
+        "sha256": "0c0ee6665c60192da09dde12213b0c52270071700ef2c3028d32a5bdd45ad6b2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/adoption-walker.test.ts",
+        "sha256": "e3fdd5fb120681c684843ccde7ab997bd7b27823e4c1a54aa4c3815d57b00a4b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/attribute-aliases.test.ts",
+        "sha256": "faaa3f3b1e93b8c1f969447bb7d47c8ebbc5f463f5e3c83f258e5cbb9a23d968",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/branch-depth.test.ts",
+        "sha256": "147e656a09903a2de5eb46dbe71ebfec40e044d293d41829082a1450e346ce44",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/browser-only.test.ts",
+        "sha256": "d0eef07f6c5f0842b5a77dd5e27c6d8bd2a598afa0ac0480e8a9824fa03bbc44",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/compiled-template-exception-probe.test.ts",
+        "sha256": "1c2319c5fd00430800d788f685da72a90807b0ae90dd69d725496c8ecf1b74e2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/compiled-template.test.ts",
+        "sha256": "df0ea94887c92af72abeaf46dcb80f60f16d8dcb95fd0a2b6c0a0eb0904d1199",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/deactivate.test.ts",
+        "sha256": "859467e336ca81722449bdf5c29ee2786e9c34680fd3421183f81d2cd11176ec",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/el-magic-safety.test.ts",
+        "sha256": "6639753bc5831548742f05c3ed2f9fb13b87daced43dabaf5a35e898934afda9",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/element-prototype-cache.test.ts",
+        "sha256": "fd022550021ecc30b7fb416cee663d7aac28451d4db863c08318ff2d756ceca3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/element-url-safety.test.ts",
+        "sha256": "c53d888b5729a283c9f5f66e52806d7ba4bb0a3fc8431520dde8ad24b9fe1b63",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/element.test.ts",
+        "sha256": "1cb9d2afc8976063011d27c7cf52b391ab8c0bb79088704d7f1f8aa1c563cb78",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/error-boundary.test.ts",
+        "sha256": "495376342e21a70bf4f5f886f2fc38e531db0767bf4784d2b2776c0040993033",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/form-control-adoption.test.ts",
+        "sha256": "4fc8074b34ba734dc69db5eb339f88073b8ca41a2d33d053c4e2955739827e35",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/form-control.test.ts",
+        "sha256": "710a728a64a86a91ffc02fe217a754918920b359448212443c899a396107c63c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/fragment.test.ts",
+        "sha256": "94564a1afaf913efbfcb809e5352331bff5d41d06ce3fd90697a3d829e67cae1",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/h-function-components.test.ts",
+        "sha256": "6599b0e6049a696c4451e2f511c25351416935d761c60cc78a08a1c1502374e4",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/hydrate-cleanup.test.ts",
+        "sha256": "e7d9ee70fc614356ac2767e8ec86b0e1556373bfa9bf1d6a4b639b04a22b4c3e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/hydrate-fragment.test.ts",
+        "sha256": "5a297744b4e2e9f254729d2a24a626bfe2fa07fe6b8883d592409e5598eb00fe",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/hydrate-strict.test.ts",
+        "sha256": "e85f16b9918279b96bbd7b348f41279dc58beaeece11c76146e02bc0acf930e4",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/hydrate-svg.test.ts",
+        "sha256": "a273945dbf1c25e8242cd57f8448b7d5958e9062e52b738766fd99e543151d1f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/hydrate.test.ts",
+        "sha256": "b90ed6567ee9aba9f8d1ef8873c1621fbc7d61339d3324f0178af2b01a4f4ca8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/inv1-vectors.test.ts",
+        "sha256": "864f5028a19bef887dc94682df0d9e71e3d1c2ac82522698dd1189746ac50699",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/island-benchmark.test.ts",
+        "sha256": "76958c564e27baef55901a858da5b03201a35f8ac531ee72416286de09d04dce",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/island-state-activation.test.ts",
+        "sha256": "a4ffcb4b9dbf94fc27a98cc05d901c317602cea46e5e52eae0a77b0d548c96ef",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/island-state-array.test.ts",
+        "sha256": "f97c95c1badf711bf4d1264da5338adfcef130fb5910b3246bac87e74657226d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/island-state.test.ts",
+        "sha256": "92045af941b240cbe9d2e18ae11f8c2b2d9c9e83cffcb939ca636d577d5214f3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/jsx.test.tsx",
+        "sha256": "0c90623ee12df45338a2ed6bfba59361e0806508e668e935234c264279417b59",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/key-text.test.ts",
+        "sha256": "b786bff95f7fe9cb0164a2322bc9a038cbf9ec451baeef36f5aa0ebe0890be2e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/keyed-rows.test.ts",
+        "sha256": "9d5c710c5ca428ed6385f60ac068cbdbe63625e3614810fab9460d1458a1487f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-adoption-count.test.ts",
+        "sha256": "67d2a4fb3a62c8e9882d3885a365ae39e46b0f7ff73200fe738b1c331bd664c6",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-dependency.test.ts",
+        "sha256": "0a5aba376317b776c213e1a12272fbf933b8f112f7df59d905bedff53cd0c5dd",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-disposal.test.ts",
+        "sha256": "7ab15a31909d5e7d09626cd5d60f6ea3144cd334a392daa2cf91c2238a82c7d2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-hydration.test.ts",
+        "sha256": "0119b59f47b10ddac2d23e035a98f923f520e8573f3ad6e57f336897eae4a18e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-key-ownership.test.ts",
+        "sha256": "c4d8127fd036f43fade61cb75feeddb0c080f551ef379c8507726471096f2149",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-keyed-reconciliation.test.ts",
+        "sha256": "0eb335dc0539683948c72ebfd2735726836e1996fcde11a33295d6df627525c0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-lazy-index.test.ts",
+        "sha256": "de51171f87a0b89afe40158f0e587a05783bde95549b2020c06fd3fba8818808",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/list-lis.test.ts",
+        "sha256": "ac69dfea37567cbb08c5378bdb59705b9f9caebe143667c50d59e26f1d56e84e",
+        "phase": "exclusive",
+        "reason": "Real performance.now elapsed upper bound; run after the join."
+      },
+      {
+        "file": "src/dom/__tests__/list-rerender.test.ts",
+        "sha256": "867222658b1f97d0e793fe240d86f0f85c324bfee8be0d1139562ef35dc388ca",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/mount.test.ts",
+        "sha256": "81ce0486aeda26026f58f7e1f9f63d04d7957b4545adf877767c74ac8d350320",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/multi-island-integration.test.ts",
+        "sha256": "84c74d272e226fc047b3949f4c108c3a52c4f10db703265a7cddd18d61aa4850",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/namespace-resolution.test.ts",
+        "sha256": "ce5295c216053ff8f9d554b7ee28e750f2865ec71d85440c935b72744cd2f460",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/native-owner.test.ts",
+        "sha256": "a30252d5c36f50033d72c15daf97a49c425b2a01f5cf0b33fedeeffa0e0a915d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/navigation-adoption.test.ts",
+        "sha256": "3ca6ad6714c40992d76bc82207a562635021043f1c67c068f83ea44e20e77b95",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/normalize-text.test.ts",
+        "sha256": "ee02078eb868a3ba26b59a0bc7455215843572e1e6821c7ddfb39e79e09fa73d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/owned-adoption.test.ts",
+        "sha256": "f0360886af2fe18aae37c572bbb2df9192591e79695155e4d22dc44bc0d9de6c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/portal.test.ts",
+        "sha256": "b8067201db3625d5fc464c65993a2579dc537839f6bedd2d321672435009774f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/props-loading.test.ts",
+        "sha256": "069154661bb0c26f3852883eb9b4c697f7fb7c8238feff8ebfb3275d40c41831",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reconcile-list-fixes.test.ts",
+        "sha256": "12513cd9c5ffd935a5fbe8e1c3fb8fb858a03d2c0a9d81d483808597e69377b4",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/review-content.test.ts",
+        "sha256": "c1a34756824e7c5ecf3df897ccf5ace5380986ceac70f3eb01563f9115ea1ee4",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-adoption-caught-construction.test.ts",
+        "sha256": "883dfc15c788d95645531dd8c1210741926ebd9e36e02ca34107a01458b0f1b5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-adoption-events.test.ts",
+        "sha256": "ba5d18085be5fea9428792d68b6cf2d4c73f7d3b8d51a150cf431956f7d7004e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-adoption-nested-list.test.ts",
+        "sha256": "8b9fa46417db71dabcd00a0473727f70d85ed0ad4c899a6b87d503c128a48c6c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-adoption-scalar.test.ts",
+        "sha256": "26339e74442b24914e9c1a1418ba2ee73933bd91e4ad08d9e12c6081d81e38fb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-adoption-textarea.test.ts",
+        "sha256": "2b93f3daae4b77e5b6ee3cb67f8b777f08d1679fc642a4fd032ae43f30f41e25",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-child-boundary.test.ts",
+        "sha256": "a50c2c6996042d2b607e8a5e5df0d4666e61dae034b6fa00175d7b33e4d6ab8f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-conditional-same-branch.test.ts",
+        "sha256": "a6f872e7eb02acfcb73fb963d1cb81e1903615b720d9fb992ce1f7b9c15f07e9",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-events-internal-generation.test.ts",
+        "sha256": "9417e922bc3168eee589a8715e497c839d5b462651511dcc7b18504a00aa59f0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-events-rerun.test.ts",
+        "sha256": "7e17e6f220aab1e38d018aa8c8afe112c854e08af2eb9e9bd1dd043e3be80983",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-live-range-order.test.ts",
+        "sha256": "50a448936abd2bee4a042e8c59ae44a4a43580e07f26b8e4eb051a9c0f999ba6",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/reviewer-materializer-element-order.test.ts",
+        "sha256": "6c337c93762e918f1fd32fa62750d818e11467a0cce099ce811339e94b9e65f3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/shared-signals-across-islands.test.ts",
+        "sha256": "dc7f0dbf9c09e6e1cd9cb103c71b56840da9701a74d1b4df2f18d1399e2b6c68",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/show-text-branch.test.ts",
+        "sha256": "ee2ccadc7e0f91ad731104d4ed85697633c47810cb00475623611ad5884efe74",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/show.test.ts",
+        "sha256": "0809ec28cd1b28fcf4ead8bb733a3445a88ecbcdbccd62eb409d8f12923908e0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/skew.test.ts",
+        "sha256": "67710e19c4d7fa42f77a54060d2908b933c027207eb92145124058df92e3e6b1",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/suspense-resuspend.test.ts",
+        "sha256": "a95d2745dbc9dc2a916b9955907e6d54682c8a6ef22d1994efd63cf411ca01a6",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/suspense.test.ts",
+        "sha256": "08750afaed677caa4353c2d6e3fd0badb1e8f3e0a38d044ecbde35c874507e2e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/svg-namespace.test.ts",
+        "sha256": "53ed418e08423a6e46f70816a577bc929f59d8616de20436c9b14771f8160aad",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/switch.test.ts",
+        "sha256": "790d2b2b30b85486f8fa2d5257ed8876426dcdedda6eb79d72a09d88f54ca460",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/template.test.ts",
+        "sha256": "d3e3be93cfe6ebbdafd7ac0e8b46b43795abc808f43410c83d6b5654e29bc946",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/text.test.ts",
+        "sha256": "44d856a4aaa340e4b237ebf2ca632b012f7fce4469bc089534ed00634cbbdeba",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/trusted-html-build.test.ts",
+        "sha256": "ae0135377e4361b0d200edf50464155214c55a1bb228b18351d0db8647c7723c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/trusted-html.test.ts",
+        "sha256": "d037304a8c15a7337547bc7d123ac5b7f61756ff5fbfa4a036d47105cbd34921",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-2-numbers.test.ts",
+        "sha256": "2acb27a8aeb280a08d613aa37f31f5ebb08563914a0350ebbd9645502ca713f3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-3-integers.test.ts",
+        "sha256": "ec296194bdeb28132335c2a95259e2565ba8fe73ab2e6bac46c563b3118f33db",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-4-dates.test.ts",
+        "sha256": "3cfbc384c5daf24e2239500a230ddcb9d37d68746076cd5736c917943313dcd5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-5-null.test.ts",
+        "sha256": "1ab493a45a4b316f00d50c7a085fc8ab2dc733ecc82e7848498623c703941534",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-6-attributes.test.ts",
+        "sha256": "80c29c0cdb17d4077f5ecd0f86e46a9d8c7b7c7dc55e024646e98b867351abb9",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-6-boolean-text.test.ts",
+        "sha256": "17468a3c4886bb3de09f4ff57d5e42ce933206640efce02b0a2c560d46d0b4ea",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom/__tests__/value-rule-7-conditions.test.ts",
+        "sha256": "b5d94c1bdfd2c6436eb20756dcc1eb7a8d97a061be8fed3a5cfe6bc4905aabcf",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom-utils/__tests__/mutate.test.ts",
+        "sha256": "a17c9a9515900cacf8768e2b3fdc47483d21e9c5087d3fb894d9dd6f8d81fd9b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom-utils/__tests__/observe.test.ts",
+        "sha256": "4a2fc72bc629742673c6606ccd4ac359ef08099ba873c57d4175dcd1d5757fa5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom-utils/__tests__/query.test.ts",
+        "sha256": "f7422488c75ca7b701019cc0c1eae951d5b6e7bab376d05b830e52c9c48b9e92",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom-utils/__tests__/set-style-undefined.test.ts",
+        "sha256": "0b0a26bfb90102c50d2489e5ca520e59e8ee7c7cb0e34378e62a007c7b71998d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/dom-utils/__tests__/traverse.test.ts",
+        "sha256": "d8f8ddaa9e186c901bc5f17903616046af2c25055033b9ef41b84a5a8ef226c1",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/events/__tests__/bus.test.ts",
+        "sha256": "7d2f3258c43020f0a698aae7bef8b8e28337864587599a45904811f60cff21a6",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/events/__tests__/delegate.test.ts",
+        "sha256": "d4c737a6c4dd48fe7e7c3486bd85b53e1fa9ff7fc239cfce9fc9e25d3a4195cb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/events/__tests__/keyboard.test.ts",
+        "sha256": "c5395a305abaa427cc2823a4aa98b9dc62d47629a63f7c2d596b3e01a5bd3926",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/adversarial.test.ts",
+        "sha256": "859fd621a6f32dcd5a6a68e6458cc70c87162af7766c2b0d0ebc01eccaa34579",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/allowlist-snapshot.test.ts",
+        "sha256": "8277ff52a2d3c8b7b9db900cf9f285923ee16a2a09a479121e733751c6d66817",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/fuzz.test.ts",
+        "sha256": "9b9d8c5e8803569816e0d8db4b81594b226ba7b53f3299dc7d52fc57ec008324",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/handler-grammar.test.ts",
+        "sha256": "79717648ecef10ab328c440bea547d03bb067ab3bc6827fc395f31e2a8aae3dd",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/host-values.test.ts",
+        "sha256": "ec0e1a4c461b1cd46f3c799f3533366fa1a263e31df5aec2ae7d64f468966c13",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/interp.test.ts",
+        "sha256": "da7993c57e92d2ed9722f56a24a7e410e85939d5cbbe1de9ba9c8f03e57f8162",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/lexer.test.ts",
+        "sha256": "4ff457dbcf0e82953fcd2c14ea9b32b21d51e358e0d2aa2fb834c9905dcb26d5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/native-cost.test.ts",
+        "sha256": "aa844f92f400f5226f872a318be8f78ead64dafc4e84c43d9b3479a504d76a12",
+        "phase": "exclusive",
+        "reason": "Actual process heap-growth guard; keep exclusive."
+      },
+      {
+        "file": "src/expr/__tests__/native-preflight.test.ts",
+        "sha256": "be805858b3065f09e2e5fee1e4e2d2e8935091b908cf852a27ddae7cf8423aa5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/native-throw.test.ts",
+        "sha256": "a1964e066a243663c1f2423be94488c3c7583d0872ab8767cc1dcbc606617b09",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/no-escape-hatch.test.ts",
+        "sha256": "8353e5b494a2cf030a0381e068dba607262ab0ee340f27131c9e193e0fb1a9c5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/ordinary-search.test.ts",
+        "sha256": "204911e33edc1e534112ffe79611849069f715264ace5cb7c7d3aa3bb350651b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/parser-precedence.test.ts",
+        "sha256": "92e17429dbee52a50b15152338825bf5b363cf58f8e8ef2ab354cd0e57e411d0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/selector.test.ts",
+        "sha256": "d29f4ccb553bbc0e6e2b0c8648f0c5b679c99acd6a6c4f7af7594663fc101cab",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/string-growth.test.ts",
+        "sha256": "0ed5f803ae4a79afbf6a8121a5a741a7c31b25699372f03151fc181517d35b4e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/expr/__tests__/validate.test.ts",
+        "sha256": "73eac101a123ed1429e45ecb182e00f9b50a8fff85598115165b7d772b07b8b8",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/http/__tests__/ws-reconnect.test.ts",
+        "sha256": "5413e18f99d9070b756b7cc3dcbf05cb990fa447d766b96fab1e2f9e189fc792",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/adoption-lifecycle.test.ts",
+        "sha256": "31792ca649dbded15f9f7f23884e801dd215331151f8ff2f22a0efc7a539a82b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/adoption-live-failure.test.ts",
+        "sha256": "a9b072b6274a6a9e0a5db20a9ad93062c3ed64c01dcdc3de274af4305768499f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/adoption-preparation-revocation.test.ts",
+        "sha256": "0bbb30aa76e62ddddbc9da80de274bf177267e79e5a9c38bda1e511948cb2531",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/adoption-scope.test.ts",
+        "sha256": "df15107a676e3cae01aa178c2ac0ae538f0a9f2d845a6d201f359d7917d0ee74",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/adoption-tracked-group.test.ts",
+        "sha256": "ea14d7b9502ada6cdc0912c56b5312fba29b653b968fbc095635479ff100a9fb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/alien-signals-3x.test.ts",
+        "sha256": "0ac49b632669ad4ac6520a543688b3fade1f06cdd9c510204594cf2b312496f5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/batch.test.ts",
+        "sha256": "806f87aa472641a8c4a89438dca891bf73be7f057b90cd0e759a41c3fec0decc",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/computed-errors.test.ts",
+        "sha256": "215cc3feb7d43b42c9875864f2021c451becf6d394b6683123aa8af0337ee48c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/computed.test.ts",
+        "sha256": "416bca629a4fc8234b58bb43198c74d62029efd2340cd2d48589413dc4a4aa30",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/dev-errors.test.ts",
+        "sha256": "402c38e6b5bbba5354f1eefd2ff8ea651df0200fa1348c0a3935d8c12dce31ca",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/dev-flag.test.ts",
+        "sha256": "eefebec58c09f8cadcba58d282a1f3bc051d7d67828527281cd982ba74bac978",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-anchor.test.ts",
+        "sha256": "4f6b3171c480d338b8457ceb43ea768dea1d832cfd5e95733c02389d6a992029",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-cleanup.test.ts",
+        "sha256": "49171129ef3c9a0e5eeff5a631cede1d785944cc261de2f3bcf7b4a83c5c12e5",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-context.test.ts",
+        "sha256": "b36c460cdadf99c3cf461e5d757df55055f37f3cd9e93ad12ba64da74cd84f46",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-dependency.test.ts",
+        "sha256": "d65ad38333d5a7549f3ae25a8b8137cd1b923dde4ae7c2769f815b4f62467fd3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-engine-contract.test.ts",
+        "sha256": "5f3fe6abe1c1558a64908909421c4a5cbe1cc5972987e05d77178dcd2cc88a90",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-nested-owner.test.ts",
+        "sha256": "2a84655211dad8c37bed87f6d6cfd7399da7ab072841c19c6e59e6f9c298f843",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-node.test.ts",
+        "sha256": "dfc9884ad79c7fcf78cea6be3ea0d74b5a990e1c459866c58195f0d86f7b4086",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-reentrancy.test.ts",
+        "sha256": "df6df0cda93dfea1105e29749168b1763a64cce8108258d08c65346f9daee139",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect-startup-disposal.test.ts",
+        "sha256": "c56b27268cf955d4baca9b9ad31e3088dbd7bfefac68db879a52c8478859b7ce",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/effect.test.ts",
+        "sha256": "ae2af28c02d78f55392484a94fa429722606acebf919ed4f8b229f30184fdbef",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/frame-capture.test.ts",
+        "sha256": "8fb4020d16adab7f202e8466e2cf627c22cf304a6ac8afc3463dbf77d4f4a1fe",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/frame-effect.test.ts",
+        "sha256": "30433eedfcded839aef347a2184c40dfebb9582f8e5756bf5250c93ade98dde7",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/lifecycle.test.ts",
+        "sha256": "effee5a605a95447cfeafd3f5793fc9f2bab1d0d3ba709d220a9929762e596b2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/owner.test.ts",
+        "sha256": "7ac5d7a88584f73ea6729f2fc3b244226559dfdcb3d135124a98d48dc7fe1527",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/reactive-adversarial-fixes.test.ts",
+        "sha256": "1db7d461e90bccbefe0d6d0ba007af5bf7be754311a808259a8a9e918850c58c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/reducer.test.ts",
+        "sha256": "73cc5f5194fc4e51c918babc7e664d45880fab2daa0bd0ac2626c64578443230",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/resource-fixes.test.ts",
+        "sha256": "7157c880456b0991a0fed234bd2ccb759c94b4d4fbffe71f52e7a3e7650dab5c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/resource.test.ts",
+        "sha256": "a543826fc8721a97bedc68183169f98315affbdeedb7eccc54fd7b70a41e7758",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/reviewer-adoption-live-failure.test.ts",
+        "sha256": "a9b072b6274a6a9e0a5db20a9ad93062c3ed64c01dcdc3de274af4305768499f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/reviewer-adoption-transaction.test.ts",
+        "sha256": "cb142a07b77fe1db634bac53c0f104c770d1a77bac668b7c6c2800aab4ee9764",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/reviewer-detached-host.test.ts",
+        "sha256": "a13a54688390ce91c6710e475410af570a90d40fb2555699312af00bf7751e91",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/root-dispose-during-setup.test.ts",
+        "sha256": "c15022d09df57c9a24edd47227bb52112d8843935601f1ff1ce64cfd37432195",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/root-setup-throw.test.ts",
+        "sha256": "bb1f6121352ddc1a3f91806bbeb6e4fc64e28d0655907236a77657cd5c50e8e2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/root.test.ts",
+        "sha256": "5be4c518fb878d6074509017caf237a3e027bb63480230031580d745545a76e3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/signal-equals-name.test.ts",
+        "sha256": "95aab6fb2bfbdba2a5bd3864e638c91c6a8549d64b9c5ae84758bb1b06ca8f40",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/signal-name-dependency.test.ts",
+        "sha256": "cfefef9a4bb33d99aaafaa473035f6f7b4146bc3377ef521c1cb150417b4a53e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/signal.test.ts",
+        "sha256": "06ece527536ceda1f2643f0b45364d8c0810166c4f5a5590b083c13ceaf570c4",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/suspense-context.test.ts",
+        "sha256": "8afd220232b22d537e2a718906a5053d29cfa6093fe86ce2d0c3825cc0c447d0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/tc39-compat.test.ts",
+        "sha256": "11901ddad6a60e9d9f47fb66da2deaa087dec26ddade120cd51f534ff0d91e6a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/reactive/__tests__/untrack.test.ts",
+        "sha256": "4324c0c82fc43824f16836360c2a6bfc1658a68cec3f7ffa54be809eea28bd3b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/security/__tests__/url-safety.test.ts",
+        "sha256": "d848e3b9c8fddfc8b738d9d72045964ee9a0e2f0381d6fa5ef62aa3297a4696a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/history.test.ts",
+        "sha256": "437ba54ea012439abc49c75be5d0a5eb9372be95d72fa684627c403f62b1291e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/persist.test.ts",
+        "sha256": "ab826e7f41a121e590a9554ebee390738b43d71411cc7bd6cfcfbeb37f591957",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/store-adversarial-fixes.test.ts",
+        "sha256": "1337b40dee2c63ab88d72935c3f247f3743dc4ebcd556395a7c2a6d1ddc68125",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/store-array-reactivity.test.ts",
+        "sha256": "cde7511fde9d518b31d280695da1221ddba503808aba028f76df221ae20b8739",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/store-identity.test.ts",
+        "sha256": "2613c84c24e384758a70bb9dc9501c0d2183339ffee230ad544fb5a78fb74efb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/store-proto-hijack.test.ts",
+        "sha256": "faad99aa782ab80efd876c7d3e9ba23a6022dd9d03c42bb42242118a49bdfad0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/state/__tests__/store.test.ts",
+        "sha256": "996a6b234dd4e945468b24d7926117965253fd73751e6b67b19d1280d422181c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/storage/__tests__/indexed-concurrent-stores.test.ts",
+        "sha256": "36316f4157207fa3226a944183d71592c8e9baa0ebf97edb5abba04f564b7653",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/storage/__tests__/indexed-hardening.test.ts",
+        "sha256": "8d06004c3ca3e4b59d012a4768544625648cd2d99be6cb891076e9180b43987b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "src/storage/__tests__/storage.test.ts",
+        "sha256": "4045e1bc5f6017f0dce77ee2e647f75dca7cb5cb81e1c329afbfeee35186ef76",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      }
+    ],
+    "browser": [
+      {
+        "file": "e2e/activate-load-queue.spec.ts",
+        "sha256": "1da05352ab923155830900d87b16951b4cdf8f244da1dbb2de150af631ea9b3d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/adoption-content.spec.ts",
+        "sha256": "75fc0e07bb858c5c9b512056f701ef266575f90cbd6092cde7933cc83e2d0d2f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/adoption-controls.spec.ts",
+        "sha256": "11557fa9dc337d01b5bdcbb480ca320b2b7b7819fdf20e264540b8281dda0815",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/adoption.spec.ts",
+        "sha256": "aad5d9b185749296dd645c6dc4d58e714f5137a12084d0384100b406eb0efb4b",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/compiled-template-adoption.spec.ts",
+        "sha256": "a4e8fb25221f3afcc7666899c76547ce00deea037c3dcfe7dea0e141ba286417",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/computed-names.spec.ts",
+        "sha256": "e360eb4a634d5157809d0d1d1243f0abb1f8a8fca05256c25d03c2fe8f1a466c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/core-regressions.spec.ts",
+        "sha256": "3fa57832d69554bcce79d965e856b2697fe2b315af7c1923925d39ed6f0dfcbe",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/csp-example.spec.ts",
+        "sha256": "160ad7284b4cd0bd556fdf29147e4b79d17f87d2fda15e35978fba085cc67f58",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/csp.spec.ts",
+        "sha256": "65b53c17e147f278540ff792963dd749d758b24d672ea6382cff8de1a542b079",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/data-fetch.spec.ts",
+        "sha256": "15c605ee510fe68dce3b92ad2c73925a8c777de11c984e3c3e589b84e2a09d61",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/development-build.spec.ts",
+        "sha256": "1de174963a2107b99aa85006475ce766fefa3cfe3f830e1105c34fd05d78ae71",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/effect-self-disposal.spec.ts",
+        "sha256": "b398511af6fe201020556d6b75da36146446b65f247ace7376ae99112d73868e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/event-modifiers.spec.ts",
+        "sha256": "3db0e6e82170f79e89fbd1d769293de0631ca3e77816f4632342c48930d237fb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/expr-cost.spec.ts",
+        "sha256": "c8bcd2882dfbad2be121fa8132020d5f8deba79cd4be408c1c38cd50df75ea47",
+        "phase": "exclusive",
+        "reason": "Measured browser task/list cost and throttling; keep exclusive."
+      },
+      {
+        "file": "e2e/frame.spec.ts",
+        "sha256": "448f54f8dafc27a408b18a97432e6da99dd459d0c2414a45c6f8fa4cfd79f07a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/if-branch.spec.ts",
+        "sha256": "c0f7d32137d74c351264a8feb22f0d5920fe1da8c8b785cd2d86e73c978f8fb0",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/inv1.spec.ts",
+        "sha256": "c7007de9abfe171d63e173ce94bda641c2019a0ac0b34963f929bda632621f3f",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/keyed-adoption.spec.ts",
+        "sha256": "4191398174d51c962d019148ee5bacc289dfa2d58284900ef7a32071eb702af2",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/list-key-ownership.spec.ts",
+        "sha256": "9a415f8300189c46918935a3a634eec7cd0d3893a5a1c33cc8b4dd01a8517ed3",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/listener-cleanup.spec.ts",
+        "sha256": "f3d7f3747d914fb4922733c310e368a5efdce2de9837ffa567babf32cc2511bb",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/native-throw.spec.ts",
+        "sha256": "9c2b05b761b23d31888e06ab07e050c427a6e2885f2b32524ba087eb0e229bb7",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/nested-scope.spec.ts",
+        "sha256": "d87a33a74172776705a84deb97bc93a702eb314b3913ec07e0dd6ff467b158de",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/normalization.spec.ts",
+        "sha256": "f3ac3fba63cb963a9ac2d93cb5c0e80345446c17dab2430a15ac18469095a5ec",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/review-content-css-native.spec.ts",
+        "sha256": "0f85b43eea2e36a8b6a9827587d5ea521c6a0eee7279c01774c7ba61e51ffd0c",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/review-content-noscript-native.spec.ts",
+        "sha256": "0a04304853b3a9aa3eef41b2a5a63f20a3053b1bd65131db1316817e181abe86",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/review-content-template-native.spec.ts",
+        "sha256": "bae241d7821f964417ae7036e5c5169967cd4132474fde6f8d629bd566a110cc",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/runtime.spec.ts",
+        "sha256": "9b0cc799b03ddb461dc90c0257cda50b5683906c330bc324aa6d48f7a837c84a",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/show-text-branch.spec.ts",
+        "sha256": "c0e8d39376541de63bb157e6fb299a72940e1e5ac167b32a6e2daf88dff2532d",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/skew.spec.ts",
+        "sha256": "f18093438280a3d53ce1fd726635e3e20dc3c9afcad3061aeac7190b2645c139",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/sr33.spec.ts",
+        "sha256": "63672923f7d2f09e56aa5bd348e0b8eb1f8cd34aef1928fd13fab72b70ce910c",
+        "phase": "exclusive",
+        "reason": "Actual native-call timing and heap guards; keep exclusive."
+      },
+      {
+        "file": "e2e/state-roundtrip.spec.ts",
+        "sha256": "91136ce1770390f15bb4b54e99ad6ab77461156128c84635cb26ec6e872f0808",
+        "phase": "exclusive",
+        "reason": "beforeAll invokes root Cargo island_state_roundtrip; keep exclusive."
+      },
+      {
+        "file": "e2e/tiered-mount.spec.ts",
+        "sha256": "9e3d0606f9ebe4fe912d246e937749fd6cb86eab6cc236b5b06ad1626c981a35",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/trusted-types.spec.ts",
+        "sha256": "f4b096afd481bed08cb80975dc5322c5dfcfa955a569d4f71e0065544e7acd1e",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/update-diff.spec.ts",
+        "sha256": "0ea62939c82869316043680669c0754d6ff746749552e2cc87dc2a3f3ce9ca58",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      },
+      {
+        "file": "e2e/value-rules.spec.ts",
+        "sha256": "fdcc5ca904b8f6a19992ee17c2b8570ea207304a78183765a1856e2605835320",
+        "phase": "overlap",
+        "reason": "Unchanged correctness file; resource ownership recorded in scheduler map."
+      }
+    ]
+  },
+  "configuration": [
+    {
+      "file": "packages/core/playwright.config.ts",
+      "sha256": "d4b72bfc136b1a3ac7b44d5136c9ed076f03b8a8c7d6df03b9175d89ba9c0786"
+    },
+    {
+      "file": "packages/core/vitest.config.ts",
+      "sha256": "cc44292d68c39dca2b2fa3e8d4fd805856919dac9bbe4d7acffea7fadb5f642d"
+    }
+  ]
+}

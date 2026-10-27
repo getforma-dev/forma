@@ -57,7 +57,7 @@ const SURFACES: Record<string, { load: () => Promise<object>; exports: string[] 
   },
   './navigation': {
     load: () => import('../navigation'),
-    exports: ['navigationHTML', 'prepareInitialNativeOwners', 'prepareNativeOwner', 'validateNativeOwnerTree'],
+    exports: ['isDangerousUrl', 'navigationHTML', 'prepareInitialNativeOwners', 'prepareNativeOwner', 'validateNativeOwnerTree'],
   },
   './http': {
     load: () => import('../http/index'),

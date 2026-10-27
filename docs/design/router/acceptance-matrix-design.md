@@ -1,6 +1,6 @@
 # FORMA-301 acceptance and evidence matrix
 
-2026-10-26. **Rows distinguish design verification, partial experimental evidence and future qualification.** This is an executable-work backlog and proof definition, not a report of successful implementation. Research prototype results are historical inputs only. The [research map](research-map.md) explains why each behavior matters; the [JSON form](output/drafts/research-map.json) contains reverse question references.
+2026-10-26. **Rows distinguish design verification, partial experimental evidence and future qualification.** This is an executable-work backlog and proof definition, not a report of successful implementation. Research prototype results are historical inputs only. The [research map](research-map.md) explains why each behavior matters; the [JSON form](research-map.json) contains reverse question references.
 
 ## Gates and receipts
 

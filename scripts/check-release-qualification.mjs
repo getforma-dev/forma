@@ -8,6 +8,7 @@ import { readRcAudit } from './release-audit.mjs';
 import { SOAK_GATE, readSoakDeferral } from './release-soak-deferral.mjs';
 import { releaseLine } from './release-line.mjs';
 import { changelogEntry } from './release-record.mjs';
+import { usesFinalWaiver, readFinalWaiver } from './release-final-waiver.mjs';
 
 export async function checkReleaseQualification({ tag, commit, root = ROOT, finalReader, deferredReader } = {}) {
   assert.match(commit ?? '', /^[a-f0-9]{40}$/); assert.equal(run('git', ['rev-parse', 'HEAD'], root).trim(), commit);
@@ -18,6 +19,12 @@ export async function checkReleaseQualification({ tag, commit, root = ROOT, fina
   changelogEntry(run('git', ['show', `${commit}:CHANGELOG.md`], root), line.version);
   if (line.milestone === 'rc') return { milestone: 'rc', audit: readRcAudit(commit, root).binding };
   if (line.milestone === 'final') {
+    if (usesFinalWaiver(contracts)) {
+      assertMilestoneReady(contracts, line.version);
+      const retained = readFinalWaiver({ root, contracts, version: line.version, commit });
+      return { milestone: 'final', audit: readRcAudit(commit, root).binding,
+        releaseWaiver: { ...retained.disposition, sha256: retained.sha256 } };
+    }
     const module = await import('./release-burn-in-final.mjs');
     if (contracts.milestones?.final?.gates?.[SOAK_GATE]?.status === 'deferred') {
       assertMilestoneReady(contracts, line.version);

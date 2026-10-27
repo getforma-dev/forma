@@ -1,13 +1,10 @@
 # Forma documentation
 
-Forma 3.1.0 is the latest stable release, with seven coordinated packages. The
-[3.1 upgrade guide](UPGRADING-3.1.md) describes that release. Published
-[3.2.0-rc.2](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2) adds the optional router as the eighth package.
-This checkout prepares unpublished 3.2.0-rc.3; the
-[preparation record](release/3.2-RC3-PREPARATION.md) separates its pending checks
-from RC2 publication and the [original implementation ledger](design/router/qualification.md).
-Historical decisions and release evidence are kept separately from the path an
-application author should follow.
+Forma 3.2.0 coordinates eight packages, including the optional router. The
+[3.2 upgrade guide](UPGRADING-3.2.md) explains version alignment and migration.
+The [release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0)
+records publication; historical decisions and evidence remain in the
+[release archive](release/README.md).
 
 ## Build with Forma
 
@@ -18,13 +15,13 @@ application author should follow.
 | Build browser UI or a static site | [Core quickstart](../packages/core/README.md) and [API](../packages/core/docs/API.md) |
 | Use Rust request data in a page | [Declared props](DECLARED-PROPS.md) and [server API](../crates/forma-server/README.md) |
 | Activate server-rendered islands | [Islands and state](../packages/core/docs/ISLANDS.md) |
-| Add client navigation and persistent layouts (3.2 candidate) | [Routing guide](ROUTING.md), [router API](../packages/router/README.md) and [native-router starter](../packages/create-app/templates/native-router/README.md) |
+| Add client navigation and persistent layouts | [Routing guide](ROUTING.md), [router API](../packages/router/README.md) and [native-router starter](../packages/create-app/templates/native-router/README.md) |
 | Use the explicit HTML runtime | [HTML runtime](../packages/core/docs/HTML-RUNTIME.md) |
 | Know what compiles natively | [Admitted subset and build diagnostics](../packages/compiler/docs/subset.md) |
 | Configure a build or deployment | [Build package](../packages/build/README.md) |
 | Upgrade to published 3.0 | [Upgrade guide](UPGRADING-3.0.md) and [compatibility](compatibility.md) |
 | Upgrade to published 3.1 | [3.0 → 3.1 upgrade guide](UPGRADING-3.1.md) |
-| Prepare a router application for 3.2 | [3.2 candidate upgrade guide](UPGRADING-3.2.md) |
+| Upgrade an application to 3.2 | [3.2 upgrade guide](UPGRADING-3.2.md) |
 | Diagnose a failure | [Diagnostic catalogue](DIAGNOSTICS.md) |
 
 ## Contracts and security

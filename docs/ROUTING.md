@@ -3,12 +3,16 @@
 Forma's optional `@getforma/router` keeps compatible layouts alive while the URL
 and page content change. Rust can continue rendering the destination HTML and
 typed props; client navigation does not require moving rendering into JavaScript.
-The router is available in the published coordinated **[3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)**.
-Stable 3.1.0 does not include it. This source checkout prepares unpublished
-3.2.0-rc.3; [its release preparation](release/3.2-RC3-PREPARATION.md) does not
-change the registry version used in the walkthrough below.
+The router is part of the coordinated **Forma 3.2.0** set. Use matching core,
+compiler, build and server versions; 3.1.0 does not include the navigation API.
 
-## Choose a rendering path
+## Islands and navigation work together
+
+Client-side **navigation** changes the URL and destination content without a full
+document reload. Client-side **rendering** creates that content in JavaScript.
+Forma supports the first without requiring the second: Rust can render the HTML,
+islands can provide its interactivity, and the native adapter can coordinate
+navigation between those pages.
 
 | Application | Adapter | Where the destination comes from |
 |---|---|---|
@@ -17,23 +21,42 @@ change the registry version used in the walkthrough below.
 | Reviewed generated static documents | `createHtmlAdapter({ head, pages })` | A registered, hashed HTML content region |
 | Ordinary links, forms or no-JavaScript pages | No router | A complete document response |
 
-Choose one profile for a document. Moving between profiles takes a document
-navigation. A static page does not need a router bundle, and a standalone no-JS
-route stays a useful option even in an application with routed pages.
+Keep one navigation coordinator for the currently loaded HTML document. Its
+adapter determines how destination content is prepared and owned; it does not
+choose whether the application may use islands. In a native group, compatible
+layouts and their islands retain their DOM and local state. Departing owners
+dispose their islands, and fresh destination owners activate their declared
+islands. Do not mount the browser adapter over an existing SSR or island root.
+
+One application can use different rendering paths in different sections. For
+example, `/shop/*` can use Rust-rendered pages, islands and native navigation;
+`/studio/*` can use browser-rendered routes; and `/legal/*` can use ordinary
+documents with no router. Moving between native, browser and generated-HTML
+profiles takes a full document navigation in the current implementation.
+In-memory layout state does not carry across that boundary. Within a compatible
+native group, navigation remains enhanced and islands remain islands.
+
+Native groups currently require production SSR builds without watch mode or code
+splitting. They admit declared native islands, not browser-only islands, and a
+child route outlet must sit outside island-owned DOM. All owners' island code is
+bundled into the initial group script: deferred island activation does not imply
+per-route JavaScript downloads. These are the current
+[group build constraints](../packages/build/README.md#optional-native-navigation-groups),
+not restrictions on ordinary islands applications that do not opt into a group.
 
 ## Start with a connected application
 
-Use the `native-router` template from the published 3.2.0-rc.2 candidate:
+Use the `native-router` template from the 3.2.0 release:
 
 ```sh
-npx @getforma/create-app@3.2.0-rc.2 my-routed-app --template native-router
+npx @getforma/create-app@3.2.0 my-routed-app --template native-router
 cd my-routed-app
 cd admin && npm ci && npm run build && cd ..
 cargo run --locked
 ```
 
-The command above selects the published RC2 CLI and its coordinated dependencies.
-For unpublished RC3 work, contributors use the [packed candidate workflow](../packages/create-app/README.md#development).
+The command above selects the 3.2.0 CLI and its coordinated dependencies.
+For unpublished source changes, contributors use the [packed candidate workflow](../packages/create-app/README.md#development).
 Open `http://localhost:3000`. Change the shell counter and input, then follow Home
 and About. The shell's nodes and state survive; the Home counter belongs to its
 leaf and starts again after that owner is replaced. Refresh or disable JavaScript
