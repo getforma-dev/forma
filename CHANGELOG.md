@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.2.0] - 2026-10-27
+
+- Add optional `@getforma/router` for browser routes, generated HTML and typed
+  native SSR navigation, with persistent layouts, owned cleanup and enhanced
+  actions. Native islands retain their selective activation and ownership.
+- Ship the connected `native-router` starter and browser-routed dashboard in the
+  eight-package coordinated release. Ordinary SSR and core-only applications
+  remain supported.
+- Guard router links with core's URL policy, avoid duplicate uncertain-submission
+  announcements, and recover source edits made during refused native watch builds.
+- Preserve source security, packed correctness, artifact integrity and trusted
+  publishing. The maintainer waived the extra N7 campaign and active soak for
+  this release; they are not passing measurements. See the
+  [release decision](docs/release/3.2-PERFORMANCE-DECISION.md).
+
+## Historical preparation checkpoints
+
 ## [Unreleased]
 
 - Guard router-created links with core's existing URL policy, including

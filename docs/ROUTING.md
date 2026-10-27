@@ -3,9 +3,8 @@
 Forma's optional `@getforma/router` keeps compatible layouts alive while the URL
 and page content change. Rust can continue rendering the destination HTML and
 typed props; client navigation does not require moving rendering into JavaScript.
-The router is available in the published coordinated **[3.2.0-rc.3 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)**.
-Stable 3.1.0 does not include it. The walkthrough below uses the published
-candidate; [release records](release/README.md) track stable acceptance separately.
+The router is part of the coordinated **Forma 3.2.0** set. Use matching core,
+compiler, build and server versions; 3.1.0 does not include the navigation API.
 
 ## Islands and navigation work together
 
@@ -47,16 +46,16 @@ not restrictions on ordinary islands applications that do not opt into a group.
 
 ## Start with a connected application
 
-Use the `native-router` template from the published 3.2.0-rc.3 candidate:
+Use the `native-router` template from the 3.2.0 release:
 
 ```sh
-npx @getforma/create-app@3.2.0-rc.3 my-routed-app --template native-router
+npx @getforma/create-app@3.2.0 my-routed-app --template native-router
 cd my-routed-app
 cd admin && npm ci && npm run build && cd ..
 cargo run --locked
 ```
 
-The command above selects the published RC3 CLI and its coordinated dependencies.
+The command above selects the 3.2.0 CLI and its coordinated dependencies.
 For unpublished source changes, contributors use the [packed candidate workflow](../packages/create-app/README.md#development).
 Open `http://localhost:3000`. Change the shell counter and input, then follow Home
 and About. The shell's nodes and state survive; the Home counter belongs to its

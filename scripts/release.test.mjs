@@ -20,6 +20,7 @@ const seededMilestones = (statuses, source = historicalContracts()) => {
     for (const gate of Object.values(c.milestones[milestone].gates)) {
       gate.status = statuses[milestone];
       delete gate.deferral; // Synthetic done/pending states cannot retain a live deferral.
+      delete gate.waiver; // Nor an actual final-only waiver from the live contract.
     }
   }
   return c;

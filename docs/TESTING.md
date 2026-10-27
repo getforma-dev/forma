@@ -379,7 +379,7 @@ manifest contains complete RC4 and prospective 3.2.0 snapshots: one coordinated
 version selects the whole snapshot, never independent hashes per file. Only the
 27 precomputed `release-set.versionFiles` paths differ; mixed graphs, unknown
 versions or any other changed input select full serial. This prepares the
-version-only final transition without changing the scheduler after its soak. A changed
+version-only transition without changing the scheduler. A changed
 input, failed command, lost log or incomplete cleanup after work starts fails
 that invocation instead of retrying it serially.
 
@@ -387,9 +387,11 @@ Every run prints its fresh external `forma-r17-*` evidence directory. CI retains
 admission/plan identities, both phases' complete worker logs and cleanup, the
 consumed build receipt, hidden browser result files and native-success evidence
 alongside the existing reports. A successful
-local or single hosted run does not establish N7: its fresh 20-command campaign
+local or single hosted run does not establish N7. A qualifying 20-command campaign
 must time this normal entrypoint and retain the admitted mode and every original
 outcome, without mixing serial fallbacks or replacing failed observations.
+The maintainer [waived the extra campaign for 3.2.0](release/3.2-PERFORMANCE-DECISION.md);
+ordinary CI still runs this complete entrypoint, and no N7 pass is claimed.
 
 | Gate | Current owner |
 |---|---|

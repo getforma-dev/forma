@@ -1,5 +1,34 @@
 # FORMA-301: 3.2 candidate qualification
 
+## Stable release preparation — revised 2026-10-27 decision
+
+The maintainer directed a streamlined stable 3.2.0 release. The
+[decision](../../release/3.2-PERFORMANCE-DECISION.md) explicitly waives the extra
+20-command N7 campaign and one-hour active soak; neither is passed. It also
+removes new RC publication solely for soak inputs and the staged production
+rollback exercise. Security, core correctness, independent source review,
+ordinary CI, tagged qualification and trusted publishing remain required.
+The website will update once, after stable publication, with current 3.2.0
+docs, examples and downloads and live deployment verification.
+
+Source `0e116ebf77cb34e15c04d946a706ac0f0556db93` has successful original
+[CI 40537713511](https://github.com/getforma-dev/forma/actions/runs/40537713511)
+(19 successful jobs and one expected legacy scaffold skip). Its ordinary R17
+command took 620 seconds; that is one observation, not an N7 distribution.
+Its original [P17 40537706950](https://github.com/getforma-dev/forma/actions/runs/40537706950)
+passes all 75 checks in 1,303.893 seconds, with independently authenticated raw
+evidence, security controls and complete cleanup. Decoder p95 values of 9.8 and
+27.7 ms satisfy the original 30 ms bound without an exception.
+The same archive set passes 90 native cases and the unchanged paired-size
+limits: 12,276/12,288 incremental gzip bytes and 40,704/65,536 group bytes.
+
+Stable preparation changes coordinated versions, release policy and current
+documentation. Earlier execution is not relabeled as stable-tag execution.
+Final source audit, ordinary stable-source CI and the actual tagged P17 still
+precede publication. Original checkpoints below retain their measured identities,
+failed results and then-applicable requirements.
+
+
 ## Successor status — 2026-10-27 UTC
 
 [3.2.0-rc.2 is published](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)

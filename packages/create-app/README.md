@@ -23,20 +23,17 @@ Scaffold a new [Forma](https://getforma.dev) application — Rust server + TypeS
 
 ## Usage
 
-The basic commands below use the latest stable, coordinated `3.1.0` set.
-For the new router starter, use published [3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3):
+Use the coordinated `3.2.0` CLI. For a connected native router application:
 
 ```sh
-npx @getforma/create-app@3.2.0-rc.3 my-routed-app --template native-router
+npx @getforma/create-app@3.2.0 my-routed-app --template native-router
 ```
 
 For unpublished source changes, contributors use the
 [packed candidate workflow](#development).
-The [release records](../../docs/release/README.md) distinguish actual RC3
-publication from the remaining stable 3.2 acceptance.
 
 ```bash
-npx @getforma/create-app@3.1.0 my-app
+npx @getforma/create-app@3.2.0 my-app
 cd my-app
 ```
 
@@ -56,11 +53,11 @@ because its `/api/*` routes have no authentication.
 ## Options
 
 ```bash
-npx @getforma/create-app@3.1.0 my-app --template dashboard
-npx @getforma/create-app@3.1.0 my-app --template minimal
-npx @getforma/create-app@3.1.0 my-app --dry-run
-npx @getforma/create-app@3.1.0 --help
-npx @getforma/create-app@3.1.0 --version
+npx @getforma/create-app@3.2.0 my-app --template dashboard
+npx @getforma/create-app@3.2.0 my-app --template minimal
+npx @getforma/create-app@3.2.0 my-app --dry-run
+npx @getforma/create-app@3.2.0 --help
+npx @getforma/create-app@3.2.0 --version
 ```
 
 Project names must start with a lowercase letter and use only lowercase
@@ -77,9 +74,9 @@ exists.
 |----------|-----------|-------------|
 | `dashboard` | Explicit Browser rendering | DevOps admin panel — 4 pages, 8 API routes, SVG chart, Tailwind CSS, Gruvbox theme, 16 Playwright tests |
 | `minimal` | Browser, or native SSR with `npm run build:ssr` | Rust server + a Counter page and a static About page |
-| `native-router` | Native SSR with optional owned navigation | Persistent layout, typed owner branches, ordinary links and history; candidate release only |
+| `native-router` | Native SSR with optional owned navigation | Persistent layout, typed owner branches, ordinary links and history |
 
-`native-router` is included in published 3.2.0-rc.3; it is absent from
+`native-router` is included in 3.2.0; it is absent from
 published 3.0/3.1 archives. For unpublished changes use the documented packed
 candidate workflow and select `--template native-router` from that candidate CLI.
 The 3.2 set adds `@getforma/router` to this template and the dashboard. The dashboard remains an
@@ -164,7 +161,7 @@ The current eight-package candidate gate requires all 24 heavy controls plus the
 | [@getforma/core](https://www.npmjs.com/package/@getforma/core) | Reactive DOM library — signals, h(), islands, SSR hydration |
 | [@getforma/compiler](https://www.npmjs.com/package/@getforma/compiler) | FMIR generation, coded diagnostics and esbuild SSR integration |
 | [@getforma/build](https://www.npmjs.com/package/@getforma/build) | Production pipeline — bundling, hashing, compression, manifest |
-| [@getforma/router](../router/README.md) | Optional browser/native navigation and persistent layouts (3.2 candidate) |
+| [@getforma/router](../router/README.md) | Optional browser/native navigation and persistent layouts |
 
 ### Backend (Rust)
 

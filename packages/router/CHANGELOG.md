@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0] - 2026-10-27
+
+- Release optional owned routing with browser, generated-HTML and typed native
+  adapters, persistent layouts, safe links, cancellation and history handling.
+- Preserve islands within compatible native owner groups and ordinary document
+  navigation across rendering profiles. Include typed actions, mutation
+  uncertainty, context revocation, bounded recovery, focus and scroll behavior.
+- Apply core's URL policy to `Link`, announce uncertain outcomes once, and remove
+  the unused `PreparedView.focus` type field.
+
+## Historical preparation checkpoints
+
 ## [Unreleased]
 
 - Guard `Link` URLs with core's existing policy without requiring an ambient

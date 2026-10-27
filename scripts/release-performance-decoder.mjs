@@ -23,6 +23,17 @@ export const DECODER_PROFILE = Object.freeze({
   end: 'first instruction of the registered component',
   registration: 'before start', validation: 'after end', retries: 0,
 });
+// The maintainer accepted 0.7 ms headroom for 3.2 on 2026-10-27. Preserve
+// the original profile and its verdict for archived observations; new 3.2
+// producers explicitly identify the revised acceptance policy. See
+// docs/release/3.2-PERFORMANCE-DECISION.md.
+export const DECODER_32_PROFILE = Object.freeze({
+  ...DECODER_PROFILE, policy: 'public-decoder-p95-3.2-headroom-v1',
+  targetP95Ms: 30, maxP95Ms: 30.7,
+  decision: 'FORMA-3.2-MAINTAINER-HEADROOM-20261027',
+});
+const is32Release = version => typeof version === 'string' && /^3\.2\.0(?:-rc\.[1-9]\d*)?$/.test(version);
+export const decoderProfile = version => is32Release(version) ? DECODER_32_PROFILE : DECODER_PROFILE;
 export const DECODER_CSP = "default-src 'none'; script-src 'self'; require-trusted-types-for 'script'; trusted-types forma; base-uri 'none'";
 
 // Real generateRealIr output for these exact original sources. Frozen compiler
@@ -110,7 +121,9 @@ function checkObservation(observation,payload,negative=false) {
 }
 export function validateDecoder(report) {
   assert.equal(report?.schema,1); assert.equal(report.pilot,false,'decoder: a pilot cannot qualify a release');
-  assert.deepEqual(report.profile,DECODER_PROFILE,'decoder: actual measurement profile differs');
+  const profile = report.profile?.policy === DECODER_32_PROFILE.policy
+    ? decoderProfile(report.artifact?.version) : DECODER_PROFILE;
+  assert.deepEqual(report.profile,profile,'decoder: actual measurement profile differs');
   assert.equal(report.responsePolicy,DECODER_CSP,'decoder: actual enforced Trusted Types header differs');
   assert(typeof report.browserVersion==='string'&&report.browserVersion.length>0);
   assert.equal(new Date(report.recordedAt).toISOString(),report.recordedAt,'decoder: recording date absent');
@@ -174,8 +187,8 @@ export function validateDecoder(report) {
   }
   // Check all samples of both shapes and the refusal controls before timing.
   // With forty samples, nearest-rank p95 is the 38th sorted original duration.
-  for(const row of timings) assert(row.p95Ms<=DECODER_PROFILE.maxP95Ms,
-    `decoder ${row.id} p95: exceeds ${DECODER_PROFILE.maxP95Ms}ms`);
+  for(const row of timings) assert(row.p95Ms<=profile.maxP95Ms,
+    `decoder ${row.id} p95: exceeds ${profile.maxP95Ms}ms`);
   return report;
 }
 
@@ -243,7 +256,7 @@ export async function measurePackedDecoder({corePath,compilerPath=resolve(corePa
     const cdp=await page.context().newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
     const cpu=cpus();
-    const report={schema:1,pilot:false,profile:{...DECODER_PROFILE},recordedAt:new Date().toISOString(),
+    const report={schema:1,pilot:false,profile:{...decoderProfile(version)},recordedAt:new Date().toISOString(),
       browserVersion:browser.version(),responsePolicy:null,
       artifact:{file:'dist/forma.esm.js',sha256:sha(artifact),bytes:artifact.length,version},compiler,
       machine:{node:process.version,platform:platform(),release:release(),architecture:arch(),cpu:cpu[0]?.model,logicalCpus:cpu.length,memoryBytes:totalmem()},cases:[],controls:[]};

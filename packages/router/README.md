@@ -3,12 +3,8 @@
 Optional client navigation for Forma: ranked routes, persistent layouts, owned
 cleanup, browser history and progressively enhanced typed Rust actions.
 
-The router is published in **[Forma 3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3)**.
-Stable 3.1.0
-does not contain this API or core's `/navigation` entry. Use one coordinated
-published candidate or the sealed packed candidate for qualification; do not
-mix a 3.2 router with 3.1 core. The [release records](../../docs/release/README.md)
-keep source validation, publication and stable acceptance separate.
+The router is part of **Forma 3.2.0**. Use one coordinated package set; do not
+mix a 3.2 router with 3.1 core, which lacks the `/navigation` entry.
 Start with the [routing guide](../../docs/ROUTING.md) for rendering choices and a
 connected application, or the [3.2 upgrade guide](../../docs/UPGRADING-3.2.md).
 
@@ -25,12 +21,12 @@ An application can use both paths in different sections; crossing between them
 loads a new document. The [rendering guide](../../docs/ROUTING.md#islands-and-navigation-work-together)
 explains the supported combinations and current native-group build constraints.
 
-## Install the published candidate
+## Install
 
 For an existing browser application with the matching 3.2 toolchain:
 
 ```sh
-npm install --save-exact @getforma/core@3.2.0-rc.3 @getforma/router@3.2.0-rc.3
+npm install --save-exact @getforma/core@3.2.0 @getforma/router@3.2.0
 ```
 
 Native applications also coordinate compiler, build and Rust crate versions;

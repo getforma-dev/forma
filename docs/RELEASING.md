@@ -1,34 +1,24 @@
 # Unified releases
 
-The coordinated 3.2 line includes eight packages with the optional
-`@getforma/router`. Stable
-[3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0) remains available;
-[3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) is published as a router prerelease.
-The [RC3 publication outcome](release/3.2-RC3-PUBLICATION.md) supplements the
-historical preparation record and distinguishes publication from stable
-acceptance. RC2 hosts the separate
-inventory-only RC1 recovery; [the incident record](release/3.2-RECORD-RECOVERY.md)
-preserves the original failed record job. Published 3.0 and 3.1 records
-retain their original seven-package inventory. The [3.0 as-built summary](release/V3-AS-BUILT.md)
-records its qualification and completed post-release verification. This document explains the release
-mechanisms and retains historical 3.0 examples. Never reuse an existing tag or
-version. For a new release, first prepare its own reviewed contract and evidence.
-The checked-in contract record, `scripts/release-contracts.json`, states which
-tickets gate which milestone (alpha, beta, rc, final); a tag publishes only when
-every gate of its milestone and of the earlier milestones is done, except the
-explicit 3.0.0 post-release soak obligation under L-66-QUOTA. That exception
-requires an authenticated published RC, its P17 and independent audit, and the
-reviewed final source changes; it records deferred status and zero soak credit.
-See [the post-release soak path](release/RC-BURN-IN.md). Read the contract
-record for the candidate's current readiness; a version string alone does not
-authorize publication. See [the milestone gate](#milestone-gate) below and the
-historical [alpha runbook](release/ALPHA-RUNBOOK.md). Earlier alpha and A2 results
-retain their original scope and do not establish beta, RC or final qualification.
+Forma 3.2.0 coordinates eight packages, including optional `@getforma/router`.
+The current source prepares stable 3.2.0; its
+[release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0) is the
+publication authority. Historical 3.0/3.1 records keep their seven-package
+inventory, and published 3.2 prereleases keep their original outcomes.
 
-Later version lines use their own reviewed contract, RC audit and completed
-pre-final soak. The RC tag and final version must have the same exact major,
-minor and patch; 3.0 evidence cannot qualify 3.1. The L-66-QUOTA deferral remains
-exclusive to 3.0.0. Version-line support does not close gates or publish packages.
+The [2026-10-27 maintainer decision](release/3.2-PERFORMANCE-DECISION.md) permits
+3.2.0 to proceed directly to stable after final source audit, ordinary CI and
+tagged package qualification. Its extra N7 timing campaign and one-hour active
+soak are explicitly **waived**, with zero credit. It does not waive security,
+core correctness, archive integrity/provenance, independent source review or
+trusted publishing. The release record carries the exact decision and waiver
+status. No separate new RC publication is needed solely to provide soak inputs.
+
+Other version lines retain the normal same-line RC/audit/soak policy. The
+historical 3.0 L-66-QUOTA deferral remains distinct: it promised a future soak
+and required an authenticated published RC. Never reuse a tag or version.
+Read `scripts/release-contracts.json` for actual milestone readiness; a version
+string or a pending checklist does not authorize publication.
 
 ## Prepare and test
 

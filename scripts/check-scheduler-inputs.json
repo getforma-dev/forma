@@ -6819,7 +6819,7 @@
       },
       {
         "path": "scripts/check-release-qualification.mjs",
-        "sha256": "0acfd72e552f6b6e37091d04f1164b5d3d91f3a5775b55682cbba0bccf2a0e9a"
+        "sha256": "585d3cf9616f567a74052fe80f03229e7c44edc68c8fadcfe734eb971d0c2974"
       },
       {
         "path": "scripts/check-release-support.mjs",
@@ -6827,7 +6827,7 @@
       },
       {
         "path": "scripts/check-release-workflow.rb",
-        "sha256": "d59dd1739f1bacd9dc5132dbc2366f91e6959d6d5c0b91be8d2f66c59ef8f3af"
+        "sha256": "3236986b953ad3b2c6a40fa77accb38106c629041e741e48e8b251dfcfab3272"
       },
       {
         "path": "scripts/check-router-research.mjs",
@@ -7206,6 +7206,14 @@
         "sha256": "4130f15f7c7904342e96bb2a4d2e59449927776748a2e550b482348a75fa7c21"
       },
       {
+        "path": "scripts/release-final-waiver.mjs",
+        "sha256": "4802bef35d29724338f826e86019952ea58b5fd4a886b18be66e1c3fe762a8e1"
+      },
+      {
+        "path": "scripts/release-final-waiver.test.mjs",
+        "sha256": "9ba0dc337a9e57d6909a60b0a0251181de754298e9bf5c118f635745a8aaf696"
+      },
+      {
         "path": "scripts/release-fixture-apps.mjs",
         "sha256": "3923e218d6bbab117b9b044843b64aedd3caaa0f7a092022e2948c10d3e6643a"
       },
@@ -7303,11 +7311,11 @@
       },
       {
         "path": "scripts/release-performance-decoder.mjs",
-        "sha256": "0cc2fff640e8982fba66a62085ed8e98f7169d16e68d9816d77fe65024258054"
+        "sha256": "b3a05ffe370d30693481e5f2df6e872ee47c21f557751a6593f680e2125b74cf"
       },
       {
         "path": "scripts/release-performance-decoder.test.mjs",
-        "sha256": "d8166106b72d51ebd63bb29aeb7e782144e18526b6730da6c86f5758d42cb984"
+        "sha256": "7732bd8f1ce007e6f83c909924939442e07dcdbbf2871dd3ffa1897f61a46ea1"
       },
       {
         "path": "scripts/release-performance-durability.test.mjs",
@@ -7423,7 +7431,7 @@
       },
       {
         "path": "scripts/release-record.mjs",
-        "sha256": "3be2b761c8b1fcd4a3bfea13638d7918a93e4160d4744c592a70ae3598a5ed55"
+        "sha256": "ff33aeaae059584abc89099277c65cb052727acab5a0f17531a901cb389db36d"
       },
       {
         "path": "scripts/release-record.test.mjs",
@@ -7447,7 +7455,7 @@
       },
       {
         "path": "scripts/release-set.mjs",
-        "sha256": "3b544dbb2fbe5212a37bc955a4ce0b71eeeef75a3e30776e3b75cf86a7f3f2fa"
+        "sha256": "cb240bac3a81453ac565bf8b4a31101cdd948d53a791c08343106e8eb3ae5119"
       },
       {
         "path": "scripts/release-signatures.test.mjs",
@@ -7559,7 +7567,7 @@
       },
       {
         "path": "scripts/release.test.mjs",
-        "sha256": "7561b88f8d938506dd41937c40714da0ded3115e15f676824b57e065bf4c1052"
+        "sha256": "827bc94409463fe35088e01fe7c6e2946f409c8765a3fb098e5fc327858badd4"
       },
       {
         "path": "scripts/reviewer-static-executable.test.mjs",
@@ -14329,7 +14337,7 @@
       },
       {
         "path": "scripts/check-release-qualification.mjs",
-        "sha256": "0acfd72e552f6b6e37091d04f1164b5d3d91f3a5775b55682cbba0bccf2a0e9a"
+        "sha256": "585d3cf9616f567a74052fe80f03229e7c44edc68c8fadcfe734eb971d0c2974"
       },
       {
         "path": "scripts/check-release-support.mjs",
@@ -14337,7 +14345,7 @@
       },
       {
         "path": "scripts/check-release-workflow.rb",
-        "sha256": "d59dd1739f1bacd9dc5132dbc2366f91e6959d6d5c0b91be8d2f66c59ef8f3af"
+        "sha256": "3236986b953ad3b2c6a40fa77accb38106c629041e741e48e8b251dfcfab3272"
       },
       {
         "path": "scripts/check-router-research.mjs",
@@ -14716,6 +14724,14 @@
         "sha256": "4130f15f7c7904342e96bb2a4d2e59449927776748a2e550b482348a75fa7c21"
       },
       {
+        "path": "scripts/release-final-waiver.mjs",
+        "sha256": "4802bef35d29724338f826e86019952ea58b5fd4a886b18be66e1c3fe762a8e1"
+      },
+      {
+        "path": "scripts/release-final-waiver.test.mjs",
+        "sha256": "9ba0dc337a9e57d6909a60b0a0251181de754298e9bf5c118f635745a8aaf696"
+      },
+      {
         "path": "scripts/release-fixture-apps.mjs",
         "sha256": "3923e218d6bbab117b9b044843b64aedd3caaa0f7a092022e2948c10d3e6643a"
       },
@@ -14813,11 +14829,11 @@
       },
       {
         "path": "scripts/release-performance-decoder.mjs",
-        "sha256": "0cc2fff640e8982fba66a62085ed8e98f7169d16e68d9816d77fe65024258054"
+        "sha256": "b3a05ffe370d30693481e5f2df6e872ee47c21f557751a6593f680e2125b74cf"
       },
       {
         "path": "scripts/release-performance-decoder.test.mjs",
-        "sha256": "d8166106b72d51ebd63bb29aeb7e782144e18526b6730da6c86f5758d42cb984"
+        "sha256": "7732bd8f1ce007e6f83c909924939442e07dcdbbf2871dd3ffa1897f61a46ea1"
       },
       {
         "path": "scripts/release-performance-durability.test.mjs",
@@ -14933,7 +14949,7 @@
       },
       {
         "path": "scripts/release-record.mjs",
-        "sha256": "3be2b761c8b1fcd4a3bfea13638d7918a93e4160d4744c592a70ae3598a5ed55"
+        "sha256": "ff33aeaae059584abc89099277c65cb052727acab5a0f17531a901cb389db36d"
       },
       {
         "path": "scripts/release-record.test.mjs",
@@ -14957,7 +14973,7 @@
       },
       {
         "path": "scripts/release-set.mjs",
-        "sha256": "3b544dbb2fbe5212a37bc955a4ce0b71eeeef75a3e30776e3b75cf86a7f3f2fa"
+        "sha256": "cb240bac3a81453ac565bf8b4a31101cdd948d53a791c08343106e8eb3ae5119"
       },
       {
         "path": "scripts/release-signatures.test.mjs",
@@ -15069,7 +15085,7 @@
       },
       {
         "path": "scripts/release.test.mjs",
-        "sha256": "7561b88f8d938506dd41937c40714da0ded3115e15f676824b57e065bf4c1052"
+        "sha256": "827bc94409463fe35088e01fe7c6e2946f409c8765a3fb098e5fc327858badd4"
       },
       {
         "path": "scripts/reviewer-static-executable.test.mjs",

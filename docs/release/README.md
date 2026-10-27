@@ -1,37 +1,25 @@
 # Release documentation
 
-**[3.1.0](https://github.com/getforma-dev/forma/releases/tag/v3.1.0) remains the latest stable release.**
-**[3.2.0-rc.3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3) is published** with the optional router and eight
-authenticated registry archives. Its [dated publication outcome](3.2-RC3-PUBLICATION.md)
-records the actual attempts, normal release record and finite inventory-only npm
-placeholder receipt. The [preparation record](3.2-RC3-PREPARATION.md) retains its
-earlier observations. Prerelease publication does not complete stable, device,
-production rollback or soak acceptance.
+The current source prepares **Forma 3.2.0**, with eight coordinated packages and
+the optional router. The [stable release record](https://github.com/getforma-dev/forma/releases/tag/v3.2.0)
+is the publication authority. See the [3.2 upgrade guide](../UPGRADING-3.2.md)
+and [routing guide](../ROUTING.md) for application instructions.
 
-RC1's eight archives were published before its record job failed. RC2 now hosts
-the separate inventory-only receipt. The [incident record and dated follow-up](3.2-RECORD-RECOVERY.md)
-preserve the failed original outcome without granting RC1 qualification or soak credit.
-
-Current source prepares a coordinated RC4 successor for the reviewed router
-cleanup and maintained R17 scheduling changes. [Its preparation record](3.2-RC4-PREPARATION.md)
-lists the evidence still required. Earlier archives, tags and failures stay
-immutable; a local version string does not establish publication.
-
-## 3.2 router preparation
+The maintainer approved a [streamlined release](3.2-PERFORMANCE-DECISION.md):
+retain source security, core correctness, exact-source audit, ordinary CI,
+tagged packed qualification, artifact integrity and trusted publishing. Waive
+the extra timing campaign and active soak, without claiming those passed, along
+with extra RC publication solely for soak inputs and the staged rollback exercise.
+The stable website, docs, examples and downloads update together after registry
+publication; no additional public RC preview is planned.
 
 The [router implementation record](../design/router/README.md) preserves the
-research and design decisions. Its [qualification ledger](../design/router/qualification.md)
-distinguishes source and packed evidence from the remaining stable-release
-scenarios, manual accessibility/device review and live website acceptance.
-The [registry enrollment procedure](ROUTER-REGISTRY-ENROLLMENT.md) records the
-finite first-package bootstrap exception and subsequent trusted-publisher and
-monitoring obligations. The current gates are in `scripts/release-contracts.json`;
-RC qualification does not complete the stable gates or hosted soak.
-
-The [3.1 performance decisions](3.1-PERFORMANCE-TRADEOFFS.md),
-[3.1 qualification](3.1-QUALIFICATION.md) and [3.1 upgrade guide](../UPGRADING-3.1.md)
-retain that release's tradeoffs, evidence and migration advice. Earlier RC
-failures and superseded qualification records retain their original status.
+research, design and qualification evidence. Published
+[RC3](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.3), its
+[publication outcome](3.2-RC3-PUBLICATION.md), and the
+[unpublished RC4 preparation](3.2-RC4-PREPARATION.md) remain historical checkpoints.
+RC1's failed record job and RC2's inventory-only recovery remain in the
+[incident record](3.2-RECORD-RECOVERY.md). No failed result is rewritten.
 
 ## Maintainer procedures
 
