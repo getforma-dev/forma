@@ -5,13 +5,39 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
-import { validatePartition, validatePrototypeSource, partitionCommands, ROOT, manifestPath } from './check-core-partition.mjs';
+import { validatePartition, validatePrototypeSource, prototypeSourceDrift, partitionCommands, ROOT, manifestPath } from './check-core-partition.mjs';
 import { runPair, seal, assertSeal, freshEvidencePath } from './check-scheduler-pair.mjs';
 import { spawnProofProcess, stopProofProcess } from './router-proof-process.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const specs = [{ id: 'a', browserWorkers: 0, cargoPools: 0 }, { id: 'b', browserWorkers: 2, cargoPools: 0 }];
 const inventory = JSON.parse(readFileSync(manifestPath));
+test('only the known CI setup module regular untracked CPython cache is generated output', () => {
+  const root = mkdtempSync(resolve(tmpdir(), 'forma-setup-cache-control-'));
+  const cache = 'scripts/__pycache__/prefer-ubuntu-archive.cpython-312.pyc';
+  const path = resolve(root, cache);
+  try {
+    mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, 'synthetic generated cache');
+    assert.deepEqual(prototypeSourceDrift([], [cache], root), []);
+    const unknown = [
+      'scripts/__pycache__/new-helper.cpython-312.pyc',
+      'scripts/__pycache__/prefer-ubuntu-archive.cpython-312.py',
+      'scripts/__pycache__/prefer-ubuntu-archive.cpython-312.pyc/source.mjs',
+      'scripts/__pycache__/prefer-ubuntu-archive.cpython-312.opt-1.pyc',
+      'scripts/__pycache__/prefer-ubuntu-archive.pypy312.pyc',
+      'scripts/__pycache__/README.md', 'scripts/new-helper.py',
+      'packages/core/src/new.test.ts',
+    ];
+    assert.deepEqual(prototypeSourceDrift([], [cache, ...unknown], root), unknown);
+    assert.deepEqual(prototypeSourceDrift(['scripts/prefer-ubuntu-archive.py'], [cache], root), ['scripts/prefer-ubuntu-archive.py']);
+    assert.deepEqual(prototypeSourceDrift([cache], [], root), [cache], 'tracked changes never receive the generated-output exception');
+    rmSync(path); mkdirSync(path);
+    assert.deepEqual(prototypeSourceDrift([], [cache], root), [cache]);
+    rmSync(path, { recursive: true }); writeFileSync(resolve(root, 'other'), 'unreviewed');
+    symlinkSync(resolve(root, 'other'), path);
+    assert.deepEqual(prototypeSourceDrift([], [cache], root), [cache]);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 test('all original core files are unchanged and dispatched once, with timing/heap/Cargo exclusive', () => {
   validatePrototypeSource();
   validatePartition();

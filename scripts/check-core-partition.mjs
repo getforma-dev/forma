@@ -2,7 +2,7 @@
 // hooks, profiles, timeouts, samples, expected failures or assertions change.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
+import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -14,6 +14,18 @@ export const PROTOTYPE_FILES = ['scripts/check-core-partition.json', 'scripts/ch
   'scripts/check-scheduler-lanes.sh', 'scripts/check-scheduler-pair.mjs',
   'scripts/check-scheduler.test.mjs', 'scripts/check-scheduler-owned.test.mjs'];
 const digest = value => createHash('sha256').update(value).digest('hex');
+export function prototypeSourceDrift(changed, untracked, root = ROOT) {
+  // Ordinary CI imports this one frozen setup module before R17. Only its
+  // regular, untracked CPython cache is generated output; the tracked .py and
+  // every other helper/cache entry still require the normal source review.
+  const setupCache = path => /^scripts\/__pycache__\/prefer-ubuntu-archive\.cpython-3\d{1,2}\.pyc$/.test(path)
+    && lstatSync(resolve(root, 'scripts/__pycache__')).isDirectory()
+    && lstatSync(resolve(root, path)).isFile();
+  return [...new Set([
+    ...changed.filter(path => !PROTOTYPE_FILES.includes(path)),
+    ...untracked.filter(path => !PROTOTYPE_FILES.includes(path) && !setupCache(path)),
+  ])];
+}
 export function validatePrototypeSource(root = ROOT) {
   const source = JSON.parse(readFileSync(resolve(root, 'scripts/check-core-partition.json'))).source;
   assert.equal(source, '0cf47cdd6b487543f488f60695f74553282bbe9c');
@@ -23,7 +35,7 @@ export function validatePrototypeSource(root = ROOT) {
   // permission to run an undiscovered browser/Cargo writer in a concurrent lane.
   const changed = git(['diff', '--name-only', '-z', source, '--']);
   const untracked = git(['ls-files', '--others', '--exclude-standard', '-z']);
-  assert.deepEqual([...new Set([...changed, ...untracked])].filter(path => !PROTOTYPE_FILES.includes(path)), [],
+  assert.deepEqual(prototypeSourceDrift(changed, untracked, root), [],
     'review source/resource drift before using the scheduler prototype');
 }
 function walk(directory) {
