@@ -1,24 +1,24 @@
 {
   "contract": "d14-whole-release-v1",
-  "reviewedCommit": "3c10b6d056b1b160db47c7f603693502e78e0c71",
-  "reviewedTree": "2263f1cc01c12b0eb19b5c2a4dff356371f9925b",
-  "inputManifestSha256": "f49c8cfdcce3c71cdd2e733857a2068178bd2905884b64bf4c6e948bd2bb3dd1",
+  "reviewedCommit": "12476b5c14e00414f3c6e4c52215b65a40efadf2",
+  "reviewedTree": "55e593629ff66f9f1d24dba820a1c51acf152fd1",
+  "inputManifestSha256": "7eaf46a1dc6affee0e78b2c347ec7ba9aef6528d833dfb34ec36394d82414d2b",
   "authorModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "e2e8cc708044dee79045397154819f6f83a55a93442676effcdd82eb7ca4ae7b"
+    "sessionEvidenceSha256": "3236edc51ac87a28a9432beb3cb3d26341f3f5f501006c2573c2ddf6a2a3691f"
   },
   "reviewerModel": {
     "provider": "openai",
     "id": "gpt-6-astra",
-    "sessionEvidenceSha256": "a686c586dd2f255608994e2455e918f432bc05fe9020c45647e5c7c20a6487e5"
+    "sessionEvidenceSha256": "df8c07a91cae37c9a2eaee5432cab899097c16215c8762ab6a68e7e0dac1e3b2"
   },
   "independence": {
     "method": "fresh-context",
     "decision": "L-65",
-    "initializationEvidenceSha256": "6545e18e63c4bbd0c93e0618e414751b6ae9376e630caaa5dd5bf9944b3c1707"
+    "initializationEvidenceSha256": "d24c71b5980373608205a11619faa3c906950c5fe3a9b7c6ccc7e2eed5379760"
   },
-  "reviewedAt": "2026-10-27T00:52:51Z",
+  "reviewedAt": "2026-10-27T03:47:10.778Z",
   "accepted": true,
   "findings": [
     {
@@ -26,65 +26,86 @@
       "severity": "medium",
       "disposition": "resolved",
       "rationale": "Irreversible revalidation commit failures now recover even without a history write. Failed committed adapter sessions are detached and disposed before bounded recovery, including exhausted journals; generation checks preserve newer reentrant/async authority. Independent original/fixed browser controls and 12 recovery/native tests support the repair. Current packed navigation/ownership/security campaigns and exact final source bind it.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-002",
       "severity": "low",
       "disposition": "resolved",
-      "rationale": "Current compatibility/release/qualification documentation identifies 3.2 as eight packages and three starters. Published 3.0/3.1 seven-package receipts and earlier router development evidence retain their historical identities. The final 57-row ledger and 49 indexed evidence files were independently verified.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "rationale": "Current documentation identifies prepared RC.2 as eight packages and three starters and preserves the actual RC.1 publication/record failure. The stale core README RC.1 pin caused completed check/Node 22 / Node 24 failures before the original run was cancelled by PR replacement. Five factual Markdown corrections in5b44312e pass unchanged docs-truth 20/20 and the replacement CI (19 successful jobs, one intentional published-scaffold skip). All 57 frozen row bytes and 49 indexed evidence files remain historical; current supplemental evidence retains actual source identities.",
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-003",
       "severity": "low",
       "disposition": "resolved",
       "rationale": "The source advisory gate explicitly covers the current native-router starter through the version-selected inventory. Independent ten-control replay verifies native-only advisory/unreachable/missing-starter refusal and historical behavior. Fresh current P17 also passes source and packed advisory/signature gates. This was a coverage defect, not evidence of a present uncovered runtime vulnerability.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-004",
       "severity": "medium",
       "disposition": "resolved",
       "rationale": "All three shipped consumer workflows now enforce scripts-off complete npm installation, registry signatures, full npm advisories and pinned cargo-deny with live database fetch before builds. Independent parsed-workflow/mutation/fail-fast shell/packed-byte controls pass. Current candidate source/template equality and all three P17 starter runs bind the shipped correction.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-005",
       "severity": "medium",
       "disposition": "nonblocking",
-      "rationale": "Bootstrap credential metadata shows broader package/org write authority, 2FA bypass and a seven-day expiry rather than the requested package-only/one-day credential. The human explicitly authorized the finite exception after disclosure, as relayed and recorded by the parent. The source restricts use to the first exact @getforma/router 3.2.0-rc.1 qualified archive and strips credentials from other npm children; it does not reduce registry authority if leaked. Immediate GitHub secret removal and npm revocation after publication, actual trusted-publisher enrollment/first trusted publication and live monitoring remain mandatory operational obligations. No least-privilege or completed-enrollment claim is accepted.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "rationale": "The historical broader bootstrap credential remains a disclosed founder-authorized finite exception. Actual observer receipts now verify GitHub secret removal, the named token already absent from the actual owner token list, saved router trust for getforma-dev/forma, release.yml, npm-publish, and require 2FA/disallow-bypass-token policy. No exact revocation instant is inferred. RC.2 source neither needs nor authorizes bootstrap credentials. First actual OIDC publication and post-record observation/reconciliation remain later operational outcomes; saved configuration is not successful publication. The historical exception is not silently erased or presented as least privilege.",
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-006",
       "severity": "medium",
       "disposition": "resolved",
       "rationale": "Click interception reads the raw href and resolves it against the committed view during a held POP; missing href is not synthesized into navigation. The original three-engine failure, corrected 12-case replay and full 117-case history campaign retain their actual source identities. The two removed irreversible assignments were immediately overwritten unconditionally and did not create a new callback boundary.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-007",
       "severity": "low",
       "disposition": "resolved",
       "rationale": "Scroll bookkeeping now inserts/prunes immediately after current assignment and before signal/title callbacks. Independent original/fixed title-failure/full-journal/preparation-failure controls show exactly 1000 records with the current key retained; the earlier prune relocation failed that control. Corrected installed regressions and current source/packed size preserve the original caps.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-008",
       "severity": "medium",
       "disposition": "resolved",
       "rationale": "Five-package observer defaults and eight-package registry policy are prepared before the audit freeze, removing the runbook requirement for prohibited post-RC source edits. Independent 43-test replay verifies missing-router 404/nonzero/incomplete/no snapshot, immutable historical baseline, expansion/shrink behavior and missing package/record/hash rejection. Preexisting policy data and historical inventory readers are unchanged. Configuration is not live enrollment or a successful registry observation.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     },
     {
       "id": "D14-3.2-009",
       "severity": "low",
       "disposition": "nonblocking",
       "rationale": "The first uncertain-outcome announcement repeats the warning sentence and doubles punctuation. An independent installed 4c59 control observes the DOM text while confirming one POST, retained uncertainty and refusal of a subsequent submit. This is a visible/live-region wording defect, not an observed speech failure. The general Mac checklist confirmation does not refute it. Retained for follow-up; no fixed claim or runtime change is required for this RC.",
-      "evidenceSha256": "03f04ca1967a4dfd9daad4a56ff6dc597a0ceeb2adc6a1ed8a3da0e2f7fb20ef"
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+    },
+    {
+      "id": "D14-3.2-010",
+      "severity": "high",
+      "disposition": "resolved",
+      "rationale": "The original immutableRC1 run published all eight archives after 75-check P17 but failed record 121967590802 because the exact changelog heading was absent. High historical release-blocker severity is preserved. Corrected preflight shares changelogEntry with recording and reads exact committed CHANGELOG before either publisher. Independent36control replay verifies missing, empty or neighboring entries and uncommitted repairs cannot pass. RC.2 has its exact heading. Original failedworkflow/no ordinary DS12 remains visible; finite recovery admits inventory only and cannot turn it into a baseline. Source repair is resolved; actualRC2record success remains a future release outcome.",
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+    },
+    {
+      "id": "D14-3.2-011",
+      "severity": "medium",
+      "disposition": "resolved",
+      "rationale": "The initial reconciler treated recovery proof contents as opaque after digest authentication, so internally rehashed malformed proof could admit recovered claims. The source owner added shared validatePublicationRecoveryProof after authenticated receipt/proof binding and before any recovered addRecord. Original nine negative failures are retained. All nine semantic controls pass after bdc691e1, and this reviewer independently replayed 216 recovery/reconciliation/workflow/historical-reader controls with zero failures or skips. Nonhost releases remain no-op; strictinvalidrecovery admits no RC.1 claims and actual failed producer / separate recorder remain distinct.",
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
+    },
+    {
+      "id": "D14-3.2-012",
+      "severity": "medium",
+      "disposition": "nonblocking",
+      "rationale": "The maintainability shortfall/evidence gap is real and retained. Severity medium reflects longer maintainer feedback and CI cost; the observation is not a failed functional test, safety/security invariant violation or publication-integrity defect. It is nonblocking for the prepared RC audit, whose report explicitly preserves unmet/unestablished targets and does not approve stable release. This classification does not mark N7 met, change the 600-second threshold / 20-run protocol, create a timing waiver, claim a cold-cache excuse, infer a p95 failure, or infer a product regression from noncomparable 3.0 data. A current N7 conformance claim requires the prescribed actual20-run qualification or an explicit applicable founder disposition.",
+      "evidenceSha256": "a5b74052bc80876b0da2cca3cea3bf78186336444df0898f4f6321909bf4a021"
     }
   ],
   "blockingFindings": [],
-  "acceptanceEvidenceSha256": "5fe580a7a24fe12e21e42fd52df2bc3469588f044c6a1fd7b0cbd6188b6dc901"
+  "acceptanceEvidenceSha256": "1461f5be13153fc95095929eecc69db42c17b89f0e539706e3ceed6cc4dbeab7"
 }

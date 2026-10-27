@@ -137,7 +137,7 @@
           "scope": "the recall script and SECURITY.md generated from the release record"
         },
         "FORMA-145 audit": {
-          "status": "pending",
+          "status": "done",
           "scope": "fresh-context independent whole-release review of the exact 3.2 candidate and retained evidence, with an empty blocking list (D14)"
         },
         "FORMA-257": {
