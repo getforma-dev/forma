@@ -3,13 +3,47 @@
 Observed **2026-10-27 UTC**. The release and gate statuses below describe this
 checkpoint; later outcomes require their own evidence.
 
-The coordinated source is prepared as **3.2.0-rc.1**. It has not been published,
-and these results do not approve a stable release or a production deployment.
+The coordinated source is now prepared as **3.2.0-rc.2**. All eight RC.1 packages
+were published, but the original release-record job failed. RC.2 is not yet
+published; these results do not approve a stable release or production deployment.
 This supplement records later evidence for the same **57 frozen RT IDs** without
 changing [the design acceptance matrix](acceptance-matrix-design.md) or rewriting
 [the historical feature ledger](qualification.md).
 
-## Evidence boundaries
+## RC.1 incident and current RC.2 checkpoint
+
+[PR #204](https://github.com/getforma-dev/forma/pull/204) merged at
+`6e5e2e4937e5ed9dc60e6669cb4887508ccdbdb8`. The immutable RC.1 tag's
+[run 40433276229, attempt 1](https://github.com/getforma-dev/forma/actions/runs/40433276229)
+passed **75/75 P17 checks in 1,247.311 seconds** and published all eight independently
+byte-verified packages. Record job **121967590802** then failed with
+`missing CHANGELOG entry for 3.2.0-rc.1`, before GitHub Release creation/upload.
+The run remains failed; there is no qualified RC.1 DS12 or credited RC.1 soak.
+
+The historical D14 review missed this preparation defect, recorded as
+**D14-3.2-010**. Guard commit **3da2bfd2** reuses the existing changelog parser to
+reject a missing or empty exact-version entry in committed source before publishing.
+Its retained negative controls reproduce the missing refusal, and the corrected
+focused suites pass **36/36**. The current manifests, lockfiles and starter seeds
+match all **27** RC.2 version-projection files. Helper/reconciler source is present;
+its local validation and fresh whole-release review remain ongoing at this checkpoint.
+
+The finite recovery attaches a distinct **inventory-only** RC.1 receipt through
+the normal RC.2 record job for reconciliation. It does not create an ordinary
+RC.1 DS12, P17/performance baseline exception or support/soak authorization. The
+[RC.1 incident and RC.2 recovery record](../../release/3.2-RECORD-RECOVERY.md)
+preserves the actual run/tag, all eight archive hashes and original receipt hashes,
+and distinguishes the implemented source boundary from pending hosted execution.
+Fresh RC.2 D14, branch/main/tag CI, its own P17, first OIDC publication and successful
+release recording remain pending.
+
+The campaign narrative, **57 row dispositions** and unchanged
+[machine-readable index](evidence/acceptance-3.2.json) below retain their original
+measured source and checkpoint scopes. References there to current qualification
+or future publication describe those earlier campaign checkpoints; they are not
+RC.2 executions or closures of the pending gates above.
+
+## Earlier campaign evidence boundaries
 
 The first completed native and supplementary campaigns below measure source
 `862d18dc1e2eb06f9b7f947cc22f020d6fa646e9`, DS11 SHA-256
@@ -289,13 +323,14 @@ Historical/source keys refer to the unchanged links in the previous ledger.
 
 ## Publication and stable acceptance remain separate
 
-Current hosted P17 and the original full mutation campaign are complete and
-independently reviewed within their stated scopes. The accompanying release-contract
-delta records the documentation, candidate and publisher preparation rows done. RC
-publication still requires the final independent D14 review of that completed input
-tree, followed by the required final-source/main/tag checks. The final tagged
-workflow qualifies its own archives. This document does not complete D14 or claim
-publication.
+The earlier hosted P17 and original full mutation campaign are complete and
+independently reviewed within their stated scopes. Historical D14 accepted input
+`3c10b6d056b1b160db47c7f603693502e78e0c71`, followed by audit-only `fc226343` and
+merged PR #204. It missed the RC.1 changelog defect; its approval is preserved,
+not transferred to corrected RC.2 source. Actual RC.1 publication and failed
+recording are described above. Fresh RC.2 review, required source/main/tag checks,
+its own P17 and successful publication/recording are still required. This document
+does not complete those gates or turn RC.1's failed run into a successful release.
 
 The user confirmed the six requested Mac Safari keyboard/VoiceOver/Reduce Motion
 tasks with **“ok done all good.”** That actual confirmation is retained with the
@@ -312,9 +347,20 @@ uncertainty; retry refusal remains correct. This is not an observed speech-outpu
 failure, and the Mac confirmation does not prove repetition is absent. No runtime
 change or false “fixed” claim is made for this nonblocking RC usability issue.
 
-Stable acceptance also requires actual published registry identities, router
-trusted-publisher and monitor enrollment, final registry-pinned site/lab/download
-qualification, the deployed OVH proxy/build identity and rollback checks, and a
-same-line published RC soak with at least 3,600 fault-free credited active seconds.
+Bootstrap GitHub secret absence was verified at **2026-10-27 02:08:21 UTC**, and
+temporary token absence from the actual owner list at **02:30:55 UTC**. Router
+trusted publisher `444b6303-11f2-4327-8837-8f009fe445fa` is saved for
+`getforma-dev/forma` / `release.yml` / `npm-publish` with publish permission; actual
+npm Settings verifies `mfa=publish`. These are completed observations, not an
+inferred revocation time or proof of an OIDC publication. The first qualified OIDC
+publication remains pending for RC.2, before **2026-10-29 02:29 UTC**; exact receipts
+are linked in the [recovery record](../../release/3.2-RECORD-RECOVERY.md).
+
+Stable acceptance still requires the qualified published RC.2 identities and
+validated trusted publishing/live registry monitoring, final registry-pinned
+site/lab/download qualification, the deployed OVH proxy/build identity and
+rollback checks, physical iPhone HTTPS acceptance, and a same-line published RC
+soak with at least 3,600 fault-free credited active seconds. The staged website
+remains unpushed at `1a088ca5`; no live router rollout is claimed.
 The historical 3.0 deferral is not transferred to 3.2. No pending criterion is
 waived by a local fixture result.
