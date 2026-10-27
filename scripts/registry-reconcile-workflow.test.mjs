@@ -55,5 +55,5 @@ test('ordinary PR CI runs the offline discrepancy and workflow controls', () => 
   const ci = readWorkflow('ci.yml');
   const step = ci.jobs['release-workflow'].steps.find(s => s.name === 'Registry reconciliation failures and read-only workflow controls');
   assert(step && !step.if && !step['continue-on-error']);
-  assert.equal(step.run, 'node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs');
+  assert.equal(step.run, 'node --test --test-concurrency=2 scripts/registry-reconcile.test.mjs scripts/registry-reconcile-workflow.test.mjs scripts/release-publication-recovery.test.mjs');
 });
