@@ -1,7 +1,7 @@
 {
   "contract": "d14-input-manifest-v1",
-  "commit": "aa3f913f7e9cefcdd808066ca58823a5eed4b54c",
-  "tree": "10bcae43d78f4b4f311b9bf370a8e350a5461c4b",
+  "commit": "bb39371cab3def78fe49228ef7601e967a77d9c1",
+  "tree": "d476df4935811842d2d8353157847ff5722ba501",
   "entries": [
     {
       "path": ".gitattributes",
@@ -15766,17 +15766,17 @@
     {
       "path": "docs/release/d14-input-manifest.json",
       "mode": "100644",
-      "blob": "9d0c2e9eb12b2400026bff97bb0ecb330c4b3a59"
+      "blob": "e716ad6e7c5010135fab5a7a922411ff74dbb1cd"
     },
     {
       "path": "docs/release/d14-report.json",
       "mode": "100644",
-      "blob": "03c65156287ce9037f1173502f70c3a83002001d"
+      "blob": "f35cb75fb91d505087dbb16fb8c45c5438c37729"
     },
     {
       "path": "docs/release/d14-review-evidence.json",
       "mode": "100644",
-      "blob": "9834c8175b47ceaebd1c2c24aaad6486260af1c4"
+      "blob": "0b937d5ebbaeda6456d4531a4abd6134f783b375"
     },
     {
       "path": "docs/release/npm-provider-placeholder-router.json",
@@ -20341,7 +20341,7 @@
     {
       "path": "packages/core/CHANGELOG.md",
       "mode": "100644",
-      "blob": "b358e435cd0073b62432331d2df1b365f61aa455"
+      "blob": "5a7037a8036b2c8e2a3c742e808e8f50d8bb8dda"
     },
     {
       "path": "packages/core/CONTRIBUTING.md",
@@ -20351,7 +20351,7 @@
     {
       "path": "packages/core/CSP.md",
       "mode": "100644",
-      "blob": "5e6005c0caa02c02ee4d0696431985c20cdf567a"
+      "blob": "6a6bf9bf0ec9c9be0c554afb37a8d65424d85629"
     },
     {
       "path": "packages/core/LICENSE",
@@ -20366,7 +20366,7 @@
     {
       "path": "packages/core/SECURITY.md",
       "mode": "100644",
-      "blob": "c142898777a6e73cf8ab36026f9cd613d3f9fd1b"
+      "blob": "51f9f54224dd5d8425b4718d6208d674cd4e020e"
     },
     {
       "path": "packages/core/bench/_support.ts",
@@ -24561,7 +24561,7 @@
     {
       "path": "scripts/release-contracts.json",
       "mode": "100644",
-      "blob": "203df1b5c0a585372a8b1dd872278062076573c9"
+      "blob": "de7c914c29577e859a272682a9d0ea34d08d8dac"
     },
     {
       "path": "scripts/release-corpus.test.mjs",
