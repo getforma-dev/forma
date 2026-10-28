@@ -298,8 +298,9 @@ The build then writes `dist/formajs-frame.global.js` from the
 A production build classifies every route and holds it to its class's
 ceilings (N2; DR-35 and the 3.1 performance decision). Sizes are gzip at level 9, a KB
 being 1,000 bytes and a KiB 1,024; Brotli is reported beside them. A route over
-a ceiling fails the build with `BUILD-819`, naming the route, its class and
-the bytes, before anything is written.
+an effective error threshold fails with `BUILD-819`, naming the route, class and
+bytes, before publishing assets. Without configuration the error thresholds
+remain the class ceilings below.
 
 | Class | Which routes | Forma's code | All of the route's JavaScript |
 |---|---|---|---|
@@ -337,8 +338,8 @@ A canvas may ship 365 KiB of JavaScript instead of 75 KiB; Forma's code stays
 under 28,420 B either way, and the declaration gives nothing to a route
 without JavaScript. Only `true` or `false` is accepted (anything else is a
 config error, reported before anything is written). It is provisional public
-configuration at 3.0.0: declare it for a page that really is a canvas, and trim
-or split any other page over 75 KiB.
+configuration: declare it for a page that really is a canvas. Other heavy pages
+can use a measured application budget without claiming to be canvases.
 
 The report is printed after the bundle summary, returned as
 `BuildResult.sizeReport` (`BuildResult.sizes` is its routes) and written,
@@ -349,6 +350,85 @@ forma-server refuses to serve it. The times by phase (`bundle`, `hash`,
 `previewFrame`, a frame-document row reports the runtime forma-server inlines
 into every preview document. Watch mode reports nothing: its bytes are not what
 a route ships.
+
+### Application size policy (FORMA-232)
+
+`sizeBudgets` changes application build policy, not framework qualification,
+correctness or browser responsiveness. Its version is explicit:
+
+```ts
+sizeBudgets: {
+  version: 1,
+  defaults: { javascript: { warning: 69_120, error: 76_800 } },
+  routes: {
+    "/reports": { javascript: { warning: 90_000, error: 100_000 } },
+  },
+},
+// Optional external report path; default: `${outputDir}.size-report.json`.
+sizeReportJson: "evidence/size-report.json",
+```
+
+The two metrics are `forma` (estimated bundled Forma gzip contribution) and
+`javascript` (all cold-route JavaScript gzip bytes, including the registered
+worker). Thresholds are nonnegative safe integer bytes, gzip level 9. A value
+**equal** to a threshold is permitted; strictly greater warns or fails. An
+explicit `{ warning: 80_000, error: null }` is warning-only and builds successfully.
+At least one threshold is required per configured metric. Omitted `error` uses
+the route's default ceiling; omitted `warning` is 90% of the effective error,
+rounded down. Warning-only requires an explicit warning. Warning cannot exceed
+error. Unknown fields, versions, exact route keys, nonfinite/fractional numbers,
+and inverted thresholds are errors (`BUILD-826`), including in watch mode.
+
+Precedence is route metric, application default metric, class default. A route
+metric replaces that entire metric's application rule; its omitted fields use
+class defaults as above. There are no wildcard routes. Class defaults retain
+28,420 B ordinary Forma, 75 KiB page and 365 KiB canvas error limits; the verified
+navigation group retains its separate 40,708 B / 64 KiB defaults. No-JavaScript
+routes always enforce zero, whatever the configuration.
+
+The default early warning is 90% of the class error ceiling. This is a headroom
+signal, not an experimentally derived responsiveness threshold: the retained
+composition spike at 27,674 B already used 97.4% of today's 28,420 B allowance,
+and would warn before the failure boundary. It does not change existing build
+failures or promise a particular runtime performance.
+
+`FORMA_SIZE_POLICY=framework` explicitly selects unchanged framework ceilings
+regardless of application overrides. The integrated check, CI, engine and packed
+release qualification select it. A configured override remains visible in the
+report but is not applied. Neither this setting nor an application override
+changes unsupported-source refusal, static no-JavaScript rules, integrity,
+CSP/Trusted Types, adoption, identity or runtime bounds.
+
+The report remains schema 1, with an additive `routes[].budget` policy object
+(version 1). Existing `ceilings`, `exceeded` and `over` still mean **default**
+conformance, even if an application allows an excess. The policy object records
+actual/default/effective values, estimate labels, configuration source, severity
+and excess bytes. Use `budget.severity` for the effective build verdict. Console,
+API and JSON carry the same policy. Warnings also appear in `BuildResult.warnings`.
+On a size failure, the thrown error has `code: "BUILD-819"`, `sizeReport` and
+`reportPath` (the exported `SizeBudgetError` type describes it).
+
+Every measured production build atomically writes the external JSON report,
+including a refused build, while preserving previous assets. A successful build
+also writes the existing report inside `outputDir`. External reports must be
+outside `outputDir`; protect or archive these build records as appropriate.
+Watch mode validates the configuration but does not measure or enforce shipping
+budgets on its unminified code and writes no new size report. A prior production
+report is not a watch measurement.
+
+`budgetThreshold` remains the legacy **Brotli all-assets** warning in the
+manifest: JavaScript, CSS and fonts, excluding the service worker. It neither
+sets nor overrides the gzip metrics above and does not fail builds. Use
+`sizeBudgets` for cold JavaScript policy; do not compare their different units
+and asset sets as if they were the same measurement.
+
+Before increasing a budget, inspect the actual import/chunk graph and the
+failed metric. Try a bounded safe improvement (unused or duplicate imports,
+optional work, appropriate SSR) without deleting safety/accessibility or hiding
+immediately needed code in deferred chunks. Record the route, old/new policy,
+reason, alternatives, bytes and browser behavior in review. A permitted build
+alone does not certify performance. Removing the override restores the default
+policy; do not keep raising it until a build passes.
 
 ## What It Does
 
@@ -363,7 +443,7 @@ a route ships.
 | **Manifest** | Writes schema 2: writer/app/build, aliases, route modes and filename-keyed immutable/SHA-384 metadata |
 | **SSR** | (Optional) Emits one `<page>.ir` FMIR binary per entry for Rust server-side rendering |
 | **Budget** | Warns if route brotli size exceeds threshold (default 200KB) |
-| **Size report** | Per route: its class (no interactive region, islands, whole-page mount, authenticated navigation group), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core`, `@getforma/router` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before anything is written, naming the route, its class and bytes (DR-35 and the 3.1 performance decision; the ceilings are not configurable): Forma's code at most 28,420 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region. Verified navigation groups have the separate fixed 40,708 B Forma / 64 KiB total class above |
+| **Size report** | Per route: its class (no interactive region, islands, whole-page mount, authenticated navigation group), what it loads cold in raw, gzip -9 and Brotli bytes, Forma's code (`@getforma/core`, `@getforma/router` and `alien-signals` as bundled, attributed from the bundler's metafile, plus the identity banner Forma's build writes at the top of every JavaScript file) beside the application's, and the generated `sw.js` a route with JavaScript registers; with `previewFrame`, a frame-document row; the build's times by phase. Printed, returned as `BuildResult.sizeReport` (`BuildResult.sizes` is its routes), and written without the times as `size-report.json` beside the manifest (forma-server never serves it). **The gate:** a route over its class's ceiling fails the build with `BUILD-819` before assets are published, retaining its external report and naming the route, its class and bytes (DR-35 and the 3.1 performance decision; application policy is configurable as above, framework qualification stays fixed): Forma's code at most 28,420 B gzip -9; all of a route's JavaScript at most 75 KiB, or 365 KiB if the route is declared `canvas: true`; none at all on a route with no interactive region. Verified navigation groups have the separate fixed 40,708 B Forma / 64 KiB total class above |
 | **Swap in** | A production build writes all of the above into a staging directory beside `outputDir` (`.<name>.forma-staging-…`) and swaps it in only when every step has succeeded: a build that fails part way leaves `outputDir` exactly as the last good build left it, so the application never embeds half a build. Watch mode publishes browser outputs only after a successful build and replaces files by rename; failed compatibility checks preserve the previous outputs |
 
 **A symlinked `outputDir` is refused (`BUILD-824`).** The swap renames a real directory over `outputDir`, which over a link would replace the link and leave the previous build in its target, where whatever serves the link keeps reading it (watch mode removes the link when it empties `outputDir`). Neither mode follows the link: the build fails first, before staging, deleting or writing anything, naming the link and the directory it points at, and the link and its target are left as they were. Set `outputDir` to the target, or build into a real directory and copy it where the link points. A link that points at nothing is refused too. Only `outputDir` itself is checked: a symlinked directory above it (`/var` on macOS, `link/dist` with `link` a symlink) is followed, and the output is swapped in beside `outputDir` inside the directory the link names. A mount point (a container volume) is not a link and still has its contents replaced in place.

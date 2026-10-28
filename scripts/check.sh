@@ -34,6 +34,8 @@
 # their own CI jobs beside this one, and the three-engine and nightly-probe
 # workflows.
 set -euo pipefail
+# Application overrides never relax framework fixture qualification.
+export FORMA_SIZE_POLICY=framework
 cd "$(dirname "$0")/.."
 node -e 'if (!process.features.typescript) { console.error(`::error::scripts/check.sh needs a Node that strips types (.node-version: 24) for the parity harness; this is ${process.version}`); process.exit(1); }'
 started=$(date +%s)

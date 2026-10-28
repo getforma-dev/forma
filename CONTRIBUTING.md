@@ -195,3 +195,14 @@ A CSS build requires a local `@tailwindcss/cli`; builds never fetch it with `npx
 is pinned exactly to 3.1.2. The private workspace uses the pinned Node build toolchain while
 Node 22/24 compatibility jobs exercise the published packages' Node 22 floor. The dated
 policy adds Node 26 on 2026-10-28; maintenance gates continue using `.node-version`.
+
+
+## Application size policy
+
+Framework qualification sets `FORMA_SIZE_POLICY=framework`; application
+`sizeBudgets` overrides cannot relax its shipped regression ceilings. Tests of
+application policy explicitly select `application` within isolated test scopes.
+For consumer work, inspect the import graph and try a bounded safe optimization
+before proposing a route override. Record bytes, behavior, alternatives and
+tradeoffs; never raise budgets automatically after a failure. See
+[application budgets](packages/build/README.md#application-size-policy-forma-232).

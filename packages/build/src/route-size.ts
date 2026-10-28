@@ -77,6 +77,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { IDENTITY_BANNER_HEAD } from './identity.js';
 import type { RouteManifest } from './types.js';
+import type { SizeBudgetEvaluation } from './size-budgets.js';
 
 /** N2's ceiling: Forma code per route, gzip -9 (28,420 B under the 3.1 decision). */
 export const FORMA_CODE_CEILING_GZIP = 28_420;
@@ -160,8 +161,10 @@ export interface RouteSize extends ByteSizes {
   ceilings: RouteCeilings;
   /** Which ceilings the route is over: Forma's code, all of its JavaScript, or both. */
   exceeded: Array<'forma' | 'javascript'>;
-  /** `exceeded` is not empty: the build fails. */
+  /** Default-policy conformance, even when an explicit application policy permits the excess. */
   over: boolean;
+  /** Additive versioned policy result. Missing on legacy reports; ceilings/exceeded/over always retain default meaning. */
+  budget?: SizeBudgetEvaluation;
 }
 
 /** A file the build writes that is not a route's: the service worker, the preview frame's runtime. */
@@ -455,7 +458,7 @@ export function formatSizeReport(report: SizeReport): string[] {
   const classWidth = Math.max(1, ...routes.map((size) => classOf(size).length));
   const label = (name: string): string => `   ${name.padEnd(14)}   `;
   const lines = [
-    '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Forma code is @getforma/core, @getforma/router and alien-signals as bundled;',
+    '   Size report (gzip -9, Brotli beside it; 1 KB = 1,000 B, 1 KiB = 1,024 B). Estimated Forma code is @getforma/core, @getforma/router and alien-signals as bundled;',
     `   N2's ceilings are policy (DR-35 and the 3.1 performance decision): Forma code ${bytes(report.ceilings.forma)} B, the JavaScript of a page ${bytes(report.ceilings.page)} B, of a canvas ${bytes(report.ceilings.canvas)} B, a route with no interactive region none.`,
   ];
   if (routes.some(size => size.class === 'navigation-group')) lines.push(
@@ -480,6 +483,10 @@ export function formatSizeReport(report: SizeReport): string[] {
         `  ${size.files.map((file) => file.file).join(' ')}` +
         (over.length > 0 ? `  OVER: ${over.join(', ')}` : ''),
     );
+    if (size.budget) for (const metric of ['forma', 'javascript'] as const) {
+      const rule = size.budget.metrics[metric];
+      lines.push(`      ${metric}: ${rule.severity}; actual ${bytes(rule.actual)} B${rule.estimated ? ' (estimate)' : ''}; default warn/error ${bytes(rule.default.warning)}/${bytes(rule.default.error)} B; effective warn/error ${bytes(rule.effective.warning)}/${rule.effective.error === null ? 'warning-only' : bytes(rule.effective.error)} B; source ${rule.source}; policy ${size.budget.policy}; default excess ${bytes(rule.defaultExcess)} B`);
+    }
   }
   if (report.worker) {
     const { file, raw, gzip, brotli } = report.worker;
@@ -504,23 +511,25 @@ export function formatSizeReport(report: SizeReport): string[] {
  * bytes, or undefined when every route is within its own.
  */
 export function routeSizeFailure(sizes: readonly RouteSize[]): Error | undefined {
-  const over = sizes.filter((size) => size.over);
+  const over = sizes.filter((size) => size.budget ? size.budget.severity === 'error' : size.over);
   if (over.length === 0) return undefined;
   const listed = over
     .map((size) => {
-      const measures = size.exceeded.map((each) =>
-        each === 'forma'
-          ? `Forma code ${bytes(size.forma.gzip)} B against ${bytes(size.ceilings.forma)} B`
-          : `JavaScript ${bytes(size.javascript.gzip)} B against ${bytes(size.ceilings.javascript)} B`,
-      );
+      const exceeded = size.budget ? (['forma', 'javascript'] as const).filter(metric => size.budget!.metrics[metric].severity === 'error') : size.exceeded;
+      const measures = exceeded.map((each) => {
+        const ceiling = size.budget?.metrics[each].effective.error ?? size.ceilings[each];
+        return each === 'forma'
+          ? `Forma code ${bytes(size.forma.gzip)} B against ${bytes(ceiling)} B`
+          : `JavaScript ${bytes(size.javascript.gzip)} B against ${bytes(ceiling)} B`;
+      });
       // The worker is named where it is part of the figure: not Forma's code, but JavaScript the route ships.
-      const files = [...size.files.map((file) => file.file), ...(size.exceeded.includes('javascript') && size.worker.gzip > 0 ? [WORKER_FILE] : [])];
+      const files = [...size.files.map((file) => file.file), ...(exceeded.includes('javascript') && size.worker.gzip > 0 ? [WORKER_FILE] : [])];
       return `${size.route} (${classOf(size)}) ${measures.join(' and ')} (${files.length > 0 ? files.join(', ') : 'no files'})`;
     })
     .join('; ');
   return new Error(
     `BUILD-819 ${over.length === 1 ? 'a route is over its size ceiling' : `${over.length} routes are over their size ceilings`} ` +
       `(gzip -9; DR-35 and the 3.1 performance decision; 1 KB = 1,000 B, 1 KiB = 1,024 B): ${listed}. ` +
-      'Trim what the route imports or ships, split it, or declare a heavy page\'s route `canvas: true` (365 KiB of JavaScript instead of 75 KiB); the ceilings are policy and not configurable.',
+      'Inspect the import graph and try a bounded safe optimization first. An explicit application sizeBudgets policy requires measured tradeoffs; it never changes framework qualification, no-JavaScript or security contracts.',
   );
 }

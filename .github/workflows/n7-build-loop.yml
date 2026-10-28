@@ -14,6 +14,7 @@ concurrency:
 permissions:
   contents: read
 env:
+  FORMA_SIZE_POLICY: framework
   N7_SOURCE: ${{ inputs.source_commit }}
   CARGO_BUILD_JOBS: '4'
   CARGO_INCREMENTAL: '0'
