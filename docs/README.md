@@ -42,6 +42,9 @@ The [cross-package tests](../e2e/README.md), [parity harness](../e2e/parity/READ
 explain the checks behind the contracts. The [release guide](RELEASING.md) describes
 maintainer procedures; it is not required to build an application.
 
+The [canvas composition size reference](evidence/forma-246-composition-canvas-size/README.md)
+records the exact named native fixture's measured route size and bounded scope.
+
 ## Release status and history
 
 - [3.2 publication and router acceptance](release/3.2-PUBLICATION.md): completed
