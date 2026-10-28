@@ -151,7 +151,7 @@ negotiation and the response policy at the real HTTP boundary. Inspect actual
 package and route-size reports rather than inferring them from another app's
 benchmark result.
 
-The [Round 2 report](../benchmarks/grand-prix/evidence/2026-10-24/index.html)
+The [Round 2 report](https://github.com/getforma-dev/forma-grandprix/blob/main/evidence/2026-10-24/index.html)
 retains measured sources, sample spread and failed candidates. Its Linux and
 local measurements describe those fixtures and campaigns; the original
 throughput estimates are not release guarantees.

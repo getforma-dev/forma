@@ -79,6 +79,12 @@ security and release checks run in [Actions](.github/workflows).
 [CONTRIBUTING.md](CONTRIBUTING.md) covers setup and verification;
 [SECURITY.md](SECURITY.md) covers reporting and support windows.
 
+Cross-framework performance campaigns, competitor applications and historical
+Grand Prix results live in the independent
+[Forma Grand Prix laboratory](https://github.com/getforma-dev/forma-grandprix).
+Its workflows run there against exact Forma source revisions. Framework unit,
+integration and focused regression checks remain in this repository.
+
 `packages/` and `crates/` hold the implementation; `e2e/` holds cross-package
 fixtures; `docs/` holds guides, contracts and retained evidence. The former
 standalone repositories are maintenance sources for older lines, not the place
