@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "writer": "3.2.0",
+  "app": "composition-canvas",
+  "build": "fixture",
+  "aliases": {
+    "home.ir": "home.ir"
+  },
+  "assets": {
+    "home.ir": {
+      "immutable": false,
+      "integrity": "sha384-d8fNQm5linysqmSS6yeslABfaHVDPrK4H85R2XPaL1Qm3xtt8l91lbcPqmJA381X"
+    },
+    "app.js": {
+      "immutable": false,
+      "integrity": "sha384-hZQ74HkFfEi339cD4hwwJuPFQyWK5Lu7xT+LjLXyDpbE2yVOfccaNBchE22x/jg9"
+    }
+  },
+  "routes": {
+    "/": {
+      "mode": "ssr",
+      "ir": "home.ir",
+      "js": [
+        "app.js"
+      ],
+      "css": [],
+      "fonts": [],
+      "total_size_br": 0,
+      "budget_warn_threshold": 0
+    }
+  }
+}

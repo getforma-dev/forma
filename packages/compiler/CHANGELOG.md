@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- FORMA-246: add the named composition-canvas conformance fixture, strict enum/depth refusals, and exact source-to-Rust fixture pairing. Document the existing JSX namespace pass and canonical-style input constraints; no compiler or runtime admission changes.
+
 Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
 3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
 is published. The development notes below retain their earlier scope; the RC3

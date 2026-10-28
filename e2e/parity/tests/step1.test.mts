@@ -26,9 +26,9 @@ test('the corpus by step: 14 modules at step 0; step 1 adds props-contract, the 
   assert.equal(zero.length, 14);
   assert.ok(zero.every(entry => entry.step === 0));
   const added = one.filter(entry => entry.step === 1).map(entry => entry.name);
-  assert.deepEqual(added.slice(0, 2), ['props-contract', 'transition']);
+  assert.deepEqual(added.slice(0, 3), ['props-contract', 'transition', 'composition-canvas']);
   const family = readEmitterCases(TEST, IR).map(item => item.name);
-  assert.deepEqual(added.slice(2), family.filter(name => name !== 'browser'), 'every committed case but browser');
+  assert.deepEqual(added.slice(3), family.filter(name => name !== 'browser'), 'every committed case but browser');
   assert.ok(family.includes('roundtrip') && family.includes('keyed-shapes') && family.includes('browser'));
   assert.equal(one.find(entry => entry.name === 'transition')!.transition?.export, 'parityTransition');
   assert.equal(one.find(entry => entry.name === 'transition')!.ir, undefined, 'the P3 fixture serves its compiled module');

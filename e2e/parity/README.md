@@ -97,6 +97,25 @@ step. `CARGO_TARGET_DIR` is honoured.
    activate). A P2 difference names the record (`mutation` at its DOM path, old and new value) or
    the activation error (`FORMA_E_HYDRATE_VALUE` at `/node[0]/node[3]`).
 
+## Named composition states
+
+`composition-canvas` joins step 1 with four checked-in resolved states in the
+compiler conformance fixture. The client twin uses the same JSX namespace pass
+as the ordinary Browser build, preserving SVG title/a semantics. Its `statesFile` is exercised completely even
+when `--states` is smaller; `--state` selects an explicit index and refuses an
+out-of-range index. This keeps kind flags consistent with each card and bounds
+nested data independently of the generated corpus. The generated-state policy
+for every existing module is unchanged. The source and limitations are described
+in the compiler's [data-driven composition pattern](../../packages/compiler/docs/subset.md#data-driven-composition).
+
+`tests/composition-canvas.test.mts` also serves a typed two-canvas page, retains
+all original elements, checks zero initial writes with a live observer control,
+checks label/control associations, and clicks the focus buttons through three
+transitions while checking instance isolation. `FORMA_PARITY_BROWSER` selects
+Chromium, Firefox or WebKit; the engine workflow runs these controls in all
+three. `FORMA_CANVAS_REPORT` optionally retains full JSON evidence. A seeded
+wrong initial attribute must fail both parity and adoption.
+
 ## Generated states
 
 A generated state is one value assignment for a declared props schema (FORMA-102's closed set:

@@ -192,7 +192,8 @@ describe('the code catalogue', () => {
   });
 
   it('has a fixture pair for every code a page can trigger, and no other', () => {
-    const fixtures = readdirSync(CORPUS).sort();
+    const fixtures = readdirSync(CORPUS).filter(name => name !== 'composition-canvas').sort();
+    expect(readdirSync(CORPUS)).toContain('composition-canvas'); // Named cross-feature corpus has its own suite.
     const expected = DIAGNOSTIC_CATALOGUE.map((e) => e.code).filter((c) => !NOT_A_PAGE.has(c));
     expect(fixtures).toEqual(expected);
     for (const code of fixtures) {

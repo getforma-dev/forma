@@ -53,6 +53,45 @@ explicitly. There is no silent placeholder IR or warning-only SSR escape hatch.
   explicitly registered `browserOnly(Impl)` component. A route may opt out of
   SSR with `ssr: false`; no partial native fallback is invented.
 
+## Data-driven composition
+
+`tests/fixtures/conformance/composition-canvas/` is the named canvas pattern:
+a declared `cards` array, handler-resolved boolean kind flags, nested keyed
+row/cell lists, SVG attributes supplied as strings, and label/control pairs
+inside the BUILD-618 nesting rules. The enum remains useful for `data-kind`;
+compute the flags in the handler rather than comparing the enum inside
+`createShow` (BUILD-610). Local composition still stops at three levels
+(BUILD-403, accompanied by mandatory BUILD-610 when no native contract exists).
+
+The SVG title retains ordinary JSX syntax. Forma's existing JSX namespace pass
+constructs dual-use SVG names in the correct namespace in both Browser and
+native entry bundles. A bare `h()` tree bypasses that JSX pass and follows core's
+explicit `svg()`/parent-context contract instead. The parity twin runs the same
+namespace pass as a Browser build; it does not rewrite the compared DOM.
+
+For exact native/client attribute parity, the fixture handler provides canonical
+CSS strings such as `left: 40px; top: 0px;`. Native rendering retains the supplied
+attribute spelling; the client style API writes individual CSSOM properties,
+whose serialization may differ for other spellings. Adoption compares matching
+style semantics without an initial write. This fixture proves its declared
+style values, not arbitrary CSS canonicalization. Keep that input contract when
+reusing the pattern, and test other CSS values in the intended browsers.
+
+The original exploratory source compiled and rendered natively but used
+noncanonical style spelling; that input does not pass exact client
+attribute parity. The named fixture preserves all four card types and adjusts
+that data spelling, without a compiler, runtime or wire-format change.
+Its four explicit states cover two or three cards of every kind, empty cards,
+empty nested arrays and long/non-ASCII text. They run through derived Rust
+`PageProps`, bind/finalize, full `PageResponse`, and the parity harness. A second
+page with two independent canvases verifies retained nodes, label associations
+and repeated focus-button interactions.
+
+Paginate or bound resolved arrays before rendering to stay within the 1 MiB
+initial island-state cap. A small canvas is conformance evidence, not proof that
+a future application's entire component library meets route-size limits. The
+route-size policy and application measurement remain separate checks.
+
 ## Indexed row updates
 
 `createKeyedRows(initialRows, row => row.id)` and the two-argument
