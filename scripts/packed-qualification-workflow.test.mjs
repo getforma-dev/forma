@@ -27,6 +27,7 @@ function validate(workflow) {
   assert.equal(workflow.permissions, undefined);
   assert.deepEqual(workflow.concurrency, { group: 'packed-qualification-${{ github.ref }}', 'cancel-in-progress': false });
   assert.deepEqual(workflow.env, {
+    FORMA_SIZE_POLICY: 'framework',
     CARGO_BUILD_JOBS: '3', CARGO_INCREMENTAL: '0', CARGO_TERM_COLOR: 'never',
     CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: 'fallback', PLAYWRIGHT_SKIP_BROWSER_GC: '1',
     FORMA_PERFORMANCE_TARGET_TAG: '${{ inputs.target_tag }}',
@@ -74,6 +75,7 @@ function validate(workflow) {
 test('manual qualification uses original candidates, whole verifier, read-only permissions and owned failure retention', () => validate(actual));
 test('publishing, source substitution, skipped verification, weakened time bounds and lost failure evidence are rejected', () => {
   for (const mutate of [
+    w => { delete w.env.FORMA_SIZE_POLICY; }, w => { w.env.FORMA_SIZE_POLICY = 'application'; },
     w => { w.on.push = {}; }, w => { w.jobs.verify.permissions['id-token'] = 'write'; },
     w => { w.jobs.pack.environment = 'npm-publish'; }, w => { w.concurrency['cancel-in-progress'] = true; },
     w => { w.jobs.verify.steps[0].with.ref = 'main'; },

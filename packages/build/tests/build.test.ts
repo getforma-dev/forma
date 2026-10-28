@@ -737,7 +737,7 @@ describe('@getforma/build — atomic output (L-21)', () => {
     expect(files).not.toContain('stale.js');
     expect(files).toContain(result.manifest.aliases['app.js']);
     expect(readFileSync(join(outDir, result.manifest.aliases['app.js']!), 'utf8')).toContain('second good build');
-    expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'fonts', 'src']);
+    expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'dist.size-report.json', 'fonts', 'src']);
   }, 30_000);
 
   // FORMA-170. The swap renames a real staging directory over `outputDir`; over
@@ -818,10 +818,10 @@ describe('@getforma/build — atomic output (L-21)', () => {
       expect(lstatSync(join(realParent, 'dist')).isDirectory()).toBe(true);
       expect(lstatSync(join(realParent, 'dist')).isSymbolicLink()).toBe(false);
       expect(readFileSync(join(realParent, 'dist', result.manifest.aliases['app.js']!), 'utf8')).toContain('through the parent link');
-      expect(readdirSync(realParent)).toEqual(['dist']);
+      expect(readdirSync(realParent).sort()).toEqual(['dist', 'dist.size-report.json']);
     }, 60_000);
 
-    it('still swaps a real outputDir in whole, the previous output replaced and nothing left beside it', async () => {
+    it('still swaps a real outputDir in whole, leaving only the external size report beside it', async () => {
       await build(config);
       writeFileSync(join(outDir, 'stale.js'), 'stale');
       writeFileSync(join(srcDir, 'app.ts'), 'export const label = "after the link check";\n');
@@ -831,7 +831,7 @@ describe('@getforma/build — atomic output (L-21)', () => {
       expect(lstatSync(outDir).isSymbolicLink()).toBe(false);
       expect(readdirSync(outDir)).not.toContain('stale.js');
       expect(readFileSync(join(outDir, result.manifest.aliases['app.js']!), 'utf8')).toContain('after the link check');
-      expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'fonts', 'src']);
+      expect(readdirSync(tmpRoot).sort()).toEqual(['dist', 'dist.size-report.json', 'fonts', 'src']);
     }, 60_000);
 
     it('refuses watch mode too: it empties outputDir first, which would remove the link', async () => {

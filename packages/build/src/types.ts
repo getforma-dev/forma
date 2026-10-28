@@ -5,6 +5,7 @@
  */
 
 import type { RouteSize, SizeReport } from './route-size.js';
+import type { SizeBudgets } from './size-budgets.js';
 
 // ---------------------------------------------------------------------------
 // Configuration Types
@@ -41,8 +42,8 @@ export interface RouteMapping {
    * and is JavaScript-heavy by design. The size report holds all of its
    * JavaScript to 365 KiB gzip -9 instead of the 75 KiB of other pages; Forma's
    * own code stays under N2's 28,420 B either way. It raises nothing for a
-   * route without JavaScript. A heavy page that is not a canvas is trimmed or
-   * split, not declared.
+   * route without JavaScript. A heavy page that is not a canvas can use an
+   * explicit measured sizeBudgets policy after bounded optimization.
    */
   canvas?: boolean;
 }
@@ -130,8 +131,12 @@ export interface BuildConfig {
   ssrEntryPoints?: Record<string, string>;
   /** Enable watch mode */
   watch?: boolean;
-  /** Budget threshold in bytes (Brotli-compressed), default 200_000 */
+  /** Legacy all-assets Brotli warning (includes CSS/fonts, excludes worker); independent of sizeBudgets. Default 200_000. */
   budgetThreshold?: number;
+  /** Versioned application gzip policy. Does not change framework qualification or no-JS/security contracts. */
+  sizeBudgets?: SizeBudgets;
+  /** External machine-readable size report, including rejected builds. Defaults to `${outputDir}.size-report.json`; must be outside outputDir. No report in watch mode. */
+  sizeReportJson?: string;
   /** Files that should keep unhashed copies (e.g. for server-inlined assets).
    * A zero-JS SSR owner cannot request executable server inlining. */
   serverInlined?: string[];
@@ -263,7 +268,8 @@ export interface BuildResult {
    * it loads cold in raw, gzip -9 and Brotli bytes, Forma's code
    * (`@getforma/core`, `@getforma/router` and `alien-signals` as bundled) beside the application's,
    * the service worker it registers, and its ceilings. A production build fails
-   * with `BUILD-819` before writing its output when a route is over one:
+   * with `BUILD-819` before publishing assets when an effective error threshold is exceeded.
+   * Without application policy, these are:
    * Forma's code over N2's `FORMA_CODE_CEILING_GZIP` (28,420 B under the 3.1
    * performance decision; authenticated navigation groups use 40,708 B), all of its JavaScript over its class's (64 KiB for a group, none for a
    * route without an interactive region, 75 KiB, 365 KiB for a canvas). Empty in watch mode,
