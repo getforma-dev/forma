@@ -1,0 +1,784 @@
+[
+  {
+    "cards": [
+      {
+        "id": "summary-0",
+        "title": "Northstar summary 0",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [
+          {
+            "id": "summary-0-item-0",
+            "label": "Northstar label 0",
+            "value": "Northstar value 0"
+          },
+          {
+            "id": "summary-0-item-1",
+            "label": "Northstar label 1",
+            "value": "Northstar value 1"
+          }
+        ],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-0",
+        "title": "Northstar table 0",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [
+          {
+            "id": "table-0-row-0",
+            "cells": [
+              {
+                "id": "table-0-cell-0-0",
+                "text": "Northstar cell 0/0"
+              },
+              {
+                "id": "table-0-cell-0-1",
+                "text": "Northstar cell 0/1"
+              }
+            ]
+          },
+          {
+            "id": "table-0-row-1",
+            "cells": [
+              {
+                "id": "table-0-cell-1-0",
+                "text": "Northstar cell 1/0"
+              },
+              {
+                "id": "table-0-cell-1-1",
+                "text": "Northstar cell 1/1"
+              }
+            ]
+          }
+        ],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-0",
+        "title": "Northstar timeline 0",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [
+          {
+            "id": "timeline-0-bar-0",
+            "x": "0",
+            "height": "20",
+            "label": "Northstar bar 0"
+          },
+          {
+            "id": "timeline-0-bar-1",
+            "x": "30",
+            "height": "30",
+            "label": "Northstar bar 1"
+          }
+        ],
+        "fields": []
+      },
+      {
+        "id": "form-0",
+        "title": "Northstar form 0",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": [
+          {
+            "id": "form-0-text",
+            "label": "Northstar note",
+            "isText": true,
+            "isEnum": false,
+            "choices": []
+          },
+          {
+            "id": "form-0-select",
+            "label": "Northstar status",
+            "isText": false,
+            "isEnum": true,
+            "choices": [
+              {
+                "id": "form-0-choice-0",
+                "label": "Northstar choice 0"
+              },
+              {
+                "id": "form-0-choice-1",
+                "label": "Northstar choice 1"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "summary-1",
+        "title": "Northstar summary 1",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [
+          {
+            "id": "summary-1-item-0",
+            "label": "Northstar label 0",
+            "value": "Northstar value 0"
+          },
+          {
+            "id": "summary-1-item-1",
+            "label": "Northstar label 1",
+            "value": "Northstar value 1"
+          }
+        ],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-1",
+        "title": "Northstar table 1",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [
+          {
+            "id": "table-1-row-0",
+            "cells": [
+              {
+                "id": "table-1-cell-0-0",
+                "text": "Northstar cell 0/0"
+              },
+              {
+                "id": "table-1-cell-0-1",
+                "text": "Northstar cell 0/1"
+              }
+            ]
+          },
+          {
+            "id": "table-1-row-1",
+            "cells": [
+              {
+                "id": "table-1-cell-1-0",
+                "text": "Northstar cell 1/0"
+              },
+              {
+                "id": "table-1-cell-1-1",
+                "text": "Northstar cell 1/1"
+              }
+            ]
+          }
+        ],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-1",
+        "title": "Northstar timeline 1",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [
+          {
+            "id": "timeline-1-bar-0",
+            "x": "0",
+            "height": "20",
+            "label": "Northstar bar 0"
+          },
+          {
+            "id": "timeline-1-bar-1",
+            "x": "30",
+            "height": "30",
+            "label": "Northstar bar 1"
+          }
+        ],
+        "fields": []
+      },
+      {
+        "id": "form-1",
+        "title": "Northstar form 1",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": [
+          {
+            "id": "form-1-text",
+            "label": "Northstar note",
+            "isText": true,
+            "isEnum": false,
+            "choices": []
+          },
+          {
+            "id": "form-1-select",
+            "label": "Northstar status",
+            "isText": false,
+            "isEnum": true,
+            "choices": [
+              {
+                "id": "form-1-choice-0",
+                "label": "Northstar choice 0"
+              },
+              {
+                "id": "form-1-choice-1",
+                "label": "Northstar choice 1"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cards": []
+  },
+  {
+    "cards": [
+      {
+        "id": "summary-0",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  summary 0",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [
+          {
+            "id": "summary-0-item-0",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  label 0",
+            "value": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  value 0"
+          },
+          {
+            "id": "summary-0-item-1",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  label 1",
+            "value": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  value 1"
+          }
+        ],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-0",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  table 0",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [
+          {
+            "id": "table-0-row-0",
+            "cells": [
+              {
+                "id": "table-0-cell-0-0",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 0/0"
+              },
+              {
+                "id": "table-0-cell-0-1",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 0/1"
+              }
+            ]
+          },
+          {
+            "id": "table-0-row-1",
+            "cells": [
+              {
+                "id": "table-0-cell-1-0",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 1/0"
+              },
+              {
+                "id": "table-0-cell-1-1",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 1/1"
+              }
+            ]
+          }
+        ],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-0",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  timeline 0",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [
+          {
+            "id": "timeline-0-bar-0",
+            "x": "0",
+            "height": "20",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  bar 0"
+          },
+          {
+            "id": "timeline-0-bar-1",
+            "x": "30",
+            "height": "30",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  bar 1"
+          }
+        ],
+        "fields": []
+      },
+      {
+        "id": "form-0",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  form 0",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": [
+          {
+            "id": "form-0-text",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  note",
+            "isText": true,
+            "isEnum": false,
+            "choices": []
+          },
+          {
+            "id": "form-0-select",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  status",
+            "isText": false,
+            "isEnum": true,
+            "choices": [
+              {
+                "id": "form-0-choice-0",
+                "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  choice 0"
+              },
+              {
+                "id": "form-0-choice-1",
+                "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  choice 1"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "summary-1",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  summary 1",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [
+          {
+            "id": "summary-1-item-0",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  label 0",
+            "value": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  value 0"
+          },
+          {
+            "id": "summary-1-item-1",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  label 1",
+            "value": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  value 1"
+          }
+        ],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-1",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  table 1",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [
+          {
+            "id": "table-1-row-0",
+            "cells": [
+              {
+                "id": "table-1-cell-0-0",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 0/0"
+              },
+              {
+                "id": "table-1-cell-0-1",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 0/1"
+              }
+            ]
+          },
+          {
+            "id": "table-1-row-1",
+            "cells": [
+              {
+                "id": "table-1-cell-1-0",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 1/0"
+              },
+              {
+                "id": "table-1-cell-1-1",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 1/1"
+              }
+            ]
+          }
+        ],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-1",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  timeline 1",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [
+          {
+            "id": "timeline-1-bar-0",
+            "x": "0",
+            "height": "20",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  bar 0"
+          },
+          {
+            "id": "timeline-1-bar-1",
+            "x": "30",
+            "height": "30",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  bar 1"
+          }
+        ],
+        "fields": []
+      },
+      {
+        "id": "form-1",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  form 1",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": [
+          {
+            "id": "form-1-text",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  note",
+            "isText": true,
+            "isEnum": false,
+            "choices": []
+          },
+          {
+            "id": "form-1-select",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  status",
+            "isText": false,
+            "isEnum": true,
+            "choices": [
+              {
+                "id": "form-1-choice-0",
+                "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  choice 0"
+              },
+              {
+                "id": "form-1-choice-1",
+                "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  choice 1"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "summary-2",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  summary 2",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 80px; top: 0px;",
+        "items": [
+          {
+            "id": "summary-2-item-0",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  label 0",
+            "value": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  value 0"
+          },
+          {
+            "id": "summary-2-item-1",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  label 1",
+            "value": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  value 1"
+          }
+        ],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-2",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  table 2",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 80px; top: 0px;",
+        "items": [],
+        "rows": [
+          {
+            "id": "table-2-row-0",
+            "cells": [
+              {
+                "id": "table-2-cell-0-0",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 0/0"
+              },
+              {
+                "id": "table-2-cell-0-1",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 0/1"
+              }
+            ]
+          },
+          {
+            "id": "table-2-row-1",
+            "cells": [
+              {
+                "id": "table-2-cell-1-0",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 1/0"
+              },
+              {
+                "id": "table-2-cell-1-1",
+                "text": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  cell 1/1"
+              }
+            ]
+          }
+        ],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-2",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  timeline 2",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 80px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [
+          {
+            "id": "timeline-2-bar-0",
+            "x": "0",
+            "height": "20",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  bar 0"
+          },
+          {
+            "id": "timeline-2-bar-1",
+            "x": "30",
+            "height": "30",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  bar 1"
+          }
+        ],
+        "fields": []
+      },
+      {
+        "id": "form-2",
+        "title": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  form 2",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 80px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": [
+          {
+            "id": "form-2-text",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  note",
+            "isText": true,
+            "isEnum": false,
+            "choices": []
+          },
+          {
+            "id": "form-2-select",
+            "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  status",
+            "isText": false,
+            "isEnum": true,
+            "choices": [
+              {
+                "id": "form-2-choice-0",
+                "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  choice 0"
+              },
+              {
+                "id": "form-2-choice-1",
+                "label": "Équipe 東京 🧭 <&> long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long  choice 1"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "cards": [
+      {
+        "id": "summary-0",
+        "title": "Empty nested summary 0",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-0",
+        "title": "Empty nested table 0",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-0",
+        "title": "Empty nested timeline 0",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "form-0",
+        "title": "Empty nested form 0",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 0px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "summary-1",
+        "title": "Empty nested summary 1",
+        "kind": "summary",
+        "isSummary": true,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "table-1",
+        "title": "Empty nested table 1",
+        "kind": "table",
+        "isSummary": false,
+        "isTable": true,
+        "isTimeline": false,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "timeline-1",
+        "title": "Empty nested timeline 1",
+        "kind": "timeline",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": true,
+        "isForm": false,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      },
+      {
+        "id": "form-1",
+        "title": "Empty nested form 1",
+        "kind": "form",
+        "isSummary": false,
+        "isTable": false,
+        "isTimeline": false,
+        "isForm": true,
+        "style": "left: 40px; top: 0px;",
+        "items": [],
+        "rows": [],
+        "bars": [],
+        "fields": []
+      }
+    ]
+  }
+]

@@ -1,4 +1,5 @@
 //! Actual TypeScript-emitted FMIR -> derived handler -> typed handle -> native renderer.
+//! The combined list/show/SVG/form canvas contract is in `composition_canvas.rs`.
 use forma_ir::PageProps;
 use forma_server::{assets::try_load_manifest, load_ir_modules, PageHandle, RenderCtx};
 use rust_embed::Embed;

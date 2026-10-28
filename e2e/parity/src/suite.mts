@@ -44,6 +44,8 @@ export interface CorpusEntry {
    * `compare_schema` rejects is a finding for any application serving it).
    */
   readonly serverPath?: 'low-level';
+  /** Explicit resolved application states, all exercised once instead of a generated Cartesian expansion. */
+  readonly statesFile?: string;
   readonly note?: string;
 }
 
@@ -116,6 +118,13 @@ export interface ModulePlan {
 
 /** The states a module is rendered at: generated where its page declares props, else its source state. */
 export function statesFor(described: Described, entry: CorpusEntry, options: PlanOptions): { indices: number[]; states: Json[] } {
+  if (entry.statesFile) {
+    const states = JSON.parse(readFileSync(resolve(REPO, entry.statesFile), 'utf8')) as Json[];
+    if (!Array.isArray(states) || states.length === 0) throw new Error(`${entry.name}: statesFile must contain a nonempty array`);
+    const indices = options.indices ? [...options.indices] : states.map((_, index) => index);
+    for (const index of indices) if (!Number.isInteger(index) || index < 0 || index >= states.length) throw new Error(`${entry.name}: state index ${index} is outside its ${states.length} explicit states`);
+    return { indices, states: indices.map(index => states[index]!) };
+  }
   const declared = (described.schema[0] ?? []).length > 0;
   const all = declared ? Array.from({ length: options.states }, (_, i) => i) : [0];
   const indices = options.indices ? options.indices.filter(i => declared || i === 0) : all;

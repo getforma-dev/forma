@@ -15,6 +15,7 @@ import { dirname, resolve } from 'node:path';
 import * as esbuild from 'esbuild';
 import { formaSsrPlugin, getSsrEntryProducts } from '@getforma/compiler';
 import { REPO } from './server.mts';
+import { jsxNamespaceFallback } from '../../../packages/build/src/jsx-namespace.ts';
 
 export const CORE_URL = '/_parity/core.mjs';
 export const ENTRY_CORE_URL = '/_parity/entry-core.mjs';
@@ -58,7 +59,9 @@ export async function bundlePage(component: PageComponent): Promise<string> {
   const result = await esbuild.build({
     ...common,
     stdin: { contents: `export { ${component.exportName} as Page } from ${JSON.stringify(file)};`, resolveDir: dirname(file), loader: 'ts' },
-    plugins: [coreExternal],
+    // Match the ordinary Browser build's JSX namespace pass; raw esbuild alone
+    // creates dual-use SVG names in HTML before their parent exists.
+    plugins: [coreExternal, jsxNamespaceFallback()],
   });
   const out = result.outputFiles?.[0];
   if (!out) throw new Error(`bundling ${component.file} produced no output`);

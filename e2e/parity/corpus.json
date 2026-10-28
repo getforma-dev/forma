@@ -172,6 +172,20 @@
         "export": "parityTransition"
       },
       "note": "the harness's P3 fixture: no committed .ir, the module the compiler emits for it is the one served"
+    },
+    {
+      "name": "composition-canvas",
+      "step": 1,
+      "entry": "packages/compiler/tests/fixtures/conformance/composition-canvas/app.tsx",
+      "ir": "crates/forma-server/tests/fixtures/composition-canvas/home.ir",
+      "kind": "islands",
+      "page": {
+        "file": "packages/compiler/tests/fixtures/conformance/composition-canvas/page.tsx",
+        "exportName": "Home",
+        "props": "named"
+      },
+      "statesFile": "packages/compiler/tests/fixtures/conformance/composition-canvas/states.json",
+      "note": "FORMA-246: named resolved canvas states, preserving kind/flag consistency and bounded nested lists."
     }
   ],
   "families": [

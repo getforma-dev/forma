@@ -159,7 +159,7 @@ jobs:
       - name: Native HTML admission and archived parser controls
         env:
           FORMA_PARITY_BROWSER: ${{ matrix.browser }}
-        run: node --test e2e/parity/tests/html-context.test.mts
+        run: node --test e2e/parity/tests/html-context.test.mts e2e/parity/tests/composition-canvas.test.mts
 
       - name: Build optional router
         run: npm run build -w packages/router
