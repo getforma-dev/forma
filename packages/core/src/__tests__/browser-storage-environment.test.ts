@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createLocalStorage } from '../storage/local';
+import { createSessionStorage } from '../storage/session';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -14,23 +16,31 @@ describe('browser test storage environment', () => {
     expect(Object.getPrototypeOf(globalThis[name])).toBe(Storage.prototype);
   });
 
-  it('keeps local and session values separate', () => {
-    localStorage.setItem('environment-control', 'local');
-    expect(sessionStorage.getItem('environment-control')).toBeNull();
-    sessionStorage.setItem('environment-control', 'session');
-    expect(localStorage.getItem('environment-control')).toBe('local');
-    expect(sessionStorage.getItem('environment-control')).toBe('session');
+  it('keeps Forma local and session values in separate browser stores', () => {
+    const local = createLocalStorage<string>('environment-control');
+    const session = createSessionStorage<string>('environment-control');
+    local.set('local');
+    expect(session.get()).toBeNull();
+    session.set('session');
+    expect(local.get()).toBe('local');
+    expect(session.get()).toBe('session');
+    expect(localStorage.getItem('environment-control')).toBe('"local"');
+    expect(sessionStorage.getItem('environment-control')).toBe('"session"');
   });
 
   it('restores the DOM storage objects after test globals are unstubbed', () => {
     const local = localStorage;
     const session = sessionStorage;
+    const store = createLocalStorage<string>('environment-control');
+    store.set('retained');
     vi.stubGlobal('localStorage', undefined);
     vi.stubGlobal('sessionStorage', undefined);
+    expect(store.get()).toBeNull();
     vi.unstubAllGlobals();
     expect(localStorage).toBe(local);
     expect(sessionStorage).toBe(session);
     expect(localStorage).toBeInstanceOf(Storage);
     expect(sessionStorage).toBeInstanceOf(Storage);
+    expect(store.get()).toBe('retained');
   });
 });
