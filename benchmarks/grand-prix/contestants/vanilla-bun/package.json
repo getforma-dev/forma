@@ -1,8 +1,0 @@
-{
-  "name": "gp-vanilla-bun",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "dependencies": {},
-  "devDependencies": {}
-}
