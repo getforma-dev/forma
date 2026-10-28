@@ -305,9 +305,9 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-818', 'Worker metadata cannot authenticate an asset',
     'A protected immutable JS/CSS/WASM filename or its full canonical SHA-384 digest is invalid.',
     'Generate the worker from the completed manifest after final asset bytes are written; do not substitute a filename hash or abbreviated digest.'),
-  entry('BUILD-819', "A route is over its size ceiling",
-    "What the route loads cold is over the ceiling of its class (decision brief L-64, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 28,100 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.",
-    "Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings."),
+  entry('BUILD-819', 'A route is over its size policy',
+    "A cold-route gzip -9 metric exceeds its effective error threshold. Ordinary defaults are 28,420 B estimated Forma code and 75 KiB total JavaScript (365 KiB for a declared canvas); verified native navigation groups have their separate class. A route without an interactive region must ship zero JavaScript. Missing bundling attribution is also refused. Previous assets remain intact and measured size failures retain an external JSON report.",
+    "Inspect the metric and import graph, then try a bounded safe optimization. An explicit application sizeBudgets policy can express a reviewed tradeoff; framework qualification and no-JavaScript/security contracts remain unchanged. See the build package README."),
   entry('BUILD-820', 'The previous release for retention is not usable',
     "previousDist names something that is not the previous release's dist/: a path that does not exist or is not a directory, one with no readable manifest.json, another application's dist, a watch build's, one whose asset names are not flat file names, or a directory that is, holds or sits inside outputDir (which the build replaces whole).",
     "Pass the directory of the release that is live, kept apart from outputDir, or leave previousDist out for a first deploy. A dist built by an earlier schema retains nothing and says so; that is not this error."),
@@ -326,6 +326,10 @@ export const DIAGNOSTIC_CATALOGUE: readonly DiagnosticEntry[] = Object.freeze([
   entry('BUILD-824', 'outputDir is a symbolic link',
     "outputDir itself (not a directory above it) is a symbolic link, or a junction on Windows, to a directory or to nothing. The build replaces outputDir whole: a production build renames a real staging directory over it and watch mode empties it first, so either would turn the link into a directory and leave the previous build in the link's old target, where whatever serves the link keeps reading it. The build refuses before it writes or deletes anything, and names the link and where it points.",
     "Set outputDir to the directory the link points at, or build into a real directory and copy it where the link points. A symbolic link above outputDir (a symlinked parent directory) is followed and is not this error. Remove a link that points at nothing."),
+
+  entry('BUILD-826', 'Invalid application size budget',
+    "sizeBudgets has an unknown version, field or exact route, a nonfinite, fractional or negative threshold, an empty metric rule, warning-only without a warning, or warning greater than the effective error. FORMA_SIZE_POLICY also requires its exact documented spelling.",
+    "Use the versioned size policy documented in the build package README. Configuration is validated in development/watch mode too; watch does not measure unminified bytes against production budgets."),
 
   entry('BUILD-827', 'Navigation group is not a closed native product',
     'The navigation group has ambiguous owners, incompatible assets, unsupported output mode, conflicting island declarations, or executable imports outside its verified bootstrap.',

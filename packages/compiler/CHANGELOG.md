@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- FORMA-232: catalogue the build package’s invalid-budget diagnostic BUILD-826 and document effective/default size policy under BUILD-819. Native admission and emitted bytes are unchanged.
+
 Current source prepares **3.2.0-rc.3**, which is not yet published. Stable
 3.1.0 remains available; the coordinated [3.2.0-rc.2 prerelease](https://github.com/getforma-dev/forma/releases/tag/v3.2.0-rc.2)
 is published. The development notes below retain their earlier scope; the RC3
