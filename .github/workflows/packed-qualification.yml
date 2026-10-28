@@ -14,6 +14,7 @@ concurrency:
   group: packed-qualification-${{ github.ref }}
   cancel-in-progress: false
 env:
+  FORMA_SIZE_POLICY: framework
   CARGO_BUILD_JOBS: '3'
   CARGO_INCREMENTAL: '0'
   CARGO_TERM_COLOR: never

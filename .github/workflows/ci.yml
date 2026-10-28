@@ -29,6 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  FORMA_SIZE_POLICY: framework
   CARGO_TERM_COLOR: always
   # Incremental artifacts are pure overhead on an ephemeral runner and bloat
   # the rust-cache payload.

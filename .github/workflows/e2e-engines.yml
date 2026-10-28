@@ -32,6 +32,9 @@ permissions:
 # share would let that dispatch cancel the release's engine run. Dispatch and
 # PR runs are rare.
 
+env:
+  FORMA_SIZE_POLICY: framework
+
 jobs:
   e2e:
     name: e2e (${{ matrix.browser }})

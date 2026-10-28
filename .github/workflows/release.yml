@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORMA_SIZE_POLICY: framework
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback

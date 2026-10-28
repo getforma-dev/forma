@@ -844,15 +844,39 @@ minimum does not replace the compiler's current peer dependency requirement.
 
 [Lifecycle tests](../../build/tests/service-worker.test.ts).
 
-### BUILD-819 — A route is over its size ceiling
+### BUILD-819 — A route is over its size policy
 
-**Why.** What the route loads cold is over the ceiling of its class (decision brief L-64, DR-35; gzip -9, 1 KB = 1,000 B, 1 KiB = 1,024 B): @getforma/core and alien-signals as bundled carry more than 28,100 B on a route with any JavaScript, all of the route's JavaScript (its scripts and the service worker it registers) is over 75 KiB, or over 365 KiB for a route declared `canvas: true`, or a route with no interactive region lists any script. Or a file the manifest names for the route was written by no bundling pass, so its Forma code cannot be attributed. The build fails before writing its output.
+**Why.** A cold-route gzip -9 metric exceeds its effective error threshold. The
+ordinary defaults are 28,420 B estimated Forma code and 75 KiB total JavaScript
+(365 KiB for a declared canvas); verified native navigation groups have their
+separate fixed framework class. A route with no interactive region must ship
+zero JavaScript. The same code also refuses a manifest file whose bundling
+attribution is missing. Previous assets remain intact; measured size failures
+retain an external JSON report.
 
-**Fix.** Trim what the route imports from @getforma/core or ships of its own, split the route, or declare a page that hosts many modules a canvas; the ceilings are policy, not an option. The report above the failure shows each route's class, Forma code and JavaScript beside the ceilings.
+**Fix.** Inspect the metric and import graph, then try a bounded safe optimization.
+An explicit application `sizeBudgets` policy can express a reviewed tradeoff;
+framework qualification and no-JavaScript/security contracts remain unchanged.
+See [the build policy](../../build/README.md#application-size-policy-forma-232).
 
-**Build result.** Error: publication is refused.
+**Build result.** Error: publication is refused. Explicit warning-only excesses
+use `BUILD-819 warning` and allow publication while retaining default excesses.
 
-[Lifecycle tests](../../build/tests/route-size.test.ts).
+[Lifecycle tests](../../build/tests/route-size.test.ts),
+[application policy tests](../../build/tests/size-budgets.test.ts).
+
+### BUILD-826 — Invalid application size budget
+
+**Why.** `sizeBudgets` has an unknown version, field or exact route, a nonfinite,
+fractional or negative threshold, an empty metric rule, warning-only without a
+warning, or warning greater than the effective error. `FORMA_SIZE_POLICY` also
+requires its exact documented spelling.
+
+**Fix.** Use the [versioned size policy](../../build/README.md#application-size-policy-forma-232).
+This error is validated in development/watch mode too; watch does not measure
+unminified bytes against production budgets.
+
+**Build result.** Error; application policy is not silently ignored.
 
 ### BUILD-820 — The previous release for retention is not usable
 

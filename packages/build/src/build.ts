@@ -8,6 +8,7 @@
  * worker generation, and budget warnings.
  */
 
+import { applySizeBudgets, SizeBudgetError, sizeBudgetWarnings, sizePolicyFromEnvironment, validateSizeBudgets, validateResolvedSizeBudgets } from './size-budgets.js';
 import { validateNavigation, navigationOptions, navigationFilename, validateNavigationProduct, navigationExecutableGuard } from './navigation.js';
 import {jsxNamespaceFallback} from './jsx-namespace.js';
 import * as esbuild from 'esbuild';
@@ -29,7 +30,7 @@ import {
   realpathSync,
   existsSync,
 } from 'node:fs';
-import { join, extname, basename, dirname, sep } from 'node:path';
+import { join, extname, basename, dirname, sep, resolve } from 'node:path';
 import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -314,6 +315,8 @@ function shown(value: unknown): string {
  * Verified by: packages/build/tests/build.test.ts > "rejects a route whose js is missing or not an array, naming each route"
  */
 function validateConfig(config: BuildConfig): void {
+  validateSizeBudgets(config.sizeBudgets, Object.keys(config.routes));
+  sizePolicyFromEnvironment(process.env.FORMA_SIZE_POLICY);
   const problems: string[] = [];
   const entryNames = new Set<string>();
 
@@ -438,6 +441,14 @@ function validateConfig(config: BuildConfig): void {
     // ENOENT after the whole build ran (FORMA-245).
     // Verified by: packages/build/tests/strict.test.ts > "refuses a report whose parent is a link to nothing, naming the link and where it points, before creating anything"
     const dangling = danglingReportParent(config.diagnosticsJson);
+    if (dangling) problems.push(dangling);
+  }
+
+  const sizeReportJson = config.sizeReportJson ?? `${resolve(config.outputDir)}.size-report.json`;
+  if (typeof sizeReportJson !== 'string' || !sizeReportJson.trim()) problems.push('sizeReportJson must be a nonempty path');
+  else {
+    if (isInsideOutputDir(sizeReportJson, config.outputDir)) problems.push('sizeReportJson must be outside outputDir');
+    const dangling = danglingReportParent(sizeReportJson);
     if (dangling) problems.push(dangling);
   }
 
@@ -630,8 +641,8 @@ type SsrPluginShared = Pick<Parameters<SsrPluginFactory>[0], 'strict' | 'onDiagn
  *
  * A production build writes into a staging directory beside `outputDir` and
  * swaps it in only when every step has succeeded, so a build that fails part
- * way leaves the previous output exactly as it was, and nothing beside it
- * (L-21). The application embeds `outputDir` in its binary, and used to embed
+ * way leaves the previous assets exactly as they were (L-21). External size
+ * and diagnostic reports can retain evidence of a rejected build. The application embeds `outputDir` in its binary, and used to embed
  * half a build after a failure. Watch mode writes in place, as before.
  * Verified by: packages/build/tests/build.test.ts > "leaves the previous build byte-identical when a build fails after writing files"
  * Verified by: packages/build/tests/build.test.ts > "a failed first build leaves no output directory and nothing beside it"
@@ -641,13 +652,14 @@ export async function build(userConfig: BuildConfig): Promise<BuildResult> {
   // previous build's output on its way to failing.
   validateConfig(userConfig);
   validateNavigation(userConfig);
+  validateResolvedSizeBudgets(userConfig);
   // 3.0 strict-only publication; validate legacy flag spelling.
   const project = process.cwd();
   // A release marked security retains nothing (L-16, SR45); the environment marks it too, and
   // a `false` in the configuration does not unmark it: the mark can only be forgotten safely.
   const environmentSecurity = securityFromEnvironment(process.env.FORMA_SECURITY_RELEASE);
   const security = userConfig.security === true || environmentSecurity;
-  const config: BuildConfig = { ...userConfig, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app), security };
+  const config: BuildConfig = { ...userConfig, sizeReportJson: userConfig.sizeReportJson ?? `${resolve(userConfig.outputDir)}.size-report.json`, ...resolveDiagnosticOptions(userConfig), app: resolveAppName(project, userConfig.app), security };
   // The previous release is read and checked before anything is bundled or written, so a wrong
   // path fails at once (BUILD-820). Watch mode and a security release never read it.
   // Verified by: packages/build/tests/retention.test.ts > "is ignored by watch mode, which is a development build"
@@ -1169,6 +1181,10 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
       canvases: new Set(Object.entries(config.routes).filter(([, mapping]) => mapping.canvas === true).map(([route]) => route)),
       worker,
     });
+    applySizeBudgets(sizes, config.sizeBudgets, sizePolicyFromEnvironment(process.env.FORMA_SIZE_POLICY));
+    const budgetWarnings = sizeBudgetWarnings(sizes);
+    warnings.push(...budgetWarnings);
+    for (const warning of budgetWarnings) console.warn(warning);
     const times: BuildTimes = { totalMs: Object.values(phases).reduce((total, ms) => total + ms, 0), phases };
     const sizeReport: SizeReport = {
       version: 1,
@@ -1180,7 +1196,10 @@ async function buildInto(config: BuildConfig, shownDir: string, frame: FrameRunt
     };
     console.log(`\n${formatSizeReport(sizeReport).join('\n')}`);
     const overCeiling = routeSizeFailure(sizes);
-    if (overCeiling) throw overCeiling;
+    // Retain measurements outside the staged product even if publication is refused.
+    mkdirSync(dirname(config.sizeReportJson!), { recursive: true });
+    writeFileAtomic(config.sizeReportJson!, serializeSizeReport(sizeReport));
+    if (overCeiling) throw new SizeBudgetError(overCeiling.message, sizeReport, config.sizeReportJson!);
 
     writeFileSync(
       join(distDir, 'manifest.json'),
