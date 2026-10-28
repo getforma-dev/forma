@@ -21,6 +21,10 @@ crates/forma-server/tests/fixtures/documents-0.2.1/** -text
 # that writes them (tests/strict_loader.rs), manifests included.
 crates/forma-server/tests/fixtures/modules/** -text
 
+# The composition-canvas compiler products are paired byte-for-byte and their
+# manifest SRI authenticates the emitted JS. Preserve those bytes on Windows.
+crates/forma-server/tests/fixtures/composition-canvas/** -text
+
 # forma-server's preview-frame fixtures are inlined and hashed byte-for-byte,
 # and one of them holds a carriage return on purpose (FRAME-103), so checkout
 # must never rewrite their line endings.
