@@ -29,6 +29,9 @@ committing a changed protocol or adapter.
 
 ## Run and review
 
+For hosted runs, use the [GitHub Actions guide](docs/RUNNING-ON-GITHUB.md). It gives
+the qualified four-CPU inputs and explains why PR checks remain diagnostic.
+
 Commit the source first. Qualified measurements require native Linux, Docker,
 the declared CPU allocation and a quiet machine. Browser suites also require the
 existing pinned Chromium installation and executable hash. See [ROUND-2.md](ROUND-2.md)
