@@ -15,15 +15,19 @@ function mulberry32(a) {
   };
 }
 
-const rnd = mulberry32(42);
+export function createDataGenerator(seed = 42) {
+const rnd = mulberry32(seed);
 let nextId = 1;
 const pick = (list) => list[Math.floor(rnd() * list.length)];
 
 // Returns [{ id, label }, ...]
-export function buildData(count) {
+return function buildData(count) {
   const out = new Array(count);
   for (let i = 0; i < count; i++) {
     out[i] = { id: nextId++, label: pick(A) + ' ' + pick(C) + ' ' + pick(N) };
   }
   return out;
+};
 }
+
+export const buildData = createDataGenerator();

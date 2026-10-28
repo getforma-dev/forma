@@ -1,0 +1,14 @@
+{
+  "name": "@getforma/grand-prix",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Forma Grand Prix: reproducible comparative performance laboratory",
+  "scripts": {
+    "gp": "node src/cli.mjs",
+    "test": "node --test tests/*.test.mjs harness/*.test.mjs client-race/*.test.mjs",
+    "check": "node src/cli.mjs doctor",
+    "history": "node src/cli.mjs history"
+  },
+  "engines": { "node": ">=22" }
+}

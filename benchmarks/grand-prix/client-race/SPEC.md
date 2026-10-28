@@ -24,3 +24,33 @@ static files. Cars: `forma`, `vanilla`, `react`, `preact`, `solid`, `svelte`, `v
   floor without changing raw samples, sample counts or the operation boundary.
 - Bundle: the Brotli and gzip size of all JavaScript the built `index.html` loads, written to
   `results/raw/bundle/<car>.json`.
+
+## Maintained laboratory checks (2026-10-28)
+
+New DOM records identify `correctnessVersion: full-state-keyed-v1`. Outside each timing
+window the harness compares every row ID, label, selected row, and surviving DOM node
+identity with a fresh seed-42 reference model. This detects skipped replacement work,
+wrong data and unkeyed recreation that row counts alone cannot detect. MessageChannel
+ports close after each measurement. Existing zero-duration clock observations remain
+unchanged; only the geometric summary uses the established 0.1 ms resolution floor.
+
+Raw outputs refuse overwrite, including failed attempts. Use a fresh run directory;
+`GP_RESULTS_DIR` routes default output under its `raw/dom` and `raw/bundle` folders.
+Car IDs must be distinct known adapters and repetition counts must be valid integers.
+The execution order is recorded. The order remains the frozen requested order; vary
+it only as an explicitly versioned protocol change, not in response to results.
+
+Bundle measurement covers initial static JavaScript, excluding dynamic imports, CSS,
+HTML and network protocol overhead. It is not a full browser-transfer measurement.
+Historical records retain their original check strength and are not retrospectively
+promoted to the stronger correctness contract.
+
+The bundle collector parses static module imports and re-exports with Node's built-in
+module parser in a bounded subprocess; it does not evaluate application code or add
+a parser dependency. Missing references, remote/non-file modules, bare imports,
+syntax errors and paths or symlinks outside `dist` fail the measurement. Import maps,
+HTML base URLs, `nomodule` branches, and query/fragment script references currently
+require a separate supported protocol and are refused rather than undercounted.
+Inline static imports and modulepreloads are included; dynamic imports remain
+intentionally excluded. Failed bundle attempts retain JSON with `verified: false`,
+`status: failed` and a readable error, without fabricated byte totals.

@@ -10,7 +10,7 @@ import os from 'node:os';
 import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import {
-  ROOT, RAW, REQUEST_ENCODING, REQUEST_HEADERS, CFG, CAMPAIGN, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
+  ROOT, RESULTS, RAW, REQUEST_ENCODING, REQUEST_HEADERS, CFG, CAMPAIGN, EVENTS, LABEL, RUN_LABEL, RUN_ID, log, sleep, docker, dockerSync, installTrap, makeNetwork, removeNetwork,
   startCar, hostPort, removeContainer, startLoadgen, waitReady, get, checkBody, smokeCar, imageInfo, oha,
   startSampler, parseMem, machineState, writeRaw, stats, uniq, imageName, cpusetArgs, assertContainerResources, configureResources,
 } from './lib.mjs';
@@ -249,20 +249,20 @@ async function pitstop(car) {
 async function external(evId, script, extraArgs = []) {
   const file = path.join(ROOT, script);
   if (!fs.existsSync(file)) { log(`  ${script} does not exist yet, skipped`); return { ok: false, why: 'missing ' + script }; }
-  fs.mkdirSync(path.join(ROOT, 'harness', 'logs'), { recursive: true });
-  const logf = path.join(ROOT, 'harness', 'logs', `${evId}-${Date.now()}.log`), out = fs.openSync(logf, 'w');
+  fs.mkdirSync(path.join(RESULTS, 'logs'), { recursive: true });
+  const logf = path.join(RESULTS, 'logs', `${evId}-${Date.now()}.log`), out = fs.openSync(logf, 'w');
   const before = machineState();
   const signals = evId === 'signals';
   const program = signals ? 'docker' : process.execPath;
   const args = signals ? ['run', '--rm', '--label', LABEL, '--label', RUN_LABEL, '--cpus=1', '--memory=1g', '-e', `GP_CAMPAIGN_JSON=${JSON.stringify(CAMPAIGN)}`,
     '-v', `${path.join(ROOT, 'harness/campaign.mjs')}:/gp/harness/campaign.mjs:ro`,
-    '-v', `${path.join(ROOT, 'results/raw/signals')}:/out`, imageName('signals'), ...extraArgs] : [file, ...extraArgs];
-  fs.mkdirSync(path.join(ROOT, 'results/raw', evId), { recursive: true });
+    '-v', `${path.join(RAW, 'signals')}:/out`, imageName('signals'), ...extraArgs] : [file, ...extraArgs];
+  fs.mkdirSync(path.join(RAW, evId), { recursive: true });
   const code = await new Promise(res => {
     const p = spawn(program, args, { cwd: ROOT, stdio: ['ignore', out, out] });
     p.on('error', () => res(-1)); p.on('close', res);
   });
-  const dir = path.join(ROOT, 'results', 'raw', evId); fs.mkdirSync(dir, { recursive: true });
+  const dir = path.join(RAW, evId); fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, '_machine.json'), JSON.stringify({ event: evId, campaign: CAMPAIGN, runner: script, exitCode: code, log: path.relative(ROOT, logf), before, after: machineState(), config: { forced } }, null, 2));
   log(`  ${script} exit ${code}, log ${path.relative(ROOT, logf)}`);
   return { ok: code === 0 };

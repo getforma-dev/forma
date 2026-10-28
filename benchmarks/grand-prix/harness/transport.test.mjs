@@ -7,10 +7,10 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync, brotliCompressSync } from 'node:zlib';
-import { expected } from '../shared/dataset.mjs';
+import { renderPage } from '../contestants/vanilla-node/src/page.vanilla.mjs';
 import { get } from './lib.mjs';
 import { requestHeaders, ohaArguments, captureResponse, validateResponse, assertSampleRepresentation, wireMeasurement, OHA_VERSION } from './transport.mjs';
-const page = rows => Buffer.from(expected(rows).mustContain.join(' ') + '<table>' + Array.from({ length: rows }, (_, i) => `<tr data-id="${i + 1}"></tr>`).join('') + '</table>');
+const page = rows => Buffer.from(renderPage(rows));
 const response = (rows = 100, encoding = 'identity') => {
   const body = encoding === 'gzip' ? gzipSync(page(rows)) : page(rows);
   return captureResponse(rows, { status: 200, body, headers: { 'content-length': String(body.length), ...(encoding === 'identity' ? {} : { 'content-encoding': encoding }) },

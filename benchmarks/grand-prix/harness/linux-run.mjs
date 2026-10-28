@@ -1,4 +1,5 @@
 import { createCampaign } from './campaign.mjs';
+import { entrantsFor } from './registry.mjs';
 // One owned, sequential Linux run. No resource outside this run is pruned.
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -13,8 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 assert(!process.env.GP_RAW_DIR && !process.env.GP_ACCEPT_ENCODING, 'this driver owns raw-output and request-encoding selection');
 const argv = process.argv.slice(2);
 const option = (name, fallback) => argv.includes(`--${name}`) ? argv[argv.indexOf(`--${name}`) + 1] : fallback;
-const allCars = ['forma', 'vanilla-node', 'react-node', 'preact-node', 'solid-node', 'svelte-node', 'vue-node',
-  'react-bun', 'vanilla-bun', 'react-deno', 'vanilla-deno', 'next', 'react-router', 'astro'];
+const allCars = entrantsFor('server');
 const cars = option('cars', allCars.join(',')).split(',');
 assert(cars.length && new Set(cars).size === cars.length && cars.every(car => allCars.includes(car)), 'invalid car set');
 const events = option('events', '1-8');
@@ -41,7 +41,7 @@ process.env.GP_IMAGE_PREFIX = `gp264/${id}`;
 const imageName = car => `${process.env.GP_IMAGE_PREFIX}/${car}`;
 const builder = `gp264-${id}`;
 const label = `gp264run=${id}`;
-const results = join(root, 'results');
+const results = resolve(process.env.GP_RESULTS_DIR || join(root, 'results'));
 mkdirSync(results, { recursive: true });
 assert(!existsSync(join(results, 'raw')), 'fresh raw directory required; archive prior evidence first');
 const ownershipPath = join(results, `${id}-ownership.json`);

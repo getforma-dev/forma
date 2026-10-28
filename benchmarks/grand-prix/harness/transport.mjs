@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
-import { expected } from '../shared/dataset.mjs';
+import { assertSSRPage } from './ssr-contract.mjs';
 
 export const OHA_VERSION = '1.16.0';
 export function requestHeaders(encoding = 'identity') {
@@ -16,7 +16,7 @@ const natural = (value, name) => assert(Number.isSafeInteger(value) && value >= 
 
 export function captureResponse(rows, response, headers) {
   const body = response.body ?? Buffer.alloc(0);
-  return { rows, status: response.status, requestHeaders: { ...headers }, headers: response.headers ?? {},
+  return { semanticValidation: 'laboratory-1-rows-v1', rows, status: response.status, requestHeaders: { ...headers }, headers: response.headers ?? {},
     rawHeaders: response.rawHeaders ?? [], bytes: body.length, sha256: sha256(body), bodyBase64: body.toString('base64'),
     ...(response.error ? { error: response.error } : {}) };
 }
@@ -46,9 +46,7 @@ export function validateResponse(record, headers = requestHeaders()) {
     assert.equal(Number(record.headers['content-length']), body.length, 'encoded content length differs');
   }
   const decoded = encoding === 'br' ? brotliDecompressSync(body) : encoding === 'gzip' ? gunzipSync(body) : body;
-  const text = decoded.toString('utf8'), exp = expected(record.rows);
-  assert.equal((text.match(/<tr\b[^>]*\sdata-id=/g) ?? []).length, exp.rowCount, 'SSR row count differs');
-  for (const item of exp.mustContain) assert(text.includes(item), `SSR data missing: ${item}`);
+  assertSSRPage(record.rows, decoded.toString('utf8'));
   return body;
 }
 

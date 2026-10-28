@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "Forma Grand Prix",
+  "protocolVersion": "laboratory-1",
+  "purpose": "Find Forma strengths, weaknesses and regressions through fair, reproducible comparisons. No championship score.",
+  "defaultProfile": "native-8-v1",
+  "defaultMode": "qualified",
+  "minimumFreeBytes": 4294967296,
+  "seed": 254264,
+  "baseline": { "label": "Published Forma 3.0.0 / frozen Round 2 competitors", "sourceCommit": "3d9de62d0709e8158cadd62be387ff1481ca9e66" },
+  "currentForma": { "version": "3.2.0", "sourceCommit": "fc76ea8531f0e3a85d0224087384e41f52040e3c", "verifiedAt": "2026-10-28", "note": "Explicit candidate selection; current package versions are not substituted into historical baselines." },
+  "suites": {
+    "server": { "driver": "harness/linux-run.mjs", "events": ["sprint", "endurance", "multicore", "reaction", "fuel", "grid", "weight", "pitstop"], "cars": ["forma", "vanilla-node", "react-node", "preact-node", "solid-node", "svelte-node", "vue-node", "react-bun", "vanilla-bun", "react-deno", "vanilla-deno", "next", "react-router", "astro"], "requires": ["linux", "docker", "cleanGit"] },
+    "client": { "driver": "harness/client-linux.mjs", "events": ["dom", "bundle", "signals"], "cars": ["forma", "vanilla", "react", "preact", "solid", "svelte", "vue", "alien-signals", "preact-signals", "vue-reactivity"], "requires": ["linux", "docker", "cleanGit", "chromium"] },
+    "islands": { "driver": "harness/islands-linux.mjs", "events": ["islands"], "cars": ["forma", "react-node", "react-bun", "react-deno", "preact-node", "solid-node", "svelte-node", "vue-node", "next", "react-router", "astro"], "requires": ["linux", "docker", "cleanGit", "chromium"] },
+    "signals": { "driver": "signals-race/run.mjs", "events": ["signals"], "cars": ["forma", "alien-signals", "solid", "preact-signals", "vue-reactivity"], "requires": ["signalsDependencies"], "diagnosticOnly": true }
+  },
+  "retention": { "evidence": "Never delete automatically", "generated": "Remove run-owned dependency and build outputs after sealing evidence", "logs": "Retain with each run", "legacy": "Keep frozen evidence and its original qualification; never rewrite it as a new baseline" }
+}

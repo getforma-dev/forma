@@ -32,7 +32,7 @@ assert(refs.every(ref => /^[a-f0-9]{40}$/.test(ref)) && new Set(refs).size === r
 const id = process.env.GP_RUN_ID || `client-${Date.now().toString(36)}`;
 assert(/^[a-z0-9-]+$/.test(id));
 process.env.GP_RUN_ID = id;
-const results = join(root, 'results');
+const results = resolve(process.env.GP_RESULTS_DIR || join(root, 'results'));
 mkdirSync(results, { recursive: true });
 const work = join(results, `${id}-client`);
 assert(!existsSync(work), 'fresh evidence directory required');

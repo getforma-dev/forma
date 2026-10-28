@@ -7,3 +7,8 @@ harness/logs/
 **/.next/
 **/.react-router/
 **/*.log
+
+# Managed sessions: seal/publish selected evidence deliberately, never git-add build trees.
+/runs/
+/.grandprix/
+/updates/

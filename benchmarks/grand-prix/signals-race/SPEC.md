@@ -25,3 +25,19 @@ signal, 100 effects); effect create and dispose; batch of 100 writes with one ef
 reports ops/s. Runner `signals-race/run.mjs` runs every car in a `node:22-bookworm-slim` container with
 `--cpus=1`, two warm-up rounds and five timed rounds, each car in a fresh process, and writes
 `results/raw/signals/<car>.json`.
+
+## Maintained laboratory checks (2026-10-28)
+
+The runner preserves campaign and resource-affinity qualification, validates selected
+adapter IDs and counts, and rejects overwriting any result. `GP_RESULTS_DIR` routes
+local default output under `raw/signals`; container `/out` and explicit `--out` still
+work. Worker failures, malformed output and timeouts are retained as failed JSON
+records and cause nonzero exit. The default per-adapter limit is ten minutes;
+`--timeout` records an operational bound in milliseconds, not a speed result.
+
+Every adapter receives explicit garbage collection before each fixed workload.
+Non-finite or nonpositive timings/rates are invalid. Vue has no public batch API:
+its uncoalesced batching result carries `comparable: false`; its legacy aggregate
+carries `geomeanComparable: false`. Retain those observations, but compare equivalent
+individual workloads instead of ranking that aggregate against batching libraries.
+The historical geometric summary is kept for reader compatibility, not endorsement.

@@ -80,7 +80,7 @@ export function evaluateBudgets({ sprint, fuel, grid, weight }) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const dir = resolve(process.argv[2] ?? 'results/raw');
+  const dir = resolve(process.argv[2] ?? (process.env.GP_RESULTS_DIR ? resolve(process.env.GP_RESULTS_DIR, 'raw') : 'results/raw'));
   const records = Object.fromEntries(['sprint', 'fuel', 'grid', 'weight'].map(event =>
     [event, JSON.parse(readFileSync(resolve(dir, event, 'forma.json'), 'utf8'))]));
   const result = evaluateBudgets(records);

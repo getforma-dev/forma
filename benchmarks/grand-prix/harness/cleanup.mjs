@@ -3,7 +3,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-mkdirSync('results', { recursive: true });
+const results = resolve(process.env.GP_RESULTS_DIR || 'results');
+mkdirSync(results, { recursive: true });
 const id = process.env.GP_RUN_ID;
 assert(/^[a-z0-9-]+$/.test(id ?? ''), 'cleanup requires this run\'s GP_RUN_ID');
 const dry = process.argv.includes('--dry-run');
@@ -27,7 +28,7 @@ for (const [query, command] of [
 }
 // The driver writes this manifest only after successfully creating its unique
 // builder. No prefix-based deletion or global image/cache pruning is allowed.
-const manifest = resolve('results', `${id}-ownership.json`);
+const manifest = resolve(results, `${id}-ownership.json`);
 if (existsSync(manifest)) {
   const owned = JSON.parse(readFileSync(manifest, 'utf8'));
   assert.equal(owned.id, id);
@@ -38,4 +39,4 @@ if (existsSync(manifest)) {
   }
 }
 cleanup.after = execFileSync('df', ['-k', '.'], { encoding: 'utf8' });
-if (!dry) writeFileSync(resolve('results', `${id}-cleanup.json`), JSON.stringify(cleanup, null, 2) + '\n');
+if (!dry) writeFileSync(resolve(results, `${id}-cleanup.json`), JSON.stringify(cleanup, null, 2) + '\n');

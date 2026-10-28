@@ -5,18 +5,20 @@ import { readCampaign } from '../harness/campaign.mjs';
 // Every requested car must have a built index.html; missing cars and browser errors fail the run.
 import puppeteer from 'puppeteer-core';
 import { writeFile, mkdir } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { appsDir, rawDir, parseArgs, builtCars, serveDist } from './lib.mjs';
 import { validateProfile, verifyRoleAffinity } from '../harness/resource-profile.mjs';
 import { measuredDuration, operationGeomean } from './timing.mjs';
+import { createModel, checkState } from './assertions.mjs';
 
 const args = parseArgs(process.argv.slice(2), {
   runs: '5', warmups: '2', out: path.join(rawDir, 'dom'),
   chrome: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 });
 const RUNS = +args.runs, WARM = +args.warmups;
+if (!Number.isInteger(RUNS) || RUNS < 1 || RUNS > 1000 || !Number.isInteger(WARM) || WARM < 0 || WARM > 1000) throw new Error('runs must be 1–1000 and warmups 0–1000');
 const resourceProfile = args['resource-profile'] ? validateProfile(JSON.parse(readFileSync(args['resource-profile'], 'utf8'))) : null;
 const campaign = args.campaign ? readCampaign(args.campaign) : process.env.GP_CAMPAIGN_FILE ? readCampaign() : null;
 if (resourceProfile?.qualified && !campaign) throw new Error('qualified run requires a campaign identity');
@@ -24,6 +26,9 @@ const processAffinity = resourceProfile ? verifyRoleAffinity(resourceProfile, 'b
 if (resourceProfile?.qualified && (RUNS !== 5 || WARM !== 2)) throw new Error('qualified DOM race requires five runs and two warmups');
 const { have, missing } = builtCars(args.cars);
 if (missing.length || !have.length) throw new Error('requested client cars missing built output: ' + missing.join(', '));
+for (const car of have) for (const suffix of ['.json', '.failed.json']) {
+  if (existsSync(path.join(args.out, car + suffix))) throw new Error('Refusing to overwrite retained DOM result: ' + car);
+}
 
 // Each op: prep (untimed) puts the page in the state it needs; click is what is timed; check verifies the result.
 const ops = [
@@ -39,12 +44,16 @@ const ops = [
 ];
 
 const pageFns = () => {
+  let previous = new Map();
+  window.__remember = () => { previous = new Map([...document.querySelectorAll('tbody tr')].map(tr => [tr.querySelector('td.col-id').textContent, tr])); };
   window.__raf2 = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   window.__state = () => {
     const trs = [...document.querySelectorAll('tbody tr')];
     const danger = trs.filter((t) => t.classList.contains('danger'));
     return {
       rows: trs.length,
+      selected: danger.map(tr => tr.querySelector('td.col-id').textContent),
+      keyed: trs.every(tr => { const id = tr.querySelector('td.col-id').textContent; return !previous.has(id) || previous.get(id) === tr; }),
       ids: trs.map((t) => t.querySelector('td.col-id').textContent),
       labels: trs.map((t) => t.querySelector('a.lbl').textContent),
       firstId: trs.length ? +trs[0].querySelector('td.col-id').textContent : 0,
@@ -59,7 +68,7 @@ const pageFns = () => {
     // task boundary (all microtasks drained, a MessageChannel task after the framework's own).
     const t0 = performance.now();
     el.click();
-    await new Promise((r) => { const ch = new MessageChannel(); ch.port1.onmessage = () => r(); ch.port2.postMessage(0); });
+    await new Promise((r) => { const ch = new MessageChannel(); ch.port1.onmessage = () => { ch.port1.close(); ch.port2.close(); r(); }; ch.port2.postMessage(0); });
     void document.body.offsetHeight;
     return performance.now() - t0;
   };
@@ -87,7 +96,7 @@ chromeVersion = await browser.version();
 for (const car of have) {
   const server = await serveDist(path.join(appsDir, car, 'dist'));
   let page;
-  const errors = [], result = {};
+  const errors = [], result = {}, model = createModel();
   try {
   page = await browser.newPage();
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -99,11 +108,18 @@ for (const car of have) {
     const runs = [];
     result[op.name] = { runs };
     for (let i = 0; i < WARM + RUNS; i++) {
-      for (const p of op.prep) await page.evaluate((s) => window.__prep(s), prepSel[p]);
+      for (const p of op.prep) { await page.evaluate((s) => window.__prep(s), prepSel[p]); model.apply(p); }
+      await page.evaluate(() => window.__remember());
+      const preparation = checkState(await page.evaluate(() => window.__state()), model.expected());
+      if (preparation.length) throw new Error(`${car} ${op.name} preparation: ${preparation.join('; ')}`);
       const before = op.before ? await page.evaluate(() => window.__state()) : null;
       const ms = await page.evaluate((s) => window.__measure(s), op.click);
       measuredDuration(ms, `${car} ${op.name}`);
+      model.apply(op.name === 'select' ? 'select' : op.name === 'remove' ? 'remove' : op.click.slice(1));
       const state = await page.evaluate(() => window.__state());
+      const problems = checkState(state, model.expected());
+      if (problems.length) throw new Error(`${car} ${op.name}: ${problems.join('; ')}`);
+      if (errors.length) throw new Error(`${car}: browser errors: ${errors.join('; ')}`);
       if (!op.check(state, before)) throw new Error(`${car} ${op.name}: result check failed (rows=${state.rows})`);
       if (i >= WARM) runs.push(ms);
     }
@@ -114,15 +130,15 @@ for (const car of have) {
   console.log(`${car.padEnd(8)} geometric mean ${geomean.toFixed(2)} ms${errors.length ? '  PAGE ERRORS: ' + errors.length : ''}`);
   await writeFile(path.join(args.out, `${car}.json`), JSON.stringify({
     event: 9, car, measuredAt: new Date().toISOString(), runs: RUNS, warmups: WARM, geomeanMs: geomean, resourceProfile, campaign, processAffinity, browserProcessAffinity,
-    ops: result, pageErrors: errors, verified: errors.length === 0,
+    ops: result, pageErrors: errors, verified: errors.length === 0, correctnessVersion: 'full-state-keyed-v1', executionOrder: have,
     machine: { cpu: os.cpus()[0].model, cores: os.cpus().length, loadavg: os.loadavg(), chrome: chromeVersion, node: process.version },
-  }, null, 2) + '\n');
+  }, null, 2) + '\n', { flag: 'wx' });
   if (errors.length) throw new Error(`${car}: browser errors invalidate the race: ${errors.join('; ')}`);
   } catch (error) {
     await writeFile(path.join(args.out, `${car}.failed.json`), JSON.stringify({
       event: 9, car, measuredAt: new Date().toISOString(), verified: false, error: String(error), resourceProfile, campaign, processAffinity, browserProcessAffinity,
       ops: result, pageErrors: errors, chrome: chromeVersion,
-    }, null, 2) + '\n');
+    }, null, 2) + '\n', { flag: 'wx' });
     throw error;
   } finally {
     await page?.close().catch(() => {});

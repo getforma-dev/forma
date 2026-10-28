@@ -1,0 +1,1520 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-28",
+  "purpose": "Trace benchmark findings through engineering decisions, releases and remaining debt; preserve evidence rather than search for favorable reruns.",
+  "claimBoundary": "Published-source ancestry establishes inherited implementation, not unchanged behavior or newly measured 3.2 performance. Measurements remain bound to each campaign and exact source.",
+  "releases": {
+    "3.0.0": {
+      "commit": "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+      "evidence": [
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published release scope"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/releases/tag/v3.0.0",
+          "label": "Published release"
+        }
+      ]
+    },
+    "3.1.0": {
+      "commit": "9a570afece5eb5091824422f00134a875310e857",
+      "evidence": [
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published release scope"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/releases/tag/v3.1.0",
+          "label": "Published release"
+        }
+      ]
+    },
+    "3.2.0": {
+      "commit": "fc76ea8531f0e3a85d0224087384e41f52040e3c",
+      "evidence": [
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published release scope"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/releases/tag/v3.2.0",
+          "label": "Published release"
+        }
+      ]
+    }
+  },
+  "sources": {
+    "published-3.0": {
+      "commit": "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+      "label": "Published Forma 3.0.0 control"
+    },
+    "static-only": {
+      "commit": "d00f231a98dbe6068354fb862134d91e5b276380",
+      "label": "FORMA-257 static route trial"
+    },
+    "walker-only": {
+      "commit": "be029708545efc8d771df25ce774362f461718e2",
+      "label": "FORMA-258 walker trial"
+    },
+    "server-combined": {
+      "commit": "81d1fd815d93f274f9b8bec7a6bc584e1273f3c2",
+      "label": "Combined static and walker trial"
+    },
+    "compression": {
+      "commit": "87ecea920685694dda3ed8a8d914b03f28ddff9c",
+      "label": "Compression executable before static suppression"
+    },
+    "withdrawn-rows": {
+      "commit": "54a836c06eeba99c345cf294d47e7118b5ad7924",
+      "label": "Withdrawn client candidate"
+    },
+    "row-rollback": {
+      "commit": "16862984ffdbb6c171af9d63a9eefac2caba843d",
+      "label": "Reviewed rollback"
+    },
+    "bundle-before": {
+      "commit": "ea0adee8a58772787d6a07f05e83a4b651283289",
+      "label": "Bundle-only baseline"
+    },
+    "bundle-after": {
+      "commit": "8b56026efbb9ac3c52e7b4382e483f1433509dd3",
+      "label": "Isolated bundle change"
+    },
+    "cache-policy": {
+      "commit": "f66783c99d357b833238e6a424aaa599c4c78cb5",
+      "label": "Merged reviewed starter-cache policy"
+    },
+    "pre-effect": {
+      "commit": "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+      "label": "Pre-effect main in final client/adoption campaigns"
+    },
+    "effect-selected": {
+      "commit": "9ac07a446ebe8aaad407a895fa8aaece189bc69e",
+      "label": "Selected integrated public effects"
+    },
+    "adoption-selected": {
+      "commit": "44835efa2f13d694ff32f0dc56f4e5f0aa413eb3",
+      "label": "Selected B in ABBA adoption campaign"
+    },
+    "compiler-control": {
+      "commit": "226f0d8d56e0d6e68517d53f52bcc7149ee7e869",
+      "label": "Published RC2 compiler control"
+    },
+    "compiler-selected": {
+      "commit": "1d204ba48ea7861f28a22d9483116b310afb35f2",
+      "label": "Measured opt-in compiler candidate"
+    },
+    "compiler-merged": {
+      "commit": "ad26d9f8cdf78f6cfd2f22afefa2883cd903187a",
+      "label": "Opt-in compiler integration"
+    },
+    "startup-before": {
+      "commit": "8ae49afaf742914a376f2654afa3758a02b38827",
+      "label": "RC3 before adoption compilation hint"
+    },
+    "startup-after": {
+      "commit": "9f53f5ef9bcbd68ff6b5a41c7855b4f5e387d757",
+      "label": "Measured RC3 startup repair"
+    },
+    "stable-3.1": {
+      "commit": "9a570afece5eb5091824422f00134a875310e857",
+      "label": "Published stable 3.1.0"
+    },
+    "stable-3.2": {
+      "commit": "fc76ea8531f0e3a85d0224087384e41f52040e3c",
+      "label": "Published stable 3.2.0"
+    }
+  },
+  "changes": [
+    {
+      "id": "GP-H001",
+      "title": "Plain HTML for static native routes",
+      "tickets": [
+        "FORMA-257"
+      ],
+      "status": "adopted",
+      "finding": "The no-JavaScript benchmark page paid for adoption markers, row keys and empty island state.",
+      "change": "Omit adoption machinery only on native routes without JavaScript or islands; keep island contracts intact.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+        "d00f231a98dbe6068354fb862134d91e5b276380",
+        "81d1fd815d93f274f9b8bec7a6bc584e1273f3c2"
+      ],
+      "measurements": [
+        {
+          "metric": "100-row response bytes",
+          "unit": "B",
+          "campaignId": "40116668819",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 33193
+          },
+          "candidate": {
+            "source": "static-only",
+            "value": 17154
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 17500,
+            "met": true
+          }
+        },
+        {
+          "metric": "Combined SSR Sprint",
+          "unit": "requests/s",
+          "campaignId": "40116668819",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 2490.69
+          },
+          "candidate": {
+            "source": "server-combined",
+            "value": 2583.96
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Combined SSR Endurance",
+          "unit": "requests/s",
+          "campaignId": "40116668819",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 262.66
+          },
+          "candidate": {
+            "source": "server-combined",
+            "value": 262.4
+          },
+          "direction": "higher"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+          "label": "Paired server sections 8–10"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40116668819",
+          "label": "Original campaign 40116668819"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published 3.1 release scope"
+        }
+      ],
+      "tradeoffs": [
+        "Smaller bytes did not deliver the estimated 3,300/5,000 requests/s. Combined Sprint improved 3.74%; Endurance was 0.10% lower in this campaign."
+      ],
+      "remainingTargets": [
+        "Investigate whole-request costs rather than treating removed bytes as a throughput prediction."
+      ],
+      "guardrails": [
+        "Preserve visible content, CSP/response policy and strict adoption on island routes.",
+        "Do not relabel component measurements as a final 3.1 or 3.2 binary measurement."
+      ],
+      "repeatOnlyIf": [
+        "A relevant compiler/static-renderer change or a preregistered whole-request hypothesis exists."
+      ]
+    },
+    {
+      "id": "GP-H002",
+      "title": "Reduce native walker allocation and escaping cost",
+      "tickets": [
+        "FORMA-258"
+      ],
+      "status": "adopted",
+      "finding": "Profiling found temporary conversion/allocation costs in rendering; HTTP and walker-only clocks measure different work.",
+      "change": "Use reviewed allocation/escaping improvements while preserving emitted content and escaping security controls.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+        "be029708545efc8d771df25ce774362f461718e2"
+      ],
+      "measurements": [
+        {
+          "metric": "100-row instrumented walker",
+          "unit": "µs",
+          "campaignId": "40116668819",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 101,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 113.85
+          },
+          "candidate": {
+            "source": "walker-only",
+            "value": 94.11
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "1000-row instrumented walker",
+          "unit": "µs",
+          "campaignId": "40116668819",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 101,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 1211.27
+          },
+          "candidate": {
+            "source": "walker-only",
+            "value": 968.47
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "SSR Sprint",
+          "unit": "requests/s",
+          "campaignId": "40116668819",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 2490.69
+          },
+          "candidate": {
+            "source": "walker-only",
+            "value": 2619.51
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "1000-row walker cost",
+          "unit": "ns/B",
+          "campaignId": "40116668819",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "walker-only",
+            "value": 2.967
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 10,
+            "met": true
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+          "label": "Walker cost section 9"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40116668819",
+          "label": "Original campaign 40116668819"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "3.1 allocation improvement"
+        }
+      ],
+      "tradeoffs": [
+        "HTTP marginal cost remained 11.006 ns/B; the walker-only target is not an HTTP claim. One Endurance tail-ratio sample reached 1.5264 although the frozen mean-based rule passed."
+      ],
+      "remainingTargets": [
+        "Keep HTTP and walker clocks separate; profile data preparation/projection/transport for further gains."
+      ],
+      "guardrails": [
+        "Keep exact nodes/list iterations, body parity, escaping mutant controls, and all outliers."
+      ],
+      "repeatOnlyIf": [
+        "A measured walker path or a specific allocation hypothesis changes; do not rerun unchanged code for a nicer sample."
+      ]
+    },
+    {
+      "id": "GP-H003",
+      "title": "Public-effect gains carry batching and own-engine gaps",
+      "tickets": [
+        "FORMA-259"
+      ],
+      "status": "accepted-tradeoff",
+      "finding": "Published public effects substantially lagged the exact engine used by Forma; comparisons to a different engine version were insufficient.",
+      "change": "Select the simpler supplied-node effect/lifecycle design with cleanup repair; retain pristine alien-signals 3.1.2 as a separate same-trial control.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+        "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+        "9ac07a446ebe8aaad407a895fa8aaece189bc69e"
+      ],
+      "measurements": [
+        {
+          "metric": "Write with one effect",
+          "unit": "ops/s",
+          "campaignId": "40140319634",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 5307555
+          },
+          "candidate": {
+            "source": "effect-selected",
+            "value": 9062327
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Fan-out to 100 effects",
+          "unit": "ops/s",
+          "campaignId": "40140319634",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 67273
+          },
+          "candidate": {
+            "source": "effect-selected",
+            "value": 165336
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Effect create and dispose",
+          "unit": "ops/s",
+          "campaignId": "40140319634",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 2194656
+          },
+          "candidate": {
+            "source": "effect-selected",
+            "value": 7710678
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Batch of 100 writes",
+          "unit": "ops/s",
+          "campaignId": "40140319634",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 214962
+          },
+          "candidate": {
+            "source": "effect-selected",
+            "value": 185312
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Fan-out / pristine own engine",
+          "unit": "ratio",
+          "campaignId": "40140319634",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "effect-selected",
+            "value": 0.71645
+          },
+          "direction": "higher",
+          "target": {
+            "operator": ">=",
+            "value": 0.8,
+            "met": false
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
+          "label": "FORMA-259 decisions"
+        },
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/client-final/README.md",
+          "label": "Final client audit"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40140319634",
+          "label": "Original campaign 40140319634"
+        }
+      ],
+      "tradeoffs": [
+        "Batch throughput was 13.79% below published and 6.93% below pre-effect main. The 80% own-engine fan-out goal failed.",
+        "This campaign measures 9ac07a44; later RC3 observations are GP-H010 and supersede claims about the latest candidate."
+      ],
+      "remainingTargets": [
+        "Reach at least 80% of the same-trial pristine engine for each effect workload without dropping lifecycle behavior."
+      ],
+      "guardrails": [
+        "Keep synchronous updates, cleanup/disposal, reporting, owned subscriptions and all nine workloads.",
+        "Do not infer island-adoption gains from public-effect gains or aggregate away batching loss."
+      ],
+      "repeatOnlyIf": [
+        "A scoped effect/batch design hypothesis has changed; retain exact own-engine version and all operations."
+      ]
+    },
+    {
+      "id": "GP-H004",
+      "title": "Withdraw row optimizations that worsened real operations",
+      "tickets": [
+        "FORMA-260"
+      ],
+      "status": "rejected",
+      "finding": "The first qualified row candidate missed creation acceptance and slowed swap, removal and clear despite a smaller bundle.",
+      "change": "Withdraw unproven list changes in 16862984; retain their failed campaign and compare future proposals against the exact rejected design.",
+      "shippedReleases": [],
+      "inheritedBy": [],
+      "sourceCommits": [
+        "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+        "54a836c06eeba99c345cf294d47e7118b5ad7924",
+        "16862984ffdbb6c171af9d63a9eefac2caba843d"
+      ],
+      "measurements": [
+        {
+          "metric": "Create 1000 rows",
+          "unit": "ms",
+          "campaignId": "40116672499",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 25.66
+          },
+          "candidate": {
+            "source": "withdrawn-rows",
+            "value": 31.74
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Swap rows",
+          "unit": "ms",
+          "campaignId": "40116672499",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 1.72
+          },
+          "candidate": {
+            "source": "withdrawn-rows",
+            "value": 2.24
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Remove row",
+          "unit": "ms",
+          "campaignId": "40116672499",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 1.4
+          },
+          "candidate": {
+            "source": "withdrawn-rows",
+            "value": 2.14
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Clear rows",
+          "unit": "ms",
+          "campaignId": "40116672499",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 2.82
+          },
+          "candidate": {
+            "source": "withdrawn-rows",
+            "value": 4.26
+          },
+          "direction": "lower"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+          "label": "Withdrawn and rollback sections 13–15"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40116672499",
+          "label": "Original campaign 40116672499"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40118323052",
+          "label": "Original campaign 40118323052"
+        },
+        {
+          "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
+          "label": "FORMA-260 rejected prototypes"
+        }
+      ],
+      "tradeoffs": [
+        "A lower bundle size did not establish acceptable interaction speed. Fixed-order samples are bounded observations, not a universal causal effect."
+      ],
+      "remainingTargets": [
+        "Create 1000 rows at no more than 1.10× same-trial vanilla remains the original target."
+      ],
+      "guardrails": [
+        "Do not remove ownership/listener cleanup or reuse rejected generic-list code without a new reviewed contract.",
+        "Do not pool the failed and rollback VMs or select only favorable operations."
+      ],
+      "repeatOnlyIf": [
+        "A materially different, explicit template/event or large-list strategy is preregistered with full correctness and cost coverage."
+      ]
+    },
+    {
+      "id": "GP-H005",
+      "title": "Offer response compression as a deliberate opt-in",
+      "tickets": [
+        "FORMA-261"
+      ],
+      "status": "accepted-tradeoff",
+      "finding": "Rendered HTML was sent uncompressed while its marker-heavy output compressed well; per-request compression adds CPU and security costs.",
+      "change": "Add response-specific Brotli/gzip negotiation through with_compression; leave it off by default.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "87ecea920685694dda3ed8a8d914b03f28ddff9c"
+      ],
+      "measurements": [
+        {
+          "metric": "Identity → Brotli wire bytes",
+          "unit": "B",
+          "campaignId": "40116661885",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "compression",
+            "value": 33193
+          },
+          "candidate": {
+            "source": "compression",
+            "value": 2491
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Identity → Brotli Sprint",
+          "unit": "requests/s",
+          "campaignId": "40116661885",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "compression",
+            "value": 2778.61
+          },
+          "candidate": {
+            "source": "compression",
+            "value": 2055.57
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Identity → Brotli Sprint p99",
+          "unit": "ms",
+          "campaignId": "40116661885",
+          "pairing": "same-campaign",
+          "statistic": "mean of per-run p99",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "compression",
+            "value": 27.74
+          },
+          "candidate": {
+            "source": "compression",
+            "value": 37.23
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Identity → Brotli mean memory peaks",
+          "unit": "MiB",
+          "campaignId": "40116661885",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 3,
+          "baseline": {
+            "source": "compression",
+            "value": 3.92
+          },
+          "candidate": {
+            "source": "compression",
+            "value": 7.02
+          },
+          "direction": "lower"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+          "label": "Compression section 11"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40116661885",
+          "label": "Original campaign 40116661885"
+        },
+        {
+          "path": "SECURITY.md",
+          "label": "Opt-in page compression policy"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published 3.1 compression scope"
+        }
+      ],
+      "tradeoffs": [
+        "Brotli reduced bytes by 92.5% but throughput by 26.0% and increased p99 by 34.2%. gzip also costs CPU/tail latency.",
+        "This pre-static executable does not predict the compression ratio of the final smaller static response."
+      ],
+      "remainingTargets": [
+        "Choose compression only for an application workload whose transfer benefit justifies CPU, latency and response-security costs."
+      ],
+      "guardrails": [
+        "Require response-specific BREACH review; preserve CSP/no-store/Vary and decoded-content correctness."
+      ],
+      "repeatOnlyIf": [
+        "Response data shape, codec version/level, cache policy or deployment constraints materially change."
+      ]
+    },
+    {
+      "id": "GP-H006",
+      "title": "Cache release dependencies before changing FMIR delivery",
+      "tickets": [
+        "FORMA-262"
+      ],
+      "status": "adopted",
+      "finding": "A page edit relinks the embedded Rust application; cold dependencies dominate uncached starter builds.",
+      "change": "Ship locked target caching in generated CI with read-only cache policy outside the default branch. Defer release FMIR-from-disk.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+        "f66783c99d357b833238e6a424aaa599c4c78cb5"
+      ],
+      "measurements": [
+        {
+          "metric": "Minimal Rust release cold → restored cache",
+          "unit": "s",
+          "campaignId": "40108274094",
+          "pairing": "separate-runners-cache-pair",
+          "statistic": "mean",
+          "samplesPerSource": 1,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 35.84
+          },
+          "candidate": {
+            "source": "published-3.0",
+            "value": 2.87
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Dashboard Rust release cold → restored cache",
+          "unit": "s",
+          "campaignId": "40108274094",
+          "pairing": "separate-runners-cache-pair",
+          "statistic": "mean",
+          "samplesPerSource": 1,
+          "baseline": {
+            "source": "published-3.0",
+            "value": 38.7
+          },
+          "candidate": {
+            "source": "published-3.0",
+            "value": 4.11
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Warm registry compilation artifacts",
+          "unit": "count",
+          "campaignId": "40108274094",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "published-3.0",
+            "value": 0
+          },
+          "direction": "lower"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+          "label": "Cache section 16"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40108274094",
+          "label": "Original campaign 40108274094"
+        },
+        {
+          "path": "docs/DEPLOYMENT.md",
+          "label": "Cache and disk-loading policy"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published starter cache change"
+        }
+      ],
+      "tradeoffs": [
+        "One cold/warm pair per starter on separate runners is an example, not a distribution or guaranteed build speed.",
+        "Release disk-loading adds authentication, atomic-update and version-skew obligations; it was evaluated and deferred."
+      ],
+      "remainingTargets": [
+        "Keep release build/deploy integrity while reducing repeat compilation work."
+      ],
+      "guardrails": [
+        "Preserve exact lockfile/cache keys and default-branch write policy. Do not call skipped app recompilation an achieved optimization."
+      ],
+      "repeatOnlyIf": [
+        "Cache keys/toolchains or starter workloads change; disk-loading work must first solve authenticated atomic deployment."
+      ]
+    },
+    {
+      "id": "GP-H007",
+      "title": "Isolate tree-shaking gains from effect and row changes",
+      "tickets": [
+        "FORMA-263"
+      ],
+      "status": "adopted",
+      "finding": "Client-only apps retained unnecessary activation and development-related setup; combined candidates obscured attribution.",
+      "change": "Extract the bundle-only change and measure identical app/dependency builds independently of rejected rows and public effects.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "ea0adee8a58772787d6a07f05e83a4b651283289",
+        "8b56026efbb9ac3c52e7b4382e483f1433509dd3"
+      ],
+      "measurements": [
+        {
+          "metric": "Production app Brotli 11",
+          "unit": "B",
+          "campaignId": "local-bundle-2026-10-24",
+          "pairing": "controlled-local-build",
+          "statistic": "mean",
+          "samplesPerSource": 1,
+          "baseline": {
+            "source": "bundle-before",
+            "value": 8654
+          },
+          "candidate": {
+            "source": "bundle-after",
+            "value": 8417
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Production app gzip 9",
+          "unit": "B",
+          "campaignId": "local-bundle-2026-10-24",
+          "pairing": "controlled-local-build",
+          "statistic": "mean",
+          "samplesPerSource": 1,
+          "baseline": {
+            "source": "bundle-before",
+            "value": 9549
+          },
+          "candidate": {
+            "source": "bundle-after",
+            "value": 9267
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Production app raw JavaScript",
+          "unit": "B",
+          "campaignId": "local-bundle-2026-10-24",
+          "pairing": "controlled-local-build",
+          "statistic": "mean",
+          "samplesPerSource": 1,
+          "baseline": {
+            "source": "bundle-before",
+            "value": 25876
+          },
+          "candidate": {
+            "source": "bundle-after",
+            "value": 25063
+          },
+          "direction": "lower"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/round-2.json",
+          "label": "Bundle-only section 20"
+        },
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/local-bundle/verify.mjs",
+          "label": "Recompute preserved production bytes"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/pull/187",
+          "label": "Reviewed isolated extraction"
+        }
+      ],
+      "tradeoffs": [
+        "The isolated 237 B Brotli gain is not the later integrated app size; effect/ownership/compiler changes add separate costs.",
+        "Mapped-module byte totals come from another build; compression savings are not additive by module."
+      ],
+      "remainingTargets": [
+        "Keep unused features out of the measured client-only import graph without weakening ownership APIs."
+      ],
+      "guardrails": [
+        "Retain exact app, dependency, bundler and source hashes; keep static byte results separate from timing campaigns."
+      ],
+      "repeatOnlyIf": [
+        "Reachable import graph, package splitting or emitted production code changes."
+      ]
+    },
+    {
+      "id": "GP-H008",
+      "title": "Keep initial adoption cost separate from public effects",
+      "tickets": [
+        "FORMA-259"
+      ],
+      "status": "accepted-tradeoff",
+      "finding": "Public-effect improvements did not establish adoption performance; strict adoption uses the raw engine.",
+      "change": "Run a fixed ABBA 1000-binding regression control and explicitly accept the measured adoption cost.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "f5be8647439e560c71c27b8c5f4bde26507b8bbb",
+        "44835efa2f13d694ff32f0dc56f4e5f0aa413eb3"
+      ],
+      "measurements": [
+        {
+          "metric": "Initial adoption",
+          "unit": "ms",
+          "campaignId": "40146688695",
+          "pairing": "same-campaign-ABBA",
+          "statistic": "mean",
+          "samplesPerSource": 30,
+          "baseline": {
+            "source": "pre-effect",
+            "value": 8.5867
+          },
+          "candidate": {
+            "source": "adoption-selected",
+            "value": 8.9267
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Single-signal update",
+          "unit": "ms",
+          "campaignId": "40146688695",
+          "pairing": "same-campaign-ABBA",
+          "statistic": "mean",
+          "samplesPerSource": 30,
+          "baseline": {
+            "source": "pre-effect",
+            "value": 1.2467
+          },
+          "candidate": {
+            "source": "adoption-selected",
+            "value": 1.14
+          },
+          "direction": "lower"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
+          "label": "Adoption ABBA decision"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40146688695",
+          "label": "Original campaign 40146688695"
+        }
+      ],
+      "tradeoffs": [
+        "Mean adoption rose 0.3400 ms (3.96%); both B-leg means exceeded both A legs. No-adoption-regression was not demonstrated.",
+        "One 7.1 ms A update drives the lower update mean; medians 1.0 → 1.1 ms do not support a clean speedup. Historical error capture was narrower than current harness requirements."
+      ],
+      "remainingTargets": [
+        "Improve adoption while retaining zero initial writes and node identity; do not promise equality from overlapping spreads."
+      ],
+      "guardrails": [
+        "Keep every leg, five warmups/15 samples per leg, existing update/disposal checks and explicit source binding."
+      ],
+      "repeatOnlyIf": [
+        "Adoption path or its emitted graph changes, or a preregistered model warrants a new ABBA control."
+      ]
+    },
+    {
+      "id": "GP-H009",
+      "title": "Adopt compiler-created rows only as explicit opt-in",
+      "tickets": [
+        "FORMA-294",
+        "FORMA-260"
+      ],
+      "status": "accepted-tradeoff",
+      "finding": "Generic row construction remained a weakness; early literal/fresh-event prototypes were insufficient and unsafe to promote broadly.",
+      "change": "Ship reviewed clientTemplates:true for eligible client-created rows, with staged evaluation, delegated callbacks and guaranteed cleanup; default stays off.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "226f0d8d56e0d6e68517d53f52bcc7149ee7e869",
+        "1d204ba48ea7861f28a22d9483116b310afb35f2",
+        "ad26d9f8cdf78f6cfd2f22afefa2883cd903187a"
+      ],
+      "measurements": [
+        {
+          "metric": "Create 1000 rows",
+          "unit": "ms",
+          "campaignId": "40226501380",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "compiler-control",
+            "value": 31.92
+          },
+          "candidate": {
+            "source": "compiler-selected",
+            "value": 28.22
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Create 10000 rows",
+          "unit": "ms",
+          "campaignId": "40226501380",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "compiler-control",
+            "value": 347.24
+          },
+          "candidate": {
+            "source": "compiler-selected",
+            "value": 287.34
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Clear rows",
+          "unit": "ms",
+          "campaignId": "40226501380",
+          "pairing": "same-campaign",
+          "statistic": "mean",
+          "samplesPerSource": 5,
+          "baseline": {
+            "source": "compiler-control",
+            "value": 4.24
+          },
+          "candidate": {
+            "source": "compiler-selected",
+            "value": 5.18
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Create 1000 / matched vanilla",
+          "unit": "ratio",
+          "campaignId": "40226501380",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "compiler-selected",
+            "value": 1.271
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 1.1,
+            "met": false
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/release/FORMA-294-COMPILER-CANDIDATE.md",
+          "label": "Compiler scope, costs and qualification"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40226501380",
+          "label": "Original campaign 40226501380"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published 3.1 opt-in compiler"
+        }
+      ],
+      "tradeoffs": [
+        "Clear cost rose 22.17% (+0.94 ms); select/swap also rose. Creation remains above 1.10× vanilla.",
+        "The package graph cap was explicitly raised 49,414 → 49,926 gzip B; unchanged route budgets still reject oversized opted-in native fixtures. Adopted lists do not receive this clone path."
+      ],
+      "remainingTargets": [
+        "Improve client-created rows without expanding compiler semantics silently or removing cleanup."
+      ],
+      "guardrails": [
+        "Keep option default-off, unsupported-shape refusals, staged expression order, raw-sink policy and stale-callback revocation.",
+        "Preserve route/startup limits; a package cap increase is not permission to increase route budgets."
+      ],
+      "repeatOnlyIf": [
+        "A scoped compiler design or shared-chunk packaging hypothesis changes; compare all nine operations and actual opted-in delivery bytes."
+      ]
+    },
+    {
+      "id": "GP-H010",
+      "title": "Startup repair leaves later client regression debt visible",
+      "tickets": [
+        "FORMA-299",
+        "FORMA-259",
+        "FORMA-260"
+      ],
+      "status": "accepted-tradeoff",
+      "finding": "RC3 startup qualification failed source-bound 57.260/60.373 ms tasks; later byte-equivalent DOM programs still showed adverse timing observations.",
+      "change": "Enable eager compilation hints for five private adoption functions without changing bodies or startup bounds; accept bounded client costs explicitly.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "8ae49afaf742914a376f2654afa3758a02b38827",
+        "9f53f5ef9bcbd68ff6b5a41c7855b4f5e387d757"
+      ],
+      "measurements": [
+        {
+          "metric": "Tenant maximum source-bound drain task",
+          "unit": "ms",
+          "campaignId": "40239821236",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "startup-after",
+            "value": 42.186
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 50,
+            "met": true
+          }
+        },
+        {
+          "metric": "Island maximum source-bound drain task",
+          "unit": "ms",
+          "campaignId": "40239821236",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "startup-after",
+            "value": 40.343
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 50,
+            "met": true
+          }
+        },
+        {
+          "metric": "Fan-out / pristine own engine",
+          "unit": "ratio",
+          "campaignId": "40240214599",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "startup-after",
+            "value": 0.74507
+          },
+          "direction": "higher",
+          "target": {
+            "operator": ">=",
+            "value": 0.8,
+            "met": false
+          }
+        },
+        {
+          "metric": "Effect create-dispose / pristine own engine",
+          "unit": "ratio",
+          "campaignId": "40240214599",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "startup-after",
+            "value": 0.79463
+          },
+          "direction": "higher",
+          "target": {
+            "operator": ">=",
+            "value": 0.8,
+            "met": false
+          }
+        },
+        {
+          "metric": "Create 1000 / matched vanilla",
+          "unit": "ratio",
+          "campaignId": "40240214599",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "startup-after",
+            "value": 1.563
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 1.1,
+            "met": false
+          }
+        },
+        {
+          "metric": "Reachable app Brotli bytes",
+          "unit": "B",
+          "campaignId": "40240214599",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "startup-after",
+            "value": 9425
+          },
+          "direction": "lower"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/release/3.1-PERFORMANCE-TRADEOFFS.md",
+          "label": "RC3 startup repair and current client costs"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40240214599",
+          "label": "Original campaign 40240214599"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40239821236",
+          "label": "Original campaign 40239821236"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "Published 3.1 accepted gaps"
+        }
+      ],
+      "tradeoffs": [
+        "Same-campaign current vs 8ae throughput changes: fan-out −13.11%, diamond −11.29%, effect creation −8.79%. Published-relative gains do not erase these losses.",
+        "Current app is 773 B Brotli above published 3.0. The original fan-out, effect-create and row targets remain missed.",
+        "Separate failed and repaired startup campaigns do not form a same-host speed comparison. Byte-identical APIs do not prove compilation, module-layout or collection causes."
+      ],
+      "remainingTargets": [
+        "Reach >=80% own-engine fan-out and effect creation and <=1.10× same-trial vanilla creation; retain the 50 ms startup engineering target."
+      ],
+      "guardrails": [
+        "Retain every sample/control, startup source binding, unchanged ownership and size gates; do not rerun solely for favorable values.",
+        "The bounded 55 ms exception policy is explicit, not a replacement for the 50 ms target or a retroactive pass."
+      ],
+      "repeatOnlyIf": [
+        "Relevant source/emitted graph or a preregistered mechanism changes; otherwise reuse the accepted evidence with exact applicability proof."
+      ]
+    },
+    {
+      "id": "GP-H011",
+      "title": "Qualify transport and preserve rejected campaign evidence",
+      "tickets": [
+        "FORMA-264"
+      ],
+      "status": "adopted",
+      "finding": "Probe/load user agents differed; twelve React Router samples had unresolved body-size discrepancies. Original rankings were not qualified.",
+      "change": "Use identical explicit request headers, retain probe bodies and full load-generator output, and run a separate corrected campaign instead of patching historical numbers.",
+      "shippedReleases": [
+        "3.1.0"
+      ],
+      "inheritedBy": [
+        "3.2.0"
+      ],
+      "sourceCommits": [
+        "2006423b21fe0f8dd5a510bd09bfe3b8748327a5",
+        "9a570afece5eb5091824422f00134a875310e857"
+      ],
+      "measurements": [
+        {
+          "metric": "Audited timed server samples",
+          "unit": "count",
+          "campaignId": "40123441558",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "published-3.0",
+            "value": 168
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Retained probe bodies",
+          "unit": "count",
+          "campaignId": "40123441558",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "published-3.0",
+            "value": 112
+          },
+          "direction": "higher"
+        },
+        {
+          "metric": "Transport records",
+          "unit": "count",
+          "campaignId": "40123441558",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": null,
+          "baseline": null,
+          "candidate": {
+            "source": "published-3.0",
+            "value": 294
+          },
+          "direction": "higher"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/README.md",
+          "label": "Authenticated campaign boundaries"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40123441558",
+          "label": "Original campaign 40123441558"
+        },
+        {
+          "path": "benchmarks/grand-prix/evidence/2026-10-24/server-qualified/independent-verification.json",
+          "label": "Qualified audit result"
+        }
+      ],
+      "tradeoffs": [
+        "Aggregate byte equality and retained probes do not prove the content of each timed response. Hosted VMs do not prove exclusive physical hosts.",
+        "Historical unresolved/failed runs stay excluded; changing a harness validator does not upgrade old evidence."
+      ],
+      "remainingTargets": [
+        "Preserve fair controlled comparisons and explicit qualification boundaries as adapters evolve."
+      ],
+      "guardrails": [
+        "Use same-campaign ratios and exact lock/source/browser/resource identities; never pool unrelated VMs or crown an overall winner.",
+        "Memory <=8 MiB, readiness remainder <=50 ms and image <=150,000,000 B remain source-specific strength guards."
+      ],
+      "repeatOnlyIf": [
+        "Headers, transport, dependency/runtime versions, workloads or resource profiles change; replay retained evidence before spending a new race."
+      ]
+    },
+    {
+      "id": "GP-H012",
+      "title": "Carry 3.1 lessons into 3.2 without inventing a rerace",
+      "tickets": [
+        "FORMA-264",
+        "FORMA-301"
+      ],
+      "status": "accepted-tradeoff",
+      "finding": "Benchmark-driven improvements shipped in 3.1 and are inherited by 3.2; router release qualification has different clocks and scopes.",
+      "change": "Record release ancestry, current packed decoder observations and explicit timing/soak waivers separately from Grand Prix measurements.",
+      "shippedReleases": [
+        "3.2.0"
+      ],
+      "inheritedBy": [],
+      "sourceCommits": [
+        "9a570afece5eb5091824422f00134a875310e857",
+        "fc76ea8531f0e3a85d0224087384e41f52040e3c"
+      ],
+      "measurements": [
+        {
+          "metric": "Packed decoder shape 1 p95",
+          "unit": "ms",
+          "campaignId": "40553136904",
+          "pairing": "observation-only",
+          "statistic": "nearest-rank p95",
+          "samplesPerSource": 40,
+          "baseline": null,
+          "candidate": {
+            "source": "stable-3.2",
+            "value": 11.4
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 30,
+            "met": true
+          }
+        },
+        {
+          "metric": "Packed decoder shape 2 p95",
+          "unit": "ms",
+          "campaignId": "40553136904",
+          "pairing": "observation-only",
+          "statistic": "nearest-rank p95",
+          "samplesPerSource": 40,
+          "baseline": null,
+          "candidate": {
+            "source": "stable-3.2",
+            "value": 27.1
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 30,
+            "met": true
+          }
+        },
+        {
+          "metric": "Full check command duration",
+          "unit": "s",
+          "campaignId": "40549601525",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": 1,
+          "baseline": null,
+          "candidate": {
+            "source": "stable-3.2",
+            "value": 577
+          },
+          "direction": "lower"
+        },
+        {
+          "metric": "Tag workflow to release acknowledgment",
+          "unit": "s",
+          "campaignId": "40553136904",
+          "pairing": "observation-only",
+          "statistic": "observed",
+          "samplesPerSource": 1,
+          "baseline": null,
+          "candidate": {
+            "source": "stable-3.2",
+            "value": 2369.113
+          },
+          "direction": "lower",
+          "target": {
+            "operator": "<=",
+            "value": 1800,
+            "met": false
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "path": "docs/release/3.2-PUBLICATION.md",
+          "label": "Stable 3.2 publication and actual observations"
+        },
+        {
+          "path": "docs/release/3.2-PERFORMANCE-DECISION.md",
+          "label": "Explicit timing limits and waivers"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "label": "3.1 and 3.2 shipped scope"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40553136904",
+          "label": "Original campaign 40553136904"
+        },
+        {
+          "path": "https://github.com/getforma-dev/forma/actions/runs/40549601525",
+          "label": "Original campaign 40549601525"
+        }
+      ],
+      "tradeoffs": [
+        "The accepted decoder bound was 30.7 ms but actual tagged p95s also passed original 30 ms. This is not a decoder speedup comparison.",
+        "Additional 20-run N7 campaign and one-hour soak were explicitly waived; 577 s is one observation, not p95. Outer release target missed.",
+        "No fresh full Grand Prix campaign for exact stable 3.2 is established by these release documents. Inherited code is not inherited timing identity."
+      ],
+      "remainingTargets": [
+        "Use a new versioned same-host race when a changed measured path needs evaluation; do not repeat waived release work or claim it passed."
+      ],
+      "guardrails": [
+        "Keep security/correctness, cleanup and archive provenance mandatory; preserve original failed reports and decisions.",
+        "Do not compare 3.2 decoder/CI observations to older Grand Prix clocks."
+      ],
+      "repeatOnlyIf": [
+        "A specific 3.2-or-later change needs measured attribution under a frozen campaign; otherwise retain exact release/evidence boundaries."
+      ]
+    }
+  ]
+}

@@ -18,7 +18,7 @@ async function main() {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const id = process.env.GP_RUN_ID;
   assert(/^[a-z0-9-]+$/.test(id ?? ''), 'set GP_RUN_ID');
-  const results = join(root, 'results');
+  const results = resolve(process.env.GP_RESULTS_DIR || join(root, 'results'));
   const out = join(results, `${id}-paired`);
   const reportPath = join(out, 'run.json');
   const run = (script, env) => new Promise((ok, fail) => {

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 export const here = path.dirname(fileURLToPath(import.meta.url));
 export const appsDir = path.join(here, 'apps');
-export const rawDir = path.join(here, '..', 'results', 'raw');
+export const rawDir = path.join(process.env.GP_RESULTS_DIR || path.join(here, '..', 'results'), 'raw');
 export const ALL_CARS = ['forma', 'vanilla', 'react', 'preact', 'solid', 'svelte', 'vue'];
 
 export function parseArgs(argv, defaults) {
@@ -23,6 +23,7 @@ export function parseArgs(argv, defaults) {
 
 export function builtCars(requested) {
   const list = requested ? requested.split(',') : ALL_CARS;
+  if (!list.length || new Set(list).size !== list.length || list.some(car => !ALL_CARS.includes(car))) throw new Error('Unknown or duplicate client car');
   const have = list.filter((c) => existsSync(path.join(appsDir, c, 'dist', 'index.html')));
   const missing = list.filter((c) => !have.includes(c));
   return { have, missing };
@@ -38,11 +39,12 @@ export function serveDist(root) {
       if (p === '/favicon.ico') { res.writeHead(204); res.end(); return; }
       if (p.endsWith('/')) p += 'index.html';
       const file = path.join(root, path.normalize(p));
-      if (!file.startsWith(root)) throw new Error('out');
+      const relative = path.relative(root, file);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('out');
       await stat(file);
       res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
       res.end(await readFile(file));
     } catch { res.writeHead(404); res.end('not found'); }
   });
-  return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server)));
+  return new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => resolve(server)); });
 }

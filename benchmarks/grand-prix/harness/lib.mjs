@@ -6,14 +6,15 @@ import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expected } from '../shared/dataset.mjs';
+import { assertSSRPage } from './ssr-contract.mjs';
 import assert from 'node:assert/strict';
 import { hostProfile, parseCpuList } from './resource-profile.mjs';
 import { createCampaign, readCampaign } from './campaign.mjs';
 import { requestHeaders, ohaArguments, captureResponse, validateResponse, assertSampleRepresentation, wireMeasurement } from './transport.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const RAW = process.env.GP_RAW_DIR ? path.resolve(process.env.GP_RAW_DIR) : path.join(ROOT, 'results', 'raw');
+export const RESULTS = path.resolve(process.env.GP_RESULTS_DIR || path.join(ROOT, 'results'));
+export const RAW = process.env.GP_RAW_DIR ? path.resolve(process.env.GP_RAW_DIR) : path.join(RESULTS, 'raw');
 export const REQUEST_ENCODING = process.env.GP_ACCEPT_ENCODING;
 if (REQUEST_ENCODING && !['identity', 'br', 'gzip'].includes(REQUEST_ENCODING)) throw new Error('invalid compression experiment encoding');
 export const REQUEST_HEADERS = requestHeaders(REQUEST_ENCODING ?? 'identity');
@@ -36,7 +37,7 @@ export const CFG = {
 
 export let CAMPAIGN;
 export function configureResources() {
-  CAMPAIGN = process.env.GP_CAMPAIGN_FILE ? readCampaign() : createCampaign(path.join(ROOT, 'results', `${RUN_ID}-campaign.json`));
+  CAMPAIGN = process.env.GP_CAMPAIGN_FILE ? readCampaign() : createCampaign(path.join(RESULTS, `${RUN_ID}-campaign.json`));
   const profile = hostProfile();
   Object.assign(CFG, { resourceProfile: profile, classA: profile.classA, classB: profile.classB,
     loadgenCpus: profile.loadgen.cpus, loadgenCpuset: profile.loadgen.cpuset,
@@ -164,11 +165,8 @@ export async function waitReady(c, port, ms = 60000) {
 
 // ---------- body verification ----------
 export function checkBody(n, body) {
-  const text = body.toString('utf8'), exp = expected(n), problems = [];
-  const count = (text.match(/<tr\b[^>]*\sdata-id=/g) || []).length; // attribute order is free (Forma writes data-forma-key first)
-  if (count !== exp.rowCount) problems.push(`rows: found ${count}, expected ${exp.rowCount}`);
-  for (const s of exp.mustContain) if (!text.includes(s)) problems.push(`missing "${s}"`);
-  return { ok: !problems.length, rows: count, problems };
+  try { const result = assertSSRPage(n, body.toString('utf8')); return { ok: true, rows: result.rowCount, problems: [] }; }
+  catch (error) { return { ok: false, rows: null, problems: [error.message] }; }
 }
 
 // Retain the exact representation checked before timing, including small-page coverage.

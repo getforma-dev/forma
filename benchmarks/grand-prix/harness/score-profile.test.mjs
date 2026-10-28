@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { gzipSync, brotliCompressSync } from 'node:zlib';
 import { profileConfiguration } from './resource-profile.mjs';
-import { expected } from '../shared/dataset.mjs';
+import { renderPage } from '../contestants/vanilla-node/src/page.vanilla.mjs';
 import { requestHeaders, captureResponse, ohaArguments, wireMeasurement } from './transport.mjs';
 import { scoringProfile, measurementDigest, validateSummaryProfile } from './score-profile.mjs';
 
@@ -38,7 +38,7 @@ test('all diagnostic profile records remain diagnostic even with complete sample
 test('qualified HTTP evidence requires full samples, limits and recorded transport outcomes', () => {
   const headers = requestHeaders();
   const responses = Object.fromEntries([10, 100, 1000].map(rows => {
-    const body = Buffer.from(expected(rows).mustContain.join(' ') + '<tr data-id="1"></tr>'.repeat(rows));
+    const body = Buffer.from(renderPage(rows));
     return [rows, captureResponse(rows, { status: 200, headers: {}, rawHeaders: [], body }, headers)];
   }));
   const load = z => {

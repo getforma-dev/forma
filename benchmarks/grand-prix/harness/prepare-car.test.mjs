@@ -56,8 +56,14 @@ test('candidate binding proof survives image cleanup and all server lanes qualif
   assert(driver.includes('`${id}-forma-${file}`'));
   for (const name of ['grand-prix.yml', 'grand-prix-paired.yml', 'grand-prix-compression.yml']) {
     const workflow = readFileSync(new URL('../../../.github/workflows/' + name, import.meta.url), 'utf8');
-    assert(workflow.includes('harness/candidate-lock.test.mjs'));
-    assert(workflow.includes('harness/prepare-car.test.mjs'));
+    const applicationSuite = workflow.includes('npm test --prefix benchmarks/grand-prix');
+    if (applicationSuite) {
+      const scripts = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).scripts;
+      assert(scripts.test.includes('node --test') && scripts.test.includes('harness/*.test.mjs'), 'application suite must include every harness refusal control');
+    } else {
+      assert(workflow.includes('harness/candidate-lock.test.mjs'));
+      assert(workflow.includes('harness/prepare-car.test.mjs'));
+    }
     assert(workflow.includes('benchmarks/grand-prix/results/*.json'));
     assert(workflow.includes('benchmarks/grand-prix/results/*.lock'));
   }

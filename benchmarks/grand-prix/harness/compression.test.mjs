@@ -5,7 +5,7 @@ import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { checkCandidateLock } from './candidate-lock.mjs';
 import { decodeExperimentResponse } from './compression-response.mjs';
 import { summarizeCompression } from './compression-report.mjs';
-import { expected } from '../shared/dataset.mjs';
+import { renderPage } from '../contestants/vanilla-node/src/page.vanilla.mjs';
 import { requestHeaders, captureResponse, ohaArguments, wireMeasurement } from './transport.mjs';
 import { profileConfiguration } from './resource-profile.mjs';
 
@@ -114,7 +114,7 @@ for (const [name, mutate] of [
 
 function explicitSample() {
   const records = sample('gha-4-v1');
-  const page = nonce => Buffer.from(expected(100).mustContain.join(' ') + '<tr data-id="1"></tr>'.repeat(100) + `<script nonce="${nonce}"></script>`);
+  const page = nonce => Buffer.from(renderPage(100) + `<script nonce="${nonce}"></script>`);
   const nonces = ['AAAAAAAAAAAAAAAAAAAAAA==', 'mY5yPWZxVhhP9k1n2Q3Xgw==', 'BBBBBBBBBBBBBBBBBBBBBB=='];
   for (const [encoding, events] of Object.entries(records)) {
     const headers = requestHeaders(encoding);

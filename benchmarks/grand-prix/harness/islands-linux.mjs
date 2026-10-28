@@ -1,4 +1,5 @@
 import { createCampaign } from './campaign.mjs';
+import { entrantsFor } from './registry.mjs';
 // Sequential native Linux island qualification. Every Docker resource is run-owned.
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
@@ -10,8 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { hostProfile, validateEngineProfile, validateContainerResources } from './resource-profile.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const CARS = ['forma', 'react-node', 'react-bun', 'react-deno', 'preact-node', 'solid-node',
-  'svelte-node', 'vue-node', 'next', 'react-router', 'astro'];
+export const CARS = entrantsFor('islands');
 const lock = JSON.parse(readFileSync(new URL('./chromium-linux-lock.json', import.meta.url), 'utf8'));
 const validDigest = value => /^sha256:[a-f0-9]{64}$/.test(value ?? '');
 
@@ -74,7 +74,7 @@ export async function main(argv = process.argv.slice(2)) {
   assert(/^[a-z0-9-]+$/.test(id), 'invalid run ID');
   process.env.GP_RUN_ID = id;
   const builder = `gp264-${id}`, label = `gp264run=${id}`, network = `gp264-islands-${id}`;
-  const results = join(root, 'results'), output = join(results, `islands-${id}`);
+  const results = resolve(process.env.GP_RESULTS_DIR || join(root, 'results')), output = join(results, `islands-${id}`);
   mkdirSync(results, { recursive: true });
   assert(!existsSync(output) && !existsSync(join(results, `${id}-ownership.json`)), 'fresh run ID required');
   mkdirSync(output);

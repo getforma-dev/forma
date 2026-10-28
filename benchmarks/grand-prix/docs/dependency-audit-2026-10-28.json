@@ -1,0 +1,902 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-28T11:36:28.182Z",
+  "scope": "npm direct dependencies; Rust, browser and Docker pins are separate reviewed inputs",
+  "packages": [
+    {
+      "name": "@astrojs/node",
+      "latest": "11.1.9",
+      "integrity": "sha512-fmWwCINRIf0gyFZlOlYaJGZnoeB5JJAXJvUXlHorhhemOxkftrOcMalwPIyNG2Q3KhncRvYMiJ8nGHsWrdtrpg==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/%40astrojs%2Fnode/latest"
+    },
+    {
+      "name": "@astrojs/react",
+      "latest": "7.1.1",
+      "integrity": "sha512-jHan8UuXzFEbzcmsjCRrepm9Xc5XRz+Jt57MjfE568tbOEoDKVzeMuHf9YO0Y4hHwROX8iJmLzaiT3Yr5W0UbQ==",
+      "engines": {
+        "node": ">=22.23.4"
+      },
+      "source": "https://registry.npmjs.org/%40astrojs%2Freact/latest"
+    },
+    {
+      "name": "@getforma/build",
+      "latest": "3.2.0",
+      "integrity": "sha512-vDRadd/J/Oyp70tcUENrJifrVOrCuNhiB9SoiIZ6NA4IjwkYGTAKHmZ5PZrcvO0CwH5nowQuKDNlBaAN9vpk/A==",
+      "engines": {
+        "node": ">=22"
+      },
+      "source": "https://registry.npmjs.org/%40getforma%2Fbuild/latest"
+    },
+    {
+      "name": "@getforma/compiler",
+      "latest": "3.2.0",
+      "integrity": "sha512-Pg6zpFso4N5e3QWc4w+JrqifjjNvDv63mDh2pB2qhv9dOss6bLG3Eub99Ye4N7DYHydc1bfCb6egE/QO8bFjzA==",
+      "engines": {
+        "node": ">=22"
+      },
+      "source": "https://registry.npmjs.org/%40getforma%2Fcompiler/latest"
+    },
+    {
+      "name": "@getforma/core",
+      "latest": "3.2.0",
+      "integrity": "sha512-7NBfZtubktrcKHDf+LI2FadkbxKXjU8OR7KLMuycLsMy50x44hiP7xyE1NZNlITzUMnmTvoS5lylxE0/n/60hA==",
+      "engines": {
+        "node": ">=22"
+      },
+      "source": "https://registry.npmjs.org/%40getforma%2Fcore/latest"
+    },
+    {
+      "name": "@preact/preset-vite",
+      "latest": "2.10.6",
+      "integrity": "sha512-ZZ5RIT2ZVXg8UxRA8VZpoT8CdpDG7RFIqOT4bELqNBp85+HKvQBbgmh3gsoW1UOQXx26TLe+ZRNKI7q281Kckw==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/%40preact%2Fpreset-vite/latest"
+    },
+    {
+      "name": "@preact/signals-core",
+      "latest": "1.14.5",
+      "integrity": "sha512-vcRv7Ityz5JVmeiVqIluLFzT/PDS/AlhHUpw3/aUWqcVUs6bDGIPXE/6RSC4evBNWYvnniozg5Syfj33al3gkg==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/%40preact%2Fsignals-core/latest"
+    },
+    {
+      "name": "@react-router/dev",
+      "latest": "8.5.1",
+      "integrity": "sha512-1NQ/lP8m7Kd9G4cGKPoEMZe0qcWOnRkf8QxpAcnX/3V5wJp+/mDvM9QUqwUxI+RywytNNGtc4uuDFhwt0xMLbg==",
+      "engines": {
+        "node": ">=22.22.0"
+      },
+      "source": "https://registry.npmjs.org/%40react-router%2Fdev/latest"
+    },
+    {
+      "name": "@react-router/node",
+      "latest": "8.5.1",
+      "integrity": "sha512-hEr3YFQaSoQL8T85+DqNOpdDLfuD2mKEeGdQAEvfix2bQdCtcpatE0uzB3zYidIUex0iEJG/eOZdAjLrzlJrjA==",
+      "engines": {
+        "node": ">=22.22.0"
+      },
+      "source": "https://registry.npmjs.org/%40react-router%2Fnode/latest"
+    },
+    {
+      "name": "@react-router/serve",
+      "latest": "8.5.1",
+      "integrity": "sha512-frPpfYqIA4f9ynW+tBxUox0BD+yaJJttu1SLPkTOyE5o6/h8Y9ueD4+4dtoCaxmlnF4rKWbcXptRPcwX+KEEZw==",
+      "engines": {
+        "node": ">=22.22.0"
+      },
+      "source": "https://registry.npmjs.org/%40react-router%2Fserve/latest"
+    },
+    {
+      "name": "@sveltejs/vite-plugin-svelte",
+      "latest": "7.3.1",
+      "integrity": "sha512-ZPsLN8B1e/En+Ak5s4V7srFDT532oS0qieLsQwu63NGKsS+iAjoO2Js1BochlHlglcU+Pt7WAO3C5Ee+4f6gVA==",
+      "engines": {
+        "node": "^20.19 || ^22.12 || >=24"
+      },
+      "source": "https://registry.npmjs.org/%40sveltejs%2Fvite-plugin-svelte/latest"
+    },
+    {
+      "name": "@types/react",
+      "latest": "19.3.0",
+      "integrity": "sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/%40types%2Freact/latest"
+    },
+    {
+      "name": "@types/react-dom",
+      "latest": "19.3.0",
+      "integrity": "sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/%40types%2Freact-dom/latest"
+    },
+    {
+      "name": "@vitejs/plugin-react",
+      "latest": "6.1.2",
+      "integrity": "sha512-fhJNGUdscQa4HkI0xFxwonWyhnVReCPDbXI7FH7jmzpnVCrFQI7PRrhWecO263610vOrs9tr2Y4xcf8uAdFxbw==",
+      "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+      },
+      "source": "https://registry.npmjs.org/%40vitejs%2Fplugin-react/latest"
+    },
+    {
+      "name": "@vitejs/plugin-vue",
+      "latest": "6.0.10",
+      "integrity": "sha512-b80aUQh3n+qEzzZm5oQp3rT2QImeCx58K6eFl/RkJ3d65KW0kTuv5lNsLRVAjbW9YRUpo/wzmvzMgV34bTAItA==",
+      "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+      },
+      "source": "https://registry.npmjs.org/%40vitejs%2Fplugin-vue/latest"
+    },
+    {
+      "name": "@vue/reactivity",
+      "latest": "3.5.44",
+      "integrity": "sha512-u+QJdKeBBEADkPdevsL+6E12QlYVfBD8Zcw5qjDQKtamI6l14KyqazJMobhCKelhWN5zpyKUiEDoTyHE93cqWw==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/%40vue%2Freactivity/latest"
+    },
+    {
+      "name": "alien-signals",
+      "latest": "3.2.1",
+      "integrity": "sha512-I8FjmltrfnDFoZedi5CG8DghVYNhzb/Ijluz7tCSJH0xpd0484Kowhbb1XDYOxfJpU1p5wnM2X54dA+IfGyD1g==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/alien-signals/latest"
+    },
+    {
+      "name": "astro",
+      "latest": "7.4.2",
+      "integrity": "sha512-FAH4cdDlFaVnQGjazLTEIC5vJqGlo5XANc1wIbzQHIqAjJTll/RWTUs+SPNW1JdezG4YGxMZllaE5A41T2kzhA==",
+      "engines": {
+        "npm": ">=9.6.5",
+        "node": ">=22.23.4",
+        "pnpm": ">=7.1.0"
+      },
+      "source": "https://registry.npmjs.org/astro/latest"
+    },
+    {
+      "name": "esbuild",
+      "latest": "0.28.2",
+      "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==",
+      "engines": {
+        "node": ">=18"
+      },
+      "source": "https://registry.npmjs.org/esbuild/latest"
+    },
+    {
+      "name": "isbot",
+      "latest": "5.2.2",
+      "integrity": "sha512-iQcBXcd+Rv/pkubRyGh2utW2j1oPG5hZY6TUhVPpqK4G+o3IbxpJNx04hgksjc/N7GK5pEorUxDeg31cFgEk/w==",
+      "engines": {
+        "node": ">=18"
+      },
+      "source": "https://registry.npmjs.org/isbot/latest"
+    },
+    {
+      "name": "next",
+      "latest": "16.4.3",
+      "integrity": "sha512-OqxKTGi9u80FydydsMNYNjnuje9Au+kvHlt2GZ//ftdpDHm1dxKqAaENoOOTX5wKzn+9vaKUNIfZeyZUuLhCnA==",
+      "engines": {
+        "node": ">=20.9.0"
+      },
+      "source": "https://registry.npmjs.org/next/latest"
+    },
+    {
+      "name": "preact",
+      "latest": "11.1.0",
+      "integrity": "sha512-hz1VsjWx5pSYPDVEzb9w+XyOmQpP1qW/ZEaMiYm+C8ykJr8KP+TKGZIbCW0QmZ/Yr/jg3XkZoziEWn9iWHZ9Mw==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/preact/latest"
+    },
+    {
+      "name": "preact-render-to-string",
+      "latest": "6.8.2",
+      "integrity": "sha512-Hdx7cKD3AMYgt795TdddBpUbuGEFoL/VeA6s7VrBt9Gjt0r6rCy5wMp5xkDjQ9cbKj62frHsEx1x8yV6EjoOpg==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/preact-render-to-string/latest"
+    },
+    {
+      "name": "puppeteer-core",
+      "latest": "25.16.0",
+      "integrity": "sha512-VA5Pf54N8shfopNkZZXCdiiwfnnY8ZJYAMqFQRhlH5mGUhfwf53Ar770GPtdpTDLUqvQeYpIBtC9/G2Jij2IJw==",
+      "engines": {
+        "node": ">=22.12.0"
+      },
+      "source": "https://registry.npmjs.org/puppeteer-core/latest"
+    },
+    {
+      "name": "react",
+      "latest": "19.3.1",
+      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==",
+      "engines": {
+        "node": ">=0.10.0"
+      },
+      "source": "https://registry.npmjs.org/react/latest"
+    },
+    {
+      "name": "react-dom",
+      "latest": "19.3.1",
+      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/react-dom/latest"
+    },
+    {
+      "name": "react-router",
+      "latest": "8.5.1",
+      "integrity": "sha512-5u1eQ46QjuXjNfEnLwzrnou1Bm5dquO3xjVYkkMYCudtkicD2AQHtx+fvXzPATtPJx8TW6DR1x1TDRqsfHyZBw==",
+      "engines": {
+        "node": ">=22.22.0"
+      },
+      "source": "https://registry.npmjs.org/react-router/latest"
+    },
+    {
+      "name": "solid-js",
+      "latest": "1.9.17",
+      "integrity": "sha512-4GAmLOWPfNV8H9Jfn2LSFTpNEG6jiOKPiwd5lnLGQtehHaX6l3TOLzJqQ7mqwB/3k1Yy3zyumFVopmc/tm34ow==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/solid-js/latest"
+    },
+    {
+      "name": "svelte",
+      "latest": "5.57.3",
+      "integrity": "sha512-5mAftM3SoDV9X0zdF386F9p2pv8iKOwi/KfBS1XnBAkVCKFzVOLHUoa8iGWAt4buoicLmyWVRpuuD5wplXOQsg==",
+      "engines": {
+        "node": ">=18"
+      },
+      "source": "https://registry.npmjs.org/svelte/latest"
+    },
+    {
+      "name": "tsx",
+      "latest": "4.23.15",
+      "integrity": "sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw==",
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "source": "https://registry.npmjs.org/tsx/latest"
+    },
+    {
+      "name": "typescript",
+      "latest": "7.0.2",
+      "integrity": "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==",
+      "engines": {
+        "node": ">=16.20.0"
+      },
+      "source": "https://registry.npmjs.org/typescript/latest"
+    },
+    {
+      "name": "vite",
+      "latest": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+      },
+      "source": "https://registry.npmjs.org/vite/latest"
+    },
+    {
+      "name": "vite-plugin-solid",
+      "latest": "2.11.14",
+      "integrity": "sha512-7ZVBt8rpoyqmlwin2kRIUveaHoF6/kulY7gsnD+qFh4nS29V4OPAnw+ojoAspXIjObiL9o1xh9a/nTuYHm02Rw==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/vite-plugin-solid/latest"
+    },
+    {
+      "name": "vue",
+      "latest": "3.5.44",
+      "integrity": "sha512-dvvmaOCG7lAMkJTPqPwWeGMsPS6DIsFsfZDUgBp9V6mHf9b3+/wyVwYR4Es+WV6uJC0FKRxp81Obcq0ZwUcGFQ==",
+      "engines": null,
+      "source": "https://registry.npmjs.org/vue/latest"
+    }
+  ],
+  "dependencies": [
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "@astrojs/node",
+      "requested": "9.5.5",
+      "resolved": "9.5.5",
+      "integrity": "sha512-rtU2BGU5u3SfGURpANfMxVzCIoR86MkaN05ncza9rbtuMKJ/XnRJt/BbyVknDbOJ71hoci0SIsJwKcJR8vvi/A==",
+      "latest": "11.1.9",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "@astrojs/react",
+      "requested": "4.4.2",
+      "resolved": "4.4.2",
+      "integrity": "sha512-1tl95bpGfuaDMDn8O3x/5Dxii1HPvzjvpL2YTuqOOrQehs60I2DKiDgh1jrKc7G8lv+LQT5H15V6QONQ+9waeQ==",
+      "latest": "7.1.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/forma/admin/package.json",
+      "section": "devDependencies",
+      "name": "@getforma/build",
+      "requested": "^3.0.0",
+      "resolved": "3.0.0",
+      "integrity": "sha512-8Zuv1J5aZ3jk7/jLLLbhtOqSFAW05hTESJSAhgTnHpsox4oRH5cW5iTLYm9Bg47DC1IA7V+ee3SRDfachDxKNg==",
+      "latest": "3.2.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/forma/admin/package.json",
+      "section": "devDependencies",
+      "name": "@getforma/compiler",
+      "requested": "^3.0.0",
+      "resolved": "3.0.0",
+      "integrity": "sha512-8ESud1QBPYwsEptAAWULe2nKZbum5M2mAJbt8heAExjfVdP7aWTJXK3OP5awEn3iZftPRjEUyBZGi4s1qDLTNQ==",
+      "latest": "3.2.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "@getforma/core",
+      "requested": "3.0.0",
+      "resolved": "3.0.0",
+      "integrity": "sha512-+bl6muLPRkzyUbUM7HsyE+JRooynev1UVc7Ivn9iWACA3i7/rdfDcCUcKODCdNckSOCmNDWXKeXRm5NpB/lWuw==",
+      "latest": "3.2.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/forma/admin/package.json",
+      "section": "dependencies",
+      "name": "@getforma/core",
+      "requested": "^3.0.0",
+      "resolved": "3.0.0",
+      "integrity": "sha512-+bl6muLPRkzyUbUM7HsyE+JRooynev1UVc7Ivn9iWACA3i7/rdfDcCUcKODCdNckSOCmNDWXKeXRm5NpB/lWuw==",
+      "latest": "3.2.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "signals-race/package.json",
+      "section": "dependencies",
+      "name": "@getforma/core",
+      "requested": "3.0.0",
+      "resolved": "3.0.0",
+      "integrity": "sha512-+bl6muLPRkzyUbUM7HsyE+JRooynev1UVc7Ivn9iWACA3i7/rdfDcCUcKODCdNckSOCmNDWXKeXRm5NpB/lWuw==",
+      "latest": "3.2.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/preact-node/package.json",
+      "section": "devDependencies",
+      "name": "@preact/preset-vite",
+      "requested": "2.10.6",
+      "resolved": "2.10.6",
+      "integrity": "sha512-ZZ5RIT2ZVXg8UxRA8VZpoT8CdpDG7RFIqOT4bELqNBp85+HKvQBbgmh3gsoW1UOQXx26TLe+ZRNKI7q281Kckw==",
+      "latest": "2.10.6",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "signals-race/package.json",
+      "section": "dependencies",
+      "name": "@preact/signals-core",
+      "requested": "1.14.4",
+      "resolved": "1.14.4",
+      "integrity": "sha512-HNB6HYeYKhQbJ1aKl+YRjrS4+QWHLKX6qKoUsfS/m0vqzsVaEBiZiaKbG/e+NKk2ch5ALQr/ihWaMHxiCuuWHA==",
+      "latest": "1.14.5",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "devDependencies",
+      "name": "@react-router/dev",
+      "requested": "7.18.4",
+      "resolved": "7.18.4",
+      "integrity": "sha512-4sxQa18Znjz1zw1MGK7f97zXjK4NVcNgESvWPPEYScRFAHJWq6Q3/oejDPfYjKWLygsX1yF9jboxbGLw+V9f+g==",
+      "latest": "8.5.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "dependencies",
+      "name": "@react-router/node",
+      "requested": "7.18.4",
+      "resolved": "7.18.4",
+      "integrity": "sha512-PXNpc4fi0xa5Vp+uaYDFbzIEr4ZmLgch/w25AvxGV2eW32BzDh/OLlpGG074M/FKKi2CzDMsTsU8D3cDH4jywg==",
+      "latest": "8.5.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "dependencies",
+      "name": "@react-router/serve",
+      "requested": "7.18.4",
+      "resolved": "7.18.4",
+      "integrity": "sha512-MbSgKv0k3kwqV4DPK8XzZeYpBkxu9wsK/o2JQgCgk6GCUqARD9RhA1mOQPBkR88TUwpJ7Sj3+VPTamA6qmdiVA==",
+      "latest": "8.5.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "@sveltejs/vite-plugin-svelte",
+      "requested": "7.3.1",
+      "resolved": "7.3.1",
+      "integrity": "sha512-ZPsLN8B1e/En+Ak5s4V7srFDT532oS0qieLsQwu63NGKsS+iAjoO2Js1BochlHlglcU+Pt7WAO3C5Ee+4f6gVA==",
+      "latest": "7.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/svelte-node/package.json",
+      "section": "devDependencies",
+      "name": "@sveltejs/vite-plugin-svelte",
+      "requested": "7.3.1",
+      "resolved": "7.3.1",
+      "integrity": "sha512-ZPsLN8B1e/En+Ak5s4V7srFDT532oS0qieLsQwu63NGKsS+iAjoO2Js1BochlHlglcU+Pt7WAO3C5Ee+4f6gVA==",
+      "latest": "7.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "@types/react",
+      "requested": "19.1.0",
+      "resolved": "19.1.0",
+      "integrity": "sha512-UaicktuQI+9UKyA4njtDOGBD/67t8YEBt2xdfqu8+gP9hqPUPsiXlNPcpS2gVdjmis5GKPG3fCxbQLVgxsQZ8w==",
+      "latest": "19.3.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "@types/react-dom",
+      "requested": "19.1.0",
+      "resolved": "19.1.0",
+      "integrity": "sha512-21E2zejNNRtjG4hKIyJz4aWswGEcNFTgttA0bZIRGjj1HA/tbSUxIJnIcYbn98pwJck0cS1bsQhn6eaKqbcFWw==",
+      "latest": "19.3.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-node/package.json",
+      "section": "devDependencies",
+      "name": "@vitejs/plugin-react",
+      "requested": "5.2.0",
+      "resolved": "5.2.0",
+      "integrity": "sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==",
+      "latest": "6.1.2",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "@vitejs/plugin-vue",
+      "requested": "6.0.10",
+      "resolved": "6.0.10",
+      "integrity": "sha512-b80aUQh3n+qEzzZm5oQp3rT2QImeCx58K6eFl/RkJ3d65KW0kTuv5lNsLRVAjbW9YRUpo/wzmvzMgV34bTAItA==",
+      "latest": "6.0.10",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/vue-node/package.json",
+      "section": "devDependencies",
+      "name": "@vitejs/plugin-vue",
+      "requested": "6.0.10",
+      "resolved": "6.0.10",
+      "integrity": "sha512-b80aUQh3n+qEzzZm5oQp3rT2QImeCx58K6eFl/RkJ3d65KW0kTuv5lNsLRVAjbW9YRUpo/wzmvzMgV34bTAItA==",
+      "latest": "6.0.10",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "signals-race/package.json",
+      "section": "dependencies",
+      "name": "@vue/reactivity",
+      "requested": "3.5.44",
+      "resolved": "3.5.44",
+      "integrity": "sha512-u+QJdKeBBEADkPdevsL+6E12QlYVfBD8Zcw5qjDQKtamI6l14KyqazJMobhCKelhWN5zpyKUiEDoTyHE93cqWw==",
+      "latest": "3.5.44",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "signals-race/package.json",
+      "section": "dependencies",
+      "name": "alien-signals",
+      "requested": "3.2.1",
+      "resolved": "3.2.1",
+      "integrity": "sha512-I8FjmltrfnDFoZedi5CG8DghVYNhzb/Ijluz7tCSJH0xpd0484Kowhbb1XDYOxfJpU1p5wnM2X54dA+IfGyD1g==",
+      "latest": "3.2.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "astro",
+      "requested": "5.18.2",
+      "resolved": "5.18.2",
+      "integrity": "sha512-TnFwLnAXty5MXKPDGuKXqK4AMBXG+FH6RUdK7Oyc3gyfNoFIthT+4eRbzOK43bdRlLaZuxgciDSjgtggZ3OtGQ==",
+      "latest": "7.4.2",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/forma/admin/package.json",
+      "section": "devDependencies",
+      "name": "esbuild",
+      "requested": "^0.28.1",
+      "resolved": "0.28.2",
+      "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==",
+      "latest": "0.28.2",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "dependencies",
+      "name": "isbot",
+      "requested": "5.1.28",
+      "resolved": "5.1.28",
+      "integrity": "sha512-qrOp4g3xj8YNse4biorv6O5ZShwsJM0trsoda4y7j/Su7ZtTTfVXFzbKkpgcSoDrHS8FcTuUwcU04YimZlZOxw==",
+      "latest": "5.2.2",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/next/package.json",
+      "section": "dependencies",
+      "name": "next",
+      "requested": "15.5.28",
+      "resolved": "15.5.28",
+      "integrity": "sha512-JjhLBBY1PNnuwPtcZ7t8yxVeJVYvD2Jyp633J+gRCNbzSt7N0E+xqCf6uQiff3+3qmUkwcF/ksfSsK1xsZ76Tw==",
+      "latest": "16.4.3",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "preact",
+      "requested": "10.29.8",
+      "resolved": "10.29.8",
+      "integrity": "sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==",
+      "latest": "11.1.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/preact-node/package.json",
+      "section": "dependencies",
+      "name": "preact",
+      "requested": "10.29.8",
+      "resolved": "10.29.8",
+      "integrity": "sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==",
+      "latest": "11.1.0",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/preact-node/package.json",
+      "section": "dependencies",
+      "name": "preact-render-to-string",
+      "requested": "6.8.1",
+      "resolved": "6.8.1",
+      "integrity": "sha512-EIaLVlarET55f737gG/g1bK1UfjAgT3Z7Ch1Z7UX4/TwHh1O7EI5sCtwhVP+cs0n37SyV2HjZCSRtrpMm4Bujw==",
+      "latest": "6.8.2",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "puppeteer-core",
+      "requested": "25.16.0",
+      "resolved": "25.16.0",
+      "integrity": "sha512-VA5Pf54N8shfopNkZZXCdiiwfnnY8ZJYAMqFQRhlH5mGUhfwf53Ar770GPtdpTDLUqvQeYpIBtC9/G2Jij2IJw==",
+      "latest": "25.16.0",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "island-race/package.json",
+      "section": "dependencies",
+      "name": "puppeteer-core",
+      "requested": "25.16.0",
+      "resolved": "25.16.0",
+      "integrity": "sha512-VA5Pf54N8shfopNkZZXCdiiwfnnY8ZJYAMqFQRhlH5mGUhfwf53Ar770GPtdpTDLUqvQeYpIBtC9/G2Jij2IJw==",
+      "latest": "25.16.0",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "react",
+      "requested": "19.3.1",
+      "resolved": "19.3.1",
+      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==",
+      "latest": "19.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "react",
+      "requested": "19.3.1",
+      "resolved": "19.3.1",
+      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==",
+      "latest": "19.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/next/package.json",
+      "section": "dependencies",
+      "name": "react",
+      "requested": "19.1.0",
+      "resolved": "19.1.0",
+      "integrity": "sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==",
+      "latest": "19.3.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-bun/package.json",
+      "section": "dependencies",
+      "name": "react",
+      "requested": "19.3.1",
+      "resolved": null,
+      "integrity": null,
+      "latest": "19.3.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-node/package.json",
+      "section": "dependencies",
+      "name": "react",
+      "requested": "19.3.1",
+      "resolved": "19.3.1",
+      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==",
+      "latest": "19.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "dependencies",
+      "name": "react",
+      "requested": "19.1.0",
+      "resolved": "19.1.0",
+      "integrity": "sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==",
+      "latest": "19.3.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "react-dom",
+      "requested": "19.3.1",
+      "resolved": "19.3.1",
+      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
+      "latest": "19.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/astro/package.json",
+      "section": "dependencies",
+      "name": "react-dom",
+      "requested": "19.3.1",
+      "resolved": "19.3.1",
+      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
+      "latest": "19.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/next/package.json",
+      "section": "dependencies",
+      "name": "react-dom",
+      "requested": "19.1.0",
+      "resolved": "19.1.0",
+      "integrity": "sha512-Xs1hdnE+DyKgeHJeJznQmYMIBG3TKIHJJT95Q58nHLSrElKlGQqDTR2HQ9fx5CN/Gk6Vh/kupBTDLU11/nDk/g==",
+      "latest": "19.3.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-bun/package.json",
+      "section": "dependencies",
+      "name": "react-dom",
+      "requested": "19.3.1",
+      "resolved": null,
+      "integrity": null,
+      "latest": "19.3.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-node/package.json",
+      "section": "dependencies",
+      "name": "react-dom",
+      "requested": "19.3.1",
+      "resolved": "19.3.1",
+      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
+      "latest": "19.3.1",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "dependencies",
+      "name": "react-dom",
+      "requested": "19.1.0",
+      "resolved": "19.1.0",
+      "integrity": "sha512-Xs1hdnE+DyKgeHJeJznQmYMIBG3TKIHJJT95Q58nHLSrElKlGQqDTR2HQ9fx5CN/Gk6Vh/kupBTDLU11/nDk/g==",
+      "latest": "19.3.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "dependencies",
+      "name": "react-router",
+      "requested": "7.18.4",
+      "resolved": "7.18.4",
+      "integrity": "sha512-PUPQcMhMGRAslLcvtlPz/kmzBEWPhLdgLFrL7pLNepBL6dX0lWj4WD2cUYVgYCuT3jxvghYFg81cDTj44DhetQ==",
+      "latest": "8.5.1",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "solid-js",
+      "requested": "1.9.17",
+      "resolved": "1.9.17",
+      "integrity": "sha512-4GAmLOWPfNV8H9Jfn2LSFTpNEG6jiOKPiwd5lnLGQtehHaX6l3TOLzJqQ7mqwB/3k1Yy3zyumFVopmc/tm34ow==",
+      "latest": "1.9.17",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/solid-node/package.json",
+      "section": "dependencies",
+      "name": "solid-js",
+      "requested": "1.9.17",
+      "resolved": "1.9.17",
+      "integrity": "sha512-4GAmLOWPfNV8H9Jfn2LSFTpNEG6jiOKPiwd5lnLGQtehHaX6l3TOLzJqQ7mqwB/3k1Yy3zyumFVopmc/tm34ow==",
+      "latest": "1.9.17",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "signals-race/package.json",
+      "section": "dependencies",
+      "name": "solid-js",
+      "requested": "1.9.17",
+      "resolved": "1.9.17",
+      "integrity": "sha512-4GAmLOWPfNV8H9Jfn2LSFTpNEG6jiOKPiwd5lnLGQtehHaX6l3TOLzJqQ7mqwB/3k1Yy3zyumFVopmc/tm34ow==",
+      "latest": "1.9.17",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "svelte",
+      "requested": "5.57.2",
+      "resolved": "5.57.2",
+      "integrity": "sha512-1YiPCAXT0Ct6g1vOMmSLa0Nsc3QRMvtDF32ihgglGVrugIuIK38RyDiFNXVDhtQ81TJjSO57NdMw6DyYLqSGDQ==",
+      "latest": "5.57.3",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/svelte-node/package.json",
+      "section": "dependencies",
+      "name": "svelte",
+      "requested": "5.57.2",
+      "resolved": "5.57.2",
+      "integrity": "sha512-1YiPCAXT0Ct6g1vOMmSLa0Nsc3QRMvtDF32ihgglGVrugIuIK38RyDiFNXVDhtQ81TJjSO57NdMw6DyYLqSGDQ==",
+      "latest": "5.57.3",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/forma/admin/package.json",
+      "section": "devDependencies",
+      "name": "tsx",
+      "requested": "^4.0.0",
+      "resolved": "4.23.15",
+      "integrity": "sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw==",
+      "latest": "4.23.15",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/forma/admin/package.json",
+      "section": "devDependencies",
+      "name": "typescript",
+      "requested": "^5.7.0",
+      "resolved": "5.9.3",
+      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+      "latest": "7.0.2",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "vite",
+      "requested": "8.3.5",
+      "resolved": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "latest": "8.3.5",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/preact-node/package.json",
+      "section": "devDependencies",
+      "name": "vite",
+      "requested": "8.3.5",
+      "resolved": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "latest": "8.3.5",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/react-node/package.json",
+      "section": "devDependencies",
+      "name": "vite",
+      "requested": "8.3.5",
+      "resolved": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "latest": "8.3.5",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/react-router/package.json",
+      "section": "devDependencies",
+      "name": "vite",
+      "requested": "6.3.5",
+      "resolved": "6.3.5",
+      "integrity": "sha512-cZn6NDFE7wdTpINgs++ZJ4N49W2vRp8LCKrn3Ob1kYNtOo21vfDoaV5GzBfLU4MovSAB8uNRm4jgzVQZ+mBzPQ==",
+      "latest": "8.3.5",
+      "updateAvailable": true
+    },
+    {
+      "manifest": "contestants/solid-node/package.json",
+      "section": "devDependencies",
+      "name": "vite",
+      "requested": "8.3.5",
+      "resolved": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "latest": "8.3.5",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/svelte-node/package.json",
+      "section": "devDependencies",
+      "name": "vite",
+      "requested": "8.3.5",
+      "resolved": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "latest": "8.3.5",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/vue-node/package.json",
+      "section": "devDependencies",
+      "name": "vite",
+      "requested": "8.3.5",
+      "resolved": "8.3.5",
+      "integrity": "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ==",
+      "latest": "8.3.5",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "vite-plugin-solid",
+      "requested": "2.11.14",
+      "resolved": "2.11.14",
+      "integrity": "sha512-7ZVBt8rpoyqmlwin2kRIUveaHoF6/kulY7gsnD+qFh4nS29V4OPAnw+ojoAspXIjObiL9o1xh9a/nTuYHm02Rw==",
+      "latest": "2.11.14",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/solid-node/package.json",
+      "section": "devDependencies",
+      "name": "vite-plugin-solid",
+      "requested": "2.11.14",
+      "resolved": "2.11.14",
+      "integrity": "sha512-7ZVBt8rpoyqmlwin2kRIUveaHoF6/kulY7gsnD+qFh4nS29V4OPAnw+ojoAspXIjObiL9o1xh9a/nTuYHm02Rw==",
+      "latest": "2.11.14",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "client-race/package.json",
+      "section": "dependencies",
+      "name": "vue",
+      "requested": "3.5.44",
+      "resolved": "3.5.44",
+      "integrity": "sha512-dvvmaOCG7lAMkJTPqPwWeGMsPS6DIsFsfZDUgBp9V6mHf9b3+/wyVwYR4Es+WV6uJC0FKRxp81Obcq0ZwUcGFQ==",
+      "latest": "3.5.44",
+      "updateAvailable": false
+    },
+    {
+      "manifest": "contestants/vue-node/package.json",
+      "section": "dependencies",
+      "name": "vue",
+      "requested": "3.5.44",
+      "resolved": "3.5.44",
+      "integrity": "sha512-dvvmaOCG7lAMkJTPqPwWeGMsPS6DIsFsfZDUgBp9V6mHf9b3+/wyVwYR4Es+WV6uJC0FKRxp81Obcq0ZwUcGFQ==",
+      "latest": "3.5.44",
+      "updateAvailable": false
+    }
+  ],
+  "policy": "New dependency cohorts require correctness and a fresh complete comparison; original locked baselines and historical evidence remain frozen."
+}
