@@ -41,7 +41,7 @@ jobs:
           git status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/burn-in-source/before.txt"
           test ! -s "$RUNNER_TEMP/burn-in-source/before.txt"
           python3 scripts/release-owned-linux.test.py
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: '1.93.1'
       - name: Install the committed tools and pinned sanitizer harness
