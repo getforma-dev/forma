@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- FORMA-246: record the exact final composition-canvas fixture's native route-size reference and reproducible producer beside its subset policy; no emitted-code or budget change.
 - FORMA-246: add the named composition-canvas conformance fixture, strict enum/depth refusals, and exact source-to-Rust fixture pairing. Document the existing JSX namespace pass and canonical-style input constraints; no compiler or runtime admission changes.
 - FORMA-232: catalogue the build package’s invalid-budget diagnostic BUILD-826 and document effective/default size policy under BUILD-819. Native admission and emitted bytes are unchanged.
 

@@ -1,0 +1,198 @@
+{
+  "recordedAt": "2026-10-28T23:49:01.026Z",
+  "sourceCommit": "166cec8741462a5ebc4449c4fd553af482a978bd",
+  "scope": "Exact named composition-canvas in a clean single-route native wrapper; source checkout packages, not a new registry qualification",
+  "toolchain": {
+    "node": "v24.22.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "esbuild": "0.28.1"
+  },
+  "packageLockSha256": "f06b0687e900b35c24692dc420460f56c8f9f04429e59f053d48bf1d9d72020e",
+  "packageProducts": {
+    "core": {
+      "version": "3.2.0",
+      "manifestSha256": "b0bbad7a046c6346732dce1cadb4a8764bff353d2038f8b1818891e0a554e59c",
+      "javascriptFiles": 32,
+      "javascriptInventorySha256": "7362959ad12353428ee5cb88e8762d27d546882fdd0abf7c9124be525ad62ebe"
+    },
+    "compiler": {
+      "version": "3.2.0",
+      "manifestSha256": "34d39a4aa813d38fb1dd20197fb589f9195f499f0957855e04cb862113fab9d3",
+      "javascriptFiles": 1,
+      "javascriptInventorySha256": "74f8279b4dfea61c3a05f9a34b3a9e57b5cb0c17627ba6cef135d438d5a5c089"
+    },
+    "build": {
+      "version": "3.2.0",
+      "manifestSha256": "a81992af142ad801780ad40435091a07b594686436b84dfb8237ab8bf818b84c",
+      "javascriptFiles": 2,
+      "javascriptInventorySha256": "fe50251e14d614c62685c9821665b9ceaa092302f53e2f17af54efd78c31de6f"
+    }
+  },
+  "producerSha256": "8e7c78f0264fc74094258ec087303f18892bc0f2485302069b1c3e83988b2ca9",
+  "fixtureSourceSha256": {
+    "app.tsx": "864fb8892c10a28b41d846ec453b2ea36adb1d08cffbf6a932d588febba5ec0b",
+    "page.tsx": "9653fce5fe2724adfd797434e2f5a34b5e669f4d415f55c575a36645c17973f0"
+  },
+  "compilerDiagnostics": [],
+  "buildWarnings": [
+    "BUILD-819 warning: / estimated Forma code 28024 B exceeds warning 25578 B by 2446 B (framework; error 28420 B; default error 28420 B)",
+    "BUILD-809 no Cargo.lock found from <consumer-wrapper>; forma-server compatibility cannot be checked until startup"
+  ],
+  "wrapper": {
+    "config": {
+      "app": "composition-canvas",
+      "entryPoints": [
+        {
+          "entry": "src/home/app.tsx",
+          "outfile": "home.js"
+        }
+      ],
+      "outputDir": "dist",
+      "routes": {
+        "/": {
+          "js": [
+            "home"
+          ],
+          "css": []
+        }
+      },
+      "ssr": true,
+      "strict": true,
+      "ssrEntryPoints": {
+        "home": "src/home/app.tsx"
+      }
+    },
+    "sourceCopies": "app.tsx and page.tsx copied byte-for-byte; no alternate renderer or data bootstrap",
+    "dependencies": "Canonical @getforma package-root links; no framework bytes copied into application files",
+    "css": false,
+    "router": false,
+    "serverStateIncludedInJavascript": false
+  },
+  "policy": {
+    "mode": "framework",
+    "applicationOverrides": false,
+    "formaGzip": 28420,
+    "javascriptGzip": 76800
+  },
+  "attribution": "Production metafile raw contributions: core/router/alien-signals plus identity banner; gzip-9 shares allocated by raw proportion. Total JavaScript includes generated service worker.",
+  "native": {
+    "bytes": 4754,
+    "sha256": "8ac7b9491db971a7255a7943ed431f0258ef7242349f787a11aeee108accaa65",
+    "equalsFrozenNamedFixture": true
+  },
+  "route": {
+    "route": "/",
+    "class": "islands",
+    "canvas": false,
+    "files": [
+      {
+        "file": "home.950e2e99.js",
+        "raw": 86833,
+        "gzip": 28921,
+        "brotli": 25843,
+        "forma": {
+          "raw": 84139,
+          "gzip": 28024,
+          "brotli": 25041
+        },
+        "router": {
+          "raw": 0,
+          "gzip": 0,
+          "brotli": 0
+        }
+      }
+    ],
+    "raw": 86833,
+    "gzip": 28921,
+    "brotli": 25843,
+    "forma": {
+      "raw": 84139,
+      "gzip": 28024,
+      "brotli": 25041
+    },
+    "core": {
+      "raw": 84139,
+      "gzip": 28024,
+      "brotli": 25041
+    },
+    "router": {
+      "raw": 0,
+      "gzip": 0,
+      "brotli": 0
+    },
+    "application": {
+      "raw": 2694,
+      "gzip": 897,
+      "brotli": 802
+    },
+    "worker": {
+      "raw": 3117,
+      "gzip": 1451,
+      "brotli": 1221
+    },
+    "javascript": {
+      "raw": 89950,
+      "gzip": 30372,
+      "brotli": 27064
+    },
+    "ceilings": {
+      "forma": 28420,
+      "javascript": 76800
+    },
+    "exceeded": [],
+    "over": false,
+    "budget": {
+      "version": 1,
+      "policy": "framework",
+      "metrics": {
+        "forma": {
+          "actual": 28024,
+          "estimated": true,
+          "default": {
+            "warning": 25578,
+            "error": 28420
+          },
+          "effective": {
+            "warning": 25578,
+            "error": 28420
+          },
+          "source": "framework",
+          "severity": "warning",
+          "warningExcess": 2446,
+          "errorExcess": 0,
+          "defaultExcess": 0
+        },
+        "javascript": {
+          "actual": 30372,
+          "estimated": false,
+          "default": {
+            "warning": 69120,
+            "error": 76800
+          },
+          "effective": {
+            "warning": 69120,
+            "error": 76800
+          },
+          "source": "framework",
+          "severity": "ok",
+          "warningExcess": 0,
+          "errorExcess": 0,
+          "defaultExcess": 0
+        }
+      },
+      "severity": "warning"
+    }
+  },
+  "assets": {
+    "home.950e2e99.js": "950e2e995d51c8e751af07dc42dc6b180986d6f1aedc5d605964fa19c93f22ee",
+    "sw.js": "04df4b031692506676dfcb573c09438178f64b6269b8cf16e38cfc0f1284a86b",
+    "home.8ac7b949.ir": "8ac7b9491db971a7255a7943ed431f0258ef7242349f787a11aeee108accaa65"
+  },
+  "limits": [
+    "Not the historical 4752-byte four-card spike",
+    "Not full GenUI primitive-library or consumer qualification",
+    "JavaScript size wrapper has no Cargo.lock; this run does not repeat Rust compatibility or rendering qualification",
+    "No application budget override, canvas ceiling increase or release claim"
+  ]
+}

@@ -92,6 +92,14 @@ initial island-state cap. A small canvas is conformance evidence, not proof that
 a future application's entire component library meets route-size limits. The
 route-size policy and application measurement remain separate checks.
 
+The [final named-fixture size reference](../../../docs/evidence/forma-246-composition-canvas-size/README.md)
+records **28,024 B estimated Forma gzip of 28,420 B** and **30,372 B total
+JavaScript of 76,800 B**, including its 1,451 B service worker. It uses the exact
+4,754 B FMIR fixture in a clean native `islands` route, without CSS, router or
+application budget overrides. The standard 25,578 B Forma warning remains
+visible; this is below the error ceiling, not a full consumer-library budget
+qualification. The linked producer records source, package and toolchain identity.
+
 ## Indexed row updates
 
 `createKeyedRows(initialRows, row => row.id)` and the two-argument

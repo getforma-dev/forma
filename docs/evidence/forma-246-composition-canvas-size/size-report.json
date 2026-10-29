@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "ceilings": {
+    "forma": 28420,
+    "page": 76800,
+    "canvas": 373760
+  },
+  "routes": [
+    {
+      "route": "/",
+      "class": "islands",
+      "canvas": false,
+      "files": [
+        {
+          "file": "home.950e2e99.js",
+          "raw": 86833,
+          "gzip": 28921,
+          "brotli": 25843,
+          "forma": {
+            "raw": 84139,
+            "gzip": 28024,
+            "brotli": 25041
+          },
+          "router": {
+            "raw": 0,
+            "gzip": 0,
+            "brotli": 0
+          }
+        }
+      ],
+      "raw": 86833,
+      "gzip": 28921,
+      "brotli": 25843,
+      "forma": {
+        "raw": 84139,
+        "gzip": 28024,
+        "brotli": 25041
+      },
+      "core": {
+        "raw": 84139,
+        "gzip": 28024,
+        "brotli": 25041
+      },
+      "router": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "application": {
+        "raw": 2694,
+        "gzip": 897,
+        "brotli": 802
+      },
+      "worker": {
+        "raw": 3117,
+        "gzip": 1451,
+        "brotli": 1221
+      },
+      "javascript": {
+        "raw": 89950,
+        "gzip": 30372,
+        "brotli": 27064
+      },
+      "ceilings": {
+        "forma": 28420,
+        "javascript": 76800
+      },
+      "exceeded": [],
+      "over": false,
+      "budget": {
+        "version": 1,
+        "policy": "framework",
+        "metrics": {
+          "forma": {
+            "actual": 28024,
+            "estimated": true,
+            "default": {
+              "warning": 25578,
+              "error": 28420
+            },
+            "effective": {
+              "warning": 25578,
+              "error": 28420
+            },
+            "source": "framework",
+            "severity": "warning",
+            "warningExcess": 2446,
+            "errorExcess": 0,
+            "defaultExcess": 0
+          },
+          "javascript": {
+            "actual": 30372,
+            "estimated": false,
+            "default": {
+              "warning": 69120,
+              "error": 76800
+            },
+            "effective": {
+              "warning": 69120,
+              "error": 76800
+            },
+            "source": "framework",
+            "severity": "ok",
+            "warningExcess": 0,
+            "errorExcess": 0,
+            "defaultExcess": 0
+          }
+        },
+        "severity": "warning"
+      }
+    }
+  ],
+  "worker": {
+    "file": "sw.js",
+    "raw": 3117,
+    "gzip": 1451,
+    "brotli": 1221
+  }
+}
