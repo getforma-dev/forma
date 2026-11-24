@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- `createFetch` now reports a timed-out request through `error()` as an `Error`
+  named `TimeoutError` (`Request timed out after N ms`), matching what
+  `data-fetch` already does. Before, a timeout was swallowed with intentional
+  aborts, leaving `data()` and `error()` both null.
+- `createFetch` no longer lets a superseded or aborted request write its late
+  response or failure over the request that replaced it.
+
 ## [3.2.0] - 2026-10-27
 
 - Add the optional `@getforma/core/navigation` entry for native owner scopes,
